@@ -1,0 +1,76 @@
+{
+  "schema": "paydirt.truth/1",
+  "pair": "sol-06",
+  "variant": "fixed",
+  "origin": "original",
+  "assistant": "openai/gpt-6.1-sol",
+  "canary": "e33a4e85-f14d-4004-affc-93a99d86ce3d",
+  "planted": [],
+  "decoys": [
+    {
+      "id": "D1",
+      "file": "src/TollWeaver.sol",
+      "lines": [
+        [
+          147,
+          153
+        ]
+      ],
+      "functions": [
+        "acceptStewardship"
+      ],
+      "why": "No modifier, but the body reverts NotPendingSteward unless msg.sender equals pendingSteward, which only the steward can set; the address(0) default can never match a caller.",
+      "proof": "test/Fixed.t.sol:test_decoy_D1"
+    },
+    {
+      "id": "D2",
+      "file": "src/TollWeaver.sol",
+      "lines": [
+        [
+          278,
+          294
+        ]
+      ],
+      "functions": [
+        "laneSnapshot"
+      ],
+      "why": "A view that returns configuration and per-asset accruals already readable through the public getters and outstandingProceeds; it writes no storage and gives the caller no control over funds.",
+      "proof": "test/Fixed.t.sol:test_decoy_D2"
+    }
+  ],
+  "acceptable": [
+    {
+      "file": "src/TollWeaver.sol",
+      "lines": [
+        [
+          239,
+          253
+        ]
+      ],
+      "note": "low, unscored: releaseProceeds pushes both shares in one call, so a recipient that cannot receive the asset blocks the other share until the steward repoints it"
+    },
+    {
+      "file": "src/TollWeaver.sol",
+      "lines": [
+        [
+          140,
+          144
+        ]
+      ],
+      "note": "info, unscored: a nomination cannot be cleared to address(0), only overwritten with another nominee"
+    }
+  ],
+  "patched_region": {
+    "file": "src/TollWeaver.sol",
+    "lines": [
+      [
+        180,
+        185
+      ]
+    ],
+    "functions": [
+      "setServiceBeneficiary"
+    ]
+  },
+  "report": null
+}

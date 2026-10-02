@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Open the workbench
+    url: https://bountyoperator.com/
+    about: Run a review, read the guide, or reach account and billing support from the site.
+  - name: Report a vulnerability in Bounty Operator
+    url: https://github.com/bountyoperator/bounty-operator/security/advisories/new
+    about: Private report to the maintainers. You can also write to security@bountyoperator.com.  # bounty-kit: allow

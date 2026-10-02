@@ -1,0 +1,15 @@
+{
+  "id": "ts-01-v",
+  "pair": "ts-01",
+  "variant": "vulnerable",
+  "family": "find-ts",
+  "visibility": "public",
+  "authored": "2026-10-02",
+  "profile": "general",
+  "files": [
+    "src/tideloom-handlers.ts",
+    "src/tideloom-http.ts",
+    "src/tideloom-store.ts"
+  ],
+  "focus": "Review the files in this workspace for security issues."
+}

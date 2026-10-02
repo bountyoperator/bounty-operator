@@ -1,0 +1,463 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How to write a bug bounty report that survives triage | Bounty Operator</title>
+<meta name="description" content="Twelve checks to run and the evidence to attach before you submit a bug bounty report, with a worked example rewritten line by line.">
+<link rel="canonical" href="https://bountyoperator.com/guide">
+<meta name="color-scheme" content="dark light">
+<meta name="theme-color" content="#0a1220" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f5f7fb" media="(prefers-color-scheme: light)">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Bounty Operator">
+<meta property="og:title" content="How to write a bug bounty report that survives triage | Bounty Operator">
+<meta property="og:description" content="Twelve checks to run and the evidence to attach before you submit a bug bounty report, with a worked example rewritten line by line.">
+<meta property="og:url" content="https://bountyoperator.com/guide">
+<meta property="og:image" content="https://bountyoperator.com/social-v2.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Bounty Operator. Find the hole in your report before the triager does.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="How to write a bug bounty report that survives triage | Bounty Operator">
+<meta name="twitter:description" content="Twelve checks to run and the evidence to attach before you submit a bug bounty report, with a worked example rewritten line by line.">
+<meta name="twitter:image" content="https://bountyoperator.com/social-v2.png">
+<meta name="twitter:image:alt" content="Bounty Operator. Find the hole in your report before the triager does.">
+<link rel="icon" href="/favicon.ico" sizes="48x48">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+<script src="/theme.js"></script>
+<link rel="stylesheet" href="/css/base.css">
+<link rel="stylesheet" href="/css/docs.css">
+<script type="module" src="/docs/handoff.mjs"></script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Bounty Operator","item":"https://bountyoperator.com/"},{"@type":"ListItem","position":2,"name":"Report guide","item":"https://bountyoperator.com/guide"}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"How to write a bug bounty report that survives triage","description":"Twelve checks to run and the evidence to attach before you submit a bug bounty report, with a worked example rewritten line by line.","url":"https://bountyoperator.com/guide","mainEntityOfPage":"https://bountyoperator.com/guide","datePublished":"2026-10-03","dateModified":"2026-10-03","author":{"@type":"Organization","name":"Tradi3","url":"https://audits.sherlock.xyz/watson/Tradi3"},"publisher":{"@type":"Organization","name":"Bounty Operator","url":"https://bountyoperator.com/"}}</script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="site-header">
+<div class="wrap site-header__inner">
+<a class="brand" href="/"><svg class="brand__mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect class="brand__tile" width="64" height="64" rx="14"/><path class="brand__glyph" d="M12.5 15h6.5v31.5h-6.5z"/><path class="brand__glyph" fill-rule="evenodd" d="M25.5 25a10.75 10.75 0 1 0 0 21.5a10.75 10.75 0 0 0 0-21.5zm0 6.25a4.5 4.5 0 1 1 0 9a4.5 4.5 0 0 1 0-9z"/><path class="brand__slash" d="M45.5 13h6.25l-8.6 37.5h-6.25z"/></svg><span class="brand__name">Bounty Operator</span></a>
+<nav class="site-nav" aria-label="Main"><ul><li><a href="/#workspace">Workbench</a></li><li><a href="/method">Method</a></li><li><a href="/tools">Tools</a></li><li><a href="/guide" aria-current="page">Guide</a></li><li><a href="/mcp">MCP</a></li><li><a href="/pricing">Pricing</a></li></ul></nav>
+<div class="site-header__actions">
+<button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch colour theme"><span class="icon theme-toggle__icon" aria-hidden="true"></span></button>
+<a class="btn btn--secondary btn--sm" href="/#account">Account</a>
+</div>
+</div>
+</header>
+<main id="main" tabindex="-1">
+<article class="docs wrap">
+<header class="docs-head">
+<nav class="breadcrumbs" aria-label="Breadcrumb"><ol><li><a href="/">Bounty Operator</a></li><li aria-current="page">Report guide</li></ol></nav>
+<h1>How to write a bug bounty report that survives triage</h1>
+<p class="lede">A triager needs one sentence to close a weak report, and about ten minutes to find it. This guide covers what a report needs to get past that, the twelve checks to run before you file, and one report rewritten fragment by fragment.</p>
+
+<div class="cluster docs-head__actions"><a class="btn btn--primary" href="/tools/report-check"><span class="btn__label">Check a draft</span><span class="icon icon--arrow-right" aria-hidden="true"></span></a><a class="btn btn--secondary" href="/templates"><span class="btn__label">Report templates</span></a></div>
+</header>
+
+<div class="docs-body">
+<nav class="docs-toc" aria-label="On this page">
+<p class="meta">On this page</p>
+<ul><li><a href="#lands">What lands</a></li><li><a href="#example">Worked example</a></li><li><a href="#checks">The twelve checks</a></li><li><a href="#order">Order of work</a></li><li><a href="#evidence">Evidence to collect</a></li></ul>
+</nav>
+<div class="docs-content">
+<div class="docs-record"><p>Twelve checks, distilled from 105 real case files across five platforms. The wins and the closures. Built by Tradi3: <a class="link link--external" href="https://immunefi.com/audit-competition/audit-comp-firelight-1/leaderboard/" target="_blank" rel="noopener noreferrer">2nd of 133 in Immunefi’s Firelight competition<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a> and <a class="link link--external" href="https://immunefi.com/audit-competition/audit-comp-quantus/leaderboard/" target="_blank" rel="noopener noreferrer">8th of 65 in Quantus<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a>.</p></div>
+<section class="docs-section" aria-labelledby="lands">
+<h2 class="docs-section__title" id="lands">What a report that lands contains</h2>
+
+<div class="prose">
+<p>A report that lands has these seven things. A triager can verify each of them without taking your word for it.</p>
+</div>
+<ul class="checklist guide-lands"><li><span class="icon icon--check" aria-hidden="true"></span><div><p><strong>An executed proof, with its command and output, and a control case.</strong> The control is the same test without the bug step. It shows the loss comes from the bug and not from the setup.</p></div></li><li><span class="icon icon--check" aria-hidden="true"></span><div><p><strong>A final assertion on the object the impact row names.</strong> A balance, an owner, a stored record. An event or a reverted call is not the object.</p></div></li><li><span class="icon icon--check" aria-hidden="true"></span><div><p><strong>The exact code location on a pinned revision, and a concrete fix.</strong> File, lines and commit. The fix names the lines it changes.</p></div></li><li><span class="icon icon--check" aria-hidden="true"></span><div><p><strong>A title that states mechanism and consequence in one sentence.</strong> Numbered attack steps follow it, kept separate from the test code.</p></div></li><li><span class="icon icon--check" aria-hidden="true"></span><div><p><strong>Limits and non-claims, stated by you.</strong> Name the nearest known issue and say how this one differs.</p></div></li><li><span class="icon icon--check" aria-hidden="true"></span><div><p><strong>The impact row, quoted verbatim.</strong> Copy it from the programme page. Do not paraphrase it.</p></div></li><li><span class="icon icon--check" aria-hidden="true"></span><div><p><strong>Filed within hours of reproduction.</strong> Fold the variants into one report.</p></div></li></ul>
+</section><section class="docs-section" aria-labelledby="example">
+<h2 class="docs-section__title" id="example">A worked example, before and after</h2>
+
+<div class="prose">
+<p>HarborVault is a contract written for this guide. It is not a real protocol and no report on it was ever filed. The bug is real in the code as written, and the test output below is from an actual Foundry run.</p>
+<p>The vault burns shares when a withdrawal is requested and pays two days later. Line 34 prices the shares against the vault's whole token balance, which still holds assets queued for earlier requests.</p>
+</div>
+<div id="guide-contract">
+<figure class="code code--numbered"><figcaption class="code__bar"><span class="code__name">src/HarborVault.sol</span><span class="code__range">1–48</span><button class="code__copy" type="button" data-copy><span class="icon icon--copy" aria-hidden="true"></span><span data-copy-label>Copy</span></button></figcaption><pre class="code__pre" tabindex="0" role="region" aria-label="Source: src/HarborVault.sol"><code><span class="code__line" data-n="1">// SPDX-License-Identifier: MIT
+</span><span class="code__line" data-n="2">pragma solidity ^0.8.24;
+</span><span class="code__line" data-n="3">
+</span><span class="code__line" data-n="4">interface IERC20 {
+</span><span class="code__line" data-n="5">    function balanceOf(address account) external view returns (uint256);
+</span><span class="code__line" data-n="6">    function transfer(address to, uint256 amount) external returns (bool);
+</span><span class="code__line" data-n="7">    function transferFrom(address from, address to, uint256 amount) external returns (bool);
+</span><span class="code__line" data-n="8">}
+</span><span class="code__line" data-n="9">
+</span><span class="code__line" data-n="10">/// @notice Written for the Bounty Operator report guide. Not a real protocol.
+</span><span class="code__line" data-n="11">contract HarborVault {
+</span><span class="code__line" data-n="12">    IERC20 public immutable asset;
+</span><span class="code__line" data-n="13">    uint256 public constant DELAY = 2 days;
+</span><span class="code__line" data-n="14">
+</span><span class="code__line" data-n="15">    uint256 public totalShares;
+</span><span class="code__line" data-n="16">    mapping(address =&gt; uint256) public shares;
+</span><span class="code__line" data-n="17">    mapping(address =&gt; uint256) public queued;
+</span><span class="code__line" data-n="18">    mapping(address =&gt; uint256) public unlockAt;
+</span><span class="code__line" data-n="19">
+</span><span class="code__line" data-n="20">    constructor(IERC20 asset_) {
+</span><span class="code__line" data-n="21">        asset = asset_;
+</span><span class="code__line" data-n="22">    }
+</span><span class="code__line" data-n="23">
+</span><span class="code__line" data-n="24">    function deposit(uint256 assets) external returns (uint256 minted) {
+</span><span class="code__line" data-n="25">        uint256 pool = asset.balanceOf(address(this));
+</span><span class="code__line" data-n="26">        minted = totalShares == 0 ? assets : assets * totalShares / pool;
+</span><span class="code__line" data-n="27">        shares[msg.sender] += minted;
+</span><span class="code__line" data-n="28">        totalShares += minted;
+</span><span class="code__line" data-n="29">        require(asset.transferFrom(msg.sender, address(this), assets), &quot;transfer failed&quot;);
+</span><span class="code__line" data-n="30">    }
+</span><span class="code__line" data-n="31">
+</span><span class="code__line" data-n="32">    /// @dev Burns shares now and pays after DELAY, so an exit cannot be front-run.
+</span><span class="code__line" data-n="33">    function requestWithdraw(uint256 shareAmount) external {
+</span><span class="code__line is-hl" data-n="34">        uint256 pool = asset.balanceOf(address(this));
+</span><span class="code__line is-hl" data-n="35">        uint256 owed = shareAmount * pool / totalShares;
+</span><span class="code__line" data-n="36">        shares[msg.sender] -= shareAmount;
+</span><span class="code__line" data-n="37">        totalShares -= shareAmount;
+</span><span class="code__line is-flag" data-n="38">        queued[msg.sender] += owed;
+</span><span class="code__line" data-n="39">        unlockAt[msg.sender] = block.timestamp + DELAY;
+</span><span class="code__line" data-n="40">    }
+</span><span class="code__line" data-n="41">
+</span><span class="code__line" data-n="42">    function claim() external {
+</span><span class="code__line" data-n="43">        require(block.timestamp &gt;= unlockAt[msg.sender], &quot;locked&quot;);
+</span><span class="code__line" data-n="44">        uint256 owed = queued[msg.sender];
+</span><span class="code__line" data-n="45">        queued[msg.sender] = 0;
+</span><span class="code__line" data-n="46">        require(asset.transfer(msg.sender, owed), &quot;transfer failed&quot;);
+</span><span class="code__line" data-n="47">    }
+</span><span class="code__line" data-n="48">}
+</span></code></pre></figure>
+</div>
+
+<div class="ba">
+<h3 class="ba__label" id="example-title">Title</h3>
+<div class="ba__panes">
+<div class="ba__pane" data-side="before"><p class="ba__tag"><span class="chip chip--dashed" data-tone="unproven">Before</span></p><div class="ba__text"><p>Critical: accounting bug in HarborVault lets an attacker steal funds</p></div></div>
+<div class="ba__pane" data-side="after"><p class="ba__tag"><span class="chip" data-tone="observed">After</span></p><div class="ba__text"><p><code>requestWithdraw</code> prices shares against assets already queued for withdrawal, so a split exit is overpaid out of the remaining holders’ assets</p></div></div>
+</div>
+<p class="ba__why">Mechanism and consequence in one sentence. The severity moves to the severity field, where it has to match the programme’s scale.</p>
+</div>
+
+<div class="ba">
+<h3 class="ba__label" id="example-impact">Impact</h3>
+<div class="ba__panes">
+<div class="ba__pane" data-side="before"><p class="ba__tag"><span class="chip chip--dashed" data-tone="unproven">Before</span></p><div class="ba__text"><p>Critical. Loss of all user funds.</p></div></div>
+<div class="ba__pane" data-side="after"><p class="ba__tag"><span class="chip" data-tone="observed">After</span></p><div class="ba__text"><p><strong>Impact row:</strong> “Direct theft of user funds held by the vault.”</p><p>A holder who splits a 50.000000-share exit into two requests is paid 58.333333 USDC instead of 50.000000. The other holder’s 50.000000 shares then redeem for 41.666667 USDC.</p></div></div>
+</div>
+<p class="ba__why">The impact row is quoted word for word, and each clause has a number behind it: who is paid, how much, and who is short.</p>
+</div>
+
+<div class="ba">
+<h3 class="ba__label" id="example-steps">Attack steps</h3>
+<div class="ba__panes">
+<div class="ba__pane" data-side="before"><p class="ba__tag"><span class="chip chip--dashed" data-tone="unproven">Before</span></p><div class="ba__text"><p>An attacker can withdraw more than they put in and drain the vault.</p></div></div>
+<div class="ba__pane" data-side="after"><p class="ba__tag"><span class="chip" data-tone="observed">After</span></p><div class="ba__text"><ol><li>Alice and Bob each hold 50.000000 shares. The vault holds 100.000000 USDC.</li><li>Alice calls <code>requestWithdraw(25.000000)</code>. Queued for Alice: 25.000000. Shares outstanding: 75.000000. Vault balance: still 100.000000.</li><li>Alice calls <code>requestWithdraw(25.000000)</code> again. Line 35 computes 25 × 100 / 75 = 33.333333. Queued for Alice: 58.333333.</li><li>After the two-day delay Alice calls <code>claim()</code> and receives 58.333333 USDC.</li><li>Bob holds the only 50.000000 shares left. The vault holds 41.666667 USDC. Bob exits and receives 41.666667 USDC.</li></ol><p>Every step is a public call by an ordinary holder. No privileged role acts.</p></div></div>
+</div>
+<p class="ba__why">Numbered steps with concrete values, kept apart from the test code. The last line is the actor trace: nobody trusted has to do anything.</p>
+</div>
+
+<div class="ba">
+<h3 class="ba__label" id="example-proof">Proof</h3>
+<div class="ba__panes">
+<div class="ba__pane" data-side="before"><p class="ba__tag"><span class="chip chip--dashed" data-tone="unproven">Before</span></p><div class="ba__text"><p>PoC attached. Run the test to see the exploit.</p></div></div>
+<div class="ba__pane" data-side="after"><p class="ba__tag"><span class="chip" data-tone="observed">After</span></p><div class="ba__text"><figure class="code"><pre class="code__pre" tabindex="0" role="region" aria-label="Test command and output"><code><span class="code__line">$ forge test --match-contract HarborVaultSplitTest -vv
+</span><span class="code__line">
+</span><span class="code__line">[PASS] test_control_oneRequest() (gas: 155201)
+</span><span class="code__line">Logs:
+</span><span class="code__line">  alice paid 50000000
+</span><span class="code__line">  bob paid   50000000
+</span><span class="code__line">
+</span><span class="code__line">[PASS] test_split_twoRequests() (gas: 158023)
+</span><span class="code__line">Logs:
+</span><span class="code__line">  alice paid 58333333
+</span><span class="code__line">  bob paid   41666667
+</span></code></pre></figure><p>The control test is the same exit made with one request. The final assertion in each test reads Bob’s token balance. The test deploys HarborVault unmodified and a plain six-decimal token. Nothing is mocked.</p></div></div>
+</div>
+<p class="ba__why">The command and its output sit in the report body. The control case shows the loss comes from the second request, and the last assertion reads the object the impact row names: a holder’s balance.</p>
+</div>
+
+<div class="ba">
+<h3 class="ba__label" id="example-severity">Severity</h3>
+<div class="ba__panes">
+<div class="ba__pane" data-side="before"><p class="ba__tag"><span class="chip chip--dashed" data-tone="unproven">Before</span></p><div class="ba__text"><p>Critical.</p></div></div>
+<div class="ba__pane" data-side="after"><p class="ba__tag"><span class="chip" data-tone="observed">After</span></p><div class="ba__text"><p>High. The proof shows theft of part of one holder’s funds: 8.333333 of Bob’s 50.000000 USDC. The programme’s Critical row requires loss of all funds in the vault, which this proof does not assert.</p></div></div>
+</div>
+<p class="ba__why">The claim is the highest row the proof fully asserts. The report also names the one fact that would move it up.</p>
+</div>
+
+<div class="ba">
+<h3 class="ba__label" id="example-limits">Limits and prior art</h3>
+<div class="ba__panes">
+<div class="ba__pane" data-side="before"><p class="ba__tag"><span class="chip chip--dashed" data-tone="unproven">Before</span></p><div class="ba__text"><p class="ba__empty">Nothing. The draft has no section for either.</p></div></div>
+<div class="ba__pane" data-side="after"><p class="ba__tag"><span class="chip" data-tone="observed">After</span></p><div class="ba__text"><p><strong>Limits:</strong> measured for two requests only. More requests take more; that follows from line 35 and is not measured here. <code>deposit()</code> reads the same balance at line 25 and is not part of this claim.</p><p><strong>Nearest known issue:</strong> audit note L-03, “rounding in requestWithdraw favours the user”. L-03 concerns one unit of rounding and its fix changes the rounding direction. This report concerns the unsubtracted queue and its fix is different.</p></div></div>
+</div>
+<p class="ba__why">The limit and the nearest known issue are stated by the author, before a triager raises either. The known issue is distinguished by its fix, not by its wording.</p>
+</div>
+
+<div class="stack stack--12 guide-drafts">
+<div id="guide-draft">
+<details class="disclosure"><summary class="disclosure__summary">The first draft in full<span class="disclosure__hint">draft-report.md</span></summary><div class="disclosure__body"><figure class="code code--wrap"><figcaption class="code__bar"><span class="code__name">draft-report.md</span><button class="code__copy" type="button" data-copy><span class="icon icon--copy" aria-hidden="true"></span><span data-copy-label>Copy</span></button></figcaption><pre class="code__pre" tabindex="0" role="region" aria-label="Source: draft-report.md"><code><span class="code__line"># Critical: accounting bug in HarborVault lets an attacker steal funds
+</span><span class="code__line">
+</span><span class="code__line">## Summary
+</span><span class="code__line">The withdrawal accounting in HarborVault is wrong. An attacker can withdraw more than they put in and drain the vault. All user funds are at risk.
+</span><span class="code__line">
+</span><span class="code__line">## Impact
+</span><span class="code__line">Critical. Loss of all user funds.
+</span><span class="code__line">
+</span><span class="code__line">## Proof of concept
+</span><span class="code__line">PoC attached. Run the test to see the exploit.
+</span><span class="code__line">
+</span><span class="code__line">## Recommendation
+</span><span class="code__line">Fix the accounting in requestWithdraw.
+</span></code></pre></figure></div></details>
+</div>
+<details class="disclosure"><summary class="disclosure__summary">The rewritten report in full<span class="disclosure__hint">report.md</span></summary><div class="disclosure__body"><figure class="code code--wrap"><figcaption class="code__bar"><span class="code__name">report.md</span><button class="code__copy" type="button" data-copy><span class="icon icon--copy" aria-hidden="true"></span><span data-copy-label>Copy</span></button></figcaption><pre class="code__pre" tabindex="0" role="region" aria-label="Source: report.md"><code><span class="code__line"># requestWithdraw prices shares against assets already queued for withdrawal, so a split exit is overpaid out of the remaining holders&#39; assets
+</span><span class="code__line">
+</span><span class="code__line">## Impact row
+</span><span class="code__line">&quot;Direct theft of user funds held by the vault.&quot;
+</span><span class="code__line">
+</span><span class="code__line">## Location
+</span><span class="code__line">src/HarborVault.sol:34-35 at commit 4f1c9e2, the revision the scope page lists.
+</span><span class="code__line">
+</span><span class="code__line">## Root cause
+</span><span class="code__line">Line 34 reads the vault&#39;s whole token balance as the pool. Assets queued at line 38 stay in that balance until claim() pays them, while the shares they belonged to were burned at line 37. Every request made while a queue exists is priced against assets that are already owed to someone.
+</span><span class="code__line">
+</span><span class="code__line">## Attack steps
+</span><span class="code__line">1. Alice and Bob each hold 50.000000 shares. The vault holds 100.000000 USDC.
+</span><span class="code__line">2. Alice calls requestWithdraw(25.000000). Queued for Alice: 25.000000. Shares outstanding: 75.000000. Vault balance: still 100.000000.
+</span><span class="code__line">3. Alice calls requestWithdraw(25.000000) again. Line 35 computes 25 × 100 / 75 = 33.333333. Queued for Alice: 58.333333.
+</span><span class="code__line">4. After the two-day delay Alice calls claim() and receives 58.333333 USDC.
+</span><span class="code__line">5. Bob holds the only 50.000000 shares left. The vault holds 41.666667 USDC. Bob exits and receives 41.666667 USDC.
+</span><span class="code__line">
+</span><span class="code__line">Every step is a public call by an ordinary holder. No privileged role acts.
+</span><span class="code__line">
+</span><span class="code__line">## Proof
+</span><span class="code__line">```
+</span><span class="code__line">$ forge test --match-contract HarborVaultSplitTest -vv
+</span><span class="code__line">
+</span><span class="code__line">[PASS] test_control_oneRequest() (gas: 155201)
+</span><span class="code__line">Logs:
+</span><span class="code__line">  alice paid 50000000
+</span><span class="code__line">  bob paid   50000000
+</span><span class="code__line">
+</span><span class="code__line">[PASS] test_split_twoRequests() (gas: 158023)
+</span><span class="code__line">Logs:
+</span><span class="code__line">  alice paid 58333333
+</span><span class="code__line">  bob paid   41666667
+</span><span class="code__line">```
+</span><span class="code__line">The control test is the same exit made with one request. The final assertion in each test reads Bob&#39;s token balance. The test deploys HarborVault unmodified and a plain six-decimal token. Nothing is mocked.
+</span><span class="code__line">
+</span><span class="code__line">## Severity
+</span><span class="code__line">High. The proof shows theft of part of one holder&#39;s funds: 8.333333 of Bob&#39;s 50.000000 USDC. The programme&#39;s Critical row requires loss of all funds in the vault, which this proof does not assert.
+</span><span class="code__line">
+</span><span class="code__line">## Limits
+</span><span class="code__line">Measured for two requests only. More requests take more; that follows from line 35 and is not measured here. deposit() reads the same balance at line 25 and is not part of this claim.
+</span><span class="code__line">
+</span><span class="code__line">## Nearest known issue
+</span><span class="code__line">Audit note L-03, &quot;rounding in requestWithdraw favours the user&quot;. L-03 concerns one unit of rounding and its fix changes the rounding direction. This report concerns the unsubtracted queue and its fix is different.
+</span><span class="code__line">
+</span><span class="code__line">## Fix
+</span><span class="code__line">Track a totalQueued counter. Add to it at line 38, subtract it in claim(), and price shares against balanceOf(vault) - totalQueued at lines 25 and 34.
+</span></code></pre></figure></div></details>
+</div>
+
+<div class="guide-try">
+<div class="guide-try__text">
+<p class="guide-try__title">Run the weak draft through the workbench</p>
+<p class="muted small">Loads HarborVault.sol and the first draft into the Challenge a draft report profile. You choose the model and supply the key, or export the prompt to your chat app.</p>
+</div>
+<a class="btn btn--primary" href="/?profile=report#workspace" data-handoff="guide-example"><span class="btn__label">Challenge this draft</span><span class="icon icon--arrow-right" aria-hidden="true"></span></a>
+</div>
+</section><section class="docs-section" aria-labelledby="checks">
+<h2 class="docs-section__title" id="checks">The twelve checks</h2>
+
+<div class="prose">
+<p>Every check exists because real reports were closed for that reason. Each one asks one question of your draft and leads to a verdict. The <a href="/method">method page</a> says why reports die on each one.</p>
+</div>
+<ol class="checks">
+<li class="checks__item">
+<span class="checks__n" aria-hidden="true">01</span>
+<div class="checks__body">
+<h3 class="checks__name">Actor trace</h3>
+<p class="checks__test">Who performs every step, and who supplies every decisive value?</p>
+</div>
+<p class="checks__outcome"><span class="visually-hidden">Leads to: </span><span class="chip verdict" data-verdict="drop">Drop</span></p>
+</li><li class="checks__item">
+<span class="checks__n" aria-hidden="true">02</span>
+<div class="checks__body">
+<h3 class="checks__name">Own-verdict reversal</h3>
+<p class="checks__test">Which new evidence defeats each reason you recorded when you held this finding or lowered its severity?</p>
+</div>
+<p class="checks__outcome"><span class="visually-hidden">Leads to: </span><span class="chip" data-tone="neutral">Earlier verdict stands</span></p>
+</li><li class="checks__item">
+<span class="checks__n" aria-hidden="true">03</span>
+<div class="checks__body">
+<h3 class="checks__name">Design intent and counterfactual</h3>
+<p class="checks__test">Did the project mean this behaviour, and does the bug step add anything over the intended path?</p>
+</div>
+<p class="checks__outcome"><span class="visually-hidden">Leads to: </span><span class="chip verdict" data-verdict="drop">Drop</span></p>
+</li><li class="checks__item">
+<span class="checks__n" aria-hidden="true">04</span>
+<div class="checks__body">
+<h3 class="checks__name">Literal impact and exclusion fit</h3>
+<p class="checks__test">Does an exclusion name this class, and does every clause of the impact row have an artefact behind it?</p>
+</div>
+<p class="checks__outcome"><span class="visually-hidden">Leads to: </span><span class="chip verdict" data-verdict="drop">Drop</span><span class="chip verdict" data-verdict="rewrite-then-submit">Rewrite, then submit</span></p>
+</li><li class="checks__item">
+<span class="checks__n" aria-hidden="true">05</span>
+<div class="checks__body">
+<h3 class="checks__name">Asset and version binding</h3>
+<p class="checks__test">Does the cited code exist in the scoped asset, at the revision that is deployed?</p>
+</div>
+<p class="checks__outcome"><span class="visually-hidden">Leads to: </span><span class="chip verdict" data-verdict="drop">Drop</span><span class="chip verdict" data-verdict="prove-first">Prove first</span></p>
+</li><li class="checks__item">
+<span class="checks__n" aria-hidden="true">06</span>
+<div class="checks__body">
+<h3 class="checks__name">Prior-art sweep</h3>
+<p class="checks__test">Does a known issue, an audit note, a branch or a pull request cover the same function and consequence, or carry the same fix?</p>
+</div>
+<p class="checks__outcome"><span class="visually-hidden">Leads to: </span><span class="chip verdict" data-verdict="hold-duplicate">Hold: duplicate</span></p>
+</li><li class="checks__item">
+<span class="checks__n" aria-hidden="true">07</span>
+<div class="checks__body">
+<h3 class="checks__name">Own-report family</h3>
+<p class="checks__test">Stated with no file and no entry point, is the broken invariant one you have already reported on this programme?</p>
+</div>
+<p class="checks__outcome"><span class="visually-hidden">Leads to: </span><span class="chip verdict" data-verdict="hold-duplicate">Hold: duplicate</span></p>
+</li><li class="checks__item">
+<span class="checks__n" aria-hidden="true">08</span>
+<div class="checks__body">
+<h3 class="checks__name">Executed end-state proof</h3>
+<p class="checks__test">Does the final assertion read the object the impact row names, on production code, with the command and its output in the report?</p>
+</div>
+<p class="checks__outcome"><span class="visually-hidden">Leads to: </span><span class="chip verdict" data-verdict="prove-first">Prove first</span></p>
+</li><li class="checks__item">
+<span class="checks__n" aria-hidden="true">09</span>
+<div class="checks__body">
+<h3 class="checks__name">Production reachability</h3>
+<p class="checks__test">Does every state the proof sets up have a route from live state by public calls?</p>
+</div>
+<p class="checks__outcome"><span class="visually-hidden">Leads to: </span><span class="chip verdict" data-verdict="prove-first">Prove first</span></p>
+</li><li class="checks__item">
+<span class="checks__n" aria-hidden="true">10</span>
+<div class="checks__body">
+<h3 class="checks__name">Severity against the written scale</h3>
+<p class="checks__test">Which row of the programme’s own scale does the proof assert, after every recovery action is applied?</p>
+</div>
+<p class="checks__outcome"><span class="visually-hidden">Leads to: </span><span class="chip verdict" data-verdict="rewrite-then-submit">Rewrite, then submit</span></p>
+</li><li class="checks__item">
+<span class="checks__n" aria-hidden="true">11</span>
+<div class="checks__body">
+<h3 class="checks__name">Submission integrity</h3>
+<p class="checks__test">Does what the platform stored match the draft: the proof field, the severity, the impact row?</p>
+</div>
+<p class="checks__outcome"><span class="visually-hidden">Leads to: </span><span class="chip verdict" data-verdict="rewrite-then-submit">Rewrite, then submit</span></p>
+</li><li class="checks__item">
+<span class="checks__n" aria-hidden="true">12</span>
+<div class="checks__body">
+<h3 class="checks__name">Private-duplicate clock</h3>
+<p class="checks__test">Small fix, old code, central path, checklist class: how long before someone else files it?</p>
+</div>
+<p class="checks__outcome"><span class="visually-hidden">Leads to: </span><span class="chip" data-tone="neutral">Sets a filing deadline</span></p>
+</li>
+</ol>
+<div class="prose">
+<p>The executable version of each check runs inside <a href="/gauntlet">the gauntlet</a>.</p>
+</div>
+</section><section class="docs-section" aria-labelledby="order">
+<h2 class="docs-section__title" id="order">The order to work in</h2>
+
+<div class="prose">
+<p>Run the gates that end a report before the stages that cost work. Scope, provenance and prior art are reading. A proof is building, so it comes fourth.</p>
+</div>
+<ol class="stages">
+<li class="stages__item">
+<div class="stages__body">
+<p class="stages__name">Scope</p>
+<p class="stages__q">Is the code in the scoped asset at the deployed revision, is the class excluded, and does every clause of the impact row have an artefact behind it?</p>
+</div>
+<a class="stages__link" href="/?profile=scope#workspace">Run this stage<span class="visually-hidden">: Scope</span></a>
+</li><li class="stages__item">
+<div class="stages__body">
+<p class="stages__name">Provenance</p>
+<p class="stages__q">Who performs each step, is the behaviour documented design or an audit fix, and is every precondition reachable from live state?</p>
+</div>
+<a class="stages__link" href="/?profile=provenance#workspace">Run this stage<span class="visually-hidden">: Provenance</span></a>
+</li><li class="stages__item">
+<div class="stages__body">
+<p class="stages__name">Prior art</p>
+<p class="stages__q">Same root cause or same one-line fix as a known issue, a prior audit note, a team branch, or your own earlier report?</p>
+</div>
+<a class="stages__link" href="/?profile=prior-art#workspace">Run this stage<span class="visually-hidden">: Prior art</span></a>
+</li><li class="stages__item">
+<div class="stages__body">
+<p class="stages__name">Proof</p>
+<p class="stages__q">Does the proof run production code on every step and end by reading the object the impact row names, with measured numbers?</p>
+</div>
+<a class="stages__link" href="/?profile=poc#workspace">Run this stage<span class="visually-hidden">: Proof</span></a>
+</li><li class="stages__item">
+<div class="stages__body">
+<p class="stages__name">Severity</p>
+<p class="stages__q">What is the highest row of the programme’s own scale that the proof fully asserts, after every downgrade clause?</p>
+</div>
+<a class="stages__link" href="/?profile=severity#workspace">Run this stage<span class="visually-hidden">: Severity</span></a>
+</li><li class="stages__item">
+<div class="stages__body">
+<p class="stages__name">Triager</p>
+<p class="stages__q">What is the one sentence that closes this report in ten minutes, and is it answered in the first paragraph?</p>
+</div>
+<a class="stages__link" href="/?profile=triage#workspace">Run this stage<span class="visually-hidden">: Triager</span></a>
+</li><li class="stages__item">
+<div class="stages__body">
+<p class="stages__name">Report</p>
+<p class="stages__q">Do the claims follow from the code, is the proof inline, do form and body agree, are the limits stated?</p>
+</div>
+<a class="stages__link" href="/?profile=report#workspace">Run this stage<span class="visually-hidden">: Report</span></a>
+</li><li class="stages__item">
+<div class="stages__body">
+<p class="stages__name">Verdict</p>
+<p class="stages__q">One decision, one blocker, the cheapest action that removes it, and a filing deadline.</p>
+</div>
+
+</li>
+</ol>
+<div class="prose">
+<p>Every stage but the last is a review profile in the workbench, run as a hosted review with your own model key. The Free plan runs one hosted review per UTC day, any profile. Operator runs all eight in order as one <a href="/gauntlet">Gauntlet</a> and ends with a single verdict:</p>
+</div>
+<p class="cluster cluster--tight guide-verdicts"><span class="chip verdict" data-verdict="submit">Submit</span><span class="chip verdict" data-verdict="rewrite-then-submit">Rewrite, then submit</span><span class="chip verdict" data-verdict="prove-first">Prove first</span><span class="chip verdict" data-verdict="hold-duplicate">Hold: duplicate</span><span class="chip verdict" data-verdict="drop">Drop</span></p>
+</section><section class="docs-section" aria-labelledby="evidence">
+<h2 class="docs-section__title" id="evidence">Evidence to collect before you write</h2>
+
+<div class="prose">
+<p>These decide outcomes, so gather them before you write a sentence. A missing one is a gap a triager finds for you.</p>
+</div>
+<ul class="checklist checklist--columns"><li><span class="icon icon--check" aria-hidden="true"></span><div><p>The programme’s impact list, and the row you selected</p></div></li><li><span class="icon icon--check" aria-hidden="true"></span><div><p>Exclusions and trusted roles</p></div></li><li><span class="icon icon--check" aria-hidden="true"></span><div><p>The severity scale, with thresholds and downgrade clauses</p></div></li><li><span class="icon icon--check" aria-hidden="true"></span><div><p>The asset, the revision your proof ran on, and the deployed revision</p></div></li><li><span class="icon icon--check" aria-hidden="true"></span><div><p>Known issues, audits and fix-review notes, team branches, and how deep your clone goes</p></div></li><li><span class="icon icon--check" aria-hidden="true"></span><div><p>Your own earlier reports on the programme</p></div></li><li><span class="icon icon--check" aria-hidden="true"></span><div><p>The actor behind each step</p></div></li><li><span class="icon icon--check" aria-hidden="true"></span><div><p>The measured loss</p></div></li><li><span class="icon icon--check" aria-hidden="true"></span><div><p>The proof run: command, commit, output, and anything mocked</p></div></li><li><span class="icon icon--check" aria-hidden="true"></span><div><p>Fee and duplicate rules, and the date you first reproduced it</p></div></li><li><span class="icon icon--check" aria-hidden="true"></span><div><p>The platform’s read-back of the stored submission</p></div></li></ul>
+</section>
+</div>
+</div>
+<aside class="docs-next" aria-labelledby="next-step">
+<div class="docs-next__text"><h2 class="h3" id="next-step">Find the hole before the triager does</h2><p class="muted">Paste your draft into the report check, start from a platform template, or run a profile against your own files.</p></div>
+<div class="cluster"><a class="btn btn--primary" href="/#workspace"><span class="btn__label">Open the workbench</span><span class="icon icon--arrow-right" aria-hidden="true"></span></a><a class="btn btn--secondary" href="/tools/report-check"><span class="btn__label">Report check</span></a><a class="btn btn--secondary" href="/templates"><span class="btn__label">Report templates</span></a></div>
+</aside>
+</article>
+</main>
+<footer class="site-footer">
+<div class="wrap site-footer__grid">
+<div class="site-footer__brand">
+<a class="brand" href="/"><svg class="brand__mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect class="brand__tile" width="64" height="64" rx="14"/><path class="brand__glyph" d="M12.5 15h6.5v31.5h-6.5z"/><path class="brand__glyph" fill-rule="evenodd" d="M25.5 25a10.75 10.75 0 1 0 0 21.5a10.75 10.75 0 0 0 0-21.5zm0 6.25a4.5 4.5 0 1 1 0 9a4.5 4.5 0 0 1 0-9z"/><path class="brand__slash" d="M45.5 13h6.25l-8.6 37.5h-6.25z"/></svg><span class="brand__name">Bounty Operator</span></a>
+<p class="site-footer__promise">Find the hole in your report before the triager does.</p>
+</div>
+<nav class="site-footer__col" aria-label="Product"><h2 class="site-footer__title">Product</h2><ul><li><a href="/#workspace">Workbench</a></li><li><a href="/method">Method</a></li><li><a href="/gauntlet">Gauntlet</a></li><li><a href="/panel-review">Panel review</a></li><li><a href="/pricing">Pricing</a></li><li><a href="/#account">Account</a></li></ul></nav>
+<nav class="site-footer__col" aria-label="Tools"><h2 class="site-footer__title">Tools</h2><ul><li><a href="/tools">All tools</a></li><li><a href="/tools/report-check">Report check</a></li><li><a href="/tools/verify">Packet verifier</a></li><li><a href="/tools/secret-check">Secret check</a></li><li><a href="/tools/acceptance-rates">Acceptance rates</a></li><li><a href="/tools/slither-focus">Slither triage queue</a></li></ul></nav>
+<nav class="site-footer__col" aria-label="Resources"><h2 class="site-footer__title">Resources</h2><ul><li><a href="/guide">Report guide</a></li><li><a href="/mcp">MCP setup</a></li><li><a href="/templates">Report templates</a></li><li><a href="/changelog">Changelog</a></li><li><a href="https://github.com/bountyoperator/bounty-operator" target="_blank" rel="noopener noreferrer">Source<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></li></ul></nav>
+<nav class="site-footer__col" aria-label="Legal"><h2 class="site-footer__title">Legal</h2><ul><li><a href="/privacy">Privacy</a></li><li><a href="/terms">Terms</a></li><li><a href="/security">Security</a></li><li><a href="/licenses">Licences</a></li><li><a href="mailto:security@bountyoperator.com">Report a vulnerability</a></li></ul></nav>
+</div>
+<div class="wrap">
+<div class="site-footer__base">
+<p>Built by <a href="https://audits.sherlock.xyz/watson/Tradi3" target="_blank" rel="noopener noreferrer">Tradi3</a></p>
+<p><a href="mailto:support@bountyoperator.com">support@bountyoperator.com</a></p>
+</div>
+</div>
+</footer>
+</body>
+</html>

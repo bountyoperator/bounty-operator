@@ -1,0 +1,40 @@
+{
+  "name": "bounty-operator-web",
+  "version": "0.7.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "profiles": "node ../scripts/select-profiles.mjs",
+    "predev": "node ../scripts/select-profiles.mjs",
+    "dev": "wrangler dev --port 8787 --local-upstream localhost:8787 --upstream-protocol http --var SITE_ORIGIN:http://localhost:8787 --var BILLING_MODE:disabled",
+    "pretest": "node ../scripts/select-profiles.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "test:private": "node ../scripts/select-profiles.mjs && node --test private/tests/*.test.mjs",
+    "pretypes": "node ../scripts/select-profiles.mjs",
+    "types": "tsc --noEmit",
+    "check": "npm test && npm run types",
+    "presmoke:auth": "node ../scripts/select-profiles.mjs",
+    "smoke:auth": "node tests/auth-smoke.mjs",
+    "presmoke:portal": "node ../scripts/select-profiles.mjs",
+    "smoke:portal": "node tests/portal-smoke.mjs",
+    "presmoke:stream": "node ../scripts/select-profiles.mjs",
+    "smoke:stream": "node tests/stream-smoke.mjs",
+    "stats": "node ../scripts/stats.mjs",
+    "leak-audit": "node ../scripts/leak-audit.mjs",
+    "deploy": "node ../scripts/deploy.mjs",
+    "deploy:check": "node ../scripts/deploy.mjs --dry-run",
+    "verify:live": "node ../scripts/verify-live.mjs"
+  },
+  "dependencies": {
+    "@simplewebauthn/server": "14.0.3",
+    "stripe": "23.0.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20261002.1",
+    "typescript": "^5.9.0",
+    "wrangler": "^4.131.1"
+  },
+  "engines": {
+    "node": ">=22.18"
+  }
+}

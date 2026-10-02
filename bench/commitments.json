@@ -1,0 +1,228 @@
+{
+  "schema": "paydirt.commitments/1",
+  "release": "2026-10",
+  "rule": "sha256(\"<salt>:<case hash>\"). The case hash is sha256 over the text \"paydirt.case/1\" followed, for every file of the case directory in path order, by a newline, the path, a NUL byte and the sha256 of the file. The salt of a case is published when the case is.",
+  "commitments": [
+    {
+      "case": "ch-02-a",
+      "sha256": "ececb871cfa9ab9b84eb885dd5647510972452f3100134cf731fa8cca0c09233",
+      "committed": "2026-10-02"
+    },
+    {
+      "case": "ch-02-o",
+      "sha256": "60c243cad8e9380fb63fc95e0af98add72e838976f55211f677b238945465dc9",
+      "committed": "2026-10-02"
+    },
+    {
+      "case": "ch-03-a",
+      "sha256": "248026ff16fc6aee4495ac59b6cadb3f495cd3a287c48ccccd258d644ae70c78",
+      "committed": "2026-10-02"
+    },
+    {
+      "case": "ch-03-o",
+      "sha256": "fd68a9ade4171fb3ee932935e79ac10b671e9d5e716ff62a58331575eda1ac39",
+      "committed": "2026-10-02"
+    },
+    {
+      "case": "ch-04-a",
+      "sha256": "d609a20d7d4c382c628018779db80c623bb105b4adefbb76e18c9b3a6eb73114",
+      "committed": "2026-10-02"
+    },
+    {
+      "case": "ch-04-o",
+      "sha256": "5445687392e59ad0dfcf34f583e768d9179518a66dc86c0cb75d782419bb0925",
+      "committed": "2026-10-02"
+    },
+    {
+      "case": "ch-05-a",
+      "sha256": "72f1a57a6d209646af81d7ad4133948c47279ef892a568b33e8e0aff34ddb444",
+      "committed": "2026-10-02"
+    },
+    {
+      "case": "ch-05-o",
+      "sha256": "4f2ce12b61e51c2f862efce81f49e512c4eb10fa0688848bda0315a6bcd01759",
+      "committed": "2026-10-02"
+    },
+    {
+      "case": "ch-06-a",
+      "sha256": "026562f774747280ff3bc224943210f1795d24c3f9eb32885736405f5bf0d47e",
+      "committed": "2026-10-02"
+    },
+    {
+      "case": "ch-06-o",
+      "sha256": "9c29ef74f5e2b8049378d29c9fd60f76cd95372dec66dafdc2c7c8b38795bb52",
+      "committed": "2026-10-02"
+    },
+    {
+      "case": "ch-07-a",
+      "sha256": "cc51e63c18751b91a9959112bb9ad43701aa1c220e8526ad96ba29a67d9ccca4",
+      "committed": "2026-10-02"
+    },
+    {
+      "case": "ch-07-o",
+      "sha256": "5486548e649f6a931e8f1ca9a4b818f54cb10a01a42e6d876e38f5d1f8474d9d",
+      "committed": "2026-10-02"
+    },
+    {
+      "case": "hard-01-f",
+      "sha256": "cdca16be1c7ff8727847ab38f72eacd2e6959ffb3fe405e4bd11416ecda0a25c",
+      "committed": "2026-10-02"
+    },
+    {
+      "case": "hard-01-v",
+      "sha256": "cf9f1a219bcda82f0d73c46a1be2eacd34db13a0f4e2c0d3341fab1ce00bb378",
+      "committed": "2026-10-02"
+    },
+    {
+      "case": "hard-02-f",
+      "sha256": "20529b97fecd76d6d4c5463d63da6346dd5f9373aaa34bece6d85ea795ca114b",
+      "committed": "2026-10-02"
+    },
+    {
+      "case": "hard-02-v",
+      "sha256": "fae1e900ca128646f34fb17b9ca8f70b5d8ff11dfa12c09fcd773dedd53264e3",
+      "committed": "2026-10-02"
+    },
+    {
+      "case": "hard-03-f",
+      "sha256": "5f133a06d3b50e0a0defe35075907767169373c4c8da236ac17111d0b38ba857",
+      "committed": "2026-10-02"
+    },
+    {
+      "case": "hard-03-v",
+      "sha256": "3d09707a9c612fa1949fd79f98d056c18c1a9ba51e07fbbc6f4caa20ec6f866e",
+      "committed": "2026-10-02"
+    },
+    {
+      "case": "hard-04-f",
+      "sha256": "777a2dcc83257c5696139e310fd73cf36dd8e709e54cc35525b0e39d08726274",
+      "committed": "2026-10-02"
+    },
+    {
+      "case": "hard-04-v",
+      "sha256": "c05cde70735f51b68356d6234a97d476c56f3b932ab33bf26534196a524d9872",
+      "committed": "2026-10-02"
+    },
+    {
+      "case": "hard-07-a",
+      "sha256": "c1d853a3421f7dd2f0431721630b9cac07bd08ea6817be6c362f126c1566edd0",
+      "committed": "2026-10-02"
+    },
+    {
+      "case": "hard-07-o",
+      "sha256": "26d61c8faff0b3b0ee0790d6b317ae9b5aeaa3113e0d17a4c5b4f2b5a6273210",
+      "committed": "2026-10-02"
+    },
+    {
+      "case": "hard-08-a",
+      "sha256": "c345cf1d57d4573504da6e134a306c23e3c704bd4f8b22d28ce405545d811570",
+      "committed": "2026-10-02"
+    },
+    {
+      "case": "hard-08-o",
+      "sha256": "3327301dc3c037892f2b54ca9b26a1f0ca97937d6365719d8be66d218c64f3ea",
+      "committed": "2026-10-02"
+    },
+    {
+      "case": "sol-02-f",
+      "sha256": "383ddadfa7e3444073637efde4448ee53eaa1bc18bcfcd52e4dc01d6469a8a16",
+      "committed": "2026-10-02"
+    },
+    {
+      "case": "sol-02-v",
+      "sha256": "22ce422748fa7d56477a482018df9f4b9535cf68eafba829bd8e67740ff3de57",
+      "committed": "2026-10-02"
+    },
+    {
+      "case": "sol-03-f",
+      "sha256": "c41c1d059ac1545b434b9699a6133c1eccb666d045e8174cf3ba6b74b4e15ab7",
+      "committed": "2026-10-02"
+    },
+    {
+      "case": "sol-03-v",
+      "sha256": "61657eaf9350fe97804257ffd87edce6e1bd8322c08613e24d8728a80aa765ef",
+      "committed": "2026-10-02"
+    },
+    {
+      "case": "sol-05-f",
+      "sha256": "f7f3632b2a1f4841b10f9ad515ddf2fe36475c6468bfafc2a2daa235d6e59faf",
+      "committed": "2026-10-02"
+    },
+    {
+      "case": "sol-05-v",
+      "sha256": "5cee1b9c9620ebb83d339714089f358d19b1a4f7a208835fd0845c5bbd1b6828",
+      "committed": "2026-10-02"
+    },
+    {
+      "case": "sol-07-f",
+      "sha256": "3c914254117b70a4f2fadffff37ca5fbabd78c33322ec5a862fb7c4338cde87e",
+      "committed": "2026-10-02"
+    },
+    {
+      "case": "sol-07-v",
+      "sha256": "7eca0ba14f3867670a11856757a462b1a0e3a5fab702e54507e99fb3bf88b0db",
+      "committed": "2026-10-02"
+    },
+    {
+      "case": "sol-08-f",
+      "sha256": "dca30dcaa1cc57789416a003aab5d1dc4629a02dea7529b91d47fa9c9d3bac61",
+      "committed": "2026-10-02"
+    },
+    {
+      "case": "sol-08-v",
+      "sha256": "76f3303810ba5676a7359e844c7d685dc5e55dd345cd7a5545f704a8630a1b45",
+      "committed": "2026-10-02"
+    },
+    {
+      "case": "sol-09-f",
+      "sha256": "dd6c4ff0e7a43ca592af79a82b2060fcb304aec45aaaf935cc20366d2b86ab14",
+      "committed": "2026-10-02"
+    },
+    {
+      "case": "sol-09-v",
+      "sha256": "ac8b9a4d7b71a811923fc072662d12bc41f0a0e145c40ef948da10f63c46771d",
+      "committed": "2026-10-02"
+    },
+    {
+      "case": "sol-10-f",
+      "sha256": "f5ea713012d8433bac5a9feed133b0526a3aa0e46dac5bd18dba77f49b849403",
+      "committed": "2026-10-02"
+    },
+    {
+      "case": "sol-10-v",
+      "sha256": "64da3d54d6a9da5d0a7b78073b921e63c0cb2c3187ce3d4ba0495bf762f91f66",
+      "committed": "2026-10-02"
+    },
+    {
+      "case": "sol-11-f",
+      "sha256": "e9a1c852bce95d37109d1d6bb4d537e62bed3ad0e681f0c9bb7fdf725616b2a2",
+      "committed": "2026-10-02"
+    },
+    {
+      "case": "sol-11-v",
+      "sha256": "81d04afed21bc9df459d86610aa2c522a05600fada636c23cffed81a9b7f2654",
+      "committed": "2026-10-02"
+    },
+    {
+      "case": "ts-02-f",
+      "sha256": "7f788bbc52c58736ef2e00285d516d1255bf041ea1c76c4e30130ec517831416",
+      "committed": "2026-10-02"
+    },
+    {
+      "case": "ts-02-v",
+      "sha256": "55dca2d224f960a6366d69e80925148e48ee1b797fedef5a6a4517baed1c9dd1",
+      "committed": "2026-10-02"
+    },
+    {
+      "case": "ts-03-f",
+      "sha256": "536499212ca491e02491cb94050a189caa85f4e4d829024714caad9b4146ea5d",
+      "committed": "2026-10-02"
+    },
+    {
+      "case": "ts-03-v",
+      "sha256": "4957685452ea55d41edc4d38d186c9a61772568f27718159eca14ad8cd129d7e",
+      "committed": "2026-10-02"
+    }
+  ],
+  "superseded": []
+}

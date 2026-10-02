@@ -1,0 +1,126 @@
+@charset "UTF-8";
+
+/*
+  Bounty Operator: the social card (web/public/social-v2.png)
+
+  Loaded after base.css and home.css by web/site/social/card.html, which is
+  drawn at exactly 1200 x 630 and never served. Colours come from the base
+  tokens; the sizes here are fixed pixels because the canvas is.
+*/
+
+.social {
+  width: 1200px;
+  height: 630px;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.social-card {
+  display: grid;
+  grid-template-columns: 456px minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) 72px;
+  column-gap: 44px;
+  width: 1200px;
+  height: 630px;
+  padding: 48px 48px 0 60px;
+  overflow: hidden;
+  background:
+    radial-gradient(60% 80% at 100% 0%, color-mix(in srgb, var(--accent-solid) 22%, transparent), transparent 70%),
+    var(--bg);
+}
+
+.social-card__pitch {
+  display: flex;
+  flex-direction: column;
+}
+
+.social-card__brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.social-card__brand .brand__mark {
+  width: 46px;
+  height: 46px;
+}
+
+.social-card__eyebrow {
+  max-width: 420px;
+  margin-top: 48px;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.social-card__title {
+  margin-top: 18px;
+  font-size: 62px;
+  font-weight: 650;
+  line-height: 1.04;
+  letter-spacing: -0.035em;
+  text-wrap: balance;
+}
+
+/* The example is drawn larger than on the page and runs off the bottom edge,
+   behind the strip. The file bar and the reference chip are left out so the
+   cited lines stay in the picture. */
+.social-card__shot {
+  zoom: 1.1;
+}
+
+.social-card__shot .home-shot__stamp {
+  right: auto;
+  left: var(--sp-24);
+}
+
+.social-card__shot .finding__bar,
+.social-card__shot .finding__refs {
+  display: none;
+}
+
+.social-card__strip {
+  position: relative;
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 32px;
+  margin-inline: -60px -48px;
+  padding-inline: 60px 48px;
+  border-top: 1px solid var(--line-strong);
+  background: var(--surface);
+  font-size: 21px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.social-card__proof,
+.social-card__price {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  white-space: nowrap;
+}
+
+.social-card__proof > span + span::before,
+.social-card__price > span + span::before {
+  content: "";
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  margin-right: 14px;
+  border-radius: 1px;
+  background: var(--accent);
+  vertical-align: middle;
+}
+
+.social-card__price {
+  color: var(--muted);
+}
+
+.social-card__price > span:last-child {
+  color: var(--text);
+}

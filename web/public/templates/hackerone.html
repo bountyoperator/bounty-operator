@@ -1,0 +1,339 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HackerOne bug report template | Bounty Operator</title>
+<meta name="description" content="HackerOne report template in Markdown: numbered reproduction steps, expected against actual, impact, a CVSS vector, and the report states that cost reputation.">
+<link rel="canonical" href="https://bountyoperator.com/templates/hackerone">
+<meta name="color-scheme" content="dark light">
+<meta name="theme-color" content="#0a1220" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f5f7fb" media="(prefers-color-scheme: light)">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Bounty Operator">
+<meta property="og:title" content="HackerOne bug report template | Bounty Operator">
+<meta property="og:description" content="HackerOne report template in Markdown: numbered reproduction steps, expected against actual, impact, a CVSS vector, and the report states that cost reputation.">
+<meta property="og:url" content="https://bountyoperator.com/templates/hackerone">
+<meta property="og:image" content="https://bountyoperator.com/social-v2.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Bounty Operator. Find the hole in your report before the triager does.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="HackerOne bug report template | Bounty Operator">
+<meta name="twitter:description" content="HackerOne report template in Markdown: numbered reproduction steps, expected against actual, impact, a CVSS vector, and the report states that cost reputation.">
+<meta name="twitter:image" content="https://bountyoperator.com/social-v2.png">
+<meta name="twitter:image:alt" content="Bounty Operator. Find the hole in your report before the triager does.">
+<link rel="icon" href="/favicon.ico" sizes="48x48">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+<script src="/theme.js"></script>
+<link rel="stylesheet" href="/css/base.css">
+<link rel="stylesheet" href="/css/templates.css">
+<link rel="modulepreload" href="/tools/ping.mjs">
+<script type="module" src="/templates/template.mjs"></script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Bounty Operator","item":"https://bountyoperator.com/"},{"@type":"ListItem","position":2,"name":"Report templates","item":"https://bountyoperator.com/templates"},{"@type":"ListItem","position":3,"name":"HackerOne","item":"https://bountyoperator.com/templates/hackerone"}]}</script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="site-header">
+<div class="wrap site-header__inner">
+<a class="brand" href="/"><svg class="brand__mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect class="brand__tile" width="64" height="64" rx="14"/><path class="brand__glyph" d="M12.5 15h6.5v31.5h-6.5z"/><path class="brand__glyph" fill-rule="evenodd" d="M25.5 25a10.75 10.75 0 1 0 0 21.5a10.75 10.75 0 0 0 0-21.5zm0 6.25a4.5 4.5 0 1 1 0 9a4.5 4.5 0 0 1 0-9z"/><path class="brand__slash" d="M45.5 13h6.25l-8.6 37.5h-6.25z"/></svg><span class="brand__name">Bounty Operator</span></a>
+<nav class="site-nav" aria-label="Main"><ul><li><a href="/#workspace">Workbench</a></li><li><a href="/method">Method</a></li><li><a href="/tools">Tools</a></li><li><a href="/guide">Guide</a></li><li><a href="/mcp">MCP</a></li><li><a href="/pricing">Pricing</a></li></ul></nav>
+<div class="site-header__actions">
+<button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch colour theme"><span class="icon theme-toggle__icon" aria-hidden="true"></span></button>
+<a class="btn btn--secondary btn--sm" href="/#account">Account</a>
+</div>
+</div>
+</header>
+<main id="main" tabindex="-1">
+
+<div class="wrap tpl-page">
+  <header class="tpl-hero">
+    <nav class="breadcrumbs" aria-label="Breadcrumb"><ol><li><a href="/">Bounty Operator</a></li><li><a href="/templates">Templates</a></li><li aria-current="page">HackerOne</li></ol></nav>
+    <h1>HackerOne bug report template</h1>
+    <p class="lede">The parts HackerOne’s quality guide asks for, in its order, with the asset, weakness and severity the form wants up front. The preview is the last edit you get, so the draft has to be right before it is pasted.</p>
+    <div class="cluster tpl-actions">
+    <button class="btn btn--primary" type="button" data-template-copy><span class="icon icon--copy" aria-hidden="true"></span><span class="btn__label">Copy as Markdown</span></button>
+    <a class="btn btn--secondary" href="/templates/hackerone.md" download="hackerone-report-template.md"><span class="icon icon--download" aria-hidden="true"></span><span class="btn__label">Download .md</span></a>
+    <span class="tpl-actions__status" role="status" data-template-status></span>
+  </div>
+    <p class="meta">Rules checked 2 Oct 2026 · 9 sources</p>
+  </header>
+
+  <div class="tpl-layout">
+    <nav class="tpl-toc" aria-label="On this page">
+    <p class="meta">On this page</p>
+    <ul><li><a href="#template">The template</a></li><li><a href="#closed">What gets this closed</a></li><li><a href="#check">Challenge the draft</a></li><li><a href="#sources">Sources</a></li></ul>
+  </nav>
+
+    <div class="tpl-main">
+      <section class="tpl-block" aria-labelledby="template">
+        <h2 id="template">The template</h2>
+        <p class="tpl-block__lede">HackerOne’s form takes the asset, the weakness and the severity as separate fields before the write-up. The title line goes in the title field. Videos are attached as files.</p>
+        <p class="tpl-legend">
+          <span class="chip" data-tone="observed">Platform</span><span>asked for in HackerOne’s published guidance.</span>
+          <span class="chip chip--dashed" data-tone="neutral">Added</span><span>answers the two objections that close reports late: overclaiming and known issues.</span>
+        </p>
+        <article class="tpl" aria-labelledby="template">
+    <div class="tpl__bar"><span class="icon icon--file" aria-hidden="true"></span><span class="tpl__file">hackerone.md</span><span class="tpl__tag">9 sections</span></div>
+    <section class="tpl__section" id="s-title" data-origin="platform">
+      <div class="tpl__label"><span class="tpl__n">01</span><span class="chip" data-tone="observed">Platform</span></div>
+      <div class="tpl__content">
+        <h3 class="tpl__heading">Title</h3>
+        <p class="tpl__rule">Vulnerability type, where it is, what it allows. HackerOne’s own example sets a stored XSS in a named field, with its effect, against a bare vulnerability class.</p>
+        <div class="tpl__fill"><p><span class="slot">Vulnerability type</span> in <span class="slot">feature or endpoint</span> allows <span class="slot">what the attacker does</span></p></div>
+      </div>
+    </section><section class="tpl__section" id="s-summary" data-origin="platform">
+      <div class="tpl__label"><span class="tpl__n">02</span><span class="chip" data-tone="observed">Platform</span></div>
+      <div class="tpl__content">
+        <h3 class="tpl__heading">Summary</h3>
+        <p class="tpl__rule">The form asks for asset, weakness and severity before the write-up. Since 21 September 2026 a severity is required on every programme that has not opted out. Use the calculator the programme lists: CVSS 3.0, 3.1, 4.0 or manual.</p>
+        <div class="tpl__fill"><ul class="tpl__list"><li>Asset: <span class="slot">the in-scope asset, exactly as the programme lists it</span></li><li>Weakness: <span class="slot">the weakness you selected on the form</span></li><li>Severity: <span class="slot">None, Low, Medium, High or Critical</span>, vector <code><span class="slot">CVSS vector in the version the programme uses</span></code></li><li>Tested on: <span class="slot">URL or build</span>, <span class="slot">version, release or commit</span>, <span class="slot">date and time in UTC</span></li></ul><p><span class="slot">One paragraph: what the vulnerability is and what an attacker gets from it.</span></p></div>
+      </div>
+    </section><section class="tpl__section" id="s-steps" data-origin="platform">
+      <div class="tpl__label"><span class="tpl__n">03</span><span class="chip" data-tone="observed">Platform</span></div>
+      <div class="tpl__content">
+        <h3 class="tpl__heading">Steps to Reproduce</h3>
+        <p class="tpl__rule">Numbered steps a triager follows without asking a question. Give the URL, the parameter and the role of every account. A report left in Needs More Info for more than 30 days closes as Informative.</p>
+        <div class="tpl__fill"><p>Accounts: <span class="slot">attacker account and its role</span>, <span class="slot">victim account and its role</span>. Both are test accounts you own.</p><ol class="steps tpl__steps"><li><span class="slot">Log in as the attacker account and open the URL.</span></li><li><span class="slot">Send this request, with the parameter and the value.</span></li><li><span class="slot">Observe the response or the state change, with the exact value.</span></li></ol></div>
+      </div>
+    </section><section class="tpl__section" id="s-expected" data-origin="platform">
+      <div class="tpl__label"><span class="tpl__n">04</span><span class="chip" data-tone="observed">Platform</span></div>
+      <div class="tpl__content">
+        <h3 class="tpl__heading">Expected vs Actual Behavior</h3>
+        <p class="tpl__rule">One line each. The expected line cites where the rule comes from: documentation, the permission model, the programme’s own policy.</p>
+        <div class="tpl__fill"><ul class="tpl__list"><li>Expected: <span class="slot">what the application should do, and the source of that rule</span></li><li>Actual: <span class="slot">what it does</span></li></ul></div>
+      </div>
+    </section><section class="tpl__section" id="s-impact" data-origin="platform">
+      <div class="tpl__label"><span class="tpl__n">05</span><span class="chip" data-tone="observed">Platform</span></div>
+      <div class="tpl__content">
+        <h3 class="tpl__heading">Impact</h3>
+        <p class="tpl__rule">What an attacker does with it, to whom, at what scale. Not Applicable is the state for a report whose security implications were not demonstrated, and it costs 5 reputation. Argue each CVSS metric you set: self sign-up means Privileges Required is None, and an unpredictable ID means Attack Complexity is High until you show how the ID is obtained.</p>
+        <div class="tpl__fill"><p><span class="slot">What the attacker reads, changes or takes over, for which users, and how many.</span></p><ul class="tpl__list"><li>Preconditions: <span class="slot">none, or what the attacker needs first</span></li><li>User interaction: <span class="slot">none, or what the victim has to do</span></li><li>Mitigations already in place that do not stop it: <span class="slot">list</span></li></ul></div>
+      </div>
+    </section><section class="tpl__section" id="s-material" data-origin="platform">
+      <div class="tpl__label"><span class="tpl__n">06</span><span class="chip" data-tone="observed">Platform</span></div>
+      <div class="tpl__content">
+        <h3 class="tpl__heading">Supporting Material</h3>
+        <p class="tpl__rule">The request and the response, or the command and its output, in code blocks. Attach screenshots and recordings as files. A link to a hosted video is not accepted.</p>
+        <div class="tpl__fill"><figure class="code code--wrap tpl__code"><pre class="code__pre" tabindex="0" role="region" aria-label="Code: http"><code><span class="code__line">{The request}
+</span></code></pre></figure><figure class="code code--wrap tpl__code"><pre class="code__pre" tabindex="0" role="region" aria-label="Code: http"><code><span class="code__line">{The response, trimmed to the part that proves the point}
+</span></code></pre></figure><p>Attached: <span class="slot">file names of screenshots or the recording</span></p></div>
+      </div>
+    </section><section class="tpl__section" id="s-remediation" data-origin="platform">
+      <div class="tpl__label"><span class="tpl__n">07</span><span class="chip" data-tone="observed">Platform</span></div>
+      <div class="tpl__content">
+        <h3 class="tpl__heading">Remediation</h3>
+        <p class="tpl__rule">Optional on HackerOne. Include it when you know where the check belongs.</p>
+        <div class="tpl__fill"><p><span class="slot">The check that is missing and where it belongs.</span></p></div>
+      </div>
+    </section><section class="tpl__section" id="s-limits" data-origin="added">
+      <div class="tpl__label"><span class="tpl__n">08</span><span class="chip chip--dashed" data-tone="neutral">Added</span></div>
+      <div class="tpl__content">
+        <h3 class="tpl__heading">Limits and non-claims</h3>
+        <p class="tpl__rule">Say where testing stopped. The platform standards require testing to stop the moment sensitive personal data is exposed, and the core ineligible list closes findings that rest on unlikely interaction.</p>
+        <div class="tpl__fill"><ul class="tpl__list"><li>Testing stopped at: <span class="slot">the point you stopped, for example after reading one record of your own second account</span></li><li>Not claimed: <span class="slot">what this report does not say, for example no access to other tenants</span></li><li>Depends on: <span class="slot">browser, configuration or feature flag the behaviour needs</span></li></ul></div>
+      </div>
+    </section><section class="tpl__section" id="s-known" data-origin="added">
+      <div class="tpl__label"><span class="tpl__n">09</span><span class="chip chip--dashed" data-tone="neutral">Added</span></div>
+      <div class="tpl__content">
+        <h3 class="tpl__heading">Known issues checked</h3>
+        <p class="tpl__rule">A report on something the programme already knows closes as Duplicate, or as Informative when the issue is listed on its security page. Name the nearest known item and state the difference.</p>
+        <div class="tpl__fill"><ul class="tpl__list"><li>Programme policy, exclusions and known issues: <span class="slot">date checked, the nearest item, why this differs</span></li><li>Disclosed reports on this programme: <span class="slot">the nearest report, why the root cause or the endpoint differs</span></li><li>Core ineligible findings: <span class="slot">the nearest category, and the demonstrated impact that takes this out of it</span></li></ul></div>
+      </div>
+    </section>
+    <div class="tpl__source" data-template-source>
+      <details class="disclosure"><summary class="disclosure__summary">Markdown source<span class="disclosure__hint">hackerone.md</span></summary><div class="disclosure__body"><figure class="code code--wrap"><figcaption class="code__bar"><span class="code__name">hackerone.md</span><button class="code__copy" type="button" data-copy><span class="icon icon--copy" aria-hidden="true"></span><span data-copy-label>Copy</span></button></figcaption><pre class="code__pre" tabindex="0" role="region" aria-label="Markdown source: hackerone.md"><code><span class="code__line">&gt; HackerOne report template from https://bountyoperator.com/templates/hackerone. Platform rules checked 2 Oct 2026.
+</span><span class="code__line">&gt; Replace every {placeholder}. Delete this note before you submit.
+</span><span class="code__line">
+</span><span class="code__line"># {Vulnerability type} in {feature or endpoint} allows {what the attacker does}
+</span><span class="code__line">
+</span><span class="code__line">## Summary
+</span><span class="code__line">
+</span><span class="code__line">- Asset: {the in-scope asset, exactly as the programme lists it}
+</span><span class="code__line">- Weakness: {the weakness you selected on the form}
+</span><span class="code__line">- Severity: {None, Low, Medium, High or Critical}, vector `{CVSS vector in the version the programme uses}`
+</span><span class="code__line">- Tested on: {URL or build}, {version, release or commit}, {date and time in UTC}
+</span><span class="code__line">
+</span><span class="code__line">{One paragraph: what the vulnerability is and what an attacker gets from it.}
+</span><span class="code__line">
+</span><span class="code__line">## Steps to Reproduce
+</span><span class="code__line">
+</span><span class="code__line">Accounts: {attacker account and its role}, {victim account and its role}. Both are test accounts you own.
+</span><span class="code__line">
+</span><span class="code__line">1. {Log in as the attacker account and open the URL.}
+</span><span class="code__line">2. {Send this request, with the parameter and the value.}
+</span><span class="code__line">3. {Observe the response or the state change, with the exact value.}
+</span><span class="code__line">
+</span><span class="code__line">## Expected vs Actual Behavior
+</span><span class="code__line">
+</span><span class="code__line">- Expected: {what the application should do, and the source of that rule}
+</span><span class="code__line">- Actual: {what it does}
+</span><span class="code__line">
+</span><span class="code__line">## Impact
+</span><span class="code__line">
+</span><span class="code__line">{What the attacker reads, changes or takes over, for which users, and how many.}
+</span><span class="code__line">
+</span><span class="code__line">- Preconditions: {none, or what the attacker needs first}
+</span><span class="code__line">- User interaction: {none, or what the victim has to do}
+</span><span class="code__line">- Mitigations already in place that do not stop it: {list}
+</span><span class="code__line">
+</span><span class="code__line">## Supporting Material
+</span><span class="code__line">
+</span><span class="code__line">```http
+</span><span class="code__line">{The request}
+</span><span class="code__line">```
+</span><span class="code__line">
+</span><span class="code__line">```http
+</span><span class="code__line">{The response, trimmed to the part that proves the point}
+</span><span class="code__line">```
+</span><span class="code__line">
+</span><span class="code__line">Attached: {file names of screenshots or the recording}
+</span><span class="code__line">
+</span><span class="code__line">## Remediation
+</span><span class="code__line">
+</span><span class="code__line">{The check that is missing and where it belongs.}
+</span><span class="code__line">
+</span><span class="code__line">## Limits and non-claims
+</span><span class="code__line">
+</span><span class="code__line">- Testing stopped at: {the point you stopped, for example after reading one record of your own second account}
+</span><span class="code__line">- Not claimed: {what this report does not say, for example no access to other tenants}
+</span><span class="code__line">- Depends on: {browser, configuration or feature flag the behaviour needs}
+</span><span class="code__line">
+</span><span class="code__line">## Known issues checked
+</span><span class="code__line">
+</span><span class="code__line">- Programme policy, exclusions and known issues: {date checked, the nearest item, why this differs}
+</span><span class="code__line">- Disclosed reports on this programme: {the nearest report, why the root cause or the endpoint differs}
+</span><span class="code__line">- Core ineligible findings: {the nearest category, and the demonstrated impact that takes this out of it}
+</span></code></pre></figure></div></details>
+    </div>
+  </article>
+      </section>
+
+      <section class="tpl-block" aria-labelledby="closed">
+        <h2 id="closed">What gets this closed on HackerOne</h2>
+        <p class="tpl-block__lede">Each reason comes from a page HackerOne publishes. The programme or contest page adds its own rules on top, and those win.</p>
+        <ol class="closed"><li class="closed__item">
+      <h3 class="closed__title">Impact not demonstrated</h3>
+      <p>Not Applicable is the closed state for a report with no valid reproducible issue or no demonstrated security implication. It costs 5 reputation. Spam costs 10.</p>
+      <p class="closed__refs"><span class="meta">Source</span> <a class="link" href="https://docs.hackerone.com/en/articles/8475030-report-states" target="_blank" rel="noopener noreferrer">Report States</a>, <a class="link" href="https://docs.hackerone.com/en/articles/8369865-reputation" target="_blank" rel="noopener noreferrer">Reputation</a></p>
+    </li><li class="closed__item">
+      <h3 class="closed__title">Core ineligible findings</h3>
+      <p>Closed as invalid unless the report shows clear security impact: self-XSS, tabnabbing, content spoofing, clickjacking on pages with no sensitive action, logout CSRF, permissive CORS, version disclosure, CSV injection, open redirects, TLS and cookie-flag findings, SPF, DKIM and DMARC settings, and most rate-limit issues. DoS and social engineering are never to be tested without authorisation.</p>
+      <p class="closed__refs"><span class="meta">Source</span> <a class="link" href="https://docs.hackerone.com/en/articles/8494488-core-ineligible-findings" target="_blank" rel="noopener noreferrer">Core Ineligible Findings</a></p>
+    </li><li class="closed__item">
+      <h3 class="closed__title">Duplicates</h3>
+      <p>Duplicate covers an issue already reported or otherwise known, and several reports that one fix resolves. A duplicate of a resolved report filed before it went public earns 2 reputation. A duplicate of a Not Applicable report, or of a report that was already public, costs 5.</p>
+      <p class="closed__refs"><span class="meta">Source</span> <a class="link" href="https://docs.hackerone.com/en/articles/8475030-report-states" target="_blank" rel="noopener noreferrer">Report States</a>, <a class="link" href="https://docs.hackerone.com/en/articles/8369865-reputation" target="_blank" rel="noopener noreferrer">Reputation</a></p>
+    </li><li class="closed__item">
+      <h3 class="closed__title">Known and accepted risks</h3>
+      <p>Informative is used for out-of-scope submissions, for issues listed on the programme’s security page, and for accepted risk. It leaves reputation unchanged.</p>
+      <p class="closed__refs"><span class="meta">Source</span> <a class="link" href="https://docs.hackerone.com/en/articles/8475030-report-states" target="_blank" rel="noopener noreferrer">Report States</a></p>
+    </li><li class="closed__item">
+      <h3 class="closed__title">One systemic issue filed as many reports</h3>
+      <p>The platform standard rewards the first three reports that establish a systemic issue, then a single discretionary bonus. Later instances that the same fix resolves are treated as duplicates or paid a reduced bonus. Put the variants in one report.</p>
+      <p class="closed__refs"><span class="meta">Source</span> <a class="link" href="https://docs.hackerone.com/en/articles/8369826-detailed-platform-standards" target="_blank" rel="noopener noreferrer">Detailed Platform Standards</a></p>
+    </li><li class="closed__item">
+      <h3 class="closed__title">A severity the vector does not support</h3>
+      <p>Severity is required at submission on programmes that have not opted out. The standards fix some metrics: Privileges Required is None when anyone can sign up, Attack Complexity is High for an IDOR with unpredictable IDs until the report shows how they are obtained, and deleting data counts against Integrity, not Availability.</p>
+      <p class="closed__refs"><span class="meta">Source</span> <a class="link" href="https://docs.hackerone.com/en/articles/8473994-submitting-reports" target="_blank" rel="noopener noreferrer">Submitting Reports</a>, <a class="link" href="https://docs.hackerone.com/en/articles/8475343-severity" target="_blank" rel="noopener noreferrer">Severity</a>, <a class="link" href="https://docs.hackerone.com/en/articles/8369826-detailed-platform-standards" target="_blank" rel="noopener noreferrer">Detailed Platform Standards</a></p>
+    </li><li class="closed__item">
+      <h3 class="closed__title">A report that cannot be edited</h3>
+      <p>Review the preview before you submit. The help centre is direct about it:</p><blockquote class="closed__quote"><p>You won’t be able to edit your details after submitting the report.</p><footer>Submitting Reports, HackerOne</footer></blockquote>
+      <p class="closed__refs"><span class="meta">Source</span> <a class="link" href="https://docs.hackerone.com/en/articles/8473994-submitting-reports" target="_blank" rel="noopener noreferrer">Submitting Reports</a></p>
+    </li><li class="closed__item">
+      <h3 class="closed__title">Penalties</h3>
+      <p>No fee is published. The cost is reputation: a profile starts at 100, a low reputation limits how many reports you can file in a period, and programmes set Signal requirements measured over your last 365 days.</p>
+      <p class="closed__refs"><span class="meta">Source</span> <a class="link" href="https://docs.hackerone.com/en/articles/8369865-reputation" target="_blank" rel="noopener noreferrer">Reputation</a>, <a class="link" href="https://docs.hackerone.com/en/articles/8369891-signal-impact" target="_blank" rel="noopener noreferrer">Signal &amp; Impact</a></p>
+    </li></ol>
+      </section>
+
+      <section class="tpl-block" aria-labelledby="check">
+        <h2 id="check">Challenge the filled draft</h2>
+        <div class="tpl-check" data-handoff data-handoff-profile="report" data-handoff-focus="HackerOne report draft. Check reproduction steps, demonstrated impact, the CVSS vector and the core ineligible list." data-handoff-name="hackerone-report-draft.md" data-handoff-note="Draft written from the HackerOne report template at bountyoperator.com/templates/hackerone. Platform rules checked 2 Oct 2026." data-handoff-markers="slots">
+    <p class="tpl-block__lede">Paste the report once every placeholder is replaced. The workbench opens with <a class="link" href="/challenge-report">Challenge a draft report</a> selected and argues against each claim: the impact row, the proof, the severity, the known issues. You decide what to rewrite.</p>
+    <div class="field"><label class="label" for="draft">Your filled draft</label><textarea class="textarea mono" id="draft" name="draft" rows="8" placeholder="Paste the report with every placeholder replaced." spellcheck="false" data-handoff-input aria-describedby="draft-help draft-state"></textarea><p class="help" id="draft-help">The draft stays in this browser. It is sent only when you run a review in the workbench.</p></div>
+    <p class="tpl-check__state" id="draft-state" aria-live="polite" data-handoff-state></p>
+    <div class="notice notice--error tpl-check__error" role="alert"></div>
+    <div class="cluster">
+      <a class="btn btn--primary" href="/?profile=report#workspace" data-handoff-go><span class="btn__label">Challenge it in the workbench</span><span class="icon icon--arrow-right" aria-hidden="true"></span></a>
+      <a class="btn btn--secondary" href="/tools/report-check"><span class="btn__label">Run the report check</span></a>
+    </div>
+  </div>
+      </section>
+
+      <section class="tpl-block" aria-labelledby="sources">
+        <h2 id="sources">Sources</h2>
+        <p class="tpl-block__lede">Primary sources only, read on 2 Oct 2026. Rules change. Read the programme page on the day you submit.</p>
+        <ul class="sources"><li class="sources__item">
+      <p class="sources__link"><a class="link link--external" href="https://docs.hackerone.com/en/articles/8475116-quality-reports" target="_blank" rel="noopener noreferrer">Quality Reports<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></p>
+      <p class="sources__note">The parts of a report and the pre-submission checks.</p>
+      <p class="sources__date meta">Updated 5 Feb 2025 · checked 2 Oct 2026</p>
+    </li><li class="sources__item">
+      <p class="sources__link"><a class="link link--external" href="https://docs.hackerone.com/en/articles/8473994-submitting-reports" target="_blank" rel="noopener noreferrer">Submitting Reports<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></p>
+      <p class="sources__note">The form fields, the severity requirement from 21 Sep 2026, attachments, no edits after submission.</p>
+      <p class="sources__date meta">Updated Sep 2026 · checked 2 Oct 2026</p>
+    </li><li class="sources__item">
+      <p class="sources__link"><a class="link link--external" href="https://docs.hackerone.com/en/articles/8475030-report-states" target="_blank" rel="noopener noreferrer">Report States<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></p>
+      <p class="sources__note">What each closed state means.</p>
+      <p class="sources__date meta">Updated 15 Jul 2024 · checked 2 Oct 2026</p>
+    </li><li class="sources__item">
+      <p class="sources__link"><a class="link link--external" href="https://docs.hackerone.com/en/articles/8369865-reputation" target="_blank" rel="noopener noreferrer">Reputation<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></p>
+      <p class="sources__note">Points gained and lost per report state.</p>
+      <p class="sources__date meta">Updated 1 Dec 2025 · checked 2 Oct 2026</p>
+    </li><li class="sources__item">
+      <p class="sources__link"><a class="link link--external" href="https://docs.hackerone.com/en/articles/8369891-signal-impact" target="_blank" rel="noopener noreferrer">Signal &amp; Impact<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></p>
+      <p class="sources__note">How Signal is calculated and what it gates.</p>
+      <p class="sources__date meta">Updated 17 Jul 2024 · checked 2 Oct 2026</p>
+    </li><li class="sources__item">
+      <p class="sources__link"><a class="link link--external" href="https://docs.hackerone.com/en/articles/8494488-core-ineligible-findings" target="_blank" rel="noopener noreferrer">Core Ineligible Findings<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></p>
+      <p class="sources__note">Findings closed as invalid without demonstrated impact.</p>
+      <p class="sources__date meta">Updated 19 May 2025 · checked 2 Oct 2026</p>
+    </li><li class="sources__item">
+      <p class="sources__link"><a class="link link--external" href="https://docs.hackerone.com/en/articles/8369826-detailed-platform-standards" target="_blank" rel="noopener noreferrer">Detailed Platform Standards<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></p>
+      <p class="sources__note">Systemic issues, bug chains, CVSS clarifications, sensitive data.</p>
+      <p class="sources__date meta">Updated 21 Jan 2026 · checked 2 Oct 2026</p>
+    </li><li class="sources__item">
+      <p class="sources__link"><a class="link link--external" href="https://docs.hackerone.com/en/articles/8475343-severity" target="_blank" rel="noopener noreferrer">Severity<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></p>
+      <p class="sources__note">Severity ratings and the CVSS versions offered.</p>
+      <p class="sources__date meta">Updated Sep 2026 · checked 2 Oct 2026</p>
+    </li><li class="sources__item">
+      <p class="sources__link"><a class="link link--external" href="https://docs.hackerone.com/en/articles/15518592-post-submission-guide" target="_blank" rel="noopener noreferrer">Post-Submission Guide<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></p>
+      <p class="sources__note">What happens after submission and how to request mediation.</p>
+      <p class="sources__date meta">Updated 16 Jun 2026 · checked 2 Oct 2026</p>
+    </li></ul>
+      </section>
+
+      <nav class="tpl-next" aria-label="Other templates">
+        <p class="meta">Other templates</p>
+        <ul>
+          <li><a href="/templates/immunefi">Immunefi</a></li><li><a href="/templates/sherlock">Sherlock</a></li><li><a href="/templates/cantina">Cantina</a></li>
+          <li><a href="/templates/foundry-poc">Foundry PoC</a></li>
+          <li><a href="/templates">All templates</a></li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+</div>
+</main>
+<footer class="site-footer">
+<div class="wrap site-footer__grid">
+<div class="site-footer__brand">
+<a class="brand" href="/"><svg class="brand__mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect class="brand__tile" width="64" height="64" rx="14"/><path class="brand__glyph" d="M12.5 15h6.5v31.5h-6.5z"/><path class="brand__glyph" fill-rule="evenodd" d="M25.5 25a10.75 10.75 0 1 0 0 21.5a10.75 10.75 0 0 0 0-21.5zm0 6.25a4.5 4.5 0 1 1 0 9a4.5 4.5 0 0 1 0-9z"/><path class="brand__slash" d="M45.5 13h6.25l-8.6 37.5h-6.25z"/></svg><span class="brand__name">Bounty Operator</span></a>
+<p class="site-footer__promise">Find the hole in your report before the triager does.</p>
+</div>
+<nav class="site-footer__col" aria-label="Product"><h2 class="site-footer__title">Product</h2><ul><li><a href="/#workspace">Workbench</a></li><li><a href="/method">Method</a></li><li><a href="/gauntlet">Gauntlet</a></li><li><a href="/panel-review">Panel review</a></li><li><a href="/pricing">Pricing</a></li><li><a href="/#account">Account</a></li></ul></nav>
+<nav class="site-footer__col" aria-label="Tools"><h2 class="site-footer__title">Tools</h2><ul><li><a href="/tools">All tools</a></li><li><a href="/tools/report-check">Report check</a></li><li><a href="/tools/verify">Packet verifier</a></li><li><a href="/tools/secret-check">Secret check</a></li><li><a href="/tools/acceptance-rates">Acceptance rates</a></li><li><a href="/tools/slither-focus">Slither triage queue</a></li></ul></nav>
+<nav class="site-footer__col" aria-label="Resources"><h2 class="site-footer__title">Resources</h2><ul><li><a href="/guide">Report guide</a></li><li><a href="/mcp">MCP setup</a></li><li><a href="/templates">Report templates</a></li><li><a href="/changelog">Changelog</a></li><li><a href="https://github.com/bountyoperator/bounty-operator" target="_blank" rel="noopener noreferrer">Source<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></li></ul></nav>
+<nav class="site-footer__col" aria-label="Legal"><h2 class="site-footer__title">Legal</h2><ul><li><a href="/privacy">Privacy</a></li><li><a href="/terms">Terms</a></li><li><a href="/security">Security</a></li><li><a href="/licenses">Licences</a></li><li><a href="mailto:security@bountyoperator.com">Report a vulnerability</a></li></ul></nav>
+</div>
+<div class="wrap">
+<div class="site-footer__base">
+<p>Built by <a href="https://audits.sherlock.xyz/watson/Tradi3" target="_blank" rel="noopener noreferrer">Tradi3</a></p>
+<p><a href="mailto:support@bountyoperator.com">support@bountyoperator.com</a></p>
+</div>
+</div>
+</footer>
+</body>
+</html>

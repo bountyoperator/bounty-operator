@@ -1,0 +1,133 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.bountyoperator/bounty-operator",
+  "title": "Bounty Operator",
+  "description": "Argues against a security finding or a draft bug bounty report before you submit it.",
+  "version": "0.7.0",
+  "websiteUrl": "https://bountyoperator.com/mcp",
+  "repository": {
+    "url": "https://github.com/bountyoperator/bounty-operator",
+    "source": "github",
+    "subfolder": "mcp"
+  },
+  "packages": [
+    {
+      "registryType": "npm",
+      "registryBaseUrl": "https://registry.npmjs.org",
+      "identifier": "bounty-operator-mcp",
+      "version": "0.7.0",
+      "runtimeHint": "npx",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "BOUNTY_OPERATOR_TOKEN",
+          "description": "Connection token (bok_...) from the account panel at bountyoperator.com. The account and run_review tools use it; every other tool works with none.",
+          "format": "string",
+          "isRequired": false,
+          "isSecret": true
+        },
+        {
+          "name": "BOUNTY_OPERATOR_MODEL",
+          "description": "Model id run_review uses when a call names none.",
+          "format": "string",
+          "isRequired": false,
+          "isSecret": false
+        },
+        {
+          "name": "BOUNTY_OPERATOR_ROOT",
+          "description": "Absolute path of the project folder that file paths resolve under. Defaults to the directory the server starts in.",
+          "format": "filepath",
+          "isRequired": false,
+          "isSecret": false
+        },
+        {
+          "name": "OPENROUTER_API_KEY",
+          "description": "OpenRouter API key, for run_review with provider openrouter.",
+          "format": "string",
+          "isRequired": false,
+          "isSecret": true
+        },
+        {
+          "name": "ANTHROPIC_API_KEY",
+          "description": "Anthropic API key, for run_review with provider anthropic.",
+          "format": "string",
+          "isRequired": false,
+          "isSecret": true
+        },
+        {
+          "name": "OPENAI_API_KEY",
+          "description": "OpenAI API key, for run_review with provider openai.",
+          "format": "string",
+          "isRequired": false,
+          "isSecret": true
+        },
+        {
+          "name": "GEMINI_API_KEY",
+          "description": "Gemini API key, for run_review with provider gemini.",
+          "format": "string",
+          "isRequired": false,
+          "isSecret": true
+        },
+        {
+          "name": "XAI_API_KEY",
+          "description": "xAI API key, for run_review with provider xai.",
+          "format": "string",
+          "isRequired": false,
+          "isSecret": true
+        },
+        {
+          "name": "DEEPSEEK_API_KEY",
+          "description": "DeepSeek API key, for run_review with provider deepseek.",
+          "format": "string",
+          "isRequired": false,
+          "isSecret": true
+        },
+        {
+          "name": "MISTRAL_API_KEY",
+          "description": "Mistral API key, for run_review with provider mistral.",
+          "format": "string",
+          "isRequired": false,
+          "isSecret": true
+        },
+        {
+          "name": "GROQ_API_KEY",
+          "description": "Groq API key, for run_review with provider groq.",
+          "format": "string",
+          "isRequired": false,
+          "isSecret": true
+        }
+      ]
+    }
+  ],
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://bountyoperator.com/api/mcp",
+      "headers": [
+        {
+          "name": "Authorization",
+          "description": "Connection token from the account panel at bountyoperator.com. The account and run_review tools use it; every other tool works with none.",
+          "value": "Bearer {token}",
+          "isRequired": false,
+          "isSecret": true,
+          "variables": {
+            "token": {
+              "description": "Connection token, starting with bok_.",
+              "format": "string",
+              "isSecret": true
+            }
+          }
+        },
+        {
+          "name": "X-Provider-Key",
+          "description": "API key of the model provider that run_review calls.",
+          "format": "string",
+          "isRequired": false,
+          "isSecret": true
+        }
+      ]
+    }
+  ]
+}

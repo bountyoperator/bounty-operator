@@ -1,0 +1,394 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bounty Operator MCP server: install for Claude Code, Codex and Cursor</title>
+<meta name="description" content="Copy-paste install for the Bounty Operator MCP server in Claude Code, Codex and Cursor, with its tools, three prompts and token setup.">
+<link rel="canonical" href="https://bountyoperator.com/mcp">
+<meta name="color-scheme" content="dark light">
+<meta name="theme-color" content="#0a1220" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f5f7fb" media="(prefers-color-scheme: light)">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Bounty Operator">
+<meta property="og:title" content="Bounty Operator MCP server: install for Claude Code, Codex and Cursor">
+<meta property="og:description" content="Copy-paste install for the Bounty Operator MCP server in Claude Code, Codex and Cursor, with its tools, three prompts and token setup.">
+<meta property="og:url" content="https://bountyoperator.com/mcp">
+<meta property="og:image" content="https://bountyoperator.com/social-v2.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Bounty Operator. Find the hole in your report before the triager does.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Bounty Operator MCP server: install for Claude Code, Codex and Cursor">
+<meta name="twitter:description" content="Copy-paste install for the Bounty Operator MCP server in Claude Code, Codex and Cursor, with its tools, three prompts and token setup.">
+<meta name="twitter:image" content="https://bountyoperator.com/social-v2.png">
+<meta name="twitter:image:alt" content="Bounty Operator. Find the hole in your report before the triager does.">
+<link rel="icon" href="/favicon.ico" sizes="48x48">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+<script src="/theme.js"></script>
+<link rel="stylesheet" href="/css/base.css">
+<link rel="stylesheet" href="/css/docs.css">
+<link rel="modulepreload" href="/tools/ping.mjs">
+<script type="module" src="/docs/tabs.mjs"></script>
+<script type="module" src="/docs/copy-ping.mjs"></script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Bounty Operator","item":"https://bountyoperator.com/"},{"@type":"ListItem","position":2,"name":"MCP server","item":"https://bountyoperator.com/mcp"}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Do I need an account to use the MCP server?","acceptedAnswer":{"@type":"Answer","text":"No. list_profiles , prepare_review and build_packet work with no account and no key, and so do the challenge-report and solidity-review prompts: your agent’s own model answers the prepared request of a core profile. An account token adds account , run_review for every profile, and the gauntlet prompt."}},{"@type":"Question","name":"Should I use the remote endpoint or the local server?","acceptedAnswer":{"@type":"Answer","text":"The remote endpoint needs nothing installed and works on any machine the client runs on. The local server needs Node 22 or later, keeps review preparation on your machine, reads files by path and adds run_gauntlet_plan . The other five tools are the same on both."}},{"@type":"Question","name":"What does a hosted review cost through MCP?","acceptedAnswer":{"@type":"Answer","text":"run_review shares one allowance with the website: one hosted review per UTC day on Free, any profile, and unlimited on Operator at US$10 per week. A gauntlet run over MCP uses seven hosted reviews, one for every stage but the report stage, so a full run takes Operator. Your model provider bills its own usage to your key."}},{"@type":"Question","name":"Which profiles can my agent’s own model run?","acceptedAnswer":{"@type":"Answer","text":"The three core profiles: Code security review, Solidity review and Challenge a draft report. prepare_review returns their method and the request. Every other profile is hosted: prepare_review refuses it with hosted_profile and run_review runs it on the service, on your provider key."}},{"@type":"Question","name":"How do I check the service before a long run?","acceptedAnswer":{"@type":"Answer","text":"GET https://bountyoperator.com/api/health returns the version, reviews (whether hosted reviews are on) and profiles . profiles reads hosted when the service carries the full method of every hosted profile. A Worker built from the public repository reads community : it runs the hosted profiles on short stand-in instructions."}},{"@type":"Question","name":"Which clients work?","acceptedAnswer":{"@type":"Answer","text":"Any client that speaks MCP over Streamable HTTP or stdio. This page has the commands for Claude Code, Codex and Cursor."}}]}</script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="site-header">
+<div class="wrap site-header__inner">
+<a class="brand" href="/"><svg class="brand__mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect class="brand__tile" width="64" height="64" rx="14"/><path class="brand__glyph" d="M12.5 15h6.5v31.5h-6.5z"/><path class="brand__glyph" fill-rule="evenodd" d="M25.5 25a10.75 10.75 0 1 0 0 21.5a10.75 10.75 0 0 0 0-21.5zm0 6.25a4.5 4.5 0 1 1 0 9a4.5 4.5 0 0 1 0-9z"/><path class="brand__slash" d="M45.5 13h6.25l-8.6 37.5h-6.25z"/></svg><span class="brand__name">Bounty Operator</span></a>
+<nav class="site-nav" aria-label="Main"><ul><li><a href="/#workspace">Workbench</a></li><li><a href="/method">Method</a></li><li><a href="/tools">Tools</a></li><li><a href="/guide">Guide</a></li><li><a href="/mcp" aria-current="page">MCP</a></li><li><a href="/pricing">Pricing</a></li></ul></nav>
+<div class="site-header__actions">
+<button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch colour theme"><span class="icon theme-toggle__icon" aria-hidden="true"></span></button>
+<a class="btn btn--secondary btn--sm" href="/#account">Account</a>
+</div>
+</div>
+</header>
+<main id="main" tabindex="-1">
+<article class="docs wrap">
+<header class="docs-head">
+<nav class="breadcrumbs" aria-label="Breadcrumb"><ol><li><a href="/">Bounty Operator</a></li><li aria-current="page">MCP server</li></ol></nav>
+<h1>Bounty Operator MCP server</h1>
+<p class="lede">Run the pre-submission checks from your coding agent. One command adds the server. Preparing a core review and building the packet need no account.</p>
+
+
+</header>
+<div class="docs-lead"><section class="install" data-tabs aria-labelledby="install-title">
+<h2 class="visually-hidden" id="install-title">Install</h2>
+<div class="tabs" role="tablist" aria-label="Client"><button class="tabs__tab" type="button" role="tab" id="tab-claude-code" aria-selected="true" aria-controls="panel-claude-code">Claude Code</button><button class="tabs__tab" type="button" role="tab" id="tab-codex" aria-selected="false" aria-controls="panel-codex" tabindex="-1">Codex</button><button class="tabs__tab" type="button" role="tab" id="tab-cursor" aria-selected="false" aria-controls="panel-cursor" tabindex="-1">Cursor</button></div>
+<div class="install__panel" id="panel-claude-code">
+<h3 class="install__client">Claude Code</h3>
+<div class="install__route">
+<p class="install__label"><span class="meta">Remote endpoint</span><span class="chip" data-tone="observed">Nothing to install</span></p>
+<figure class="code code--wrap"><figcaption class="code__bar"><span class="code__name">Terminal</span><button class="code__copy" type="button" data-copy><span class="icon icon--copy" aria-hidden="true"></span><span data-copy-label>Copy</span></button></figcaption><pre class="code__pre" tabindex="0" role="region" aria-label="Claude Code: add the remote endpoint"><code><span class="code__line">claude mcp add --transport http bounty-operator https://bountyoperator.com/api/mcp
+</span></code></pre></figure>
+</div>
+<div class="install__route">
+<p class="install__label"><span class="meta">Local server</span><span class="chip" data-tone="neutral">Node 22 or later</span></p>
+<figure class="code code--wrap"><figcaption class="code__bar"><span class="code__name">Terminal</span><button class="code__copy" type="button" data-copy><span class="icon icon--copy" aria-hidden="true"></span><span data-copy-label>Copy</span></button></figcaption><pre class="code__pre" tabindex="0" role="region" aria-label="Claude Code: add the local server"><code><span class="code__line">claude mcp add --transport stdio bounty-operator -- npx -y https://bountyoperator.com/dl/bounty-operator-mcp.tgz
+</span></code></pre></figure>
+<p class="fine">On Windows outside WSL, start it through <code>cmd</code>: end the command with <code>-- cmd /c npx -y</code> and the same address.</p>
+</div>
+<details class="disclosure"><summary class="disclosure__summary">Add your account token<span class="disclosure__hint">for account and run_review</span></summary><div class="disclosure__body"><div class="install__token">
+<p>Remote endpoint. The two headers carry your account token and your provider key:</p>
+<figure class="code code--wrap"><figcaption class="code__bar"><span class="code__name">Terminal</span><button class="code__copy" type="button" data-copy><span class="icon icon--copy" aria-hidden="true"></span><span data-copy-label>Copy</span></button></figcaption><pre class="code__pre" tabindex="0" role="region" aria-label="Claude Code: remote endpoint with a token"><code><span class="code__line">claude mcp add --transport http bounty-operator https://bountyoperator.com/api/mcp --header &quot;Authorization: Bearer $BOUNTY_OPERATOR_TOKEN&quot; --header &quot;X-Provider-Key: $OPENROUTER_API_KEY&quot;
+</span></code></pre></figure>
+<p>Local server. The same two values go in as environment variables:</p>
+<figure class="code code--wrap"><figcaption class="code__bar"><span class="code__name">Terminal</span><button class="code__copy" type="button" data-copy><span class="icon icon--copy" aria-hidden="true"></span><span data-copy-label>Copy</span></button></figcaption><pre class="code__pre" tabindex="0" role="region" aria-label="Claude Code: local server with a token"><code><span class="code__line">claude mcp add --env BOUNTY_OPERATOR_TOKEN=$BOUNTY_OPERATOR_TOKEN --env OPENROUTER_API_KEY=$OPENROUTER_API_KEY --transport stdio bounty-operator -- npx -y https://bountyoperator.com/dl/bounty-operator-mcp.tgz
+</span></code></pre></figure>
+<p class="fine">Your shell fills in <code>$BOUNTY_OPERATOR_TOKEN</code> when the command runs. In PowerShell write <code>$env:BOUNTY_OPERATOR_TOKEN</code>. If the server is already added, run <code>claude mcp remove bounty-operator</code> first.</p></div></div></details>
+</div><div class="install__panel" id="panel-codex">
+<h3 class="install__client">Codex</h3>
+<div class="install__route">
+<p class="install__label"><span class="meta">Remote endpoint</span><span class="chip" data-tone="observed">Nothing to install</span></p>
+<figure class="code code--wrap"><figcaption class="code__bar"><span class="code__name">Terminal</span><button class="code__copy" type="button" data-copy><span class="icon icon--copy" aria-hidden="true"></span><span data-copy-label>Copy</span></button></figcaption><pre class="code__pre" tabindex="0" role="region" aria-label="Codex: add the remote endpoint"><code><span class="code__line">codex mcp add bounty-operator --url https://bountyoperator.com/api/mcp
+</span></code></pre></figure>
+</div>
+<div class="install__route">
+<p class="install__label"><span class="meta">Local server</span><span class="chip" data-tone="neutral">Node 22 or later</span></p>
+<figure class="code code--wrap"><figcaption class="code__bar"><span class="code__name">Terminal</span><button class="code__copy" type="button" data-copy><span class="icon icon--copy" aria-hidden="true"></span><span data-copy-label>Copy</span></button></figcaption><pre class="code__pre" tabindex="0" role="region" aria-label="Codex: add the local server"><code><span class="code__line">codex mcp add bounty-operator -- npx -y https://bountyoperator.com/dl/bounty-operator-mcp.tgz
+</span></code></pre></figure>
+</div>
+<details class="disclosure"><summary class="disclosure__summary">Add your account token<span class="disclosure__hint">for account and run_review</span></summary><div class="disclosure__body"><div class="install__token">
+<p>Remote endpoint, in <code>~/.codex/config.toml</code>. Codex reads both values from your environment:</p>
+<figure class="code"><figcaption class="code__bar"><span class="code__name">~/.codex/config.toml</span><button class="code__copy" type="button" data-copy><span class="icon icon--copy" aria-hidden="true"></span><span data-copy-label>Copy</span></button></figcaption><pre class="code__pre" tabindex="0" role="region" aria-label="Source: ~/.codex/config.toml"><code><span class="code__line">[mcp_servers.bounty-operator]
+</span><span class="code__line">url = &quot;https://bountyoperator.com/api/mcp&quot;
+</span><span class="code__line">bearer_token_env_var = &quot;BOUNTY_OPERATOR_TOKEN&quot;
+</span><span class="code__line">env_http_headers = { &quot;X-Provider-Key&quot; = &quot;OPENROUTER_API_KEY&quot; }
+</span><span class="code__line">tool_timeout_sec = 300
+</span></code></pre></figure>
+<p>Local server:</p>
+<figure class="code"><figcaption class="code__bar"><span class="code__name">~/.codex/config.toml</span><button class="code__copy" type="button" data-copy><span class="icon icon--copy" aria-hidden="true"></span><span data-copy-label>Copy</span></button></figcaption><pre class="code__pre" tabindex="0" role="region" aria-label="Source: ~/.codex/config.toml"><code><span class="code__line">[mcp_servers.bounty-operator]
+</span><span class="code__line">command = &quot;npx&quot;
+</span><span class="code__line">args = [&quot;-y&quot;, &quot;https://bountyoperator.com/dl/bounty-operator-mcp.tgz&quot;]
+</span><span class="code__line">env_vars = [&quot;BOUNTY_OPERATOR_TOKEN&quot;, &quot;OPENROUTER_API_KEY&quot;]
+</span><span class="code__line">tool_timeout_sec = 300
+</span></code></pre></figure>
+<p class="fine">Codex stops a tool call after 60 seconds by default. A hosted review runs for up to 270 seconds, so keep the <code>tool_timeout_sec</code> line.</p></div></div></details>
+</div><div class="install__panel" id="panel-cursor">
+<h3 class="install__client">Cursor</h3>
+<div class="install__route">
+<p class="install__label"><span class="meta">Remote endpoint</span><span class="chip" data-tone="observed">Nothing to install</span></p>
+<figure class="code"><figcaption class="code__bar"><span class="code__name">~/.cursor/mcp.json</span><button class="code__copy" type="button" data-copy><span class="icon icon--copy" aria-hidden="true"></span><span data-copy-label>Copy</span></button></figcaption><pre class="code__pre" tabindex="0" role="region" aria-label="Source: ~/.cursor/mcp.json"><code><span class="code__line">{
+</span><span class="code__line">  &quot;mcpServers&quot;: {
+</span><span class="code__line">    &quot;bounty-operator&quot;: {
+</span><span class="code__line">      &quot;url&quot;: &quot;https://bountyoperator.com/api/mcp&quot;
+</span><span class="code__line">    }
+</span><span class="code__line">  }
+</span><span class="code__line">}
+</span></code></pre></figure>
+<p class="install__alt"><a class="btn btn--secondary btn--sm" href="cursor://anysphere.cursor-deeplink/mcp/install?name=bounty-operator&amp;config=eyJ1cmwiOiJodHRwczovL2JvdW50eW9wZXJhdG9yLmNvbS9hcGkvbWNwIn0%3D"><span class="icon icon--plus" aria-hidden="true"></span><span class="btn__label">Add to Cursor</span></a><span class="fine">Opens Cursor and adds the remote endpoint.</span></p>
+</div>
+<div class="install__route">
+<p class="install__label"><span class="meta">Local server</span><span class="chip" data-tone="neutral">Node 22 or later</span></p>
+<figure class="code"><figcaption class="code__bar"><span class="code__name">~/.cursor/mcp.json</span><button class="code__copy" type="button" data-copy><span class="icon icon--copy" aria-hidden="true"></span><span data-copy-label>Copy</span></button></figcaption><pre class="code__pre" tabindex="0" role="region" aria-label="Source: ~/.cursor/mcp.json"><code><span class="code__line">{
+</span><span class="code__line">  &quot;mcpServers&quot;: {
+</span><span class="code__line">    &quot;bounty-operator&quot;: {
+</span><span class="code__line">      &quot;type&quot;: &quot;stdio&quot;,
+</span><span class="code__line">      &quot;command&quot;: &quot;npx&quot;,
+</span><span class="code__line">      &quot;args&quot;: [
+</span><span class="code__line">        &quot;-y&quot;,
+</span><span class="code__line">        &quot;https://bountyoperator.com/dl/bounty-operator-mcp.tgz&quot;
+</span><span class="code__line">      ]
+</span><span class="code__line">    }
+</span><span class="code__line">  }
+</span><span class="code__line">}
+</span></code></pre></figure>
+</div>
+<details class="disclosure"><summary class="disclosure__summary">Add your account token<span class="disclosure__hint">for account and run_review</span></summary><div class="disclosure__body"><div class="install__token">
+<p>Remote endpoint. Cursor fills <code>${env:NAME}</code> from your environment:</p>
+<figure class="code"><figcaption class="code__bar"><span class="code__name">~/.cursor/mcp.json</span><button class="code__copy" type="button" data-copy><span class="icon icon--copy" aria-hidden="true"></span><span data-copy-label>Copy</span></button></figcaption><pre class="code__pre" tabindex="0" role="region" aria-label="Source: ~/.cursor/mcp.json"><code><span class="code__line">{
+</span><span class="code__line">  &quot;mcpServers&quot;: {
+</span><span class="code__line">    &quot;bounty-operator&quot;: {
+</span><span class="code__line">      &quot;url&quot;: &quot;https://bountyoperator.com/api/mcp&quot;,
+</span><span class="code__line">      &quot;headers&quot;: {
+</span><span class="code__line">        &quot;Authorization&quot;: &quot;Bearer ${env:BOUNTY_OPERATOR_TOKEN}&quot;,
+</span><span class="code__line">        &quot;X-Provider-Key&quot;: &quot;${env:OPENROUTER_API_KEY}&quot;
+</span><span class="code__line">      }
+</span><span class="code__line">    }
+</span><span class="code__line">  }
+</span><span class="code__line">}
+</span></code></pre></figure>
+<p>Local server:</p>
+<figure class="code"><figcaption class="code__bar"><span class="code__name">~/.cursor/mcp.json</span><button class="code__copy" type="button" data-copy><span class="icon icon--copy" aria-hidden="true"></span><span data-copy-label>Copy</span></button></figcaption><pre class="code__pre" tabindex="0" role="region" aria-label="Source: ~/.cursor/mcp.json"><code><span class="code__line">{
+</span><span class="code__line">  &quot;mcpServers&quot;: {
+</span><span class="code__line">    &quot;bounty-operator&quot;: {
+</span><span class="code__line">      &quot;type&quot;: &quot;stdio&quot;,
+</span><span class="code__line">      &quot;command&quot;: &quot;npx&quot;,
+</span><span class="code__line">      &quot;args&quot;: [
+</span><span class="code__line">        &quot;-y&quot;,
+</span><span class="code__line">        &quot;https://bountyoperator.com/dl/bounty-operator-mcp.tgz&quot;
+</span><span class="code__line">      ],
+</span><span class="code__line">      &quot;env&quot;: {
+</span><span class="code__line">        &quot;BOUNTY_OPERATOR_TOKEN&quot;: &quot;${env:BOUNTY_OPERATOR_TOKEN}&quot;,
+</span><span class="code__line">        &quot;OPENROUTER_API_KEY&quot;: &quot;${env:OPENROUTER_API_KEY}&quot;
+</span><span class="code__line">      }
+</span><span class="code__line">    }
+</span><span class="code__line">  }
+</span><span class="code__line">}
+</span></code></pre></figure>
+<p class="fine">Use <code>.cursor/mcp.json</code> in a project folder to add the server to that project only.</p></div></div></details>
+</div>
+<p class="install__foot fine">No account needed for either route. <code>list_profiles</code>, <code>prepare_review</code> for the three core profiles and <code>build_packet</code> work as soon as the server is added. The local package is listed with its SHA-256 in <a href="/dl/SHA256SUMS.txt">SHA256SUMS.txt</a>.</p>
+</section></div>
+<div class="docs-body">
+<nav class="docs-toc" aria-label="On this page">
+<p class="meta">On this page</p>
+<ul><li><a href="#tools">Tools</a></li><li><a href="#hosted">Core and hosted profiles</a></li><li><a href="#prompts">Slash commands</a></li><li><a href="#token">Account token</a></li><li><a href="#permissions">Permissions</a></li><li><a href="#errors">Failed calls</a></li><li><a href="#faq">Questions</a></li></ul>
+</nav>
+<div class="docs-content">
+
+<section class="docs-section" aria-labelledby="tools">
+<h2 class="docs-section__title" id="tools">The tools it exposes</h2>
+
+<div class="prose">
+<p>The remote endpoint exposes five tools. Three run with no account, so an agent can prepare a review and package the result on the first call. The local server adds a sixth, <code>run_gauntlet_plan</code>, and reads files by path.</p>
+<p>Code security review, Solidity review and Challenge a draft report are the three core profiles. <code>prepare_review</code> hands their request to your agent’s own model. Every other profile runs on the hosted service through <code>run_review</code>, and so do seven of the gauntlet’s stages.</p>
+</div>
+<ul class="tool-list" aria-label="Tools">
+<li class="tool-list__item">
+<p class="tool-list__name"><code>list_profiles</code></p>
+<p class="tool-list__needs"><span class="chip" data-tone="ok">No account</span></p>
+<p class="tool-list__text">The review profiles and what each one needs as input. Every profile carries <code>hosted</code>: false for a core profile, true for a hosted one.</p>
+</li><li class="tool-list__item">
+<p class="tool-list__name"><code>prepare_review</code></p>
+<p class="tool-list__needs"><span class="chip" data-tone="ok">No account</span></p>
+<p class="tool-list__text">For the three core profiles: runs the privacy check on the files, then returns a SHA-256 manifest and the exact review request. Your agent’s own model answers it. A hosted profile is refused with <code>hosted_profile</code>.</p>
+</li><li class="tool-list__item">
+<p class="tool-list__name"><code>run_gauntlet_plan</code></p>
+<p class="tool-list__needs"><span class="chip" data-tone="ok">No account</span><span class="chip" data-tone="neutral">Local server</span></p>
+<p class="tool-list__text">The eight gauntlet stages in order, the Context fields still empty and the call that ends the run. The plan names the tool that runs each stage.</p>
+</li><li class="tool-list__item">
+<p class="tool-list__name"><code>build_packet</code></p>
+<p class="tool-list__needs"><span class="chip" data-tone="ok">No account</span></p>
+<p class="tool-list__text">Turns a finished review into the evidence packet: the manifest with hashes, your context, the review and a link to verify it.</p>
+</li><li class="tool-list__item">
+<p class="tool-list__name"><code>account</code></p>
+<p class="tool-list__needs"><span class="chip" data-tone="observed">Account token</span></p>
+<p class="tool-list__text">Your plan, the reviews used today and when the allowance resets.</p>
+</li><li class="tool-list__item">
+<p class="tool-list__name"><code>run_review</code></p>
+<p class="tool-list__needs"><span class="chip" data-tone="observed">Account token</span><span class="chip" data-tone="neutral">Provider key</span></p>
+<p class="tool-list__text">A hosted review of any profile on the provider and model you name, and the only way to run a hosted profile. Returns the review, the manifest and your remaining allowance.</p>
+</li>
+</ul>
+<div class="prose">
+<p>A call takes up to 50 text files, 120 KB per file, 240 KB and 20,000 lines in total. File names are repo-relative paths such as <code>src/Vault.sol</code>. When the privacy check blocks a file, the result lists the file, the line and the kind of match, and never the matched text.</p>
+<p>The remote endpoint takes file text inline as <code>files</code>. On the local server, <code>prepare_review</code> and <code>run_review</code> also take <code>paths</code>: the server reads those files under its working directory, so your agent does not send the text. A client that starts the server outside your project sets <code>BOUNTY_OPERATOR_ROOT</code> to the project folder.</p>
+<p>A first request to try:</p>
+</div>
+<figure class="code code--wrap"><figcaption class="code__bar"><span class="code__name">Prompt</span><button class="code__copy" type="button" data-copy><span class="icon icon--copy" aria-hidden="true"></span><span data-copy-label>Copy</span></button></figcaption><pre class="code__pre" tabindex="0" role="region" aria-label="A first request"><code><span class="code__line">Use bounty-operator to prepare a Solidity review of src/Vault.sol. Answer the request it returns, then build the packet.
+</span></code></pre></figure>
+</section><section class="docs-section" aria-labelledby="hosted">
+<h2 class="docs-section__title" id="hosted">Core and hosted profiles</h2>
+
+<div class="prose">
+<p><code>list_profiles</code> marks every profile. <code>hosted: false</code> is one of the three core profiles: its method is open source and <code>prepare_review</code> hands it to your agent. <code>hosted: true</code> is a hosted profile: the service adds its method when <code>run_review</code> runs and sends it with your files to the provider you named, under your key. It is not in the local package or in the public repository, and no tool or prompt returns it.</p>
+<p>For a hosted profile the tools answer like this:</p>
+</div>
+<ul class="tool-list tool-list--commands" aria-label="What each tool returns for a hosted profile">
+<li class="tool-list__item">
+<p class="tool-list__name"><code>list_profiles</code></p>
+<p class="tool-list__text">The profile with its name, its description, the inputs it reads and <code>hosted: true</code>.</p>
+</li><li class="tool-list__item">
+<p class="tool-list__name"><code>prepare_review</code></p>
+<p class="tool-list__text">A failed call with the code <code>hosted_profile</code>, the profile id and a sentence that names <code>run_review</code>. It is refused before any file is read.</p>
+</li><li class="tool-list__item">
+<p class="tool-list__name"><code>run_review</code></p>
+<p class="tool-list__text">The review, its verdict, the reference check, the manifest and your remaining allowance. It uses one hosted review. <code>verdict</code> and <code>panel</code> run on Operator only.</p>
+</li><li class="tool-list__item">
+<p class="tool-list__name"><code>build_packet</code></p>
+<p class="tool-list__text">The evidence packet for the review <code>run_review</code> returned. Pass <code>source: &quot;ai&quot;</code>.</p>
+</li>
+</ul>
+<div class="prose">
+<p>The refusal, as the remote endpoint returns it for <code>triage</code>:</p>
+</div>
+<figure class="code code--wrap"><figcaption class="code__bar"><span class="code__name">prepare_review</span></figcaption><pre class="code__pre" tabindex="0" role="region" aria-label="The result of prepare_review for a hosted profile"><code><span class="code__line">{
+</span><span class="code__line">  &quot;profile&quot;: &quot;triage&quot;,
+</span><span class="code__line">  &quot;error&quot;: &quot;Triager simulation runs on the server. Call run_review with profile \&quot;triage\&quot;, your connection token and your provider key in the X-Provider-Key header.&quot;,
+</span><span class="code__line">  &quot;code&quot;: &quot;hosted_profile&quot;
+</span><span class="code__line">}
+</span></code></pre></figure>
+<div class="prose">
+<p>The local server returns the same code and names <code>BOUNTY_OPERATOR_TOKEN</code> in the sentence. <code>run_review</code> sends the files and your provider key to the service, which adds the method of the profile, calls your provider and returns the review.</p>
+</div>
+</section><section class="docs-section" aria-labelledby="prompts">
+<h2 class="docs-section__title" id="prompts">Three slash commands</h2>
+
+<div class="prose">
+<p>The server ships three prompts. A client that supports MCP prompts lists them as commands. In Claude Code, type <code>/</code> and pick one, or type the full name:</p>
+</div>
+<ul class="tool-list tool-list--commands" aria-label="Prompts">
+<li class="tool-list__item">
+<p class="tool-list__name"><code>/mcp__bounty-operator__challenge-report</code></p>
+<p class="tool-list__text">Checks every claim in your draft report against the code it cites, then builds the evidence packet.</p>
+</li><li class="tool-list__item">
+<p class="tool-list__name"><code>/mcp__bounty-operator__solidity-review</code></p>
+<p class="tool-list__text">Maps entry points and invariants in the contracts you name and reports what the code proves, with file and line.</p>
+</li><li class="tool-list__item">
+<p class="tool-list__name"><code>/mcp__bounty-operator__gauntlet</code></p>
+<p class="tool-list__text">Takes a finding through the pre-submission stages in order and ends with one verdict. Its hosted stages run through <code>run_review</code>.</p>
+</li>
+</ul>
+<div class="prose">
+<p><code>challenge-report</code> and <code>solidity-review</code> prepare the review with <code>prepare_review</code>, have your agent’s own model answer and end with <code>build_packet</code>, so both work with no account.</p>
+<p><code>gauntlet</code> lists the eight stages with the tool that runs each one. Seven are hosted and run through <code>run_review</code>. The report stage is a core profile, so your agent’s own model answers it from <code>prepare_review</code>. The run needs an account token and your provider key, and it uses seven hosted reviews. Free covers one hosted review per UTC day, so a full run takes Operator. On the local server the prompt starts from <code>run_gauntlet_plan</code>.</p>
+</div>
+</section><section class="docs-section" aria-labelledby="token">
+<h2 class="docs-section__title" id="token">What needs an account token</h2>
+
+<div class="grid grid--2 token-split">
+<div class="token-split__col">
+<h3 class="h4">Works with no token</h3>
+<ul class="token-split__list">
+<li><code>list_profiles</code></li>
+<li><code>prepare_review</code>, for the three core profiles</li>
+<li><code>build_packet</code></li>
+<li><code>run_gauntlet_plan</code>, on the local server</li>
+<li>The <code>challenge-report</code> and <code>solidity-review</code> prompts</li>
+</ul>
+<p class="fine">Your agent’s own model does the review. Nothing is counted against an allowance.</p>
+</div>
+<div class="token-split__col">
+<h3 class="h4">Needs a token</h3>
+<ul class="token-split__list">
+<li><code>account</code></li>
+<li><code>run_review</code>, with your provider key</li>
+<li>The <code>gauntlet</code> prompt, which runs its hosted stages with <code>run_review</code></li>
+</ul>
+<p class="fine">A hosted review uses the same allowance as the website: one per UTC day on Free, unlimited on Operator at US$10 per week.</p>
+</div>
+</div>
+<div class="prose">
+<h3 id="create-token">Create a token</h3>
+<ol>
+<li>Sign in at <a href="/#account">bountyoperator.com</a> with your passkey and open the account panel.</li>
+<li>Under Connections, name the connection after the client that will use it, and create it.</li>
+<li>Copy the token. It starts with <code>bok_</code> and is shown once.</li>
+<li>Set it as <code>BOUNTY_OPERATOR_TOKEN</code> in your environment and add the server with the token command for your client.</li>
+</ol>
+<p>A token lasts 90 days. An account holds three at a time. Revoke one in the account panel and it stops working at once.</p>
+<h3 id="provider-key">Your provider key</h3>
+<p><code>run_review</code> runs on your own model key. The remote endpoint takes it in the <code class="nowrap">X-Provider-Key</code> header. The local server reads it from the provider’s environment variable:</p>
+</div>
+<div class="table-wrap" tabindex="0" role="region" aria-label="Provider key variables"><table class="table table--dense provider-table"><thead><tr><th scope="col">Provider</th><th scope="col">Environment variable</th></tr></thead><tbody><tr><th scope="row">OpenRouter</th><td class="mono">OPENROUTER_API_KEY</td></tr><tr><th scope="row">Anthropic</th><td class="mono">ANTHROPIC_API_KEY</td></tr><tr><th scope="row">OpenAI</th><td class="mono">OPENAI_API_KEY</td></tr><tr><th scope="row">Google Gemini</th><td class="mono">GEMINI_API_KEY</td></tr><tr><th scope="row">xAI</th><td class="mono">XAI_API_KEY</td></tr><tr><th scope="row">DeepSeek</th><td class="mono">DEEPSEEK_API_KEY</td></tr><tr><th scope="row">Mistral</th><td class="mono">MISTRAL_API_KEY</td></tr><tr><th scope="row">Groq</th><td class="mono">GROQ_API_KEY</td></tr></tbody></table></div>
+<div class="prose">
+<p>The remote endpoint uses the provider’s default model when a call names none. The local server needs a model: pass <code>model</code>, or set <code>BOUNTY_OPERATOR_MODEL</code>.</p>
+</div>
+</section><section class="docs-section" aria-labelledby="permissions">
+<h2 class="docs-section__title" id="permissions">What the server can reach</h2>
+<ul class="facts"><li class="facts__item"><span class="icon icon--key" aria-hidden="true"></span><div><p class="facts__title">A token does two things</p><p class="facts__text">It reads your usage and runs a review. Billing, passkeys, recovery and deletion stay behind your passkey. We keep a SHA-256 of the token, its label and its last-used time.</p></div></li><li class="facts__item"><span class="icon icon--file" aria-hidden="true"></span><div><p class="facts__title">The server sees what your agent passes</p><p class="facts__text">The remote endpoint receives file contents as tool arguments and nothing else from your machine. The local server reads only the paths your agent names under its working directory.</p></div></li><li class="facts__item"><span class="icon icon--shield" aria-hidden="true"></span><div><p class="facts__title">A hosted review goes through our server</p><p class="facts__text">The run_review tool sends the files and your provider key to bountyoperator.com. The server adds the method of the profile, calls your provider and returns the review. It stores none of it.</p></div></li><li class="facts__item"><span class="icon icon--lock" aria-hidden="true"></span><div><p class="facts__title">Keys stay out of the transcript</p><p class="facts__text">The provider key travels in a header or an environment variable, never as a tool argument.</p></div></li><li class="facts__item"><span class="icon icon--refresh" aria-hidden="true"></span><div><p class="facts__title">Stateless endpoint</p><p class="facts__text">Each request stands alone. There is no MCP session to resume and no stream held open.</p></div></li><li class="facts__item"><span class="icon icon--terminal" aria-hidden="true"></span><div><p class="facts__title">Local means local</p><p class="facts__text">On the local server, preparing a review, planning a gauntlet and building a packet run on your machine with no network call.</p></div></li></ul>
+<p class="fine">The <a href="/security">security page</a> has the full data flow, what is stored and how to report a vulnerability.</p>
+</section><section class="docs-section" aria-labelledby="errors">
+<h2 class="docs-section__title" id="errors">When a call fails</h2>
+
+<div class="prose">
+<p>A failed tool call comes back as a result with <code>isError</code> set and one JSON object: <code>error</code>, a sentence your agent can act on, and <code>code</code>, a value that does not change. Both servers use the same codes.</p>
+</div>
+<ul class="tool-list tool-list--commands" aria-label="Error codes">
+<li class="tool-list__item">
+<p class="tool-list__name"><code>hosted_profile</code></p>
+<p class="tool-list__text"><code>prepare_review</code> was called with a hosted profile. Nothing was read and nothing was counted. Call <code>run_review</code>.</p>
+</li><li class="tool-list__item">
+<p class="tool-list__name"><code>privacy_block</code></p>
+<p class="tool-list__text">The privacy check found a secret. The result lists the file, the line and the kind of each match. Remove it and call again.</p>
+</li><li class="tool-list__item">
+<p class="tool-list__name"><code>privacy_warn</code></p>
+<p class="tool-list__text">The privacy check found an email or an IP address. Call again with <code>acknowledgeWarnings: true</code> to send the files as they are.</p>
+</li><li class="tool-list__item">
+<p class="tool-list__name"><code>daily_used</code></p>
+<p class="tool-list__text">The free review of the day is used. The result carries <code>resetsAt</code>, the time the next one opens.</p>
+</li><li class="tool-list__item">
+<p class="tool-list__name"><code>operator_only</code></p>
+<p class="tool-list__text"><code>run_review</code> was called with <code>verdict</code> or <code>panel</code> on an account without Operator. Those two profiles run only inside the gauntlet and a panel review. Nothing was sent to the provider and the review of the day is not used.</p>
+</li><li class="tool-list__item">
+<p class="tool-list__name"><code>review_running</code></p>
+<p class="tool-list__text">The account is running as many reviews as its plan allows. Call again when one finishes.</p>
+</li><li class="tool-list__item">
+<p class="tool-list__name"><code>provider</code></p>
+<p class="tool-list__text">Your provider refused the call or timed out: a rejected key, an unknown model, a rate limit. The review is not counted.</p>
+</li><li class="tool-list__item">
+<p class="tool-list__name"><code>output_withheld</code></p>
+<p class="tool-list__text">The model repeated its instructions instead of reviewing, so the answer was stopped and the call used one review. Run it again or choose a stronger model.</p>
+</li>
+</ul>
+<div class="prose">
+<p><code>account</code> and <code>run_review</code> without a valid token are answered with HTTP 401 by the remote endpoint, which is what makes a client ask for the token. The local server returns the code <code>token</code>.</p>
+</div>
+</section><section class="docs-section" aria-labelledby="faq">
+<h2 class="docs-section__title" id="faq">Questions</h2>
+<div class="accordion"><details class="accordion__item"><summary class="accordion__summary">Do I need an account to use the MCP server?</summary><div class="accordion__body"><p>No. <code>list_profiles</code>, <code>prepare_review</code> and <code>build_packet</code> work with no account and no key, and so do the <code>challenge-report</code> and <code>solidity-review</code> prompts: your agent’s own model answers the prepared request of a core profile. An account token adds <code>account</code>, <code>run_review</code> for every profile, and the <code>gauntlet</code> prompt.</p></div></details><details class="accordion__item"><summary class="accordion__summary">Should I use the remote endpoint or the local server?</summary><div class="accordion__body"><p>The remote endpoint needs nothing installed and works on any machine the client runs on. The local server needs Node 22 or later, keeps review preparation on your machine, reads files by path and adds <code>run_gauntlet_plan</code>. The other five tools are the same on both.</p></div></details><details class="accordion__item"><summary class="accordion__summary">What does a hosted review cost through MCP?</summary><div class="accordion__body"><p><code>run_review</code> shares one allowance with the website: one hosted review per UTC day on Free, any profile, and unlimited on Operator at US$10 per week. A gauntlet run over MCP uses seven hosted reviews, one for every stage but the report stage, so a full run takes Operator. Your model provider bills its own usage to your key.</p></div></details><details class="accordion__item"><summary class="accordion__summary">Which profiles can my agent’s own model run?</summary><div class="accordion__body"><p>The three core profiles: Code security review, Solidity review and Challenge a draft report. <code>prepare_review</code> returns their method and the request. Every other profile is hosted: <code>prepare_review</code> refuses it with <code>hosted_profile</code> and <code>run_review</code> runs it on the service, on your provider key.</p></div></details><details class="accordion__item"><summary class="accordion__summary">How do I check the service before a long run?</summary><div class="accordion__body"><p><code>GET https://bountyoperator.com/api/health</code> returns the version, <code>reviews</code> (whether hosted reviews are on) and <code>profiles</code>. <code>profiles</code> reads <code>hosted</code> when the service carries the full method of every hosted profile. A Worker built from the public repository reads <code>community</code>: it runs the hosted profiles on short stand-in instructions.</p></div></details><details class="accordion__item"><summary class="accordion__summary">Which clients work?</summary><div class="accordion__body"><p>Any client that speaks MCP over Streamable HTTP or stdio. This page has the commands for Claude Code, Codex and Cursor.</p></div></details></div>
+</section>
+</div>
+</div>
+<aside class="docs-next" aria-labelledby="next-step">
+<div class="docs-next__text"><h2 class="h3" id="next-step">Prefer a browser</h2><p class="muted">The workbench runs the same profiles with the same engine, and shows each finding as a card.</p></div>
+<div class="cluster"><a class="btn btn--primary" href="/#workspace"><span class="btn__label">Open the workbench</span><span class="icon icon--arrow-right" aria-hidden="true"></span></a><a class="btn btn--secondary" href="/guide"><span class="btn__label">Read the report guide</span></a></div>
+</aside>
+</article>
+</main>
+<footer class="site-footer">
+<div class="wrap site-footer__grid">
+<div class="site-footer__brand">
+<a class="brand" href="/"><svg class="brand__mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect class="brand__tile" width="64" height="64" rx="14"/><path class="brand__glyph" d="M12.5 15h6.5v31.5h-6.5z"/><path class="brand__glyph" fill-rule="evenodd" d="M25.5 25a10.75 10.75 0 1 0 0 21.5a10.75 10.75 0 0 0 0-21.5zm0 6.25a4.5 4.5 0 1 1 0 9a4.5 4.5 0 0 1 0-9z"/><path class="brand__slash" d="M45.5 13h6.25l-8.6 37.5h-6.25z"/></svg><span class="brand__name">Bounty Operator</span></a>
+<p class="site-footer__promise">Find the hole in your report before the triager does.</p>
+</div>
+<nav class="site-footer__col" aria-label="Product"><h2 class="site-footer__title">Product</h2><ul><li><a href="/#workspace">Workbench</a></li><li><a href="/method">Method</a></li><li><a href="/gauntlet">Gauntlet</a></li><li><a href="/panel-review">Panel review</a></li><li><a href="/pricing">Pricing</a></li><li><a href="/#account">Account</a></li></ul></nav>
+<nav class="site-footer__col" aria-label="Tools"><h2 class="site-footer__title">Tools</h2><ul><li><a href="/tools">All tools</a></li><li><a href="/tools/report-check">Report check</a></li><li><a href="/tools/verify">Packet verifier</a></li><li><a href="/tools/secret-check">Secret check</a></li><li><a href="/tools/acceptance-rates">Acceptance rates</a></li><li><a href="/tools/slither-focus">Slither triage queue</a></li></ul></nav>
+<nav class="site-footer__col" aria-label="Resources"><h2 class="site-footer__title">Resources</h2><ul><li><a href="/guide">Report guide</a></li><li><a href="/mcp">MCP setup</a></li><li><a href="/templates">Report templates</a></li><li><a href="/changelog">Changelog</a></li><li><a href="https://github.com/bountyoperator/bounty-operator" target="_blank" rel="noopener noreferrer">Source<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></li></ul></nav>
+<nav class="site-footer__col" aria-label="Legal"><h2 class="site-footer__title">Legal</h2><ul><li><a href="/privacy">Privacy</a></li><li><a href="/terms">Terms</a></li><li><a href="/security">Security</a></li><li><a href="/licenses">Licences</a></li><li><a href="mailto:security@bountyoperator.com">Report a vulnerability</a></li></ul></nav>
+</div>
+<div class="wrap">
+<div class="site-footer__base">
+<p>Built by <a href="https://audits.sherlock.xyz/watson/Tradi3" target="_blank" rel="noopener noreferrer">Tradi3</a></p>
+<p><a href="mailto:support@bountyoperator.com">support@bountyoperator.com</a></p>
+</div>
+</div>
+</footer>
+</body>
+</html>

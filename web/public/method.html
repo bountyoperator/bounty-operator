@@ -1,0 +1,417 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Why bug bounty reports get rejected: the twelve checks | Bounty Operator</title>
+<meta name="description" content="Why bug bounty reports get closed: twelve checks, the question each one asks, why reports die on it and the verdict it leads to. From 105 real case files.">
+<link rel="canonical" href="https://bountyoperator.com/method">
+<meta name="color-scheme" content="dark light">
+<meta name="theme-color" content="#0a1220" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f5f7fb" media="(prefers-color-scheme: light)">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Bounty Operator">
+<meta property="og:title" content="The twelve checks that decide a bug bounty report">
+<meta property="og:description" content="Why bug bounty reports get closed: twelve checks, the question each one asks, why reports die on it and the verdict it leads to. From 105 real case files.">
+<meta property="og:url" content="https://bountyoperator.com/method">
+<meta property="og:image" content="https://bountyoperator.com/social-v2.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Bounty Operator. Find the hole in your report before the triager does.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="The twelve checks that decide a bug bounty report">
+<meta name="twitter:description" content="Why bug bounty reports get closed: twelve checks, the question each one asks, why reports die on it and the verdict it leads to. From 105 real case files.">
+<meta name="twitter:image" content="https://bountyoperator.com/social-v2.png">
+<meta name="twitter:image:alt" content="Bounty Operator. Find the hole in your report before the triager does.">
+<link rel="icon" href="/favicon.ico" sizes="48x48">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+<script src="/theme.js"></script>
+<link rel="stylesheet" href="/css/base.css">
+<link rel="stylesheet" href="/css/landing.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Bounty Operator","item":"https://bountyoperator.com/"},{"@type":"ListItem","position":2,"name":"Method","item":"https://bountyoperator.com/method"}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","headline":"The twelve checks that decide a bug bounty report","description":"Why bug bounty reports get closed: twelve checks, the question each one asks, why reports die on it and the verdict it leads to. From 105 real case files.","url":"https://bountyoperator.com/method","mainEntityOfPage":"https://bountyoperator.com/method","datePublished":"2026-10-03","dateModified":"2026-10-03","author":{"@type":"Organization","name":"Tradi3","url":"https://audits.sherlock.xyz/watson/Tradi3"},"publisher":{"@type":"Organization","name":"Bounty Operator","url":"https://bountyoperator.com/","logo":{"@type":"ImageObject","url":"https://bountyoperator.com/icon-512.png"}},"image":"https://bountyoperator.com/social-v2.png"}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"ItemList","name":"The twelve checks","numberOfItems":12,"itemListElement":[{"@type":"ListItem","position":1,"name":"Actor trace","description":"Who performs every step, and who supplies every decisive value?","url":"https://bountyoperator.com/method#check-1"},{"@type":"ListItem","position":2,"name":"Own-verdict reversal","description":"Which new evidence defeats each reason you recorded when you held this finding or lowered its severity?","url":"https://bountyoperator.com/method#check-2"},{"@type":"ListItem","position":3,"name":"Design intent and counterfactual","description":"Did the project mean this behaviour, and does the bug step add anything over the intended path?","url":"https://bountyoperator.com/method#check-3"},{"@type":"ListItem","position":4,"name":"Literal impact and exclusion fit","description":"Does an exclusion name this class, and does every clause of the impact row have an artefact behind it?","url":"https://bountyoperator.com/method#check-4"},{"@type":"ListItem","position":5,"name":"Asset and version binding","description":"Does the cited code exist in the scoped asset, at the revision that is deployed?","url":"https://bountyoperator.com/method#check-5"},{"@type":"ListItem","position":6,"name":"Prior-art sweep","description":"Does a known issue, an audit note, a branch or a pull request cover the same function and consequence, or carry the same fix?","url":"https://bountyoperator.com/method#check-6"},{"@type":"ListItem","position":7,"name":"Own-report family","description":"Stated with no file and no entry point, is the broken invariant one you have already reported on this programme?","url":"https://bountyoperator.com/method#check-7"},{"@type":"ListItem","position":8,"name":"Executed end-state proof","description":"Does the final assertion read the object the impact row names, on production code, with the command and its output in the report?","url":"https://bountyoperator.com/method#check-8"},{"@type":"ListItem","position":9,"name":"Production reachability","description":"Does every state the proof sets up have a route from live state by public calls?","url":"https://bountyoperator.com/method#check-9"},{"@type":"ListItem","position":10,"name":"Severity against the written scale","description":"Which row of the programme’s own scale does the proof assert, after every recovery action is applied?","url":"https://bountyoperator.com/method#check-10"},{"@type":"ListItem","position":11,"name":"Submission integrity","description":"Does what the platform stored match the draft: the proof field, the severity, the impact row?","url":"https://bountyoperator.com/method#check-11"},{"@type":"ListItem","position":12,"name":"Private-duplicate clock","description":"Small fix, old code, central path, checklist class: how long before someone else files it?","url":"https://bountyoperator.com/method#check-12"}]}</script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="site-header">
+<div class="wrap site-header__inner">
+<a class="brand" href="/"><svg class="brand__mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect class="brand__tile" width="64" height="64" rx="14"/><path class="brand__glyph" d="M12.5 15h6.5v31.5h-6.5z"/><path class="brand__glyph" fill-rule="evenodd" d="M25.5 25a10.75 10.75 0 1 0 0 21.5a10.75 10.75 0 0 0 0-21.5zm0 6.25a4.5 4.5 0 1 1 0 9a4.5 4.5 0 0 1 0-9z"/><path class="brand__slash" d="M45.5 13h6.25l-8.6 37.5h-6.25z"/></svg><span class="brand__name">Bounty Operator</span></a>
+<nav class="site-nav" aria-label="Main"><ul><li><a href="/#workspace">Workbench</a></li><li><a href="/method" aria-current="page">Method</a></li><li><a href="/tools">Tools</a></li><li><a href="/guide">Guide</a></li><li><a href="/mcp">MCP</a></li><li><a href="/pricing">Pricing</a></li></ul></nav>
+<div class="site-header__actions">
+<button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch colour theme"><span class="icon theme-toggle__icon" aria-hidden="true"></span></button>
+<a class="btn btn--secondary btn--sm" href="/#account">Account</a>
+</div>
+</div>
+</header>
+<main id="main" tabindex="-1">
+
+
+<section class="lp-hero wrap lp-hero--split">
+  <nav class="breadcrumbs" aria-label="Breadcrumb"><ol><li><a href="/">Bounty Operator</a></li><li aria-current="page">Method</li></ol></nav>
+  <div class="lp-hero__grid">
+    <div class="lp-hero__text">
+      <p class="eyebrow">Why bug bounty reports get rejected</p>
+      <h1>The twelve checks that decide a bug bounty report</h1>
+      <p class="lede">Twelve checks, distilled from 105 real case files across five platforms. The wins and the closures. Every check exists because real reports were closed for that reason. For each one: the question it asks, why reports die on it and the verdict it leads to.</p>
+      <div class="cluster lp-hero__actions"><a class="btn btn--primary btn--lg" href="/#workspace"><span class="btn__label">Run a check free</span><span class="icon icon--arrow-right" aria-hidden="true"></span></a><a class="btn btn--secondary btn--lg" href="#gauntlet"><span class="btn__label">Go to the gauntlet</span></a></div>
+      <p class="fine lp-hero__note">1 hosted review per UTC day on your own model. No card.</p>
+      <p class="proofline"><span class="icon icon--shield" aria-hidden="true"></span><span>Built by Tradi3: <a class="link link--external" href="https://immunefi.com/audit-competition/audit-comp-firelight-1/leaderboard/" target="_blank" rel="noopener noreferrer">2nd of 133 in Immunefi’s Firelight competition<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a> and <a class="link link--external" href="https://immunefi.com/audit-competition/audit-comp-quantus/leaderboard/" target="_blank" rel="noopener noreferrer">8th of 65 in Quantus<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a>.</span></p>
+    </div>
+    <div class="lp-hero__aside">
+<div class="glance">
+  <p class="meta">Every check leads to a decision</p>
+  <dl class="verdicts"><div class="verdicts__row"><dt><span class="chip verdict" data-verdict="submit">Submit</span></dt><dd>Every decisive claim is backed by the supplied code and proof. File it.</dd></div><div class="verdicts__row"><dt><span class="chip verdict" data-verdict="rewrite-then-submit">Rewrite, then submit</span></dt><dd>The finding holds. The draft misstates its severity, impact, preconditions or fix.</dd></div><div class="verdicts__row"><dt><span class="chip verdict" data-verdict="prove-first">Prove first</span></dt><dd>The claimed impact is not demonstrated on the real path yet. One artefact is missing.</dd></div><div class="verdicts__row"><dt><span class="chip verdict" data-verdict="hold-duplicate">Hold: duplicate</span></dt><dd>A known issue, an audit note, a branch or your own earlier report has the same root cause or the same fix.</dd></div><div class="verdicts__row"><dt><span class="chip verdict" data-verdict="drop">Drop</span></dt><dd>The code contradicts the root cause, the behaviour is the design, or the rules exclude it.</dd></div></dl>
+  <p class="fine">The gauntlet returns exactly one of these, with one blocker and the cheapest action that removes it.</p>
+</div></div>
+  </div>
+</section>
+
+<section class="section section--tight wrap" aria-labelledby="closures">
+  <header class="section-head"><div class="section-head__text"><h2 id="closures">The closure reason, and the check that catches it</h2><p class="lede">A report is closed at the first of these a triager reaches. Each one is answered by a check that comes before the report is filed.</p></div></header>
+  
+<ul class="closures" aria-label="Closure reasons and the checks that catch them">
+  <li class="closures__head" aria-hidden="true"><span>Closed as</span><span>What the triager saw</span><span>Checks</span></li>
+  <li class="closures__row"><p class="closures__reason">Out of scope</p><p class="closures__saw">The file is not in the scoped asset, the revision is not the deployed one, or an exclusion names the bug class.</p><span class="checkrefs"><span class="visually-hidden">Checks </span><a class="checkref" href="#check-4">04</a> <a class="checkref" href="#check-5">05</a></span></li><li class="closures__row"><p class="closures__reason">Intended behaviour</p><p class="closures__saw">A comment, a project test or the introducing commit describes the behaviour as the design.</p><span class="checkrefs"><span class="visually-hidden">Checks </span><a class="checkref" href="#check-3">03</a></span></li><li class="closures__row"><p class="closures__reason">Trusted role or user error</p><p class="closures__saw">A decisive step is performed by an admin, an operator or the victim.</p><span class="checkrefs"><span class="visually-hidden">Checks </span><a class="checkref" href="#check-1">01</a></span></li><li class="closures__row"><p class="closures__reason">Duplicate or known issue</p><p class="closures__saw">A known issue, an audit note, a branch, a pull request or your own earlier report has the same root cause or the same fix.</p><span class="checkrefs"><span class="visually-hidden">Checks </span><a class="checkref" href="#check-6">06</a> <a class="checkref" href="#check-7">07</a> <a class="checkref" href="#check-12">12</a></span></li><li class="closures__row"><p class="closures__reason">Impact not demonstrated</p><p class="closures__saw">The proof shows the bug and never asserts the loss, a mock performs the deciding step, or the starting state has no public route.</p><span class="checkrefs"><span class="visually-hidden">Checks </span><a class="checkref" href="#check-8">08</a> <a class="checkref" href="#check-9">09</a></span></li><li class="closures__row"><p class="closures__reason">Severity downgraded</p><p class="closures__saw">The loss is recoverable, or the body argues a lower row than the one selected.</p><span class="checkrefs"><span class="visually-hidden">Checks </span><a class="checkref" href="#check-10">10</a></span></li><li class="closures__row"><p class="closures__reason">Incomplete submission</p><p class="closures__saw">The stored submission is missing the proof, or the form says one thing and the body another.</p><span class="checkrefs"><span class="visually-hidden">Checks </span><a class="checkref" href="#check-11">11</a></span></li>
+</ul>
+</section>
+
+<section class="section wrap" aria-labelledby="checks">
+  <header class="section-head"><div class="section-head__text"><h2 id="checks">The twelve checks</h2><p class="lede">Each check asks one question. A report that fails the first never needs a proof.</p></div></header>
+  <div class="checks">
+    
+<nav class="toc" aria-label="The twelve checks">
+  <p class="meta">The twelve checks</p>
+  <ol class="toc__list"><li><a href="#check-1"><span class="toc__n">01</span>Actor trace</a></li><li><a href="#check-2"><span class="toc__n">02</span>Own-verdict reversal</a></li><li><a href="#check-3"><span class="toc__n">03</span>Design intent and counterfactual</a></li><li><a href="#check-4"><span class="toc__n">04</span>Literal impact and exclusion fit</a></li><li><a href="#check-5"><span class="toc__n">05</span>Asset and version binding</a></li><li><a href="#check-6"><span class="toc__n">06</span>Prior-art sweep</a></li><li><a href="#check-7"><span class="toc__n">07</span>Own-report family</a></li><li><a href="#check-8"><span class="toc__n">08</span>Executed end-state proof</a></li><li><a href="#check-9"><span class="toc__n">09</span>Production reachability</a></li><li><a href="#check-10"><span class="toc__n">10</span>Severity against the written scale</a></li><li><a href="#check-11"><span class="toc__n">11</span>Submission integrity</a></li><li><a href="#check-12"><span class="toc__n">12</span>Private-duplicate clock</a></li></ol>
+</nav>
+    <div class="checks__list">
+      <div class="findings">
+<article class="finding check-card" id="check-1" aria-labelledby="check-1-title">
+  <header class="finding__head">
+    <div class="finding__tags"><span class="finding__id">Check 01</span></div>
+    <h3 class="finding__title" id="check-1-title">Actor trace</h3>
+  </header>
+  <dl class="finding__rows">
+    <div class="rail" data-rail="observed"><dt class="rail__label">Asks</dt><dd class="rail__body"><p class="check-card__asks">Who performs every step, and who supplies every decisive value?</p></dd></div>
+    <div class="rail" data-rail="gap"><dt class="rail__label">Why it kills</dt><dd class="rail__body"><p>A programme pays for what an unprivileged attacker does. When the deciding step belongs to an owner, an operator or the victim’s own approval, the report is closed as a trusted-role or user-error case, however real the flaw in the code.</p></dd></div>
+    <div class="rail" data-rail="next"><dt class="rail__label">Leads to</dt><dd class="rail__body"><p class="check-card__leads"><span class="chip verdict" data-verdict="drop">Drop</span></p></dd></div>
+  </dl>
+</article>
+<article class="finding check-card" id="check-2" aria-labelledby="check-2-title">
+  <header class="finding__head">
+    <div class="finding__tags"><span class="finding__id">Check 02</span></div>
+    <h3 class="finding__title" id="check-2-title">Own-verdict reversal</h3>
+  </header>
+  <dl class="finding__rows">
+    <div class="rail" data-rail="observed"><dt class="rail__label">Asks</dt><dd class="rail__body"><p class="check-card__asks">Which new evidence defeats each reason you recorded when you held this finding or lowered its severity?</p></dd></div>
+    <div class="rail" data-rail="gap"><dt class="rail__label">Why it kills</dt><dd class="rail__body"><p>A finding reads stronger on the second look because nothing argues back. A report revived with no new evidence is closed for the reason already written in your own notes.</p></dd></div>
+    <div class="rail" data-rail="next"><dt class="rail__label">Leads to</dt><dd class="rail__body"><p class="check-card__leads"><span class="chip chip--dashed" data-tone="neutral">Earlier verdict stands</span></p></dd></div>
+  </dl>
+</article>
+<article class="finding check-card" id="check-3" aria-labelledby="check-3-title">
+  <header class="finding__head">
+    <div class="finding__tags"><span class="finding__id">Check 03</span></div>
+    <h3 class="finding__title" id="check-3-title">Design intent and counterfactual</h3>
+  </header>
+  <dl class="finding__rows">
+    <div class="rail" data-rail="observed"><dt class="rail__label">Asks</dt><dd class="rail__body"><p class="check-card__asks">Did the project mean this behaviour, and does the bug step add anything over the intended path?</p></dd></div>
+    <div class="rail" data-rail="gap"><dt class="rail__label">Why it kills</dt><dd class="rail__body"><p>Behaviour the project documented, tested or introduced as an audit fix is closed as intended. A proof that reaches the same end state without the bug step shows no loss the design did not already allow.</p></dd></div>
+    <div class="rail" data-rail="next"><dt class="rail__label">Leads to</dt><dd class="rail__body"><p class="check-card__leads"><span class="chip verdict" data-verdict="drop">Drop</span></p></dd></div>
+  </dl>
+</article>
+<article class="finding check-card" id="check-4" aria-labelledby="check-4-title">
+  <header class="finding__head">
+    <div class="finding__tags"><span class="finding__id">Check 04</span></div>
+    <h3 class="finding__title" id="check-4-title">Literal impact and exclusion fit</h3>
+  </header>
+  <dl class="finding__rows">
+    <div class="rail" data-rail="observed"><dt class="rail__label">Asks</dt><dd class="rail__body"><p class="check-card__asks">Does an exclusion name this class, and does every clause of the impact row have an artefact behind it?</p></dd></div>
+    <div class="rail" data-rail="gap"><dt class="rail__label">Why it kills</dt><dd class="rail__body"><p>A triager reads the exclusions first and the impact row word by word. One matching exclusion ends the report, and one clause with nothing behind it moves the report to a lower row.</p></dd></div>
+    <div class="rail" data-rail="next"><dt class="rail__label">Leads to</dt><dd class="rail__body"><p class="check-card__leads"><span class="chip verdict" data-verdict="drop">Drop</span><span class="chip verdict" data-verdict="rewrite-then-submit">Rewrite, then submit</span></p></dd></div>
+  </dl>
+</article>
+<article class="finding check-card" id="check-5" aria-labelledby="check-5-title">
+  <header class="finding__head">
+    <div class="finding__tags"><span class="finding__id">Check 05</span></div>
+    <h3 class="finding__title" id="check-5-title">Asset and version binding</h3>
+  </header>
+  <dl class="finding__rows">
+    <div class="rail" data-rail="observed"><dt class="rail__label">Asks</dt><dd class="rail__body"><p class="check-card__asks">Does the cited code exist in the scoped asset, at the revision that is deployed?</p></dd></div>
+    <div class="rail" data-rail="gap"><dt class="rail__label">Why it kills</dt><dd class="rail__body"><p>A bug in a branch, a mirror or an old tag is a bug in something the programme does not pay for. A proof built on another revision proves that revision and leaves the deployed one untested.</p></dd></div>
+    <div class="rail" data-rail="next"><dt class="rail__label">Leads to</dt><dd class="rail__body"><p class="check-card__leads"><span class="chip verdict" data-verdict="drop">Drop</span><span class="chip verdict" data-verdict="prove-first">Prove first</span></p></dd></div>
+  </dl>
+</article>
+<article class="finding check-card" id="check-6" aria-labelledby="check-6-title">
+  <header class="finding__head">
+    <div class="finding__tags"><span class="finding__id">Check 06</span></div>
+    <h3 class="finding__title" id="check-6-title">Prior-art sweep</h3>
+  </header>
+  <dl class="finding__rows">
+    <div class="rail" data-rail="observed"><dt class="rail__label">Asks</dt><dd class="rail__body"><p class="check-card__asks">Does a known issue, an audit note, a branch or a pull request cover the same function and consequence, or carry the same fix?</p></dd></div>
+    <div class="rail" data-rail="gap"><dt class="rail__label">Why it kills</dt><dd class="rail__body"><p>Duplicates are judged on root cause and on the fix. Titles, wording and the strength of the proof carry no weight, so a report on a root cause someone already wrote down is closed.</p></dd></div>
+    <div class="rail" data-rail="next"><dt class="rail__label">Leads to</dt><dd class="rail__body"><p class="check-card__leads"><span class="chip verdict" data-verdict="hold-duplicate">Hold: duplicate</span></p></dd></div>
+  </dl>
+</article>
+<article class="finding check-card" id="check-7" aria-labelledby="check-7-title">
+  <header class="finding__head">
+    <div class="finding__tags"><span class="finding__id">Check 07</span></div>
+    <h3 class="finding__title" id="check-7-title">Own-report family</h3>
+  </header>
+  <dl class="finding__rows">
+    <div class="rail" data-rail="observed"><dt class="rail__label">Asks</dt><dd class="rail__body"><p class="check-card__asks">Stated with no file and no entry point, is the broken invariant one you have already reported on this programme?</p></dd></div>
+    <div class="rail" data-rail="gap"><dt class="rail__label">Why it kills</dt><dd class="rail__body"><p>Two reports on one invariant are grouped as one finding, and the later one is closed against the earlier. New evidence belongs in the report that already exists.</p></dd></div>
+    <div class="rail" data-rail="next"><dt class="rail__label">Leads to</dt><dd class="rail__body"><p class="check-card__leads"><span class="chip verdict" data-verdict="hold-duplicate">Hold: duplicate</span></p></dd></div>
+  </dl>
+</article>
+<article class="finding check-card" id="check-8" aria-labelledby="check-8-title">
+  <header class="finding__head">
+    <div class="finding__tags"><span class="finding__id">Check 08</span></div>
+    <h3 class="finding__title" id="check-8-title">Executed end-state proof</h3>
+  </header>
+  <dl class="finding__rows">
+    <div class="rail" data-rail="observed"><dt class="rail__label">Asks</dt><dd class="rail__body"><p class="check-card__asks">Does the final assertion read the object the impact row names, on production code, with the command and its output in the report?</p></dd></div>
+    <div class="rail" data-rail="gap"><dt class="rail__label">Why it kills</dt><dd class="rail__body"><p>A proof that shows the defect and describes the loss leaves the impact unproven. Triagers pay for an end state they can see asserted, and a proof they cannot run or read inline counts as no proof.</p></dd></div>
+    <div class="rail" data-rail="next"><dt class="rail__label">Leads to</dt><dd class="rail__body"><p class="check-card__leads"><span class="chip verdict" data-verdict="prove-first">Prove first</span></p></dd></div>
+  </dl>
+</article>
+<article class="finding check-card" id="check-9" aria-labelledby="check-9-title">
+  <header class="finding__head">
+    <div class="finding__tags"><span class="finding__id">Check 09</span></div>
+    <h3 class="finding__title" id="check-9-title">Production reachability</h3>
+  </header>
+  <dl class="finding__rows">
+    <div class="rail" data-rail="observed"><dt class="rail__label">Asks</dt><dd class="rail__body"><p class="check-card__asks">Does every state the proof sets up have a route from live state by public calls?</p></dd></div>
+    <div class="rail" data-rail="gap"><dt class="rail__label">Why it kills</dt><dd class="rail__body"><p>A test can write any state it likes. A state that no public call reaches is an artefact of the test, and the report is closed as not exploitable.</p></dd></div>
+    <div class="rail" data-rail="next"><dt class="rail__label">Leads to</dt><dd class="rail__body"><p class="check-card__leads"><span class="chip verdict" data-verdict="prove-first">Prove first</span></p></dd></div>
+  </dl>
+</article>
+<article class="finding check-card" id="check-10" aria-labelledby="check-10-title">
+  <header class="finding__head">
+    <div class="finding__tags"><span class="finding__id">Check 10</span></div>
+    <h3 class="finding__title" id="check-10-title">Severity against the written scale</h3>
+  </header>
+  <dl class="finding__rows">
+    <div class="rail" data-rail="observed"><dt class="rail__label">Asks</dt><dd class="rail__body"><p class="check-card__asks">Which row of the programme’s own scale does the proof assert, after every recovery action is applied?</p></dd></div>
+    <div class="rail" data-rail="gap"><dt class="rail__label">Why it kills</dt><dd class="rail__body"><p>Severity is graded on the programme’s written scale, read literally. A tier claimed above the measured loss, or a loss the project can undo, is downgraded.</p></dd></div>
+    <div class="rail" data-rail="next"><dt class="rail__label">Leads to</dt><dd class="rail__body"><p class="check-card__leads"><span class="chip verdict" data-verdict="rewrite-then-submit">Rewrite, then submit</span></p></dd></div>
+  </dl>
+</article>
+<article class="finding check-card" id="check-11" aria-labelledby="check-11-title">
+  <header class="finding__head">
+    <div class="finding__tags"><span class="finding__id">Check 11</span></div>
+    <h3 class="finding__title" id="check-11-title">Submission integrity</h3>
+  </header>
+  <dl class="finding__rows">
+    <div class="rail" data-rail="observed"><dt class="rail__label">Asks</dt><dd class="rail__body"><p class="check-card__asks">Does what the platform stored match the draft: the proof field, the severity, the impact row?</p></dd></div>
+    <div class="rail" data-rail="gap"><dt class="rail__label">Why it kills</dt><dd class="rail__body"><p>The triager judges the stored submission and never sees the draft on your disk. An empty proof field, or a form that disagrees with the body, closes a finding that is real.</p></dd></div>
+    <div class="rail" data-rail="next"><dt class="rail__label">Leads to</dt><dd class="rail__body"><p class="check-card__leads"><span class="chip verdict" data-verdict="rewrite-then-submit">Rewrite, then submit</span></p></dd></div>
+  </dl>
+</article>
+<article class="finding check-card" id="check-12" aria-labelledby="check-12-title">
+  <header class="finding__head">
+    <div class="finding__tags"><span class="finding__id">Check 12</span></div>
+    <h3 class="finding__title" id="check-12-title">Private-duplicate clock</h3>
+  </header>
+  <dl class="finding__rows">
+    <div class="rail" data-rail="observed"><dt class="rail__label">Asks</dt><dd class="rail__body"><p class="check-card__asks">Small fix, old code, central path, checklist class: how long before someone else files it?</p></dd></div>
+    <div class="rail" data-rail="gap"><dt class="rail__label">Why it kills</dt><dd class="rail__body"><p>Other hunters file in private, so a clean public search says nothing about who is ahead of you. A bug that is easy to find on old, central code is found more than once, and the later reports are closed as duplicates.</p></dd></div>
+    <div class="rail" data-rail="next"><dt class="rail__label">Leads to</dt><dd class="rail__body"><p class="check-card__leads"><span class="chip chip--dashed" data-tone="neutral">Sets a filing deadline</span></p></dd></div>
+  </dl>
+</article></div>
+      <p class="checks__run"><span class="icon icon--play" aria-hidden="true"></span><span>The executable version of each check runs inside <a class="link" href="/gauntlet">the gauntlet</a>.</span></p>
+    </div>
+  </div>
+</section>
+
+<section class="section wrap" aria-labelledby="land">
+  <header class="section-head"><div class="section-head__text"><h2 id="land">What makes a report land</h2><p class="lede">The reports that were paid share these. Each line answers one or more of the checks before the triager asks.</p></div></header>
+  
+<ul class="lands"><li class="lands__item"><span class="icon icon--check" aria-hidden="true"></span><p class="lands__text">An executed proof with its command and output, plus a control case.</p><span class="checkrefs"><a class="checkref" href="#check-3">03</a> <a class="checkref" href="#check-8">08</a></span></li><li class="lands__item"><span class="icon icon--check" aria-hidden="true"></span><p class="lands__text">A final assertion on the object the impact row names: a balance, an owner, a stored record.</p><span class="checkrefs"><a class="checkref" href="#check-4">04</a> <a class="checkref" href="#check-8">08</a></span></li><li class="lands__item"><span class="icon icon--check" aria-hidden="true"></span><p class="lands__text">The exact code location on a pinned revision, and a concrete fix.</p><span class="checkrefs"><a class="checkref" href="#check-5">05</a></span></li><li class="lands__item"><span class="icon icon--check" aria-hidden="true"></span><p class="lands__text">A title that states mechanism and consequence in one sentence, with numbered attack steps kept separate from test code.</p><span class="checkrefs"><a class="checkref" href="#check-1">01</a></span></li><li class="lands__item"><span class="icon icon--check" aria-hidden="true"></span><p class="lands__text">Limits and non-claims stated by the author, with the nearest known issue named and distinguished.</p><span class="checkrefs"><a class="checkref" href="#check-6">06</a></span></li><li class="lands__item"><span class="icon icon--check" aria-hidden="true"></span><p class="lands__text">The impact row quoted verbatim.</p><span class="checkrefs"><a class="checkref" href="#check-4">04</a> <a class="checkref" href="#check-10">10</a></span></li><li class="lands__item"><span class="icon icon--check" aria-hidden="true"></span><p class="lands__text">Filed within hours of reproduction, with variants folded into one report.</p><span class="checkrefs"><a class="checkref" href="#check-7">07</a> <a class="checkref" href="#check-12">12</a></span></li></ul>
+</section>
+
+<section class="section wrap" aria-labelledby="gauntlet">
+  <header class="section-head"><div class="section-head__text"><h2 id="gauntlet">The eight-stage gauntlet</h2><p class="lede">The same checks, run as eight stages on your draft, your code and the programme rules. The order runs the gates that end a report before the stages that cost work.</p></div><div class="section-head__aside"><span class="chip status" data-status="operator">Operator</span> <a class="link" href="/gauntlet">How a run looks</a></div></header>
+  <nav class="stepper pipeline" aria-label="Gauntlet stages"><ol><li><a class="stepper__step" href="#stage-scope" data-state="todo"><span class="stepper__marker"><span aria-hidden="true">1</span></span><span class="stepper__label">Scope</span></a></li><li><a class="stepper__step" href="#stage-provenance" data-state="todo"><span class="stepper__marker"><span aria-hidden="true">2</span></span><span class="stepper__label">Provenance</span></a></li><li><a class="stepper__step" href="#stage-prior-art" data-state="todo"><span class="stepper__marker"><span aria-hidden="true">3</span></span><span class="stepper__label">Prior art</span></a></li><li><a class="stepper__step" href="#stage-poc" data-state="todo"><span class="stepper__marker"><span aria-hidden="true">4</span></span><span class="stepper__label">Proof</span></a></li><li><a class="stepper__step" href="#stage-severity" data-state="todo"><span class="stepper__marker"><span aria-hidden="true">5</span></span><span class="stepper__label">Severity</span></a></li><li><a class="stepper__step" href="#stage-triage" data-state="todo"><span class="stepper__marker"><span aria-hidden="true">6</span></span><span class="stepper__label">Triager</span></a></li><li><a class="stepper__step" href="#stage-report" data-state="todo"><span class="stepper__marker"><span aria-hidden="true">7</span></span><span class="stepper__label">Report</span></a></li><li><a class="stepper__step" href="#stage-verdict" data-state="todo"><span class="stepper__marker"><span aria-hidden="true">8</span></span><span class="stepper__label">Verdict</span></a></li></ol></nav>
+  <ol class="stages">
+<li class="stage" id="stage-scope">
+  <div class="stage__marker" aria-hidden="true"><span>1</span></div>
+  <div class="stage__body">
+    <div class="stage__head">
+      <h3 class="stage__name">Scope</h3>
+      <code class="stage__id">scope</code>
+      <span class="meta stage__checks">Checks <a href="#check-4">4</a>, <a href="#check-5">5</a></span>
+    </div>
+    <p class="stage__decides">Whether the code is in the scoped asset at the deployed revision, whether the class is excluded, and whether every clause of the chosen impact row has an artefact behind it.</p>
+    <div class="stage__out">
+      <span class="meta">Outputs</span>
+      <ul class="stage__outputs"><li>Binding table</li><li>Exclusion matches</li><li>Impact row, clause by clause</li></ul>
+    </div>
+    
+  </div>
+</li>
+<li class="stage" id="stage-provenance">
+  <div class="stage__marker" aria-hidden="true"><span>2</span></div>
+  <div class="stage__body">
+    <div class="stage__head">
+      <h3 class="stage__name">Provenance</h3>
+      <code class="stage__id">provenance</code>
+      <span class="meta stage__checks">Checks <a href="#check-1">1</a>, <a href="#check-3">3</a>, <a href="#check-9">9</a></span>
+    </div>
+    <p class="stage__decides">Who performs each step, whether the behaviour is documented design or an audit fix, whether the bug adds anything over the intended path, and whether every precondition is reachable from live state.</p>
+    <div class="stage__out">
+      <span class="meta">Outputs</span>
+      <ul class="stage__outputs"><li>Actor table</li><li>Intent evidence</li><li>Counterfactual</li><li>Preconditions</li></ul>
+    </div>
+    
+  </div>
+</li>
+<li class="stage" id="stage-prior-art">
+  <div class="stage__marker" aria-hidden="true"><span>3</span></div>
+  <div class="stage__body">
+    <div class="stage__head">
+      <h3 class="stage__name">Prior art</h3>
+      <code class="stage__id">prior-art</code>
+      <span class="meta stage__checks">Checks <a href="#check-6">6</a>, <a href="#check-7">7</a>, <a href="#check-12">12</a></span>
+    </div>
+    <p class="stage__decides">Whether a known issue, a prior audit note, a team branch or your own earlier report has the same root cause or the same one-line fix.</p>
+    <div class="stage__out">
+      <span class="meta">Outputs</span>
+      <ul class="stage__outputs"><li>Root-cause fingerprint</li><li>Matches</li><li>The duplicate clock</li></ul>
+    </div>
+    
+  </div>
+</li>
+<li class="stage" id="stage-poc">
+  <div class="stage__marker" aria-hidden="true"><span>4</span></div>
+  <div class="stage__body">
+    <div class="stage__head">
+      <h3 class="stage__name">Proof</h3>
+      <code class="stage__id">poc</code>
+      <span class="meta stage__checks">Check <a href="#check-8">8</a></span>
+    </div>
+    <p class="stage__decides">Whether the proof runs production code on every step and ends by reading the object the impact row names, with measured numbers.</p>
+    <div class="stage__out">
+      <span class="meta">Outputs</span>
+      <ul class="stage__outputs"><li>Step table: executed, mocked or narrated</li><li>End-state assertion</li><li>Measured loss</li></ul>
+    </div>
+    
+  </div>
+</li>
+<li class="stage" id="stage-severity">
+  <div class="stage__marker" aria-hidden="true"><span>5</span></div>
+  <div class="stage__body">
+    <div class="stage__head">
+      <h3 class="stage__name">Severity</h3>
+      <code class="stage__id">severity</code>
+      <span class="meta stage__checks">Check <a href="#check-10">10</a></span>
+    </div>
+    <p class="stage__decides">The highest row of the programme’s own scale that the proof fully asserts, after every downgrade clause.</p>
+    <div class="stage__out">
+      <span class="meta">Outputs</span>
+      <ul class="stage__outputs"><li>The tier to claim</li><li>The one fact that moves it</li></ul>
+    </div>
+    
+  </div>
+</li>
+<li class="stage" id="stage-triage">
+  <div class="stage__marker" aria-hidden="true"><span>6</span></div>
+  <div class="stage__body">
+    <div class="stage__head">
+      <h3 class="stage__name">Triager</h3>
+      <code class="stage__id">triage</code>
+      
+    </div>
+    <p class="stage__decides">The one sentence that closes this report in ten minutes, and whether the first paragraph already answers it.</p>
+    <div class="stage__out">
+      <span class="meta">Outputs</span>
+      <ul class="stage__outputs"><li>Ranked rejection reasons</li><li>The draft sentence that triggers each</li></ul>
+    </div>
+    
+  </div>
+</li>
+<li class="stage" id="stage-report">
+  <div class="stage__marker" aria-hidden="true"><span>7</span></div>
+  <div class="stage__body">
+    <div class="stage__head">
+      <h3 class="stage__name">Report</h3>
+      <code class="stage__id">report</code>
+      <span class="meta stage__checks">Check <a href="#check-11">11</a></span>
+    </div>
+    <p class="stage__decides">Whether the claims follow from the code, the proof is inline, the form and the body agree, and the limits are stated.</p>
+    <div class="stage__out">
+      <span class="meta">Outputs</span>
+      <ul class="stage__outputs"><li>Claims table</li><li>The rewritten report</li></ul>
+    </div>
+    
+  </div>
+</li>
+<li class="stage" id="stage-verdict">
+  <div class="stage__marker" aria-hidden="true"><span>8</span></div>
+  <div class="stage__body">
+    <div class="stage__head">
+      <h3 class="stage__name">Verdict</h3>
+      <code class="stage__id">verdict</code>
+      
+    </div>
+    <p class="stage__decides">One decision.</p>
+    <div class="stage__out">
+      <span class="meta">Outputs</span>
+      <ul class="stage__outputs"><li>One of five verdicts</li><li>One blocker</li><li>The cheapest action that removes it</li><li>A filing deadline</li></ul>
+    </div>
+    
+  </div>
+</li></ol>
+  <div class="gauntlet-end">
+    
+<div class="example">
+  <p class="example__bar"><span class="chip status" data-status="example">Example</span><span class="meta">What stage 8 hands you · invented protocol</span></p>
+  <div class="example__body"><header class="dossier"><div class="dossier__verdict"><span class="meta">Verdict</span><span class="chip verdict verdict--lg" data-verdict="prove-first">Prove first</span></div><p class="dossier__headline">The seizure bug is in the code. The proof reads the return value of <code>liquidate</code> on a mock oracle; the impact row names the borrower’s collateral.</p><ul class="counts"><li data-sev="critical" data-zero><span class="counts__n">0</span><span class="counts__label">Critical</span></li><li data-sev="high"><span class="counts__n">1</span><span class="counts__label">High</span></li><li data-sev="medium" data-zero><span class="counts__n">0</span><span class="counts__label">Medium</span></li><li data-sev="hardening"><span class="counts__n">1</span><span class="counts__label">Hardening</span></li><li data-sev="checked-safe"><span class="counts__n">3</span><span class="counts__label">Checked safe</span></li></ul></header></div>
+</div>
+    <p class="fine">One decision, one blocker, the cheapest action that removes it and a filing deadline. <a class="link" href="/gauntlet">Read the full example dossier</a></p>
+  </div>
+</section>
+
+<section class="section wrap" aria-labelledby="run">
+  <header class="section-head"><div class="section-head__text"><h2 id="run">Two ways to run it</h2><p class="lede">Both run on your own model and your own key.</p></div></header>
+  <div class="grid grid--2">
+    <div class="card"><div class="card__head"><h3 class="card__title">One profile at a time</h3><div class="card__meta"><span class="chip status" data-status="free">Free</span></div></div><div class="card__body"><div class="stack stack--12">
+        <p>Pick the profile that matches the check you are on: scope, provenance, prior art, proof, severity, triager or report. One hosted review per UTC day.</p>
+        <ul class="ticks"><li><span class="icon icon--check" aria-hidden="true"></span><span>All eleven single profiles, hosted on your own key</span></li><li><span class="icon icon--check" aria-hidden="true"></span><span>The three core profiles also export as a prompt for any chat app or local model, with paste-back</span></li><li><span class="icon icon--check" aria-hidden="true"></span><span>Review packet with a SHA-256 manifest of every file</span></li></ul>
+      </div></div><div class="card__foot"><a class="btn btn--secondary" href="/#workspace"><span class="btn__label">Open the workbench</span><span class="icon icon--arrow-right" aria-hidden="true"></span></a></div></div>
+    <div class="card card--accent"><div class="card__head"><h3 class="card__title">The full gauntlet</h3><div class="card__meta"><span class="chip status" data-status="operator">Operator · US$10/week</span></div></div><div class="card__body"><div class="stack stack--12">
+        <p>One run takes the draft through all eight stages and returns the verdict dossier. Each stage reads the output of the stages before it.</p>
+        <ul class="ticks"><li><span class="icon icon--check" aria-hidden="true"></span><span>Unlimited hosted reviews</span></li><li><span class="icon icon--check" aria-hidden="true"></span><span>The Gauntlet and Panel review</span></li><li><span class="icon icon--check" aria-hidden="true"></span><span>Four hosted reviews running at once</span></li></ul>
+      </div></div><div class="card__foot"><div class="cluster"><a class="btn btn--primary" href="/pricing"><span class="btn__label">Get Operator</span><span class="icon icon--arrow-right" aria-hidden="true"></span></a><a class="btn btn--quiet" href="/gauntlet"><span class="btn__label">See a gauntlet run</span></a></div></div></div>
+  </div>
+</section>
+
+<section class="section section--tight wrap">
+  
+<nav class="related" aria-label="Related">
+  <p class="meta">Related</p>
+  <ul class="related__list"><li><a class="related__link" href="/challenge-report"><span class="related__label">Challenge a draft report<span class="icon icon--arrow-right" aria-hidden="true"></span></span><span class="related__text">Every claim in your draft, checked against the code.</span></a></li><li><a class="related__link" href="/triager-simulation"><span class="related__label">Triager simulation<span class="icon icon--arrow-right" aria-hidden="true"></span></span><span class="related__text">The three reasons a triager closes this report, ranked.</span></a></li><li><a class="related__link" href="/prior-art-check"><span class="related__label">Prior-art overlap<span class="icon icon--arrow-right" aria-hidden="true"></span></span><span class="related__text">Same root cause, or only the same symptom.</span></a></li><li><a class="related__link" href="/solidity-review"><span class="related__label">Solidity review<span class="icon icon--arrow-right" aria-hidden="true"></span></span><span class="related__text">Entry points, invariants and value flow in Solidity contracts.</span></a></li><li><a class="related__link" href="/code-security-review"><span class="related__label">Code security review<span class="icon icon--arrow-right" aria-hidden="true"></span></span><span class="related__text">Authorization, data handling and failure paths in any codebase.</span></a></li><li><a class="related__link" href="/your-model-your-key"><span class="related__label">Your model, your key<span class="icon icon--arrow-right" aria-hidden="true"></span></span><span class="related__text">Where your code goes and what is stored.</span></a></li><li><a class="related__link" href="/compare"><span class="related__label">Compare<span class="icon icon--arrow-right" aria-hidden="true"></span></span><span class="related__text">Bounty Operator next to a chat app, an audit skill and platform pre-checks.</span></a></li></ul>
+</nav>
+</section>
+</main>
+<footer class="site-footer">
+<div class="wrap site-footer__grid">
+<div class="site-footer__brand">
+<a class="brand" href="/"><svg class="brand__mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect class="brand__tile" width="64" height="64" rx="14"/><path class="brand__glyph" d="M12.5 15h6.5v31.5h-6.5z"/><path class="brand__glyph" fill-rule="evenodd" d="M25.5 25a10.75 10.75 0 1 0 0 21.5a10.75 10.75 0 0 0 0-21.5zm0 6.25a4.5 4.5 0 1 1 0 9a4.5 4.5 0 0 1 0-9z"/><path class="brand__slash" d="M45.5 13h6.25l-8.6 37.5h-6.25z"/></svg><span class="brand__name">Bounty Operator</span></a>
+<p class="site-footer__promise">Find the hole in your report before the triager does.</p>
+</div>
+<nav class="site-footer__col" aria-label="Product"><h2 class="site-footer__title">Product</h2><ul><li><a href="/#workspace">Workbench</a></li><li><a href="/method">Method</a></li><li><a href="/gauntlet">Gauntlet</a></li><li><a href="/panel-review">Panel review</a></li><li><a href="/pricing">Pricing</a></li><li><a href="/#account">Account</a></li></ul></nav>
+<nav class="site-footer__col" aria-label="Tools"><h2 class="site-footer__title">Tools</h2><ul><li><a href="/tools">All tools</a></li><li><a href="/tools/report-check">Report check</a></li><li><a href="/tools/verify">Packet verifier</a></li><li><a href="/tools/secret-check">Secret check</a></li><li><a href="/tools/acceptance-rates">Acceptance rates</a></li><li><a href="/tools/slither-focus">Slither triage queue</a></li></ul></nav>
+<nav class="site-footer__col" aria-label="Resources"><h2 class="site-footer__title">Resources</h2><ul><li><a href="/guide">Report guide</a></li><li><a href="/mcp">MCP setup</a></li><li><a href="/templates">Report templates</a></li><li><a href="/changelog">Changelog</a></li><li><a href="https://github.com/bountyoperator/bounty-operator" target="_blank" rel="noopener noreferrer">Source<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></li></ul></nav>
+<nav class="site-footer__col" aria-label="Legal"><h2 class="site-footer__title">Legal</h2><ul><li><a href="/privacy">Privacy</a></li><li><a href="/terms">Terms</a></li><li><a href="/security">Security</a></li><li><a href="/licenses">Licences</a></li><li><a href="mailto:security@bountyoperator.com">Report a vulnerability</a></li></ul></nav>
+</div>
+<div class="wrap">
+<div class="site-footer__base">
+<p>Built by <a href="https://audits.sherlock.xyz/watson/Tradi3" target="_blank" rel="noopener noreferrer">Tradi3</a></p>
+<p><a href="mailto:support@bountyoperator.com">support@bountyoperator.com</a></p>
+</div>
+</div>
+</footer>
+</body>
+</html>

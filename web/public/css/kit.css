@@ -1,0 +1,294 @@
+@charset "UTF-8";
+
+/*
+  Layout for the component kit (/_kit), a dev page built only with
+  `node scripts/build-site.mjs --dev`. Nothing here is a shared component:
+  shared styles live in base.css.
+*/
+
+.kit {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-32);
+  padding-block: var(--sp-32) 0;
+}
+
+.kit__content {
+  min-width: 0;
+}
+
+.kit__intro {
+  display: grid;
+  gap: var(--sp-12);
+  padding-bottom: var(--sp-32);
+}
+
+/* Section index: a row of links on small screens, a sticky column on wide ones. */
+.kit__index ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--sp-16);
+  margin-top: var(--sp-8);
+  padding: 0;
+  list-style: none;
+}
+
+.kit__index a {
+  display: inline-flex;
+  align-items: center;
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  color: var(--muted);
+  font-size: var(--fs-14);
+  text-decoration: none;
+}
+
+.kit__index a:hover {
+  color: var(--accent);
+}
+
+@media (min-width: 64em) {
+  .kit {
+    grid-template-columns: 11rem minmax(0, 1fr);
+    gap: var(--sp-48);
+    padding-top: var(--sp-48);
+  }
+
+  .kit__index {
+    position: sticky;
+    top: var(--sp-24);
+    align-self: start;
+  }
+
+  .kit__index ul {
+    display: grid;
+    gap: 0;
+  }
+
+  .kit__index a {
+    min-height: 2rem;
+  }
+}
+
+.kit__section {
+  padding-block: var(--sp-48);
+  border-top: 1px solid var(--line);
+}
+
+.kit__section .section-head {
+  margin-bottom: var(--sp-24);
+}
+
+/* One labelled example. */
+.kit__demo {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-12);
+}
+
+.kit__demo--narrow {
+  max-width: 26rem;
+}
+
+/* The dialog is shown in the page flow instead of on top of it. */
+.kit__dialog .dialog {
+  position: static;
+  margin: 0;
+}
+
+/* Colour swatches */
+.swatches {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
+  gap: var(--sp-12);
+}
+
+.swatch {
+  display: grid;
+  gap: 0.125rem;
+}
+
+.swatch__chip {
+  height: 3rem;
+  margin-bottom: var(--sp-8);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-ctl);
+  background: var(--swatch);
+}
+
+.swatch__name {
+  font: 600 var(--fs-12) / 1.4 var(--font-mono);
+}
+
+.swatch__note {
+  color: var(--muted);
+  font-size: var(--fs-13);
+}
+
+.swatch[data-token="bg"] {
+  --swatch: var(--bg);
+}
+
+.swatch[data-token="surface"] {
+  --swatch: var(--surface);
+}
+
+.swatch[data-token="surface-2"] {
+  --swatch: var(--surface-2);
+}
+
+.swatch[data-token="line"] {
+  --swatch: var(--line);
+}
+
+.swatch[data-token="line-strong"] {
+  --swatch: var(--line-strong);
+}
+
+.swatch[data-token="line-control"] {
+  --swatch: var(--line-control);
+}
+
+.swatch[data-token="text"] {
+  --swatch: var(--text);
+}
+
+.swatch[data-token="muted"] {
+  --swatch: var(--muted);
+}
+
+.swatch[data-token="accent"] {
+  --swatch: var(--accent);
+}
+
+.swatch[data-token="accent-solid"] {
+  --swatch: var(--accent-solid);
+}
+
+.swatch[data-token="gap"] {
+  --swatch: var(--gap);
+}
+
+.swatch[data-token="gap-bg"] {
+  --swatch: var(--gap-bg);
+}
+
+.swatch[data-token="sev-crit"] {
+  --swatch: var(--sev-crit);
+}
+
+.swatch[data-token="sev-high"] {
+  --swatch: var(--sev-high);
+}
+
+.swatch[data-token="sev-med"] {
+  --swatch: var(--sev-med);
+}
+
+.swatch[data-token="sev-low"] {
+  --swatch: var(--sev-low);
+}
+
+.swatch[data-token="sev-info"] {
+  --swatch: var(--sev-info);
+}
+
+.swatch[data-token="sev-none"] {
+  --swatch: var(--sev-none);
+}
+
+/* Spacing scale */
+.spaces {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--sp-16);
+}
+
+.spaces li {
+  display: grid;
+  gap: var(--sp-8);
+  justify-items: start;
+}
+
+.spaces__bar {
+  width: var(--space);
+  height: var(--space);
+  border-radius: 2px;
+  background: var(--accent);
+}
+
+.spaces [data-sp="4"] {
+  --space: var(--sp-4);
+}
+
+.spaces [data-sp="8"] {
+  --space: var(--sp-8);
+}
+
+.spaces [data-sp="12"] {
+  --space: var(--sp-12);
+}
+
+.spaces [data-sp="16"] {
+  --space: var(--sp-16);
+}
+
+.spaces [data-sp="24"] {
+  --space: var(--sp-24);
+}
+
+.spaces [data-sp="32"] {
+  --space: var(--sp-32);
+}
+
+.spaces [data-sp="48"] {
+  --space: var(--sp-48);
+}
+
+.spaces [data-sp="72"] {
+  --space: var(--sp-72);
+}
+
+.spaces [data-sp="112"] {
+  --space: var(--sp-112);
+}
+
+/* Type specimen */
+.specimen__row {
+  display: grid;
+  gap: var(--sp-4);
+  padding-block: var(--sp-16);
+  border-bottom: 1px solid var(--line);
+}
+
+.specimen__row:last-child {
+  border-bottom: 0;
+}
+
+@media (min-width: 48em) {
+  .specimen__row {
+    grid-template-columns: 7.5rem minmax(0, 1fr);
+    gap: var(--sp-24);
+    align-items: baseline;
+  }
+}
+
+/* Icon sheet */
+.icon-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr));
+  gap: var(--sp-4) var(--sp-16);
+}
+
+.icon-grid li {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-12);
+  min-height: 2.5rem;
+}
+
+.icon-grid .icon {
+  width: 1.25rem;
+  height: 1.25rem;
+}

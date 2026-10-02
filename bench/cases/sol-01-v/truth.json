@@ -1,0 +1,139 @@
+{
+  "schema": "paydirt.truth/1",
+  "pair": "sol-01",
+  "variant": "vulnerable",
+  "origin": "original",
+  "assistant": "openai/gpt-6.1-sol",
+  "canary": "7c2a4f15-f9ab-4e64-9c42-f71c99cdc889",
+  "planted": [
+    {
+      "id": "P1",
+      "primary": true,
+      "file": "src/AsterQuay.sol",
+      "lines": [
+        [
+          90,
+          93
+        ],
+        [
+          142,
+          151
+        ],
+        [
+          298,
+          302
+        ]
+      ],
+      "functions": [
+        "deposit",
+        "previewDeposit",
+        "convertToShares",
+        "_sharesFor",
+        "totalAssets"
+      ],
+      "severity": [
+        "high",
+        "critical"
+      ],
+      "mechanism": "totalAssets() is the live token balance and _sharesFor floors assets * totalSupply / totalAssets with no offset and no zero-receipt check in deposit, so the first holder can mint 1 unit of receipts, transfer assets straight to the contract, make the next deposit mint zero receipts and redeem the whole balance.",
+      "proof": "test/Vulnerable.t.sol:test_planted_P1"
+    }
+  ],
+  "decoys": [
+    {
+      "id": "D1",
+      "file": "src/AsterQuay.sol",
+      "lines": [
+        [
+          272,
+          280
+        ]
+      ],
+      "functions": [
+        "sweepToken"
+      ],
+      "why": "Owner-only and reverts with ProtectedToken when the token is the underlying asset or the receipt token itself, so it can only move unrelated tokens; depositors' assets and receipts are untouched.",
+      "proof": "test/Vulnerable.t.sol:test_decoy_D1"
+    },
+    {
+      "id": "D2",
+      "file": "src/AsterQuay.sol",
+      "lines": [
+        [
+          111,
+          114
+        ],
+        [
+          116,
+          120
+        ],
+        [
+          331,
+          339
+        ]
+      ],
+      "functions": [
+        "previewWithdraw",
+        "previewRedeem",
+        "_exitFeeOnNet",
+        "_exitFeeOnGross"
+      ],
+      "why": "The two exit-fee helpers divide by BPS and by BPS + exitFeeBps because one prices the fee on the net amount and the other on the gross amount; both round up, withdraw rounds the receipts burned up and redeem rounds the assets down, so every rounding step goes against the caller and neither route pays a smaller fee than the other.",
+      "proof": "test/Vulnerable.t.sol:test_decoy_D2"
+    }
+  ],
+  "acceptable": [
+    {
+      "file": "src/AsterQuay.sol",
+      "lines": [
+        [
+          213,
+          222
+        ]
+      ],
+      "note": "low/design, unscored: yield arrives as a step in reportYield, so a deposit placed just before a report shares in it; the exit fee is the only brake."
+    },
+    {
+      "file": "src/AsterQuay.sol",
+      "lines": [
+        [
+          122,
+          126
+        ]
+      ],
+      "note": "low, unscored: depositCap is compared with the live balance, so yield and direct transfers consume the cap."
+    },
+    {
+      "file": "src/AsterQuay.sol",
+      "lines": [
+        [
+          202,
+          205
+        ]
+      ],
+      "note": "low, unscored: receipts sent to the contract itself cannot be recovered (sweepToken rejects the receipt token)."
+    },
+    {
+      "file": "src/AsterQuay.sol",
+      "lines": [
+        [
+          249,
+          258
+        ]
+      ],
+      "note": "info, unscored: fee policy changes take effect immediately (bounded at 20% report fee and 1% exit fee)."
+    },
+    {
+      "file": "src/AsterQuay.sol",
+      "lines": [
+        [
+          68,
+          76
+        ]
+      ],
+      "note": "info, unscored: decimals is supplied by the deployer rather than read from the asset."
+    }
+  ],
+  "patched_region": null,
+  "report": null
+}

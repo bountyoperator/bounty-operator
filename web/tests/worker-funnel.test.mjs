@@ -1,0 +1,153 @@
+import assert from 'node:assert/strict';
+import test from 'node:test';
+
+import { CLIENT_EVENTS, count, countVisit, dayOf, isBot, pageviewEvent, refCodeBucket, referrerBucket, visitSource } from '../src/funnel.ts';
+import { SITE_ORIGIN, createContext, createEnv, funnelCounts } from './worker-helpers.mjs';
+
+const CHROME = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36';
+
+test('referrerBucket names the sources on the list', () => {
+  const cases = {
+    'https://x.com/someone/status/1': 'x',
+    'https://t.co/abc': 'x',
+    'https://twitter.com/': 'x',
+    'https://mobile.twitter.com/': 'x',
+    'https://github.com/example/repository': 'github',
+    'https://news.ycombinator.com/item?id=1': 'hackernews',
+    'https://www.reddit.com/r/ethdev/': 'reddit',
+    'https://old.reddit.com/': 'reddit',
+    'https://www.google.com/': 'google',
+    'https://www.google.co.uk/': 'google',
+    'https://google.com.au/search': 'google',
+    'https://www.bing.com/search?q=x': 'bing',
+    'https://duckduckgo.com/': 'duckduckgo',
+    'https://immunefi.com/bug-bounty/': 'immunefi',
+    'https://cantina.xyz/': 'cantina',
+    'https://audits.sherlock.xyz/': 'sherlock',
+    'https://discord.com/channels/1/2': 'discord',
+    'https://openrouter.ai/apps': 'openrouter',
+    'https://t.me/somechannel': 'telegram',
+    'https://warpcast.com/': 'farcaster',
+    'https://farcaster.xyz/': 'farcaster',
+  };
+  for (const [referer, bucket] of Object.entries(cases)) {
+    assert.equal(referrerBucket(referer, SITE_ORIGIN), bucket, referer);
+  }
+});
+
+test('referrerBucket files unknown sites under other and ignores the site itself', () => {
+  assert.equal(referrerBucket('https://example.org/post', SITE_ORIGIN), 'other');
+  assert.equal(referrerBucket('https://notx.com/', SITE_ORIGIN), 'other', 'a suffix match needs a dot before it');
+  assert.equal(referrerBucket('https://evilgithub.com/', SITE_ORIGIN), 'other');
+  assert.equal(referrerBucket('https://google.evil.example/', SITE_ORIGIN), 'other');
+
+  assert.equal(referrerBucket('https://bountyoperator.com/guide', SITE_ORIGIN), null);
+  assert.equal(referrerBucket('https://www.bountyoperator.com/', SITE_ORIGIN), null);
+  assert.equal(referrerBucket('', SITE_ORIGIN), null);
+  assert.equal(referrerBucket(null, SITE_ORIGIN), null);
+  assert.equal(referrerBucket('not a url', SITE_ORIGIN), null);
+  assert.equal(referrerBucket('android-app://com.twitter.android', SITE_ORIGIN), null);
+});
+
+test('refCodeBucket accepts only codes on the list', () => {
+  assert.equal(refCodeBucket('x'), 'x');
+  assert.equal(refCodeBucket('Twitter'), 'x');
+  assert.equal(refCodeBucket('hn'), 'hackernews');
+  assert.equal(refCodeBucket('gh'), 'github');
+  assert.equal(refCodeBucket('launch'), 'launch');
+  assert.equal(refCodeBucket('mcp'), 'mcp');
+
+  assert.equal(refCodeBucket('made-up-code'), null, 'a visitor cannot mint new counter rows');
+  assert.equal(refCodeBucket('constructor'), null);
+  assert.equal(refCodeBucket('__proto__'), null);
+  assert.equal(refCodeBucket(''), null);
+  assert.equal(refCodeBucket(null), null);
+});
+
+test('visitSource prefers the ?ref= code over the Referer header', () => {
+  const url = (search) => new URL(`${SITE_ORIGIN}/guide${search}`);
+  assert.equal(visitSource(url('?ref=hn'), 'https://x.com/', SITE_ORIGIN), 'hackernews');
+  assert.equal(visitSource(url('?ref=unknown'), 'https://x.com/', SITE_ORIGIN), 'x');
+  assert.equal(visitSource(url(''), 'https://github.com/', SITE_ORIGIN), 'github');
+  assert.equal(visitSource(url(''), null, SITE_ORIGIN), null);
+});
+
+test('isBot filters crawlers, tools and empty agents', () => {
+  assert.equal(isBot(CHROME), false);
+  assert.equal(isBot('Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1'), false);
+  for (const agent of ['', null, 'curl/8.9.0', 'Googlebot/2.1 (+http://www.google.com/bot.html)', 'Twitterbot/1.0', 'python-requests/2.32', 'Slackbot-LinkExpanding 1.0', 'node']) {
+    assert.equal(isBot(agent), true, String(agent));
+  }
+});
+
+test('pageviewEvent normalises the path', () => {
+  assert.equal(pageviewEvent('/'), 'pv:/');
+  assert.equal(pageviewEvent('/guide'), 'pv:/guide');
+  assert.equal(pageviewEvent('/tools/report-check/'), 'pv:/tools/report-check');
+  assert.equal(pageviewEvent(`/${'a'.repeat(100)}`), null);
+});
+
+function htmlResponse(status = 200, type = 'text/html; charset=utf-8') {
+  return new Response(status === 304 ? null : '<!doctype html>', { status, headers: { 'Content-Type': type } });
+}
+
+function visit(path, headers = {}, method = 'GET') {
+  return new Request(`${SITE_ORIGIN}${path}`, { method, headers: { 'User-Agent': CHROME, ...headers } });
+}
+
+async function countedFor(request, response = htmlResponse()) {
+  const env = createEnv();
+  const ctx = createContext();
+  countVisit(env, ctx, request, new URL(request.url), response);
+  await ctx.settled();
+  return funnelCounts(env.DB);
+}
+
+test('countVisit records a page view and its source', async () => {
+  assert.deepEqual(await countedFor(visit('/guide', { Referer: 'https://x.com/a/status/1', 'Sec-Fetch-Dest': 'document' })), {
+    'pv:/guide': 1,
+    'ref:x': 1,
+  });
+  assert.deepEqual(await countedFor(visit('/?ref=hn')), { 'pv:/': 1, 'ref:hackernews': 1 });
+  assert.deepEqual(await countedFor(visit('/pricing', { Referer: `${SITE_ORIGIN}/` })), { 'pv:/pricing': 1 });
+  assert.deepEqual(await countedFor(visit('/guide'), htmlResponse(304)), { 'pv:/guide': 1 }, 'a revalidated page is a visit too');
+});
+
+test('countVisit skips everything that is not a person loading a page', async () => {
+  assert.deepEqual(await countedFor(visit('/guide', { 'User-Agent': 'Googlebot/2.1' })), {});
+  assert.deepEqual(await countedFor(visit('/missing'), htmlResponse(404)), {});
+  assert.deepEqual(await countedFor(visit('/style.css'), htmlResponse(200, 'text/css')), {});
+  assert.deepEqual(await countedFor(visit('/guide', { 'Sec-Fetch-Dest': 'iframe' })), {});
+  assert.deepEqual(await countedFor(visit('/guide', { 'Sec-Purpose': 'prefetch' })), {});
+  assert.deepEqual(await countedFor(visit('/guide', {}, 'HEAD')), {});
+});
+
+test('count adds up per day and never rejects', async () => {
+  const env = createEnv();
+  const ctx = createContext();
+  count(env, ctx, 'register');
+  count(env, ctx, 'register', 'login');
+  count(env, ctx);
+  await ctx.settled();
+  assert.deepEqual(funnelCounts(env.DB), { login: 1, register: 2 });
+  assert.equal(env.DB.sqlite.prepare('SELECT COUNT(DISTINCT day) AS days FROM funnel_daily').get().days, 1);
+
+  const broken = { DB: { prepare: () => ({ bind: () => ({}) }), batch: () => Promise.reject(new Error('down')) } };
+  count(broken, ctx, 'register');
+  await ctx.settled();
+});
+
+test('dayOf is the UTC date', () => {
+  assert.equal(dayOf(1790899200), '2026-10-02');
+  assert.equal(dayOf(1790899199), '2026-10-01');
+});
+
+test('client events are a fixed list that cannot collide with server counters', () => {
+  assert(CLIENT_EVENTS.has('prompt_exported'));
+  assert(!CLIENT_EVENTS.has('register'));
+  assert(!CLIENT_EVENTS.has('sub_active'));
+  for (const name of CLIENT_EVENTS) {
+    assert.match(name, /^[a-z][a-z_]{2,40}$/);
+    assert(!name.includes(':'));
+  }
+});

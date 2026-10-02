@@ -1,0 +1,26 @@
+{
+  "schema": "paydirt.truth/1",
+  "pair": "fx-01",
+  "variant": "fixed",
+  "origin": "original",
+  "assistant": "anthropic/claude-opus-5.5",
+  "canary": "c4a91e02-7b3d-4d85-9e61-2f8a0c5d7b33",
+  "planted": [],
+  "decoys": [
+    {
+      "id": "D1",
+      "file": "src/PocketBank.sol",
+      "lines": [[50, 57]],
+      "functions": ["sweepDust"],
+      "why": "No modifier, but the first line reverts NotOwner for every caller except the immutable owner, and feesAccrued is zeroed before the transfer.",
+      "proof": "test/Fixed.t.sol:test_decoy_D1"
+    }
+  ],
+  "acceptable": [],
+  "patched_region": {
+    "file": "src/PocketBank.sol",
+    "lines": [[36, 47]],
+    "functions": ["withdrawAll"]
+  },
+  "report": null
+}

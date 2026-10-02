@@ -1,0 +1,44 @@
+name: Feature request
+description: A review profile, prompt pass, scanner adapter or other change you want.
+labels: [enhancement]
+body:
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Kind
+      options:
+        - New review profile
+        - New prompt pass
+        - Scanner adapter
+        - Web app
+        - MCP server
+        - CLI
+        - Something else
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: What you are trying to do
+      description: The point in a hunt where this comes up and what you do today.
+      placeholder: After a Sherlock contest closes I want to check my drafts against the judging rules for that contest.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What it should do
+      description: Inputs, output and the verdict or queue you expect back. An example of real output beats a description.
+    validations:
+      required: true
+  - type: textarea
+    id: sources
+    attributes:
+      label: Sources
+      description: For a scanner adapter, link the tool and a sample of its output. For a dataset, give the source, licence and sample size.
+  - type: checkboxes
+    id: contribute
+    attributes:
+      label: Contribution
+      options:
+        - label: I can open a pull request for this.

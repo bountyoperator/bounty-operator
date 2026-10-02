@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pricing: Free, or Operator at US$10 per week | Bounty Operator</title>
+<meta name="description" content="Free gives you 1 hosted review per UTC day. Operator is US$10 per week for unlimited reviews, the Gauntlet, Panel review and four reviews at once.">
+<link rel="canonical" href="https://bountyoperator.com/pricing">
+<meta name="color-scheme" content="dark light">
+<meta name="theme-color" content="#0a1220" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f5f7fb" media="(prefers-color-scheme: light)">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Bounty Operator">
+<meta property="og:title" content="Pricing: Free, or Operator at US$10 per week | Bounty Operator">
+<meta property="og:description" content="Free gives you 1 hosted review per UTC day. Operator is US$10 per week for unlimited reviews, the Gauntlet, Panel review and four reviews at once.">
+<meta property="og:url" content="https://bountyoperator.com/pricing">
+<meta property="og:image" content="https://bountyoperator.com/social-v2.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Bounty Operator. Find the hole in your report before the triager does.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Pricing: Free, or Operator at US$10 per week | Bounty Operator">
+<meta name="twitter:description" content="Free gives you 1 hosted review per UTC day. Operator is US$10 per week for unlimited reviews, the Gauntlet, Panel review and four reviews at once.">
+<meta name="twitter:image" content="https://bountyoperator.com/social-v2.png">
+<meta name="twitter:image:alt" content="Bounty Operator. Find the hole in your report before the triager does.">
+<link rel="icon" href="/favicon.ico" sizes="48x48">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+<script src="/theme.js"></script>
+<link rel="stylesheet" href="/css/base.css">
+<link rel="stylesheet" href="/css/landing.css">
+<link rel="stylesheet" href="/css/account.css">
+<link rel="modulepreload" href="/app/api.mjs">
+<link rel="modulepreload" href="/app/billing-ui.mjs">
+<link rel="modulepreload" href="/app/events.mjs">
+<link rel="modulepreload" href="/app/passkey.mjs">
+<link rel="modulepreload" href="/app/portal.mjs">
+<link rel="modulepreload" href="/app/ui.mjs">
+<script type="module" src="/app/account.mjs"></script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Bounty Operator","item":"https://bountyoperator.com/"},{"@type":"ListItem","position":2,"name":"Pricing","item":"https://bountyoperator.com/pricing"}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Bounty Operator","url":"https://bountyoperator.com/","applicationCategory":"SecurityApplication","operatingSystem":"Web","description":"Pre-submission review for bug bounty reports and smart-contract findings. The AI argues against the finding. The hunter writes the report.","image":"https://bountyoperator.com/social-v2.png","creator":{"@type":"Organization","name":"Tradi3","url":"https://audits.sherlock.xyz/watson/Tradi3"},"offers":[{"@type":"Offer","name":"Free","price":"0","priceCurrency":"USD","description":"One hosted review a day, any single profile; prompt export for the three core profiles. Free tools, repo import and local history.","url":"https://bountyoperator.com/pricing"},{"@type":"Offer","name":"Operator","price":"10.00","priceCurrency":"USD","description":"Unlimited hosted reviews, the Gauntlet, Panel review and four concurrent reviews.","url":"https://bountyoperator.com/pricing","priceSpecification":{"@type":"UnitPriceSpecification","price":"10.00","priceCurrency":"USD","billingDuration":"P1W","unitText":"week"}}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"What counts as a hosted review?","acceptedAnswer":{"@type":"Answer","text":"One review profile run through bountyoperator.com on your own API key, from the workbench or from a coding agent with run_review . Exporting the prompt of a core profile to your chat app does not count and has no daily limit. Neither does a core profile prepared over MCP for your agent’s own model."}},{"@type":"Question","name":"Which profiles does the free review cover?","acceptedAnswer":{"@type":"Answer","text":"Any single profile, all eleven. Code security review, Solidity review and Challenge a draft report are the three core profiles: they also export as a prompt and prepare over MCP. The other eight run hosted only, in the workbench or through run_review : scope and impact fit, design intent and actors, prior-art overlap, proof review, severity calibration, triager simulation, report editor and scanner triage."}},{"@type":"Question","name":"When does the free review reset?","acceptedAnswer":{"@type":"Answer","text":"At 00:00 UTC. A review the provider fails, refuses or cuts off at the start does not use the day’s allowance."}},{"@type":"Question","name":"What does Operator add?","acceptedAnswer":{"@type":"Answer","text":"Unlimited hosted reviews, the Gauntlet, Panel review and four hosted reviews running at once. The gauntlet from a coding agent over MCP uses seven hosted reviews, so it runs on Operator too."}},{"@type":"Question","name":"Who pays for the model?","acceptedAnswer":{"@type":"Answer","text":"Your provider bills model usage to your own key. The US$10 per week covers the hosted workbench and does not include model usage."}},{"@type":"Question","name":"How does billing work?","acceptedAnswer":{"@type":"Answer","text":"US$10 billed weekly, renews until you cancel in the Stripe portal; access runs to the end of the paid week."}},{"@type":"Question","name":"Can I use a chat subscription instead of an API key?","acceptedAnswer":{"@type":"Answer","text":"Yes, on both plans, for the three core profiles: code security review, Solidity review and challenge a draft report. Export the prompt, paste it into your chat app and paste the answer back. The other profiles run hosted on an API key."}},{"@type":"Question","name":"Do I need an email address or a card for the free plan?","acceptedAnswer":{"@type":"Answer","text":"No. An account is a passkey. A card is entered only at Stripe when you buy Operator."}}]}</script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="site-header">
+<div class="wrap site-header__inner">
+<a class="brand" href="/"><svg class="brand__mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect class="brand__tile" width="64" height="64" rx="14"/><path class="brand__glyph" d="M12.5 15h6.5v31.5h-6.5z"/><path class="brand__glyph" fill-rule="evenodd" d="M25.5 25a10.75 10.75 0 1 0 0 21.5a10.75 10.75 0 0 0 0-21.5zm0 6.25a4.5 4.5 0 1 1 0 9a4.5 4.5 0 0 1 0-9z"/><path class="brand__slash" d="M45.5 13h6.25l-8.6 37.5h-6.25z"/></svg><span class="brand__name">Bounty Operator</span></a>
+<nav class="site-nav" aria-label="Main"><ul><li><a href="/#workspace">Workbench</a></li><li><a href="/method">Method</a></li><li><a href="/tools">Tools</a></li><li><a href="/guide">Guide</a></li><li><a href="/mcp">MCP</a></li><li><a href="/pricing" aria-current="page">Pricing</a></li></ul></nav>
+<div class="site-header__actions">
+<button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch colour theme"><span class="icon theme-toggle__icon" aria-hidden="true"></span></button>
+<a class="btn btn--secondary btn--sm" href="/#account">Account</a>
+</div>
+</div>
+</header>
+<main id="main" tabindex="-1">
+
+
+<section class="lp-hero wrap">
+  <nav class="breadcrumbs" aria-label="Breadcrumb"><ol><li><a href="/">Bounty Operator</a></li><li aria-current="page">Pricing</li></ol></nav>
+  <div class="lp-hero__grid">
+    <div class="lp-hero__text">
+      <p class="eyebrow">Pricing</p>
+      <h1>Bounty Operator pricing: Free, or Operator at US$10 per week</h1>
+      <p class="lede">Two plans. No seats, no credits, no per-line metering. Both run on your own model and your own key, so your provider bills the model usage and Bounty Operator bills a flat week.</p>
+      
+      
+      
+    </div>
+    
+  </div>
+</section>
+
+<section class="section section--tight wrap" aria-labelledby="plans">
+  <h2 class="visually-hidden" id="plans">Plans</h2>
+  <div class="plans__note" data-checkout-note></div>
+  <div class="plans">
+    <article class="plan" aria-labelledby="plan-free">
+      <div class="plan__head">
+        <h3 class="plan__name" id="plan-free">Free</h3>
+        <span class="chip status" data-status="free">Free</span>
+      </div>
+      <p class="plan__price"><span class="plan__amount">US$0</span></p>
+      <p class="plan__for">One hosted review per UTC day. No card.</p>
+      <ul class="ticks"><li><span class="icon icon--check" aria-hidden="true"></span><span>1 hosted review per UTC day</span></li><li><span class="icon icon--check" aria-hidden="true"></span><span>Any of the eleven single profiles</span></li><li><span class="icon icon--check" aria-hidden="true"></span><span>Gauntlet and Panel review: the worked examples</span></li><li><span class="icon icon--check" aria-hidden="true"></span><span>1 hosted review running at a time</span></li><li><span class="icon icon--check" aria-hidden="true"></span><span>Prompt export with paste-back and MCP prepare for the three core profiles, no daily limit</span></li><li><span class="icon icon--check" aria-hidden="true"></span><span>Free tools, repository import and local history</span></li></ul>
+      <div class="plan__cta"><a class="btn btn--secondary btn--lg btn--block" href="/#workspace"><span class="btn__label">Run today’s free review</span></a></div>
+    </article>
+    <article class="plan plan--accent" aria-labelledby="plan-operator">
+      <div class="plan__head">
+        <h3 class="plan__name" id="plan-operator">Operator</h3>
+        <span class="chip status" data-status="operator">Operator</span>
+      </div>
+      <p class="plan__price"><span class="plan__amount">US$10</span><span class="plan__per">per week</span></p>
+      <p class="plan__for">For contest weeks and live hunts.</p>
+      <ul class="ticks"><li><span class="icon icon--check" aria-hidden="true"></span><span>Unlimited hosted reviews</span></li><li><span class="icon icon--check" aria-hidden="true"></span><span>All eleven single profiles</span></li><li><span class="icon icon--check" aria-hidden="true"></span><span>The Gauntlet: eight stages, one verdict dossier</span></li><li><span class="icon icon--check" aria-hidden="true"></span><span>Panel review: two to four models, then cross-examination</span></li><li><span class="icon icon--check" aria-hidden="true"></span><span>4 hosted reviews running at once</span></li><li><span class="icon icon--check" aria-hidden="true"></span><span>Everything in Free</span></li></ul>
+      <div class="plan__cta"><button class="btn btn--primary btn--lg btn--block" type="button" id="upgrade" data-account-action="checkout"><span class="btn__label">Get Operator</span><span class="icon icon--arrow-right" aria-hidden="true"></span></button></div>
+    </article>
+  </div>
+  <p class="fine plans__terms">US$10 billed weekly, renews until you cancel in the Stripe portal; access runs to the end of the paid week.</p>
+</section>
+
+<section class="section wrap" aria-labelledby="compare-plans">
+  <header class="section-head"><div class="section-head__text"><h2 id="compare-plans">Line by line</h2></div></header>
+  <div class="table-wrap" tabindex="0" role="region" aria-label="Free and Operator, line by line"><table class="table plans-table"><thead><tr><th scope="col">What you get</th><th scope="col">Free</th><th scope="col">Operator · US$10/week</th></tr></thead><tbody><tr><th scope="row">Hosted reviews</th><td>1 per UTC day</td><td>Unlimited</td></tr><tr><th scope="row">All eleven single profiles, hosted</th><td>Any one, once a day</td><td><span class="plan-yes"><span class="icon icon--check" role="img" aria-label="Yes"></span></span></td></tr><tr><th scope="row"><a class="link" href="/gauntlet">Gauntlet</a>: eight stages, one verdict dossier</th><td><span class="chip chip--dashed" data-tone="neutral">Example only</span></td><td><span class="plan-yes"><span class="icon icon--check" role="img" aria-label="Yes"></span></span></td></tr><tr><th scope="row"><a class="link" href="/panel-review">Panel review</a>: two to four models, then cross-examination</th><td><span class="chip chip--dashed" data-tone="neutral">Example only</span></td><td><span class="plan-yes"><span class="icon icon--check" role="img" aria-label="Yes"></span></span></td></tr><tr><th scope="row">Hosted reviews running at once</th><td>1</td><td>4</td></tr><tr><th scope="row">Prompt export with paste-back, three core profiles</th><td><span class="plan-yes"><span class="icon icon--check" role="img" aria-label="Yes"></span></span></td><td><span class="plan-yes"><span class="icon icon--check" role="img" aria-label="Yes"></span></span></td></tr><tr><th scope="row">Free tools</th><td><span class="plan-yes"><span class="icon icon--check" role="img" aria-label="Yes"></span></span></td><td><span class="plan-yes"><span class="icon icon--check" role="img" aria-label="Yes"></span></span></td></tr><tr><th scope="row">Repository import from GitHub</th><td><span class="plan-yes"><span class="icon icon--check" role="img" aria-label="Yes"></span></span></td><td><span class="plan-yes"><span class="icon icon--check" role="img" aria-label="Yes"></span></span></td></tr><tr><th scope="row">Local history</th><td><span class="plan-yes"><span class="icon icon--check" role="img" aria-label="Yes"></span></span></td><td><span class="plan-yes"><span class="icon icon--check" role="img" aria-label="Yes"></span></span></td></tr><tr><th scope="row">MCP: prepare a core profile for your agent’s own model</th><td><span class="plan-yes"><span class="icon icon--check" role="img" aria-label="Yes"></span></span></td><td><span class="plan-yes"><span class="icon icon--check" role="img" aria-label="Yes"></span></span></td></tr><tr><th scope="row">MCP: run any profile hosted with <code>run_review</code></th><td>Uses the daily review</td><td>Unlimited</td></tr></tbody></table></div>
+</section>
+
+<section class="section wrap wrap--narrow" aria-labelledby="faq">
+  <header class="section-head"><div class="section-head__text"><h2 id="faq">Pricing questions</h2></div></header>
+  <div class="accordion"><details class="accordion__item" name="pricing-faq"><summary class="accordion__summary">What counts as a hosted review?</summary><div class="accordion__body"><p>One review profile run through bountyoperator.com on your own API key, from the workbench or from a coding agent with <code>run_review</code>. Exporting the prompt of a core profile to your chat app does not count and has no daily limit. Neither does a core profile prepared over MCP for your agent’s own model.</p></div></details><details class="accordion__item" name="pricing-faq"><summary class="accordion__summary">Which profiles does the free review cover?</summary><div class="accordion__body"><p>Any single profile, all eleven. Code security review, Solidity review and Challenge a draft report are the three core profiles: they also export as a prompt and prepare over MCP. The other eight run hosted only, in the workbench or through <code>run_review</code>: scope and impact fit, design intent and actors, prior-art overlap, proof review, severity calibration, triager simulation, report editor and scanner triage.</p></div></details><details class="accordion__item" name="pricing-faq"><summary class="accordion__summary">When does the free review reset?</summary><div class="accordion__body"><p>At 00:00 UTC. A review the provider fails, refuses or cuts off at the start does not use the day’s allowance.</p></div></details><details class="accordion__item" name="pricing-faq"><summary class="accordion__summary">What does Operator add?</summary><div class="accordion__body"><p>Unlimited hosted reviews, the Gauntlet, Panel review and four hosted reviews running at once. The gauntlet from a coding agent over MCP uses seven hosted reviews, so it runs on Operator too.</p></div></details><details class="accordion__item" name="pricing-faq"><summary class="accordion__summary">Who pays for the model?</summary><div class="accordion__body"><p>Your provider bills model usage to your own key. The US$10 per week covers the hosted workbench and does not include model usage.</p></div></details><details class="accordion__item" name="pricing-faq"><summary class="accordion__summary">How does billing work?</summary><div class="accordion__body"><p>US$10 billed weekly, renews until you cancel in the Stripe portal; access runs to the end of the paid week.</p></div></details><details class="accordion__item" name="pricing-faq"><summary class="accordion__summary">Can I use a chat subscription instead of an API key?</summary><div class="accordion__body"><p>Yes, on both plans, for the three core profiles: code security review, Solidity review and challenge a draft report. Export the prompt, paste it into your chat app and paste the answer back. The other profiles run hosted on an API key.</p></div></details><details class="accordion__item" name="pricing-faq"><summary class="accordion__summary">Do I need an email address or a card for the free plan?</summary><div class="accordion__body"><p>No. An account is a passkey. A card is entered only at Stripe when you buy Operator.</p></div></details></div>
+</section>
+
+<section class="section section--tight wrap">
+  
+<nav class="related" aria-label="Related">
+  <p class="meta">Related</p>
+  <ul class="related__list"><li><a class="related__link" href="/gauntlet"><span class="related__label">Gauntlet<span class="icon icon--arrow-right" aria-hidden="true"></span></span><span class="related__text">What an Operator run returns, with a full example dossier.</span></a></li><li><a class="related__link" href="/panel-review"><span class="related__label">Panel review<span class="icon icon--arrow-right" aria-hidden="true"></span></span><span class="related__text">Two to four models, then a cross-examination pass.</span></a></li><li><a class="related__link" href="/your-model-your-key"><span class="related__label">Your model, your key<span class="icon icon--arrow-right" aria-hidden="true"></span></span><span class="related__text">Providers, prompt export and what is stored.</span></a></li><li><a class="related__link" href="/compare"><span class="related__label">Compare<span class="icon icon--arrow-right" aria-hidden="true"></span></span><span class="related__text">Bounty Operator next to a chat app, an audit skill and platform pre-checks.</span></a></li></ul>
+</nav>
+</section>
+</main>
+<footer class="site-footer">
+<div class="wrap site-footer__grid">
+<div class="site-footer__brand">
+<a class="brand" href="/"><svg class="brand__mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect class="brand__tile" width="64" height="64" rx="14"/><path class="brand__glyph" d="M12.5 15h6.5v31.5h-6.5z"/><path class="brand__glyph" fill-rule="evenodd" d="M25.5 25a10.75 10.75 0 1 0 0 21.5a10.75 10.75 0 0 0 0-21.5zm0 6.25a4.5 4.5 0 1 1 0 9a4.5 4.5 0 0 1 0-9z"/><path class="brand__slash" d="M45.5 13h6.25l-8.6 37.5h-6.25z"/></svg><span class="brand__name">Bounty Operator</span></a>
+<p class="site-footer__promise">Find the hole in your report before the triager does.</p>
+</div>
+<nav class="site-footer__col" aria-label="Product"><h2 class="site-footer__title">Product</h2><ul><li><a href="/#workspace">Workbench</a></li><li><a href="/method">Method</a></li><li><a href="/gauntlet">Gauntlet</a></li><li><a href="/panel-review">Panel review</a></li><li><a href="/pricing">Pricing</a></li><li><a href="/#account">Account</a></li></ul></nav>
+<nav class="site-footer__col" aria-label="Tools"><h2 class="site-footer__title">Tools</h2><ul><li><a href="/tools">All tools</a></li><li><a href="/tools/report-check">Report check</a></li><li><a href="/tools/verify">Packet verifier</a></li><li><a href="/tools/secret-check">Secret check</a></li><li><a href="/tools/acceptance-rates">Acceptance rates</a></li><li><a href="/tools/slither-focus">Slither triage queue</a></li></ul></nav>
+<nav class="site-footer__col" aria-label="Resources"><h2 class="site-footer__title">Resources</h2><ul><li><a href="/guide">Report guide</a></li><li><a href="/mcp">MCP setup</a></li><li><a href="/templates">Report templates</a></li><li><a href="/changelog">Changelog</a></li><li><a href="https://github.com/bountyoperator/bounty-operator" target="_blank" rel="noopener noreferrer">Source<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></li></ul></nav>
+<nav class="site-footer__col" aria-label="Legal"><h2 class="site-footer__title">Legal</h2><ul><li><a href="/privacy">Privacy</a></li><li><a href="/terms">Terms</a></li><li><a href="/security">Security</a></li><li><a href="/licenses">Licences</a></li><li><a href="mailto:security@bountyoperator.com">Report a vulnerability</a></li></ul></nav>
+</div>
+<div class="wrap">
+<div class="site-footer__base">
+<p>Built by <a href="https://audits.sherlock.xyz/watson/Tradi3" target="_blank" rel="noopener noreferrer">Tradi3</a></p>
+<p><a href="mailto:support@bountyoperator.com">support@bountyoperator.com</a></p>
+</div>
+</div>
+</footer>
+<dialog class="dialog dialog--sm account-dialog" id="account-dialog" aria-labelledby="account-dialog-title" closedby="any"><header class="dialog__head"><h2 class="dialog__title" id="account-dialog-title">Sign in</h2><button class="dialog__close" type="button" data-close-dialog aria-label="Close"><span class="icon icon--x" aria-hidden="true"></span></button></header><div class="dialog__body"></div></dialog>
+<dialog class="dialog dialog--lg portal" id="portal-dialog" aria-labelledby="portal-dialog-title" closedby="any"><header class="dialog__head"><h2 class="dialog__title" id="portal-dialog-title">Account</h2><button class="dialog__close" type="button" data-close-dialog aria-label="Close"><span class="icon icon--x" aria-hidden="true"></span></button></header><div class="dialog__body"></div></dialog>
+<dialog class="dialog dialog--sm reauth-dialog" id="reauth-dialog" aria-labelledby="reauth-dialog-title" closedby="any"><header class="dialog__head"><h2 class="dialog__title" id="reauth-dialog-title">Confirm it&#39;s you</h2><button class="dialog__close" type="button" data-close-dialog aria-label="Close"><span class="icon icon--x" aria-hidden="true"></span></button></header><div class="dialog__body"></div></dialog>
+</body>
+</html>

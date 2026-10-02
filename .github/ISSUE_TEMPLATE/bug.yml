@@ -1,0 +1,58 @@
+name: Bug report
+description: Something in the web app, the MCP server, the CLI or a prompt does the wrong thing.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Keep secrets, private report links and target-specific PoCs out of this issue.
+        A security problem in Bounty Operator itself goes through the [security policy](https://github.com/bountyoperator/bounty-operator/security/policy).
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Where
+      options:
+        - Web app (bountyoperator.com)
+        - MCP server
+        - CLI (bounty-kit)
+        - Prompt library
+        - Docs
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: The output of `bounty-kit --version`, the MCP package version, or the version in the site footer.
+      placeholder: 0.7.0
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: The exact command, tool call or clicks. For a review, name the profile, provider and model.
+      placeholder: |
+        1. bounty-kit ai-review ./Vault.sol --dry-run
+        2. ...
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: What happened
+      description: Paste the error text or output. Redact keys and private paths.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: OS, plus the Python or Node version, or the browser and AI client.
+      placeholder: Windows 11, Python 3.14

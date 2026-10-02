@@ -1,0 +1,1200 @@
+@charset "UTF-8";
+
+/*
+  Bounty Operator: free tools (/tools and /tools/*)
+
+  Loaded after base.css. Every colour, size and radius is a token from there.
+
+   1. Page head
+   2. Tool panel
+   3. Drop zone
+   4. Hub rows
+   5. Report check: score, tally, check rows
+   6. Result summary, hashes, hits
+   7. Acceptance rates
+   8. Copy blocks: steps, phrases, ticks, tables
+   9. Next action and related tools
+*/
+
+/* ==========================================================================
+   1. Page head
+   ========================================================================== */
+
+.tool-head {
+  display: grid;
+  gap: var(--sp-16);
+  margin-bottom: var(--sp-32);
+}
+
+.tool-head .lede {
+  max-width: 64ch;
+}
+
+/* "Runs in your browser. Nothing is uploaded." */
+.tool-local {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-8);
+  color: var(--muted);
+  font: 600 var(--fs-12) / 1.5 var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.tool-local .icon {
+  width: 0.875rem;
+  height: 0.875rem;
+  color: var(--ok);
+}
+
+/* ==========================================================================
+   2. Tool panel
+   ========================================================================== */
+
+/* The frame around the interactive part: a window bar, then the body. */
+.tool-panel {
+  overflow: clip;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.tool-panel__bar {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  min-height: 2.5rem;
+  padding: var(--sp-8) var(--sp-16) var(--sp-8) var(--sp-24);
+  border-bottom: 1px solid var(--line);
+  background: var(--surface-2);
+  color: var(--muted);
+  font: 500 var(--fs-12) / 1.4 var(--font-mono);
+}
+
+.tool-panel__name {
+  color: var(--text);
+}
+
+.tool-panel__tag {
+  margin-left: auto;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.tool-panel__body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-16);
+  padding: var(--sp-24);
+}
+
+@media (max-width: 39.99em) {
+  .tool-panel__bar {
+    padding-left: var(--sp-16);
+  }
+
+  .tool-panel__body {
+    padding: var(--sp-16);
+  }
+}
+
+/* Input on the left, result on the right, from 64em. */
+.tool-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-24);
+}
+
+.tool-split__in,
+.tool-split__out {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-16);
+  align-content: start;
+  min-width: 0;
+}
+
+.tool-draft {
+  min-height: 16rem;
+  line-height: 1.6;
+}
+
+@media (min-width: 64em) {
+  .tool-split {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+    gap: var(--sp-32);
+  }
+
+  /* The draft stays in view while the result list scrolls past it. */
+  .tool-split__in {
+    position: sticky;
+    top: var(--sp-24);
+    align-self: start;
+  }
+
+  .tool-draft {
+    min-height: 26rem;
+  }
+}
+
+/* Two numbered inputs side by side. */
+.tool-pair {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-24);
+}
+
+.tool-pair__col {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-12);
+  align-content: start;
+}
+
+@media (min-width: 48em) {
+  .tool-pair {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .tool-pair .drop__label {
+    min-height: 9.5rem;
+    align-content: center;
+  }
+}
+
+.tool-label {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  font-size: var(--fs-16);
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+}
+
+.tool-label__n {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border: 1px solid var(--accent);
+  border-radius: 50%;
+  color: var(--accent);
+  font: 600 var(--fs-12) / 1 var(--font-mono);
+}
+
+.tool-state {
+  color: var(--muted);
+  font-size: var(--fs-13);
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+.tool-state:empty {
+  display: none;
+}
+
+.tool-options {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--sp-16);
+}
+
+.tool-number {
+  width: 6.5rem;
+}
+
+.tool-result {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-16);
+  padding-top: var(--sp-16);
+  border-top: 1px solid var(--line);
+}
+
+.tool-output .code__pre {
+  max-height: 28rem;
+  overflow-y: auto;
+}
+
+/* ==========================================================================
+   3. Drop zone
+   ========================================================================== */
+
+.drop {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-4);
+}
+
+.drop__label {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: var(--sp-4);
+  padding: var(--sp-32) var(--sp-16);
+  border: 1px dashed var(--line-control);
+  border-radius: var(--r-ctl);
+  background: var(--surface-2);
+  text-align: center;
+  cursor: pointer;
+  transition:
+    background-color var(--t-fast),
+    border-color var(--t-fast);
+}
+
+.drop__label:hover,
+.drop.is-over .drop__label {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 9%, var(--surface));
+}
+
+.drop.is-over .drop__label {
+  border-style: solid;
+}
+
+.drop__label:focus-within {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.drop__label > .icon {
+  width: 1.5rem;
+  height: 1.5rem;
+  margin-bottom: var(--sp-4);
+  color: var(--accent);
+}
+
+.drop__title {
+  font-size: var(--fs-16);
+  font-weight: 650;
+  line-height: 1.4;
+}
+
+.drop__hint {
+  max-width: 44ch;
+  color: var(--muted);
+  font-size: var(--fs-13);
+  line-height: 1.55;
+}
+
+/* The input stays focusable; the label is what is seen and pressed. */
+.drop__input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.drop__folder {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  gap: var(--sp-8);
+  min-height: var(--tap);
+  padding-inline: var(--sp-4);
+  border-radius: var(--r-ctl);
+  color: var(--accent);
+  font-size: var(--fs-14);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.drop__folder:hover {
+  color: var(--accent-hover);
+}
+
+.drop__folder:focus-within {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* ==========================================================================
+   4. Hub rows
+   ========================================================================== */
+
+/* One ledger: a numbered row per tool, the whole row is the link. */
+.tool-rows {
+  overflow: clip;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.tool-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: 2rem minmax(0, 1fr) auto;
+  gap: var(--sp-8) var(--sp-16);
+  align-items: start;
+  padding: 1.25rem var(--sp-16);
+  transition: background-color var(--t-fast);
+}
+
+.tool-row + .tool-row {
+  border-top: 1px solid var(--line);
+}
+
+.tool-row:hover {
+  background: var(--surface-2);
+}
+
+.tool-row:focus-within {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+}
+
+.tool-row__n {
+  padding-top: 0.3rem;
+  color: var(--muted);
+  font: 600 var(--fs-12) / 1.4 var(--font-mono);
+  letter-spacing: 0.06em;
+}
+
+.tool-row__title {
+  font-size: var(--fs-18);
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+}
+
+.tool-row__link {
+  text-decoration: none;
+}
+
+/* The link covers the row, so the row is one target. */
+.tool-row__link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
+.tool-row__link:focus-visible {
+  outline: none;
+}
+
+.tool-row__text {
+  max-width: 62ch;
+  margin-top: var(--sp-4);
+  color: var(--muted);
+  font-size: var(--fs-14);
+  line-height: 1.55;
+}
+
+.tool-row__io {
+  display: flex;
+  grid-column: 2 / -1;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-4) var(--sp-8);
+  color: var(--muted);
+  font: 600 var(--fs-12) / 1.5 var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.tool-row__io .icon {
+  color: var(--accent);
+}
+
+.tool-row__go {
+  grid-column: 3;
+  grid-row: 1;
+  padding-top: 0.25rem;
+  color: var(--muted);
+  transition:
+    color var(--t-fast),
+    transform var(--t-fast);
+}
+
+.tool-row:hover .tool-row__go {
+  color: var(--accent);
+  transform: translateX(2px);
+}
+
+@media (min-width: 56em) {
+  .tool-row {
+    grid-template-columns: 2.5rem minmax(0, 1fr) minmax(0, 17rem) auto;
+    gap: var(--sp-8) var(--sp-24);
+    align-items: center;
+    padding: var(--sp-24);
+  }
+
+  .tool-row__n {
+    padding-top: 0;
+  }
+
+  .tool-row__io {
+    grid-column: auto;
+    justify-content: flex-end;
+  }
+
+  .tool-row__go {
+    grid-column: auto;
+    grid-row: auto;
+    padding-top: 0;
+  }
+}
+
+/* ==========================================================================
+   5. Report check: score, tally, check rows
+   ========================================================================== */
+
+.score {
+  display: grid;
+  gap: var(--sp-12);
+  padding: var(--sp-16) 1.25rem;
+  border: 1px solid var(--line);
+  border-radius: var(--r-ctl);
+  background: var(--surface-2);
+}
+
+.score__line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-4) var(--sp-12);
+  font-size: var(--fs-18);
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+.score__n {
+  color: var(--muted);
+  font: 600 var(--fs-40) / 1 var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+.score[data-ready] .score__n {
+  color: var(--text);
+}
+
+.score__note {
+  color: var(--muted);
+  font-size: var(--fs-14);
+  line-height: 1.5;
+}
+
+/* One square per check: filled when it passes, dashed when the part is
+   missing, red when a line was flagged. */
+.tally {
+  display: grid;
+  grid-template-columns: repeat(14, minmax(0, 1fr));
+  gap: var(--sp-4);
+}
+
+.tally > li {
+  height: 0.5rem;
+  border: 1px solid var(--line-strong);
+  border-radius: 2px;
+}
+
+.tally > [data-status="pass"] {
+  border-color: var(--ok);
+  background: var(--ok);
+}
+
+.tally > [data-status="missing"] {
+  border: 1px dashed var(--gap);
+}
+
+.tally > [data-status="flagged"] {
+  border-color: var(--danger);
+  background: var(--danger);
+}
+
+.checks {
+  overflow: clip;
+  border: 1px solid var(--line);
+  border-radius: var(--r-ctl);
+}
+
+.checks:empty {
+  display: none;
+}
+
+/* A check row. The spine says how it stands: green passed, amber dashed
+   missing, red flagged. */
+.check {
+  --spine: var(--line-strong);
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-8);
+  padding: 0.875rem var(--sp-16) 0.875rem 1.25rem;
+}
+
+.check + .check {
+  border-top: 1px solid var(--line);
+}
+
+.check::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 3px;
+  background: var(--spine);
+}
+
+.check[data-status="pending"] {
+  padding-block: var(--sp-8);
+}
+
+.check[data-status="pending"] .check__label {
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.check[data-status="pass"] {
+  --spine: var(--ok);
+}
+
+.check[data-status="missing"] {
+  --spine: repeating-linear-gradient(to bottom, var(--gap) 0 4px, transparent 4px 8px);
+}
+
+.check[data-status="flagged"] {
+  --spine: var(--danger);
+}
+
+/* The chip keeps its column and the label wraps beside it, on every width. */
+.check__head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-8) var(--sp-12);
+}
+
+.check__head .chip {
+  flex: none;
+  min-width: 5.25rem;
+  justify-content: center;
+}
+
+.check__head .check__label {
+  min-width: 0;
+  padding-top: 0.125rem;
+}
+
+.check__label {
+  font-size: var(--fs-14);
+  font-weight: 650;
+  line-height: 1.4;
+  letter-spacing: 0;
+}
+
+.check__finding {
+  color: var(--muted);
+  font-size: var(--fs-14);
+  line-height: 1.5;
+}
+
+.check:not([data-status="pass"]) .check__finding {
+  color: var(--text);
+}
+
+.check__evidence {
+  display: grid;
+  gap: var(--sp-8);
+  font-size: var(--fs-13);
+  line-height: 1.6;
+}
+
+.check__evidence > li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--sp-4) var(--sp-8);
+  align-items: baseline;
+}
+
+/* The line number selects that line in the draft. */
+.check__line {
+  min-width: 2.5rem;
+  padding: 0.125rem 0.375rem;
+  border: 1px solid var(--line);
+  border-radius: var(--r-chip);
+  background: var(--surface-2);
+  color: var(--accent);
+  font: 600 var(--fs-12) / 1.5 var(--font-mono);
+  transition: border-color var(--t-fast);
+}
+
+.check__line:hover {
+  border-color: var(--accent);
+}
+
+@media (pointer: coarse) {
+  .check__line {
+    min-width: var(--tap);
+    min-height: var(--tap);
+  }
+}
+
+.check__quote {
+  justify-self: start;
+  font-size: var(--fs-12);
+}
+
+.check__note,
+.check__more {
+  grid-column: 2;
+  color: var(--muted);
+}
+
+.check__fix {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--sp-12);
+  align-items: baseline;
+  padding-top: var(--sp-8);
+  border-top: 1px dashed var(--line-strong);
+  font-size: var(--fs-14);
+  line-height: 1.5;
+}
+
+/* ==========================================================================
+   6. Result summary, hashes, hits
+   ========================================================================== */
+
+/* The one-line outcome above a result. data-state: ok, note or bad. */
+.tool-summary {
+  --tone: var(--sev-info);
+  display: grid;
+  gap: var(--sp-4);
+  padding: var(--sp-12) var(--sp-16);
+  border: 1px solid color-mix(in srgb, var(--tone) 40%, transparent);
+  border-left-width: 3px;
+  border-radius: var(--r-ctl);
+  background: color-mix(in srgb, var(--tone) 9%, var(--surface));
+}
+
+.tool-summary[data-state="ok"] {
+  --tone: var(--ok);
+}
+
+.tool-summary[data-state="bad"] {
+  --tone: var(--danger);
+}
+
+.tool-summary__line {
+  font-size: var(--fs-18);
+  font-weight: 650;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+}
+
+.tool-summary__meta {
+  color: var(--muted);
+  font: 600 var(--fs-12) / 1.5 var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.tool-file {
+  font-family: var(--font-mono);
+  font-size: var(--fs-13);
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+/* A full SHA-256 in four groups, so it wraps between groups and nowhere else. */
+.tool-hash {
+  display: inline-flex;
+  flex-wrap: wrap;
+  min-width: 0;
+  color: var(--text);
+  font: 500 var(--fs-12) / 1.6 var(--font-mono);
+}
+
+.tool-hash > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* Verify: one row per listed file. The spine says how it compared. */
+.vrows {
+  overflow: clip;
+  border: 1px solid var(--line);
+  border-radius: var(--r-ctl);
+}
+
+.vrow {
+  --spine: var(--line-strong);
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-8) var(--sp-24);
+  padding: 0.875rem var(--sp-16) 0.875rem 1.25rem;
+}
+
+.vrow + .vrow {
+  border-top: 1px solid var(--line);
+}
+
+.vrow::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 3px;
+  background: var(--spine);
+}
+
+.vrow[data-status="match"] {
+  --spine: var(--ok);
+}
+
+.vrow[data-status="normalised"] {
+  --spine: var(--accent);
+}
+
+.vrow[data-status="mismatch"] {
+  --spine: var(--danger);
+}
+
+.vrow[data-status="missing"] {
+  --spine: repeating-linear-gradient(to bottom, var(--gap) 0 4px, transparent 4px 8px);
+}
+
+.vrow__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-8) var(--sp-12);
+}
+
+.vrow__head .chip {
+  min-width: 7.5rem;
+  justify-content: center;
+}
+
+.vrow__body {
+  display: grid;
+  gap: var(--sp-4);
+  min-width: 0;
+}
+
+.vrow__hash {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0 var(--sp-8);
+  align-items: baseline;
+}
+
+@media (min-width: 30em) {
+  .vrow__hash {
+    grid-template-columns: 5.5rem minmax(0, 1fr);
+  }
+}
+
+.vrow__key {
+  color: var(--muted);
+  font: 600 var(--fs-12) / 1.6 var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.vrow__note {
+  margin-top: var(--sp-4);
+  color: var(--muted);
+  font-size: var(--fs-13);
+  line-height: 1.55;
+}
+
+@media (min-width: 64em) {
+  .vrow {
+    grid-template-columns: minmax(0, 24rem) minmax(0, 1fr);
+    align-items: start;
+  }
+}
+
+.tool-table__foot {
+  max-width: 62rem;
+  margin-top: var(--sp-16);
+  color: var(--muted);
+  font-size: var(--fs-13);
+  line-height: 1.6;
+}
+
+.tool-table__foot .link {
+  overflow-wrap: anywhere;
+}
+
+/* Secret check: one row per hit. Level, where, what kind. */
+.hits {
+  overflow: clip;
+  border: 1px solid var(--line);
+  border-radius: var(--r-ctl);
+}
+
+.hits:empty {
+  display: none;
+}
+
+.hit {
+  display: grid;
+  grid-template-columns: 4rem minmax(0, 1fr);
+  gap: var(--sp-4) var(--sp-12);
+  align-items: center;
+  padding: 0.625rem var(--sp-16);
+  font-size: var(--fs-14);
+  line-height: 1.5;
+}
+
+.hit + .hit {
+  border-top: 1px solid var(--line);
+}
+
+.hit .chip {
+  justify-content: center;
+}
+
+.hit .ref {
+  justify-self: start;
+}
+
+.hit__kind {
+  grid-column: 2;
+}
+
+.hit__kind::first-letter {
+  text-transform: uppercase;
+}
+
+@media (min-width: 44em) {
+  .hit {
+    grid-template-columns: 4rem minmax(0, 22rem) minmax(0, 1fr);
+  }
+
+  .hit__kind {
+    grid-column: auto;
+  }
+}
+
+/* ==========================================================================
+   7. Acceptance rates
+   ========================================================================== */
+
+.rates-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-16) var(--sp-48);
+  margin-bottom: var(--sp-24);
+}
+
+.rates-facts > li {
+  display: grid;
+  gap: 0.125rem;
+}
+
+.rates-facts__n {
+  font: 600 var(--fs-28) / 1.1 var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+/* The class name and its tag are one link to the row. */
+.rates .rates__class {
+  display: grid;
+  align-content: center;
+  justify-items: start;
+  text-decoration: none;
+}
+
+.rates .rates__label {
+  font-weight: 650;
+}
+
+.rates .rates__class:hover .rates__label {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+@media (pointer: coarse) {
+  .rates .rates__class {
+    min-height: var(--tap);
+  }
+}
+
+.rates .rates__tag {
+  padding: 0;
+  background: none;
+  color: var(--muted);
+  font-size: var(--fs-12);
+  font-weight: 400;
+}
+
+.rates .rates__rate {
+  font-family: var(--font-mono);
+  font-size: var(--fs-16);
+  font-weight: 600;
+}
+
+.rates .rates__small {
+  display: flex;
+  width: max-content;
+  margin-top: var(--sp-4);
+}
+
+@media (min-width: 48em) {
+  .rates .num {
+    width: 7.5rem;
+  }
+}
+
+/* Narrower than the text-column minimum base.css gives a last cell. */
+.table.rates tbody td.rates__actions {
+  width: 3.5rem;
+  min-width: 0;
+  padding-block: var(--sp-4);
+  text-align: right;
+  vertical-align: middle;
+}
+
+.rates [data-copied] {
+  color: var(--ok);
+}
+
+/* A row opened by its own link. */
+.rates tbody tr:target {
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.rates tbody tr {
+  scroll-margin-top: var(--sp-72);
+}
+
+/* ==========================================================================
+   8. Copy blocks: steps, phrases, ticks, tables
+   ========================================================================== */
+
+.tool-copy {
+  max-width: 44rem;
+}
+
+.tool-copy > * + * {
+  margin-top: var(--sp-16);
+}
+
+.tool-copy > .lede {
+  max-width: none;
+}
+
+.tool-copy + .table-wrap {
+  margin-top: var(--sp-24);
+}
+
+.tool-copy .link,
+.tool-copy a:not([class]) {
+  color: var(--accent);
+}
+
+/* Numbered "how it works" strip. */
+.tool-steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+  gap: var(--sp-24);
+  margin-top: var(--sp-24);
+  counter-reset: tool-step;
+}
+
+.tool-steps > li {
+  padding-top: var(--sp-12);
+  border-top: 2px solid var(--line-strong);
+  color: var(--muted);
+  font-size: var(--fs-14);
+  line-height: 1.6;
+  counter-increment: tool-step;
+}
+
+.tool-steps > li::before {
+  content: counter(tool-step, decimal-leading-zero);
+  color: var(--accent);
+  font: 600 var(--fs-12) / 1.5 var(--font-mono);
+  letter-spacing: 0.06em;
+}
+
+.tool-steps__title {
+  margin-block: var(--sp-4);
+  color: var(--text);
+  font-size: var(--fs-16);
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+}
+
+/* The seven phrases: the phrase in amber, what it concedes beside it. */
+.phrases {
+  border-top: 1px solid var(--line);
+  font-size: var(--fs-14);
+  line-height: 1.5;
+}
+
+.phrases__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.125rem var(--sp-16);
+  padding-block: 0.625rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.phrases__row > dt {
+  color: var(--gap);
+  font-family: var(--font-mono);
+  font-size: var(--fs-13);
+  font-weight: 600;
+}
+
+@media (min-width: 30em) {
+  .phrases__row {
+    grid-template-columns: 11.5rem minmax(0, 1fr);
+    align-items: baseline;
+  }
+}
+
+.ticks {
+  display: grid;
+  gap: 0.625rem;
+  font-size: var(--fs-14);
+  line-height: 1.55;
+}
+
+.ticks > li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--sp-12);
+  align-items: baseline;
+}
+
+.ticks > li > .icon {
+  align-self: start;
+  margin-top: 0.3em;
+  color: var(--ok);
+}
+
+.ticks--plain > li {
+  grid-template-columns: 2.5rem minmax(0, 1fr);
+}
+
+.ticks--plain .meta {
+  color: var(--accent);
+}
+
+.tool-table caption {
+  font-size: var(--fs-16);
+}
+
+/* The reference tables stack on a phone (.stack-table in base.css). The
+   Slither queue is already in rank order there, so its rank column stays out. */
+@media (max-width: 43.99em) {
+  .table-wrap > .table.stack-table tbody tr > .queue__rank {
+    display: none;
+  }
+
+  .table-wrap > .table.stack-table tbody tr > .queue__rank + * {
+    margin-top: 0;
+  }
+}
+
+/* Inline code keeps the 12px floor inside 13px and 14px text. */
+.tool-table code,
+.tool-table__foot code,
+.tool-state code {
+  font-size: var(--fs-12);
+}
+
+.tool-faq {
+  margin-top: var(--sp-16);
+}
+
+/* ==========================================================================
+   9. Next action and related tools
+   ========================================================================== */
+
+.tool-next {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-16) var(--sp-32);
+  padding: var(--sp-24);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+}
+
+.tool-next__text {
+  flex: 1 1 22rem;
+  max-width: 44rem;
+}
+
+.tool-next__text > p {
+  margin-top: var(--sp-8);
+  color: var(--muted);
+  font-size: var(--fs-14);
+  line-height: 1.6;
+}
+
+.tool-related {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+  gap: var(--sp-12);
+  margin-top: var(--sp-16);
+}
+
+.tool-related__link {
+  display: grid;
+  align-content: start;
+  gap: var(--sp-4);
+  height: 100%;
+  padding: var(--sp-16);
+  border: 1px solid var(--line);
+  border-radius: var(--r-ctl);
+  background: var(--surface);
+  text-decoration: none;
+  transition: border-color var(--t-fast);
+}
+
+.tool-related__link:hover {
+  border-color: var(--accent);
+}
+
+.tool-related__name {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-8);
+  font-size: var(--fs-14);
+  font-weight: 650;
+}
+
+.tool-related__name .icon {
+  color: var(--accent);
+}
+
+.tool-related__text {
+  color: var(--muted);
+  font-size: var(--fs-13);
+  line-height: 1.55;
+}
+
+@media print {
+  .drop,
+  .tool-actions,
+  .tool-related,
+  .tool-next {
+    display: none !important;
+  }
+}

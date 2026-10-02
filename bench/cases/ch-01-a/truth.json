@@ -1,0 +1,17 @@
+{
+  "schema": "paydirt.truth/1",
+  "pair": "ch-01",
+  "variant": "accurate",
+  "origin": "original",
+  "assistant": "google/gemini-3.1-pro-preview",
+  "canary": "15a7c1d6-c581-4c04-98b2-35fc65bf7cb1",
+  "planted": [],
+  "decoys": [],
+  "acceptable": [],
+  "patched_region": null,
+  "report": {
+    "verdict": "supported",
+    "max_severity": "critical",
+    "false_claims": []
+  }
+}

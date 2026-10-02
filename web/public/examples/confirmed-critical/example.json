@@ -1,0 +1,33 @@
+{
+  "id": "confirmed-critical",
+  "order": 2,
+  "title": "Confirmed at Critical",
+  "summary": "A draft claims one owner can empty a 3-of-5 treasury. The code and the proof agree.",
+  "profile": "report",
+  "mode": "bounty",
+  "focus": "",
+  "files": [
+    "src/HalyardTreasury.sol",
+    "test/DuplicateSignature.t.sol",
+    "draft-report.md",
+    "docs/known-issues.md"
+  ],
+  "context": {
+    "target": "Halyard Treasury bounty programme, asset HalyardTreasury (synthetic programme written for this example)",
+    "scope": "src/HalyardTreasury.sol at release v2.0.1",
+    "version": "halyard-treasury release v2.0.1, the supplied files",
+    "proofRevision": "halyard-treasury release v2.0.1, local Foundry run, no fork",
+    "proof": "local",
+    "prior": "distinct",
+    "cloneDepth": "full",
+    "notes": "",
+    "rules": "Halyard Treasury bug bounty: severity scale.\n\nNo single owner is trusted. The treasury's guarantee is that owners holding fewer than `threshold` keys cannot move funds or change the owner set.\n\nCritical\n- Execution of a treasury transaction approved by fewer than `threshold` distinct owners.\n- Direct theft of treasury assets by an account that is not an owner.\nHigh\n- Permanent freezing of treasury assets.\nMedium\n- Temporary freezing of treasury assets for 24 hours or longer.\nLow\n- An owner action that costs the other owners gas and nothing else.\n\nLowest paid tier: Low.",
+    "impactList": "Critical: Execution of a treasury transaction approved by fewer than `threshold` distinct owners\nCritical: Direct theft of treasury assets by an account that is not an owner\nHigh: Permanent freezing of treasury assets\nMedium: Temporary freezing of treasury assets for 24 hours or longer\nLow: An owner action that costs the other owners gas and nothing else",
+    "impactRow": "Critical: Execution of a treasury transaction approved by fewer than `threshold` distinct owners",
+    "exclusions": "Out of scope: anything listed in docs/known-issues.md; attacks that need `threshold` or more owner keys; gas optimisations.\nTrusted roles: none. A single owner is not trusted.",
+    "loss": "PoC run: treasury balance 500 ETH before, 0 after. Recipient balance 0 before, 500 ETH after. Control run with one signature: reverts, treasury keeps 500 ETH.",
+    "proofLog": "forge test --match-contract DuplicateSignatureTest -vv\n\nRan 2 tests for test/DuplicateSignature.t.sol:DuplicateSignatureTest\n[PASS] test_control_oneSignatureIsRefused() (gas: 40464)\n[PASS] test_oneOwnerEmptiesTreasuryWithRepeatedSignature() (gas: 122051)\nLogs:\n  treasury balance after (wei) 0\n  recipient balance after (ETH) 500\n\nSuite result: ok. 2 passed; 0 failed; 0 skipped",
+    "mocks": "None. The test deploys the production contract on a local chain with five owners and threshold 3, and signs with one owner key.",
+    "economics": "No submission fee. Duplicates are not paid: the first complete report wins. First reproduced 2026-10-01."
+  }
+}

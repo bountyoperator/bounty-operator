@@ -1,0 +1,116 @@
+{
+  "schema": "paydirt.truth/1",
+  "pair": "ts-01",
+  "variant": "vulnerable",
+  "origin": "original",
+  "assistant": "openai/gpt-6.1-sol",
+  "canary": "4fb153ce-e3ac-48ca-8093-1653c08014aa",
+  "planted": [
+    {
+      "id": "P1",
+      "primary": true,
+      "file": "src/tideloom-handlers.ts",
+      "lines": [
+        [
+          198,
+          200
+        ]
+      ],
+      "functions": [
+        "downloadPayment"
+      ],
+      "severity": [
+        "high",
+        "medium"
+      ],
+      "mechanism": "downloadPayment looks the remittance up with the unscoped store.getRemittance(id) instead of getRemittanceForTenant(id, ctx.principal.tenantId) as the sibling read handlers do, so any authenticated member of one marina can read another marina's payment records (amount, bank reference, bill id) by supplying or enumerating sequential remit-N ids.",
+      "proof": "verify/ts-01/tideloom.test.mjs:planted_P1"
+    }
+  ],
+  "decoys": [
+    {
+      "id": "D1",
+      "file": "src/tideloom-http.ts",
+      "lines": [
+        [
+          50,
+          55
+        ],
+        [
+          109,
+          117
+        ]
+      ],
+      "functions": [
+        "respond",
+        "presentable"
+      ],
+      "why": "respond() builds the error body with internalMessage, stack and cause, but presentable() returns only {code, message, requestId} unless the runtime mode is development, and the mode is production for every NODE_ENV other than the exact string \"development\"; no stack, internal message or cause reaches a production response.",
+      "proof": "verify/ts-01/tideloom.test.mjs:decoy_D1"
+    },
+    {
+      "id": "D2",
+      "file": "src/tideloom-handlers.ts",
+      "lines": [
+        [
+          105,
+          109
+        ]
+      ],
+      "functions": [
+        "listBills"
+      ],
+      "why": "listBills reads query.tenantId but honours it only when the principal role is platform, and authenticate() has already checked that role against the stored membership; clerks and managers are always pinned to ctx.principal.tenantId.",
+      "proof": "verify/ts-01/tideloom.test.mjs:decoy_D2"
+    },
+    {
+      "id": "D3",
+      "file": "src/tideloom-handlers.ts",
+      "lines": [
+        [
+          234,
+          236
+        ]
+      ],
+      "functions": [
+        "inspectBill"
+      ],
+      "why": "inspectBill uses the unscoped store.getBill lookup, but staff() runs first and rejects every principal whose stored membership is not the platform role, so the cross-marina read is support-staff tooling by design.",
+      "proof": "verify/ts-01/tideloom.test.mjs:decoy_D3"
+    }
+  ],
+  "acceptable": [
+    {
+      "file": "src/tideloom-store.ts",
+      "lines": [
+        [
+          60,
+          64
+        ]
+      ],
+      "note": "Sequential, guessable ids (marina-1, bill-1, remit-1). Low/info hardening note, unscored: isolation is meant to come from the tenant predicate, not from id secrecy."
+    },
+    {
+      "file": "src/tideloom-store.ts",
+      "lines": [
+        [
+          186,
+          189
+        ]
+      ],
+      "note": "The unscoped getRemittance accessor (store-side location of the planted lookup). Unscored: a finding located only here is neither a hit nor a false positive."
+    },
+    {
+      "file": "src/tideloom-http.ts",
+      "lines": [
+        [
+          31,
+          43
+        ]
+      ],
+      "note": "Development mode returns diagnostics by design and is opt-in at bootstrap. Low/info configuration note, unscored."
+    }
+  ],
+  "patched_region": null,
+  "report": null
+}

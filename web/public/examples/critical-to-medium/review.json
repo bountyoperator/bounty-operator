@@ -1,0 +1,12 @@
+{
+  "model": "anthropic/claude-opus-5.5",
+  "usage": {
+    "input": 11062,
+    "output": 6088
+  },
+  "costUsd": 0.166,
+  "verdict": "rewrite-then-submit",
+  "referenceProblems": 0,
+  "profile": "report",
+  "generatedAt": "2026-10-02T15:48:20.207Z"
+}

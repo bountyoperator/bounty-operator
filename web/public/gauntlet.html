@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gauntlet: eight-stage bug bounty report check | Bounty Operator</title>
+<meta name="description" content="One run takes your draft through eight stages and returns one verdict, one blocker and the cheapest action that removes it. Example dossier included.">
+<link rel="canonical" href="https://bountyoperator.com/gauntlet">
+<meta name="color-scheme" content="dark light">
+<meta name="theme-color" content="#0a1220" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f5f7fb" media="(prefers-color-scheme: light)">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Bounty Operator">
+<meta property="og:title" content="Gauntlet: eight-stage bug bounty report check | Bounty Operator">
+<meta property="og:description" content="One run takes your draft through eight stages and returns one verdict, one blocker and the cheapest action that removes it. Example dossier included.">
+<meta property="og:url" content="https://bountyoperator.com/gauntlet">
+<meta property="og:image" content="https://bountyoperator.com/social-v2.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Bounty Operator. Find the hole in your report before the triager does.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Gauntlet: eight-stage bug bounty report check | Bounty Operator">
+<meta name="twitter:description" content="One run takes your draft through eight stages and returns one verdict, one blocker and the cheapest action that removes it. Example dossier included.">
+<meta name="twitter:image" content="https://bountyoperator.com/social-v2.png">
+<meta name="twitter:image:alt" content="Bounty Operator. Find the hole in your report before the triager does.">
+<link rel="icon" href="/favicon.ico" sizes="48x48">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+<script src="/theme.js"></script>
+<link rel="stylesheet" href="/css/base.css">
+<link rel="stylesheet" href="/css/landing.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Bounty Operator","item":"https://bountyoperator.com/"},{"@type":"ListItem","position":2,"name":"Method","item":"https://bountyoperator.com/method"},{"@type":"ListItem","position":3,"name":"Gauntlet","item":"https://bountyoperator.com/gauntlet"}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"What does a gauntlet run cost?","acceptedAnswer":{"@type":"Answer","text":"The Gauntlet is part of Operator at US$10 per week. A run is eight reviews on your own model, so your provider bills eight model calls to your key."}},{"@type":"Question","name":"Which model runs the stages?","acceptedAnswer":{"@type":"Answer","text":"The one you choose. Every stage is a hosted review: your files and your API key go through our server, which adds the method of the stage, to your provider. That is OpenRouter, Anthropic, OpenAI, Google Gemini, xAI, DeepSeek, Mistral or Groq. No file, key or review is stored."}},{"@type":"Question","name":"Can I run the stages on a chat subscription or from a coding agent?","acceptedAnswer":{"@type":"Answer","text":"The stages run hosted, on an API key. The report stage is the Challenge a draft report profile, which also exports as a prompt on its own. From a coding agent, the gauntlet prompt of the MCP server runs the same order: seven hosted reviews through run_review with a connection token, and the report stage on your agent’s own model."}},{"@type":"Question","name":"What happens when an early stage ends the report?","acceptedAnswer":{"@type":"Answer","text":"The run stops there. A drop or a hold-duplicate from scope, provenance or prior art ends the report before the proof stage costs you a day, and the dossier opens on that verdict. One button runs the remaining stages anyway."}},{"@type":"Question","name":"Does the gauntlet run code or touch the target?","acceptedAnswer":{"@type":"Answer","text":"It reads the files you supply. The proof stage reads your test and its output and tells you the one run that is missing. You run it locally."}},{"@type":"Question","name":"What does the free plan show?","acceptedAnswer":{"@type":"Answer","text":"The example dossier on this page and every single profile, one hosted review per UTC day. Each gauntlet stage except the final verdict is also a profile you run on its own."}}]}</script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="site-header">
+<div class="wrap site-header__inner">
+<a class="brand" href="/"><svg class="brand__mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect class="brand__tile" width="64" height="64" rx="14"/><path class="brand__glyph" d="M12.5 15h6.5v31.5h-6.5z"/><path class="brand__glyph" fill-rule="evenodd" d="M25.5 25a10.75 10.75 0 1 0 0 21.5a10.75 10.75 0 0 0 0-21.5zm0 6.25a4.5 4.5 0 1 1 0 9a4.5 4.5 0 0 1 0-9z"/><path class="brand__slash" d="M45.5 13h6.25l-8.6 37.5h-6.25z"/></svg><span class="brand__name">Bounty Operator</span></a>
+<nav class="site-nav" aria-label="Main"><ul><li><a href="/#workspace">Workbench</a></li><li><a href="/method" aria-current="page">Method</a></li><li><a href="/tools">Tools</a></li><li><a href="/guide">Guide</a></li><li><a href="/mcp">MCP</a></li><li><a href="/pricing">Pricing</a></li></ul></nav>
+<div class="site-header__actions">
+<button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch colour theme"><span class="icon theme-toggle__icon" aria-hidden="true"></span></button>
+<a class="btn btn--secondary btn--sm" href="/#account">Account</a>
+</div>
+</div>
+</header>
+<main id="main" tabindex="-1">
+
+
+<section class="lp-hero wrap lp-hero--split">
+  <nav class="breadcrumbs" aria-label="Breadcrumb"><ol><li><a href="/">Bounty Operator</a></li><li><a href="/method">Method</a></li><li aria-current="page">Gauntlet</li></ol></nav>
+  <div class="lp-hero__grid">
+    <div class="lp-hero__text lp-hero__text--sticky">
+      <p class="eyebrow"><span class="chip status" data-status="operator">Operator</span></p>
+      <h1>One run, eight stages, one verdict on your bug bounty report</h1>
+      <p class="lede">Hand over the draft, the code and the programme rules. The Gauntlet runs eight stages in the order that saves work and returns one decision, the one blocker behind it and the cheapest action that removes it.</p>
+      <div class="cluster lp-hero__actions"><a class="btn btn--primary btn--lg" href="/pricing"><span class="btn__label">Get Operator</span><span class="icon icon--arrow-right" aria-hidden="true"></span></a><a class="btn btn--secondary btn--lg" href="#stages"><span class="btn__label">See the eight stages</span></a></div>
+      <p class="fine lp-hero__note">US$10 per week. Runs on your own model and key.</p>
+      
+    </div>
+    <div class="lp-hero__aside">
+<div class="example example--narrow">
+  <p class="example__bar"><span class="chip status" data-status="example">Example</span><span class="meta">Example dossier · invented protocol</span></p>
+  <div class="example__body">
+    <div class="stack">
+      <header class="dossier"><div class="dossier__verdict"><span class="meta">Verdict</span><span class="chip verdict verdict--lg" data-verdict="prove-first">Prove first</span></div><p class="dossier__headline">The seizure bug is in the code. The proof reads the return value of <code>liquidate</code> on a mock oracle; the impact row names the borrower’s collateral.</p><ul class="counts"><li data-sev="critical" data-zero><span class="counts__n">0</span><span class="counts__label">Critical</span></li><li data-sev="high"><span class="counts__n">1</span><span class="counts__label">High</span></li><li data-sev="medium" data-zero><span class="counts__n">0</span><span class="counts__label">Medium</span></li><li data-sev="hardening"><span class="counts__n">1</span><span class="counts__label">Hardening</span></li><li data-sev="checked-safe"><span class="counts__n">3</span><span class="counts__label">Checked safe</span></li></ul></header>
+      <div class="ledger"><dl class="kv decision"><div class="kv__row"><dt>Blocker</dt><dd>The proof never reads the borrower’s collateral balance, and the unhealthy state comes from a mock oracle.</dd></div><div class="kv__row"><dt>Cheapest action</dt><dd>One fork test at the deployed revision: let the real feed move the price, liquidate with 1 unit of debt, assert the borrower’s collateral before and after, and run a control that repays in full.</dd></div><div class="kv__row"><dt>Severity to claim</dt><dd>High, on the programme scale supplied in Context.</dd></div><div class="kv__row"><dt>Filing deadline</dt><dd>Within hours of the fork run. The fix is one line on the central liquidation path.</dd></div></dl></div>
+    </div></div>
+</div></div>
+  </div>
+</section>
+
+<section class="section wrap" aria-labelledby="verdicts">
+  <div class="split">
+    <div>
+      <header class="section-head"><div class="section-head__text"><h2 id="verdicts">The verdict is one of five</h2><p class="lede">Words a hunter already uses. The dossier never ends on “consider” or “it depends”.</p></div></header>
+      <ul class="ticks"><li><span class="icon icon--check" aria-hidden="true"></span><span>One verdict for the whole report.</span></li><li><span class="icon icon--check" aria-hidden="true"></span><span>One blocker: the single fact that stops submission today.</span></li><li><span class="icon icon--check" aria-hidden="true"></span><span>The cheapest action that removes the blocker, as something you run locally.</span></li><li><span class="icon icon--check" aria-hidden="true"></span><span>A filing deadline, set by how exposed the finding is to a private duplicate.</span></li></ul>
+    </div>
+    <dl class="verdicts verdicts--boxed"><div class="verdicts__row"><dt><span class="chip verdict" data-verdict="submit">Submit</span></dt><dd>Every decisive claim is backed by the supplied code and proof. File it.</dd></div><div class="verdicts__row"><dt><span class="chip verdict" data-verdict="rewrite-then-submit">Rewrite, then submit</span></dt><dd>The finding holds. The draft misstates its severity, impact, preconditions or fix.</dd></div><div class="verdicts__row"><dt><span class="chip verdict" data-verdict="prove-first">Prove first</span></dt><dd>The claimed impact is not demonstrated on the real path yet. One artefact is missing.</dd></div><div class="verdicts__row"><dt><span class="chip verdict" data-verdict="hold-duplicate">Hold: duplicate</span></dt><dd>A known issue, an audit note, a branch or your own earlier report has the same root cause or the same fix.</dd></div><div class="verdicts__row"><dt><span class="chip verdict" data-verdict="drop">Drop</span></dt><dd>The code contradicts the root cause, the behaviour is the design, or the rules exclude it.</dd></div></dl>
+  </div>
+</section>
+
+<section class="section wrap" aria-labelledby="stages">
+  <header class="section-head"><div class="section-head__text"><h2 id="stages">Eight stages, gates first</h2><p class="lede">Scope, provenance and prior art end a report without a proof. They run before the stages that cost you work. Each stage reads the output of the stages before it.</p></div><div class="section-head__aside"><a class="link" href="/method">The twelve checks behind the stages</a></div></header>
+  <nav class="stepper pipeline" aria-label="Gauntlet stages of the example run"><ol><li><a class="stepper__step" href="#example" data-state="done"><span class="stepper__marker"><span class="icon icon--check" aria-hidden="true"></span></span><span class="stepper__label">Scope</span><span class="visually-hidden">, done</span></a></li><li><a class="stepper__step" href="#example" data-state="done"><span class="stepper__marker"><span class="icon icon--check" aria-hidden="true"></span></span><span class="stepper__label">Provenance</span><span class="visually-hidden">, done</span></a></li><li><a class="stepper__step" href="#example" data-state="done"><span class="stepper__marker"><span class="icon icon--check" aria-hidden="true"></span></span><span class="stepper__label">Prior art</span><span class="visually-hidden">, done</span></a></li><li><a class="stepper__step" href="#example" data-state="done"><span class="stepper__marker"><span class="icon icon--check" aria-hidden="true"></span></span><span class="stepper__label">Proof</span><span class="visually-hidden">, done</span></a></li><li><a class="stepper__step" href="#example" data-state="done"><span class="stepper__marker"><span class="icon icon--check" aria-hidden="true"></span></span><span class="stepper__label">Severity</span><span class="visually-hidden">, done</span></a></li><li><a class="stepper__step" href="#example" data-state="done"><span class="stepper__marker"><span class="icon icon--check" aria-hidden="true"></span></span><span class="stepper__label">Triager</span><span class="visually-hidden">, done</span></a></li><li><a class="stepper__step" href="#example" data-state="done"><span class="stepper__marker"><span class="icon icon--check" aria-hidden="true"></span></span><span class="stepper__label">Report</span><span class="visually-hidden">, done</span></a></li><li><a class="stepper__step" href="#example" data-state="current" aria-current="step"><span class="stepper__marker"><span aria-hidden="true">8</span></span><span class="stepper__label">Verdict</span></a></li></ol></nav>
+  <div class="stage-grid">
+    
+      <article class="stage-card">
+        <p class="stage-card__n meta">Stage 1</p>
+        <h3 class="stage-card__name">Scope</h3>
+        <p class="stage-card__decides">Whether the code is in the scoped asset at the deployed revision, whether the class is excluded, and whether every clause of the chosen impact row has an artefact behind it.</p>
+        <ul class="stage__outputs"><li>Binding table</li><li>Exclusion matches</li><li>Impact row, clause by clause</li></ul>
+      </article>
+      <article class="stage-card">
+        <p class="stage-card__n meta">Stage 2</p>
+        <h3 class="stage-card__name">Provenance</h3>
+        <p class="stage-card__decides">Who performs each step, whether the behaviour is documented design or an audit fix, whether the bug adds anything over the intended path, and whether every precondition is reachable from live state.</p>
+        <ul class="stage__outputs"><li>Actor table</li><li>Intent evidence</li><li>Counterfactual</li><li>Preconditions</li></ul>
+      </article>
+      <article class="stage-card">
+        <p class="stage-card__n meta">Stage 3</p>
+        <h3 class="stage-card__name">Prior art</h3>
+        <p class="stage-card__decides">Whether a known issue, a prior audit note, a team branch or your own earlier report has the same root cause or the same one-line fix.</p>
+        <ul class="stage__outputs"><li>Root-cause fingerprint</li><li>Matches</li><li>The duplicate clock</li></ul>
+      </article>
+      <article class="stage-card">
+        <p class="stage-card__n meta">Stage 4</p>
+        <h3 class="stage-card__name">Proof</h3>
+        <p class="stage-card__decides">Whether the proof runs production code on every step and ends by reading the object the impact row names, with measured numbers.</p>
+        <ul class="stage__outputs"><li>Step table: executed, mocked or narrated</li><li>End-state assertion</li><li>Measured loss</li></ul>
+      </article>
+      <article class="stage-card">
+        <p class="stage-card__n meta">Stage 5</p>
+        <h3 class="stage-card__name">Severity</h3>
+        <p class="stage-card__decides">The highest row of the programme’s own scale that the proof fully asserts, after every downgrade clause.</p>
+        <ul class="stage__outputs"><li>The tier to claim</li><li>The one fact that moves it</li></ul>
+      </article>
+      <article class="stage-card">
+        <p class="stage-card__n meta">Stage 6</p>
+        <h3 class="stage-card__name">Triager</h3>
+        <p class="stage-card__decides">The one sentence that closes this report in ten minutes, and whether the first paragraph already answers it.</p>
+        <ul class="stage__outputs"><li>Ranked rejection reasons</li><li>The draft sentence that triggers each</li></ul>
+      </article>
+      <article class="stage-card">
+        <p class="stage-card__n meta">Stage 7</p>
+        <h3 class="stage-card__name">Report</h3>
+        <p class="stage-card__decides">Whether the claims follow from the code, the proof is inline, the form and the body agree, and the limits are stated.</p>
+        <ul class="stage__outputs"><li>Claims table</li><li>The rewritten report</li></ul>
+      </article>
+      <article class="stage-card">
+        <p class="stage-card__n meta">Stage 8</p>
+        <h3 class="stage-card__name">Verdict</h3>
+        <p class="stage-card__decides">One decision.</p>
+        <ul class="stage__outputs"><li>One of five verdicts</li><li>One blocker</li><li>The cheapest action that removes it</li><li>A filing deadline</li></ul>
+      </article>
+  </div>
+</section>
+
+<section class="section wrap" aria-labelledby="example">
+  <header class="section-head"><div class="section-head__text"><h2 id="example">The dossier, in full</h2><p class="lede">A draft claims a Critical pool drain in Brinewell Lend, a lending protocol invented for this page. Eight stages later the finding stands, the severity moves, and one test is missing.</p></div></header>
+  
+<div class="example">
+  <p class="example__bar"><span class="chip status" data-status="example">Example</span><span class="meta">Example dossier · invented protocol · Brinewell Lend</span></p>
+  <div class="example__body">
+    <div class="stack stack--24">
+      <header class="dossier"><div class="dossier__verdict"><span class="meta">Verdict</span><span class="chip verdict verdict--lg" data-verdict="prove-first">Prove first</span></div><p class="dossier__headline">The seizure bug is in the code. The proof reads the return value of <code>liquidate</code> on a mock oracle; the impact row names the borrower’s collateral.</p><ul class="counts"><li data-sev="critical" data-zero><span class="counts__n">0</span><span class="counts__label">Critical</span></li><li data-sev="high"><span class="counts__n">1</span><span class="counts__label">High</span></li><li data-sev="medium" data-zero><span class="counts__n">0</span><span class="counts__label">Medium</span></li><li data-sev="hardening"><span class="counts__n">1</span><span class="counts__label">Hardening</span></li><li data-sev="checked-safe"><span class="counts__n">3</span><span class="counts__label">Checked safe</span></li></ul></header>
+      <div class="table-wrap" tabindex="0" role="region" aria-label="Stages"><table class="table stack-table stack-table--plain stage-table"><caption>Stages</caption><thead><tr><th scope="col">Stage</th><th scope="col">Its verdict</th><th scope="col">The one thing it decided</th></tr></thead><tbody><tr><th scope="row"><span class="stage-cell"><span class="stage-cell__n">1</span>Scope</span></th><td><span class="cell-label">Its verdict</span><span class="chip verdict" data-verdict="submit">Submit</span></td><td><span class="cell-label">The one thing it decided</span>The file and the function exist in the scoped asset at the deployed revision. No exclusion names the class.</td></tr><tr><th scope="row"><span class="stage-cell"><span class="stage-cell__n">2</span>Provenance</span></th><td><span class="cell-label">Its verdict</span><span class="chip verdict" data-verdict="prove-first">Prove first</span></td><td><span class="cell-label">The one thing it decided</span>Every step is performed by an unprivileged liquidator. The unhealthy state is set through <code>MockOracle.setPrice</code>, with no route from live state shown.</td></tr><tr><th scope="row"><span class="stage-cell"><span class="stage-cell__n">3</span>Prior art</span></th><td><span class="cell-label">Its verdict</span><span class="chip verdict" data-verdict="rewrite-then-submit">Rewrite, then submit</span></td><td><span class="cell-label">The one thing it decided</span>Audit item L-04 has the same symptom and a different root cause. The report has to state the difference in its first paragraph.</td></tr><tr><th scope="row"><span class="stage-cell"><span class="stage-cell__n">4</span>Proof</span></th><td><span class="cell-label">Its verdict</span><span class="chip verdict" data-verdict="prove-first">Prove first</span></td><td><span class="cell-label">The one thing it decided</span>The final assertion reads the return value of <code>liquidate</code>. The impact row names the borrower’s collateral.</td></tr><tr><th scope="row"><span class="stage-cell"><span class="stage-cell__n">5</span>Severity</span></th><td><span class="cell-label">Its verdict</span><span class="chip verdict" data-verdict="rewrite-then-submit">Rewrite, then submit</span></td><td><span class="cell-label">The one thing it decided</span>The proof supports High on the scale supplied. The draft selects Critical.</td></tr><tr><th scope="row"><span class="stage-cell"><span class="stage-cell__n">6</span>Triager</span></th><td><span class="cell-label">Its verdict</span><span class="chip verdict" data-verdict="prove-first">Prove first</span></td><td><span class="cell-label">The one thing it decided</span>Fastest close: impact not shown. “The attacker drains the pool” has no assertion behind it.</td></tr><tr><th scope="row"><span class="stage-cell"><span class="stage-cell__n">7</span>Report</span></th><td><span class="cell-label">Its verdict</span><span class="chip verdict" data-verdict="rewrite-then-submit">Rewrite, then submit</span></td><td><span class="cell-label">The one thing it decided</span>Root cause and fix are confirmed against lines 215-216. The title claims a pool drain; the code shows a loss per position.</td></tr><tr><th scope="row"><span class="stage-cell"><span class="stage-cell__n">8</span>Verdict</span></th><td><span class="cell-label">Its verdict</span><span class="chip verdict" data-verdict="prove-first">Prove first</span></td><td><span class="cell-label">The one thing it decided</span>One fork test stands between this draft and a High.</td></tr></tbody></table></div>
+      <div class="findings">
+        <article class="finding" id="gauntlet-f-1" data-sev="high" aria-labelledby="gauntlet-f-1-title"><div class="finding__bar"><span class="icon icon--file" aria-hidden="true"></span><span class="finding__file">input-2/src/LiquidationEngine.sol</span><span class="hash" title="sha256: 7c1e9a40b6d25f83e0a4c7719d3b58e2f6a09c14d7e3b5a8809f2c61d4e7b3a5"><span class="hash__algo">sha256</span>7c1e9a40b6d2…</span><span class="finding__tag">318 lines</span></div><header class="finding__head"><div class="finding__tags"><span class="finding__id">F-1</span><span class="chip sev" data-sev="high">High</span><span class="chip status" data-status="proven">Proven in source</span></div><h3 class="finding__title" id="gauntlet-f-1-title"><code>liquidate</code> sizes the seizure from the whole collateral, not from the amount repaid</h3><ul class="finding__refs" aria-label="Locations"><li><span class="ref" title="input-2/src/LiquidationEngine.sol:212-221"><span class="ref__file">input-2/src/LiquidationEngine.sol</span><span class="ref__lines">:212-221</span></span></li></ul></header><dl class="finding__rows"><div class="rail" data-rail="impact"><dt class="rail__label">Impact</dt><dd class="rail__body"><p>A liquidator who repays 1 unit of debt on an unhealthy position takes all of its collateral. The borrower loses the collateral above the debt. Bound: each unhealthy position’s collateral, minus the debt repaid.</p></dd></div><div class="rail" data-rail="observed"><dt class="rail__label">Observed</dt><dd class="rail__body"><ol class="steps"><li><code>liquidate</code> checks one thing about the position: <code>_healthFactor(p) &lt; WAD</code> (line 214).</li><li>Line 215 computes <code>seized</code> from <code>p.collateral</code> and <code>bonusBps</code>. <code>repay</code> is not in the expression.</li><li>Line 216 caps <code>seized</code> at <code>p.collateral</code>, so any <code>repay</code> above zero seizes the whole collateral.</li><li>Lines 217-220 reduce the debt by <code>repay</code> and send <code>seized</code> to the caller.</li></ol><figure class="code code--numbered"><figcaption class="code__bar"><span class="code__name">input-2/src/LiquidationEngine.sol</span><span class="code__range">212–221</span><button class="code__copy" type="button" data-copy><span class="icon icon--copy" aria-hidden="true"></span><span data-copy-label>Copy</span></button></figcaption><pre class="code__pre" tabindex="0" role="region" aria-label="Source: input-2/src/LiquidationEngine.sol"><code><span class="code__line" data-n="212">function liquidate(address borrower, uint256 repay) external nonReentrant {
+</span><span class="code__line" data-n="213">    Position storage p = positions[borrower];
+</span><span class="code__line" data-n="214">    if (_healthFactor(p) &gt;= WAD) revert Healthy();
+</span><span class="code__line is-hl" data-n="215">    uint256 seized = (p.collateral * (BPS + bonusBps)) / BPS;
+</span><span class="code__line is-flag" data-n="216">    if (seized &gt; p.collateral) seized = p.collateral;
+</span><span class="code__line" data-n="217">    p.debt -= repay;
+</span><span class="code__line" data-n="218">    p.collateral -= seized;
+</span><span class="code__line" data-n="219">    debtToken.safeTransferFrom(msg.sender, address(this), repay);
+</span><span class="code__line" data-n="220">    collateralToken.safeTransfer(msg.sender, seized);
+</span><span class="code__line" data-n="221">}
+</span></code></pre></figure></dd></div><div class="rail" data-rail="counter" data-status="open"><dt class="rail__label">Counterargument</dt><dd class="rail__body"><p class="rail__quote">The position is unhealthy. The borrower was going to lose that collateral to liquidation anyway.</p><p class="rail__answer"><span class="chip status" data-status="open">Open</span><span>The intended path seizes the repaid amount plus the bonus. The draft never shows the two outcomes side by side, and its test reaches the unhealthy state through <code>MockOracle.setPrice</code>.</span></p></dd></div><div class="rail" data-rail="gap" data-status="open"><dt class="rail__label">Evidence gap</dt><dd class="rail__body"><ul class="gaps"><li>A run on a fork of the deployed revision where the position turns unhealthy through the real price feed.</li><li>A final assertion on the borrower’s collateral balance, next to a control run that repays the debt in full.</li></ul></dd></div><div class="rail" data-rail="fix"><dt class="rail__label">Fix</dt><dd class="rail__body"><p>Compute <code>seized</code> from <code>repay</code>: convert it to collateral at the oracle price, add <code>bonusBps</code>, then cap at <code>p.collateral</code>.</p></dd></div><div class="rail" data-rail="next"><dt class="rail__label">Next</dt><dd class="rail__body"><p class="rail__next"><span class="icon icon--arrow-right" aria-hidden="true"></span><span>Run the fork test with both assertions, then paste the command and its output into the report body.</span></p></dd></div></dl></article>
+      </div>
+      <div class="table-wrap" tabindex="0" role="region" aria-label="To do, in order"><table class="table table--dense stack-table"><caption>To do, in order</caption><thead><tr><th scope="col" class="num">#</th><th scope="col">Action</th><th scope="col">Artefact it produces</th><th scope="col">Stage</th></tr></thead><tbody><tr><td class="num">1</td><td><span class="cell-label">Action</span>Rerun the test on a fork of the deployed revision, with the price moved by the real feed.</td><td><span class="cell-label">Artefact it produces</span>Command and output</td><td><span class="cell-label">Stage</span>Proof</td></tr><tr><td class="num">2</td><td><span class="cell-label">Action</span>Assert the borrower’s collateral balance before and after, and add the full-repay control.</td><td><span class="cell-label">Artefact it produces</span>Two assertions</td><td><span class="cell-label">Stage</span>Proof</td></tr><tr><td class="num">3</td><td><span class="cell-label">Action</span>Change the claimed severity to High and quote the impact row word for word.</td><td><span class="cell-label">Artefact it produces</span>Edited report</td><td><span class="cell-label">Stage</span>Severity</td></tr><tr><td class="num">4</td><td><span class="cell-label">Action</span>Name audit item L-04 in the first paragraph and state the different root cause.</td><td><span class="cell-label">Artefact it produces</span>One paragraph</td><td><span class="cell-label">Stage</span>Prior art</td></tr><tr><td class="num">5</td><td><span class="cell-label">Action</span>Replace “drains the pool” in the title with the per-position loss.</td><td><span class="cell-label">Artefact it produces</span>Edited title</td><td><span class="cell-label">Stage</span>Report</td></tr></tbody></table></div>
+    </div></div>
+</div>
+</section>
+
+<section class="section wrap" aria-labelledby="hand-over">
+  <header class="section-head"><div class="section-head__text"><h2 id="hand-over">What you hand over</h2><p class="lede">The run asks for the evidence that decides outcomes. A field left empty is named in the dossier as not supplied.</p></div></header>
+  <ol class="points points--3"><li class="points__item"><h3 class="points__title">The draft and the code</h3><p class="points__text">Your report, the source files it cites and the proof with its command and output.</p></li><li class="points__item"><h3 class="points__title">Impact and exclusions</h3><p class="points__text">The programme’s impact list, the row you intend to select, the exclusions and the trusted roles.</p></li><li class="points__item"><h3 class="points__title">The severity scale</h3><p class="points__text">The programme’s own scale with its thresholds and downgrade clauses, pasted in.</p></li><li class="points__item"><h3 class="points__title">Asset and revisions</h3><p class="points__text">The scoped asset, the revision your proof ran against and the revision that is deployed.</p></li><li class="points__item"><h3 class="points__title">Prior material</h3><p class="points__text">Known issues, audits and fix-review notes, team branches, and your own earlier reports on the programme.</p></li><li class="points__item"><h3 class="points__title">Clock and read-back</h3><p class="points__text">The date you first reproduced it, the fee and duplicate rules, and what the platform stored after you filled in the form.</p></li></ol>
+</section>
+
+<section class="section wrap" aria-labelledby="how">
+  <header class="section-head"><div class="section-head__text"><h2 id="how">How it runs</h2><p class="lede">No new machinery. The Gauntlet is eight hosted reviews, run in order from your browser on your own key.</p></div></header>
+  <ol class="points points--2"><li class="points__item"><h3 class="points__title">Eight reviews, one after another</h3><p class="points__text">Each stage is a hosted review with its own profile. It goes through our server, which adds the method of the stage, to your provider. Your provider bills each call to your key.</p></li><li class="points__item"><h3 class="points__title">Earlier stages become evidence</h3><p class="points__text">A stage’s output goes to the later stages as a file named <code>stage-&lt;n&gt;-&lt;profile&gt;.md</code>, next to your draft and your code.</p></li><li class="points__item"><h3 class="points__title">Finished stages are kept</h3><p class="points__text">A cancelled run, a provider error or a reload keeps every stage that finished. The run picks up at the stage that did not.</p></li><li class="points__item"><h3 class="points__title">One packet</h3><p class="points__text">The dossier downloads as one record with the SHA-256 manifest of every file the run read.</p></li></ol>
+</section>
+
+<section class="section wrap wrap--narrow" aria-labelledby="faq">
+  <header class="section-head"><div class="section-head__text"><h2 id="faq">Questions</h2></div></header>
+  <div class="accordion"><details class="accordion__item" name="gauntlet-faq"><summary class="accordion__summary">What does a gauntlet run cost?</summary><div class="accordion__body"><p>The Gauntlet is part of Operator at US$10 per week. A run is eight reviews on your own model, so your provider bills eight model calls to your key.</p></div></details><details class="accordion__item" name="gauntlet-faq"><summary class="accordion__summary">Which model runs the stages?</summary><div class="accordion__body"><p>The one you choose. Every stage is a hosted review: your files and your API key go through our server, which adds the method of the stage, to your provider. That is OpenRouter, Anthropic, OpenAI, Google Gemini, xAI, DeepSeek, Mistral or Groq. No file, key or review is stored.</p></div></details><details class="accordion__item" name="gauntlet-faq"><summary class="accordion__summary">Can I run the stages on a chat subscription or from a coding agent?</summary><div class="accordion__body"><p>The stages run hosted, on an API key. The report stage is the Challenge a draft report profile, which also exports as a prompt on its own. From a coding agent, the <code>gauntlet</code> prompt of the MCP server runs the same order: seven hosted reviews through <code>run_review</code> with a connection token, and the report stage on your agent’s own model.</p></div></details><details class="accordion__item" name="gauntlet-faq"><summary class="accordion__summary">What happens when an early stage ends the report?</summary><div class="accordion__body"><p>The run stops there. A drop or a hold-duplicate from scope, provenance or prior art ends the report before the proof stage costs you a day, and the dossier opens on that verdict. One button runs the remaining stages anyway.</p></div></details><details class="accordion__item" name="gauntlet-faq"><summary class="accordion__summary">Does the gauntlet run code or touch the target?</summary><div class="accordion__body"><p>It reads the files you supply. The proof stage reads your test and its output and tells you the one run that is missing. You run it locally.</p></div></details><details class="accordion__item" name="gauntlet-faq"><summary class="accordion__summary">What does the free plan show?</summary><div class="accordion__body"><p>The example dossier on this page and every single profile, one hosted review per UTC day. Each gauntlet stage except the final verdict is also a profile you run on its own.</p></div></details></div>
+</section>
+
+
+<section class="section wrap">
+  <div class="cta-band">
+    <div class="cta-band__text">
+      <h2 class="cta-band__title">Run the gauntlet before the triager does</h2>
+      <p class="cta-band__lede">Unlimited hosted reviews, the Gauntlet, Panel review and four reviews running at once.</p>
+    </div>
+    <div class="cta-band__actions">
+      <div class="cluster"><a class="btn btn--primary btn--lg" href="/pricing"><span class="btn__label">Get Operator</span><span class="icon icon--arrow-right" aria-hidden="true"></span></a><a class="btn btn--secondary btn--lg" href="/method"><span class="btn__label">Read the method</span></a></div>
+      <p class="fine">US$10 billed weekly, renews until you cancel in the Stripe portal; access runs to the end of the paid week.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section section--tight wrap">
+  
+<nav class="related" aria-label="Related">
+  <p class="meta">Related</p>
+  <ul class="related__list"><li><a class="related__link" href="/method"><span class="related__label">The twelve checks<span class="icon icon--arrow-right" aria-hidden="true"></span></span><span class="related__text">The question each check asks, and why reports die on it.</span></a></li><li><a class="related__link" href="/panel-review"><span class="related__label">Panel review<span class="icon icon--arrow-right" aria-hidden="true"></span></span><span class="related__text">Two to four models, then a cross-examination pass.</span></a></li><li><a class="related__link" href="/pricing"><span class="related__label">Pricing<span class="icon icon--arrow-right" aria-hidden="true"></span></span><span class="related__text">Free and Operator, side by side.</span></a></li></ul>
+</nav>
+</section>
+</main>
+<footer class="site-footer">
+<div class="wrap site-footer__grid">
+<div class="site-footer__brand">
+<a class="brand" href="/"><svg class="brand__mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect class="brand__tile" width="64" height="64" rx="14"/><path class="brand__glyph" d="M12.5 15h6.5v31.5h-6.5z"/><path class="brand__glyph" fill-rule="evenodd" d="M25.5 25a10.75 10.75 0 1 0 0 21.5a10.75 10.75 0 0 0 0-21.5zm0 6.25a4.5 4.5 0 1 1 0 9a4.5 4.5 0 0 1 0-9z"/><path class="brand__slash" d="M45.5 13h6.25l-8.6 37.5h-6.25z"/></svg><span class="brand__name">Bounty Operator</span></a>
+<p class="site-footer__promise">Find the hole in your report before the triager does.</p>
+</div>
+<nav class="site-footer__col" aria-label="Product"><h2 class="site-footer__title">Product</h2><ul><li><a href="/#workspace">Workbench</a></li><li><a href="/method">Method</a></li><li><a href="/gauntlet">Gauntlet</a></li><li><a href="/panel-review">Panel review</a></li><li><a href="/pricing">Pricing</a></li><li><a href="/#account">Account</a></li></ul></nav>
+<nav class="site-footer__col" aria-label="Tools"><h2 class="site-footer__title">Tools</h2><ul><li><a href="/tools">All tools</a></li><li><a href="/tools/report-check">Report check</a></li><li><a href="/tools/verify">Packet verifier</a></li><li><a href="/tools/secret-check">Secret check</a></li><li><a href="/tools/acceptance-rates">Acceptance rates</a></li><li><a href="/tools/slither-focus">Slither triage queue</a></li></ul></nav>
+<nav class="site-footer__col" aria-label="Resources"><h2 class="site-footer__title">Resources</h2><ul><li><a href="/guide">Report guide</a></li><li><a href="/mcp">MCP setup</a></li><li><a href="/templates">Report templates</a></li><li><a href="/changelog">Changelog</a></li><li><a href="https://github.com/bountyoperator/bounty-operator" target="_blank" rel="noopener noreferrer">Source<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></li></ul></nav>
+<nav class="site-footer__col" aria-label="Legal"><h2 class="site-footer__title">Legal</h2><ul><li><a href="/privacy">Privacy</a></li><li><a href="/terms">Terms</a></li><li><a href="/security">Security</a></li><li><a href="/licenses">Licences</a></li><li><a href="mailto:security@bountyoperator.com">Report a vulnerability</a></li></ul></nav>
+</div>
+<div class="wrap">
+<div class="site-footer__base">
+<p>Built by <a href="https://audits.sherlock.xyz/watson/Tradi3" target="_blank" rel="noopener noreferrer">Tradi3</a></p>
+<p><a href="mailto:support@bountyoperator.com">support@bountyoperator.com</a></p>
+</div>
+</div>
+</footer>
+</body>
+</html>

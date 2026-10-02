@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bug bounty report check: 14 instant checks on a draft | Bounty Operator</title>
+<meta name="description" content="Paste a draft bug bounty report and get 14 instant checks: pinned commit, quoted impact row, inline proof, trusted roles, leftover secrets. Runs in the browser.">
+<link rel="canonical" href="https://bountyoperator.com/tools/report-check">
+<meta name="color-scheme" content="dark light">
+<meta name="theme-color" content="#0a1220" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f5f7fb" media="(prefers-color-scheme: light)">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Bounty Operator">
+<meta property="og:title" content="Bug bounty report check: 14 instant checks on a draft | Bounty Operator">
+<meta property="og:description" content="Paste a draft bug bounty report and get 14 instant checks: pinned commit, quoted impact row, inline proof, trusted roles, leftover secrets. Runs in the browser.">
+<meta property="og:url" content="https://bountyoperator.com/tools/report-check">
+<meta property="og:image" content="https://bountyoperator.com/social-v2.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Bounty Operator. Find the hole in your report before the triager does.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Bug bounty report check: 14 instant checks on a draft | Bounty Operator">
+<meta name="twitter:description" content="Paste a draft bug bounty report and get 14 instant checks: pinned commit, quoted impact row, inline proof, trusted roles, leftover secrets. Runs in the browser.">
+<meta name="twitter:image" content="https://bountyoperator.com/social-v2.png">
+<meta name="twitter:image:alt" content="Bounty Operator. Find the hole in your report before the triager does.">
+<link rel="icon" href="/favicon.ico" sizes="48x48">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+<script src="/theme.js"></script>
+<link rel="stylesheet" href="/css/base.css">
+<link rel="stylesheet" href="/css/tools.css">
+<link rel="modulepreload" href="/tools/report-check-core.mjs">
+<link rel="modulepreload" href="/tools/dom.mjs">
+<link rel="modulepreload" href="/tools/ping.mjs">
+<link rel="modulepreload" href="/review-core.mjs">
+<link rel="modulepreload" href="/tools/secret-check-core.mjs">
+<link rel="modulepreload" href="/profiles.mjs">
+<link rel="modulepreload" href="/evidence.mjs">
+<link rel="modulepreload" href="/parse.mjs">
+<script type="module" src="/tools/report-check.mjs"></script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Bounty Operator","item":"https://bountyoperator.com/"},{"@type":"ListItem","position":2,"name":"Tools","item":"https://bountyoperator.com/tools"},{"@type":"ListItem","position":3,"name":"Report check","item":"https://bountyoperator.com/tools/report-check"}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Where does my draft go?","acceptedAnswer":{"@type":"Answer","text":"Nowhere. The fourteen checks are JavaScript that runs in this tab, and the page sends no request with your text. After the page has loaded it makes one request: a counter that says the tool was used, with nothing of yours in it. Pressing “Run the full challenge on your model” moves the draft to the workbench through this browser’s session storage. A model sees it only when you start a review there."}},{"@type":"Question","name":"What does 14 of 14 tell me?","acceptedAnswer":{"@type":"Answer","text":"That the parts a triager looks for first are on the page: a commit, a quoted impact row, one severity, an inline proof with its output, a comparison with known issues. The check reads text. Whether the claim survives an adversary is what the workbench challenge answers."}},{"@type":"Question","name":"Which report formats does it read?","acceptedAnswer":{"@type":"Answer","text":"Markdown and plain text. Immunefi, Cantina, Sherlock and HackerOne reports all carry these parts, under different headings. The checks look for the content, so the heading names do not matter."}}]}</script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="site-header">
+<div class="wrap site-header__inner">
+<a class="brand" href="/"><svg class="brand__mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect class="brand__tile" width="64" height="64" rx="14"/><path class="brand__glyph" d="M12.5 15h6.5v31.5h-6.5z"/><path class="brand__glyph" fill-rule="evenodd" d="M25.5 25a10.75 10.75 0 1 0 0 21.5a10.75 10.75 0 0 0 0-21.5zm0 6.25a4.5 4.5 0 1 1 0 9a4.5 4.5 0 0 1 0-9z"/><path class="brand__slash" d="M45.5 13h6.25l-8.6 37.5h-6.25z"/></svg><span class="brand__name">Bounty Operator</span></a>
+<nav class="site-nav" aria-label="Main"><ul><li><a href="/#workspace">Workbench</a></li><li><a href="/method">Method</a></li><li><a href="/tools" aria-current="page">Tools</a></li><li><a href="/guide">Guide</a></li><li><a href="/mcp">MCP</a></li><li><a href="/pricing">Pricing</a></li></ul></nav>
+<div class="site-header__actions">
+<button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch colour theme"><span class="icon theme-toggle__icon" aria-hidden="true"></span></button>
+<a class="btn btn--secondary btn--sm" href="/#account">Account</a>
+</div>
+</div>
+</header>
+<main id="main" tabindex="-1">
+
+<section class="section section--tight wrap">
+<header class="tool-head">
+<nav class="breadcrumbs" aria-label="Breadcrumb"><ol><li><a href="/">Bounty Operator</a></li><li><a href="/tools">Tools</a></li><li aria-current="page">Report check</li></ol></nav>
+<h1>Bug bounty report check</h1>
+<p class="lede">Paste a draft. Fourteen checks answer at once: what is on the page, what is missing, and which sentence a triager will quote back at you.</p>
+<p class="tool-local"><span class="icon icon--lock" aria-hidden="true"></span><span>Your content never leaves the browser.</span></p>
+</header>
+<div class="tool-panel" id="report-check">
+<div class="tool-panel__bar"><span class="icon icon--terminal" aria-hidden="true"></span><span class="tool-panel__name">report-check</span><span class="tool-panel__tag">Local · 14 checks</span></div>
+<div class="tool-panel__body">
+<div class="tool-split">
+<div class="tool-split__in">
+<div class="field"><label class="label" for="draft">Draft report</label><textarea class="textarea mono tool-draft" id="draft" name="draft" rows="18" placeholder="# Missing checkpoint in stake() lets a new staker drain accrued rewards
+
+Severity: High
+…" spellcheck="false" autocomplete="off" aria-describedby="draft-help"></textarea><p class="help" id="draft-help">Markdown or plain text. The checks run as you type.</p></div>
+<div class="cluster">
+<button class="btn btn--secondary" type="button" id="check-run"><span class="icon icon--play" aria-hidden="true"></span><span class="btn__label">Check report</span></button>
+<button class="btn btn--quiet" type="button" id="check-example"><span class="btn__label">Load example</span></button>
+<button class="btn btn--quiet" type="button" id="check-clear"><span class="btn__label">Clear</span></button>
+</div>
+</div>
+<div class="tool-split__out">
+<h2 class="visually-hidden">Result</h2>
+<div class="score" id="score" role="status">
+<p class="score__line"><span class="score__n" id="score-n">0</span><span id="score-text">of 14 checks pass</span></p>
+<ol class="tally" id="tally" aria-hidden="true"><li></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li></ol>
+<p class="score__note" id="score-note">Paste a draft, or load the example, to see each check with the line it found.</p>
+</div>
+<div class="cluster tool-actions">
+<a class="btn btn--primary" href="/?profile=report#workspace" id="check-handoff"><span class="btn__label">Run the full challenge on your model</span><span class="icon icon--arrow-right" aria-hidden="true"></span></a>
+<button class="btn btn--secondary" type="button" id="check-copy" disabled><span class="icon icon--copy" aria-hidden="true"></span><span class="btn__label">Copy checklist as Markdown</span></button>
+</div>
+<div id="check-notice"></div>
+<ol class="checks" id="checks" aria-label="Check results"><li class="check" data-status="pending"><div class="check__head"><span class="chip chip--dashed" data-tone="neutral">Not run</span><h3 class="check__label">Title states mechanism and consequence</h3></div></li><li class="check" data-status="pending"><div class="check__head"><span class="chip chip--dashed" data-tone="neutral">Not run</span><h3 class="check__label">Scoped asset named</h3></div></li><li class="check" data-status="pending"><div class="check__head"><span class="chip chip--dashed" data-tone="neutral">Not run</span><h3 class="check__label">Pinned revision</h3></div></li><li class="check" data-status="pending"><div class="check__head"><span class="chip chip--dashed" data-tone="neutral">Not run</span><h3 class="check__label">Impact row quoted verbatim</h3></div></li><li class="check" data-status="pending"><div class="check__head"><span class="chip chip--dashed" data-tone="neutral">Not run</span><h3 class="check__label">Severity stated once and consistent</h3></div></li><li class="check" data-status="pending"><div class="check__head"><span class="chip chip--dashed" data-tone="neutral">Not run</span><h3 class="check__label">Trusted roles in the attack path</h3></div></li><li class="check" data-status="pending"><div class="check__head"><span class="chip chip--dashed" data-tone="neutral">Not run</span><h3 class="check__label">Proof inline with command and output</h3></div></li><li class="check" data-status="pending"><div class="check__head"><span class="chip chip--dashed" data-tone="neutral">Not run</span><h3 class="check__label">Final assertion on a balance, owner or stored record</h3></div></li><li class="check" data-status="pending"><div class="check__head"><span class="chip chip--dashed" data-tone="neutral">Not run</span><h3 class="check__label">Mocks and pranks of privileged roles</h3></div></li><li class="check" data-status="pending"><div class="check__head"><span class="chip chip--dashed" data-tone="neutral">Not run</span><h3 class="check__label">Known-issue and prior-audit comparison</h3></div></li><li class="check" data-status="pending"><div class="check__head"><span class="chip chip--dashed" data-tone="neutral">Not run</span><h3 class="check__label">Limits and non-claims stated</h3></div></li><li class="check" data-status="pending"><div class="check__head"><span class="chip chip--dashed" data-tone="neutral">Not run</span><h3 class="check__label">Self-negating phrases</h3></div></li><li class="check" data-status="pending"><div class="check__head"><span class="chip chip--dashed" data-tone="neutral">Not run</span><h3 class="check__label">Secrets and private report links</h3></div></li><li class="check" data-status="pending"><div class="check__head"><span class="chip chip--dashed" data-tone="neutral">Not run</span><h3 class="check__label">Local paths</h3></div></li></ol>
+</div>
+</div></div>
+</div>
+</section>
+
+<section class="section section--tight wrap" aria-labelledby="checks-heading">
+<div class="tool-copy">
+<h2 id="checks-heading">The fourteen checks</h2>
+<p class="lede">Each result is one of three states. <strong>Pass</strong>: the part is on the page, with the line that carries it. <strong>Missing</strong>: nothing in the draft matches. <strong>Flagged</strong>: a line was found that a triager closes on, quoted so you can fix it.</p>
+</div>
+<div class="table-wrap" tabindex="0" role="region" aria-label="What each check looks for"><table class="table stack-table tool-table"><caption>What each check looks for</caption><thead><tr><th scope="col">Check</th><th scope="col">What it looks for</th><th scope="col">Fix when it is open</th></tr></thead><tbody><tr><th scope="row">Title states mechanism and consequence</th><td><span class="cell-label">What it looks for</span>The first heading or Title line names what the code does wrong and what is lost, locked, read, bypassed or blocked.</td><td><span class="cell-label">Fix when it is open</span>Write the title as one sentence: what the code does wrong, then what the attacker gains or the user loses.</td></tr><tr><th scope="row">Scoped asset named</th><td><span class="cell-label">What it looks for</span>A scope, asset or target line carries an address, a repository link or a file.</td><td><span class="cell-label">Fix when it is open</span>Name the asset exactly as the programme lists it: the contract address or the repository path.</td></tr><tr><th scope="row">Pinned revision</th><td><span class="cell-label">What it looks for</span>A commit hash, or a code link that contains one. A link to a branch is flagged.</td><td><span class="cell-label">Fix when it is open</span>State the commit the finding was reproduced on and link every code reference at that commit.</td></tr><tr><th scope="row">Impact row quoted verbatim</th><td><span class="cell-label">What it looks for</span>An impact line with the programme’s row in quotation marks or in a quote block.</td><td><span class="cell-label">Fix when it is open</span>Copy the impact row from the programme page word for word and put it in quotation marks.</td></tr><tr><th scope="row">Severity stated once and consistent</th><td><span class="cell-label">What it looks for</span>One severity level. A range, or two different levels, is flagged.</td><td><span class="cell-label">Fix when it is open</span>State one severity, at the row the body argues, and remove every other level.</td></tr><tr><th scope="row">Trusted roles in the attack path</th><td><span class="cell-label">What it looks for</span>Numbered attack steps that name owner, admin, keeper, operator or governance.</td><td><span class="cell-label">Fix when it is open</span>Label who performs each step; a decisive step by a trusted role ends the report.</td></tr><tr><th scope="row">Proof inline with command and output</th><td><span class="cell-label">What it looks for</span>A run command and the output it printed, in the report body. A link alone is flagged.</td><td><span class="cell-label">Fix when it is open</span>Paste the exact command and the output it printed into the report body.</td></tr><tr><th scope="row">Final assertion on a balance, owner or stored record</th><td><span class="cell-label">What it looks for</span>An assertion in the proof that reads a balance, an owner or a stored value.</td><td><span class="cell-label">Fix when it is open</span>End the proof with an assertion that reads the object the impact row names.</td></tr><tr><th scope="row">Mocks and pranks of privileged roles</th><td><span class="cell-label">What it looks for</span>A prank of a role-named address, a mock, or a forced state write in the proof.</td><td><span class="cell-label">Fix when it is open</span>Reach each state through public calls from live state, or name the mocked step and its route.</td></tr><tr><th scope="row">Known-issue and prior-audit comparison</th><td><span class="cell-label">What it looks for</span>A line that names a known issue, an audit note or an earlier report.</td><td><span class="cell-label">Fix when it is open</span>Name the nearest known issue or audit note and say in one sentence how the root cause differs.</td></tr><tr><th scope="row">Limits and non-claims stated</th><td><span class="cell-label">What it looks for</span>A limits section, or a sentence that says what the report does not claim.</td><td><span class="cell-label">Fix when it is open</span>Add two or three lines that say what the proof does not show and what you are not claiming.</td></tr><tr><th scope="row">Self-negating phrases</th><td><span class="cell-label">What it looks for</span>Sentences that contain: closest impact, if compromised, assuming, could potentially, currently zero, can be avoided by, does not establish.</td><td><span class="cell-label">Fix when it is open</span>Prove the condition each sentence concedes, or cut the claim that depends on it.</td></tr><tr><th scope="row">Secrets and private report links</th><td><span class="cell-label">What it looks for</span>Keys, tokens, seed phrases, private platform links, email addresses and public IP addresses.</td><td><span class="cell-label">Fix when it is open</span>Remove each listed line and rotate any key that was pasted anywhere.</td></tr><tr><th scope="row">Local paths</th><td><span class="cell-label">What it looks for</span>Home-directory paths such as /home/name/ or C:\Users\name\.</td><td><span class="cell-label">Fix when it is open</span>Replace each local path with a repository-relative path.</td></tr></tbody></table></div>
+</section>
+
+<section class="section section--tight wrap" aria-labelledby="phrases-heading">
+<div class="split">
+<div class="tool-copy">
+<h2 id="phrases-heading">Seven phrases that close a report</h2>
+<p>Each one concedes a point before the triager has to make it. The check quotes the sentence so you can prove the condition or cut the claim.</p>
+<dl class="phrases"><div class="phrases__row"><dt>“closest impact”</dt><dd>Says the selected impact row does not fit.</dd></div><div class="phrases__row"><dt>“if compromised”</dt><dd>Makes a trusted party the attacker.</dd></div><div class="phrases__row"><dt>“assuming”</dt><dd>States a precondition with no route to it from live state.</dd></div><div class="phrases__row"><dt>“could potentially”</dt><dd>Describes an outcome the proof did not produce.</dd></div><div class="phrases__row"><dt>“currently zero”</dt><dd>Says nothing is at risk today.</dd></div><div class="phrases__row"><dt>“can be avoided by”</dt><dd>Names an action that removes the loss.</dd></div><div class="phrases__row"><dt>“does not establish”</dt><dd>Concedes the claim is unproven.</dd></div></dl>
+</div>
+<div class="tool-copy">
+<h2>What a report that lands contains</h2>
+<ul class="ticks">
+<li><span class="icon icon--check" aria-hidden="true"></span><span>An executed proof with its command and output, and a control case.</span></li>
+<li><span class="icon icon--check" aria-hidden="true"></span><span>A final assertion on the object the impact row names: a balance, an owner, a stored record.</span></li>
+<li><span class="icon icon--check" aria-hidden="true"></span><span>The exact code location on a pinned revision, and a concrete fix.</span></li>
+<li><span class="icon icon--check" aria-hidden="true"></span><span>A title that states mechanism and consequence in one sentence.</span></li>
+<li><span class="icon icon--check" aria-hidden="true"></span><span>Numbered attack steps, kept separate from test code.</span></li>
+<li><span class="icon icon--check" aria-hidden="true"></span><span>The impact row quoted verbatim.</span></li>
+<li><span class="icon icon--check" aria-hidden="true"></span><span>Limits and non-claims stated by the author, and the nearest known issue named and distinguished.</span></li>
+</ul>
+<p>Twelve checks, distilled from 105 real case files across five platforms. The wins and the closures. For a blank page, start from a <a class="link" href="/templates">report template</a> or the <a class="link" href="/guide">report guide</a>.</p>
+</div>
+</div>
+</section>
+
+<section class="section section--tight wrap wrap--narrow" aria-labelledby="questions">
+<h2 id="questions">Questions</h2>
+<div class="accordion tool-faq"><details class="accordion__item"><summary class="accordion__summary">Where does my draft go?</summary><div class="accordion__body"><p>Nowhere. The fourteen checks are JavaScript that runs in this tab, and the page sends no request with your text. After the page has loaded it makes one request: a counter that says the tool was used, with nothing of yours in it. Pressing “Run the full challenge on your model” moves the draft to the workbench through this browser’s session storage. A model sees it only when you start a review there.</p></div></details><details class="accordion__item"><summary class="accordion__summary">What does 14 of 14 tell me?</summary><div class="accordion__body"><p>That the parts a triager looks for first are on the page: a commit, a quoted impact row, one severity, an inline proof with its output, a comparison with known issues. The check reads text. Whether the claim survives an adversary is what the workbench challenge answers.</p></div></details><details class="accordion__item"><summary class="accordion__summary">Which report formats does it read?</summary><div class="accordion__body"><p>Markdown and plain text. Immunefi, Cantina, Sherlock and HackerOne reports all carry these parts, under different headings. The checks look for the content, so the heading names do not matter.</p></div></details></div>
+</section>
+
+<section class="section section--tight wrap" aria-labelledby="next-action">
+<div class="tool-next">
+<div class="tool-next__text">
+<h2 class="h3" id="next-action">The text is in order. Now test the claim.</h2>
+<p>In the workbench your own model splits the draft into claims and marks each one confirmed, overstated, contradicted or unverifiable, with the line that decides it.</p>
+</div>
+<div class="cluster">
+<a class="btn btn--primary" href="/?profile=report#workspace"><span class="btn__label">Challenge a draft report</span><span class="icon icon--arrow-right" aria-hidden="true"></span></a>
+<a class="btn btn--secondary" href="/challenge-report"><span class="btn__label">How the challenge works</span></a>
+</div>
+</div>
+</section>
+
+<section class="section section--tight wrap" aria-labelledby="more-tools">
+<h2 class="h3" id="more-tools">More free tools</h2>
+<ul class="tool-related"><li><a class="tool-related__link" href="/tools/verify"><span class="tool-related__name">Packet verifier<span class="icon icon--arrow-right" aria-hidden="true"></span></span><span class="tool-related__text">Drop a packet and its source files and get match, mismatch or missing for every SHA-256.</span></a></li><li><a class="tool-related__link" href="/tools/secret-check"><span class="tool-related__name">Secret check<span class="icon icon--arrow-right" aria-hidden="true"></span></span><span class="tool-related__text">Drop a PoC folder and get every key, token, seed phrase and private report link as file:line.</span></a></li><li><a class="tool-related__link" href="/tools/acceptance-rates"><span class="tool-related__name">Acceptance rates<span class="icon icon--arrow-right" aria-hidden="true"></span></span><span class="tool-related__text">Twelve bug classes ranked by how often judges accepted them, with the sample size on every row.</span></a></li><li><a class="tool-related__link" href="/tools/slither-focus"><span class="tool-related__name">Slither triage queue<span class="icon icon--arrow-right" aria-hidden="true"></span></span><span class="tool-related__text">Drop Slither’s JSON and get a ranked Markdown queue of the 13 detectors worth a manual pass.</span></a></li></ul>
+</section>
+</main>
+<footer class="site-footer">
+<div class="wrap site-footer__grid">
+<div class="site-footer__brand">
+<a class="brand" href="/"><svg class="brand__mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect class="brand__tile" width="64" height="64" rx="14"/><path class="brand__glyph" d="M12.5 15h6.5v31.5h-6.5z"/><path class="brand__glyph" fill-rule="evenodd" d="M25.5 25a10.75 10.75 0 1 0 0 21.5a10.75 10.75 0 0 0 0-21.5zm0 6.25a4.5 4.5 0 1 1 0 9a4.5 4.5 0 0 1 0-9z"/><path class="brand__slash" d="M45.5 13h6.25l-8.6 37.5h-6.25z"/></svg><span class="brand__name">Bounty Operator</span></a>
+<p class="site-footer__promise">Find the hole in your report before the triager does.</p>
+</div>
+<nav class="site-footer__col" aria-label="Product"><h2 class="site-footer__title">Product</h2><ul><li><a href="/#workspace">Workbench</a></li><li><a href="/method">Method</a></li><li><a href="/gauntlet">Gauntlet</a></li><li><a href="/panel-review">Panel review</a></li><li><a href="/pricing">Pricing</a></li><li><a href="/#account">Account</a></li></ul></nav>
+<nav class="site-footer__col" aria-label="Tools"><h2 class="site-footer__title">Tools</h2><ul><li><a href="/tools">All tools</a></li><li><a href="/tools/report-check">Report check</a></li><li><a href="/tools/verify">Packet verifier</a></li><li><a href="/tools/secret-check">Secret check</a></li><li><a href="/tools/acceptance-rates">Acceptance rates</a></li><li><a href="/tools/slither-focus">Slither triage queue</a></li></ul></nav>
+<nav class="site-footer__col" aria-label="Resources"><h2 class="site-footer__title">Resources</h2><ul><li><a href="/guide">Report guide</a></li><li><a href="/mcp">MCP setup</a></li><li><a href="/templates">Report templates</a></li><li><a href="/changelog">Changelog</a></li><li><a href="https://github.com/bountyoperator/bounty-operator" target="_blank" rel="noopener noreferrer">Source<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></li></ul></nav>
+<nav class="site-footer__col" aria-label="Legal"><h2 class="site-footer__title">Legal</h2><ul><li><a href="/privacy">Privacy</a></li><li><a href="/terms">Terms</a></li><li><a href="/security">Security</a></li><li><a href="/licenses">Licences</a></li><li><a href="mailto:security@bountyoperator.com">Report a vulnerability</a></li></ul></nav>
+</div>
+<div class="wrap">
+<div class="site-footer__base">
+<p>Built by <a href="https://audits.sherlock.xyz/watson/Tradi3" target="_blank" rel="noopener noreferrer">Tradi3</a></p>
+<p><a href="mailto:support@bountyoperator.com">support@bountyoperator.com</a></p>
+</div>
+</div>
+</footer>
+</body>
+</html>

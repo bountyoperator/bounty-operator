@@ -1,0 +1,13 @@
+# A proof project holds the sources and the answer of its pair, so a held pair's proof must
+# never be committed. Everything under verify/ is ignored; when a pair is promoted to
+# bench/cases/, add a line `!/verify/<pair>/` below (build output stays ignored by the root file).
+/verify/*/
+!/verify/ch-01/
+!/verify/ch-08/
+!/verify/sol-01/
+!/verify/sol-04/
+!/verify/sol-06/
+!/verify/ts-01/
+
+# stored runs and local results
+/runs/

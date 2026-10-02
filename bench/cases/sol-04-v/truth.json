@@ -1,0 +1,55 @@
+{
+  "schema": "paydirt.truth/1",
+  "pair": "sol-04",
+  "variant": "vulnerable",
+  "origin": "original",
+  "assistant": "openai/gpt-6.1-sol",
+  "canary": "4f95337e-b54e-41a0-88bd-ff43af7dfcec",
+  "planted": [
+    {
+      "id": "P1",
+      "primary": true,
+      "file": "src/Cinderloom.sol",
+      "lines": [
+        [
+          200,
+          201
+        ],
+        [
+          206,
+          217
+        ]
+      ],
+      "functions": [
+        "drawEmbers",
+        "unweave"
+      ],
+      "severity": [
+        "high",
+        "critical"
+      ],
+      "mechanism": "drawEmbers() holds the latch but sends the caller's banked embers (native ETH) before zeroing them, and unweave() reads the same bankedEmbers slot without the latch, so a receiver that calls unweave() from receive() during drawEmbers() is paid its entitlement twice out of the other participants' ETH.",
+      "proof": "test/Vulnerable.t.sol:test_planted_P1"
+    }
+  ],
+  "decoys": [
+    {
+      "id": "D1",
+      "file": "src/Cinderloom.sol",
+      "lines": [
+        [
+          185,
+          188
+        ]
+      ],
+      "functions": [
+        "loosen"
+      ],
+      "why": "The unchecked subtractions cannot wrap: the revert directly above rejects any quantity that is zero, above the caller's filaments or above totalFilaments, and loosen() holds the latch for the whole call.",
+      "proof": "test/Vulnerable.t.sol:test_decoy_D1"
+    }
+  ],
+  "acceptable": [],
+  "patched_region": null,
+  "report": null
+}

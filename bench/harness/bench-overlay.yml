@@ -1,0 +1,113 @@
+# omp benchmark overlay (pass with --config). Highest non-env settings layer:
+# beats ~/.omp/agent/config.yml and any workspace .omp/config.yml.
+
+# --- no ambient context: kill every discovery source (context files, rules,
+# --- skills, MCP, hooks, custom tools, extensions, project settings)
+disabledProviders:
+  - native
+  - omp-plugins
+  - claude
+  - agent-plugins
+  - codex
+  - agents
+  - claude-plugins
+  - gemini
+  - opencode
+  - cursor
+  - windsurf
+  - cline
+  - github
+  - vscode
+  - agents-md
+  - claude-md
+  - mcp-json
+  - ssh-json
+  - builtin-defaults
+enabledProviders: []
+mcp:
+  enableProjectConfig: false
+skills:
+  enabled: false
+extensions: []
+
+# --- no memory / recall / learning
+memory:
+  backend: "off"
+autolearn:
+  enabled: false
+
+# --- tools: only local read/search; no network, no shell, no subagents
+tools:
+  xdev: false
+  intentTracing: false
+fetch:
+  enabled: false
+web_search:
+  enabled: false
+browser:
+  enabled: false
+bash:
+  enabled: false
+eval:
+  py: false
+  js: false
+github:
+  enabled: false
+lsp:
+  enabled: false
+astGrep:
+  enabled: false
+astEdit:
+  enabled: false
+async:
+  enabled: false
+launch:
+  enabled: false
+todo:
+  enabled: false
+ask:
+  enabled: false
+checkpoint:
+  enabled: false
+task:
+  maxRecursionDepth: 0
+dev:
+  autoqa: false
+
+# --- model pinning: no silent substitution
+retry:
+  modelFallback: false
+  maxRetries: 3
+advisor:
+  enabled: false
+prewalk:
+  enabled: false
+
+# --- prompt hygiene / determinism
+defaultThinkingLevel: high   # always overridden by --thinking; never leave "auto"
+features:
+  unexpectedStopDetection: none
+compaction:
+  enabled: false             # overflow fails loudly instead of provider-specific summarisation
+  experimentalContextManagement: false
+read:
+  summarize:
+    enabled: false           # `read` returns real file text, not a declarations-only outline
+  defaultLimit: 1000         # Paydirt: a bare `read` returns the whole file (case files are <= 400 lines)
+readLineNumbers: true        # Paydirt: `read` prefixes each line with its 1-based number; the answer sheet asks for lines
+magicKeywords:
+  enabled: false
+ttsr:
+  enabled: false
+personality: none
+includeModelInPrompt: false
+includeWorkspaceTree: false
+git:
+  enabled: false
+providers:
+  cacheRetention: none
+  cacheWarming: "off"
+telemetry:
+  otlpExportEnabled: false
+startup:
+  checkUpdate: false

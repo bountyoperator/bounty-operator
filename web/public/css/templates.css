@@ -1,0 +1,777 @@
+@charset "UTF-8";
+
+/*
+  Report templates: /templates and /templates/*.
+  Loaded after base.css. Everything is built from the tokens and scoped to a
+  class in this file. Blue marks what a platform asks for; amber marks what
+  the hunter still has to fill in.
+
+  1. Page frame
+  2. The template ledger
+  3. What gets this closed, sources
+  4. Challenge the draft
+  5. Hub
+  6. Foundry PoC
+*/
+
+/* ==========================================================================
+   1. Page frame
+   ========================================================================== */
+
+.tpl-page {
+  padding-block: var(--sp-32) var(--sp-72);
+}
+
+.tpl-hero {
+  display: grid;
+  gap: var(--sp-16);
+  padding-bottom: var(--sp-32);
+  border-bottom: 1px solid var(--line);
+}
+
+.tpl-hero > h1 {
+  max-width: 20ch;
+  margin-top: var(--sp-8);
+}
+
+.tpl-hero > .lede {
+  max-width: 64ch;
+}
+
+.tpl-actions {
+  margin-top: var(--sp-8);
+}
+
+.tpl-actions__status {
+  color: var(--muted);
+  font-size: var(--fs-13);
+}
+
+.tpl-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-32);
+  padding-top: var(--sp-32);
+}
+
+/* The index is a sticky column on wide screens. Narrow screens read the page in order. */
+.tpl-toc {
+  display: none;
+}
+
+.tpl-toc ul {
+  display: grid;
+  margin-top: var(--sp-8);
+  padding: 0;
+  list-style: none;
+}
+
+.tpl-toc a {
+  display: flex;
+  align-items: center;
+  min-height: 2rem;
+  color: var(--muted);
+  font-size: var(--fs-14);
+  text-decoration: none;
+}
+
+.tpl-toc a:hover {
+  color: var(--accent);
+}
+
+@media (min-width: 64em) {
+  .tpl-layout {
+    grid-template-columns: 11rem minmax(0, 1fr);
+    gap: var(--sp-48);
+    padding-top: var(--sp-48);
+  }
+
+  .tpl-toc {
+    position: sticky;
+    top: var(--sp-24);
+    display: block;
+    align-self: start;
+  }
+}
+
+.tpl-main {
+  display: grid;
+  gap: var(--sp-48);
+  min-width: 0;
+  max-width: 56rem;
+}
+
+@media (min-width: 48em) {
+  .tpl-main {
+    gap: var(--sp-72);
+  }
+}
+
+.tpl-block {
+  min-width: 0;
+}
+
+/* On the hub the blocks are direct children of the page. */
+.tpl-page > .tpl-block {
+  padding-top: var(--sp-48);
+}
+
+.tpl-block__lede {
+  max-width: 68ch;
+  margin-top: var(--sp-12);
+  color: var(--muted);
+  text-wrap: pretty;
+}
+
+.tpl-legend {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: var(--sp-8) var(--sp-12);
+  align-items: baseline;
+  max-width: 68ch;
+  margin-top: var(--sp-16);
+  color: var(--muted);
+  font-size: var(--fs-13);
+  line-height: 1.5;
+}
+
+.tpl-next {
+  padding-top: var(--sp-24);
+  border-top: 1px solid var(--line);
+}
+
+.tpl-next ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--sp-24);
+  margin-top: var(--sp-4);
+  padding: 0;
+  list-style: none;
+}
+
+.tpl-next a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap);
+  color: var(--accent);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.tpl-next a:hover {
+  color: var(--accent-hover);
+  text-decoration: underline;
+}
+
+/* ==========================================================================
+   2. The template ledger
+   ========================================================================== */
+
+.tpl {
+  margin-top: var(--sp-24);
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+}
+
+.tpl__bar {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-8);
+  min-height: 2.5rem;
+  padding: 0 1.25rem;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface-2);
+  color: var(--muted);
+  font: 600 var(--fs-12) / 1.4 var(--font-mono);
+}
+
+.tpl__file {
+  color: var(--text);
+}
+
+.tpl__tag {
+  margin-left: auto;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* One row per report section: the label in the margin, a spine, the content. */
+.tpl__section {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  border-bottom: 1px solid var(--line);
+  scroll-margin-top: var(--sp-24);
+}
+
+.tpl__label {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-12);
+  padding: var(--sp-16) 1.25rem 0;
+}
+
+.tpl__n {
+  color: var(--muted);
+  font: 600 var(--fs-12) / 1.5 var(--font-mono);
+  letter-spacing: 0.06em;
+}
+
+.tpl__content {
+  min-width: 0;
+  padding: var(--sp-8) 1.25rem 1.25rem;
+}
+
+@media (min-width: 44em) {
+  .tpl__section {
+    grid-template-columns: 8.5rem minmax(0, 1fr);
+  }
+
+  .tpl__label {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--sp-8);
+    padding: 1.375rem 0 1.25rem 1.25rem;
+  }
+
+  .tpl__content {
+    padding: 1.25rem;
+    border-left: 2px solid var(--accent);
+  }
+
+  .tpl__section[data-origin="added"] > .tpl__content {
+    border-left: 2px dashed var(--line-strong);
+  }
+}
+
+.tpl__heading {
+  font-size: var(--fs-18);
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+}
+
+.tpl__rule {
+  max-width: 66ch;
+  margin-top: var(--sp-8);
+  color: var(--muted);
+  font-size: var(--fs-14);
+  line-height: 1.6;
+  text-wrap: pretty;
+}
+
+/* The fill-in skeleton, set like the document it becomes. */
+.tpl__fill {
+  display: grid;
+  gap: var(--sp-12);
+  margin-top: var(--sp-16);
+  padding: var(--sp-16);
+  border: 1px solid var(--line);
+  border-radius: var(--r-ctl);
+  background: var(--bg);
+  font-size: var(--fs-14);
+  line-height: 1.65;
+}
+
+.tpl__fill > * {
+  min-width: 0;
+}
+
+.tpl__list {
+  display: grid;
+  gap: var(--sp-8);
+}
+
+.tpl__list > li {
+  position: relative;
+  padding-left: 1.125rem;
+}
+
+.tpl__list > li::before {
+  content: "";
+  position: absolute;
+  top: 0.7em;
+  left: 0.125rem;
+  width: 0.375rem;
+  height: 1px;
+  background: var(--muted);
+}
+
+/* A placeholder: unproven until the hunter replaces it. */
+.slot {
+  padding: 0.05em 0.3em;
+  border-radius: var(--r-chip);
+  background: var(--gap-bg);
+  color: var(--gap);
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+.tpl__fill code > .slot {
+  padding: 0;
+  background: none;
+}
+
+.tpl__source {
+  padding: var(--sp-12) 1.25rem;
+  background: var(--surface-2);
+}
+
+/* ==========================================================================
+   3. What gets this closed, sources
+   ========================================================================== */
+
+.closed {
+  counter-reset: closed;
+  display: grid;
+  margin-top: var(--sp-24);
+  border-top: 1px solid var(--line);
+}
+
+.closed__item {
+  position: relative;
+  padding: var(--sp-16) 0 var(--sp-16) 2.5rem;
+  border-bottom: 1px solid var(--line);
+  counter-increment: closed;
+}
+
+.closed__item::before {
+  content: counter(closed, decimal-leading-zero);
+  position: absolute;
+  top: 1.0625rem;
+  left: 0;
+  color: var(--danger);
+  font: 600 var(--fs-12) / 1.9 var(--font-mono);
+}
+
+.closed__title {
+  font-size: var(--fs-16);
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+}
+
+.closed__item > p {
+  max-width: 68ch;
+  margin-top: var(--sp-4);
+  font-size: var(--fs-14);
+  line-height: 1.6;
+}
+
+.closed__quote {
+  max-width: 68ch;
+  margin-top: var(--sp-12);
+  padding-left: var(--sp-12);
+  border-left: 2px solid var(--line-strong);
+  font-size: var(--fs-14);
+}
+
+.closed__quote > p {
+  font-weight: 600;
+  quotes: "\201C" "\201D";
+}
+
+.closed__quote > p::before {
+  content: open-quote;
+}
+
+.closed__quote > p::after {
+  content: close-quote;
+}
+
+.closed__quote > footer {
+  margin-top: var(--sp-4);
+  color: var(--muted);
+  font-size: var(--fs-13);
+}
+
+.closed__item > .closed__refs {
+  margin-top: var(--sp-12);
+  color: var(--muted);
+  font-size: var(--fs-13);
+}
+
+.closed__refs > .meta {
+  margin-right: var(--sp-4);
+}
+
+.closed__refs .link,
+.sources .link {
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+.closed__refs .link:hover,
+.sources .link:hover {
+  color: var(--accent-hover);
+  text-decoration-color: currentColor;
+}
+
+.sources {
+  display: grid;
+  margin-top: var(--sp-24);
+  border-top: 1px solid var(--line);
+}
+
+.sources__item {
+  display: grid;
+  gap: var(--sp-4);
+  padding-block: 0.875rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.sources__link {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.sources__note {
+  max-width: 68ch;
+  color: var(--muted);
+  font-size: var(--fs-14);
+}
+
+/* ==========================================================================
+   4. Challenge the draft
+   ========================================================================== */
+
+.tpl-check {
+  display: grid;
+  gap: var(--sp-16);
+}
+
+.tpl-check > .field {
+  margin-top: var(--sp-8);
+}
+
+.tpl-check__state {
+  min-height: 1.25rem;
+  margin-top: calc(-1 * var(--sp-8));
+  color: var(--muted);
+  font-size: var(--fs-13);
+  overflow-wrap: anywhere;
+}
+
+.tpl-check__state[data-state="open"] {
+  color: var(--gap);
+}
+
+.tpl-check__state[data-state="ok"] {
+  color: var(--ok);
+}
+
+/* ==========================================================================
+   5. Hub
+   ========================================================================== */
+
+.tpl-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16.25rem), 1fr));
+  gap: var(--sp-24);
+}
+
+.tpl-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-12);
+  padding: 1.25rem;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+}
+
+.tpl-card__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-4) var(--sp-12);
+}
+
+.tpl-card__title {
+  font-size: var(--fs-22);
+}
+
+.tpl-card__title > a {
+  text-decoration: none;
+}
+
+/* The title is a link of its own: on a touch screen it gets the full tap height. */
+@media (pointer: coarse) {
+  .tpl-card__title > a {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--tap);
+  }
+}
+
+.tpl-card__title > a:hover {
+  color: var(--accent);
+}
+
+.tpl-card__meta {
+  color: var(--muted);
+  font: 600 var(--fs-12) / 1.5 var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.tpl-card__about {
+  color: var(--muted);
+  font-size: var(--fs-14);
+  line-height: 1.55;
+}
+
+.tpl-card > .meta {
+  margin-top: var(--sp-4);
+}
+
+.tpl-card__closed {
+  display: grid;
+  gap: var(--sp-8);
+  font-size: var(--fs-14);
+  line-height: 1.45;
+}
+
+.tpl-card__closed > li {
+  display: grid;
+  grid-template-columns: 1rem minmax(0, 1fr);
+  gap: var(--sp-8);
+}
+
+.tpl-card__closed .icon {
+  margin-top: 0.2em;
+  color: var(--danger);
+}
+
+.tpl-card__closed--ok .icon {
+  color: var(--ok);
+}
+
+.tpl-card__foot {
+  margin-top: auto;
+  padding-top: var(--sp-8);
+}
+
+/* The Foundry card spans the row and lays its three parts side by side. */
+.tpl-card--wide {
+  grid-column: 1 / -1;
+}
+
+@media (min-width: 60em) {
+  .tpl-card--wide {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr) 17rem;
+    grid-template-rows: auto 1fr;
+    gap: var(--sp-8) var(--sp-32);
+    align-items: start;
+  }
+
+  .tpl-card--wide > .tpl-card__head {
+    grid-column: 1;
+  }
+
+  .tpl-card--wide > .tpl-card__about {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .tpl-card--wide > .tpl-card__closed {
+    grid-column: 2;
+    grid-row: 1 / -1;
+    align-self: center;
+  }
+
+  .tpl-card--wide > .tpl-card__foot {
+    grid-column: 3;
+    grid-row: 1 / -1;
+    align-self: center;
+    margin-top: 0;
+    padding-top: 0;
+  }
+}
+
+.tpl-page .table-wrap {
+  margin-top: var(--sp-24);
+}
+
+/* Five columns of prose need room: from 60em the table sits side by side. */
+.tpl-compare {
+  min-width: 58rem;
+}
+
+.tpl-objects {
+  min-width: 40rem;
+}
+
+/* Below that the tables stack (.stack-table--wide in base.css). Rows of prose
+   get more room here, and the row name reads as a heading. */
+@media (max-width: 59.99em) {
+  .tpl-page .table-wrap > .table.stack-table tbody tr {
+    padding: var(--sp-16);
+  }
+
+  .tpl-page .table-wrap > .table.stack-table tbody tr > th {
+    font-size: var(--fs-16);
+  }
+}
+
+@media (max-width: 39.99em) {
+  .tpl-page .table-wrap > .table.stack-table tbody tr > * + * {
+    margin-top: var(--sp-12);
+  }
+}
+
+.tpl-parts {
+  counter-reset: part;
+  display: grid;
+  margin-top: var(--sp-24);
+  border-top: 1px solid var(--line);
+}
+
+.tpl-parts > li {
+  display: grid;
+  grid-template-columns: 2.25rem minmax(0, 1fr);
+  gap: 0 var(--sp-4);
+  padding-block: var(--sp-12);
+  border-bottom: 1px solid var(--line);
+  counter-increment: part;
+}
+
+.tpl-parts > li::before {
+  content: counter(part, decimal-leading-zero);
+  grid-row: 1 / span 2;
+  color: var(--muted);
+  font: 600 var(--fs-12) / 2 var(--font-mono);
+}
+
+.tpl-parts__name {
+  font-weight: 650;
+}
+
+.tpl-parts__text {
+  grid-column: 2;
+  color: var(--muted);
+  font-size: var(--fs-14);
+}
+
+/* The last two parts are the added ones. */
+.tpl-parts > li:nth-last-child(-n + 2)::before {
+  color: var(--gap);
+}
+
+@media (min-width: 48em) {
+  .tpl-parts > li {
+    grid-template-columns: 2.25rem 14rem minmax(0, 1fr);
+    gap: 0 var(--sp-16);
+    align-items: baseline;
+  }
+
+  .tpl-parts > li::before {
+    grid-row: auto;
+  }
+
+  .tpl-parts__text {
+    grid-column: 3;
+  }
+}
+
+.tpl-record {
+  max-width: 68ch;
+  margin-top: var(--sp-24);
+  padding-left: var(--sp-16);
+  border-left: 2px solid var(--accent);
+  font-size: var(--fs-14);
+  line-height: 1.6;
+}
+
+.tpl-cta {
+  margin-top: var(--sp-48);
+  padding: var(--sp-24);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+}
+
+.tpl-page > .tpl-cta {
+  padding-top: var(--sp-24);
+}
+
+.tpl-cta > .cluster {
+  margin-top: var(--sp-24);
+}
+
+@media (min-width: 48em) {
+  .tpl-cta {
+    padding: var(--sp-32);
+  }
+
+  .tpl-page > .tpl-cta {
+    padding-top: var(--sp-32);
+  }
+}
+
+/* ==========================================================================
+   6. Foundry PoC
+   ========================================================================== */
+
+.tpl-block > .code,
+.tpl-block > [data-template-source] {
+  margin-top: var(--sp-16);
+}
+
+.tpl-anatomy {
+  counter-reset: part;
+  display: grid;
+  margin-top: var(--sp-24);
+  border-top: 1px solid var(--line);
+}
+
+.tpl-anatomy__item {
+  position: relative;
+  padding: var(--sp-16) 0 var(--sp-16) 2.5rem;
+  border-bottom: 1px solid var(--line);
+  counter-increment: part;
+  scroll-margin-top: var(--sp-24);
+}
+
+.tpl-anatomy__item::before {
+  content: counter(part, decimal-leading-zero);
+  position: absolute;
+  top: 1.0625rem;
+  left: 0;
+  color: var(--accent);
+  font: 600 var(--fs-12) / 1.9 var(--font-mono);
+}
+
+.tpl-anatomy__title {
+  font-size: var(--fs-16);
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+}
+
+.tpl-anatomy__item > p {
+  max-width: 68ch;
+  margin-top: var(--sp-4);
+  font-size: var(--fs-14);
+  line-height: 1.6;
+}
+
+.tpl-anatomy__item > .tpl-anatomy__check {
+  margin-top: var(--sp-8);
+  color: var(--muted);
+  font-size: var(--fs-13);
+}
+
+.tpl-run__title {
+  margin-top: var(--sp-24);
+  font-size: var(--fs-16);
+  line-height: 1.4;
+}
+
+.tpl-run__title + .code {
+  margin-top: var(--sp-8);
+}

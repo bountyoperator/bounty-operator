@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Solidity review on your own model | Bounty Operator</title>
+<meta name="description" content="Run an AI Solidity review on your own model and key: entry points, sibling diffs, invariants, and a line reference and counterargument for every finding.">
+<link rel="canonical" href="https://bountyoperator.com/solidity-review">
+<meta name="color-scheme" content="dark light">
+<meta name="theme-color" content="#0a1220" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f5f7fb" media="(prefers-color-scheme: light)">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Bounty Operator">
+<meta property="og:title" content="AI Solidity review on your own model | Bounty Operator">
+<meta property="og:description" content="Run an AI Solidity review on your own model and key: entry points, sibling diffs, invariants, and a line reference and counterargument for every finding.">
+<meta property="og:url" content="https://bountyoperator.com/solidity-review">
+<meta property="og:image" content="https://bountyoperator.com/social-v2.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Bounty Operator. Find the hole in your report before the triager does.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="AI Solidity review on your own model | Bounty Operator">
+<meta name="twitter:description" content="Run an AI Solidity review on your own model and key: entry points, sibling diffs, invariants, and a line reference and counterargument for every finding.">
+<meta name="twitter:image" content="https://bountyoperator.com/social-v2.png">
+<meta name="twitter:image:alt" content="Bounty Operator. Find the hole in your report before the triager does.">
+<link rel="icon" href="/favicon.ico" sizes="48x48">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+<script src="/theme.js"></script>
+<link rel="stylesheet" href="/css/base.css">
+<link rel="stylesheet" href="/css/landing.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Bounty Operator","item":"https://bountyoperator.com/"},{"@type":"ListItem","position":2,"name":"Method","item":"https://bountyoperator.com/method"},{"@type":"ListItem","position":3,"name":"Solidity review","item":"https://bountyoperator.com/solidity-review"}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Which model runs the review?","acceptedAnswer":{"@type":"Answer","text":"The one you choose, on your own key: OpenRouter, Anthropic, OpenAI, Google Gemini, xAI, DeepSeek, Mistral or Groq. With a chat subscription, export the prompt, paste it into your chat app and paste the answer back. From a coding agent, prepare_review hands the same request to the agent’s own model over MCP."}},{"@type":"Question","name":"Does it work for a bounty and for my own code?","acceptedAnswer":{"@type":"Answer","text":"Yes. In bounty mode the verdict is submit, rewrite-then-submit, prove-first, hold-duplicate or drop. In own-code mode it is fix-before-deploy or no-blocking-issues."}},{"@type":"Question","name":"How does it treat admin-only bugs?","acceptedAnswer":{"@type":"Answer","text":"A bug that needs the owner or an admin to act against users is listed under Hardening. Say in Context that privileged roles are in scope and it is reported as a finding."}},{"@type":"Question","name":"Where do my files go?","acceptedAnswer":{"@type":"Answer","text":"To the model provider you choose, through our server, for that one request. Bounty Operator does not store your files, prompts, keys or results. With an exported prompt they go from your browser to the chat app you paste into. The packet you download carries a SHA-256 manifest of every file reviewed."}}]}</script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="site-header">
+<div class="wrap site-header__inner">
+<a class="brand" href="/"><svg class="brand__mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect class="brand__tile" width="64" height="64" rx="14"/><path class="brand__glyph" d="M12.5 15h6.5v31.5h-6.5z"/><path class="brand__glyph" fill-rule="evenodd" d="M25.5 25a10.75 10.75 0 1 0 0 21.5a10.75 10.75 0 0 0 0-21.5zm0 6.25a4.5 4.5 0 1 1 0 9a4.5 4.5 0 0 1 0-9z"/><path class="brand__slash" d="M45.5 13h6.25l-8.6 37.5h-6.25z"/></svg><span class="brand__name">Bounty Operator</span></a>
+<nav class="site-nav" aria-label="Main"><ul><li><a href="/#workspace">Workbench</a></li><li><a href="/method">Method</a></li><li><a href="/tools">Tools</a></li><li><a href="/guide">Guide</a></li><li><a href="/mcp">MCP</a></li><li><a href="/pricing">Pricing</a></li></ul></nav>
+<div class="site-header__actions">
+<button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch colour theme"><span class="icon theme-toggle__icon" aria-hidden="true"></span></button>
+<a class="btn btn--secondary btn--sm" href="/#account">Account</a>
+</div>
+</div>
+</header>
+<main id="main" tabindex="-1">
+
+
+<section class="lp-hero wrap lp-hero--split">
+  <nav class="breadcrumbs" aria-label="Breadcrumb"><ol><li><a href="/">Bounty Operator</a></li><li><a href="/method">Method</a></li><li aria-current="page">Solidity review</li></ol></nav>
+  <div class="lp-hero__grid">
+    <div class="lp-hero__text lp-hero__text--sticky">
+      <p class="eyebrow">Solidity review</p>
+      <h1>AI Solidity review on your own model</h1>
+      <p class="lede">Paste the contracts. Your model maps who can call what, compares sibling functions, checks every write site of each accounting invariant, and reports each way value or control is taken, with the lines that prove it and the strongest argument against it.</p>
+      <div class="cluster lp-hero__actions"><a class="btn btn--primary btn--lg" href="/?profile=solidity#workspace"><span class="btn__label">Review my contracts</span><span class="icon icon--arrow-right" aria-hidden="true"></span></a><a class="btn btn--secondary btn--lg" href="#checks"><span class="btn__label">What it checks</span></a></div>
+      <p class="fine lp-hero__note">Opens the workbench with Solidity review selected. 1 hosted review per UTC day on your own key. No card.</p>
+      
+    </div>
+    <div class="lp-hero__aside">
+<div class="example example--narrow">
+  <p class="example__bar"><span class="chip status" data-status="example">Example</span><span class="meta">Example output · invented contract</span></p>
+  <div class="example__body">
+      <div class="stack">
+        <header class="dossier"><div class="dossier__verdict"><span class="meta">Verdict</span><span class="chip verdict verdict--lg" data-verdict="prove-first">Prove first</span></div><p class="dossier__headline">The share price follows the vault’s raw balance. A seed deposit would close it, and no deployment script was supplied.</p><ul class="counts"><li data-sev="critical" data-zero><span class="counts__n">0</span><span class="counts__label">Critical</span></li><li data-sev="high"><span class="counts__n">1</span><span class="counts__label">High</span></li><li data-sev="medium" data-zero><span class="counts__n">0</span><span class="counts__label">Medium</span></li><li data-sev="hardening"><span class="counts__n">2</span><span class="counts__label">Hardening</span></li><li data-sev="checked-safe"><span class="counts__n">3</span><span class="counts__label">Checked safe</span></li></ul></header>
+        <article class="finding" id="solidity-f-1" data-sev="high" aria-labelledby="solidity-f-1-title"><div class="finding__bar"><span class="icon icon--file" aria-hidden="true"></span><span class="finding__file">input-1/SaltmarshVault.sol</span><span class="hash" title="sha256: 3f9a61c07d2b84e5a1c6f0398e7d25b4c80a17f6e3d952b08c4e71a6f39d0b25"><span class="hash__algo">sha256</span>3f9a61c07d2b…</span><span class="finding__tag">112 lines</span></div><header class="finding__head"><div class="finding__tags"><span class="finding__id">F-1</span><span class="chip sev" data-sev="high">High</span><span class="chip status" data-status="proven">Proven in source</span></div><h3 class="finding__title" id="solidity-f-1-title">A direct transfer moves the share price, and <code>deposit</code> accepts zero shares</h3><ul class="finding__refs" aria-label="Locations"><li><span class="ref" title="input-1/SaltmarshVault.sol:44-50"><span class="ref__file">input-1/SaltmarshVault.sol</span><span class="ref__lines">:44-50</span></span></li><li><span class="ref" title="input-1/SaltmarshVault.sol:58-60"><span class="ref__file">input-1/SaltmarshVault.sol</span><span class="ref__lines">:58-60</span></span></li></ul></header><dl class="finding__rows"><div class="rail" data-rail="impact"><dt class="rail__label">Impact</dt><dd class="rail__body"><p>The first depositor takes the next deposit in full. Bound: any deposit smaller than the balance donated to the vault.</p></dd></div><div class="rail" data-rail="observed"><dt class="rail__label">Observed</dt><dd class="rail__body"><ol class="steps"><li><code>totalAssets()</code> returns the vault’s raw token balance (lines 58-60). A plain transfer raises it.</li><li><code>deposit</code> divides by that balance at line 46 and rounds down. Nothing rejects <code>shares == 0</code>.</li><li>The attacker deposits 1 unit into the empty vault for 1 share, then transfers 10,000 USDC to the vault.</li><li>A victim deposits 9,999 USDC. <code>9_999e6 * 1 / (10_000e6 + 1)</code> is 0 shares. The attacker redeems 1 share for the whole balance.</li></ol><figure class="code code--numbered"><figcaption class="code__bar"><span class="code__name">input-1/SaltmarshVault.sol</span><span class="code__range">44–50</span><button class="code__copy" type="button" data-copy><span class="icon icon--copy" aria-hidden="true"></span><span data-copy-label>Copy</span></button></figcaption><pre class="code__pre" tabindex="0" role="region" aria-label="Source: input-1/SaltmarshVault.sol"><code><span class="code__line" data-n="44">function deposit(uint256 assets, address receiver) external returns (uint256 shares) {
+</span><span class="code__line" data-n="45">    uint256 supply = totalSupply();
+</span><span class="code__line is-hl" data-n="46">    shares = supply == 0 ? assets : (assets * supply) / totalAssets();
+</span><span class="code__line" data-n="47">    asset.safeTransferFrom(msg.sender, address(this), assets);
+</span><span class="code__line" data-n="48">    _mint(receiver, shares);
+</span><span class="code__line" data-n="49">    emit Deposit(msg.sender, receiver, assets, shares);
+</span><span class="code__line" data-n="50">}
+</span></code></pre></figure></dd></div><div class="rail" data-rail="counter" data-status="open"><dt class="rail__label">Counterargument</dt><dd class="rail__body"><p class="rail__quote">The deployer seeds the vault in the deployment script, so it is never empty.</p><p class="rail__answer"><span class="chip status" data-status="open">Open</span><span>No deployment script was supplied. Lines 44-50 hold no minimum-share check and no dead shares.</span></p></dd></div><div class="rail" data-rail="gap" data-status="open"><dt class="rail__label">Evidence gap</dt><dd class="rail__body"><ul class="gaps"><li>The deployment script, or the transaction of the first deposit.</li></ul></dd></div><div class="rail" data-rail="next"><dt class="rail__label">Next</dt><dd class="rail__body"><p class="rail__next"><span class="icon icon--arrow-right" aria-hidden="true"></span><span>Run the test, then read the deployment script for a seed deposit.</span></p></dd></div></dl></article>
+      </div></div>
+</div></div>
+  </div>
+</section>
+
+<section class="section wrap" aria-labelledby="checks">
+  <header class="section-head"><div class="section-head__text"><h2 id="checks">What the Solidity review checks</h2><p class="lede">The profile works through the contracts in a fixed order before it writes anything.</p></div></header>
+  <ol class="points points--3"><li class="points__item"><h3 class="points__title">Entry points</h3><p class="points__text">Every external or public function that changes state: who can call it, whether it carries a reentrancy guard, and whether value moves in or out.</p></li><li class="points__item"><h3 class="points__title">Sibling diff</h3><p class="points__text">Each function next to the others that do the same work. A modifier, pause check or checkpoint that one sibling has and another lacks is a finding.</p></li><li class="points__item"><h3 class="points__title">Invariants</h3><p class="points__text">Conservation, ratio, ordering and bounds. For each one, every line that writes the variables involved. One write site that skips the update breaks it.</p></li><li class="points__item"><h3 class="points__title">Value flow and rounding</h3><p class="points__text">Which way every division rounds and who gains, the first deposit into an empty pool, and direct transfers that move a price or a share ratio.</p></li><li class="points__item"><h3 class="points__title">Checkpoints and external calls</h3><p class="points__text">Accumulators updated before a balance changes. State that is stale at the moment of each call, token transfer, hook or callback.</p></li><li class="points__item"><h3 class="points__title">Signatures, oracles, upgrades</h3><p class="points__text">Nonce, deadline and chain id inside the signed data. Stale or movable prices. Initialisers callable twice and privileged setters left open.</p></li></ol>
+</section>
+
+<section class="section wrap">
+  <div class="split">
+    <div>
+      <header class="section-head"><div class="section-head__text"><h2 id="paste">What to paste in</h2><p class="lede">The review judges the files you supply and names what it could not see.</p></div></header>
+      <ul class="needs"><li class="needs__item"><span class="icon icon--file" aria-hidden="true"></span><div><p class="needs__name">The contracts in scope</p><p class="needs__note">One file or a small set. Import them from GitHub at a pinned commit to keep line numbers exact.</p></div></li><li class="needs__item"><span class="icon icon--file" aria-hidden="true"></span><div><p class="needs__name">Interfaces, libraries and tokens they call<span class="needs__opt">Optional</span></p><p class="needs__note">A control that lives in an unsupplied file is reported as depending on that file.</p></div></li><li class="needs__item"><span class="icon icon--file" aria-hidden="true"></span><div><p class="needs__name">Context<span class="needs__opt">Optional</span></p><p class="needs__note">The target, the commit, how the tokens behave, and whether privileged roles are in scope.</p></div></li></ul>
+      <p class="fine needs__limits">Up to 50 files, 120 KB per file, 240 KB and 20,000 lines in total. Paste, drop files, or import a repository, pull request or commit from GitHub at a pinned commit.</p>
+    </div>
+    <div>
+      <header class="section-head"><div class="section-head__text"><h2 id="returns">What comes back</h2><p class="lede">One review in a fixed format, built to be checked against the source.</p></div></header>
+      <ul class="ticks"><li><span class="icon icon--check" aria-hidden="true"></span><span>A verdict and a one-sentence headline.</span></li><li><span class="icon icon--check" aria-hidden="true"></span><span>A finding card per issue: severity, basis, location, impact and the path with concrete values.</span></li><li><span class="icon icon--check" aria-hidden="true"></span><span>The strongest counterargument to each finding, marked resolved or open.</span></li><li><span class="icon icon--check" aria-hidden="true"></span><span>The evidence gap: the one artefact still missing.</span></li><li><span class="icon icon--check" aria-hidden="true"></span><span>A fix and a test for each finding.</span></li><li><span class="icon icon--check" aria-hidden="true"></span><span>Entry points and Invariants tables, then Hardening and Checked-and-safe lists.</span></li><li><span class="icon icon--check" aria-hidden="true"></span><span>A packet with the SHA-256 manifest of every file reviewed.</span></li></ul>
+    </div>
+  </div>
+</section>
+
+
+<section class="section wrap" aria-labelledby="more">
+  <header class="section-head"><div class="section-head__text"><h2 id="more">The rest of the same review</h2><p class="lede">The entry points and the invariants the profile mapped before it reported the finding above.</p></div></header>
+  
+<div class="example">
+  <p class="example__bar"><span class="chip status" data-status="example">Example</span><span class="meta">Example output · invented contract · SaltmarshVault</span></p>
+  <div class="example__body">
+      <div class="stack stack--24">
+        <div class="table-wrap" tabindex="0" role="region" aria-label="Entry points"><table class="table stack-table"><caption>Entry points</caption><thead><tr><th scope="col">Function</th><th scope="col">Location</th><th scope="col">Caller</th><th scope="col">Guard</th><th scope="col">Value</th></tr></thead><tbody><tr><th scope="row"><code>deposit</code></th><td><span class="cell-label">Location</span><span class="ref" title="input-1/SaltmarshVault.sol:44-50"><span class="ref__file">input-1/SaltmarshVault.sol</span><span class="ref__lines">:44-50</span></span></td><td><span class="cell-label">Caller</span>anyone</td><td><span class="cell-label">Guard</span>no</td><td><span class="cell-label">Value</span>in</td></tr><tr><th scope="row"><code>redeem</code></th><td><span class="cell-label">Location</span><span class="ref" title="input-1/SaltmarshVault.sol:62-71"><span class="ref__file">input-1/SaltmarshVault.sol</span><span class="ref__lines">:62-71</span></span></td><td><span class="cell-label">Caller</span>anyone</td><td><span class="cell-label">Guard</span>no</td><td><span class="cell-label">Value</span>out</td></tr><tr><th scope="row"><code>setFeeRecipient</code></th><td><span class="cell-label">Location</span><span class="ref" title="input-1/SaltmarshVault.sol:83-86"><span class="ref__file">input-1/SaltmarshVault.sol</span><span class="ref__lines">:83-86</span></span></td><td><span class="cell-label">Caller</span>admin</td><td><span class="cell-label">Guard</span>no</td><td><span class="cell-label">Value</span>none</td></tr></tbody></table></div>
+        <div class="table-wrap" tabindex="0" role="region" aria-label="Invariants"><table class="table stack-table stack-table--plain"><caption>Invariants</caption><thead><tr><th scope="col">Property</th><th scope="col">State</th><th scope="col">Where</th></tr></thead><tbody><tr><th scope="row">Ratio: shares minted for a deposit are worth the assets paid in</th><td><span class="cell-label">State</span><span class="chip" data-tone="danger">Broken</span></td><td><span class="cell-label">Where</span>F-1</td></tr><tr><th scope="row">Conservation: <code>totalSupply</code> equals the sum of balances</th><td><span class="cell-label">State</span><span class="chip" data-tone="ok">Holds</span></td><td><span class="cell-label">Where</span><span class="ref" title="input-1/SaltmarshVault.sol:48"><span class="ref__file">input-1/SaltmarshVault.sol</span><span class="ref__lines">:48</span></span></td></tr><tr><th scope="row">Bounds: <code>redeem</code> pays out no more than the caller’s shares are worth</th><td><span class="cell-label">State</span><span class="chip" data-tone="ok">Holds</span></td><td><span class="cell-label">Where</span><span class="ref" title="input-1/SaltmarshVault.sol:64-66"><span class="ref__file">input-1/SaltmarshVault.sol</span><span class="ref__lines">:64-66</span></span></td></tr></tbody></table></div>
+      </div></div>
+</div>
+</section>
+
+<section class="section wrap wrap--narrow" aria-labelledby="faq">
+  <header class="section-head"><div class="section-head__text"><h2 id="faq">Questions</h2></div></header>
+  <div class="accordion"><details class="accordion__item" name="solidity-faq"><summary class="accordion__summary">Which model runs the review?</summary><div class="accordion__body"><p>The one you choose, on your own key: OpenRouter, Anthropic, OpenAI, Google Gemini, xAI, DeepSeek, Mistral or Groq. With a chat subscription, export the prompt, paste it into your chat app and paste the answer back. From a coding agent, <code>prepare_review</code> hands the same request to the agent’s own model over MCP.</p></div></details><details class="accordion__item" name="solidity-faq"><summary class="accordion__summary">Does it work for a bounty and for my own code?</summary><div class="accordion__body"><p>Yes. In bounty mode the verdict is submit, rewrite-then-submit, prove-first, hold-duplicate or drop. In own-code mode it is fix-before-deploy or no-blocking-issues.</p></div></details><details class="accordion__item" name="solidity-faq"><summary class="accordion__summary">How does it treat admin-only bugs?</summary><div class="accordion__body"><p>A bug that needs the owner or an admin to act against users is listed under Hardening. Say in Context that privileged roles are in scope and it is reported as a finding.</p></div></details><details class="accordion__item" name="solidity-faq"><summary class="accordion__summary">Where do my files go?</summary><div class="accordion__body"><p>To the model provider you choose, through our server, for that one request. Bounty Operator does not store your files, prompts, keys or results. With an exported prompt they go from your browser to the chat app you paste into. The packet you download carries a SHA-256 manifest of every file reviewed.</p></div></details></div>
+</section>
+
+
+<section class="section wrap">
+  <div class="cta-band">
+    <div class="cta-band__text">
+      <h2 class="cta-band__title">Run a Solidity review on your contracts</h2>
+      <p class="cta-band__lede">Your model, your key, a line reference for every claim.</p>
+    </div>
+    <div class="cta-band__actions">
+      <div class="cluster"><a class="btn btn--primary btn--lg" href="/?profile=solidity#workspace"><span class="btn__label">Review my contracts</span><span class="icon icon--arrow-right" aria-hidden="true"></span></a><a class="btn btn--secondary btn--lg" href="/method"><span class="btn__label">Read the method</span></a></div>
+      <p class="fine">Opens the workbench with Solidity review selected. Free: 1 hosted review per UTC day. Operator: unlimited, US$10 per week.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section section--tight wrap">
+  
+<nav class="related" aria-label="Run next">
+  <p class="meta">Run next</p>
+  <ul class="related__list"><li><a class="related__link" href="/?profile=poc#workspace"><span class="related__label">Proof review<span class="icon icon--arrow-right" aria-hidden="true"></span></span><span class="related__text">Whether the proof shows the impact or only the defect.</span></a></li><li><a class="related__link" href="/challenge-report"><span class="related__label">Challenge a draft report<span class="icon icon--arrow-right" aria-hidden="true"></span></span><span class="related__text">Every claim in your draft, checked against the code.</span></a></li><li><a class="related__link" href="/code-security-review"><span class="related__label">Code security review<span class="icon icon--arrow-right" aria-hidden="true"></span></span><span class="related__text">Authorization, data handling and failure paths in any codebase.</span></a></li><li><a class="related__link" href="/panel-review"><span class="related__label">Panel review<span class="icon icon--arrow-right" aria-hidden="true"></span></span><span class="related__text">Two to four models, then a cross-examination pass.</span></a></li><li><a class="related__link" href="/gauntlet"><span class="related__label">Gauntlet<span class="icon icon--arrow-right" aria-hidden="true"></span></span><span class="related__text">All eight stages in one run, with one verdict.</span></a></li></ul>
+</nav>
+</section>
+</main>
+<footer class="site-footer">
+<div class="wrap site-footer__grid">
+<div class="site-footer__brand">
+<a class="brand" href="/"><svg class="brand__mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect class="brand__tile" width="64" height="64" rx="14"/><path class="brand__glyph" d="M12.5 15h6.5v31.5h-6.5z"/><path class="brand__glyph" fill-rule="evenodd" d="M25.5 25a10.75 10.75 0 1 0 0 21.5a10.75 10.75 0 0 0 0-21.5zm0 6.25a4.5 4.5 0 1 1 0 9a4.5 4.5 0 0 1 0-9z"/><path class="brand__slash" d="M45.5 13h6.25l-8.6 37.5h-6.25z"/></svg><span class="brand__name">Bounty Operator</span></a>
+<p class="site-footer__promise">Find the hole in your report before the triager does.</p>
+</div>
+<nav class="site-footer__col" aria-label="Product"><h2 class="site-footer__title">Product</h2><ul><li><a href="/#workspace">Workbench</a></li><li><a href="/method">Method</a></li><li><a href="/gauntlet">Gauntlet</a></li><li><a href="/panel-review">Panel review</a></li><li><a href="/pricing">Pricing</a></li><li><a href="/#account">Account</a></li></ul></nav>
+<nav class="site-footer__col" aria-label="Tools"><h2 class="site-footer__title">Tools</h2><ul><li><a href="/tools">All tools</a></li><li><a href="/tools/report-check">Report check</a></li><li><a href="/tools/verify">Packet verifier</a></li><li><a href="/tools/secret-check">Secret check</a></li><li><a href="/tools/acceptance-rates">Acceptance rates</a></li><li><a href="/tools/slither-focus">Slither triage queue</a></li></ul></nav>
+<nav class="site-footer__col" aria-label="Resources"><h2 class="site-footer__title">Resources</h2><ul><li><a href="/guide">Report guide</a></li><li><a href="/mcp">MCP setup</a></li><li><a href="/templates">Report templates</a></li><li><a href="/changelog">Changelog</a></li><li><a href="https://github.com/bountyoperator/bounty-operator" target="_blank" rel="noopener noreferrer">Source<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></li></ul></nav>
+<nav class="site-footer__col" aria-label="Legal"><h2 class="site-footer__title">Legal</h2><ul><li><a href="/privacy">Privacy</a></li><li><a href="/terms">Terms</a></li><li><a href="/security">Security</a></li><li><a href="/licenses">Licences</a></li><li><a href="mailto:security@bountyoperator.com">Report a vulnerability</a></li></ul></nav>
+</div>
+<div class="wrap">
+<div class="site-footer__base">
+<p>Built by <a href="https://audits.sherlock.xyz/watson/Tradi3" target="_blank" rel="noopener noreferrer">Tradi3</a></p>
+<p><a href="mailto:support@bountyoperator.com">support@bountyoperator.com</a></p>
+</div>
+</div>
+</footer>
+</body>
+</html>

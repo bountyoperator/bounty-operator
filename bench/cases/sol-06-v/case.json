@@ -1,0 +1,14 @@
+{
+  "id": "sol-06-v",
+  "pair": "sol-06",
+  "variant": "vulnerable",
+  "family": "find-sol",
+  "visibility": "public",
+  "authored": "2026-10-02",
+  "profile": "solidity",
+  "files": [
+    "src/TollWeaver.sol",
+    "src/libraries/CoinMoves.sol"
+  ],
+  "focus": "Review the files in this workspace for security issues."
+}

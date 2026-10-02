@@ -1,0 +1,188 @@
+# Changelog
+
+## 0.7.0 — 2026-10-03
+
+Reviews
+
+- Every review opens with a verdict: `submit`, `rewrite-then-submit`,
+  `prove-first`, `hold-duplicate` or `drop`. Reviews of your own code return
+  `fix-before-deploy` or `no-blocking-issues`.
+- Eleven review profiles. New: scope and impact fit, design intent and actors,
+  prior-art overlap, proof review, severity calibration, triager simulation,
+  report editor and scanner triage. The new profiles run as hosted reviews:
+  your files and your key go through bountyoperator.com to your provider, the
+  service adds the method, and no file, key or review is stored. Code security
+  review, Solidity review and Challenge a draft report stay open source and
+  also export as a prompt.
+- A free account runs any single profile as its hosted review of the day.
+- An answer that repeats the review instructions in place of a review is
+  stopped with the code `output_withheld`. An unfilled output template is not
+  such an answer and is delivered.
+- Each finding carries its file-and-line references, the strongest
+  counterargument, the one missing artefact, a fix, a test and the next action.
+  A reference to a file or line that was not supplied is flagged.
+- Evidence fields for what decides a report: the impact row, exclusions,
+  revisions, prior material, the proof run and what the platform stored.
+- Eight providers on your own key: OpenRouter, Anthropic, OpenAI, Gemini, xAI,
+  DeepSeek, Mistral and Groq. OpenRouter connects in one click. Provider errors
+  name the cause.
+- A review takes up to 50 files, 120 KB per file, 240 KB and 20,000 lines in
+  total. The answer is capped at 16,000 tokens.
+
+Operator
+
+- The Gauntlet: one run through eight stages (scope, provenance, prior art,
+  proof, severity, triager, report, verdict). It ends in one verdict, one
+  blocker, the cheapest action that removes it and a filing deadline. A run
+  that is cancelled or interrupted keeps its finished stages.
+- Panel review: two to four models review the same files in parallel, then a
+  cross-examination pass keeps the findings the cited lines prove and records
+  how many models reported each one.
+- The last gauntlet stage and the panel cross-examination run on Operator
+  only. An account without the plan is refused with the code `operator_only`
+  before the provider is called, and keeps its review of the day.
+- Four hosted reviews at once. Free stays at one hosted review per UTC day and
+  Operator at US$10 per week.
+
+Workbench
+
+- Results stream in and render as finding cards under the verdict. A cited
+  line opens in the file it came from.
+- Import from GitHub: a repository, a folder, a pull request or a commit,
+  pinned to a commit SHA, with a file picker. A local folder can be dropped in
+  whole.
+- Paste-back for chat subscriptions: export the prompt of a core profile,
+  paste the answer back and get the same cards and packet.
+- Local history, off by default: finished reviews saved in this browser, with
+  export and delete.
+- Email and IP matches are warnings you acknowledge. A line that holds a
+  secret is masked, or its file removed, before anything is sent.
+
+Account
+
+- Rebuilt account panel: overview with today's usage, recent reviews,
+  connections, security and billing.
+- Rotating the recovery code, adding or removing a passkey, creating a
+  connection token and deleting the account ask for the passkey again when the
+  last check is older than ten minutes.
+
+Free tools and templates
+
+- Five free tools that run in the browser: report check, packet verifier,
+  secret check, acceptance rates and Slither triage queue.
+- Five templates: Immunefi, Sherlock, Cantina, HackerOne and a Foundry PoC
+  scaffold.
+- New pages: the twelve checks, the report guide with a worked example,
+  pricing, compare, security, licences and this changelog.
+
+MCP
+
+- Remote endpoint, nothing to install:
+  `claude mcp add --transport http bounty-operator https://bountyoperator.com/api/mcp`.
+- Local server from the site:
+  `npx -y https://bountyoperator.com/dl/bounty-operator-mcp.tgz`. It reads
+  files by path and adds `run_gauntlet_plan`.
+- Tools renamed to `list_profiles`, `prepare_review`, `build_packet`,
+  `run_review` and `account`. Three prompts: `challenge-report`,
+  `solidity-review` and `gauntlet`.
+- `prepare_review` takes the three core profiles and your agent's own model
+  writes the review. `list_profiles` marks every other profile `hosted`:
+  `prepare_review` refuses it with `hosted_profile` and `run_review` runs it
+  with a connection token and your provider key.
+- The `gauntlet` prompt runs seven stages through `run_review` and the report
+  stage on your agent's own model, so a full run over MCP takes Operator.
+
+Fixes
+
+- Hosted reviews now work on the production runtime. Provider calls used a
+  redirect option that runtime refuses.
+- A weekly renewal no longer drops paid access while Stripe is still
+  collecting the invoice.
+- The sign-up limit counts accounts created, not attempts. A cancelled passkey
+  prompt no longer locks sign-up for the day.
+- A review that fails validation, or that the provider cuts off at the start,
+  does not use the day's free review.
+- Billing errors name the cause.
+
+Site
+
+- New design with dark and light themes. Extensionless URLs, one content
+  security policy on every response and no third-party scripts.
+
+CLI
+
+- `ai-review` defaults to `gpt-6.1-sol` and caps output at 16,000 tokens. The
+  cap is sent as `max_completion_tokens` to OpenAI, xAI and Groq, as
+  `max_tokens` to other endpoints, and is left out for Gemini.
+  `--max-output-tokens` changes it.
+- `ai-review` reads the finish reason. A review cut off at the cap prints with a
+  warning on stderr, and a refusal or an empty answer is an error that names
+  the cause.
+- `ai-review` sends files with line numbers so the review cites exact lines.
+  The manifest and `--dry-run` include a line count per file.
+- `ai-review` accepts up to 50 files and waits 180 seconds by default. Failed
+  requests report rejected keys, unknown models, rate limits and timeouts
+  separately, with the provider's message when it passes the sanitizer.
+- `slither-focus` reads a successful scan with no detector results as an empty
+  queue.
+- `pattern-stats --json` renames the `caution` field to `note`.
+- The default agent-pack tool stack lists general tools only.
+- Packaging: SPDX licence metadata, Beta status, project URLs.
+
+## 0.6.0 — 2026-10-02
+
+- Add a three-step workbench, an account-free authored example, paste input, and
+  GitHub file import pinned to an exact commit.
+- Add code security, Solidity source-review and draft-report profiles with
+  counterarguments, defensive fixes and evidence gaps.
+- Add a stdio MCP server, local checked-request preparation, and revocable hosted
+  connections sharing the website's daily allowance.
+- Add the account portal: usage, recent review metadata, billing, passkeys,
+  recovery rotation, account export, token management and sign-out of all devices.
+- Hash connection secrets, expire them after 90 days, and keep billing and account
+  administration outside token permissions. Retain exact-origin and CSRF checks.
+- Preserve billing-linked accounts when billing is unavailable; require the
+  billing support path before deleting their local account record.
+- Publish the report guide, template, AI setup guide and Bounty Operator domain.
+- Keep provider credentials, uploaded code and review text out of persistent storage.
+
+## 0.5.0 — 2026-10-02
+
+Includes the changes prepared as 0.4.0 on 2026-09-30, which was never tagged.
+
+- Launch the Bounty Operator website on Cloudflare with passkey accounts, one
+  free review per UTC day, and a US$10/week subscription using the customer's AI key.
+- Add request previews, checked-text hashes, evidence notes, prompt export, and
+  downloadable review packets. Keep uploaded files, keys, and results out of storage.
+- Enforce daily quotas and one concurrent review per account in D1; restore the
+  free allowance after provider failure. Validate Stripe prices, signed webhooks,
+  current payment state, cancellations, refunds, and disputes before paid access.
+- Check every text suffix and report missing, oversized, binary, linked, unreadable,
+  invalid, and excluded inputs with bounded scan coverage.
+- Read AI inputs once, add network-free `--dry-run`, bound responses, refuse
+  redirects, and keep upstream bodies out of CLI errors.
+- Preserve existing generated output by default; add explicit `--force` and
+  reject malformed or failed scanner output.
+- Make reference downloads opt-in and preserve modified checkouts during updates.
+- Add Windows/Linux CI, installed-wheel checks, web checks, and privacy regressions.
+- Add the offline `pattern-stats` command: accepted and rejected counts per
+  vulnerability pattern from a CC0 snapshot of public Sherlock judging.
+- Add AI review preflight checks for sensitive input, binary files, absolute path
+  labels, aggregate payload size, and transport security.
+- Add exact deployment, live-programme verification, same-root prior-art, and
+  strongest-rejection gates to generated hunt material.
+- Add a contribution guide and a security policy.
+
+## 0.3.0 — 2026-07-09
+
+- Add the full AI bounty agent pack and the prompt library.
+
+## 0.2.0 — 2026-07-09
+
+- Add the `agent-brief` and `ai-review` commands, the AI agent flow guide and
+  the recommended tools list.
+
+## 0.1.0 — 2026-07-09
+
+- Initial public release: `sanitize`, `slither-focus`, `init-ledger` and
+  `prior-art`, the workflow guide and the reference installer script.

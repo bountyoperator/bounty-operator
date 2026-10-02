@@ -1,0 +1,58 @@
+[build-system]
+# 77.0.3 is the first setuptools release that accepts an SPDX `license` string.
+requires = ["setuptools>=77.0.3"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bounty-operator-kit"
+version = "0.7.0"
+description = "CLI for Bounty Operator: scoped agent packs, evidence gates and sanitised AI source review for bug bounty work."
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Tradi3" }]
+keywords = [
+  "bug-bounty",
+  "security-audit",
+  "smart-contracts",
+  "solidity",
+  "web3",
+  "code-review",
+  "slither",
+  "llm",
+]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Environment :: Console",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Information Technology",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Topic :: Security",
+  "Topic :: Software Development :: Quality Assurance",
+]
+
+[project.urls]
+Homepage = "https://bountyoperator.com/"
+Documentation = "https://github.com/bountyoperator/bounty-operator#readme"
+Changelog = "https://github.com/bountyoperator/bounty-operator/blob/main/CHANGELOG.md"
+Repository = "https://github.com/bountyoperator/bounty-operator"
+Issues = "https://github.com/bountyoperator/bounty-operator/issues"
+
+[project.scripts]
+bounty-kit = "bounty_operator_kit.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["bounty_operator_kit*"]
+
+[tool.setuptools.package-data]
+bounty_operator_kit = ["data/*.json"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

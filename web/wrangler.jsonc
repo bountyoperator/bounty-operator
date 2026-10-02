@@ -1,0 +1,71 @@
+{
+  // The public template: local development, the test suites and a fork's own
+  // deploy run from this file. It names no account, no route and no live
+  // database, and billing is off.
+  //
+  // The production values of bountyoperator.com (account, routes, database id,
+  // Stripe ids) live in wrangler.production.jsonc, which git does not track.
+  // `npm run deploy` deploys from that file and refuses when it is missing.
+  // The Worker name below is not the production one, so `wrangler deploy` run
+  // here by mistake cannot replace the production Worker.
+  //
+  // To deploy your own copy: set a route or `workers_dev`, your D1 database id
+  // and SITE_ORIGIN, then `npx wrangler deploy`. Its /api/health reads
+  // "profiles": "community".
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "bounty-operator-dev",
+  "main": "src/worker.ts",
+  "compatibility_date": "2026-09-18",
+  // enable_request_signal: request.signal aborts when the client disconnects,
+  // which stops the provider call and releases the review lease.
+  "compatibility_flags": ["nodejs_compat", "enable_request_signal"],
+  // The privacy scan of a full 240 KB input is the only CPU-heavy step.
+  "limits": { "cpu_ms": 300 },
+  "workers_dev": false,
+  "preview_urls": false,
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    // Every request runs the Worker, so redirects and headers are set in one place.
+    "run_worker_first": true,
+    // guide.html is served at /guide, and /guide.html redirects there.
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "404-page"
+  },
+  "vars": {
+    // The one origin the site answers on. GET and HEAD on any other host are
+    // redirected here. `npm run dev` sets it to the local address.
+    "SITE_ORIGIN": "http://localhost:8787",
+    "BILLING_MODE": "disabled",
+    "STRIPE_PRICE_ID": "",
+    "STRIPE_PORTAL_CONFIGURATION": "",
+    "AI_REVIEW_ENABLED": "true"
+  },
+  // Secrets, set with `wrangler secret put`: STRIPE_SECRET_KEY,
+  // STRIPE_WEBHOOK_SECRET, IP_HASH_KEY.
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1,
+    // Keeps ?ref= codes and Checkout session ids out of the logs.
+    "redact_query_string": true,
+    "issues": { "enabled": true },
+    "logs": { "enabled": true, "head_sampling_rate": 1, "invocation_logs": true }
+  },
+  // Daily purge of expired rows, and a sweep of stale review leases every 15 minutes.
+  "triggers": { "crons": ["17 3 * * *", "*/15 * * * *"] },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "bounty-operator-accounts",
+      // A placeholder. Local development needs no real id; a deploy needs yours.
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "./migrations"
+    }
+  ],
+  // The first gate on every API POST: 120 per minute per network address,
+  // counted at the edge with no database write.
+  "ratelimits": [
+    { "name": "API_LIMITER", "namespace_id": "7001", "simple": { "limit": 120, "period": 60 } }
+  ],
+  "version_metadata": { "binding": "CF_VERSION_METADATA" }
+}

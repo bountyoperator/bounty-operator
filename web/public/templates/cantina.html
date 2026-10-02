@@ -1,0 +1,351 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cantina finding report template | Bounty Operator</title>
+<meta name="description" content="Cantina finding template in Markdown: impact and likelihood stated separately, a PoC that compiles on the audit branch, and the rules that invalidate findings.">
+<link rel="canonical" href="https://bountyoperator.com/templates/cantina">
+<meta name="color-scheme" content="dark light">
+<meta name="theme-color" content="#0a1220" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f5f7fb" media="(prefers-color-scheme: light)">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Bounty Operator">
+<meta property="og:title" content="Cantina finding report template | Bounty Operator">
+<meta property="og:description" content="Cantina finding template in Markdown: impact and likelihood stated separately, a PoC that compiles on the audit branch, and the rules that invalidate findings.">
+<meta property="og:url" content="https://bountyoperator.com/templates/cantina">
+<meta property="og:image" content="https://bountyoperator.com/social-v2.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Bounty Operator. Find the hole in your report before the triager does.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Cantina finding report template | Bounty Operator">
+<meta name="twitter:description" content="Cantina finding template in Markdown: impact and likelihood stated separately, a PoC that compiles on the audit branch, and the rules that invalidate findings.">
+<meta name="twitter:image" content="https://bountyoperator.com/social-v2.png">
+<meta name="twitter:image:alt" content="Bounty Operator. Find the hole in your report before the triager does.">
+<link rel="icon" href="/favicon.ico" sizes="48x48">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+<script src="/theme.js"></script>
+<link rel="stylesheet" href="/css/base.css">
+<link rel="stylesheet" href="/css/templates.css">
+<link rel="modulepreload" href="/tools/ping.mjs">
+<script type="module" src="/templates/template.mjs"></script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Bounty Operator","item":"https://bountyoperator.com/"},{"@type":"ListItem","position":2,"name":"Report templates","item":"https://bountyoperator.com/templates"},{"@type":"ListItem","position":3,"name":"Cantina","item":"https://bountyoperator.com/templates/cantina"}]}</script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="site-header">
+<div class="wrap site-header__inner">
+<a class="brand" href="/"><svg class="brand__mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect class="brand__tile" width="64" height="64" rx="14"/><path class="brand__glyph" d="M12.5 15h6.5v31.5h-6.5z"/><path class="brand__glyph" fill-rule="evenodd" d="M25.5 25a10.75 10.75 0 1 0 0 21.5a10.75 10.75 0 0 0 0-21.5zm0 6.25a4.5 4.5 0 1 1 0 9a4.5 4.5 0 0 1 0-9z"/><path class="brand__slash" d="M45.5 13h6.25l-8.6 37.5h-6.25z"/></svg><span class="brand__name">Bounty Operator</span></a>
+<nav class="site-nav" aria-label="Main"><ul><li><a href="/#workspace">Workbench</a></li><li><a href="/method">Method</a></li><li><a href="/tools">Tools</a></li><li><a href="/guide">Guide</a></li><li><a href="/mcp">MCP</a></li><li><a href="/pricing">Pricing</a></li></ul></nav>
+<div class="site-header__actions">
+<button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch colour theme"><span class="icon theme-toggle__icon" aria-hidden="true"></span></button>
+<a class="btn btn--secondary btn--sm" href="/#account">Account</a>
+</div>
+</div>
+</header>
+<main id="main" tabindex="-1">
+
+<div class="wrap tpl-page">
+  <header class="tpl-hero">
+    <nav class="breadcrumbs" aria-label="Breadcrumb"><ol><li><a href="/">Bounty Operator</a></li><li><a href="/templates">Templates</a></li><li aria-current="page">Cantina</li></ol></nav>
+    <h1>Cantina finding report template</h1>
+    <p class="lede">Built around the five things Cantina’s documentation says a good finding explains, with impact and likelihood argued separately because that is how severity is set. The PoC section follows the mandatory PoC rule line by line.</p>
+    <div class="cluster tpl-actions">
+    <button class="btn btn--primary" type="button" data-template-copy><span class="icon icon--copy" aria-hidden="true"></span><span class="btn__label">Copy as Markdown</span></button>
+    <a class="btn btn--secondary" href="/templates/cantina.md" download="cantina-finding-template.md"><span class="icon icon--download" aria-hidden="true"></span><span class="btn__label">Download .md</span></a>
+    <span class="tpl-actions__status" role="status" data-template-status></span>
+  </div>
+    <p class="meta">Rules checked 2 Oct 2026 · 8 sources</p>
+  </header>
+
+  <div class="tpl-layout">
+    <nav class="tpl-toc" aria-label="On this page">
+    <p class="meta">On this page</p>
+    <ul><li><a href="#template">The template</a></li><li><a href="#closed">What gets this closed</a></li><li><a href="#check">Challenge the draft</a></li><li><a href="#sources">Sources</a></li></ul>
+  </nav>
+
+    <div class="tpl-main">
+      <section class="tpl-block" aria-labelledby="template">
+        <h2 id="template">The template</h2>
+        <p class="tpl-block__lede">Cantina’s form has its own fields for severity, likelihood, impact and title, and offers a structured template for the description. In competitions the documentation tells you to pick the Detailed one. Paste these sections under its headings.</p>
+        <p class="tpl-legend">
+          <span class="chip" data-tone="observed">Platform</span><span>asked for in Cantina’s published guidance.</span>
+          <span class="chip chip--dashed" data-tone="neutral">Added</span><span>answers the two objections that close reports late: overclaiming and known issues.</span>
+        </p>
+        <article class="tpl" aria-labelledby="template">
+    <div class="tpl__bar"><span class="icon icon--file" aria-hidden="true"></span><span class="tpl__file">cantina.md</span><span class="tpl__tag">9 sections</span></div>
+    <section class="tpl__section" id="s-title" data-origin="platform">
+      <div class="tpl__label"><span class="tpl__n">01</span><span class="chip" data-tone="observed">Platform</span></div>
+      <div class="tpl__content">
+        <h3 class="tpl__heading">Title</h3>
+        <p class="tpl__rule">The form asks for a title that conveys the essence of the vulnerability. Mechanism and consequence, one sentence.</p>
+        <div class="tpl__fill"><p><span class="slot">Mechanism</span> in <code><span class="slot">function</span></code> lets <span class="slot">actor</span> <span class="slot">consequence</span></p></div>
+      </div>
+    </section><section class="tpl__section" id="s-summary" data-origin="platform">
+      <div class="tpl__label"><span class="tpl__n">02</span><span class="chip" data-tone="observed">Platform</span></div>
+      <div class="tpl__content">
+        <h3 class="tpl__heading">Summary</h3>
+        <p class="tpl__rule">What the issue is, in two or three sentences. The first thing Cantina’s documentation asks of a good finding is that it states the issue before any code.</p>
+        <div class="tpl__fill"><p><span class="slot">What is wrong and what it leads to. Name the function and the affected party.</span></p></div>
+      </div>
+    </section><section class="tpl__section" id="s-description" data-origin="platform">
+      <div class="tpl__label"><span class="tpl__n">03</span><span class="chip" data-tone="observed">Platform</span></div>
+      <div class="tpl__content">
+        <h3 class="tpl__heading">Finding Description</h3>
+        <p class="tpl__rule">Why it happens, and where. Highlight the exact lines on the audit branch with the code-highlighting feature, then explain which logic they connect to.</p>
+        <div class="tpl__fill"><ul class="tpl__list"><li>Location: <code><span class="slot">path/File.sol</span></code> lines <span class="slot">start</span>-<span class="slot">end</span> on <code><span class="slot">audit branch</span></code> at commit <code><span class="slot">commit</span></code></li><li>Root cause: <span class="slot">the mistake, and why the surrounding checks do not stop it</span></li></ul><figure class="code code--wrap tpl__code"><pre class="code__pre" tabindex="0" role="region" aria-label="Code: solidity"><code><span class="code__line">{The smallest excerpt that shows the root cause}
+</span></code></pre></figure><p>Path:</p><ol class="steps tpl__steps"><li><span class="slot">Actor</span> calls <code><span class="slot">function</span></code> with <span class="slot">arguments</span>. <span class="slot">State after the call.</span></li><li><span class="slot">Actor</span> calls <code><span class="slot">function</span></code> with <span class="slot">arguments</span>. <span class="slot">State after the call.</span></li><li><span class="slot">Final state, with the number.</span></li></ol></div>
+      </div>
+    </section><section class="tpl__section" id="s-impact" data-origin="platform">
+      <div class="tpl__label"><span class="tpl__n">04</span><span class="chip" data-tone="observed">Platform</span></div>
+      <div class="tpl__content">
+        <h3 class="tpl__heading">Impact Explanation</h3>
+        <p class="tpl__rule">Severity on Cantina is impact × likelihood. State the impact level and the fact that puts it there. Loss of user funds or broken core functionality is High. A temporary disruption or minor fund exposure is Medium. Dust lost to rounding is capped at Low.</p>
+        <div class="tpl__fill"><p>Impact: <span class="slot">High, Medium or Low</span>. <span class="slot">Affected party</span> lose <span class="slot">amount</span>, or <span class="slot">the core function that stops working and for how long</span>.</p><p>Measured by the PoC: <span class="slot">the number from the output below</span>.</p></div>
+      </div>
+    </section><section class="tpl__section" id="s-likelihood" data-origin="platform">
+      <div class="tpl__label"><span class="tpl__n">05</span><span class="chip" data-tone="observed">Platform</span></div>
+      <div class="tpl__content">
+        <h3 class="tpl__heading">Likelihood Explanation</h3>
+        <p class="tpl__rule">Who triggers it and what it takes. Any user at any time is High. Capital, planning or other users’ actions is Medium. Rare conditions or admin action is Low, and a finding that needs admin access is capped at Low.</p>
+        <div class="tpl__fill"><p>Likelihood: <span class="slot">High, Medium or Low</span>. <span class="slot">Who triggers it, what they need, and how each precondition is reached from the current state.</span></p><p>Severity claimed: <span class="slot">High, Medium or Low</span>, from the matrix on <span class="slot">the competition or programme page you used</span>.</p></div>
+      </div>
+    </section><section class="tpl__section" id="s-poc" data-origin="platform">
+      <div class="tpl__label"><span class="tpl__n">06</span><span class="chip" data-tone="observed">Platform</span></div>
+      <div class="tpl__content">
+        <h3 class="tpl__heading">Proof of Concept</h3>
+        <p class="tpl__rule">In a competition, High and Medium need a coded PoC before the competition ends unless your reputation score is 80 or above. It has to compile and demonstrate the impact. Name the test file, confirm it runs on the audit branch, list anything else it needs, paste the output, and set the output against what was expected.</p>
+        <div class="tpl__fill"><ul class="tpl__list"><li>Test file: <code><span class="slot">test/path/File.t.sol</span></code>, added to the project&#39;s own suite</li><li>Branch and commit: <code><span class="slot">audit branch</span></code> at <code><span class="slot">commit</span></code></li><li>Extra setup: <span class="slot">none, or what the reviewer installs or sets</span></li><li>Command: <code><span class="slot">forge test --match-test test_name -vvv</span></code></li></ul><figure class="code code--wrap tpl__code"><pre class="code__pre" tabindex="0" role="region" aria-label="Code: solidity"><code><span class="code__line">{The test}
+</span></code></pre></figure><p>Output:</p><figure class="code code--wrap tpl__code"><pre class="code__pre" tabindex="0" role="region" aria-label="Code: text"><code><span class="code__line">{Pasted output}
+</span></code></pre></figure><p>Expected against actual: <span class="slot">what a correct implementation prints, and what this prints</span></p></div>
+      </div>
+    </section><section class="tpl__section" id="s-recommendation" data-origin="platform">
+      <div class="tpl__label"><span class="tpl__n">07</span><span class="chip" data-tone="observed">Platform</span></div>
+      <div class="tpl__content">
+        <h3 class="tpl__heading">Recommendation</h3>
+        <p class="tpl__rule">Cantina’s criteria recommend a mitigation with every finding. A fix that goes against the protocol’s design philosophy marks the finding as informational at most, so propose one the team would merge.</p>
+        <div class="tpl__fill"><p><span class="slot">The change, in the file and function it belongs to.</span></p><figure class="code code--wrap tpl__code"><pre class="code__pre" tabindex="0" role="region" aria-label="Code: diff"><code><span class="code__line">- {vulnerable line}
+</span><span class="code__line">+ {fixed line}
+</span></code></pre></figure></div>
+      </div>
+    </section><section class="tpl__section" id="s-limits" data-origin="added">
+      <div class="tpl__label"><span class="tpl__n">08</span><span class="chip chip--dashed" data-tone="neutral">Added</span></div>
+      <div class="tpl__content">
+        <h3 class="tpl__heading">Limits and non-claims</h3>
+        <p class="tpl__rule">A PoC that relies on unrealistic assumptions gets the finding downgraded or invalidated. List the assumptions yourself and show that each one holds.</p>
+        <div class="tpl__fill"><ul class="tpl__list"><li>Not claimed: <span class="slot">what this report does not say, for example no loss beyond the funds held at this address</span></li><li>Mocked or assumed: <span class="slot">each mock and assumption, or &quot;nothing: every step runs the deployed code&quot;</span></li><li>Stops working when: <span class="slot">the condition that breaks the path</span></li></ul></div>
+      </div>
+    </section><section class="tpl__section" id="s-known" data-origin="added">
+      <div class="tpl__label"><span class="tpl__n">09</span><span class="chip chip--dashed" data-tone="neutral">Added</span></div>
+      <div class="tpl__content">
+        <h3 class="tpl__heading">Known issues checked</h3>
+        <p class="tpl__rule">A finding acknowledged in a previous report is invalid, and so is one the team already knows about. The competition README is the reference for how the protocol is meant to behave.</p>
+        <div class="tpl__fill"><ul class="tpl__list"><li>Competition README or programme page, known issues: <span class="slot">the nearest item, why this differs</span></li><li>Previous reports on this code: <span class="slot">report and finding id, why the root cause differs</span></li><li>Intended behaviour per the README: <span class="slot">the sentence that shows this is not by design</span></li></ul></div>
+      </div>
+    </section>
+    <div class="tpl__source" data-template-source>
+      <details class="disclosure"><summary class="disclosure__summary">Markdown source<span class="disclosure__hint">cantina.md</span></summary><div class="disclosure__body"><figure class="code code--wrap"><figcaption class="code__bar"><span class="code__name">cantina.md</span><button class="code__copy" type="button" data-copy><span class="icon icon--copy" aria-hidden="true"></span><span data-copy-label>Copy</span></button></figcaption><pre class="code__pre" tabindex="0" role="region" aria-label="Markdown source: cantina.md"><code><span class="code__line">&gt; Cantina report template from https://bountyoperator.com/templates/cantina. Platform rules checked 2 Oct 2026.
+</span><span class="code__line">&gt; Replace every {placeholder}. Delete this note before you submit.
+</span><span class="code__line">
+</span><span class="code__line"># {Mechanism} in `{function}` lets {actor} {consequence}
+</span><span class="code__line">
+</span><span class="code__line">## Summary
+</span><span class="code__line">
+</span><span class="code__line">{What is wrong and what it leads to. Name the function and the affected party.}
+</span><span class="code__line">
+</span><span class="code__line">## Finding Description
+</span><span class="code__line">
+</span><span class="code__line">- Location: `{path/File.sol}` lines {start}-{end} on `{audit branch}` at commit `{commit}`
+</span><span class="code__line">- Root cause: {the mistake, and why the surrounding checks do not stop it}
+</span><span class="code__line">
+</span><span class="code__line">```solidity
+</span><span class="code__line">{The smallest excerpt that shows the root cause}
+</span><span class="code__line">```
+</span><span class="code__line">
+</span><span class="code__line">Path:
+</span><span class="code__line">
+</span><span class="code__line">1. {Actor} calls `{function}` with {arguments}. {State after the call.}
+</span><span class="code__line">2. {Actor} calls `{function}` with {arguments}. {State after the call.}
+</span><span class="code__line">3. {Final state, with the number.}
+</span><span class="code__line">
+</span><span class="code__line">## Impact Explanation
+</span><span class="code__line">
+</span><span class="code__line">Impact: {High, Medium or Low}. {Affected party} lose {amount}, or {the core function that stops working and for how long}.
+</span><span class="code__line">
+</span><span class="code__line">Measured by the PoC: {the number from the output below}.
+</span><span class="code__line">
+</span><span class="code__line">## Likelihood Explanation
+</span><span class="code__line">
+</span><span class="code__line">Likelihood: {High, Medium or Low}. {Who triggers it, what they need, and how each precondition is reached from the current state.}
+</span><span class="code__line">
+</span><span class="code__line">Severity claimed: {High, Medium or Low}, from the matrix on {the competition or programme page you used}.
+</span><span class="code__line">
+</span><span class="code__line">## Proof of Concept
+</span><span class="code__line">
+</span><span class="code__line">- Test file: `{test/path/File.t.sol}`, added to the project&#39;s own suite
+</span><span class="code__line">- Branch and commit: `{audit branch}` at `{commit}`
+</span><span class="code__line">- Extra setup: {none, or what the reviewer installs or sets}
+</span><span class="code__line">- Command: `{forge test --match-test test_name -vvv}`
+</span><span class="code__line">
+</span><span class="code__line">```solidity
+</span><span class="code__line">{The test}
+</span><span class="code__line">```
+</span><span class="code__line">
+</span><span class="code__line">Output:
+</span><span class="code__line">
+</span><span class="code__line">```text
+</span><span class="code__line">{Pasted output}
+</span><span class="code__line">```
+</span><span class="code__line">
+</span><span class="code__line">Expected against actual: {what a correct implementation prints, and what this prints}
+</span><span class="code__line">
+</span><span class="code__line">## Recommendation
+</span><span class="code__line">
+</span><span class="code__line">{The change, in the file and function it belongs to.}
+</span><span class="code__line">
+</span><span class="code__line">```diff
+</span><span class="code__line">- {vulnerable line}
+</span><span class="code__line">+ {fixed line}
+</span><span class="code__line">```
+</span><span class="code__line">
+</span><span class="code__line">## Limits and non-claims
+</span><span class="code__line">
+</span><span class="code__line">- Not claimed: {what this report does not say, for example no loss beyond the funds held at this address}
+</span><span class="code__line">- Mocked or assumed: {each mock and assumption, or &quot;nothing: every step runs the deployed code&quot;}
+</span><span class="code__line">- Stops working when: {the condition that breaks the path}
+</span><span class="code__line">
+</span><span class="code__line">## Known issues checked
+</span><span class="code__line">
+</span><span class="code__line">- Competition README or programme page, known issues: {the nearest item, why this differs}
+</span><span class="code__line">- Previous reports on this code: {report and finding id, why the root cause differs}
+</span><span class="code__line">- Intended behaviour per the README: {the sentence that shows this is not by design}
+</span></code></pre></figure></div></details>
+    </div>
+  </article>
+      </section>
+
+      <section class="tpl-block" aria-labelledby="closed">
+        <h2 id="closed">What gets this closed on Cantina</h2>
+        <p class="tpl-block__lede">Each reason comes from a page Cantina publishes. The programme or contest page adds its own rules on top, and those win.</p>
+        <ol class="closed"><li class="closed__item">
+      <h3 class="closed__title">High or Medium without a coded PoC</h3>
+      <p>By default every competition has a mandatory PoC rule: High and Medium submissions carry a coded PoC before the competition ends. Researchers with a reputation score of 80 or above are exempt, and so are missing-function findings. The bar for the PoC is one sentence:</p><blockquote class="closed__quote"><p>the PoC must compile and demonstrate the impact of the issue</p><footer>Competition Finding Severity Criteria, Cantina</footer></blockquote>
+      <p class="closed__refs"><span class="meta">Source</span> <a class="link" href="https://docs.cantina.security/standards/severity/competition" target="_blank" rel="noopener noreferrer">Competition Finding Severity Criteria</a>, <a class="link" href="https://docs.cantina.security/researchers/participation/submission-guidelines" target="_blank" rel="noopener noreferrer">Submission Guidelines</a></p>
+    </li><li class="closed__item">
+      <h3 class="closed__title">A PoC that does not prove the claim</h3>
+      <p>A PoC that cannot be executed, does not demonstrate the stated impact, or relies on unrealistic assumptions gets the finding downgraded or invalidated. So does a description that does not connect root cause to impact.</p>
+      <p class="closed__refs"><span class="meta">Source</span> <a class="link" href="https://docs.cantina.security/researchers/participation/submission-guidelines" target="_blank" rel="noopener noreferrer">Submission Guidelines</a></p>
+    </li><li class="closed__item">
+      <h3 class="closed__title">Known issues</h3>
+      <p>A finding acknowledged in a previous report is invalid. Known issues the team already has are invalid in competitions and out of scope on bounties.</p>
+      <p class="closed__refs"><span class="meta">Source</span> <a class="link" href="https://docs.cantina.security/standards/severity/competition" target="_blank" rel="noopener noreferrer">Competition Finding Severity Criteria</a>, <a class="link" href="https://docs.cantina.security/researchers/participation/submission-guidelines" target="_blank" rel="noopener noreferrer">Submission Guidelines</a>, <a class="link" href="https://docs.cantina.security/standards/severity/bug-bounty" target="_blank" rel="noopener noreferrer">Bug Bounty Severity Classification</a></p>
+    </li><li class="closed__item">
+      <h3 class="closed__title">Capped categories</h3>
+      <p>Low at most: dust lost to rounding, non-standard ERC20 behaviour, findings that need admin access. Informational at most: admin error, malicious admin unless the scope includes it, user error that harms nobody else, design choices. Invalid: speculation about future code, and approval race conditions.</p>
+      <p class="closed__refs"><span class="meta">Source</span> <a class="link" href="https://docs.cantina.security/researchers/participation/submission-guidelines" target="_blank" rel="noopener noreferrer">Submission Guidelines</a>, <a class="link" href="https://docs.cantina.security/standards/severity/competition" target="_blank" rel="noopener noreferrer">Competition Finding Severity Criteria</a></p>
+    </li><li class="closed__item">
+      <h3 class="closed__title">Two matrices, one cell apart</h3>
+      <p>The severity criteria page rates high likelihood with medium impact as High. The submission guidelines rate the same cell Medium. Say which page your severity comes from.</p>
+      <p class="closed__refs"><span class="meta">Source</span> <a class="link" href="https://docs.cantina.security/standards/severity/competition" target="_blank" rel="noopener noreferrer">Competition Finding Severity Criteria</a>, <a class="link" href="https://docs.cantina.security/researchers/participation/submission-guidelines" target="_blank" rel="noopener noreferrer">Submission Guidelines</a></p>
+    </li><li class="closed__item">
+      <h3 class="closed__title">Duplicates</h3>
+      <p>A duplicate is the same root cause with the same realistic path to the same impact. Bounties do not pay duplicates. Competitions split the points: a High is worth 10, and when three researchers find it each receives 2.7.</p>
+      <p class="closed__refs"><span class="meta">Source</span> <a class="link" href="https://docs.cantina.security/researchers/participation/bug-bounty-statuses" target="_blank" rel="noopener noreferrer">Bug Bounty Finding Statuses</a>, <a class="link" href="https://docs.cantina.security/researchers/participation/competitions" target="_blank" rel="noopener noreferrer">Competition Participation</a>, <a class="link" href="https://docs.cantina.security/standards/judging" target="_blank" rel="noopener noreferrer">Judging Processes</a></p>
+    </li><li class="closed__item">
+      <h3 class="closed__title">Unvalidated AI output and off-platform contact</h3>
+      <p>Submitting AI-generated findings without validating them leads to disqualification or a permanent ban. Contacting the client about a finding outside Cantina gets it rejected with no reward and the account banned.</p>
+      <p class="closed__refs"><span class="meta">Source</span> <a class="link" href="https://docs.cantina.security/standards/severity/competition" target="_blank" rel="noopener noreferrer">Competition Finding Severity Criteria</a>, <a class="link" href="https://docs.cantina.security/researchers/participation/competitions" target="_blank" rel="noopener noreferrer">Competition Participation</a></p>
+    </li><li class="closed__item">
+      <h3 class="closed__title">Fees and penalties</h3>
+      <p>An invalid escalation costs $100, deducted from future competition earnings. Bounties that show a deposit requirement refund it for valid findings and for honest invalid ones, and slash it for spam, low-effort or AI submissions and for over-inflated severity.</p>
+      <p class="closed__refs"><span class="meta">Source</span> <a class="link" href="https://docs.cantina.security/standards/judging" target="_blank" rel="noopener noreferrer">Judging Processes</a>, <a class="link" href="https://docs.cantina.security/researchers/participation/deposits" target="_blank" rel="noopener noreferrer">Deposits for Bounty Submissions</a></p>
+    </li></ol>
+      </section>
+
+      <section class="tpl-block" aria-labelledby="check">
+        <h2 id="check">Challenge the filled draft</h2>
+        <div class="tpl-check" data-handoff data-handoff-profile="report" data-handoff-focus="Cantina finding draft. Check impact and likelihood against the severity matrix, the mandatory PoC rule and the capped categories." data-handoff-name="cantina-report-draft.md" data-handoff-note="Draft written from the Cantina report template at bountyoperator.com/templates/cantina. Platform rules checked 2 Oct 2026." data-handoff-markers="slots">
+    <p class="tpl-block__lede">Paste the report once every placeholder is replaced. The workbench opens with <a class="link" href="/challenge-report">Challenge a draft report</a> selected and argues against each claim: the impact row, the proof, the severity, the known issues. You decide what to rewrite.</p>
+    <div class="field"><label class="label" for="draft">Your filled draft</label><textarea class="textarea mono" id="draft" name="draft" rows="8" placeholder="Paste the report with every placeholder replaced." spellcheck="false" data-handoff-input aria-describedby="draft-help draft-state"></textarea><p class="help" id="draft-help">The draft stays in this browser. It is sent only when you run a review in the workbench.</p></div>
+    <p class="tpl-check__state" id="draft-state" aria-live="polite" data-handoff-state></p>
+    <div class="notice notice--error tpl-check__error" role="alert"></div>
+    <div class="cluster">
+      <a class="btn btn--primary" href="/?profile=report#workspace" data-handoff-go><span class="btn__label">Challenge it in the workbench</span><span class="icon icon--arrow-right" aria-hidden="true"></span></a>
+      <a class="btn btn--secondary" href="/tools/report-check"><span class="btn__label">Run the report check</span></a>
+    </div>
+  </div>
+      </section>
+
+      <section class="tpl-block" aria-labelledby="sources">
+        <h2 id="sources">Sources</h2>
+        <p class="tpl-block__lede">Primary sources only, read on 2 Oct 2026. Rules change. Read the programme page on the day you submit.</p>
+        <ul class="sources"><li class="sources__item">
+      <p class="sources__link"><a class="link link--external" href="https://docs.cantina.security/researchers/participation/submission-guidelines" target="_blank" rel="noopener noreferrer">Submission Guidelines<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></p>
+      <p class="sources__note">Form fields, PoC validity criteria, duplication rules, capped severities.</p>
+      <p class="sources__date meta">checked 2 Oct 2026</p>
+    </li><li class="sources__item">
+      <p class="sources__link"><a class="link link--external" href="https://docs.cantina.security/standards/severity/competition" target="_blank" rel="noopener noreferrer">Competition Finding Severity Criteria<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></p>
+      <p class="sources__note">Severity matrix, mandatory PoC rule, acknowledged findings.</p>
+      <p class="sources__date meta">checked 2 Oct 2026</p>
+    </li><li class="sources__item">
+      <p class="sources__link"><a class="link link--external" href="https://docs.cantina.security/standards/severity/bug-bounty" target="_blank" rel="noopener noreferrer">Bug Bounty Severity Classification<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></p>
+      <p class="sources__note">Bounty severity levels and the out-of-scope list.</p>
+      <p class="sources__date meta">checked 2 Oct 2026</p>
+    </li><li class="sources__item">
+      <p class="sources__link"><a class="link link--external" href="https://docs.cantina.security/researchers/participation/examples" target="_blank" rel="noopener noreferrer">Finding Submission Examples<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></p>
+      <p class="sources__note">The five things a good finding explains.</p>
+      <p class="sources__date meta">checked 2 Oct 2026</p>
+    </li><li class="sources__item">
+      <p class="sources__link"><a class="link link--external" href="https://docs.cantina.security/researchers/participation/competitions" target="_blank" rel="noopener noreferrer">Competition Participation<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></p>
+      <p class="sources__note">Statuses, scoring, escalation, off-platform contact.</p>
+      <p class="sources__date meta">checked 2 Oct 2026</p>
+    </li><li class="sources__item">
+      <p class="sources__link"><a class="link link--external" href="https://docs.cantina.security/standards/judging" target="_blank" rel="noopener noreferrer">Judging Processes<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></p>
+      <p class="sources__note">Points, duplicate scaling, the escalation penalty.</p>
+      <p class="sources__date meta">checked 2 Oct 2026</p>
+    </li><li class="sources__item">
+      <p class="sources__link"><a class="link link--external" href="https://docs.cantina.security/researchers/participation/bug-bounty-statuses" target="_blank" rel="noopener noreferrer">Bug Bounty Finding Statuses<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></p>
+      <p class="sources__note">What Duplicate, Rejected and Spam mean on a bounty.</p>
+      <p class="sources__date meta">checked 2 Oct 2026</p>
+    </li><li class="sources__item">
+      <p class="sources__link"><a class="link link--external" href="https://docs.cantina.security/researchers/participation/deposits" target="_blank" rel="noopener noreferrer">Deposits for Bounty Submissions<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></p>
+      <p class="sources__note">When a deposit is refunded and when it is slashed.</p>
+      <p class="sources__date meta">checked 2 Oct 2026</p>
+    </li></ul>
+      </section>
+
+      <nav class="tpl-next" aria-label="Other templates">
+        <p class="meta">Other templates</p>
+        <ul>
+          <li><a href="/templates/immunefi">Immunefi</a></li><li><a href="/templates/sherlock">Sherlock</a></li><li><a href="/templates/hackerone">HackerOne</a></li>
+          <li><a href="/templates/foundry-poc">Foundry PoC</a></li>
+          <li><a href="/templates">All templates</a></li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+</div>
+</main>
+<footer class="site-footer">
+<div class="wrap site-footer__grid">
+<div class="site-footer__brand">
+<a class="brand" href="/"><svg class="brand__mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect class="brand__tile" width="64" height="64" rx="14"/><path class="brand__glyph" d="M12.5 15h6.5v31.5h-6.5z"/><path class="brand__glyph" fill-rule="evenodd" d="M25.5 25a10.75 10.75 0 1 0 0 21.5a10.75 10.75 0 0 0 0-21.5zm0 6.25a4.5 4.5 0 1 1 0 9a4.5 4.5 0 0 1 0-9z"/><path class="brand__slash" d="M45.5 13h6.25l-8.6 37.5h-6.25z"/></svg><span class="brand__name">Bounty Operator</span></a>
+<p class="site-footer__promise">Find the hole in your report before the triager does.</p>
+</div>
+<nav class="site-footer__col" aria-label="Product"><h2 class="site-footer__title">Product</h2><ul><li><a href="/#workspace">Workbench</a></li><li><a href="/method">Method</a></li><li><a href="/gauntlet">Gauntlet</a></li><li><a href="/panel-review">Panel review</a></li><li><a href="/pricing">Pricing</a></li><li><a href="/#account">Account</a></li></ul></nav>
+<nav class="site-footer__col" aria-label="Tools"><h2 class="site-footer__title">Tools</h2><ul><li><a href="/tools">All tools</a></li><li><a href="/tools/report-check">Report check</a></li><li><a href="/tools/verify">Packet verifier</a></li><li><a href="/tools/secret-check">Secret check</a></li><li><a href="/tools/acceptance-rates">Acceptance rates</a></li><li><a href="/tools/slither-focus">Slither triage queue</a></li></ul></nav>
+<nav class="site-footer__col" aria-label="Resources"><h2 class="site-footer__title">Resources</h2><ul><li><a href="/guide">Report guide</a></li><li><a href="/mcp">MCP setup</a></li><li><a href="/templates">Report templates</a></li><li><a href="/changelog">Changelog</a></li><li><a href="https://github.com/bountyoperator/bounty-operator" target="_blank" rel="noopener noreferrer">Source<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></li></ul></nav>
+<nav class="site-footer__col" aria-label="Legal"><h2 class="site-footer__title">Legal</h2><ul><li><a href="/privacy">Privacy</a></li><li><a href="/terms">Terms</a></li><li><a href="/security">Security</a></li><li><a href="/licenses">Licences</a></li><li><a href="mailto:security@bountyoperator.com">Report a vulnerability</a></li></ul></nav>
+</div>
+<div class="wrap">
+<div class="site-footer__base">
+<p>Built by <a href="https://audits.sherlock.xyz/watson/Tradi3" target="_blank" rel="noopener noreferrer">Tradi3</a></p>
+<p><a href="mailto:support@bountyoperator.com">support@bountyoperator.com</a></p>
+</div>
+</div>
+</footer>
+</body>
+</html>

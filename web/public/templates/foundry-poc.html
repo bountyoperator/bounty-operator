@@ -1,0 +1,356 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Foundry PoC template | Bounty Operator</title>
+<meta name="description" content="Foundry fork-test scaffold for a bug bounty PoC: pinned block, named actors, concrete values, a control run and a final assertion on what the impact names.">
+<link rel="canonical" href="https://bountyoperator.com/templates/foundry-poc">
+<meta name="color-scheme" content="dark light">
+<meta name="theme-color" content="#0a1220" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f5f7fb" media="(prefers-color-scheme: light)">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Bounty Operator">
+<meta property="og:title" content="Foundry PoC template | Bounty Operator">
+<meta property="og:description" content="Foundry fork-test scaffold for a bug bounty PoC: pinned block, named actors, concrete values, a control run and a final assertion on what the impact names.">
+<meta property="og:url" content="https://bountyoperator.com/templates/foundry-poc">
+<meta property="og:image" content="https://bountyoperator.com/social-v2.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Bounty Operator. Find the hole in your report before the triager does.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Foundry PoC template | Bounty Operator">
+<meta name="twitter:description" content="Foundry fork-test scaffold for a bug bounty PoC: pinned block, named actors, concrete values, a control run and a final assertion on what the impact names.">
+<meta name="twitter:image" content="https://bountyoperator.com/social-v2.png">
+<meta name="twitter:image:alt" content="Bounty Operator. Find the hole in your report before the triager does.">
+<link rel="icon" href="/favicon.ico" sizes="48x48">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+<script src="/theme.js"></script>
+<link rel="stylesheet" href="/css/base.css">
+<link rel="stylesheet" href="/css/templates.css">
+<link rel="modulepreload" href="/tools/ping.mjs">
+<script type="module" src="/templates/template.mjs"></script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Bounty Operator","item":"https://bountyoperator.com/"},{"@type":"ListItem","position":2,"name":"Report templates","item":"https://bountyoperator.com/templates"},{"@type":"ListItem","position":3,"name":"Foundry PoC","item":"https://bountyoperator.com/templates/foundry-poc"}]}</script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="site-header">
+<div class="wrap site-header__inner">
+<a class="brand" href="/"><svg class="brand__mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect class="brand__tile" width="64" height="64" rx="14"/><path class="brand__glyph" d="M12.5 15h6.5v31.5h-6.5z"/><path class="brand__glyph" fill-rule="evenodd" d="M25.5 25a10.75 10.75 0 1 0 0 21.5a10.75 10.75 0 0 0 0-21.5zm0 6.25a4.5 4.5 0 1 1 0 9a4.5 4.5 0 0 1 0-9z"/><path class="brand__slash" d="M45.5 13h6.25l-8.6 37.5h-6.25z"/></svg><span class="brand__name">Bounty Operator</span></a>
+<nav class="site-nav" aria-label="Main"><ul><li><a href="/#workspace">Workbench</a></li><li><a href="/method">Method</a></li><li><a href="/tools">Tools</a></li><li><a href="/guide">Guide</a></li><li><a href="/mcp">MCP</a></li><li><a href="/pricing">Pricing</a></li></ul></nav>
+<div class="site-header__actions">
+<button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch colour theme"><span class="icon theme-toggle__icon" aria-hidden="true"></span></button>
+<a class="btn btn--secondary btn--sm" href="/#account">Account</a>
+</div>
+</div>
+</header>
+<main id="main" tabindex="-1">
+
+<div class="wrap tpl-page">
+  <header class="tpl-hero">
+    <nav class="breadcrumbs" aria-label="Breadcrumb"><ol><li><a href="/">Bounty Operator</a></li><li><a href="/templates">Templates</a></li><li aria-current="page">Foundry PoC</li></ol></nav>
+    <h1>Foundry PoC template</h1>
+    <p class="lede">A fork-test scaffold for a bug bounty proof of concept: pinned block, named actors, concrete values, a control run, and a final assertion that reads the object the impact names. One file, one command, pasted output.</p>
+    <div class="cluster tpl-actions">
+      <button class="btn btn--primary" type="button" data-template-copy><span class="icon icon--copy" aria-hidden="true"></span><span class="btn__label">Copy the scaffold</span></button>
+      <a class="btn btn--secondary" href="/templates/ImpactPoC.t.sol" download="ImpactPoC.t.sol"><span class="icon icon--download" aria-hidden="true"></span><span class="btn__label">Download ImpactPoC.t.sol</span></a>
+      <span class="tpl-actions__status" role="status" data-template-status></span>
+    </div>
+    <p class="meta">Compiled and run with forge 1.7.1, forge-std 1.9.5 · checked 2 Oct 2026</p>
+  </header>
+
+  <div class="tpl-layout">
+    <nav class="tpl-toc" aria-label="On this page">
+    <p class="meta">On this page</p>
+    <ul><li><a href="#rule">The rule</a></li><li><a href="#scaffold">The scaffold</a></li><li><a href="#parts">Five parts</a></li><li><a href="#runs">Two runs</a></li><li><a href="#rejected">What gets a PoC rejected</a></li><li><a href="#check">Review the proof</a></li><li><a href="#sources">Sources</a></li></ul>
+  </nav>
+
+    <div class="tpl-main">
+      <section class="tpl-block" aria-labelledby="rule">
+        <h2 id="rule">The rule: the final assertion reads the object the impact names</h2>
+        <p class="tpl-block__lede">The impact row says what was lost. The last line of the test reads that thing from chain state and compares it with the number in the report. Everything before it is setup.</p>
+        <div class="table-wrap" tabindex="0" role="region" aria-label="The object to read, by impact row"><table class="table stack-table stack-table--wide tpl-objects"><caption>The object to read, by impact row</caption><thead><tr><th scope="col">Impact row</th><th scope="col">Read this</th><th scope="col">Not this</th></tr></thead><tbody><tr><th scope="row">Direct theft of user funds</th><td><span class="cell-label">Read this</span>What the victim can still withdraw, and the attacker’s token balance</td><td><span class="cell-label">Not this</span>A <code>Transfer</code> event or the return value of the attacking call</td></tr><tr><th scope="row">Permanent freezing of funds</th><td><span class="cell-label">Read this</span>What a withdrawal returns after the longest wait, on every exit path including admin recovery</td><td><span class="cell-label">Not this</span>One reverting call</td></tr><tr><th scope="row">Protocol insolvency</th><td><span class="cell-label">Read this</span>Assets held minus liabilities owed, both read from the contracts</td><td><span class="cell-label">Not this</span>A share price or an exchange rate</td></tr><tr><th scope="row">Theft of unclaimed yield</th><td><span class="cell-label">Read this</span>The victim’s claimable amount before and after</td><td><span class="cell-label">Not this</span>A reward index or an accumulator</td></tr><tr><th scope="row">Unauthorised minting</th><td><span class="cell-label">Read this</span><code>totalSupply</code>, and the balance of the account that received the mint</td><td><span class="cell-label">Not this</span>A counter inside the test</td></tr><tr><th scope="row">Governance result changed</th><td><span class="cell-label">Read this</span>The stored outcome of the proposal, or the state its execution wrote</td><td><span class="cell-label">Not this</span>A vote count the attacker inflated</td></tr></tbody></table></div>
+      </section>
+
+      <section class="tpl-block" aria-labelledby="scaffold">
+        <h2 id="scaffold">The scaffold</h2>
+        <p class="tpl-block__lede">Save it as <code>test/ImpactPoC.t.sol</code> in the project’s repository. It compiles as it stands and fails until the path is filled in. Amber lines are yours to fill. Blue lines are the two assertions.</p>
+        <div data-template-source>
+          <figure class="code code--numbered tpl-scaffold"><figcaption class="code__bar"><span class="code__name">test/ImpactPoC.t.sol</span><span class="code__range">1–124</span><button class="code__copy" type="button" data-copy><span class="icon icon--copy" aria-hidden="true"></span><span data-copy-label>Copy</span></button></figcaption><pre class="code__pre" tabindex="0" role="region" aria-label="Source: test/ImpactPoC.t.sol"><code><span class="code__line" data-n="1">// SPDX-License-Identifier: MIT
+</span><span class="code__line" data-n="2">pragma solidity ^0.8.20;
+</span><span class="code__line" data-n="3">
+</span><span class="code__line" data-n="4">// Fork-test proof of concept. One file, one command, pasted output.
+</span><span class="code__line" data-n="5">// Scaffold from https://bountyoperator.com/templates/foundry-poc
+</span><span class="code__line" data-n="6">//
+</span><span class="code__line is-flag" data-n="7">// Impact row, quoted from the programme:   &quot;TODO: paste the exact text&quot;
+</span><span class="code__line is-flag" data-n="8">// Asset in scope:                          TODO: name and address
+</span><span class="code__line is-flag" data-n="9">// Source commit the deployed code matches: TODO: 40-character commit
+</span><span class="code__line" data-n="10">//
+</span><span class="code__line" data-n="11">// Run on the deployed code:   forge test --match-path test/ImpactPoC.t.sol -vvv
+</span><span class="code__line" data-n="12">// Run on your patched build:  FIXED=true forge test --match-path test/ImpactPoC.t.sol -vvv
+</span><span class="code__line" data-n="13">//
+</span><span class="code__line" data-n="14">// RPC_URL points at an archive node. The test runs on a local fork and sends
+</span><span class="code__line" data-n="15">// nothing to mainnet or a public testnet.
+</span><span class="code__line" data-n="16">
+</span><span class="code__line" data-n="17">import {Test, console2} from &quot;forge-std/Test.sol&quot;;
+</span><span class="code__line" data-n="18">
+</span><span class="code__line" data-n="19">interface IERC20 {
+</span><span class="code__line" data-n="20">    function balanceOf(address account) external view returns (uint256);
+</span><span class="code__line" data-n="21">    function approve(address spender, uint256 amount) external returns (bool);
+</span><span class="code__line" data-n="22">}
+</span><span class="code__line" data-n="23">
+</span><span class="code__line" data-n="24">/// The in-scope contract. Inside the project&#39;s repository, import its own
+</span><span class="code__line" data-n="25">/// interface instead of declaring one here.
+</span><span class="code__line" data-n="26">interface ITarget {
+</span><span class="code__line" data-n="27">    function deposit(uint256 assets, address receiver) external returns (uint256 shares);
+</span><span class="code__line" data-n="28">    function redeem(uint256 shares, address receiver, address owner) external returns (uint256 assets);
+</span><span class="code__line" data-n="29">    function balanceOf(address account) external view returns (uint256 shares);
+</span><span class="code__line" data-n="30">}
+</span><span class="code__line" data-n="31">
+</span><span class="code__line" data-n="32">contract ImpactPoC is Test {
+</span><span class="code__line" data-n="33">    // ---- 1. Setup: one chain, one block, the scoped addresses ---------------
+</span><span class="code__line is-flag" data-n="34">    uint256 constant FORK_BLOCK = 0; // TODO: the block you reproduced at
+</span><span class="code__line is-flag" data-n="35">    ITarget constant TARGET = ITarget(address(0)); // TODO: address from the programme&#39;s asset list
+</span><span class="code__line is-flag" data-n="36">    IERC20 constant ASSET = IERC20(address(0)); // TODO: the token the impact row names
+</span><span class="code__line" data-n="37">
+</span><span class="code__line" data-n="38">    // ---- 2. Actors: who performs each step ----------------------------------
+</span><span class="code__line" data-n="39">    // No prank on an owner, admin, keeper or governance address anywhere below.
+</span><span class="code__line" data-n="40">    address attacker = makeAddr(&quot;attacker&quot;); // holds no role
+</span><span class="code__line" data-n="41">    address victim = makeAddr(&quot;victim&quot;); // an ordinary user
+</span><span class="code__line" data-n="42">
+</span><span class="code__line" data-n="43">    // ---- 3. Concrete values -------------------------------------------------
+</span><span class="code__line is-flag" data-n="44">    uint256 constant VICTIM_DEPOSIT = 100_000e6; // TODO: 100,000 units of a 6-decimal token
+</span><span class="code__line is-flag" data-n="45">    uint256 constant ATTACKER_CAPITAL = 1_000e6; // TODO: what the attacker starts with
+</span><span class="code__line is-flag" data-n="46">    uint256 constant EXPECTED_LOSS = 100_000e6; // TODO: the loss the report claims
+</span><span class="code__line" data-n="47">
+</span><span class="code__line" data-n="48">    function setUp() public {
+</span><span class="code__line" data-n="49">        vm.createSelectFork(vm.envString(&quot;RPC_URL&quot;), FORK_BLOCK);
+</span><span class="code__line" data-n="50">        if (vm.envOr(&quot;FIXED&quot;, false)) _applyFix();
+</span><span class="code__line" data-n="51">
+</span><span class="code__line" data-n="52">        vm.label(address(TARGET), &quot;Target&quot;);
+</span><span class="code__line" data-n="53">        vm.label(address(ASSET), &quot;Asset&quot;);
+</span><span class="code__line" data-n="54">
+</span><span class="code__line" data-n="55">        // Starting balances. deal() funds an account. Nothing here writes the
+</span><span class="code__line" data-n="56">        // target&#39;s storage or mocks one of its calls.
+</span><span class="code__line" data-n="57">        deal(address(ASSET), victim, VICTIM_DEPOSIT);
+</span><span class="code__line" data-n="58">        deal(address(ASSET), attacker, ATTACKER_CAPITAL);
+</span><span class="code__line" data-n="59">
+</span><span class="code__line" data-n="60">        // The victim uses the protocol the way its documentation describes.
+</span><span class="code__line" data-n="61">        vm.startPrank(victim);
+</span><span class="code__line" data-n="62">        ASSET.approve(address(TARGET), VICTIM_DEPOSIT);
+</span><span class="code__line" data-n="63">        TARGET.deposit(VICTIM_DEPOSIT, victim);
+</span><span class="code__line" data-n="64">        vm.stopPrank();
+</span><span class="code__line" data-n="65">    }
+</span><span class="code__line" data-n="66">
+</span><span class="code__line" data-n="67">    /// Puts your patched build at the deployed address. Existing storage stays,
+</span><span class="code__line" data-n="68">    /// except the slots the constructor writes: it runs again at that address.
+</span><span class="code__line" data-n="69">    /// Patch the source in this repository first. Behind a proxy, pass the
+</span><span class="code__line" data-n="70">    /// implementation address.
+</span><span class="code__line" data-n="71">    function _applyFix() internal {
+</span><span class="code__line is-flag" data-n="72">        // TODO: artifact and constructor arguments of the patched contract
+</span><span class="code__line" data-n="73">        deployCodeTo(&quot;Target.sol:Target&quot;, abi.encode(address(ASSET)), address(TARGET));
+</span><span class="code__line" data-n="74">    }
+</span><span class="code__line" data-n="75">
+</span><span class="code__line" data-n="76">    /// The object the impact row names, read from chain state.
+</span><span class="code__line" data-n="77">    ///   Theft of user funds     -&gt; what the victim can still withdraw
+</span><span class="code__line" data-n="78">    ///   Protocol insolvency     -&gt; assets held minus liabilities owed
+</span><span class="code__line" data-n="79">    ///   Unauthorised minting    -&gt; totalSupply, or the attacker&#39;s balance
+</span><span class="code__line" data-n="80">    ///   Permanent freezing      -&gt; what a withdrawal returns after the wait
+</span><span class="code__line" data-n="81">    function _impactObject() internal view returns (uint256) {
+</span><span class="code__line is-flag" data-n="82">        return ASSET.balanceOf(address(TARGET)); // TODO: the read that matches your impact row
+</span><span class="code__line" data-n="83">    }
+</span><span class="code__line" data-n="84">
+</span><span class="code__line" data-n="85">    /// The attack path, step for step as numbered in the report. Public calls only.
+</span><span class="code__line" data-n="86">    function _path(bool withBugStep) internal {
+</span><span class="code__line" data-n="87">        vm.startPrank(attacker);
+</span><span class="code__line is-flag" data-n="88">        // TODO step 1: the ordinary calls that set the stage
+</span><span class="code__line" data-n="89">        if (withBugStep) {
+</span><span class="code__line is-flag" data-n="90">            // TODO step 2: the one call the report is about
+</span><span class="code__line" data-n="91">        }
+</span><span class="code__line is-flag" data-n="92">        // TODO step 3: the calls that realise the loss
+</span><span class="code__line" data-n="93">        vm.stopPrank();
+</span><span class="code__line" data-n="94">    }
+</span><span class="code__line" data-n="95">
+</span><span class="code__line" data-n="96">    /// Passes on the deployed code. Fails when run with FIXED=true.
+</span><span class="code__line" data-n="97">    function test_impact() public {
+</span><span class="code__line" data-n="98">        uint256 objectBefore = _impactObject();
+</span><span class="code__line" data-n="99">        uint256 attackerBefore = ASSET.balanceOf(attacker);
+</span><span class="code__line" data-n="100">
+</span><span class="code__line" data-n="101">        _path(true);
+</span><span class="code__line" data-n="102">
+</span><span class="code__line" data-n="103">        uint256 objectAfter = _impactObject();
+</span><span class="code__line" data-n="104">        uint256 loss = objectBefore &gt; objectAfter ? objectBefore - objectAfter : 0;
+</span><span class="code__line" data-n="105">        console2.log(&quot;impact object before&quot;, objectBefore);
+</span><span class="code__line" data-n="106">        console2.log(&quot;impact object after &quot;, objectAfter);
+</span><span class="code__line" data-n="107">        console2.log(&quot;measured loss       &quot;, loss);
+</span><span class="code__line" data-n="108">        console2.log(&quot;attacker before     &quot;, attackerBefore);
+</span><span class="code__line" data-n="109">        console2.log(&quot;attacker after      &quot;, ASSET.balanceOf(attacker));
+</span><span class="code__line" data-n="110">
+</span><span class="code__line" data-n="111">        // FINAL ASSERTION. It reads the object the impact row names.
+</span><span class="code__line" data-n="112">        // Not an event, not a return value, not an intermediate variable.
+</span><span class="code__line is-hl" data-n="113">        assertGe(loss, EXPECTED_LOSS, &quot;impact: the object the impact row names lost value&quot;);
+</span><span class="code__line" data-n="114">    }
+</span><span class="code__line" data-n="115">
+</span><span class="code__line" data-n="116">    /// Control: the same path without the bug step. The object does not move.
+</span><span class="code__line" data-n="117">    function test_control() public {
+</span><span class="code__line" data-n="118">        uint256 objectBefore = _impactObject();
+</span><span class="code__line" data-n="119">
+</span><span class="code__line" data-n="120">        _path(false);
+</span><span class="code__line" data-n="121">
+</span><span class="code__line is-hl" data-n="122">        assertEq(_impactObject(), objectBefore, &quot;control: no loss without the bug step&quot;);
+</span><span class="code__line" data-n="123">    }
+</span><span class="code__line" data-n="124">}
+</span></code></pre></figure>
+        </div>
+      </section>
+
+      <section class="tpl-block" aria-labelledby="parts">
+        <h2 id="parts">Five parts, and the check each one answers</h2>
+        <ol class="tpl-anatomy">
+          <li class="tpl-anatomy__item" id="part-setup">
+              <h3 class="tpl-anatomy__title">Setup: one chain, one block, the scoped addresses</h3>
+              <p><code>vm.createSelectFork</code> with a block number makes the run repeatable. The triager gets the same numbers you did. <code>TARGET</code> is the address on the programme’s asset list. The header records the commit the deployed code was built from.</p>
+              <p class="tpl-anatomy__check"><span class="meta">Answers</span> Asset and version binding</p>
+            </li><li class="tpl-anatomy__item" id="part-actors">
+              <h3 class="tpl-anatomy__title">Actors: who performs each step</h3>
+              <p><code>makeAddr</code> gives every party a name in the trace. The attacker holds no role. There is no <code>vm.prank</code> on an owner, an admin, a keeper or governance: a decisive step performed by a trusted role ends the report.</p>
+              <p class="tpl-anatomy__check"><span class="meta">Answers</span> Actor trace</p>
+            </li><li class="tpl-anatomy__item" id="part-values">
+              <h3 class="tpl-anatomy__title">Concrete values</h3>
+              <p>Deposit, capital and expected loss are constants with the unit in the comment, and the report quotes the same numbers. <code>deal</code> funds accounts. Nothing writes the target’s storage and nothing mocks its calls, because every state the proof sets up needs a route from live state by public calls.</p>
+              <p class="tpl-anatomy__check"><span class="meta">Answers</span> Production reachability</p>
+            </li><li class="tpl-anatomy__item" id="part-assertion">
+              <h3 class="tpl-anatomy__title">The assertion that proves impact</h3>
+              <p>One <code>assertGe</code> at the end of <code>test_impact</code>, on <code>_impactObject()</code>, against the loss the report claims. The logged numbers above it are the ones you paste into the Impact section.</p>
+              <p class="tpl-anatomy__check"><span class="meta">Answers</span> Executed end-state proof</p>
+            </li><li class="tpl-anatomy__item" id="part-fix">
+              <h3 class="tpl-anatomy__title">The control, and the assertion that fails after the fix</h3>
+              <p><code>test_control</code> runs the same path without the bug step and asserts the object did not move. Then patch the source and run with <code>FIXED=true</code>: <code>deployCodeTo</code> puts the patched build at the deployed address, and <code>test_impact</code> fails. The bug step reverts, or the final assertion reports no loss. Paste that line next to the fix.</p>
+              <p class="tpl-anatomy__check"><span class="meta">Answers</span> Design intent and counterfactual</p>
+            </li>
+        </ol>
+      </section>
+
+      <section class="tpl-block" aria-labelledby="runs">
+        <h2 id="runs">Two runs, both pasted into the report</h2>
+        <p class="tpl-block__lede">One command. The fork needs an archive node in <code>RPC_URL</code>.</p>
+        <figure class="code"><pre class="code__pre" tabindex="0" role="region" aria-label="Command"><code><span class="code__line">export RPC_URL=&lt;archive node for the chain&gt;
+</span><span class="code__line">forge test --match-path test/ImpactPoC.t.sol -vvv
+</span></code></pre><button class="code__copy code__copy--corner" type="button" data-copy><span class="icon icon--copy" aria-hidden="true"></span><span data-copy-label>Copy</span></button></figure>
+        <p class="tpl-block__lede">The output below is real, with the call trace left out. It is this scaffold filled in for a test vault whose <code>redeem</code> has no owner check, deployed on a local anvil chain and forked at block 2.</p>
+        <h3 class="tpl-run__title">On the deployed code: both pass</h3>
+        <figure class="code"><pre class="code__pre" tabindex="0" role="region" aria-label="Output on the deployed code"><code><span class="code__line">$ forge test --match-path test/ImpactPoC.t.sol -vvv
+</span><span class="code__line">Ran 2 tests for test/ImpactPoC.t.sol:ImpactPoC
+</span><span class="code__line">[PASS] test_control() (gas: 64727)
+</span><span class="code__line">[PASS] test_impact() (gas: 80048)
+</span><span class="code__line">Logs:
+</span><span class="code__line">  impact object before 100000000000
+</span><span class="code__line">  impact object after  0
+</span><span class="code__line">  measured loss        100000000000
+</span><span class="code__line">  attacker before      1000000000
+</span><span class="code__line">  attacker after       101000000000
+</span><span class="code__line">
+</span><span class="code__line">Suite result: ok. 2 passed; 0 failed; 0 skipped; finished in 41.09ms (4.81ms CPU time)
+</span></code></pre></figure>
+        <h3 class="tpl-run__title">On the patched build: the impact test fails</h3>
+        <figure class="code"><pre class="code__pre" tabindex="0" role="region" aria-label="Output on the patched build"><code><span class="code__line">$ FIXED=true forge test --match-path test/ImpactPoC.t.sol -vvv
+</span><span class="code__line">Ran 2 tests for test/ImpactPoC.t.sol:ImpactPoC
+</span><span class="code__line">[PASS] test_control() (gas: 64754)
+</span><span class="code__line">[FAIL: not owner] test_impact() (gas: 81399)
+</span><span class="code__line">Backtrace:
+</span><span class="code__line">  at Target.redeem
+</span><span class="code__line">  at ImpactPoC.test_impact
+</span><span class="code__line">
+</span><span class="code__line">Suite result: FAILED. 1 passed; 1 failed; 0 skipped; finished in 11.83ms (1.10ms CPU time)
+</span></code></pre></figure>
+        <p class="tpl-block__lede"><code>deployCodeTo</code> runs the constructor again at the target address. Storage stays as deployed except for the slots the constructor writes. Behind a proxy, pass the implementation address.</p>
+      </section>
+
+      <section class="tpl-block" aria-labelledby="rejected">
+        <h2 id="rejected">What gets a PoC rejected</h2>
+        <ol class="closed">
+          <li class="closed__item"><h3 class="closed__title">It ran against mainnet or a public testnet</h3><p>Grounds for a permanent ban on Immunefi. Cantina and Sherlock’s bounty rules say the same: local forks only. The scaffold never broadcasts.</p></li><li class="closed__item"><h3 class="closed__title">It is steps or pseudocode</h3><p>Immunefi’s guide rules out a list of steps, pseudocode, and the project’s contracts on their own. A PoC is code the triager runs.</p></li><li class="closed__item"><h3 class="closed__title">It does not compile, or does not show the stated impact</h3><p>Cantina’s bar is that the PoC compiles and demonstrates the impact, on the audit branch, with its output. A PoC that rests on unrealistic assumptions gets the finding downgraded or invalidated.</p></li><li class="closed__item"><h3 class="closed__title">It asserts on the wrong object</h3><p>A test that ends on an event, a return value or a variable inside the test proves the call happened. The impact row names a balance, an owner or a stored record. Read that.</p></li><li class="closed__item"><h3 class="closed__title">It sets up state nobody can reach</h3><p>A storage write on the target, a mocked in-scope call, or a prank on a trusted role each replace a step the attacker has to perform. Say what was mocked, or mock nothing.</p></li>
+        </ol>
+      </section>
+
+      <section class="tpl-block" aria-labelledby="check">
+        <h2 id="check">Have the proof reviewed</h2>
+        <div class="tpl-check" data-handoff data-handoff-profile="poc" data-handoff-focus="Foundry fork-test proof of concept. Check every step runs production code, the final assertion reads the object the impact row names, and the numbers are measured." data-handoff-name="ImpactPoC.t.sol" data-handoff-note="Proof written from the Foundry PoC template at bountyoperator.com/templates/foundry-poc." data-handoff-markers="todo">
+    <p class="tpl-block__lede">Paste the filled test and its output. The workbench opens with Proof review selected and goes through the test step by step: executed, mocked or narrated, and whether the end state is the one the impact row names.</p>
+    <div class="field"><label class="label" for="proof">Your test file, then its output</label><textarea class="textarea mono" id="proof" name="proof" rows="8" placeholder="Paste the filled test and the output of both runs." spellcheck="false" data-handoff-input aria-describedby="proof-help proof-state"></textarea><p class="help" id="proof-help">The draft stays in this browser. It is sent only when you run a review in the workbench.</p></div>
+    <p class="tpl-check__state" id="proof-state" aria-live="polite" data-handoff-state></p>
+    <div class="notice notice--error tpl-check__error" role="alert"></div>
+    <div class="cluster">
+      <a class="btn btn--primary" href="/?profile=poc#workspace" data-handoff-go><span class="btn__label">Review the proof in the workbench</span><span class="icon icon--arrow-right" aria-hidden="true"></span></a>
+      
+    </div>
+  </div>
+      </section>
+
+      <section class="tpl-block" aria-labelledby="sources">
+        <h2 id="sources">Sources</h2>
+        <p class="tpl-block__lede">Platform rules read on 2 Oct 2026.</p>
+        <ul class="sources"><li class="sources__item">
+      <p class="sources__link"><a class="link link--external" href="https://immunefi.com/rules/" target="_blank" rel="noopener noreferrer">Immunefi Rules<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></p>
+      <p class="sources__note">Testing on mainnet or a public testnet, and incomplete PoCs.</p>
+      <p class="sources__date meta">checked 2 Oct 2026</p>
+    </li><li class="sources__item">
+      <p class="sources__link"><a class="link link--external" href="https://immunefi.com/blog/security-guides/how-to-submit-bug-reports-that-get-paid/" target="_blank" rel="noopener noreferrer">How to Submit Bug Reports That Get Paid<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></p>
+      <p class="sources__note">What a PoC is and is not on Immunefi.</p>
+      <p class="sources__date meta">Published 10 Feb 2023 · checked 2 Oct 2026</p>
+    </li><li class="sources__item">
+      <p class="sources__link"><a class="link link--external" href="https://docs.cantina.security/researchers/participation/submission-guidelines" target="_blank" rel="noopener noreferrer">Cantina Submission Guidelines<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></p>
+      <p class="sources__note">PoC validity criteria and what invalidates an attack path.</p>
+      <p class="sources__date meta">checked 2 Oct 2026</p>
+    </li><li class="sources__item">
+      <p class="sources__link"><a class="link link--external" href="https://docs.cantina.security/researchers/participation/bug-bounty" target="_blank" rel="noopener noreferrer">Cantina Bug Bounty Participation<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></p>
+      <p class="sources__note">Local forks in place of public chains.</p>
+      <p class="sources__date meta">checked 2 Oct 2026</p>
+    </li><li class="sources__item">
+      <p class="sources__link"><a class="link link--external" href="https://docs.sherlock.xyz/audits/judging/guidelines" target="_blank" rel="noopener noreferrer">Sherlock Criteria for Issue Validity<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></p>
+      <p class="sources__note">The cases where a coded PoC is recommended.</p>
+      <p class="sources__date meta">Version 1.12, 24 Jun 2025 · checked 2 Oct 2026</p>
+    </li><li class="sources__item">
+      <p class="sources__link"><a class="link link--external" href="https://docs.sherlock.xyz/bug-bounties/post-launch-bounty/platform-rules" target="_blank" rel="noopener noreferrer">Sherlock bug bounty Platform Rules<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></p>
+      <p class="sources__note">Testing on local forks only.</p>
+      <p class="sources__date meta">checked 2 Oct 2026</p>
+    </li><li class="sources__item">
+      <p class="sources__link"><a class="link link--external" href="https://github.com/foundry-rs/forge-std/blob/master/src/StdCheats.sol" target="_blank" rel="noopener noreferrer">forge-std StdCheats<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></p>
+      <p class="sources__note"><code>deal</code>, <code>makeAddr</code> and <code>deployCodeTo</code>, as used in the scaffold.</p>
+      <p class="sources__date meta">checked 2 Oct 2026</p>
+    </li></ul>
+      </section>
+
+      <nav class="tpl-next" aria-label="Report templates">
+        <p class="meta">Put the proof in a report</p>
+        <ul>
+          <li><a href="/templates/immunefi">Immunefi</a></li><li><a href="/templates/sherlock">Sherlock</a></li><li><a href="/templates/cantina">Cantina</a></li><li><a href="/templates/hackerone">HackerOne</a></li>
+          <li><a href="/templates">All templates</a></li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+</div>
+</main>
+<footer class="site-footer">
+<div class="wrap site-footer__grid">
+<div class="site-footer__brand">
+<a class="brand" href="/"><svg class="brand__mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect class="brand__tile" width="64" height="64" rx="14"/><path class="brand__glyph" d="M12.5 15h6.5v31.5h-6.5z"/><path class="brand__glyph" fill-rule="evenodd" d="M25.5 25a10.75 10.75 0 1 0 0 21.5a10.75 10.75 0 0 0 0-21.5zm0 6.25a4.5 4.5 0 1 1 0 9a4.5 4.5 0 0 1 0-9z"/><path class="brand__slash" d="M45.5 13h6.25l-8.6 37.5h-6.25z"/></svg><span class="brand__name">Bounty Operator</span></a>
+<p class="site-footer__promise">Find the hole in your report before the triager does.</p>
+</div>
+<nav class="site-footer__col" aria-label="Product"><h2 class="site-footer__title">Product</h2><ul><li><a href="/#workspace">Workbench</a></li><li><a href="/method">Method</a></li><li><a href="/gauntlet">Gauntlet</a></li><li><a href="/panel-review">Panel review</a></li><li><a href="/pricing">Pricing</a></li><li><a href="/#account">Account</a></li></ul></nav>
+<nav class="site-footer__col" aria-label="Tools"><h2 class="site-footer__title">Tools</h2><ul><li><a href="/tools">All tools</a></li><li><a href="/tools/report-check">Report check</a></li><li><a href="/tools/verify">Packet verifier</a></li><li><a href="/tools/secret-check">Secret check</a></li><li><a href="/tools/acceptance-rates">Acceptance rates</a></li><li><a href="/tools/slither-focus">Slither triage queue</a></li></ul></nav>
+<nav class="site-footer__col" aria-label="Resources"><h2 class="site-footer__title">Resources</h2><ul><li><a href="/guide">Report guide</a></li><li><a href="/mcp">MCP setup</a></li><li><a href="/templates">Report templates</a></li><li><a href="/changelog">Changelog</a></li><li><a href="https://github.com/bountyoperator/bounty-operator" target="_blank" rel="noopener noreferrer">Source<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></li></ul></nav>
+<nav class="site-footer__col" aria-label="Legal"><h2 class="site-footer__title">Legal</h2><ul><li><a href="/privacy">Privacy</a></li><li><a href="/terms">Terms</a></li><li><a href="/security">Security</a></li><li><a href="/licenses">Licences</a></li><li><a href="mailto:security@bountyoperator.com">Report a vulnerability</a></li></ul></nav>
+</div>
+<div class="wrap">
+<div class="site-footer__base">
+<p>Built by <a href="https://audits.sherlock.xyz/watson/Tradi3" target="_blank" rel="noopener noreferrer">Tradi3</a></p>
+<p><a href="mailto:support@bountyoperator.com">support@bountyoperator.com</a></p>
+</div>
+</div>
+</footer>
+</body>
+</html>

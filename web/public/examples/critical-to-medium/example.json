@@ -1,0 +1,34 @@
+{
+  "id": "critical-to-medium",
+  "order": 1,
+  "title": "A Critical cut down to Medium",
+  "summary": "A draft claims theft of all staked funds and a permanent freeze. The code supports a smaller finding.",
+  "profile": "report",
+  "mode": "bounty",
+  "focus": "",
+  "files": [
+    "src/TesseraStaking.sol",
+    "test/ReserveDrain.t.sol",
+    "draft-report.md",
+    "docs/known-issues.md"
+  ],
+  "context": {
+    "target": "Tessera Staking bounty programme, asset TesseraStaking (synthetic programme written for this example)",
+    "scope": "src/TesseraStaking.sol at release v1.2.0",
+    "version": "tessera-staking release v1.2.0, the supplied files",
+    "proofRevision": "tessera-staking release v1.2.0, local Foundry run, no fork",
+    "proof": "local",
+    "prior": "searched",
+    "cloneDepth": "full",
+    "notes": "",
+    "rules": "Tessera Staking bug bounty: severity scale.\n\nSeverity follows the impact the proof demonstrates, read literally. Staked principal and reward tokens are rated apart: rewards come from the programme's reward budget, principal belongs to stakers.\n\nCritical\n- Direct theft of staked principal.\n- Permanent freezing of staked principal.\nHigh\n- Temporary freezing of staked principal for 24 hours or longer.\nMedium\n- Theft of unclaimed rewards.\n- Temporary or permanent freezing of unclaimed rewards.\nLow\n- Rewards streamed at the wrong rate with no loss to a staker.\n\nLowest paid tier: Low. A report is paid at the row its proof satisfies, not the row it selects.",
+    "impactList": "Critical: Direct theft of staked principal\nCritical: Permanent freezing of staked principal\nHigh: Temporary freezing of staked principal for 24 hours or longer\nMedium: Theft of unclaimed rewards\nMedium: Temporary or permanent freezing of unclaimed rewards\nLow: Rewards streamed at the wrong rate with no loss to a staker",
+    "impactRow": "Critical: Direct theft of staked principal",
+    "exclusions": "Out of scope: anything listed in docs/known-issues.md; attacks that need the owner key or the funder key; behaviour of third-party tokens.\nTrusted roles: owner, funder.",
+    "actors": "stake, claim, withdraw: the attacker, any account, no role.\nnotifyReward: the funder, in normal operation, before the attack.\nThe stakers who lose: Alice and Bob. They take no action.",
+    "loss": "PoC run: attacker profit 69,999 TSR. The reward reserve was 70,000 TSR before the run and 1 wei after it. Contract balance after the run: not measured.",
+    "proofLog": "forge test --match-test test_attackerDrainsContractAndFreezesStakers -vv\n\nRan 1 test for test/ReserveDrain.t.sol:ReserveDrainTest\n[PASS] test_attackerDrainsContractAndFreezesStakers() (gas: 341724)\nLogs:\n  attacker stake (TSR) 1166666\n  attacker profit (TSR) 69999\n  reserve left (wei) 1\n\nSuite result: ok. 1 passed; 0 failed; 0 skipped",
+    "mocks": "TestToken, a plain ERC-20, stands in for TSR. The attacker's stake is minted in place of a flash loan. Fresh local deployment: the funder funds 70,000 TSR, Alice stakes 600,000 TSR and Bob 400,000 TSR, all through the public functions.",
+    "economics": "No submission fee. Duplicates are not paid: the first complete report wins. Programme opened 2026-08-18. First reproduced 2026-09-30."
+  }
+}

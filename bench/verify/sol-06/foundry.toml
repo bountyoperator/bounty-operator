@@ -1,0 +1,14 @@
+[profile.default]
+src = "src"
+test = "test"
+out = "out"
+cache_path = "cache"
+libs = ["../_lib"]
+remappings = ["forge-std/=../_lib/forge-std/src/"]
+allow_paths = ["../_lib"]
+solc = "0.8.28"
+evm_version = "cancun"
+optimizer = true
+optimizer_runs = 200
+auto_detect_remappings = false
+offline = true

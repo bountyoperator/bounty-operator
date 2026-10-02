@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>See why a triager would close your report | Bounty Operator</title>
+<meta name="description" content="The three likeliest reasons a triager rejects your bug bounty report, the sentence that triggers each one and the evidence that flips it. On your own model.">
+<link rel="canonical" href="https://bountyoperator.com/triager-simulation">
+<meta name="color-scheme" content="dark light">
+<meta name="theme-color" content="#0a1220" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f5f7fb" media="(prefers-color-scheme: light)">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Bounty Operator">
+<meta property="og:title" content="See why a triager would close your report | Bounty Operator">
+<meta property="og:description" content="The three likeliest reasons a triager rejects your bug bounty report, the sentence that triggers each one and the evidence that flips it. On your own model.">
+<meta property="og:url" content="https://bountyoperator.com/triager-simulation">
+<meta property="og:image" content="https://bountyoperator.com/social-v2.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Bounty Operator. Find the hole in your report before the triager does.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="See why a triager would close your report | Bounty Operator">
+<meta name="twitter:description" content="The three likeliest reasons a triager rejects your bug bounty report, the sentence that triggers each one and the evidence that flips it. On your own model.">
+<meta name="twitter:image" content="https://bountyoperator.com/social-v2.png">
+<meta name="twitter:image:alt" content="Bounty Operator. Find the hole in your report before the triager does.">
+<link rel="icon" href="/favicon.ico" sizes="48x48">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+<script src="/theme.js"></script>
+<link rel="stylesheet" href="/css/base.css">
+<link rel="stylesheet" href="/css/landing.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Bounty Operator","item":"https://bountyoperator.com/"},{"@type":"ListItem","position":2,"name":"Method","item":"https://bountyoperator.com/method"},{"@type":"ListItem","position":3,"name":"Triager simulation","item":"https://bountyoperator.com/triager-simulation"}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Does it know my programme’s rules?","acceptedAnswer":{"@type":"Answer","text":"It uses the rules you paste into Context: the scope list, the exclusions and the severity table. Rules it was not given are named in the review as not supplied."}},{"@type":"Question","name":"Is this the platform’s own triager?","acceptedAnswer":{"@type":"Answer","text":"No. It is your own model, reading the draft the way a programme triager does. It runs on a draft for any platform: Immunefi, Cantina, Sherlock or HackerOne."}},{"@type":"Question","name":"What do I do with an open reason?","acceptedAnswer":{"@type":"Answer","text":"Add the artefact the row names, or rewrite the sentence that triggers it. Then run the simulation again."}},{"@type":"Question","name":"Which model runs the review?","acceptedAnswer":{"@type":"Answer","text":"The one you choose, on your own key: OpenRouter, Anthropic, OpenAI, Google Gemini, xAI, DeepSeek, Mistral or Groq. It runs as a hosted review: one per UTC day on Free, unlimited on Operator. From a coding agent it runs through run_review over MCP, on the same allowance."}},{"@type":"Question","name":"Where do my files go?","acceptedAnswer":{"@type":"Answer","text":"Through our server to the model provider you choose, with your key, for that one request. The server adds the method of this profile on the way. Bounty Operator does not store your files, prompts, keys or results. The packet you download carries a SHA-256 manifest of every file reviewed."}}]}</script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="site-header">
+<div class="wrap site-header__inner">
+<a class="brand" href="/"><svg class="brand__mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect class="brand__tile" width="64" height="64" rx="14"/><path class="brand__glyph" d="M12.5 15h6.5v31.5h-6.5z"/><path class="brand__glyph" fill-rule="evenodd" d="M25.5 25a10.75 10.75 0 1 0 0 21.5a10.75 10.75 0 0 0 0-21.5zm0 6.25a4.5 4.5 0 1 1 0 9a4.5 4.5 0 0 1 0-9z"/><path class="brand__slash" d="M45.5 13h6.25l-8.6 37.5h-6.25z"/></svg><span class="brand__name">Bounty Operator</span></a>
+<nav class="site-nav" aria-label="Main"><ul><li><a href="/#workspace">Workbench</a></li><li><a href="/method">Method</a></li><li><a href="/tools">Tools</a></li><li><a href="/guide">Guide</a></li><li><a href="/mcp">MCP</a></li><li><a href="/pricing">Pricing</a></li></ul></nav>
+<div class="site-header__actions">
+<button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch colour theme"><span class="icon theme-toggle__icon" aria-hidden="true"></span></button>
+<a class="btn btn--secondary btn--sm" href="/#account">Account</a>
+</div>
+</div>
+</header>
+<main id="main" tabindex="-1">
+
+
+<section class="lp-hero wrap lp-hero--split">
+  <nav class="breadcrumbs" aria-label="Breadcrumb"><ol><li><a href="/">Bounty Operator</a></li><li><a href="/method">Method</a></li><li aria-current="page">Triager simulation</li></ol></nav>
+  <div class="lp-hero__grid">
+    <div class="lp-hero__text lp-hero__text--sticky">
+      <p class="eyebrow">Triager simulation</p>
+      <h1>See why a triager would close your report</h1>
+      <p class="lede">Your model reads the draft as a triager does: fast, and looking for the reason to close it. It returns the three likeliest reasons, the sentence of yours that invites each one, and the evidence that flips it.</p>
+      <div class="cluster lp-hero__actions"><a class="btn btn--primary btn--lg" href="/?profile=triage#workspace"><span class="btn__label">Simulate the triager</span><span class="icon icon--arrow-right" aria-hidden="true"></span></a><a class="btn btn--secondary btn--lg" href="#checks"><span class="btn__label">What it answers</span></a></div>
+      <p class="fine lp-hero__note">Opens the workbench with Triager simulation selected. 1 hosted review per UTC day on your own key. No card.</p>
+      
+    </div>
+    <div class="lp-hero__aside">
+<div class="example example--narrow">
+  <p class="example__bar"><span class="chip status" data-status="example">Example</span><span class="meta">Example output · invented protocol</span></p>
+  <div class="example__body">
+      <div class="stack">
+        <header class="dossier"><div class="dossier__verdict"><span class="meta">Verdict</span><span class="chip verdict verdict--lg" data-verdict="prove-first">Prove first</span></div><p class="dossier__headline">Fastest close: impact not shown. The proof ends at the revert and the loss is narrated.</p></header>
+        
+<article class="finding ledger-card" aria-labelledby="reasons-title">
+  <div class="finding__bar"><span class="icon icon--file" aria-hidden="true"></span><span class="finding__file">input-1/draft-report.md</span><span class="finding__tag">Ranked</span></div>
+  <header class="finding__head">
+    <div class="finding__tags"><span class="finding__id">Rejection reasons</span></div>
+    <h3 class="finding__title" id="reasons-title">The three a triager reaches first on this draft</h3>
+  </header>
+  <dl class="finding__rows">
+    
+    <div class="rail" data-rail="counter" data-status="open">
+      <dt class="rail__label">Reason 1</dt>
+      <dd class="rail__body">
+        <p class="ledger-card__name">Impact not shown</p>
+        <p class="rail__quote">An attacker can steal all staked funds.</p>
+        
+        <p class="rail__answer"><span class="chip status" data-status="open">Open</span><span>The test ends at the revert on line 58. Add an assertion on the staker’s balance after the attack.</span></p>
+        <p class="ledger-card__refs"><span class="ref" title="input-3/test/Exploit.t.sol:41-58"><span class="ref__file">input-3/test/Exploit.t.sol</span><span class="ref__lines">:41-58</span></span></p>
+      </dd>
+    </div>
+    <div class="rail" data-rail="counter" data-status="open">
+      <dt class="rail__label">Reason 2</dt>
+      <dd class="rail__body">
+        <p class="ledger-card__name">Privileged precondition</p>
+        <p class="rail__quote">After the operator raises the rate, the next claim overpays.</p>
+        
+        <p class="rail__answer"><span class="chip status" data-status="open">Open</span><span>The rules pasted in Context exclude operator actions. Show the path without <code>setRate</code>, or cut the step.</span></p>
+        <p class="ledger-card__refs"><span class="ref" title="input-2/StakingRewards.sol:132-137"><span class="ref__file">input-2/StakingRewards.sol</span><span class="ref__lines">:132-137</span></span></p>
+      </dd>
+    </div>
+    <div class="rail" data-rail="counter" data-status="resolved">
+      <dt class="rail__label">Reason 3</dt>
+      <dd class="rail__body">
+        <p class="ledger-card__name">Known issue</p>
+        <p class="rail__quote">Missing section: the draft does not mention the prior audit.</p>
+        
+        <p class="rail__answer"><span class="chip status" data-status="resolved">Answered</span><span>The audit note covers access to <code>setRate</code>, a different root cause. Say so in the first paragraph.</span></p>
+        <p class="ledger-card__refs"><span class="ref" title="input-4/audit-notes.md:112"><span class="ref__file">input-4/audit-notes.md</span><span class="ref__lines">:112</span></span></p>
+      </dd>
+    </div>
+    
+    <div class="rail" data-rail="next">
+      <dt class="rail__label">Next</dt>
+      <dd class="rail__body"><p class="rail__next"><span class="icon icon--arrow-right" aria-hidden="true"></span><span>Write the balance assertion first. It answers the reason a triager reaches in the first minute.</span></p></dd>
+    </div>
+  </dl>
+</article>
+      </div></div>
+</div></div>
+  </div>
+</section>
+
+<section class="section wrap" aria-labelledby="checks">
+  <header class="section-head"><div class="section-head__text"><h2 id="checks">What the simulation answers</h2><p class="lede">A triager needs one sentence to close a report. The simulation writes that sentence before the triager does. The reasons reports are closed for are on the <a class="link" href="/method#closures">method page</a>.</p></div></header>
+  <ol class="points points--2"><li class="points__item"><h3 class="points__title">The closing sentence</h3><p class="points__text">The one sentence that closes this report in ten minutes, and whether your first paragraph already answers it.</p></li><li class="points__item"><h3 class="points__title">Three reasons, ranked</h3><p class="points__text">The three likeliest rejection reasons for this draft, the likeliest first.</p></li><li class="points__item"><h3 class="points__title">The sentence that invites each</h3><p class="points__text">Quoted from your draft. Where the trouble is a gap, the missing section is named.</p></li><li class="points__item"><h3 class="points__title">What flips it</h3><p class="points__text">A line in the files you supplied, or the one artefact to add. Each reason is marked answered or open.</p></li></ol>
+</section>
+
+<section class="section wrap">
+  <div class="split">
+    <div>
+      <header class="section-head"><div class="section-head__text"><h2 id="paste">What to paste in</h2><p class="lede">The rules decide half the reasons. Paste them.</p></div></header>
+      <ul class="needs"><li class="needs__item"><span class="icon icon--file" aria-hidden="true"></span><div><p class="needs__name">Your draft report</p><p class="needs__note">As you intend to submit it.</p></div></li><li class="needs__item"><span class="icon icon--file" aria-hidden="true"></span><div><p class="needs__name">The source files it cites</p><p class="needs__note">So an objection the code already answers is marked answered, with the line.</p></div></li><li class="needs__item"><span class="icon icon--file" aria-hidden="true"></span><div><p class="needs__name">Programme rules and scope, in Context</p><p class="needs__note">The scope list, the exclusions and the severity table. Reasons that depend on rules are judged only when the rules are supplied.</p></div></li></ul>
+      <p class="fine needs__limits">Up to 50 files, 120 KB per file, 240 KB and 20,000 lines in total. Paste, drop files, or import a repository, pull request or commit from GitHub at a pinned commit.</p>
+    </div>
+    <div>
+      <header class="section-head"><div class="section-head__text"><h2 id="returns">What comes back</h2><p class="lede">Three rows, ranked, each with its way out.</p></div></header>
+      <ul class="ticks"><li><span class="icon icon--check" aria-hidden="true"></span><span>The closing sentence, and whether your first paragraph answers it.</span></li><li><span class="icon icon--check" aria-hidden="true"></span><span>The three likeliest rejection reasons for this draft, in order.</span></li><li><span class="icon icon--check" aria-hidden="true"></span><span>For each: the sentence of yours that invites it, or the missing section.</span></li><li><span class="icon icon--check" aria-hidden="true"></span><span>For each: the evidence that flips it. A line in your files, or the one artefact to add.</span></li><li><span class="icon icon--check" aria-hidden="true"></span><span>Each marked answered or open. An objection your files already answer comes back answered, with the line.</span></li><li><span class="icon icon--check" aria-hidden="true"></span><span>One verdict: submit, rewrite-then-submit, prove-first, hold-duplicate or drop.</span></li></ul>
+    </div>
+  </div>
+</section>
+
+
+
+<section class="section wrap wrap--narrow" aria-labelledby="faq">
+  <header class="section-head"><div class="section-head__text"><h2 id="faq">Questions</h2></div></header>
+  <div class="accordion"><details class="accordion__item" name="triage-faq"><summary class="accordion__summary">Does it know my programme’s rules?</summary><div class="accordion__body"><p>It uses the rules you paste into Context: the scope list, the exclusions and the severity table. Rules it was not given are named in the review as not supplied.</p></div></details><details class="accordion__item" name="triage-faq"><summary class="accordion__summary">Is this the platform’s own triager?</summary><div class="accordion__body"><p>No. It is your own model, reading the draft the way a programme triager does. It runs on a draft for any platform: Immunefi, Cantina, Sherlock or HackerOne.</p></div></details><details class="accordion__item" name="triage-faq"><summary class="accordion__summary">What do I do with an open reason?</summary><div class="accordion__body"><p>Add the artefact the row names, or rewrite the sentence that triggers it. Then run the simulation again.</p></div></details><details class="accordion__item" name="triage-faq"><summary class="accordion__summary">Which model runs the review?</summary><div class="accordion__body"><p>The one you choose, on your own key: OpenRouter, Anthropic, OpenAI, Google Gemini, xAI, DeepSeek, Mistral or Groq. It runs as a hosted review: one per UTC day on Free, unlimited on Operator. From a coding agent it runs through <code>run_review</code> over MCP, on the same allowance.</p></div></details><details class="accordion__item" name="triage-faq"><summary class="accordion__summary">Where do my files go?</summary><div class="accordion__body"><p>Through our server to the model provider you choose, with your key, for that one request. The server adds the method of this profile on the way. Bounty Operator does not store your files, prompts, keys or results. The packet you download carries a SHA-256 manifest of every file reviewed.</p></div></details></div>
+</section>
+
+
+<section class="section wrap">
+  <div class="cta-band">
+    <div class="cta-band__text">
+      <h2 class="cta-band__title">Read your report the way the triager will</h2>
+      <p class="cta-band__lede">Three reasons to close it, and what answers each.</p>
+    </div>
+    <div class="cta-band__actions">
+      <div class="cluster"><a class="btn btn--primary btn--lg" href="/?profile=triage#workspace"><span class="btn__label">Simulate the triager</span><span class="icon icon--arrow-right" aria-hidden="true"></span></a><a class="btn btn--secondary btn--lg" href="/method"><span class="btn__label">Read the method</span></a></div>
+      <p class="fine">Opens the workbench with Triager simulation selected. Free: 1 hosted review per UTC day. Operator: unlimited, US$10 per week.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section section--tight wrap">
+  
+<nav class="related" aria-label="Run next">
+  <p class="meta">Run next</p>
+  <ul class="related__list"><li><a class="related__link" href="/prior-art-check"><span class="related__label">Prior-art overlap<span class="icon icon--arrow-right" aria-hidden="true"></span></span><span class="related__text">Same root cause, or only the same symptom.</span></a></li><li><a class="related__link" href="/?profile=poc#workspace"><span class="related__label">Proof review<span class="icon icon--arrow-right" aria-hidden="true"></span></span><span class="related__text">Whether the proof shows the impact or only the defect.</span></a></li><li><a class="related__link" href="/?profile=severity#workspace"><span class="related__label">Severity calibration<span class="icon icon--arrow-right" aria-hidden="true"></span></span><span class="related__text">One level, graded on the programme’s own table.</span></a></li><li><a class="related__link" href="/gauntlet"><span class="related__label">Gauntlet<span class="icon icon--arrow-right" aria-hidden="true"></span></span><span class="related__text">All eight stages in one run, with one verdict.</span></a></li></ul>
+</nav>
+</section>
+</main>
+<footer class="site-footer">
+<div class="wrap site-footer__grid">
+<div class="site-footer__brand">
+<a class="brand" href="/"><svg class="brand__mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect class="brand__tile" width="64" height="64" rx="14"/><path class="brand__glyph" d="M12.5 15h6.5v31.5h-6.5z"/><path class="brand__glyph" fill-rule="evenodd" d="M25.5 25a10.75 10.75 0 1 0 0 21.5a10.75 10.75 0 0 0 0-21.5zm0 6.25a4.5 4.5 0 1 1 0 9a4.5 4.5 0 0 1 0-9z"/><path class="brand__slash" d="M45.5 13h6.25l-8.6 37.5h-6.25z"/></svg><span class="brand__name">Bounty Operator</span></a>
+<p class="site-footer__promise">Find the hole in your report before the triager does.</p>
+</div>
+<nav class="site-footer__col" aria-label="Product"><h2 class="site-footer__title">Product</h2><ul><li><a href="/#workspace">Workbench</a></li><li><a href="/method">Method</a></li><li><a href="/gauntlet">Gauntlet</a></li><li><a href="/panel-review">Panel review</a></li><li><a href="/pricing">Pricing</a></li><li><a href="/#account">Account</a></li></ul></nav>
+<nav class="site-footer__col" aria-label="Tools"><h2 class="site-footer__title">Tools</h2><ul><li><a href="/tools">All tools</a></li><li><a href="/tools/report-check">Report check</a></li><li><a href="/tools/verify">Packet verifier</a></li><li><a href="/tools/secret-check">Secret check</a></li><li><a href="/tools/acceptance-rates">Acceptance rates</a></li><li><a href="/tools/slither-focus">Slither triage queue</a></li></ul></nav>
+<nav class="site-footer__col" aria-label="Resources"><h2 class="site-footer__title">Resources</h2><ul><li><a href="/guide">Report guide</a></li><li><a href="/mcp">MCP setup</a></li><li><a href="/templates">Report templates</a></li><li><a href="/changelog">Changelog</a></li><li><a href="https://github.com/bountyoperator/bounty-operator" target="_blank" rel="noopener noreferrer">Source<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></li></ul></nav>
+<nav class="site-footer__col" aria-label="Legal"><h2 class="site-footer__title">Legal</h2><ul><li><a href="/privacy">Privacy</a></li><li><a href="/terms">Terms</a></li><li><a href="/security">Security</a></li><li><a href="/licenses">Licences</a></li><li><a href="mailto:security@bountyoperator.com">Report a vulnerability</a></li></ul></nav>
+</div>
+<div class="wrap">
+<div class="site-footer__base">
+<p>Built by <a href="https://audits.sherlock.xyz/watson/Tradi3" target="_blank" rel="noopener noreferrer">Tradi3</a></p>
+<p><a href="mailto:support@bountyoperator.com">support@bountyoperator.com</a></p>
+</div>
+</div>
+</footer>
+</body>
+</html>

@@ -1,0 +1,102 @@
+{
+  "model": "anthropic/claude-opus-5.5",
+  "generatedAt": "2026-10-02T16:05:16.952Z",
+  "stages": [
+    {
+      "profileId": "scope",
+      "file": "stage-1-scope.md",
+      "model": "anthropic/claude-opus-5.5",
+      "usage": {
+        "input": 10470,
+        "output": 4431
+      },
+      "costUsd": 0.1305,
+      "verdict": "rewrite-then-submit",
+      "referenceProblems": 0
+    },
+    {
+      "profileId": "provenance",
+      "file": "stage-2-provenance.md",
+      "model": "anthropic/claude-opus-5.5",
+      "usage": {
+        "input": 13062,
+        "output": 4566
+      },
+      "costUsd": 0.1436,
+      "verdict": "submit",
+      "referenceProblems": 0
+    },
+    {
+      "profileId": "prior-art",
+      "file": "stage-3-prior-art.md",
+      "model": "anthropic/claude-opus-5.5",
+      "usage": {
+        "input": 15983,
+        "output": 3554
+      },
+      "costUsd": 0.135,
+      "verdict": "rewrite-then-submit",
+      "referenceProblems": 0
+    },
+    {
+      "profileId": "poc",
+      "file": "stage-4-poc.md",
+      "model": "anthropic/claude-opus-5.5",
+      "usage": {
+        "input": 18270,
+        "output": 7105
+      },
+      "costUsd": 0.2152,
+      "verdict": "rewrite-then-submit",
+      "referenceProblems": 0
+    },
+    {
+      "profileId": "severity",
+      "file": "stage-5-severity.md",
+      "model": "anthropic/claude-opus-5.5",
+      "usage": {
+        "input": 21616,
+        "output": 5647
+      },
+      "costUsd": 0.1994,
+      "verdict": "rewrite-then-submit",
+      "referenceProblems": 0
+    },
+    {
+      "profileId": "triage",
+      "file": "stage-6-triage.md",
+      "model": "anthropic/claude-opus-5.5",
+      "usage": {
+        "input": 24720,
+        "output": 4690
+      },
+      "costUsd": 0.1927,
+      "verdict": "rewrite-then-submit",
+      "referenceProblems": 0
+    },
+    {
+      "profileId": "report",
+      "file": "stage-7-report.md",
+      "model": "anthropic/claude-opus-5.5",
+      "usage": {
+        "input": 27566,
+        "output": 8309
+      },
+      "costUsd": 0.2764,
+      "verdict": "rewrite-then-submit",
+      "referenceProblems": 0
+    },
+    {
+      "profileId": "verdict",
+      "file": "stage-8-verdict.md",
+      "model": "anthropic/claude-opus-5.5",
+      "usage": {
+        "input": 31694,
+        "output": 5750
+      },
+      "costUsd": 0.2418,
+      "verdict": "prove-first",
+      "referenceProblems": 0
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+# One line ending everywhere: several files are hashed (the MCP download, the benchmark
+# protocol), and a hash must not depend on the machine that checked the file out.
+* text=auto eol=lf
+*.png binary
+*.ico binary
+*.tgz binary
+*.gz binary

@@ -1,0 +1,45 @@
+{
+  "schema": "paydirt.truth/1",
+  "pair": "sol-04",
+  "variant": "fixed",
+  "origin": "original",
+  "assistant": "openai/gpt-6.1-sol",
+  "canary": "b66c3b04-ccc0-407b-aa2e-4e65ac4e975c",
+  "planted": [],
+  "decoys": [
+    {
+      "id": "D1",
+      "file": "src/Cinderloom.sol",
+      "lines": [
+        [
+          185,
+          188
+        ]
+      ],
+      "functions": [
+        "loosen"
+      ],
+      "why": "The unchecked subtractions cannot wrap: the revert directly above rejects any quantity that is zero, above the caller's filaments or above totalFilaments, and loosen() holds the latch for the whole call.",
+      "proof": "test/Fixed.t.sol:test_decoy_D1"
+    }
+  ],
+  "acceptable": [],
+  "patched_region": {
+    "file": "src/Cinderloom.sol",
+    "lines": [
+      [
+        200,
+        201
+      ],
+      [
+        206,
+        206
+      ]
+    ],
+    "functions": [
+      "drawEmbers",
+      "unweave"
+    ]
+  },
+  "report": null
+}

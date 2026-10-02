@@ -1,0 +1,21 @@
+[profile.default]
+src = "src"
+test = "test"
+out = "out"
+cache_path = "cache"
+libs = ["../_lib"]
+remappings = ["forge-std/=../_lib/forge-std/src/"]
+allow_paths = ["../_lib"]
+solc = "0.8.26"
+evm_version = "cancun"
+optimizer = true
+optimizer_runs = 200
+auto_detect_remappings = false
+offline = true
+
+[fuzz]
+runs = 512
+seed = "0x504179646972742d63682d3038"
+
+[lint]
+lint_on_build = false

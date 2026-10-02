@@ -1,0 +1,381 @@
+{
+  "schema": "paydirt.protocol/1",
+  "name": "Paydirt",
+  "release": "2026-10",
+  "omp": {
+    "version": "omp/18.4.4",
+    "provider": "openrouter",
+    "routing": {
+      "quantizations": [
+        "fp8",
+        "mxfp8",
+        "fp16",
+        "bf16",
+        "fp32",
+        "unknown"
+      ],
+      "preferred_min_throughput": {
+        "p50": 60
+      }
+    },
+    "flags": [
+      "-p",
+      "--mode",
+      "json",
+      "--profile",
+      "bench",
+      "--no-session",
+      "--no-title",
+      "--no-skills",
+      "--no-rules",
+      "--no-extensions",
+      "--no-lsp",
+      "--no-pty"
+    ],
+    "tools": [
+      "read",
+      "grep",
+      "glob"
+    ],
+    "thinking": "max",
+    "max_time_minutes": 30,
+    "hard_kill_grace_seconds": 90
+  },
+  "run": {
+    "repeats": 1,
+    "concurrency": 6,
+    "per_model_concurrency": 2,
+    "stagger_ms": 1500,
+    "infra_retries": 2,
+    "retry_backoff_seconds": [
+      10,
+      45
+    ],
+    "key_floor_usd": 5,
+    "generation_stats": "ends",
+    "profile_arm_models": [
+      "deepseek/deepseek-v4.1-flash",
+      "z-ai/glm-5.3-flash",
+      "openai/gpt-6-luna",
+      "anthropic/claude-sonnet-5.5"
+    ]
+  },
+  "arms": {
+    "find-sol": [
+      "raw",
+      "solidity"
+    ],
+    "find-ts": [
+      "raw",
+      "general"
+    ],
+    "challenge": [
+      "raw",
+      "report"
+    ]
+  },
+  "sets": {
+    "scored": [
+      "ch-02",
+      "ch-05",
+      "ch-06",
+      "ch-07",
+      "hard-01",
+      "hard-02",
+      "hard-03",
+      "hard-04",
+      "hard-07",
+      "hard-08",
+      "sol-02",
+      "sol-03",
+      "sol-05",
+      "sol-09",
+      "sol-10",
+      "sol-11",
+      "ts-02",
+      "ts-03"
+    ],
+    "public": [
+      "ch-01",
+      "ch-08",
+      "sol-01",
+      "sol-04",
+      "sol-06",
+      "ts-01"
+    ],
+    "reserve": [
+      "ch-03",
+      "ch-04",
+      "sol-07",
+      "sol-08"
+    ]
+  },
+  "selection": {
+    "status": "final",
+    "scored_pairs": 18,
+    "always_scored": [
+      "hard-01",
+      "hard-02",
+      "hard-03",
+      "hard-04",
+      "hard-07",
+      "hard-08"
+    ],
+    "family_targets": {
+      "challenge": 6,
+      "find-ts": 2,
+      "find-sol": 10
+    },
+    "minimum": {
+      "challenge": 6,
+      "find-ts": 2
+    },
+    "public_per_family": {
+      "challenge": 2,
+      "find-ts": 1,
+      "find-sol": 3
+    },
+    "class_cap": 2,
+    "prior_order": {
+      "challenge": [
+        "ch-07",
+        "ch-05",
+        "ch-06",
+        "ch-02",
+        "ch-03",
+        "ch-08",
+        "ch-04",
+        "ch-01"
+      ],
+      "find-ts": [
+        "ts-03",
+        "ts-02",
+        "ts-01"
+      ],
+      "find-sol": [
+        "sol-10",
+        "sol-11",
+        "sol-09",
+        "sol-03",
+        "sol-02",
+        "sol-05",
+        "sol-08",
+        "sol-07",
+        "sol-04",
+        "sol-06",
+        "sol-01"
+      ]
+    },
+    "probe": {
+      "models": [
+        "openai/gpt-oss-20b",
+        "mistralai/mistral-small-3.2-24b-instruct",
+        "google/gemma-3-27b-it",
+        "qwen/qwen3.5-9b"
+      ],
+      "repeats": 1,
+      "probes_expected": 112,
+      "probes_complete": 112,
+      "calls_expected": 224,
+      "calls_answered": 224,
+      "probes_void": 0,
+      "unprobed": []
+    }
+  },
+  "scoring": {
+    "headline_arm": "raw",
+    "max_findings": 8,
+    "max_range_lines": 40,
+    "line_tolerance": 3,
+    "line_tolerance_named": 0,
+    "max_functions": 3,
+    "bite_severities": [
+      "medium",
+      "high",
+      "critical",
+      "unrated"
+    ],
+    "max_quotes": 8,
+    "min_quote_chars": 20,
+    "max_quote_chars": 400,
+    "bootstrap": {
+      "resamples": 10000,
+      "seed": "paydirt-v1",
+      "level": 0.95
+    },
+    "budget_usd_per_run": 0.1
+  },
+  "answer_sheet": {
+    "findings": [
+      {
+        "file": "string",
+        "function": "string",
+        "line_start": "integer",
+        "line_end": "integer",
+        "severity": "critical|high|medium|low|info|unrated",
+        "claim": "string"
+      }
+    ],
+    "rejected": [
+      {
+        "quote": "string"
+      }
+    ],
+    "verdict": "supported|overclaimed|unsupported|n/a",
+    "max_severity": "critical|high|medium|low|info|unrated"
+  },
+  "tiers": {
+    "1": [
+      "deepseek/deepseek-v4.1-flash",
+      "deepseek/deepseek-v4-pro-0813",
+      "z-ai/glm-5.3-flash",
+      "z-ai/glm-5.3",
+      "qwen/qwen3.8-27b",
+      "qwen/qwen3.8-max-0902",
+      "minimax/minimax-m3",
+      "moonshotai/kimi-k3",
+      "tencent/hy4-preview",
+      "openai/gpt-oss-120b",
+      "nvidia/nemotron-3-ultra-550b-a55b"
+    ],
+    "2": [
+      "openai/gpt-6-luna",
+      "google/gemini-3.5-flash-lite",
+      "google/gemini-3.8-flash",
+      "x-ai/grok-4.7",
+      "meta/muse-spark-1.3",
+      "mistralai/mistral-medium-3-5",
+      "anthropic/claude-haiku-4.5",
+      "openai/gpt-5.6-terra",
+      "openai/gpt-6.1-sol",
+      "google/gemini-3.1-pro-preview",
+      "anthropic/claude-sonnet-5.5"
+    ],
+    "3": [
+      "anthropic/claude-opus-5.5",
+      "openai/gpt-6-astra",
+      "anthropic/claude-fable-5.1"
+    ]
+  },
+  "estimate": {
+    "input_tokens_per_run": 20000,
+    "cached_input_tokens_per_run": 33000,
+    "output_tokens_per_run": 39000,
+    "source": "mean of pilot-1: 112 runs, deepseek-v4.1-flash and glm-5.3-flash at effort max; other models will differ",
+    "raw_arm": {
+      "source": "pilot-1, raw arm only: 56 runs on 14 find pairs, deepseek/deepseek-v4.1-flash and z-ai/glm-5.3-flash at effort max. with_bug = the twin that holds the planted bug, clean = the fixed twin, any = both. No challenge pair was measured; challenge inputs use \"any\".",
+      "workspace_bytes": 17497,
+      "profiles": {
+        "mean": {
+          "with_bug": {
+            "runs": 28,
+            "input": 14437,
+            "cached": 19847,
+            "output": 28818
+          },
+          "clean": {
+            "runs": 28,
+            "input": 28074,
+            "cached": 64533,
+            "output": 53269
+          },
+          "any": {
+            "runs": 56,
+            "input": 21255,
+            "cached": 42190,
+            "output": 41043
+          }
+        },
+        "low": {
+          "model": "z-ai/glm-5.3-flash",
+          "with_bug": {
+            "runs": 14,
+            "input": 11315,
+            "cached": 2546,
+            "output": 19498
+          },
+          "clean": {
+            "runs": 14,
+            "input": 32201,
+            "cached": 8370,
+            "output": 29483
+          },
+          "any": {
+            "runs": 28,
+            "input": 21758,
+            "cached": 5458,
+            "output": 24490
+          }
+        },
+        "high": {
+          "model": "deepseek/deepseek-v4.1-flash",
+          "with_bug": {
+            "runs": 14,
+            "input": 17559,
+            "cached": 37147,
+            "output": 38137
+          },
+          "clean": {
+            "runs": 14,
+            "input": 23946,
+            "cached": 120695,
+            "output": 77054
+          },
+          "any": {
+            "runs": 28,
+            "input": 20753,
+            "cached": 78921,
+            "output": 57596
+          }
+        }
+      }
+    }
+  },
+  "files": {
+    "harness/bench-overlay.yml": "d7535aea646ec361ec5e32808a405dfaeaa97b213c2705091382c24c054d339b",
+    "harness/dump-ext.ts": "de49fdde7fc98cd04b2723be48653a625dfa63924afb7d60eeedf7674ca516d8",
+    "harness/jail-ext.ts": "6813c12d84f7f6a78ffecf67465965fdd3d1f61b04efc1bb7a95b5e2a9a98e4a",
+    "prompts/system.txt": "a3577b467cf2b16bdb1e3f2f26a794a5edc0c07549b1f9582eecbe7065ca6461",
+    "prompts/raw-task.md": "9277fe8e020bb94ba152bae975e48f6974f462a7d7438ae7732c12248f5252bf",
+    "prompts/answer-sheet.md": "38560aec15ebdd5edc99052486baf24a498bf7e2d267d455a1e0ba13157fd1f3",
+    "prompts/profile-bridge.md": "f3fcf8cadb3161553153bd3becd90729dcf9391247a0aabcad3753785eacae4f"
+  },
+  "engine": {
+    "commit": "aaad1e1d5830395a547082419ce922ea1ecf0916",
+    "dirty": true,
+    "files": {
+      "web/public/review-core.mjs": "82abb845320be4400d0e29853f88c4ee69bda605d29c60477db754f111cec440",
+      "web/public/profiles.mjs": "f6614db1156d94891d4af47c9e5d852cdc717414121669af3d6dc1cce88ab03e"
+    },
+    "profiles": {
+      "solidity": {
+        "system_sha256": "a9748fae948eb2ed569dc6416dc50b7c21093635522ca2636a760b68099562fa",
+        "engine_profile": "solidity",
+        "mode": "bounty",
+        "chars": 11555
+      },
+      "general": {
+        "system_sha256": "9fdc1d037ea25d9c78c07adc8e80c550ad022b7daba4c912ed334b5503071f22",
+        "engine_profile": "general",
+        "mode": "bounty",
+        "chars": 7442
+      },
+      "report": {
+        "system_sha256": "f5361b35e946a65d6d45993223603658a42b2d7be22e0054287fc801b2a5c025",
+        "engine_profile": "report",
+        "mode": "bounty",
+        "chars": 10766
+      }
+    }
+  },
+  "hashes": {
+    "protocol": "74aad5311600bf53862cb0c5e09dec6e6af0f63feaff7d6805d021905e0cfd35",
+    "core": "5fea9eb00e3f2bb24d3965bf6854d39742d3324b1b826492eaa1ef51dfe09768",
+    "arms": {
+      "raw": "5fea9eb00e3f2bb24d3965bf6854d39742d3324b1b826492eaa1ef51dfe09768",
+      "solidity": "ad6a658a538ec5ef84c3025febf9dea8a5e076127e2b11e9dcfe346cb2d38a15",
+      "general": "d7f99fc3799b5bf3914fd3aba5668fdf9467a391a1607f896c0e9d26083a01fc",
+      "report": "4550f8a9890f6efd39f757fcea9c5b7ea870a7beccf9fc84c715d66c7a7f6448"
+    }
+  }
+}

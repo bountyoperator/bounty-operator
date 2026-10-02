@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Your model, your key: where your code goes | Bounty Operator</title>
+<meta name="description" content="Where your code goes, who holds the API key and what is stored. Eight providers on your own key, prompt export for chat subscriptions, MCP for agents.">
+<link rel="canonical" href="https://bountyoperator.com/your-model-your-key">
+<meta name="color-scheme" content="dark light">
+<meta name="theme-color" content="#0a1220" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f5f7fb" media="(prefers-color-scheme: light)">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Bounty Operator">
+<meta property="og:title" content="Your model, your key: where your code goes | Bounty Operator">
+<meta property="og:description" content="Where your code goes, who holds the API key and what is stored. Eight providers on your own key, prompt export for chat subscriptions, MCP for agents.">
+<meta property="og:url" content="https://bountyoperator.com/your-model-your-key">
+<meta property="og:image" content="https://bountyoperator.com/social-v2.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Bounty Operator. Find the hole in your report before the triager does.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Your model, your key: where your code goes | Bounty Operator">
+<meta name="twitter:description" content="Where your code goes, who holds the API key and what is stored. Eight providers on your own key, prompt export for chat subscriptions, MCP for agents.">
+<meta name="twitter:image" content="https://bountyoperator.com/social-v2.png">
+<meta name="twitter:image:alt" content="Bounty Operator. Find the hole in your report before the triager does.">
+<link rel="icon" href="/favicon.ico" sizes="48x48">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+<script src="/theme.js"></script>
+<link rel="stylesheet" href="/css/base.css">
+<link rel="stylesheet" href="/css/landing.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Bounty Operator","item":"https://bountyoperator.com/"},{"@type":"ListItem","position":2,"name":"Your model, your key","item":"https://bountyoperator.com/your-model-your-key"}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Can I use my ChatGPT or Claude subscription?","acceptedAnswer":{"@type":"Answer","text":"Yes, for the three core profiles: code security review, Solidity review and challenge a draft report. Export the prompt, paste it into your chat app and paste the answer back. The workbench turns the answer into finding cards and a packet. A hosted review needs an API key, which providers bill separately from a chat subscription."}},{"@type":"Question","name":"Does Bounty Operator see my API key?","acceptedAnswer":{"@type":"Answer","text":"The key passes through our server in memory for the one request it belongs to and goes to your provider’s endpoint. It is not written to the database or to logs."}},{"@type":"Question","name":"What does your server add to my request?","acceptedAnswer":{"@type":"Answer","text":"The review instructions: the output format every review shares, and the method of the profile you picked. The three core profiles carry their method in the open, so their preview is the whole prompt. Every other profile is hosted: the preview shows the request that leaves your tab, with your focus, your context and the files, and the server adds the method before it goes to your provider."}},{"@type":"Question","name":"Who bills the model usage?","acceptedAnswer":{"@type":"Answer","text":"Your provider, on your key. Operator at US$10 per week covers the hosted workbench: unlimited reviews, the Gauntlet, Panel review and four reviews running at once."}},{"@type":"Question","name":"What does the provider keep?","acceptedAnswer":{"@type":"Answer","text":"The provider processes the request under its own terms and retention settings. Read them for the key you use, and run a review only on material you are allowed to share with that provider."}},{"@type":"Question","name":"Which key does Panel review use?","acceptedAnswer":{"@type":"Answer","text":"One OpenRouter key covers a whole panel: it reaches models from several labs, so two to four different models review the same files. A panel model on another provider takes that provider’s own key."}}]}</script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="site-header">
+<div class="wrap site-header__inner">
+<a class="brand" href="/"><svg class="brand__mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect class="brand__tile" width="64" height="64" rx="14"/><path class="brand__glyph" d="M12.5 15h6.5v31.5h-6.5z"/><path class="brand__glyph" fill-rule="evenodd" d="M25.5 25a10.75 10.75 0 1 0 0 21.5a10.75 10.75 0 0 0 0-21.5zm0 6.25a4.5 4.5 0 1 1 0 9a4.5 4.5 0 0 1 0-9z"/><path class="brand__slash" d="M45.5 13h6.25l-8.6 37.5h-6.25z"/></svg><span class="brand__name">Bounty Operator</span></a>
+<nav class="site-nav" aria-label="Main"><ul><li><a href="/#workspace">Workbench</a></li><li><a href="/method">Method</a></li><li><a href="/tools">Tools</a></li><li><a href="/guide">Guide</a></li><li><a href="/mcp">MCP</a></li><li><a href="/pricing">Pricing</a></li></ul></nav>
+<div class="site-header__actions">
+<button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch colour theme"><span class="icon theme-toggle__icon" aria-hidden="true"></span></button>
+<a class="btn btn--secondary btn--sm" href="/#account">Account</a>
+</div>
+</div>
+</header>
+<main id="main" tabindex="-1">
+
+
+<section class="lp-hero wrap lp-hero--split">
+  <nav class="breadcrumbs" aria-label="Breadcrumb"><ol><li><a href="/">Bounty Operator</a></li><li aria-current="page">Your model, your key</li></ol></nav>
+  <div class="lp-hero__grid">
+    <div class="lp-hero__text">
+      <p class="eyebrow">Bring your own model</p>
+      <h1>Your model, your key: where your code goes</h1>
+      <p class="lede">A review runs on the model you choose, under your own API key: OpenRouter, Anthropic, OpenAI, Google Gemini, xAI, DeepSeek, Mistral or Groq. Your files and your key pass through our server in memory. It adds the review method and sends the request to that provider. Bounty Operator stores no code, no prompts, no keys and no results.</p>
+      <div class="cluster lp-hero__actions"><a class="btn btn--primary btn--lg" href="/#workspace"><span class="btn__label">Open the workbench</span><span class="icon icon--arrow-right" aria-hidden="true"></span></a><a class="btn btn--secondary btn--lg" href="#providers"><span class="btn__label">See the providers</span></a></div>
+      <p class="fine lp-hero__note">No key at hand: export the prompt of a core profile to your chat app, with no daily limit.</p>
+      
+    </div>
+    <div class="lp-hero__aside">
+    <div class="glance">
+      <p class="meta">At a glance</p>
+      <dl class="kv"><div class="kv__row"><dt>Key</dt><dd>Yours. Used for the one request it belongs to.</dd></div><div class="kv__row"><dt>Files</dt><dd>Sent through our server to the provider you choose. Not stored by Bounty Operator.</dd></div><div class="kv__row"><dt>Method</dt><dd>Added on our server. Open source for the three core profiles.</dd></div><div class="kv__row"><dt>Providers</dt><dd>8, each called at one fixed endpoint</dd></div><div class="kv__row"><dt>Chat plan</dt><dd>Prompt export of a core profile, then paste the answer back</dd></div><div class="kv__row"><dt>Coding agent</dt><dd>MCP: prepare a core review, or run any profile hosted</dd></div><div class="kv__row"><dt>Record</dt><dd>A packet with a SHA-256 manifest of every file</dd></div></dl>
+    </div></div>
+  </div>
+</section>
+
+<section class="section section--tight wrap" aria-labelledby="path">
+  <header class="section-head"><div class="section-head__text"><h2 id="path">Where your code goes</h2><p class="lede">A hosted review has three stops. Each one is listed with what it does to your files.</p></div></header>
+  
+<ol class="flow" aria-label="Path of a hosted review">
+  <li class="flow__node">
+    <div class="flow__head"><span class="icon icon--file" aria-hidden="true"></span><h3 class="flow__name">Your browser</h3></div>
+    <p class="meta">On your device</p>
+    <ul class="flow__does"><li>Reads the files you choose.</li><li>Runs the privacy check on every file and on your instructions.</li><li>Shows the request before it leaves the tab.</li><li>Hashes each file with SHA-256 and builds the review packet you download.</li></ul>
+  </li>
+  <li class="flow__node">
+    <div class="flow__head"><span class="icon icon--shield" aria-hidden="true"></span><h3 class="flow__name">bountyoperator.com</h3></div>
+    <p class="meta">In memory, for one request</p>
+    <ul class="flow__does"><li>Receives your files, your request and your API key.</li><li>Checks your allowance and runs the privacy check again.</li><li>Adds the review method of the profile you picked and sends the request, with your key, to one fixed endpoint of the provider you chose.</li><li>Streams the review back. Writes none of it to the database or to logs.</li></ul>
+  </li>
+  <li class="flow__node">
+    <div class="flow__head"><span class="icon icon--key" aria-hidden="true"></span><h3 class="flow__name">Your provider</h3></div>
+    <p class="meta">Under your key and its terms</p>
+    <ul class="flow__does"><li>Receives your files, your request and our review instructions.</li><li>Runs the model you picked.</li><li>Bills the usage to your account.</li></ul>
+  </li></ol>
+  <p class="fine flow__note">A GitHub import goes from your browser straight to api.github.com at a pinned commit. The repository is never uploaded to our server.</p>
+</section>
+
+<section class="section wrap" aria-labelledby="ways">
+  <header class="section-head"><div class="section-head__text"><h2 id="ways">Three ways to run a review</h2><p class="lede">Same output format, same packet.</p></div></header>
+  <div class="grid grid--3">
+    <div class="card"><div class="card__head"><h3 class="card__title">Hosted review, your API key</h3><div class="card__meta"><span class="icon icon--key" aria-hidden="true"></span></div></div><div class="card__body"><div class="stack stack--12">
+        <p>Paste a key from one of eight providers and run the review in the workbench. It goes through our server to your provider, and the answer streams into finding cards.</p>
+        <ul class="ticks"><li><span class="icon icon--check" aria-hidden="true"></span><span>Every profile, the Gauntlet and Panel review</span></li><li><span class="icon icon--check" aria-hidden="true"></span><span>Free: 1 hosted review per UTC day, any single profile</span></li><li><span class="icon icon--check" aria-hidden="true"></span><span>Operator: unlimited, four at once</span></li><li><span class="icon icon--check" aria-hidden="true"></span><span>The key is used for that request only</span></li></ul>
+      </div></div><div class="card__foot"><a class="link" href="/#workspace">Open the workbench</a></div></div>
+    <div class="card"><div class="card__head"><h3 class="card__title">Prompt export, your chat subscription</h3><div class="card__meta"><span class="icon icon--copy" aria-hidden="true"></span></div></div><div class="card__body"><div class="stack stack--12">
+        <p>For the three core profiles the workbench hands you the full prompt as one document. Paste it into your chat app or a local model, then paste the answer back.</p>
+        <ul class="ticks"><li><span class="icon icon--check" aria-hidden="true"></span><span>Code security review, Solidity review, challenge a draft report</span></li><li><span class="icon icon--check" aria-hidden="true"></span><span>No API key, no account and no daily limit</span></li><li><span class="icon icon--check" aria-hidden="true"></span><span>Your files stay in your browser until you paste the prompt</span></li><li><span class="icon icon--check" aria-hidden="true"></span><span>Paste-back gives you the same cards and packet</span></li></ul>
+      </div></div><div class="card__foot"><a class="link" href="/#workspace">Export a prompt</a></div></div>
+    <div class="card"><div class="card__head"><h3 class="card__title">MCP, your coding agent</h3><div class="card__meta"><span class="icon icon--terminal" aria-hidden="true"></span></div></div><div class="card__body"><div class="stack stack--12">
+        <p>Connect an agent to the MCP server. <code>prepare_review</code> builds the request of a core profile for the agent’s own model. <code>run_review</code> runs any profile as a hosted review, and is the one way to run a hosted profile from an agent.</p>
+        <ul class="ticks"><li><span class="icon icon--check" aria-hidden="true"></span><span><code>list_profiles</code>, <code>prepare_review</code> and <code>build_packet</code> need no account</span></li><li><span class="icon icon--check" aria-hidden="true"></span><span><code>run_review</code> needs a connection token from your account</span></li><li><span class="icon icon--check" aria-hidden="true"></span><span>Your provider key travels in the <code>X-Provider-Key</code> header, never as a tool argument</span></li></ul>
+      </div></div><div class="card__foot"><a class="link" href="/mcp">MCP setup</a></div></div>
+  </div>
+</section>
+
+<section class="section wrap" aria-labelledby="key">
+  <div class="split">
+    <div>
+      <header class="section-head"><div class="section-head__text"><h2 id="key">Who holds the key</h2><p class="lede">You do.</p></div></header>
+      <div class="prose">
+        <p>You create the key in your provider’s console and paste it into the workbench when you run a review. It travels with that request to our server, goes on to the provider’s endpoint, and is gone when the request ends.</p>
+        <p>Each provider is called at one fixed endpoint. A redirect is refused. An error message from the provider is shown to you with the key removed.</p>
+        <p>Model usage is billed by the provider to the account that owns the key. Operator is a flat US$10 per week for the hosted workbench and does not include model usage.</p>
+      </div>
+    </div>
+    <div>
+      <header class="section-head"><div class="section-head__text"><h2 id="check">The privacy check</h2><p class="lede">It runs before anything is sent, in your browser and again on the server.</p></div></header>
+      <ul class="ticks"><li><span class="icon icon--check" aria-hidden="true"></span><span>Private keys, API keys, GitHub and Slack tokens, wallet keys and seed phrases block the request.</span></li><li><span class="icon icon--check" aria-hidden="true"></span><span>A file that normally holds credentials blocks the request.</span></li><li><span class="icon icon--check" aria-hidden="true"></span><span>An email address or a public IP address asks you to confirm before sending.</span></li><li><span class="icon icon--check" aria-hidden="true"></span><span>A finding names the file and the line. It never repeats the secret.</span></li></ul>
+      <p class="fine needs__limits">Up to 50 files, 120 KB per file, 240 KB and 20,000 lines in total.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section wrap" aria-labelledby="stored">
+  <header class="section-head"><div class="section-head__text"><h2 id="stored">What is stored</h2><p class="lede">The full list is on the <a class="link" href="/privacy">privacy page</a>, and the <a class="link" href="/security">security page</a> shows how it is protected. This is the short version.</p></div></header>
+  <div class="grid grid--2">
+    <div class="card"><div class="card__head"><h3 class="card__title">Never stored</h3><div class="card__meta"><span class="chip status" data-status="done">Memory only</span></div></div><div class="card__body"><ul class="ticks"><li><span class="icon icon--check" aria-hidden="true"></span><span>Your files and your code</span></li><li><span class="icon icon--check" aria-hidden="true"></span><span>Your prompts and review instructions</span></li><li><span class="icon icon--check" aria-hidden="true"></span><span>Your provider API key and any GitHub token</span></li><li><span class="icon icon--check" aria-hidden="true"></span><span>The review the model returns</span></li></ul></div></div>
+    <div class="card"><div class="card__head"><h3 class="card__title">Stored</h3><div class="card__meta">Account and service records</div></div><div class="card__body"><ul class="stored">
+        <li>A random account identifier, passkey public keys and a hashed recovery code.</li>
+        <li>Hashed session tokens and hashed connection tokens, with their labels and last-use times.</li>
+        <li>Review activity for up to seven days: status, profile, web or MCP, timestamps. It enforces the daily allowance.</li>
+        <li>Billing references from Stripe: customer and subscription ids, status, paid-until and the receipt email.</li>
+        <li>Daily totals per page and per event, with no account identifier.</li>
+      </ul></div></div>
+  </div>
+</section>
+
+<section class="section wrap" aria-labelledby="providers">
+  <header class="section-head"><div class="section-head__text"><h2 id="providers">Providers supported</h2><p class="lede">One key from any of these runs every single profile. The default model is preselected and the others are suggestions in the model list.</p></div></header>
+  <div class="table-wrap" tabindex="0" role="region" aria-label="Providers a hosted review runs on (8)"><table class="table stack-table providers"><caption>Providers a hosted review runs on (8)</caption><thead><tr><th scope="col">Provider</th><th scope="col">Default model</th><th scope="col">Also suggested</th><th scope="col">Key starts with</th><th scope="col">Create a key</th></tr></thead><tbody><tr><th scope="row">OpenRouter</th><td class="mono"><span class="cell-label">Default model</span>anthropic/claude-sonnet-5.5</td><td class="mono"><span class="cell-label">Also suggested</span><span class="model-list"><span>anthropic/claude-opus-5.5</span><span>openai/gpt-6-astra</span><span>google/gemini-3.8-flash</span><span>x-ai/grok-4.7</span></span></td><td class="mono"><span class="cell-label">Key starts with</span>sk-or-</td><td><span class="cell-label">Create a key</span><a class="link link--external" href="https://openrouter.ai/settings/keys" target="_blank" rel="noopener noreferrer">openrouter.ai<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></td></tr><tr><th scope="row">Anthropic</th><td class="mono"><span class="cell-label">Default model</span>claude-opus-5-5</td><td class="mono"><span class="cell-label">Also suggested</span><span class="model-list"><span>claude-sonnet-5-5</span><span>claude-fable-5-1</span><span>claude-haiku-4-5</span></span></td><td class="mono"><span class="cell-label">Key starts with</span>sk-ant-</td><td><span class="cell-label">Create a key</span><a class="link link--external" href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener noreferrer">console.anthropic.com<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></td></tr><tr><th scope="row">OpenAI</th><td class="mono"><span class="cell-label">Default model</span>gpt-6.1-sol</td><td class="mono"><span class="cell-label">Also suggested</span><span class="model-list"><span>gpt-6-astra</span><span>gpt-6-luna</span></span></td><td class="mono"><span class="cell-label">Key starts with</span>sk-</td><td><span class="cell-label">Create a key</span><a class="link link--external" href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer">platform.openai.com<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></td></tr><tr><th scope="row">Google Gemini</th><td class="mono"><span class="cell-label">Default model</span>gemini-3.8-flash</td><td class="mono"><span class="cell-label">Also suggested</span><span class="model-list"><span>gemini-3.1-pro-preview</span><span>gemini-3.5-flash-lite</span></span></td><td class="mono"><span class="cell-label">Key starts with</span>AIza</td><td><span class="cell-label">Create a key</span><a class="link link--external" href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer">aistudio.google.com<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></td></tr><tr><th scope="row">xAI</th><td class="mono"><span class="cell-label">Default model</span>grok-4.7</td><td class="mono"><span class="cell-label">Also suggested</span><span class="model-list"><span>grok-4.6</span><span>grok-4.3</span></span></td><td class="mono"><span class="cell-label">Key starts with</span>xai-</td><td><span class="cell-label">Create a key</span><a class="link link--external" href="https://console.x.ai" target="_blank" rel="noopener noreferrer">console.x.ai<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></td></tr><tr><th scope="row">DeepSeek</th><td class="mono"><span class="cell-label">Default model</span>deepseek-v4-pro</td><td class="mono"><span class="cell-label">Also suggested</span><span class="model-list"><span>deepseek-flash</span></span></td><td class="mono"><span class="cell-label">Key starts with</span>sk-</td><td><span class="cell-label">Create a key</span><a class="link link--external" href="https://platform.deepseek.com/api_keys" target="_blank" rel="noopener noreferrer">platform.deepseek.com<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></td></tr><tr><th scope="row">Mistral</th><td class="mono"><span class="cell-label">Default model</span>mistral-medium-latest</td><td class="mono"><span class="cell-label">Also suggested</span><span class="model-list"><span>mistral-large-2512</span><span>mistral-small-latest</span></span></td><td class="mono"><span class="cell-label">Key starts with</span><span class="muted">No fixed prefix</span></td><td><span class="cell-label">Create a key</span><a class="link link--external" href="https://console.mistral.ai/api-keys" target="_blank" rel="noopener noreferrer">console.mistral.ai<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></td></tr><tr><th scope="row">Groq</th><td class="mono"><span class="cell-label">Default model</span>openai/gpt-oss-120b</td><td class="mono"><span class="cell-label">Also suggested</span><span class="model-list"><span>qwen/qwen3.8-27b</span><span>openai/gpt-oss-20b</span></span></td><td class="mono"><span class="cell-label">Key starts with</span>gsk_</td><td><span class="cell-label">Create a key</span><a class="link link--external" href="https://console.groq.com/keys" target="_blank" rel="noopener noreferrer">console.groq.com<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></td></tr></tbody></table></div>
+</section>
+
+<section class="section wrap wrap--narrow" aria-labelledby="faq">
+  <header class="section-head"><div class="section-head__text"><h2 id="faq">Questions</h2></div></header>
+  <div class="accordion"><details class="accordion__item" name="byok-faq"><summary class="accordion__summary">Can I use my ChatGPT or Claude subscription?</summary><div class="accordion__body"><p>Yes, for the three core profiles: code security review, Solidity review and challenge a draft report. Export the prompt, paste it into your chat app and paste the answer back. The workbench turns the answer into finding cards and a packet. A hosted review needs an API key, which providers bill separately from a chat subscription.</p></div></details><details class="accordion__item" name="byok-faq"><summary class="accordion__summary">Does Bounty Operator see my API key?</summary><div class="accordion__body"><p>The key passes through our server in memory for the one request it belongs to and goes to your provider’s endpoint. It is not written to the database or to logs.</p></div></details><details class="accordion__item" name="byok-faq"><summary class="accordion__summary">What does your server add to my request?</summary><div class="accordion__body"><p>The review instructions: the output format every review shares, and the method of the profile you picked. The three core profiles carry their method in the open, so their preview is the whole prompt. Every other profile is hosted: the preview shows the request that leaves your tab, with your focus, your context and the files, and the server adds the method before it goes to your provider.</p></div></details><details class="accordion__item" name="byok-faq"><summary class="accordion__summary">Who bills the model usage?</summary><div class="accordion__body"><p>Your provider, on your key. Operator at US$10 per week covers the hosted workbench: unlimited reviews, the Gauntlet, Panel review and four reviews running at once.</p></div></details><details class="accordion__item" name="byok-faq"><summary class="accordion__summary">What does the provider keep?</summary><div class="accordion__body"><p>The provider processes the request under its own terms and retention settings. Read them for the key you use, and run a review only on material you are allowed to share with that provider.</p></div></details><details class="accordion__item" name="byok-faq"><summary class="accordion__summary">Which key does Panel review use?</summary><div class="accordion__body"><p>One OpenRouter key covers a whole panel: it reaches models from several labs, so two to four different models review the same files. A panel model on another provider takes that provider’s own key.</p></div></details></div>
+</section>
+
+
+<section class="section wrap">
+  <div class="cta-band">
+    <div class="cta-band__text">
+      <h2 class="cta-band__title">Run it on the model you already pay for</h2>
+      <p class="cta-band__lede">Paste a key, or export the prompt of a core profile to your chat app.</p>
+    </div>
+    <div class="cta-band__actions">
+      <div class="cluster"><a class="btn btn--primary btn--lg" href="/#workspace"><span class="btn__label">Open the workbench</span><span class="icon icon--arrow-right" aria-hidden="true"></span></a><a class="btn btn--secondary btn--lg" href="/mcp"><span class="btn__label">MCP setup</span></a></div>
+      <p class="fine">Free: 1 hosted review per UTC day. No card.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section section--tight wrap">
+  
+<nav class="related" aria-label="Related">
+  <p class="meta">Related</p>
+  <ul class="related__list"><li><a class="related__link" href="/compare"><span class="related__label">Compare<span class="icon icon--arrow-right" aria-hidden="true"></span></span><span class="related__text">Bounty Operator next to a chat app, an audit skill and platform pre-checks.</span></a></li><li><a class="related__link" href="/panel-review"><span class="related__label">Panel review<span class="icon icon--arrow-right" aria-hidden="true"></span></span><span class="related__text">Two to four models on one OpenRouter key.</span></a></li><li><a class="related__link" href="/pricing"><span class="related__label">Pricing<span class="icon icon--arrow-right" aria-hidden="true"></span></span><span class="related__text">Free and Operator, side by side.</span></a></li></ul>
+</nav>
+</section>
+</main>
+<footer class="site-footer">
+<div class="wrap site-footer__grid">
+<div class="site-footer__brand">
+<a class="brand" href="/"><svg class="brand__mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect class="brand__tile" width="64" height="64" rx="14"/><path class="brand__glyph" d="M12.5 15h6.5v31.5h-6.5z"/><path class="brand__glyph" fill-rule="evenodd" d="M25.5 25a10.75 10.75 0 1 0 0 21.5a10.75 10.75 0 0 0 0-21.5zm0 6.25a4.5 4.5 0 1 1 0 9a4.5 4.5 0 0 1 0-9z"/><path class="brand__slash" d="M45.5 13h6.25l-8.6 37.5h-6.25z"/></svg><span class="brand__name">Bounty Operator</span></a>
+<p class="site-footer__promise">Find the hole in your report before the triager does.</p>
+</div>
+<nav class="site-footer__col" aria-label="Product"><h2 class="site-footer__title">Product</h2><ul><li><a href="/#workspace">Workbench</a></li><li><a href="/method">Method</a></li><li><a href="/gauntlet">Gauntlet</a></li><li><a href="/panel-review">Panel review</a></li><li><a href="/pricing">Pricing</a></li><li><a href="/#account">Account</a></li></ul></nav>
+<nav class="site-footer__col" aria-label="Tools"><h2 class="site-footer__title">Tools</h2><ul><li><a href="/tools">All tools</a></li><li><a href="/tools/report-check">Report check</a></li><li><a href="/tools/verify">Packet verifier</a></li><li><a href="/tools/secret-check">Secret check</a></li><li><a href="/tools/acceptance-rates">Acceptance rates</a></li><li><a href="/tools/slither-focus">Slither triage queue</a></li></ul></nav>
+<nav class="site-footer__col" aria-label="Resources"><h2 class="site-footer__title">Resources</h2><ul><li><a href="/guide">Report guide</a></li><li><a href="/mcp">MCP setup</a></li><li><a href="/templates">Report templates</a></li><li><a href="/changelog">Changelog</a></li><li><a href="https://github.com/bountyoperator/bounty-operator" target="_blank" rel="noopener noreferrer">Source<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></li></ul></nav>
+<nav class="site-footer__col" aria-label="Legal"><h2 class="site-footer__title">Legal</h2><ul><li><a href="/privacy">Privacy</a></li><li><a href="/terms">Terms</a></li><li><a href="/security">Security</a></li><li><a href="/licenses">Licences</a></li><li><a href="mailto:security@bountyoperator.com">Report a vulnerability</a></li></ul></nav>
+</div>
+<div class="wrap">
+<div class="site-footer__base">
+<p>Built by <a href="https://audits.sherlock.xyz/watson/Tradi3" target="_blank" rel="noopener noreferrer">Tradi3</a></p>
+<p><a href="mailto:support@bountyoperator.com">support@bountyoperator.com</a></p>
+</div>
+</div>
+</footer>
+</body>
+</html>

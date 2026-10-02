@@ -1,0 +1,97 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python-version: ["3.10", "3.14"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+      - name: Build wheel
+        run: python -m pip wheel --no-deps --wheel-dir dist .
+      - name: Check installed wheel outside the source checkout
+        shell: python
+        run: |
+          import os, pathlib, subprocess, sys, tempfile
+          wheel = next(pathlib.Path('dist').glob('bounty_operator_kit-*.whl')).resolve()
+          with tempfile.TemporaryDirectory() as tmp:
+              target = pathlib.Path(tmp) / 'installed'
+              subprocess.run([sys.executable, '-m', 'pip', 'install', '--no-index', '--no-deps', '--target', str(target), str(wheel)], check=True)
+              env = {**os.environ, 'PYTHONPATH': str(target)}
+              subprocess.run([sys.executable, '-m', 'bounty_operator_kit', '--version'], cwd=tmp, env=env, check=True)
+              subprocess.run([sys.executable, '-m', 'bounty_operator_kit', 'pattern-stats', 'rounding', '--json'], cwd=tmp, env=env, check=True, stdout=subprocess.DEVNULL)
+      - name: Compile
+        run: python -m compileall -q bounty_operator_kit tests
+      - name: Test
+        run: python -m unittest discover -s tests -v
+
+  web:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Install
+        run: npm ci --ignore-scripts
+      # The hosted profiles are not in the repository. The Worker reads the stub.
+      - name: Select the stub profiles
+        run: node ../scripts/select-profiles.mjs --stub
+      - name: Test
+        run: npm test
+      - name: Typecheck the Worker
+        run: npx --no-install tsc --noEmit
+      - name: Check generated pages match their sources
+        run: node ../scripts/build-site.mjs --check
+
+  mcp:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: mcp
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: |
+            web/package-lock.json
+            mcp/package-lock.json
+      # The parity and Worker-contract tests load the Worker from web/.
+      - name: Install the Worker's dependencies
+        working-directory: web
+        run: npm ci --ignore-scripts
+      - name: Install
+        run: npm ci --ignore-scripts
+      - name: Test
+        run: npm test
+      - name: Check the MCP download matches the package
+        run: node ../scripts/build-mcp.mjs --check

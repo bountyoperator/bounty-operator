@@ -1,0 +1,971 @@
+@charset "UTF-8";
+
+/*
+  Guide, MCP, legal and trust pages: /guide, /mcp, /privacy, /terms, /security,
+  /changelog, /licenses. Loaded after base.css.
+
+  Everything here is scoped to a class and built from the tokens in base.css.
+  No colour is defined in this file.
+
+    1. Page frame        .docs, .docs-head, .docs-lead, .docs-body, .docs-toc, .docs-section
+    2. Shared blocks     .facts, .checklist, .docs-record, .docs-next
+    3. Guide             .ba, .guide-try, .checks, .stages
+    4. MCP               .install, .tool-list, .token-split
+    5. Security          .flow, .ledger-split, .report-box
+    6. Changelog         .release
+    7. Licences          .pkg-list
+*/
+
+/* ==========================================================================
+   1. Page frame
+   ========================================================================== */
+
+.docs {
+  padding-top: var(--sp-32);
+}
+
+@media (min-width: 48em) {
+  .docs {
+    padding-top: var(--sp-48);
+  }
+}
+
+.docs-head {
+  display: grid;
+  gap: var(--sp-16);
+  padding-bottom: var(--sp-32);
+  border-bottom: 1px solid var(--line);
+}
+
+.docs-head h1 {
+  max-width: 46rem;
+}
+
+.docs-head .lede {
+  max-width: 44rem;
+}
+
+.docs-head .lede a {
+  color: var(--accent);
+}
+
+.docs-head__actions {
+  margin-top: var(--sp-8);
+}
+
+/* A full-width block between the head and the indexed body: the MCP install tabs. */
+.docs-lead {
+  padding-top: var(--sp-32);
+}
+
+.docs-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-24);
+  padding-top: var(--sp-24);
+}
+
+.docs-content {
+  min-width: 0;
+  max-width: 52rem;
+}
+
+.docs-content > * + * {
+  margin-top: var(--sp-48);
+}
+
+/* Section index: a wrapping row of links on small screens, a sticky column on wide ones. */
+.docs-toc {
+  padding-bottom: var(--sp-16);
+  border-bottom: 1px solid var(--line);
+}
+
+.docs-toc ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--sp-24);
+  margin-top: var(--sp-4);
+  padding: 0;
+  list-style: none;
+}
+
+.docs-toc a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap);
+  color: var(--muted);
+  font-size: var(--fs-14);
+  text-decoration: none;
+  transition: color var(--t-fast);
+}
+
+.docs-toc a:hover {
+  color: var(--accent);
+}
+
+@media (min-width: 64em) {
+  .docs-body {
+    grid-template-columns: 12.5rem minmax(0, 1fr);
+    gap: var(--sp-72);
+    padding-top: var(--sp-48);
+  }
+
+  .docs-toc {
+    position: sticky;
+    top: var(--sp-24);
+    align-self: start;
+    padding-bottom: 0;
+    border-bottom: 0;
+  }
+
+  .docs-toc ul {
+    display: grid;
+    gap: 0;
+    margin-top: var(--sp-8);
+  }
+
+  .docs-toc a {
+    min-height: 2rem;
+    line-height: 1.35;
+  }
+}
+
+.docs-section__title {
+  margin-bottom: var(--sp-24);
+}
+
+.docs-section + .docs-section {
+  padding-top: var(--sp-48);
+  border-top: 1px solid var(--line);
+}
+
+/* Blocks inside a section that lays itself out. */
+.docs-section > * + * {
+  margin-top: var(--sp-24);
+}
+
+.docs-section > .docs-section__title + * {
+  margin-top: 0;
+}
+
+.docs-section .prose h3 {
+  font-size: var(--fs-18);
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+}
+
+/* Inline code is 0.875em. In 13px fine print that falls under the 12px floor. */
+.docs .fine code {
+  font-size: var(--fs-12);
+}
+
+/* ==========================================================================
+   2. Shared blocks
+   ========================================================================== */
+
+/* Short facts, each led by an icon. */
+.facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+  gap: var(--sp-24) var(--sp-32);
+}
+
+.facts__item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--sp-12);
+  align-items: start;
+}
+
+.facts__item > .icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-top: 0.125rem;
+  color: var(--accent);
+}
+
+.facts__title {
+  font-weight: 650;
+  line-height: 1.4;
+}
+
+.facts__text {
+  margin-top: var(--sp-4);
+  color: var(--muted);
+  font-size: var(--fs-14);
+  line-height: 1.55;
+}
+
+/* The summary at the top of the privacy policy and the terms. The doubled
+   class outranks the list reset in base.css, which zeroes list padding. */
+.facts.facts--glance {
+  padding: var(--sp-24);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+}
+
+/* A list with a tick in front of each item. */
+.checklist > li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--sp-12);
+  align-items: start;
+  max-width: 70ch;
+  line-height: 1.6;
+}
+
+.checklist > li + li {
+  margin-top: var(--sp-12);
+}
+
+.checklist > li > .icon {
+  width: 1.125rem;
+  height: 1.125rem;
+  margin-top: 0.25rem;
+  color: var(--accent);
+}
+
+.checklist strong {
+  font-weight: 650;
+}
+
+/* Two columns that fill top to bottom, so uneven items do not leave holes. */
+@media (min-width: 48em) {
+  .checklist--columns {
+    columns: 2;
+    column-gap: var(--sp-32);
+  }
+
+  .checklist--columns > li {
+    break-inside: avoid;
+  }
+}
+
+/* The record line above the guide. */
+.docs-record {
+  max-width: 70ch;
+  padding-left: var(--sp-16);
+  border-left: 2px solid var(--accent);
+  color: var(--muted);
+  font-size: var(--fs-14);
+  line-height: 1.6;
+}
+
+.docs-record .link {
+  color: var(--text);
+}
+
+/* The closing band: one sentence and the next actions. */
+.docs-next {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-24);
+  margin-top: var(--sp-72);
+  padding: var(--sp-24);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+}
+
+.docs-next__text {
+  max-width: 34rem;
+}
+
+.docs-next__text > * + * {
+  margin-top: var(--sp-8);
+}
+
+@media (min-width: 48em) {
+  .docs-next {
+    padding: var(--sp-32);
+  }
+}
+
+/* The plan comparison in the terms: three short columns that fit a 320px
+   screen, so the column minimums base.css sets for scrolling tables are lifted. */
+.table.plans-table :is(th, td):not(.num),
+.table.plans-table tbody th:not(.num),
+.table.plans-table tbody td:not(.num, .mono):last-child {
+  min-width: 0;
+}
+
+@media (max-width: 29.99em) {
+  .table.plans-table :is(th, td) {
+    padding-inline: var(--sp-8);
+  }
+
+  .table.plans-table :is(th, td):first-child {
+    padding-left: var(--sp-12);
+  }
+}
+
+/* ==========================================================================
+   3. Guide
+   ========================================================================== */
+
+.guide-lands > li {
+  max-width: 72ch;
+}
+
+/* One fragment of the report, as first written and as rewritten. */
+.ba {
+  padding-top: var(--sp-8);
+}
+
+.ba__label {
+  margin-bottom: var(--sp-12);
+  font-size: var(--fs-18);
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+}
+
+.ba__panes {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-12);
+  align-items: start;
+}
+
+@media (min-width: 52em) {
+  .ba__panes {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+    gap: var(--sp-16);
+  }
+}
+
+.ba__pane {
+  min-width: 0;
+  padding: var(--sp-16);
+  border: 1px solid var(--line);
+  border-radius: var(--r-ctl);
+  background: var(--surface);
+}
+
+/* Amber and dashed: unproven. Blue: backed by the code. */
+.ba__pane[data-side="before"] {
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--gap) 55%, transparent);
+  background: transparent;
+}
+
+.ba__pane[data-side="after"] {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
+}
+
+.ba__tag {
+  margin-bottom: var(--sp-12);
+}
+
+.ba__text {
+  font-size: var(--fs-14);
+  line-height: 1.65;
+}
+
+.ba__text > * + * {
+  margin-top: var(--sp-12);
+}
+
+.ba__text ol {
+  padding-left: 1.25rem;
+}
+
+.ba__text li + li {
+  margin-top: var(--sp-8);
+}
+
+.ba__text li::marker {
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: var(--fs-12);
+}
+
+.ba__text strong {
+  font-weight: 650;
+}
+
+.ba__empty {
+  color: var(--muted);
+}
+
+.ba__why {
+  max-width: 70ch;
+  margin-top: var(--sp-12);
+  padding-left: var(--sp-12);
+  border-left: 2px solid var(--line-strong);
+  color: var(--muted);
+  font-size: var(--fs-14);
+  line-height: 1.6;
+}
+
+/* The action under the example: load it into the workbench. */
+.guide-try {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-16) var(--sp-24);
+  padding: var(--sp-16) var(--sp-24);
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--line));
+  border-radius: var(--r-card);
+  background: color-mix(in srgb, var(--accent) 7%, var(--surface));
+}
+
+.guide-try__text {
+  max-width: 34rem;
+}
+
+.guide-try__title {
+  font-weight: 650;
+}
+
+/* The twelve checks: number, name, the question it asks, the verdict it leads to. */
+.checks {
+  border-top: 1px solid var(--line);
+}
+
+.checks__item {
+  display: grid;
+  grid-template-columns: 2.25rem minmax(0, 1fr);
+  gap: var(--sp-8) var(--sp-12);
+  padding-block: var(--sp-16);
+  border-bottom: 1px solid var(--line);
+}
+
+.checks__n {
+  padding-top: 0.25rem;
+  color: var(--muted);
+  font: 600 var(--fs-12) / 1.4 var(--font-mono);
+  letter-spacing: 0.06em;
+}
+
+.checks__name {
+  font-size: var(--fs-16);
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+}
+
+.checks__test {
+  margin-top: var(--sp-4);
+  line-height: 1.55;
+}
+
+.checks__outcome {
+  display: flex;
+  flex-wrap: wrap;
+  grid-column: 2;
+  gap: var(--sp-8);
+}
+
+@media (min-width: 52em) {
+  .checks__item {
+    grid-template-columns: 2.25rem minmax(0, 1fr) 13.5rem;
+    gap: var(--sp-16);
+  }
+
+  .checks__outcome {
+    grid-column: 3;
+    flex-direction: column;
+    align-items: flex-start;
+    padding-top: 0.125rem;
+  }
+}
+
+/* The eight stages, in order. */
+.stages {
+  border-top: 1px solid var(--line);
+  counter-reset: stage;
+}
+
+.stages__item {
+  display: grid;
+  grid-template-columns: 2.25rem minmax(0, 1fr);
+  gap: 0 var(--sp-12);
+  align-items: start;
+  padding-block: var(--sp-12);
+  border-bottom: 1px solid var(--line);
+  counter-increment: stage;
+}
+
+.stages__item::before {
+  content: counter(stage, decimal-leading-zero);
+  padding-top: 0.25rem;
+  color: var(--muted);
+  font: 600 var(--fs-12) / 1.4 var(--font-mono);
+  letter-spacing: 0.06em;
+}
+
+.stages__name {
+  font-weight: 650;
+  line-height: 1.4;
+}
+
+.stages__q {
+  margin-top: var(--sp-4);
+  color: var(--muted);
+  font-size: var(--fs-14);
+  line-height: 1.55;
+}
+
+.stages__link {
+  display: inline-flex;
+  grid-column: 2;
+  align-items: center;
+  min-height: var(--tap);
+  color: var(--accent);
+  font-size: var(--fs-14);
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.stages__link:hover {
+  color: var(--accent-hover);
+  text-decoration: underline;
+}
+
+@media (min-width: 52em) {
+  .stages__item {
+    grid-template-columns: 2.25rem minmax(0, 1fr) auto;
+    gap: 0 var(--sp-16);
+    align-items: center;
+  }
+
+  .stages__item::before {
+    align-self: start;
+  }
+
+  .stages__link {
+    grid-column: 3;
+  }
+}
+
+/* ==========================================================================
+   4. MCP
+   ========================================================================== */
+
+/* The install block: one tab per client, two routes per tab. */
+.install {
+  overflow: hidden;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.install .tabs {
+  gap: var(--sp-24);
+  padding-inline: var(--sp-16);
+  background: var(--surface-2);
+}
+
+.install__panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-16);
+  padding: var(--sp-16);
+}
+
+.install__panel:focus-visible {
+  outline-offset: -2px;
+}
+
+.install__route {
+  min-width: 0;
+}
+
+.install__label {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-8) var(--sp-12);
+  margin-bottom: var(--sp-8);
+}
+
+.install__alt {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-8) var(--sp-12);
+  margin-top: var(--sp-12);
+}
+
+.install__token {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-12);
+  padding-top: var(--sp-8);
+  font-size: var(--fs-14);
+}
+
+.install__foot {
+  padding: var(--sp-12) var(--sp-16);
+  border-top: 1px solid var(--line);
+}
+
+/* Without the tab script every panel shows, under its client name. */
+.install__client {
+  font-size: var(--fs-18);
+  line-height: 1.35;
+}
+
+.install:not([data-ready]) .tabs {
+  display: none;
+}
+
+.install:not([data-ready]) .install__panel + .install__panel {
+  border-top: 1px solid var(--line);
+}
+
+.install[data-ready] .install__client {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@media (min-width: 48em) {
+  .install .tabs {
+    padding-inline: var(--sp-24);
+  }
+
+  .install__panel {
+    padding: var(--sp-24);
+  }
+
+  .install__foot {
+    padding-inline: var(--sp-24);
+  }
+}
+
+@media (max-width: 29.99em) {
+  .install .disclosure__hint {
+    display: none;
+  }
+}
+
+/* Tools and prompts: the name, what it needs, what it does. */
+.tool-list {
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+}
+
+.tool-list__item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas:
+    "name needs"
+    "text text";
+  gap: var(--sp-8) var(--sp-16);
+  align-items: center;
+  padding: var(--sp-16);
+}
+
+.tool-list__item + .tool-list__item {
+  border-top: 1px solid var(--line);
+}
+
+.tool-list__name {
+  grid-area: name;
+  min-width: 0;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.tool-list__needs {
+  display: flex;
+  flex-wrap: wrap;
+  grid-area: needs;
+  justify-content: flex-end;
+  gap: var(--sp-8);
+}
+
+.tool-list__text {
+  grid-area: text;
+  font-size: var(--fs-14);
+  line-height: 1.6;
+}
+
+.tool-list--commands .tool-list__item {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas:
+    "name"
+    "text";
+}
+
+/* The longest command is 39 characters; 12px keeps it on one line at 360px. */
+.tool-list--commands .tool-list__name code {
+  font-size: var(--fs-12);
+}
+
+@media (min-width: 52em) {
+  .tool-list__item {
+    grid-template-columns: 9.5rem minmax(0, 1fr) auto;
+    grid-template-areas: "name text needs";
+    gap: var(--sp-24);
+    align-items: start;
+    padding: var(--sp-16) var(--sp-24);
+  }
+
+  .tool-list__needs {
+    flex-direction: column;
+    align-items: flex-end;
+    min-width: 8.5rem;
+  }
+
+  .tool-list--commands .tool-list__item {
+    grid-template-columns: 20rem minmax(0, 1fr);
+    grid-template-areas: "name text";
+  }
+
+  .tool-list--commands .tool-list__name code {
+    font-size: 0.875em;
+  }
+}
+
+.table-wrap:has(> .provider-table) {
+  max-width: 30rem;
+}
+
+/* What works with no token, and what needs one. */
+.token-split__col {
+  padding: var(--sp-24);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface);
+}
+
+.token-split__list {
+  margin-block: var(--sp-12);
+  font-size: var(--fs-14);
+}
+
+.token-split__list > li {
+  padding-block: var(--sp-8);
+  border-top: 1px solid var(--line);
+}
+
+/* ==========================================================================
+   5. Security
+   ========================================================================== */
+
+/* Data flow: three nodes joined by arrows. A column on small screens. */
+.flow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-48);
+}
+
+.flow__node {
+  position: relative;
+  padding: var(--sp-24);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+}
+
+/* The Worker is the part we run. */
+.flow__node:nth-child(2) {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--line));
+}
+
+.flow__node:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  width: 1.25rem;
+  height: 1.25rem;
+  margin: 0.875rem 0 0 -0.625rem;
+  background: var(--muted);
+  -webkit-mask: var(--icon-arrow-right) center / contain no-repeat;
+  mask: var(--icon-arrow-right) center / contain no-repeat;
+  transform: rotate(90deg);
+}
+
+.flow__n {
+  display: inline-grid;
+  place-items: center;
+  width: 1.375rem;
+  height: 1.375rem;
+  margin-right: var(--sp-8);
+  border: 1px solid var(--line-control);
+  border-radius: 50%;
+  letter-spacing: 0;
+}
+
+.flow__title {
+  margin-top: var(--sp-12);
+  font-size: var(--fs-18);
+  font-weight: 650;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+}
+
+.flow__points {
+  margin-top: var(--sp-12);
+  color: var(--muted);
+  font-size: var(--fs-14);
+  line-height: 1.55;
+}
+
+.flow__points > li + li {
+  margin-top: var(--sp-8);
+}
+
+@media (min-width: 60em) {
+  .flow {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--sp-48);
+  }
+
+  .flow__node:not(:last-child)::after {
+    top: 50%;
+    left: 100%;
+    margin: -0.625rem 0 0 0.875rem;
+    transform: none;
+  }
+}
+
+/* Two ledgers side by side: never stored, stored. */
+.ledger-split__col {
+  padding: var(--sp-24);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface);
+}
+
+.ledger-split__col > h3 {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-8);
+}
+
+.ledger-split__col > h3 > .icon {
+  width: 1.125rem;
+  height: 1.125rem;
+  color: var(--muted);
+}
+
+.ledger-split__list {
+  margin-top: var(--sp-12);
+  font-size: var(--fs-14);
+  line-height: 1.5;
+}
+
+.ledger-split__list > li {
+  padding-block: 0.625rem;
+  border-top: 1px solid var(--line);
+}
+
+/* What a report may cover: the surface, then what it includes. */
+.scope-list {
+  border-block: 1px solid var(--line);
+}
+
+.scope-list dd {
+  line-height: 1.6;
+}
+
+@media (max-width: 39.99em) {
+  .scope-list .kv__row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--sp-4);
+  }
+}
+
+/* Where to send a vulnerability report. */
+.report-box {
+  padding: var(--sp-24);
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--line));
+  border-radius: var(--r-card);
+  background: color-mix(in srgb, var(--accent) 7%, var(--surface));
+}
+
+.report-box__lead {
+  font-size: var(--fs-18);
+  font-weight: 650;
+  line-height: 1.4;
+}
+
+.report-box a {
+  color: var(--accent);
+}
+
+.report-box > * + * {
+  margin-top: var(--sp-8);
+}
+
+/* ==========================================================================
+   6. Changelog
+   ========================================================================== */
+
+.release__date {
+  margin-left: var(--sp-12);
+  color: var(--muted);
+  font: 600 var(--fs-12) / 1.4 var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.release__latest {
+  margin-left: var(--sp-8);
+}
+
+/* A group label inside a release: Reviews, Site, MCP, CLI. */
+.docs-section .prose > .release__group {
+  margin-top: 2em;
+  color: var(--muted);
+  font: 600 var(--fs-12) / 1.4 var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* ==========================================================================
+   7. Licences
+   ========================================================================== */
+
+.pkg-group__title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-8) var(--sp-12);
+  font-size: var(--fs-16);
+  line-height: 1.4;
+}
+
+.pkg-list {
+  margin-top: var(--sp-12);
+  font: 400 var(--fs-13) / 1.5 var(--font-mono);
+  columns: 17rem auto;
+  column-gap: var(--sp-32);
+}
+
+.pkg-list > li {
+  padding-block: 0.1875rem;
+  overflow-wrap: anywhere;
+  break-inside: avoid;
+}
+
+.pkg-list__version {
+  color: var(--muted);
+}
+
+@media print {
+  .docs-toc,
+  .docs-next,
+  .guide-try {
+    display: none;
+  }
+}

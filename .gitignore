@@ -1,0 +1,65 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+dist/
+build/
+*.egg-info/
+.venv/
+venv/
+env/
+.env
+.env.*
+node_modules/
+.wrangler/
+.dev.vars
+.dev.vars.*
+.bounty-kit-web/
+.local/
+worker-configuration.d.ts
+out/
+cache/
+artifacts/
+tmp/
+*.log
+*.sarif
+*.sqlite
+*.db
+
+# Site: what a development build leaves behind. `node scripts/build-site.mjs
+# --dev` writes the component kit page into the deployed folder. A production
+# build removes it again, and it is never committed or deployed.
+web/public/_kit.html
+
+# Bounty material that should not be committed.
+reports/
+findings/
+pocs/
+submissions/
+private/
+browser-profiles/ # bounty-kit: allow
+profiles/
+screenshots/
+*.har
+*.trace.zip
+
+# The hosted method. The private module is bundled into the Worker only and is
+# never committed; scripts/select-profiles.mjs writes the generated module from
+# it, or from the public stub when it is absent. scripts/leak-audit.mjs checks
+# that none of its text reaches a tracked file, web/public or the MCP download.
+web/private/
+web/src/operator-profiles.generated.mjs
+
+# Benchmark: held-out cases, raw runs and vendored test libs stay local
+bench/private/
+bench/runs/
+bench/verify/_lib/
+bench/verify/*/out/
+bench/verify/*/cache/
+
+# Production Worker configuration: account, database, Stripe ids and routes.
+# The public template is web/wrangler.jsonc; scripts/deploy.mjs deploys from this file.
+web/wrangler.production.jsonc

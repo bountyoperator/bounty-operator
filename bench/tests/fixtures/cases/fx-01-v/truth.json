@@ -1,0 +1,33 @@
+{
+  "schema": "paydirt.truth/1",
+  "pair": "fx-01",
+  "variant": "vulnerable",
+  "origin": "original",
+  "assistant": "anthropic/claude-opus-5.5",
+  "canary": "5b0e7c1a-93d4-4f6e-a2c8-0d1f6b7e4a10",
+  "planted": [
+    {
+      "id": "P1",
+      "primary": true,
+      "file": "src/PocketBank.sol",
+      "lines": [[36, 47]],
+      "functions": ["withdrawAll"],
+      "severity": ["high", "critical"],
+      "mechanism": "withdrawAll sends the payout before it zeroes the caller's balance, so a contract caller re-enters from its receive hook and is paid again from other depositors' ether.",
+      "proof": "test/Vulnerable.t.sol:test_planted_P1"
+    }
+  ],
+  "decoys": [
+    {
+      "id": "D1",
+      "file": "src/PocketBank.sol",
+      "lines": [[50, 57]],
+      "functions": ["sweepDust"],
+      "why": "No modifier, but the first line reverts NotOwner for every caller except the immutable owner, and feesAccrued is zeroed before the transfer.",
+      "proof": "test/Vulnerable.t.sol:test_decoy_D1"
+    }
+  ],
+  "acceptable": [],
+  "patched_region": null,
+  "report": null
+}

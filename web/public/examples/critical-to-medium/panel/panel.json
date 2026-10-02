@@ -1,0 +1,48 @@
+{
+  "generatedAt": "2026-10-02T16:09:24.382Z",
+  "profileId": "report",
+  "judge": {
+    "model": "anthropic/claude-opus-5.5",
+    "usage": {
+      "input": 17882,
+      "output": 5303
+    },
+    "costUsd": 0.1776,
+    "verdict": "rewrite-then-submit",
+    "referenceProblems": 0
+  },
+  "seats": [
+    {
+      "model": "anthropic/claude-opus-5.5",
+      "file": "panel-1-anthropic-claude-opus-5.5.md",
+      "usage": {
+        "input": 11062,
+        "output": 6088
+      },
+      "costUsd": 0,
+      "verdict": "rewrite-then-submit"
+    },
+    {
+      "model": "openai/gpt-6-astra",
+      "file": "panel-2-openai-gpt-6-astra.md",
+      "usage": {
+        "input": 7238,
+        "output": 1943
+      },
+      "costUsd": 0.1695,
+      "verdict": "rewrite-then-submit",
+      "referenceProblems": 0
+    },
+    {
+      "model": "google/gemini-3.8-flash",
+      "file": "panel-3-google-gemini-3.8-flash.md",
+      "usage": {
+        "input": 8468,
+        "output": 4182
+      },
+      "costUsd": 0.022,
+      "verdict": "rewrite-then-submit",
+      "referenceProblems": 0
+    }
+  ]
+}

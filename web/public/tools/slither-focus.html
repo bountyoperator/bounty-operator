@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Slither triage queue: filter Slither JSON to 13 detectors | Bounty Operator</title>
+<meta name="description" content="Drop Slither’s JSON output and get a ranked Markdown queue of the 13 detectors worth a manual pass, with file and line. Runs in your browser.">
+<link rel="canonical" href="https://bountyoperator.com/tools/slither-focus">
+<meta name="color-scheme" content="dark light">
+<meta name="theme-color" content="#0a1220" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f5f7fb" media="(prefers-color-scheme: light)">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Bounty Operator">
+<meta property="og:title" content="Slither triage queue: filter Slither JSON to 13 detectors | Bounty Operator">
+<meta property="og:description" content="Drop Slither’s JSON output and get a ranked Markdown queue of the 13 detectors worth a manual pass, with file and line. Runs in your browser.">
+<meta property="og:url" content="https://bountyoperator.com/tools/slither-focus">
+<meta property="og:image" content="https://bountyoperator.com/social-v2.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Bounty Operator. Find the hole in your report before the triager does.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Slither triage queue: filter Slither JSON to 13 detectors | Bounty Operator">
+<meta name="twitter:description" content="Drop Slither’s JSON output and get a ranked Markdown queue of the 13 detectors worth a manual pass, with file and line. Runs in your browser.">
+<meta name="twitter:image" content="https://bountyoperator.com/social-v2.png">
+<meta name="twitter:image:alt" content="Bounty Operator. Find the hole in your report before the triager does.">
+<link rel="icon" href="/favicon.ico" sizes="48x48">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+<script src="/theme.js"></script>
+<link rel="stylesheet" href="/css/base.css">
+<link rel="stylesheet" href="/css/tools.css">
+<link rel="modulepreload" href="/tools/slither-focus-core.mjs">
+<link rel="modulepreload" href="/tools/dom.mjs">
+<link rel="modulepreload" href="/tools/ping.mjs">
+<script type="module" src="/tools/slither-focus.mjs"></script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Bounty Operator","item":"https://bountyoperator.com/"},{"@type":"ListItem","position":2,"name":"Tools","item":"https://bountyoperator.com/tools"},{"@type":"ListItem","position":3,"name":"Slither triage queue","item":"https://bountyoperator.com/tools/slither-focus"}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Is the Slither output uploaded?","acceptedAnswer":{"@type":"Answer","text":"No. The file is parsed and filtered in this tab. After the page has loaded it makes one request: a counter that says the tool was used, with nothing of yours in it. Pressing “Triage this in the workbench” moves the queue to the workbench through this browser’s session storage. It leaves the browser only when you run a review there: through our server to the provider you chose."}},{"@type":"Question","name":"Why these 13 detectors?","acceptedAnswer":{"@type":"Answer","text":"Slither reports naming, style and gas detectors next to the ones that move funds. These 13 are the classes where a hit is worth reading line by line on a bounty target: value sent to a caller-chosen address, state written after an external call, ignored return values, controlled delegatecall ."}},{"@type":"Question","name":"What does the tool decide?","acceptedAnswer":{"@type":"Answer","text":"Nothing about validity. It filters, ranks and formats. A detector hit is a lead: the scanner triage profile in the workbench groups the leads by root cause and gives each one a next check."}}]}</script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="site-header">
+<div class="wrap site-header__inner">
+<a class="brand" href="/"><svg class="brand__mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect class="brand__tile" width="64" height="64" rx="14"/><path class="brand__glyph" d="M12.5 15h6.5v31.5h-6.5z"/><path class="brand__glyph" fill-rule="evenodd" d="M25.5 25a10.75 10.75 0 1 0 0 21.5a10.75 10.75 0 0 0 0-21.5zm0 6.25a4.5 4.5 0 1 1 0 9a4.5 4.5 0 0 1 0-9z"/><path class="brand__slash" d="M45.5 13h6.25l-8.6 37.5h-6.25z"/></svg><span class="brand__name">Bounty Operator</span></a>
+<nav class="site-nav" aria-label="Main"><ul><li><a href="/#workspace">Workbench</a></li><li><a href="/method">Method</a></li><li><a href="/tools" aria-current="page">Tools</a></li><li><a href="/guide">Guide</a></li><li><a href="/mcp">MCP</a></li><li><a href="/pricing">Pricing</a></li></ul></nav>
+<div class="site-header__actions">
+<button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch colour theme"><span class="icon theme-toggle__icon" aria-hidden="true"></span></button>
+<a class="btn btn--secondary btn--sm" href="/#account">Account</a>
+</div>
+</div>
+</header>
+<main id="main" tabindex="-1">
+
+<section class="section section--tight wrap">
+<header class="tool-head">
+<nav class="breadcrumbs" aria-label="Breadcrumb"><ol><li><a href="/">Bounty Operator</a></li><li><a href="/tools">Tools</a></li><li aria-current="page">Slither triage queue</li></ol></nav>
+<h1>Slither triage queue</h1>
+<p class="lede">Slither prints every detector it has, naming and style included. Drop the JSON and get the 13 detectors worth a manual pass, ranked by impact and confidence, with file and line.</p>
+<p class="tool-local"><span class="icon icon--lock" aria-hidden="true"></span><span>Your content never leaves the browser.</span></p>
+</header>
+<div class="tool-panel" id="slither-focus">
+<div class="tool-panel__bar"><span class="icon icon--terminal" aria-hidden="true"></span><span class="tool-panel__name">slither-focus</span><span class="tool-panel__tag">Local · 13 detectors</span></div>
+<div class="tool-panel__body">
+<div class="drop" id="slither-drop" data-drop>
+<label class="drop__label" for="slither-drop-input">
+<span class="icon icon--upload" aria-hidden="true"></span>
+<span class="drop__title">Drop slither.json</span>
+<span class="drop__hint">The file written by: slither . --json slither.json</span>
+<input class="drop__input" type="file" id="slither-drop-input" accept=".json,application/json">
+</label>
+</div>
+<details class="disclosure"><summary class="disclosure__summary">Paste JSON instead</summary><div class="disclosure__body"><div class="stack">
+<div class="field"><label class="label" for="slither-paste">Slither JSON</label><textarea class="textarea mono" id="slither-paste" name="slither-paste" rows="8" spellcheck="false" autocomplete="off"></textarea></div>
+<div class="cluster"><button class="btn btn--secondary" type="button" id="slither-parse"><span class="icon icon--play" aria-hidden="true"></span><span class="btn__label">Build queue</span></button></div>
+</div></div></details>
+<div class="tool-options">
+<div class="field"><label class="label" for="slither-limit">Locations per detector</label><input class="input tool-number" id="slither-limit" name="slither-limit" type="number" value="8" min="1" max="50" step="1" inputmode="numeric"><p class="help" id="slither-limit-help">Each location lists up to four line numbers.</p></div>
+<div class="cluster">
+<button class="btn btn--quiet" type="button" id="slither-example"><span class="btn__label">Load example</span></button>
+<button class="btn btn--quiet" type="button" id="slither-clear"><span class="btn__label">Clear</span></button>
+</div>
+</div>
+<div id="slither-notice"></div>
+<div class="tool-result" id="slither-result" hidden>
+<div class="tool-summary" id="slither-summary" role="status"></div>
+<div id="slither-table"></div>
+<figure class="code code--wrap tool-output"><figcaption class="code__bar"><span class="code__name">slither-focus.md</span><button class="code__copy" type="button" data-copy><span class="icon icon--copy" aria-hidden="true"></span><span data-copy-label>Copy</span></button></figcaption><pre class="code__pre" tabindex="0" role="region" aria-label="Triage queue as Markdown"><code><span class="code__line">
+</span></code></pre></figure>
+<div class="cluster tool-actions">
+<a class="btn btn--primary" href="/?profile=scanner#workspace" id="slither-handoff"><span class="btn__label">Triage this in the workbench</span><span class="icon icon--arrow-right" aria-hidden="true"></span></a>
+<button class="btn btn--secondary" type="button" id="slither-download"><span class="icon icon--download" aria-hidden="true"></span><span class="btn__label">Download .md</span></button>
+</div>
+</div></div>
+</div>
+</section>
+
+<section class="section section--tight wrap" aria-labelledby="make">
+<div class="split">
+<div class="tool-copy">
+<h2 id="make">Make the input</h2>
+<p>Run Slither with JSON output from the project root. The file holds every detector result with its impact, its confidence and the source lines of each element.</p>
+<figure class="code"><figcaption class="code__bar"><span class="code__name">shell</span><button class="code__copy" type="button" data-copy><span class="icon icon--copy" aria-hidden="true"></span><span data-copy-label>Copy</span></button></figcaption><pre class="code__pre" tabindex="0" role="region" aria-label="Slither command"><code><span class="code__line">slither . --json slither.json
+</span></code></pre></figure>
+<p>The same filter ships in the open-source kit, for a terminal or a CI step:</p>
+<figure class="code"><figcaption class="code__bar"><span class="code__name">shell</span><button class="code__copy" type="button" data-copy><span class="icon icon--copy" aria-hidden="true"></span><span data-copy-label>Copy</span></button></figcaption><pre class="code__pre" tabindex="0" role="region" aria-label="Kit command"><code><span class="code__line">bounty-kit slither-focus slither.json --markdown --limit 8
+</span></code></pre></figure>
+</div>
+<div class="tool-copy">
+<h2>What the queue holds</h2>
+<p>One section per detector result, highest impact first, then highest confidence. Each section has Slither’s description and a table of locations: file, up to four line numbers, and the function or node name.</p>
+<p>A failed run is refused. When compilation fails, Slither writes <code>"success": false</code> and no results; the tool stops there and says so. An empty queue always means the 13 detectors found nothing.</p>
+<p>The Markdown is plain: paste it into an issue, a notes file or a chat with your model.</p>
+</div>
+</div>
+</section>
+
+<section class="section section--tight wrap" aria-labelledby="detectors">
+<h2 id="detectors" class="visually-hidden">Detectors</h2>
+<div class="table-wrap" tabindex="0" role="region" aria-label="The 13 detectors kept"><table class="table stack-table stack-table--plain tool-table"><caption>The 13 detectors kept</caption><thead><tr><th scope="col">Detector</th><th scope="col">Why it gets a manual pass</th></tr></thead><tbody><tr><th scope="row"><code>arbitrary-send-erc20</code></th><td><span class="cell-label">Why it gets a manual pass</span><code>transferFrom</code> with a <code>from</code> the caller chooses. Any approval given to the contract is spendable.</td></tr><tr><th scope="row"><code>arbitrary-send-eth</code></th><td><span class="cell-label">Why it gets a manual pass</span>ETH sent to an address the caller controls.</td></tr><tr><th scope="row"><code>calls-loop</code></th><td><span class="cell-label">Why it gets a manual pass</span>External calls inside a loop. One reverting callee blocks the whole batch.</td></tr><tr><th scope="row"><code>controlled-delegatecall</code></th><td><span class="cell-label">Why it gets a manual pass</span><code>delegatecall</code> to a target the caller controls.</td></tr><tr><th scope="row"><code>delegatecall-loop</code></th><td><span class="cell-label">Why it gets a manual pass</span><code>delegatecall</code> in a loop inside a payable function. <code>msg.value</code> is counted on every pass.</td></tr><tr><th scope="row"><code>incorrect-equality</code></th><td><span class="cell-label">Why it gets a manual pass</span>Strict equality on a balance or a supply that anyone can move with a transfer.</td></tr><tr><th scope="row"><code>low-level-calls</code></th><td><span class="cell-label">Why it gets a manual pass</span><code>call</code>, <code>delegatecall</code> and <code>staticcall</code> sites. Each needs its target and its success check read.</td></tr><tr><th scope="row"><code>reentrancy-benign</code></th><td><span class="cell-label">Why it gets a manual pass</span>State written after an external call, where re-entering repeats the call.</td></tr><tr><th scope="row"><code>reentrancy-eth</code></th><td><span class="cell-label">Why it gets a manual pass</span>State written after an external call that sends ETH.</td></tr><tr><th scope="row"><code>reentrancy-no-eth</code></th><td><span class="cell-label">Why it gets a manual pass</span>State written after an external call, with no ETH sent.</td></tr><tr><th scope="row"><code>unchecked-transfer</code></th><td><span class="cell-label">Why it gets a manual pass</span>ERC-20 <code>transfer</code> or <code>transferFrom</code> whose return value is ignored.</td></tr><tr><th scope="row"><code>uninitialized-local</code></th><td><span class="cell-label">Why it gets a manual pass</span>A local variable read before it is assigned.</td></tr><tr><th scope="row"><code>unused-return</code></th><td><span class="cell-label">Why it gets a manual pass</span>The return value of an external call is dropped.</td></tr></tbody></table></div>
+</section>
+
+<section class="section section--tight wrap wrap--narrow" aria-labelledby="questions">
+<h2 id="questions">Questions</h2>
+<div class="accordion tool-faq"><details class="accordion__item"><summary class="accordion__summary">Is the Slither output uploaded?</summary><div class="accordion__body"><p>No. The file is parsed and filtered in this tab. After the page has loaded it makes one request: a counter that says the tool was used, with nothing of yours in it. Pressing “Triage this in the workbench” moves the queue to the workbench through this browser’s session storage. It leaves the browser only when you run a review there: through our server to the provider you chose.</p></div></details><details class="accordion__item"><summary class="accordion__summary">Why these 13 detectors?</summary><div class="accordion__body"><p>Slither reports naming, style and gas detectors next to the ones that move funds. These 13 are the classes where a hit is worth reading line by line on a bounty target: value sent to a caller-chosen address, state written after an external call, ignored return values, controlled <code>delegatecall</code>.</p></div></details><details class="accordion__item"><summary class="accordion__summary">What does the tool decide?</summary><div class="accordion__body"><p>Nothing about validity. It filters, ranks and formats. A detector hit is a lead: the scanner triage profile in the workbench groups the leads by root cause and gives each one a next check.</p></div></details></div>
+</section>
+
+<section class="section section--tight wrap" aria-labelledby="next-action">
+<div class="tool-next">
+<div class="tool-next__text">
+<h2 class="h3" id="next-action">A queue is a list of leads</h2>
+<p>Scanner triage groups the leads by root cause, ranks them by what each could cost, and gives every queued lead one next check.</p>
+</div>
+<div class="cluster">
+<a class="btn btn--primary" href="/?profile=scanner#workspace"><span class="btn__label">Open scanner triage</span><span class="icon icon--arrow-right" aria-hidden="true"></span></a>
+<a class="btn btn--secondary" href="/solidity-review"><span class="btn__label">Solidity review</span></a>
+</div>
+</div>
+</section>
+
+<section class="section section--tight wrap" aria-labelledby="more-tools">
+<h2 class="h3" id="more-tools">More free tools</h2>
+<ul class="tool-related"><li><a class="tool-related__link" href="/tools/report-check"><span class="tool-related__name">Report check<span class="icon icon--arrow-right" aria-hidden="true"></span></span><span class="tool-related__text">Paste a draft and see which of 14 checks it passes: pinned commit, quoted impact row, inline proof, trusted roles, leftover secrets.</span></a></li><li><a class="tool-related__link" href="/tools/verify"><span class="tool-related__name">Packet verifier<span class="icon icon--arrow-right" aria-hidden="true"></span></span><span class="tool-related__text">Drop a packet and its source files and get match, mismatch or missing for every SHA-256.</span></a></li><li><a class="tool-related__link" href="/tools/secret-check"><span class="tool-related__name">Secret check<span class="icon icon--arrow-right" aria-hidden="true"></span></span><span class="tool-related__text">Drop a PoC folder and get every key, token, seed phrase and private report link as file:line.</span></a></li><li><a class="tool-related__link" href="/tools/acceptance-rates"><span class="tool-related__name">Acceptance rates<span class="icon icon--arrow-right" aria-hidden="true"></span></span><span class="tool-related__text">Twelve bug classes ranked by how often judges accepted them, with the sample size on every row.</span></a></li></ul>
+</section>
+</main>
+<footer class="site-footer">
+<div class="wrap site-footer__grid">
+<div class="site-footer__brand">
+<a class="brand" href="/"><svg class="brand__mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect class="brand__tile" width="64" height="64" rx="14"/><path class="brand__glyph" d="M12.5 15h6.5v31.5h-6.5z"/><path class="brand__glyph" fill-rule="evenodd" d="M25.5 25a10.75 10.75 0 1 0 0 21.5a10.75 10.75 0 0 0 0-21.5zm0 6.25a4.5 4.5 0 1 1 0 9a4.5 4.5 0 0 1 0-9z"/><path class="brand__slash" d="M45.5 13h6.25l-8.6 37.5h-6.25z"/></svg><span class="brand__name">Bounty Operator</span></a>
+<p class="site-footer__promise">Find the hole in your report before the triager does.</p>
+</div>
+<nav class="site-footer__col" aria-label="Product"><h2 class="site-footer__title">Product</h2><ul><li><a href="/#workspace">Workbench</a></li><li><a href="/method">Method</a></li><li><a href="/gauntlet">Gauntlet</a></li><li><a href="/panel-review">Panel review</a></li><li><a href="/pricing">Pricing</a></li><li><a href="/#account">Account</a></li></ul></nav>
+<nav class="site-footer__col" aria-label="Tools"><h2 class="site-footer__title">Tools</h2><ul><li><a href="/tools">All tools</a></li><li><a href="/tools/report-check">Report check</a></li><li><a href="/tools/verify">Packet verifier</a></li><li><a href="/tools/secret-check">Secret check</a></li><li><a href="/tools/acceptance-rates">Acceptance rates</a></li><li><a href="/tools/slither-focus">Slither triage queue</a></li></ul></nav>
+<nav class="site-footer__col" aria-label="Resources"><h2 class="site-footer__title">Resources</h2><ul><li><a href="/guide">Report guide</a></li><li><a href="/mcp">MCP setup</a></li><li><a href="/templates">Report templates</a></li><li><a href="/changelog">Changelog</a></li><li><a href="https://github.com/bountyoperator/bounty-operator" target="_blank" rel="noopener noreferrer">Source<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></li></ul></nav>
+<nav class="site-footer__col" aria-label="Legal"><h2 class="site-footer__title">Legal</h2><ul><li><a href="/privacy">Privacy</a></li><li><a href="/terms">Terms</a></li><li><a href="/security">Security</a></li><li><a href="/licenses">Licences</a></li><li><a href="mailto:security@bountyoperator.com">Report a vulnerability</a></li></ul></nav>
+</div>
+<div class="wrap">
+<div class="site-footer__base">
+<p>Built by <a href="https://audits.sherlock.xyz/watson/Tradi3" target="_blank" rel="noopener noreferrer">Tradi3</a></p>
+<p><a href="mailto:support@bountyoperator.com">support@bountyoperator.com</a></p>
+</div>
+</div>
+</footer>
+</body>
+</html>

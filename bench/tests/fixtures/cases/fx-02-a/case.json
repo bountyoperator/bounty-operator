@@ -1,0 +1,14 @@
+{
+  "id": "fx-02-a",
+  "pair": "fx-02",
+  "variant": "accurate",
+  "family": "challenge",
+  "visibility": "public",
+  "authored": "2026-10-02",
+  "profile": "report",
+  "files": [
+    "src/LedgerMath.sol",
+    "src/PocketBank.sol"
+  ],
+  "focus": "draft-report.md is a draft bug report about the code in this workspace. Decide whether the code supports what it claims."
+}

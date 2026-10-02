@@ -1,0 +1,80 @@
+# Bounty Operator
+
+> Pre-submission review for bug bounty reports and smart-contract findings. The AI argues against the finding. The hunter writes the report. Reviews run on the user's own model key. Free: 1 hosted review per UTC day. Operator: US$10 per week.
+
+Built by Tradi3. Platform-neutral: Immunefi, Cantina, Sherlock, HackerOne. Every URL below is canonical and extensionless. Source code: https://github.com/bountyoperator/bounty-operator (MIT). The three core profiles, the free tools, the CLI and the MCP server are in that repository. The gauntlet stages and the panel cross-examination run on the hosted service.
+
+A hosted review sends the user's files and provider key through bountyoperator.com to the provider the user chose. The server adds the review method and stores no files, prompts, keys or results. The method of a hosted profile exists on the server only: no page, download or tool returns it.
+
+## Product
+
+- [Workbench](https://bountyoperator.com/#workspace): Select files, pick a review profile and run it on your own model key. The three core profiles also export as a prompt.
+- [Pricing](https://bountyoperator.com/pricing): Free gives 1 hosted review per UTC day, any single profile. Operator is US$10 per week for unlimited reviews, the Gauntlet, Panel review and four reviews at once.
+- [Method](https://bountyoperator.com/method): Why bug bounty reports get closed. Twelve checks, the question each one asks, why reports die on it and the verdict it leads to.
+- [Gauntlet](https://bountyoperator.com/gauntlet): One run through eight stages (scope, provenance, prior art, proof, severity, triager, report, verdict) that ends in one verdict.
+- [Panel review](https://bountyoperator.com/panel-review): Two to four models review in parallel, then a cross-examination pass keeps what the cited lines prove.
+- [Your model, your key](https://bountyoperator.com/your-model-your-key): Where your code goes, who holds the API key and what is stored.
+- [Compare](https://bountyoperator.com/compare): Sourced tables against chat apps, open-source audit skills, platform pre-checks and four overlapping tools.
+
+## Review profiles
+
+- [Challenge a draft report](https://bountyoperator.com/challenge-report): Every claim in a draft checked against the code it cites. Core profile, id `report`.
+- [Solidity review](https://bountyoperator.com/solidity-review): Entry points, invariants and value flow in Solidity contracts, with a line reference for every finding. Core profile, id `solidity`.
+- [Code security review](https://bountyoperator.com/code-security-review): Authorization, injection and failure paths in any codebase, each finding with file, line and a fix. Core profile, id `general`.
+- [Triager simulation](https://bountyoperator.com/triager-simulation): The likeliest reasons a triager closes the report, and the evidence that answers each. Hosted, id `triage`.
+- [Prior-art overlap](https://bountyoperator.com/prior-art-check): A finding compared with the known issues and audits you supply: same root cause, same symptom or unrelated. Hosted, id `prior-art`.
+- Six more hosted profiles run from the workbench or through `run_review`: scope and impact fit (`scope`), design intent and actors (`provenance`), proof review (`poc`), severity calibration (`severity`), report editor (`report-edit`) and scanner triage (`scanner`).
+- Core: the method is open source, and the profile runs hosted, as an exported prompt or over MCP on the agent's own model. Hosted: the profile runs on bountyoperator.com with the user's provider key and has no prompt export.
+
+## Free tools
+
+- [All tools](https://bountyoperator.com/tools): Free tools that run in the browser. Your content never leaves it.
+- [Report check](https://bountyoperator.com/tools/report-check): Instant checks on a pasted draft report.
+- [Packet verifier](https://bountyoperator.com/tools/verify): Recompute the SHA-256 of every file in a review packet.
+- [Secret check](https://bountyoperator.com/tools/secret-check): Find keys, tokens and seed phrases in a PoC or gist before publishing it.
+- [Acceptance rates](https://bountyoperator.com/tools/acceptance-rates): Acceptance rates by smart-contract bug class from public contest judging.
+- [Slither triage queue](https://bountyoperator.com/tools/slither-focus): Slither JSON reduced to a ranked queue of detectors worth a manual pass.
+
+## Report templates
+
+- [Report templates](https://bountyoperator.com/templates): Templates for four platforms and a Foundry PoC scaffold.
+- [Immunefi](https://bountyoperator.com/templates/immunefi): Immunefi bug report template in Markdown.
+- [Sherlock](https://bountyoperator.com/templates/sherlock): Sherlock audit contest report template in Markdown.
+- [Cantina](https://bountyoperator.com/templates/cantina): Cantina finding report template in Markdown.
+- [HackerOne](https://bountyoperator.com/templates/hackerone): HackerOne bug report template in Markdown.
+- [Foundry PoC](https://bountyoperator.com/templates/foundry-poc): Foundry fork-test scaffold with a control run and a final assertion.
+
+## Guides
+
+- [Report guide](https://bountyoperator.com/guide): How to write a bug bounty report that survives triage, with a worked example rewritten fragment by fragment.
+- [MCP server](https://bountyoperator.com/mcp): Install commands for Claude Code, Codex and Cursor, the tools, the three prompts and token setup.
+- [Changelog](https://bountyoperator.com/changelog): Every release with its date.
+
+## Trust and legal
+
+- [Security](https://bountyoperator.com/security): Data flow, what is stored, the headers and CSP in force, and how to report a vulnerability.
+- [Privacy policy](https://bountyoperator.com/privacy): What is stored, what is never stored, the two cookies, and account export and deletion.
+- [Terms of service](https://bountyoperator.com/terms): Plans, the weekly renewal, cancellation, refunds and the rules of use.
+- [Licences](https://bountyoperator.com/licenses): The MIT licence and the open-source packages the Worker depends on. The MCP server has no dependencies.
+
+## For agents
+
+- MCP endpoint (Streamable HTTP, JSON-RPC over POST): https://bountyoperator.com/api/mcp
+- Add it to Claude Code: `claude mcp add --transport http bounty-operator https://bountyoperator.com/api/mcp`
+- Add it to Codex: `codex mcp add bounty-operator --url https://bountyoperator.com/api/mcp`
+- The remote endpoint has five tools. With no account: `list_profiles`, `prepare_review`, `build_packet`. With an account token: `account`, `run_review`. Three prompts: `challenge-report`, `solidity-review`, `gauntlet`.
+- `list_profiles` returns every profile with `hosted`: false for a core profile, true for a hosted one.
+- `prepare_review` takes the three core profiles (`general`, `solidity`, `report`) and returns the method and the review request for the agent's own model. For a hosted profile it fails with the code `hosted_profile` before any file is read.
+- `run_review` runs any profile as a hosted review and is the only way to run a hosted one. It needs the account token in the `Authorization` header and the provider key in the `X-Provider-Key` header, and uses one hosted review.
+- The `gauntlet` prompt runs the eight stages in order: seven hosted through `run_review`, and the report stage through `prepare_review` on the agent's own model. It needs an account token. Seven hosted reviews are more than the free review of the day, so a full run takes Operator.
+- A failed tool call returns `isError` with `{ error, code }`. Codes: `hosted_profile`, `privacy_block`, `privacy_warn`, `daily_used`, `operator_only`, `review_running`, `provider`, `output_withheld`. `operator_only`: `run_review` was called with `verdict` or `panel` on an account without Operator; nothing was sent and the review of the day is not used. `output_withheld`: the model repeated its instructions instead of reviewing, so the answer was stopped and the call used one review; run it again or choose a stronger model.
+- Limits per call: 50 files, 120 KB per file, 240 KB and 20,000 lines in total.
+- Local MCP server: `npx -y https://bountyoperator.com/dl/bounty-operator-mcp.tgz`. It has six tools: it adds `run_gauntlet_plan` (no account) and reads files by path. SHA-256 of the package: https://bountyoperator.com/dl/SHA256SUMS.txt
+- Health: https://bountyoperator.com/api/health returns `status`, `version`, `reviews` and `profiles` (`hosted` on this site).
+- Sitemap: https://bountyoperator.com/sitemap.xml
+- Security contact: https://bountyoperator.com/.well-known/security.txt
+
+## Contact
+
+- Support: support@bountyoperator.com
+- Security: security@bountyoperator.com

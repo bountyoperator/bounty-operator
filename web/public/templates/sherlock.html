@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sherlock audit contest report template | Bounty Operator</title>
+<meta name="description" content="Sherlock report template in Markdown: root cause, pre-conditions, attack path and impact against the High and Medium thresholds, plus what judges invalidate.">
+<link rel="canonical" href="https://bountyoperator.com/templates/sherlock">
+<meta name="color-scheme" content="dark light">
+<meta name="theme-color" content="#0a1220" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f5f7fb" media="(prefers-color-scheme: light)">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Bounty Operator">
+<meta property="og:title" content="Sherlock audit contest report template | Bounty Operator">
+<meta property="og:description" content="Sherlock report template in Markdown: root cause, pre-conditions, attack path and impact against the High and Medium thresholds, plus what judges invalidate.">
+<meta property="og:url" content="https://bountyoperator.com/templates/sherlock">
+<meta property="og:image" content="https://bountyoperator.com/social-v2.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Bounty Operator. Find the hole in your report before the triager does.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Sherlock audit contest report template | Bounty Operator">
+<meta name="twitter:description" content="Sherlock report template in Markdown: root cause, pre-conditions, attack path and impact against the High and Medium thresholds, plus what judges invalidate.">
+<meta name="twitter:image" content="https://bountyoperator.com/social-v2.png">
+<meta name="twitter:image:alt" content="Bounty Operator. Find the hole in your report before the triager does.">
+<link rel="icon" href="/favicon.ico" sizes="48x48">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+<script src="/theme.js"></script>
+<link rel="stylesheet" href="/css/base.css">
+<link rel="stylesheet" href="/css/templates.css">
+<link rel="modulepreload" href="/tools/ping.mjs">
+<script type="module" src="/templates/template.mjs"></script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Bounty Operator","item":"https://bountyoperator.com/"},{"@type":"ListItem","position":2,"name":"Report templates","item":"https://bountyoperator.com/templates"},{"@type":"ListItem","position":3,"name":"Sherlock","item":"https://bountyoperator.com/templates/sherlock"}]}</script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="site-header">
+<div class="wrap site-header__inner">
+<a class="brand" href="/"><svg class="brand__mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect class="brand__tile" width="64" height="64" rx="14"/><path class="brand__glyph" d="M12.5 15h6.5v31.5h-6.5z"/><path class="brand__glyph" fill-rule="evenodd" d="M25.5 25a10.75 10.75 0 1 0 0 21.5a10.75 10.75 0 0 0 0-21.5zm0 6.25a4.5 4.5 0 1 1 0 9a4.5 4.5 0 0 1 0-9z"/><path class="brand__slash" d="M45.5 13h6.25l-8.6 37.5h-6.25z"/></svg><span class="brand__name">Bounty Operator</span></a>
+<nav class="site-nav" aria-label="Main"><ul><li><a href="/#workspace">Workbench</a></li><li><a href="/method">Method</a></li><li><a href="/tools">Tools</a></li><li><a href="/guide">Guide</a></li><li><a href="/mcp">MCP</a></li><li><a href="/pricing">Pricing</a></li></ul></nav>
+<div class="site-header__actions">
+<button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch colour theme"><span class="icon theme-toggle__icon" aria-hidden="true"></span></button>
+<a class="btn btn--secondary btn--sm" href="/#account">Account</a>
+</div>
+</div>
+</header>
+<main id="main" tabindex="-1">
+
+<div class="wrap tpl-page">
+  <header class="tpl-hero">
+    <nav class="breadcrumbs" aria-label="Breadcrumb"><ol><li><a href="/">Bounty Operator</a></li><li><a href="/templates">Templates</a></li><li aria-current="page">Sherlock</li></ol></nav>
+    <h1>Sherlock audit contest report template</h1>
+    <p class="lede">Sherlock’s own headings, in its order, with the loss thresholds a judge reads the Impact section against. Two sections are added at the end for the objections that close reports: limits and known issues.</p>
+    <div class="cluster tpl-actions">
+    <button class="btn btn--primary" type="button" data-template-copy><span class="icon icon--copy" aria-hidden="true"></span><span class="btn__label">Copy as Markdown</span></button>
+    <a class="btn btn--secondary" href="/templates/sherlock.md" download="sherlock-report-template.md"><span class="icon icon--download" aria-hidden="true"></span><span class="btn__label">Download .md</span></a>
+    <span class="tpl-actions__status" role="status" data-template-status></span>
+  </div>
+    <p class="meta">Rules checked 2 Oct 2026 · 9 sources</p>
+  </header>
+
+  <div class="tpl-layout">
+    <nav class="tpl-toc" aria-label="On this page">
+    <p class="meta">On this page</p>
+    <ul><li><a href="#template">The template</a></li><li><a href="#closed">What gets this closed</a></li><li><a href="#check">Challenge the draft</a></li><li><a href="#sources">Sources</a></li></ul>
+  </nav>
+
+    <div class="tpl-main">
+      <section class="tpl-block" aria-labelledby="template">
+        <h2 id="template">The template</h2>
+        <p class="tpl-block__lede">The headings from Summary to Mitigation are the ones in Sherlock’s published report template. Keep them as they are. One issue per submission, even when two issues share a line.</p>
+        <p class="tpl-legend">
+          <span class="chip" data-tone="observed">Platform</span><span>asked for in Sherlock’s published guidance.</span>
+          <span class="chip chip--dashed" data-tone="neutral">Added</span><span>answers the two objections that close reports late: overclaiming and known issues.</span>
+        </p>
+        <article class="tpl" aria-labelledby="template">
+    <div class="tpl__bar"><span class="icon icon--file" aria-hidden="true"></span><span class="tpl__file">sherlock.md</span><span class="tpl__tag">11 sections</span></div>
+    <section class="tpl__section" id="s-title" data-origin="platform">
+      <div class="tpl__label"><span class="tpl__n">01</span><span class="chip" data-tone="observed">Platform</span></div>
+      <div class="tpl__content">
+        <h3 class="tpl__heading">Title</h3>
+        <p class="tpl__rule">Sherlock’s template builds the title from three parts: the actor, the impact, the affected party.</p>
+        <div class="tpl__fill"><p><span class="slot">Actor</span> will <span class="slot">impact</span> <span class="slot">affected party</span></p></div>
+      </div>
+    </section><section class="tpl__section" id="s-summary" data-origin="platform">
+      <div class="tpl__label"><span class="tpl__n">02</span><span class="chip" data-tone="observed">Platform</span></div>
+      <div class="tpl__content">
+        <h3 class="tpl__heading">Summary</h3>
+        <p class="tpl__rule">One sentence that chains root cause, impact, affected party and path. When that sentence cannot be written, the finding is not ready.</p>
+        <div class="tpl__fill"><p><span class="slot">Root cause, with the file</span> will cause <span class="slot">impact</span> for <span class="slot">affected party</span> as <span class="slot">actor</span> will <span class="slot">the path in a few words</span>.</p></div>
+      </div>
+    </section><section class="tpl__section" id="s-root-cause" data-origin="platform">
+      <div class="tpl__label"><span class="tpl__n">03</span><span class="chip" data-tone="observed">Platform</span></div>
+      <div class="tpl__content">
+        <h3 class="tpl__heading">Root Cause</h3>
+        <p class="tpl__rule">Link the exact lines on the contest commit. Judges group duplicates by root cause, so name the mistake and not its symptom. A design decision that causes no loss is informational.</p>
+        <div class="tpl__fill"><p>In <code><span class="slot">path/File.sol</span></code> lines <span class="slot">start</span>-<span class="slot">end</span> at the contest commit <code><span class="slot">commit</span></code> (<span class="slot">permalink</span>), <span class="slot">the mistake: the missing check, the wrong order, the unsafe cast</span>.</p><figure class="code code--wrap tpl__code"><pre class="code__pre" tabindex="0" role="region" aria-label="Code: solidity"><code><span class="code__line">{The smallest excerpt that shows it}
+</span></code></pre></figure></div>
+      </div>
+    </section><section class="tpl__section" id="s-internal" data-origin="platform">
+      <div class="tpl__label"><span class="tpl__n">04</span><span class="chip" data-tone="observed">Platform</span></div>
+      <div class="tpl__content">
+        <h3 class="tpl__heading">Internal pre-conditions</h3>
+        <p class="tpl__rule">Numbered. Each one names who sets which variable to which value. Admin functions are assumed to be used correctly and internal roles are trusted unless the README says otherwise, so a pre-condition that needs an admin to act against users ends the report.</p>
+        <div class="tpl__fill"><ol class="steps tpl__steps"><li><span class="slot">Role</span> needs to call <code><span class="slot">function</span></code> to set <code><span class="slot">variable</span></code> to be <span class="slot">at least, at most or exactly</span> <code><span class="slot">value</span></code></li><li><span class="slot">Contract state that has to hold, with the number</span></li></ol><p><span class="slot">Write &quot;None&quot; when the path works from any state.</span></p></div>
+      </div>
+    </section><section class="tpl__section" id="s-external" data-origin="platform">
+      <div class="tpl__label"><span class="tpl__n">05</span><span class="chip" data-tone="observed">Platform</span></div>
+      <div class="tpl__content">
+        <h3 class="tpl__heading">External pre-conditions</h3>
+        <p class="tpl__rule">Changes outside the protocol: an oracle price, gas, another protocol’s state. High needs a loss without extensive external conditions, so every line here moves the finding toward Medium.</p>
+        <div class="tpl__fill"><ol class="steps tpl__steps"><li><span class="slot">External condition with numbers, for example a 12% price move inside one block</span></li></ol><p><span class="slot">Write &quot;None&quot; when the path needs nothing outside the protocol.</span></p></div>
+      </div>
+    </section><section class="tpl__section" id="s-attack-path" data-origin="platform">
+      <div class="tpl__label"><span class="tpl__n">06</span><span class="chip" data-tone="observed">Platform</span></div>
+      <div class="tpl__content">
+        <h3 class="tpl__heading">Attack Path</h3>
+        <p class="tpl__rule">Numbered calls, one actor per step, concrete values. A report is only grouped with a valid issue when it shows a valid path. On a chain with a private mempool, a path that depends on front-running drops one level, and Medium becomes invalid.</p>
+        <div class="tpl__fill"><ol class="steps tpl__steps"><li><span class="slot">Actor</span> calls <code><span class="slot">function</span></code> with <span class="slot">arguments</span>. <span class="slot">State after the call.</span></li><li><span class="slot">Actor</span> calls <code><span class="slot">function</span></code> with <span class="slot">arguments</span>. <span class="slot">State after the call.</span></li><li><span class="slot">Final state, with the number.</span></li></ol></div>
+      </div>
+    </section><section class="tpl__section" id="s-impact" data-origin="platform">
+      <div class="tpl__label"><span class="tpl__n">07</span><span class="chip" data-tone="observed">Platform</span></div>
+      <div class="tpl__content">
+        <h3 class="tpl__heading">Impact</h3>
+        <p class="tpl__rule">Name the affected party and the loss as a number. High: more than 1% and more than $10 of principal, yield or fees, without extensive external conditions. Medium: more than 0.01% and more than $10, or broken core functionality. Likelihood is not weighed. For a denial of service, state the lock duration: the bar is more than a week, or a time-sensitive function.</p>
+        <div class="tpl__fill"><p><span class="slot">Affected party</span> lose <span class="slot">amount</span>, which is <span class="slot">percentage</span> of their <span class="slot">principal, yield or fees</span>. The attacker gains <span class="slot">amount, or nothing when this is griefing</span>.</p><p>Severity claimed: <span class="slot">High or Medium</span>, because <span class="slot">the threshold the number clears</span>.</p></div>
+      </div>
+    </section><section class="tpl__section" id="s-poc" data-origin="platform">
+      <div class="tpl__label"><span class="tpl__n">08</span><span class="chip" data-tone="observed">Platform</span></div>
+      <div class="tpl__content">
+        <h3 class="tpl__heading">PoC</h3>
+        <p class="tpl__rule">Sherlock recommends a coded PoC for complex paths, non-trivial input constraints, precision loss, reentrancy, and gas or revert attacks. A report that cannot be understood without a PoC is invalid without one. Paste the test, the command and the output.</p>
+        <div class="tpl__fill"><p>Command: <code><span class="slot">forge test --match-test test_name -vvv</span></code> on the contest commit.</p><figure class="code code--wrap tpl__code"><pre class="code__pre" tabindex="0" role="region" aria-label="Code: solidity"><code><span class="code__line">{The test}
+</span></code></pre></figure><figure class="code code--wrap tpl__code"><pre class="code__pre" tabindex="0" role="region" aria-label="Code: text"><code><span class="code__line">{Pasted output, with the final assertion and the measured loss}
+</span></code></pre></figure></div>
+      </div>
+    </section><section class="tpl__section" id="s-mitigation" data-origin="platform">
+      <div class="tpl__label"><span class="tpl__n">09</span><span class="chip" data-tone="observed">Platform</span></div>
+      <div class="tpl__content">
+        <h3 class="tpl__heading">Mitigation</h3>
+        <p class="tpl__rule">The fix. Judges separate issues whose fixes differ, so a precise fix also marks where your root cause ends.</p>
+        <div class="tpl__fill"><p><span class="slot">The change, in the file and function it belongs to.</span></p><figure class="code code--wrap tpl__code"><pre class="code__pre" tabindex="0" role="region" aria-label="Code: diff"><code><span class="code__line">- {vulnerable line}
+</span><span class="code__line">+ {fixed line}
+</span></code></pre></figure></div>
+      </div>
+    </section><section class="tpl__section" id="s-limits" data-origin="added">
+      <div class="tpl__label"><span class="tpl__n">10</span><span class="chip chip--dashed" data-tone="neutral">Added</span></div>
+      <div class="tpl__content">
+        <h3 class="tpl__heading">Limits and non-claims</h3>
+        <p class="tpl__rule">State the constraints yourself. The criteria ask Watsons to specify every condition needed to trigger the issue, and additional constraints lower the severity.</p>
+        <div class="tpl__fill"><ul class="tpl__list"><li>Not claimed: <span class="slot">what this report does not say, for example no loss beyond the funds held at this address</span></li><li>Mocked or assumed: <span class="slot">each mock and assumption, or &quot;nothing: every step runs the deployed code&quot;</span></li><li>Stops working when: <span class="slot">the condition that breaks the path</span></li></ul></div>
+      </div>
+    </section><section class="tpl__section" id="s-known" data-origin="added">
+      <div class="tpl__label"><span class="tpl__n">11</span><span class="chip chip--dashed" data-tone="neutral">Added</span></div>
+      <div class="tpl__content">
+        <h3 class="tpl__heading">Known issues checked</h3>
+        <p class="tpl__rule">Invalid on Sherlock: issues labelled <code>wont fix</code> in an earlier contest, and acknowledged findings in the audits the README links. Name the nearest one and state the difference in root cause.</p>
+        <div class="tpl__fill"><ul class="tpl__list"><li>Contest README, known issues and acceptable risks: <span class="slot">the nearest item, why this differs</span></li><li>Earlier contests, <code>wont fix</code> issues: <span class="slot">issue link, or &quot;none on this code&quot;</span></li><li>Audits linked in the README, acknowledged findings: <span class="slot">report and finding id, why the root cause differs</span></li></ul></div>
+      </div>
+    </section>
+    <div class="tpl__source" data-template-source>
+      <details class="disclosure"><summary class="disclosure__summary">Markdown source<span class="disclosure__hint">sherlock.md</span></summary><div class="disclosure__body"><figure class="code code--wrap"><figcaption class="code__bar"><span class="code__name">sherlock.md</span><button class="code__copy" type="button" data-copy><span class="icon icon--copy" aria-hidden="true"></span><span data-copy-label>Copy</span></button></figcaption><pre class="code__pre" tabindex="0" role="region" aria-label="Markdown source: sherlock.md"><code><span class="code__line">&gt; Sherlock report template from https://bountyoperator.com/templates/sherlock. Platform rules checked 2 Oct 2026.
+</span><span class="code__line">&gt; Replace every {placeholder}. Delete this note before you submit.
+</span><span class="code__line">
+</span><span class="code__line"># {Actor} will {impact} {affected party}
+</span><span class="code__line">
+</span><span class="code__line">### Summary
+</span><span class="code__line">
+</span><span class="code__line">{Root cause, with the file} will cause {impact} for {affected party} as {actor} will {the path in a few words}.
+</span><span class="code__line">
+</span><span class="code__line">### Root Cause
+</span><span class="code__line">
+</span><span class="code__line">In `{path/File.sol}` lines {start}-{end} at the contest commit `{commit}` ({permalink}), {the mistake: the missing check, the wrong order, the unsafe cast}.
+</span><span class="code__line">
+</span><span class="code__line">```solidity
+</span><span class="code__line">{The smallest excerpt that shows it}
+</span><span class="code__line">```
+</span><span class="code__line">
+</span><span class="code__line">### Internal pre-conditions
+</span><span class="code__line">
+</span><span class="code__line">1. {Role} needs to call `{function}` to set `{variable}` to be {at least, at most or exactly} `{value}`
+</span><span class="code__line">2. {Contract state that has to hold, with the number}
+</span><span class="code__line">
+</span><span class="code__line">{Write &quot;None&quot; when the path works from any state.}
+</span><span class="code__line">
+</span><span class="code__line">### External pre-conditions
+</span><span class="code__line">
+</span><span class="code__line">1. {External condition with numbers, for example a 12% price move inside one block}
+</span><span class="code__line">
+</span><span class="code__line">{Write &quot;None&quot; when the path needs nothing outside the protocol.}
+</span><span class="code__line">
+</span><span class="code__line">### Attack Path
+</span><span class="code__line">
+</span><span class="code__line">1. {Actor} calls `{function}` with {arguments}. {State after the call.}
+</span><span class="code__line">2. {Actor} calls `{function}` with {arguments}. {State after the call.}
+</span><span class="code__line">3. {Final state, with the number.}
+</span><span class="code__line">
+</span><span class="code__line">### Impact
+</span><span class="code__line">
+</span><span class="code__line">{Affected party} lose {amount}, which is {percentage} of their {principal, yield or fees}. The attacker gains {amount, or nothing when this is griefing}.
+</span><span class="code__line">
+</span><span class="code__line">Severity claimed: {High or Medium}, because {the threshold the number clears}.
+</span><span class="code__line">
+</span><span class="code__line">### PoC
+</span><span class="code__line">
+</span><span class="code__line">Command: `{forge test --match-test test_name -vvv}` on the contest commit.
+</span><span class="code__line">
+</span><span class="code__line">```solidity
+</span><span class="code__line">{The test}
+</span><span class="code__line">```
+</span><span class="code__line">
+</span><span class="code__line">```text
+</span><span class="code__line">{Pasted output, with the final assertion and the measured loss}
+</span><span class="code__line">```
+</span><span class="code__line">
+</span><span class="code__line">### Mitigation
+</span><span class="code__line">
+</span><span class="code__line">{The change, in the file and function it belongs to.}
+</span><span class="code__line">
+</span><span class="code__line">```diff
+</span><span class="code__line">- {vulnerable line}
+</span><span class="code__line">+ {fixed line}
+</span><span class="code__line">```
+</span><span class="code__line">
+</span><span class="code__line">### Limits and non-claims
+</span><span class="code__line">
+</span><span class="code__line">- Not claimed: {what this report does not say, for example no loss beyond the funds held at this address}
+</span><span class="code__line">- Mocked or assumed: {each mock and assumption, or &quot;nothing: every step runs the deployed code&quot;}
+</span><span class="code__line">- Stops working when: {the condition that breaks the path}
+</span><span class="code__line">
+</span><span class="code__line">### Known issues checked
+</span><span class="code__line">
+</span><span class="code__line">- Contest README, known issues and acceptable risks: {the nearest item, why this differs}
+</span><span class="code__line">- Earlier contests, `wont fix` issues: {issue link, or &quot;none on this code&quot;}
+</span><span class="code__line">- Audits linked in the README, acknowledged findings: {report and finding id, why the root cause differs}
+</span></code></pre></figure></div></details>
+    </div>
+  </article>
+      </section>
+
+      <section class="tpl-block" aria-labelledby="closed">
+        <h2 id="closed">What gets this closed on Sherlock</h2>
+        <p class="tpl-block__lede">Each reason comes from a page Sherlock publishes. The programme or contest page adds its own rules on top, and those win.</p>
+        <ol class="closed"><li class="closed__item">
+      <h3 class="closed__title">Loss below the written thresholds</h3>
+      <p>Only High and Medium score in a contest. High is a direct loss above 1% and $10 without extensive external conditions. Medium is a loss above 0.01% and $10 that needs conditions, or broken core functionality. Likelihood is not considered.</p>
+      <p class="closed__refs"><span class="meta">Source</span> <a class="link" href="https://docs.sherlock.xyz/audits/judging/guidelines" target="_blank" rel="noopener noreferrer">Criteria for Issue Validity</a>, <a class="link" href="https://docs.sherlock.xyz/audits/watsons/how-to-score-issue-points-in-a-contest" target="_blank" rel="noopener noreferrer">How to Score Issue Points in a Contest</a></p>
+    </li><li class="closed__item">
+      <h3 class="closed__title">Denial of service that does not last</h3>
+      <p>A DoS counts when funds are locked for more than a week or a time-sensitive function is affected. One of the two is Medium, both is High. A repeatable attack is judged on a single occurrence.</p>
+      <p class="closed__refs"><span class="meta">Source</span> <a class="link" href="https://docs.sherlock.xyz/audits/judging/guidelines" target="_blank" rel="noopener noreferrer">Criteria for Issue Validity</a></p>
+    </li><li class="closed__item">
+      <h3 class="closed__title">Trusted roles and design decisions</h3>
+      <p>Admin functions are assumed to be used correctly. Internal roles are trusted unless the README names them untrusted. A design decision that causes no loss is informational. The README outranks code comments, and past judging decisions carry no weight:</p><blockquote class="closed__quote"><p>Historical decisions are not considered sources of truth.</p><footer>Criteria for Issue Validity, Sherlock</footer></blockquote>
+      <p class="closed__refs"><span class="meta">Source</span> <a class="link" href="https://docs.sherlock.xyz/audits/judging/guidelines" target="_blank" rel="noopener noreferrer">Criteria for Issue Validity</a></p>
+    </li><li class="closed__item">
+      <h3 class="closed__title">Known issues</h3>
+      <p>Issues labelled <code>wont fix</code> in a previous contest and acknowledged findings in the audits linked from the README are invalid. On bounties, publicly known bugs and bugs from a previous audit are never eligible for a payout.</p>
+      <p class="closed__refs"><span class="meta">Source</span> <a class="link" href="https://docs.sherlock.xyz/audits/judging/guidelines" target="_blank" rel="noopener noreferrer">Criteria for Issue Validity</a>, <a class="link" href="https://docs.sherlock.xyz/bug-bounties/post-launch-bounty/platform-rules" target="_blank" rel="noopener noreferrer">Bug bounty Platform Rules</a></p>
+    </li><li class="closed__item">
+      <h3 class="closed__title">The listed invalid categories</h3>
+      <p>Gas optimisations, wrong event values, zero-address checks, user and admin input validation, blacklisting, initializer front-running, non-standard tokens the README does not name, stale-price recommendations, re-orgs, sequencer downtime, future integrations, and wrong values in view functions that nothing else consumes.</p>
+      <p class="closed__refs"><span class="meta">Source</span> <a class="link" href="https://docs.sherlock.xyz/audits/judging/guidelines" target="_blank" rel="noopener noreferrer">Criteria for Issue Validity</a></p>
+    </li><li class="closed__item">
+      <h3 class="closed__title">No PoC where one is needed</h3>
+      <p>A PoC is recommended for complex paths, non-trivial input constraints, precision loss, reentrancy and gas or revert attacks. A report that cannot be understood without one is invalid without one.</p>
+      <p class="closed__refs"><span class="meta">Source</span> <a class="link" href="https://docs.sherlock.xyz/audits/judging/guidelines" target="_blank" rel="noopener noreferrer">Criteria for Issue Validity</a></p>
+    </li><li class="closed__item">
+      <h3 class="closed__title">Duplicates</h3>
+      <p>A report is grouped with a valid issue only when it identifies the root cause, shows at least Medium impact and gives a valid path. Duplicates share the points: each of n submissions is weighted by 0.9 to the power n − 1, divided by n. On bounties the earlier timestamp wins and the duplicate is not rewarded.</p>
+      <p class="closed__refs"><span class="meta">Source</span> <a class="link" href="https://docs.sherlock.xyz/audits/judging/guidelines" target="_blank" rel="noopener noreferrer">Criteria for Issue Validity</a>, <a class="link" href="https://docs.sherlock.xyz/audits/watsons/how-to-score-issue-points-in-a-contest" target="_blank" rel="noopener noreferrer">How to Score Issue Points in a Contest</a>, <a class="link" href="https://docs.sherlock.xyz/bug-bounties/criteria-for-bug-bounty-reports-validity" target="_blank" rel="noopener noreferrer">Criteria for Bug Bounty reports validity</a></p>
+    </li><li class="closed__item">
+      <h3 class="closed__title">Penalties and fees</h3>
+      <p>Contest payouts are withheld until the account has two valid issues and at least 20% of everything it has submitted is valid. An escalation costs Signal Score that is not refunded, and the window is 24 hours. On bounties, escalating a decision to the claims committee costs $1,000.</p>
+      <p class="closed__refs"><span class="meta">Source</span> <a class="link" href="https://docs.sherlock.xyz/audits/watsons/meeting-the-payout-criteria" target="_blank" rel="noopener noreferrer">Meeting the Payout Criteria</a>, <a class="link" href="https://docs.sherlock.xyz/audits/judging/discussion" target="_blank" rel="noopener noreferrer">Discussion</a>, <a class="link" href="https://docs.sherlock.xyz/audits/judging" target="_blank" rel="noopener noreferrer">Judging</a>, <a class="link" href="https://docs.sherlock.xyz/bug-bounties/post-launch-bounty/dispute-resolution" target="_blank" rel="noopener noreferrer">Dispute Resolution</a></p>
+    </li></ol>
+      </section>
+
+      <section class="tpl-block" aria-labelledby="check">
+        <h2 id="check">Challenge the filled draft</h2>
+        <div class="tpl-check" data-handoff data-handoff-profile="report" data-handoff-focus="Sherlock contest report draft. Check root cause, pre-conditions and the High or Medium loss threshold against the judging criteria." data-handoff-name="sherlock-report-draft.md" data-handoff-note="Draft written from the Sherlock report template at bountyoperator.com/templates/sherlock. Platform rules checked 2 Oct 2026." data-handoff-markers="slots">
+    <p class="tpl-block__lede">Paste the report once every placeholder is replaced. The workbench opens with <a class="link" href="/challenge-report">Challenge a draft report</a> selected and argues against each claim: the impact row, the proof, the severity, the known issues. You decide what to rewrite.</p>
+    <div class="field"><label class="label" for="draft">Your filled draft</label><textarea class="textarea mono" id="draft" name="draft" rows="8" placeholder="Paste the report with every placeholder replaced." spellcheck="false" data-handoff-input aria-describedby="draft-help draft-state"></textarea><p class="help" id="draft-help">The draft stays in this browser. It is sent only when you run a review in the workbench.</p></div>
+    <p class="tpl-check__state" id="draft-state" aria-live="polite" data-handoff-state></p>
+    <div class="notice notice--error tpl-check__error" role="alert"></div>
+    <div class="cluster">
+      <a class="btn btn--primary" href="/?profile=report#workspace" data-handoff-go><span class="btn__label">Challenge it in the workbench</span><span class="icon icon--arrow-right" aria-hidden="true"></span></a>
+      <a class="btn btn--secondary" href="/tools/report-check"><span class="btn__label">Run the report check</span></a>
+    </div>
+  </div>
+      </section>
+
+      <section class="tpl-block" aria-labelledby="sources">
+        <h2 id="sources">Sources</h2>
+        <p class="tpl-block__lede">Primary sources only, read on 2 Oct 2026. Rules change. Read the programme page on the day you submit.</p>
+        <ul class="sources"><li class="sources__item">
+      <p class="sources__link"><a class="link link--external" href="https://docs.sherlock.xyz/audits/judging/guidelines" target="_blank" rel="noopener noreferrer">Criteria for Issue Validity<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></p>
+      <p class="sources__note">Severity thresholds, invalid categories, PoC recommendation, duplication rules.</p>
+      <p class="sources__date meta">Version 1.12, 24 Jun 2025 · checked 2 Oct 2026</p>
+    </li><li class="sources__item">
+      <p class="sources__link"><a class="link link--external" href="https://github.com/sherlock-protocol/sherlock-v2-docs/blob/main/.report/README.md" target="_blank" rel="noopener noreferrer">Report template in the Sherlock docs repository<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></p>
+      <p class="sources__note">The headings from Title to Mitigation.</p>
+      <p class="sources__date meta">checked 2 Oct 2026</p>
+    </li><li class="sources__item">
+      <p class="sources__link"><a class="link link--external" href="https://docs.sherlock.xyz/audits/judging" target="_blank" rel="noopener noreferrer">Judging<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></p>
+      <p class="sources__note">The four judging phases and the 24-hour escalation period.</p>
+      <p class="sources__date meta">checked 2 Oct 2026</p>
+    </li><li class="sources__item">
+      <p class="sources__link"><a class="link link--external" href="https://docs.sherlock.xyz/audits/judging/discussion" target="_blank" rel="noopener noreferrer">Discussion<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></p>
+      <p class="sources__note">Escalations and their Signal cost.</p>
+      <p class="sources__date meta">checked 2 Oct 2026</p>
+    </li><li class="sources__item">
+      <p class="sources__link"><a class="link link--external" href="https://docs.sherlock.xyz/audits/watsons/how-to-score-issue-points-in-a-contest" target="_blank" rel="noopener noreferrer">How to Score Issue Points in a Contest<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></p>
+      <p class="sources__note">High and Medium weighting, and how duplicates share points.</p>
+      <p class="sources__date meta">checked 2 Oct 2026</p>
+    </li><li class="sources__item">
+      <p class="sources__link"><a class="link link--external" href="https://docs.sherlock.xyz/audits/watsons/meeting-the-payout-criteria" target="_blank" rel="noopener noreferrer">Meeting the Payout Criteria<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></p>
+      <p class="sources__note">Two valid issues and the 20% issues ratio.</p>
+      <p class="sources__date meta">checked 2 Oct 2026</p>
+    </li><li class="sources__item">
+      <p class="sources__link"><a class="link link--external" href="https://docs.sherlock.xyz/bug-bounties/criteria-for-bug-bounty-reports-validity" target="_blank" rel="noopener noreferrer">Criteria for Bug Bounty reports validity<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></p>
+      <p class="sources__note">Bounty standards, invalid categories and duplicates.</p>
+      <p class="sources__date meta">Updated 18 Mar 2026 · checked 2 Oct 2026</p>
+    </li><li class="sources__item">
+      <p class="sources__link"><a class="link link--external" href="https://docs.sherlock.xyz/bug-bounties/post-launch-bounty/platform-rules" target="_blank" rel="noopener noreferrer">Bug bounty Platform Rules<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></p>
+      <p class="sources__note">Local forks only, and the known-bug rule.</p>
+      <p class="sources__date meta">checked 2 Oct 2026</p>
+    </li><li class="sources__item">
+      <p class="sources__link"><a class="link link--external" href="https://docs.sherlock.xyz/bug-bounties/post-launch-bounty/dispute-resolution" target="_blank" rel="noopener noreferrer">Dispute Resolution<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></p>
+      <p class="sources__note">The three levels and what each escalation costs.</p>
+      <p class="sources__date meta">checked 2 Oct 2026</p>
+    </li></ul>
+      </section>
+
+      <nav class="tpl-next" aria-label="Other templates">
+        <p class="meta">Other templates</p>
+        <ul>
+          <li><a href="/templates/immunefi">Immunefi</a></li><li><a href="/templates/cantina">Cantina</a></li><li><a href="/templates/hackerone">HackerOne</a></li>
+          <li><a href="/templates/foundry-poc">Foundry PoC</a></li>
+          <li><a href="/templates">All templates</a></li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+</div>
+</main>
+<footer class="site-footer">
+<div class="wrap site-footer__grid">
+<div class="site-footer__brand">
+<a class="brand" href="/"><svg class="brand__mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect class="brand__tile" width="64" height="64" rx="14"/><path class="brand__glyph" d="M12.5 15h6.5v31.5h-6.5z"/><path class="brand__glyph" fill-rule="evenodd" d="M25.5 25a10.75 10.75 0 1 0 0 21.5a10.75 10.75 0 0 0 0-21.5zm0 6.25a4.5 4.5 0 1 1 0 9a4.5 4.5 0 0 1 0-9z"/><path class="brand__slash" d="M45.5 13h6.25l-8.6 37.5h-6.25z"/></svg><span class="brand__name">Bounty Operator</span></a>
+<p class="site-footer__promise">Find the hole in your report before the triager does.</p>
+</div>
+<nav class="site-footer__col" aria-label="Product"><h2 class="site-footer__title">Product</h2><ul><li><a href="/#workspace">Workbench</a></li><li><a href="/method">Method</a></li><li><a href="/gauntlet">Gauntlet</a></li><li><a href="/panel-review">Panel review</a></li><li><a href="/pricing">Pricing</a></li><li><a href="/#account">Account</a></li></ul></nav>
+<nav class="site-footer__col" aria-label="Tools"><h2 class="site-footer__title">Tools</h2><ul><li><a href="/tools">All tools</a></li><li><a href="/tools/report-check">Report check</a></li><li><a href="/tools/verify">Packet verifier</a></li><li><a href="/tools/secret-check">Secret check</a></li><li><a href="/tools/acceptance-rates">Acceptance rates</a></li><li><a href="/tools/slither-focus">Slither triage queue</a></li></ul></nav>
+<nav class="site-footer__col" aria-label="Resources"><h2 class="site-footer__title">Resources</h2><ul><li><a href="/guide">Report guide</a></li><li><a href="/mcp">MCP setup</a></li><li><a href="/templates">Report templates</a></li><li><a href="/changelog">Changelog</a></li><li><a href="https://github.com/bountyoperator/bounty-operator" target="_blank" rel="noopener noreferrer">Source<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></li></ul></nav>
+<nav class="site-footer__col" aria-label="Legal"><h2 class="site-footer__title">Legal</h2><ul><li><a href="/privacy">Privacy</a></li><li><a href="/terms">Terms</a></li><li><a href="/security">Security</a></li><li><a href="/licenses">Licences</a></li><li><a href="mailto:security@bountyoperator.com">Report a vulnerability</a></li></ul></nav>
+</div>
+<div class="wrap">
+<div class="site-footer__base">
+<p>Built by <a href="https://audits.sherlock.xyz/watson/Tradi3" target="_blank" rel="noopener noreferrer">Tradi3</a></p>
+<p><a href="mailto:support@bountyoperator.com">support@bountyoperator.com</a></p>
+</div>
+</div>
+</footer>
+</body>
+</html>

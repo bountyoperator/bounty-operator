@@ -1,0 +1,517 @@
+@charset "UTF-8";
+
+/*
+  Bounty Operator: the gauntlet and the panel
+
+  The two Operator rows of the Run step and the result views they end in.
+  Everything builds on the tokens and components of base.css and on the
+  workbench sheet of workbench.css; the markup comes from
+  web/site/fragments/workbench.mjs and web/public/app/{gauntlet,panel,dossier}.mjs.
+
+   1. Rows: lead, note
+   2. Stage strip
+   3. Panel seats
+   4. Panel streams
+   5. Dossier: decision, stages, agreement
+   6. Print
+*/
+
+/* ==========================================================================
+   1. Rows
+   ========================================================================== */
+
+.rn-lead > .chip {
+  margin-right: var(--sp-8);
+}
+
+.rn-note {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-12);
+}
+
+.rn-note:empty {
+  display: none;
+}
+
+/* While a run is on, the spinner stands in for the button's own icon. */
+:is(#wb-row-gauntlet, #wb-row-panel) .btn[aria-busy="true"] > .icon {
+  display: none;
+}
+
+/* ==========================================================================
+   2. Stage strip
+   ========================================================================== */
+
+/* One cell per stage: number and name on top, the state under them. The
+   state is the only thing that changes, so the strip never reflows mid-run. */
+.rn-pipe {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 12.75rem), 1fr));
+  gap: var(--sp-8);
+}
+
+.rn-pipe__item {
+  display: grid;
+  min-width: 0;
+}
+
+.rn-pipe__stage {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-content: start;
+  align-items: baseline;
+  gap: 0.375rem var(--sp-8);
+  min-width: 0;
+  min-height: 4rem;
+  padding: 0.625rem var(--sp-12);
+  border: 1px solid var(--line);
+  border-radius: var(--r-ctl);
+  background: var(--surface);
+  color: var(--text);
+  text-align: left;
+  transition:
+    background-color var(--t-fast),
+    border-color var(--t-fast);
+}
+
+.rn-pipe__n {
+  color: var(--muted);
+  font: 600 var(--fs-12) / 1.5 var(--font-mono);
+}
+
+.rn-pipe__name {
+  overflow: hidden;
+  font-size: var(--fs-14);
+  font-weight: 600;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rn-pipe__state {
+  grid-column: 1 / -1;
+  display: flex;
+  min-width: 0;
+}
+
+.rn-pipe__state > .chip {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Not reached yet, or never run: the cell recedes. */
+.rn-pipe__stage[data-state="waiting"],
+.rn-pipe__stage[data-state="stopped"] {
+  border-style: dashed;
+  border-color: var(--line-strong);
+  background: transparent;
+}
+
+.rn-pipe__stage[data-state="waiting"] .rn-pipe__name,
+.rn-pipe__stage[data-state="stopped"] .rn-pipe__name {
+  color: var(--muted);
+}
+
+.rn-pipe__stage[data-state="running"] {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 9%, var(--surface));
+}
+
+.rn-pipe__stage[data-state="failed"] {
+  border-color: var(--danger);
+}
+
+/* A finished stage that opens. */
+button.rn-pipe__stage {
+  cursor: pointer;
+}
+
+button.rn-pipe__stage:hover {
+  border-color: var(--text);
+}
+
+button.rn-pipe__stage:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* ==========================================================================
+   3. Panel seats
+   ========================================================================== */
+
+.rn-seats {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-8);
+}
+
+/* number | provider | model | cross-examines | remove; the key and the error take rows of their own. */
+.rn-seat {
+  display: grid;
+  grid-template-columns: 1.25rem minmax(8.5rem, 12rem) minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: var(--sp-8);
+}
+
+.rn-seat__n {
+  color: var(--muted);
+  font: 600 var(--fs-12) / 1 var(--font-mono);
+  text-align: right;
+}
+
+.rn-seat__key,
+.rn-seat__error {
+  grid-column: 2 / -1;
+}
+
+.rn-seat__error[hidden] {
+  display: none;
+}
+
+.rn-seat__judge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-8);
+  min-height: var(--tap);
+  padding-inline: var(--sp-4);
+  color: var(--muted);
+  font-size: var(--fs-13);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.rn-seat__judge input {
+  width: 1rem;
+  height: 1rem;
+  margin: 0;
+  accent-color: var(--accent-solid);
+}
+
+.rn-seat__judge:has(input:checked) {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.rn-seats__tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-4) var(--sp-16);
+  /* The quiet button has no border: pull it out so its label lines up with the rows. */
+  margin-left: calc(1.25rem + var(--sp-8) - var(--sp-12));
+}
+
+.rn-seats__tools > .fine {
+  flex: 1 1 16rem;
+}
+
+@media (max-width: 47.99em) {
+  .rn-seat {
+    grid-template-columns: 1.25rem minmax(0, 1fr) auto;
+    padding-bottom: var(--sp-8);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .rn-seat__provider {
+    grid-column: 2;
+  }
+
+  .rn-seat > .btn {
+    grid-column: 3;
+    grid-row: 1;
+  }
+
+  .rn-seat__model,
+  .rn-seat__judge,
+  .rn-seat__key,
+  .rn-seat__error {
+    grid-column: 2 / -1;
+  }
+
+  .rn-seats__tools {
+    margin-left: calc(-1 * var(--sp-12));
+  }
+}
+
+/* ==========================================================================
+   4. Panel streams
+   ========================================================================== */
+
+/* One column per model while they write; the cross-examination runs under them. */
+.rn-streams {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr));
+  gap: var(--sp-8);
+}
+
+.rn-streams[hidden] {
+  display: none;
+}
+
+.rn-stream--wide {
+  grid-column: 1 / -1;
+}
+
+.rn-stream .wb-live__text {
+  min-height: 5rem;
+  max-height: 14rem;
+}
+
+.rn-stream--wide .wb-live__text {
+  max-height: 20rem;
+}
+
+.rn-stream .wb-live__head {
+  padding-right: var(--sp-12);
+}
+
+/* In a column the model name takes its own line, so every column reads the same. */
+.rn-stream:not(.rn-stream--wide) .wb-live__what {
+  flex: 1 0 100%;
+  padding-bottom: var(--sp-4);
+}
+
+/* ==========================================================================
+   5. Dossier
+   ========================================================================== */
+
+.gd {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-12);
+}
+
+.gd__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-4) var(--sp-12);
+}
+
+/* The three lines a hunter acts on. Hairlines between the cells, whatever the wrap. */
+.gd__facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+  gap: 1px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--line);
+}
+
+.gd__fact {
+  position: relative;
+  display: grid;
+  align-content: start;
+  gap: var(--sp-8);
+  padding: var(--sp-16) 1.25rem var(--sp-16) 1.5rem;
+  background: var(--surface);
+}
+
+/* The spine of the finding card: amber for what is missing, blue for what to do. */
+.gd__fact::before {
+  content: "";
+  position: absolute;
+  inset: var(--sp-16) auto var(--sp-16) 0.625rem;
+  width: 2px;
+  border-radius: 1px;
+  background: var(--line-strong);
+}
+
+.gd__fact[data-fact="blocker"]::before {
+  background: var(--gap);
+}
+
+.gd__fact[data-fact="action"]::before {
+  background: var(--accent);
+}
+
+.gd__fact[data-empty]::before {
+  background: var(--line-strong);
+}
+
+.gd__label {
+  color: var(--muted);
+  font: 600 var(--fs-12) / 1.5 var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.gd__value {
+  font-size: var(--fs-16);
+  font-weight: 550;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  text-wrap: pretty;
+}
+
+.gd__value::first-letter {
+  text-transform: uppercase;
+}
+
+.gd__fact[data-empty] .gd__value {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.gd__aside {
+  display: block;
+  margin-top: var(--sp-4);
+  color: var(--muted);
+  font-size: var(--fs-13);
+  font-weight: 400;
+}
+
+.gd__more {
+  padding-inline: var(--sp-16);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  font-size: var(--fs-14);
+  line-height: 1.6;
+}
+
+:is(.gd__value, .gd__more) .ref {
+  vertical-align: baseline;
+}
+
+/* Stage and model reviews, each behind its own disclosure. */
+.gd-stages {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-8);
+}
+
+.gd-stage > .disclosure__summary {
+  gap: var(--sp-12);
+}
+
+.gd-stage__n {
+  flex: none;
+  min-width: 1rem;
+  color: var(--muted);
+  font: 600 var(--fs-12) / 1 var(--font-mono);
+}
+
+.gd-stage__name {
+  flex: none;
+  max-width: 100%;
+}
+
+.gd-stage > .disclosure__summary > .chip {
+  flex: none;
+}
+
+.gd-stage__headline {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gd-stage[open] > .disclosure__summary {
+  border-bottom: 1px solid var(--line);
+}
+
+.gd-stage__body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-16);
+  padding-top: var(--sp-12);
+}
+
+/* On a phone: number, name and chevron on the first line, the verdict under them, then the headline. */
+@media (max-width: 43.99em) {
+  /* The name takes the row, less the number and the chevron, so the verdict wraps under it. */
+  .wb .gd-stage > .disclosure__summary > .gd-stage__name {
+    flex: 1 0 calc(100% - 5rem);
+    min-width: 0;
+  }
+
+  .gd-stage > .disclosure__summary > .chip {
+    order: 3;
+    margin-left: calc(1rem + var(--sp-12));
+  }
+
+  .gd-stage > .disclosure__summary > .gd-stage__headline {
+    order: 4;
+    padding-left: calc(1rem + var(--sp-12));
+    white-space: normal;
+  }
+}
+
+/* The panel: how many models reported a finding, and the way to each review. */
+.pn-seats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-4);
+}
+
+.pn-seat {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  max-width: 100%;
+  min-height: 1.75rem;
+  padding: 0 var(--sp-8);
+  border: 1px solid var(--line-control);
+  border-radius: var(--r-chip);
+  color: var(--text);
+  font: 500 var(--fs-12) / 1.2 var(--font-mono);
+  cursor: pointer;
+  transition: border-color var(--t-fast);
+}
+
+.pn-seat:hover {
+  border-color: var(--text);
+}
+
+.pn-seat:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.pn-seat__n {
+  color: var(--muted);
+}
+
+.pn-seat__model {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (pointer: coarse) {
+  .pn-seat {
+    min-height: var(--tap);
+  }
+}
+
+.gd-next {
+  margin-top: var(--sp-8);
+}
+
+/* ==========================================================================
+   6. Print
+   ========================================================================== */
+
+@media print {
+  .gd,
+  .gd-stages {
+    display: block !important;
+  }
+
+  .gd > * + *,
+  .gd-stages > * + * {
+    margin-top: 8pt;
+  }
+
+  .gd__facts,
+  .gd-stage,
+  .rn-pipe__item {
+    break-inside: avoid;
+  }
+}

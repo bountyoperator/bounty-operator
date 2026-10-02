@@ -1,0 +1,6 @@
+Contact: mailto:security@bountyoperator.com
+Contact: https://github.com/bountyoperator/bounty-operator/security/advisories/new
+Expires: 2027-10-02T00:00:00Z
+Preferred-Languages: en
+Canonical: https://bountyoperator.com/.well-known/security.txt
+Policy: https://bountyoperator.com/security

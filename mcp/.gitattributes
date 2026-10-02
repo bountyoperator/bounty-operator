@@ -1,0 +1,2 @@
+# The command file must keep Unix line ends: its first line is a shebang.
+bin/*.mjs text eol=lf

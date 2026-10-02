@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Verify a review packet: recompute SHA-256 in the browser | Bounty Operator</title>
+<meta name="description" content="Drop a review packet or manifest with its source files and see match, mismatch or missing for every SHA-256. The hashing runs in your browser.">
+<link rel="canonical" href="https://bountyoperator.com/tools/verify">
+<meta name="color-scheme" content="dark light">
+<meta name="theme-color" content="#0a1220" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f5f7fb" media="(prefers-color-scheme: light)">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Bounty Operator">
+<meta property="og:title" content="Verify a review packet: recompute SHA-256 in the browser | Bounty Operator">
+<meta property="og:description" content="Drop a review packet or manifest with its source files and see match, mismatch or missing for every SHA-256. The hashing runs in your browser.">
+<meta property="og:url" content="https://bountyoperator.com/tools/verify">
+<meta property="og:image" content="https://bountyoperator.com/social-v2.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Bounty Operator. Find the hole in your report before the triager does.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Verify a review packet: recompute SHA-256 in the browser | Bounty Operator">
+<meta name="twitter:description" content="Drop a review packet or manifest with its source files and see match, mismatch or missing for every SHA-256. The hashing runs in your browser.">
+<meta name="twitter:image" content="https://bountyoperator.com/social-v2.png">
+<meta name="twitter:image:alt" content="Bounty Operator. Find the hole in your report before the triager does.">
+<link rel="icon" href="/favicon.ico" sizes="48x48">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+<script src="/theme.js"></script>
+<link rel="stylesheet" href="/css/base.css">
+<link rel="stylesheet" href="/css/tools.css">
+<link rel="modulepreload" href="/review-core.mjs">
+<link rel="modulepreload" href="/evidence.mjs">
+<link rel="modulepreload" href="/tools/verify-core.mjs">
+<link rel="modulepreload" href="/tools/dom.mjs">
+<link rel="modulepreload" href="/tools/ping.mjs">
+<link rel="modulepreload" href="/profiles.mjs">
+<link rel="modulepreload" href="/parse.mjs">
+<script type="module" src="/tools/verify.mjs"></script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Bounty Operator","item":"https://bountyoperator.com/"},{"@type":"ListItem","position":2,"name":"Tools","item":"https://bountyoperator.com/tools"},{"@type":"ListItem","position":3,"name":"Packet verifier","item":"https://bountyoperator.com/tools/verify"}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Are my files uploaded?","acceptedAnswer":{"@type":"Answer","text":"No. The page reads each file with the browser’s file API and hashes it with Web Crypto. It makes no request with a file name, a hash or any content. After the page has loaded it makes one request: a counter that says the tool was used, with nothing of yours in it."}},{"@type":"Question","name":"What does a match prove?","acceptedAnswer":{"@type":"Answer","text":"That the bytes you hold are the bytes the review was run on, to the last character. It is a statement about the files. Whether the review’s conclusions hold is a separate question, answered by the code and the proof."}},{"@type":"Question","name":"Where does a packet come from?","acceptedAnswer":{"@type":"Answer","text":"The workbench writes one for every finished review: the verdict, the context you gave, the file list with a SHA-256 per file, and the review itself. A manifest is the same file list as JSON, as returned by the review API and the MCP server."}}]}</script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="site-header">
+<div class="wrap site-header__inner">
+<a class="brand" href="/"><svg class="brand__mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect class="brand__tile" width="64" height="64" rx="14"/><path class="brand__glyph" d="M12.5 15h6.5v31.5h-6.5z"/><path class="brand__glyph" fill-rule="evenodd" d="M25.5 25a10.75 10.75 0 1 0 0 21.5a10.75 10.75 0 0 0 0-21.5zm0 6.25a4.5 4.5 0 1 1 0 9a4.5 4.5 0 0 1 0-9z"/><path class="brand__slash" d="M45.5 13h6.25l-8.6 37.5h-6.25z"/></svg><span class="brand__name">Bounty Operator</span></a>
+<nav class="site-nav" aria-label="Main"><ul><li><a href="/#workspace">Workbench</a></li><li><a href="/method">Method</a></li><li><a href="/tools" aria-current="page">Tools</a></li><li><a href="/guide">Guide</a></li><li><a href="/mcp">MCP</a></li><li><a href="/pricing">Pricing</a></li></ul></nav>
+<div class="site-header__actions">
+<button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch colour theme"><span class="icon theme-toggle__icon" aria-hidden="true"></span></button>
+<a class="btn btn--secondary btn--sm" href="/#account">Account</a>
+</div>
+</div>
+</header>
+<main id="main" tabindex="-1">
+
+<section class="section section--tight wrap">
+<header class="tool-head">
+<nav class="breadcrumbs" aria-label="Breadcrumb"><ol><li><a href="/">Bounty Operator</a></li><li><a href="/tools">Tools</a></li><li aria-current="page">Packet verifier</li></ol></nav>
+<h1>Verify a review packet</h1>
+<p class="lede">A review packet lists every file it covered with a SHA-256. Drop the packet and the files, and see whether what you hold is what was reviewed.</p>
+<p class="tool-local"><span class="icon icon--lock" aria-hidden="true"></span><span>Your content never leaves the browser.</span></p>
+</header>
+<div class="tool-panel" id="verify">
+<div class="tool-panel__bar"><span class="icon icon--terminal" aria-hidden="true"></span><span class="tool-panel__name">verify</span><span class="tool-panel__tag">Local · SHA-256</span></div>
+<div class="tool-panel__body">
+<div class="tool-pair">
+<div class="tool-pair__col">
+<h2 class="tool-label"><span class="tool-label__n">1</span>Packet or manifest</h2>
+<div class="drop" id="verify-manifest" data-drop>
+<label class="drop__label" for="verify-manifest-input">
+<span class="icon icon--upload" aria-hidden="true"></span>
+<span class="drop__title">Drop the packet (.md) or manifest (.json)</span>
+<span class="drop__hint">Or click to choose the file.</span>
+<input class="drop__input" type="file" id="verify-manifest-input" accept=".md,.markdown,.json,.txt">
+</label>
+</div>
+<p class="tool-state" id="manifest-state">No packet loaded.</p>
+</div>
+<div class="tool-pair__col">
+<h2 class="tool-label"><span class="tool-label__n">2</span>Source files</h2>
+<div class="drop" id="verify-files" data-drop>
+<label class="drop__label" for="verify-files-input">
+<span class="icon icon--upload" aria-hidden="true"></span>
+<span class="drop__title">Drop the files or the repository folder</span>
+<span class="drop__hint">Matched by path, then name, then hash.</span>
+<input class="drop__input" type="file" id="verify-files-input" multiple>
+</label>
+<label class="drop__folder" for="verify-files-folder"><span class="icon icon--file" aria-hidden="true"></span><span>Choose a folder</span><input class="drop__input" type="file" id="verify-files-folder" webkitdirectory multiple></label>
+</div>
+<p class="tool-state" id="files-state">No files loaded.</p>
+</div>
+</div>
+<div class="cluster">
+<button class="btn btn--quiet" type="button" id="verify-example"><span class="btn__label">Load example</span></button>
+<button class="btn btn--quiet" type="button" id="verify-clear"><span class="btn__label">Clear</span></button>
+</div>
+<div id="verify-notice"></div>
+<div class="tool-result" id="verify-result" hidden>
+<div class="tool-summary" id="verify-summary" role="status"></div>
+<div id="verify-rows"></div>
+<p class="tool-state" id="verify-extras"></p>
+<div class="cluster">
+<button class="btn btn--secondary" type="button" id="verify-copy"><span class="icon icon--copy" aria-hidden="true"></span><span class="btn__label">Copy result as Markdown</span></button>
+</div>
+</div></div>
+</div>
+</section>
+
+<section class="section section--tight wrap" aria-labelledby="how">
+<h2 id="how">How the check works</h2>
+<ol class="tool-steps"><li><h3 class="tool-steps__title">Read the file list</h3><p>Every packet has a Files section: one row per file with its label, byte size, line count and SHA-256. A manifest JSON carries the same rows.</p></li><li><h3 class="tool-steps__title">Hash the files again</h3><p>Each file you drop is read as UTF-8 text and hashed in this tab with Web Crypto, the same way the workbench hashed it.</p></li><li><h3 class="tool-steps__title">Compare row by row</h3><p>Every listed file gets one result. Files you dropped that the packet does not list are named underneath.</p></li></ol>
+</section>
+
+<section class="section section--tight wrap" aria-labelledby="results">
+<h2 id="results" class="visually-hidden">Results</h2>
+<div class="table-wrap" tabindex="0" role="region" aria-label="The four results"><table class="table stack-table tool-table"><caption>The four results</caption><thead><tr><th scope="col">Result</th><th scope="col">Meaning</th><th scope="col">What to do</th></tr></thead><tbody><tr><th scope="row">Match</th><td><span class="cell-label">Meaning</span>The file hashes to the value in the manifest.</td><td><span class="cell-label">What to do</span>Nothing. The review covered this exact file.</td></tr><tr><th scope="row">Matches after line-ending normalisation</th><td><span class="cell-label">Meaning</span>The content is the same; one side has CRLF line endings and the other LF.</td><td><span class="cell-label">What to do</span>Nothing to fix in the code. Check out with the same line endings if you need the raw hash to agree.</td></tr><tr><th scope="row">Mismatch</th><td><span class="cell-label">Meaning</span>A file with that name was supplied and its content differs.</td><td><span class="cell-label">What to do</span>Check out the commit the review was run on, or run the review again on the current file.</td></tr><tr><th scope="row">Missing</th><td><span class="cell-label">Meaning</span>No supplied file has that name or that hash.</td><td><span class="cell-label">What to do</span>Drop the missing file, or the folder that holds it.</td></tr></tbody></table></div>
+</section>
+
+<section class="section section--tight wrap" aria-labelledby="endings">
+<div class="split">
+<div class="tool-copy">
+<h2 id="endings">Why line endings get their own result</h2>
+<p>Git on Windows checks files out with CRLF line endings when <code>core.autocrlf</code> is on. The same commit then hashes to a different value on two machines, and a plain comparison calls it a mismatch.</p>
+<p>The verifier hashes each file three ways: as supplied, with CRLF replaced by LF, and with LF replaced by CRLF. A file that only matches after the swap is reported on its own line, with the direction, so a line-ending difference is never mistaken for a changed file.</p>
+</div>
+<div class="tool-copy">
+<h2>Check one hash by hand</h2>
+<p>The hash in a packet is a plain SHA-256 of the file. Any tool gives the same value.</p>
+<figure class="code"><figcaption class="code__bar"><span class="code__name">shell</span><button class="code__copy" type="button" data-copy><span class="icon icon--copy" aria-hidden="true"></span><span data-copy-label>Copy</span></button></figcaption><pre class="code__pre" tabindex="0" role="region" aria-label="Hash commands"><code><span class="code__line"># Linux
+</span><span class="code__line">sha256sum src/Vault.sol
+</span><span class="code__line">
+</span><span class="code__line"># macOS
+</span><span class="code__line">shasum -a 256 src/Vault.sol
+</span><span class="code__line">
+</span><span class="code__line"># Windows PowerShell
+</span><span class="code__line">Get-FileHash -Algorithm SHA256 src\Vault.sol
+</span></code></pre></figure>
+</div>
+</div>
+</section>
+
+<section class="section section--tight wrap wrap--narrow" aria-labelledby="questions">
+<h2 id="questions">Questions</h2>
+<div class="accordion tool-faq"><details class="accordion__item"><summary class="accordion__summary">Are my files uploaded?</summary><div class="accordion__body"><p>No. The page reads each file with the browser’s file API and hashes it with Web Crypto. It makes no request with a file name, a hash or any content. After the page has loaded it makes one request: a counter that says the tool was used, with nothing of yours in it.</p></div></details><details class="accordion__item"><summary class="accordion__summary">What does a match prove?</summary><div class="accordion__body"><p>That the bytes you hold are the bytes the review was run on, to the last character. It is a statement about the files. Whether the review’s conclusions hold is a separate question, answered by the code and the proof.</p></div></details><details class="accordion__item"><summary class="accordion__summary">Where does a packet come from?</summary><div class="accordion__body"><p>The workbench writes one for every finished review: the verdict, the context you gave, the file list with a SHA-256 per file, and the review itself. A manifest is the same file list as JSON, as returned by the review API and the MCP server.</p></div></details></div>
+</section>
+
+<section class="section section--tight wrap" aria-labelledby="next-action">
+<div class="tool-next">
+<div class="tool-next__text">
+<h2 class="h3" id="next-action">No packet yet</h2>
+<p>Run a review in the workbench. The packet it saves carries the verdict, the evidence you gave and the hash of every file, ready to attach to a submission.</p>
+</div>
+<div class="cluster">
+<a class="btn btn--primary" href="/#workspace"><span class="btn__label">Open the workbench</span><span class="icon icon--arrow-right" aria-hidden="true"></span></a>
+<a class="btn btn--secondary" href="/mcp"><span class="btn__label">Connect over MCP</span></a>
+</div>
+</div>
+</section>
+
+<section class="section section--tight wrap" aria-labelledby="more-tools">
+<h2 class="h3" id="more-tools">More free tools</h2>
+<ul class="tool-related"><li><a class="tool-related__link" href="/tools/report-check"><span class="tool-related__name">Report check<span class="icon icon--arrow-right" aria-hidden="true"></span></span><span class="tool-related__text">Paste a draft and see which of 14 checks it passes: pinned commit, quoted impact row, inline proof, trusted roles, leftover secrets.</span></a></li><li><a class="tool-related__link" href="/tools/secret-check"><span class="tool-related__name">Secret check<span class="icon icon--arrow-right" aria-hidden="true"></span></span><span class="tool-related__text">Drop a PoC folder and get every key, token, seed phrase and private report link as file:line.</span></a></li><li><a class="tool-related__link" href="/tools/acceptance-rates"><span class="tool-related__name">Acceptance rates<span class="icon icon--arrow-right" aria-hidden="true"></span></span><span class="tool-related__text">Twelve bug classes ranked by how often judges accepted them, with the sample size on every row.</span></a></li><li><a class="tool-related__link" href="/tools/slither-focus"><span class="tool-related__name">Slither triage queue<span class="icon icon--arrow-right" aria-hidden="true"></span></span><span class="tool-related__text">Drop Slither’s JSON and get a ranked Markdown queue of the 13 detectors worth a manual pass.</span></a></li></ul>
+</section>
+</main>
+<footer class="site-footer">
+<div class="wrap site-footer__grid">
+<div class="site-footer__brand">
+<a class="brand" href="/"><svg class="brand__mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect class="brand__tile" width="64" height="64" rx="14"/><path class="brand__glyph" d="M12.5 15h6.5v31.5h-6.5z"/><path class="brand__glyph" fill-rule="evenodd" d="M25.5 25a10.75 10.75 0 1 0 0 21.5a10.75 10.75 0 0 0 0-21.5zm0 6.25a4.5 4.5 0 1 1 0 9a4.5 4.5 0 0 1 0-9z"/><path class="brand__slash" d="M45.5 13h6.25l-8.6 37.5h-6.25z"/></svg><span class="brand__name">Bounty Operator</span></a>
+<p class="site-footer__promise">Find the hole in your report before the triager does.</p>
+</div>
+<nav class="site-footer__col" aria-label="Product"><h2 class="site-footer__title">Product</h2><ul><li><a href="/#workspace">Workbench</a></li><li><a href="/method">Method</a></li><li><a href="/gauntlet">Gauntlet</a></li><li><a href="/panel-review">Panel review</a></li><li><a href="/pricing">Pricing</a></li><li><a href="/#account">Account</a></li></ul></nav>
+<nav class="site-footer__col" aria-label="Tools"><h2 class="site-footer__title">Tools</h2><ul><li><a href="/tools">All tools</a></li><li><a href="/tools/report-check">Report check</a></li><li><a href="/tools/verify">Packet verifier</a></li><li><a href="/tools/secret-check">Secret check</a></li><li><a href="/tools/acceptance-rates">Acceptance rates</a></li><li><a href="/tools/slither-focus">Slither triage queue</a></li></ul></nav>
+<nav class="site-footer__col" aria-label="Resources"><h2 class="site-footer__title">Resources</h2><ul><li><a href="/guide">Report guide</a></li><li><a href="/mcp">MCP setup</a></li><li><a href="/templates">Report templates</a></li><li><a href="/changelog">Changelog</a></li><li><a href="https://github.com/bountyoperator/bounty-operator" target="_blank" rel="noopener noreferrer">Source<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></li></ul></nav>
+<nav class="site-footer__col" aria-label="Legal"><h2 class="site-footer__title">Legal</h2><ul><li><a href="/privacy">Privacy</a></li><li><a href="/terms">Terms</a></li><li><a href="/security">Security</a></li><li><a href="/licenses">Licences</a></li><li><a href="mailto:security@bountyoperator.com">Report a vulnerability</a></li></ul></nav>
+</div>
+<div class="wrap">
+<div class="site-footer__base">
+<p>Built by <a href="https://audits.sherlock.xyz/watson/Tradi3" target="_blank" rel="noopener noreferrer">Tradi3</a></p>
+<p><a href="mailto:support@bountyoperator.com">support@bountyoperator.com</a></p>
+</div>
+</div>
+</footer>
+</body>
+</html>

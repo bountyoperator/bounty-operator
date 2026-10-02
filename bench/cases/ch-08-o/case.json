@@ -1,0 +1,15 @@
+{
+  "id": "ch-08-o",
+  "pair": "ch-08",
+  "variant": "overclaimed",
+  "family": "challenge",
+  "visibility": "public",
+  "authored": "2026-10-02",
+  "profile": "report",
+  "files": [
+    "programme.md",
+    "src/PayoutOrderLib.sol",
+    "src/ReelPayoutDesk.sol"
+  ],
+  "focus": "Review draft-report.md against the code and programme.md. Decide whether the report's claims are supported."
+}

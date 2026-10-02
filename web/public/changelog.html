@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Changelog | Bounty Operator</title>
+<meta name="description" content="Every Bounty Operator release with its date: what changed in reviews, the site, the MCP server and the command-line kit.">
+<link rel="canonical" href="https://bountyoperator.com/changelog">
+<meta name="color-scheme" content="dark light">
+<meta name="theme-color" content="#0a1220" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f5f7fb" media="(prefers-color-scheme: light)">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Bounty Operator">
+<meta property="og:title" content="Changelog | Bounty Operator">
+<meta property="og:description" content="Every Bounty Operator release with its date: what changed in reviews, the site, the MCP server and the command-line kit.">
+<meta property="og:url" content="https://bountyoperator.com/changelog">
+<meta property="og:image" content="https://bountyoperator.com/social-v2.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Bounty Operator. Find the hole in your report before the triager does.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Changelog | Bounty Operator">
+<meta name="twitter:description" content="Every Bounty Operator release with its date: what changed in reviews, the site, the MCP server and the command-line kit.">
+<meta name="twitter:image" content="https://bountyoperator.com/social-v2.png">
+<meta name="twitter:image:alt" content="Bounty Operator. Find the hole in your report before the triager does.">
+<link rel="icon" href="/favicon.ico" sizes="48x48">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+<script src="/theme.js"></script>
+<link rel="stylesheet" href="/css/base.css">
+<link rel="stylesheet" href="/css/docs.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Bounty Operator","item":"https://bountyoperator.com/"},{"@type":"ListItem","position":2,"name":"Changelog","item":"https://bountyoperator.com/changelog"}]}</script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="site-header">
+<div class="wrap site-header__inner">
+<a class="brand" href="/"><svg class="brand__mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect class="brand__tile" width="64" height="64" rx="14"/><path class="brand__glyph" d="M12.5 15h6.5v31.5h-6.5z"/><path class="brand__glyph" fill-rule="evenodd" d="M25.5 25a10.75 10.75 0 1 0 0 21.5a10.75 10.75 0 0 0 0-21.5zm0 6.25a4.5 4.5 0 1 1 0 9a4.5 4.5 0 0 1 0-9z"/><path class="brand__slash" d="M45.5 13h6.25l-8.6 37.5h-6.25z"/></svg><span class="brand__name">Bounty Operator</span></a>
+<nav class="site-nav" aria-label="Main"><ul><li><a href="/#workspace">Workbench</a></li><li><a href="/method">Method</a></li><li><a href="/tools">Tools</a></li><li><a href="/guide">Guide</a></li><li><a href="/mcp">MCP</a></li><li><a href="/pricing">Pricing</a></li></ul></nav>
+<div class="site-header__actions">
+<button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch colour theme"><span class="icon theme-toggle__icon" aria-hidden="true"></span></button>
+<a class="btn btn--secondary btn--sm" href="/#account">Account</a>
+</div>
+</div>
+</header>
+<main id="main" tabindex="-1">
+<article class="docs wrap">
+<header class="docs-head">
+<nav class="breadcrumbs" aria-label="Breadcrumb"><ol><li><a href="/">Bounty Operator</a></li><li aria-current="page">Changelog</li></ol></nav>
+<h1>Bounty Operator changelog</h1>
+<p class="lede">Every release, newest first, with its date. The current version is 0.7.0.</p>
+<p class="meta docs-head__meta">6 releases · latest <time datetime="2026-10-03">3 October 2026</time></p>
+
+</header>
+
+<div class="docs-body">
+<nav class="docs-toc" aria-label="On this page">
+<p class="meta">On this page</p>
+<ul><li><a href="#v0-7-0">0.7.0</a></li><li><a href="#v0-6-0">0.6.0</a></li><li><a href="#v0-5-0">0.5.0</a></li><li><a href="#v0-3-0">0.3.0</a></li><li><a href="#v0-2-0">0.2.0</a></li><li><a href="#v0-1-0">0.1.0</a></li></ul>
+</nav>
+<div class="docs-content">
+
+<section class="docs-section" aria-labelledby="v0-7-0">
+<h2 class="docs-section__title" id="v0-7-0">0.7.0<span class="release__date"><time datetime="2026-10-03">3 October 2026</time></span><span class="release__latest"><span class="chip" data-tone="observed">Latest</span></span></h2>
+<div class="prose"><h3 class="release__group">Reviews</h3><ul><li>Every review opens with a verdict: <code>submit</code>, <code>rewrite-then-submit</code>, <code>prove-first</code>, <code>hold-duplicate</code> or <code>drop</code>. Reviews of your own code return <code>fix-before-deploy</code> or <code>no-blocking-issues</code>.</li><li>Eleven review profiles. New: scope and impact fit, design intent and actors, prior-art overlap, proof review, severity calibration, triager simulation, report editor and scanner triage. The new profiles run as hosted reviews: your files and your key go through bountyoperator.com to your provider, the service adds the method, and no file, key or review is stored. Code security review, Solidity review and Challenge a draft report stay open source and also export as a prompt.</li><li>A free account runs any single profile as its hosted review of the day.</li><li>An answer that repeats the review instructions in place of a review is stopped with the code <code>output_withheld</code>. An unfilled output template is not such an answer and is delivered.</li><li>Each finding carries its file-and-line references, the strongest counterargument, the one missing artefact, a fix, a test and the next action. A reference to a file or line that was not supplied is flagged.</li><li>Evidence fields for what decides a report: the impact row, exclusions, revisions, prior material, the proof run and what the platform stored.</li><li>Eight providers on your own key: OpenRouter, Anthropic, OpenAI, Gemini, xAI, DeepSeek, Mistral and Groq. OpenRouter connects in one click. Provider errors name the cause.</li><li>A review takes up to 50 files, 120 KB per file, 240 KB and 20,000 lines in total. The answer is capped at 16,000 tokens.</li></ul><h3 class="release__group">Operator</h3><ul><li>The Gauntlet: one run through eight stages (scope, provenance, prior art, proof, severity, triager, report, verdict). It ends in one verdict, one blocker, the cheapest action that removes it and a filing deadline. A run that is cancelled or interrupted keeps its finished stages.</li><li>Panel review: two to four models review the same files in parallel, then a cross-examination pass keeps the findings the cited lines prove and records how many models reported each one.</li><li>The last gauntlet stage and the panel cross-examination run on Operator only. An account without the plan is refused with the code <code>operator_only</code> before the provider is called, and keeps its review of the day.</li><li>Four hosted reviews at once. Free stays at one hosted review per UTC day and Operator at US$10 per week.</li></ul><h3 class="release__group">Workbench</h3><ul><li>Results stream in and render as finding cards under the verdict. A cited line opens in the file it came from.</li><li>Import from GitHub: a repository, a folder, a pull request or a commit, pinned to a commit SHA, with a file picker. A local folder can be dropped in whole.</li><li>Paste-back for chat subscriptions: export the prompt of a core profile, paste the answer back and get the same cards and packet.</li><li>Local history, off by default: finished reviews saved in this browser, with export and delete.</li><li>Email and IP matches are warnings you acknowledge. A line that holds a secret is masked, or its file removed, before anything is sent.</li></ul><h3 class="release__group">Account</h3><ul><li>Rebuilt account panel: overview with today&#39;s usage, recent reviews, connections, security and billing.</li><li>Rotating the recovery code, adding or removing a passkey, creating a connection token and deleting the account ask for the passkey again when the last check is older than ten minutes.</li></ul><h3 class="release__group">Free tools and templates</h3><ul><li>Five free tools that run in the browser: report check, packet verifier, secret check, acceptance rates and Slither triage queue.</li><li>Five templates: Immunefi, Sherlock, Cantina, HackerOne and a Foundry PoC scaffold.</li><li>New pages: the twelve checks, the report guide with a worked example, pricing, compare, security, licences and this changelog.</li></ul><h3 class="release__group">MCP</h3><ul><li>Remote endpoint, nothing to install: <code>claude mcp add --transport http bounty-operator https://bountyoperator.com/api/mcp</code>.</li><li>Local server from the site: <code>npx -y https://bountyoperator.com/dl/bounty-operator-mcp.tgz</code>. It reads files by path and adds <code>run_gauntlet_plan</code>.</li><li>Tools renamed to <code>list_profiles</code>, <code>prepare_review</code>, <code>build_packet</code>, <code>run_review</code> and <code>account</code>. Three prompts: <code>challenge-report</code>, <code>solidity-review</code> and <code>gauntlet</code>.</li><li><code>prepare_review</code> takes the three core profiles and your agent&#39;s own model writes the review. <code>list_profiles</code> marks every other profile <code>hosted</code>: <code>prepare_review</code> refuses it with <code>hosted_profile</code> and <code>run_review</code> runs it with a connection token and your provider key.</li><li>The <code>gauntlet</code> prompt runs seven stages through <code>run_review</code> and the report stage on your agent&#39;s own model, so a full run over MCP takes Operator.</li></ul><h3 class="release__group">Fixes</h3><ul><li>Hosted reviews now work on the production runtime. Provider calls used a redirect option that runtime refuses.</li><li>A weekly renewal no longer drops paid access while Stripe is still collecting the invoice.</li><li>The sign-up limit counts accounts created, not attempts. A cancelled passkey prompt no longer locks sign-up for the day.</li><li>A review that fails validation, or that the provider cuts off at the start, does not use the day&#39;s free review.</li><li>Billing errors name the cause.</li></ul><h3 class="release__group">Site</h3><ul><li>New design with dark and light themes. Extensionless URLs, one content security policy on every response and no third-party scripts.</li></ul><h3 class="release__group">CLI</h3><ul><li><code>ai-review</code> defaults to <code>gpt-6.1-sol</code> and caps output at 16,000 tokens. The cap is sent as <code>max_completion_tokens</code> to OpenAI, xAI and Groq, as <code>max_tokens</code> to other endpoints, and is left out for Gemini. <code>--max-output-tokens</code> changes it.</li><li><code>ai-review</code> reads the finish reason. A review cut off at the cap prints with a warning on stderr, and a refusal or an empty answer is an error that names the cause.</li><li><code>ai-review</code> sends files with line numbers so the review cites exact lines. The manifest and <code>--dry-run</code> include a line count per file.</li><li><code>ai-review</code> accepts up to 50 files and waits 180 seconds by default. Failed requests report rejected keys, unknown models, rate limits and timeouts separately, with the provider&#39;s message when it passes the sanitizer.</li><li><code>slither-focus</code> reads a successful scan with no detector results as an empty queue.</li><li><code>pattern-stats --json</code> renames the <code>caution</code> field to <code>note</code>.</li><li>The default agent-pack tool stack lists general tools only.</li><li>Packaging: SPDX licence metadata, Beta status, project URLs.</li></ul></div>
+</section><section class="docs-section" aria-labelledby="v0-6-0">
+<h2 class="docs-section__title" id="v0-6-0">0.6.0<span class="release__date"><time datetime="2026-10-02">2 October 2026</time></span></h2>
+<div class="prose"><ul><li>Add a three-step workbench, an account-free authored example, paste input, and GitHub file import pinned to an exact commit.</li><li>Add code security, Solidity source-review and draft-report profiles with counterarguments, defensive fixes and evidence gaps.</li><li>Add a stdio MCP server, local checked-request preparation, and revocable hosted connections sharing the website&#39;s daily allowance.</li><li>Add the account portal: usage, recent review metadata, billing, passkeys, recovery rotation, account export, token management and sign-out of all devices.</li><li>Hash connection secrets, expire them after 90 days, and keep billing and account administration outside token permissions. Retain exact-origin and CSRF checks.</li><li>Preserve billing-linked accounts when billing is unavailable; require the billing support path before deleting their local account record.</li><li>Publish the report guide, template, AI setup guide and Bounty Operator domain.</li><li>Keep provider credentials, uploaded code and review text out of persistent storage.</li></ul></div>
+</section><section class="docs-section" aria-labelledby="v0-5-0">
+<h2 class="docs-section__title" id="v0-5-0">0.5.0<span class="release__date"><time datetime="2026-10-02">2 October 2026</time></span></h2>
+<div class="prose"><p>Includes the changes prepared as 0.4.0 on 2026-09-30, which was never tagged.</p><ul><li>Launch the Bounty Operator website on Cloudflare with passkey accounts, one free review per UTC day, and a US$10/week subscription using the customer&#39;s AI key.</li><li>Add request previews, checked-text hashes, evidence notes, prompt export, and downloadable review packets. Keep uploaded files, keys, and results out of storage.</li><li>Enforce daily quotas and one concurrent review per account in D1; restore the free allowance after provider failure. Validate Stripe prices, signed webhooks, current payment state, cancellations, refunds, and disputes before paid access.</li><li>Check every text suffix and report missing, oversized, binary, linked, unreadable, invalid, and excluded inputs with bounded scan coverage.</li><li>Read AI inputs once, add network-free <code>--dry-run</code>, bound responses, refuse redirects, and keep upstream bodies out of CLI errors.</li><li>Preserve existing generated output by default; add explicit <code>--force</code> and reject malformed or failed scanner output.</li><li>Make reference downloads opt-in and preserve modified checkouts during updates.</li><li>Add Windows/Linux CI, installed-wheel checks, web checks, and privacy regressions.</li><li>Add the offline <code>pattern-stats</code> command: accepted and rejected counts per vulnerability pattern from a CC0 snapshot of public Sherlock judging.</li><li>Add AI review preflight checks for sensitive input, binary files, absolute path labels, aggregate payload size, and transport security.</li><li>Add exact deployment, live-programme verification, same-root prior-art, and strongest-rejection gates to generated hunt material.</li><li>Add a contribution guide and a security policy.</li></ul></div>
+</section><section class="docs-section" aria-labelledby="v0-3-0">
+<h2 class="docs-section__title" id="v0-3-0">0.3.0<span class="release__date"><time datetime="2026-07-09">9 July 2026</time></span></h2>
+<div class="prose"><ul><li>Add the full AI bounty agent pack and the prompt library.</li></ul></div>
+</section><section class="docs-section" aria-labelledby="v0-2-0">
+<h2 class="docs-section__title" id="v0-2-0">0.2.0<span class="release__date"><time datetime="2026-07-09">9 July 2026</time></span></h2>
+<div class="prose"><ul><li>Add the <code>agent-brief</code> and <code>ai-review</code> commands, the AI agent flow guide and the recommended tools list.</li></ul></div>
+</section><section class="docs-section" aria-labelledby="v0-1-0">
+<h2 class="docs-section__title" id="v0-1-0">0.1.0<span class="release__date"><time datetime="2026-07-09">9 July 2026</time></span></h2>
+<div class="prose"><ul><li>Initial public release: <code>sanitize</code>, <code>slither-focus</code>, <code>init-ledger</code> and <code>prior-art</code>, the workflow guide and the reference installer script.</li></ul></div>
+</section>
+</div>
+</div>
+<aside class="docs-next" aria-labelledby="next-step">
+<div class="docs-next__text"><h2 class="h3" id="next-step">Read the open-source code</h2><p class="muted">The site, the review engine with its three core profiles, the free tools, the MCP server and the command-line kit are in one public repository. The gauntlet stages and the panel cross-examination run on the hosted service.</p></div>
+<div class="cluster"><a class="btn btn--primary" href="/#workspace"><span class="btn__label">Open the workbench</span><span class="icon icon--arrow-right" aria-hidden="true"></span></a><a class="btn btn--secondary" href="https://github.com/bountyoperator/bounty-operator" target="_blank" rel="noopener noreferrer"><span class="btn__label">Source on GitHub</span><span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></div>
+</aside>
+</article>
+</main>
+<footer class="site-footer">
+<div class="wrap site-footer__grid">
+<div class="site-footer__brand">
+<a class="brand" href="/"><svg class="brand__mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect class="brand__tile" width="64" height="64" rx="14"/><path class="brand__glyph" d="M12.5 15h6.5v31.5h-6.5z"/><path class="brand__glyph" fill-rule="evenodd" d="M25.5 25a10.75 10.75 0 1 0 0 21.5a10.75 10.75 0 0 0 0-21.5zm0 6.25a4.5 4.5 0 1 1 0 9a4.5 4.5 0 0 1 0-9z"/><path class="brand__slash" d="M45.5 13h6.25l-8.6 37.5h-6.25z"/></svg><span class="brand__name">Bounty Operator</span></a>
+<p class="site-footer__promise">Find the hole in your report before the triager does.</p>
+</div>
+<nav class="site-footer__col" aria-label="Product"><h2 class="site-footer__title">Product</h2><ul><li><a href="/#workspace">Workbench</a></li><li><a href="/method">Method</a></li><li><a href="/gauntlet">Gauntlet</a></li><li><a href="/panel-review">Panel review</a></li><li><a href="/pricing">Pricing</a></li><li><a href="/#account">Account</a></li></ul></nav>
+<nav class="site-footer__col" aria-label="Tools"><h2 class="site-footer__title">Tools</h2><ul><li><a href="/tools">All tools</a></li><li><a href="/tools/report-check">Report check</a></li><li><a href="/tools/verify">Packet verifier</a></li><li><a href="/tools/secret-check">Secret check</a></li><li><a href="/tools/acceptance-rates">Acceptance rates</a></li><li><a href="/tools/slither-focus">Slither triage queue</a></li></ul></nav>
+<nav class="site-footer__col" aria-label="Resources"><h2 class="site-footer__title">Resources</h2><ul><li><a href="/guide">Report guide</a></li><li><a href="/mcp">MCP setup</a></li><li><a href="/templates">Report templates</a></li><li><a href="/changelog">Changelog</a></li><li><a href="https://github.com/bountyoperator/bounty-operator" target="_blank" rel="noopener noreferrer">Source<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></li></ul></nav>
+<nav class="site-footer__col" aria-label="Legal"><h2 class="site-footer__title">Legal</h2><ul><li><a href="/privacy">Privacy</a></li><li><a href="/terms">Terms</a></li><li><a href="/security">Security</a></li><li><a href="/licenses">Licences</a></li><li><a href="mailto:security@bountyoperator.com">Report a vulnerability</a></li></ul></nav>
+</div>
+<div class="wrap">
+<div class="site-footer__base">
+<p>Built by <a href="https://audits.sherlock.xyz/watson/Tradi3" target="_blank" rel="noopener noreferrer">Tradi3</a></p>
+<p><a href="mailto:support@bountyoperator.com">support@bountyoperator.com</a></p>
+</div>
+</div>
+</footer>
+</body>
+</html>

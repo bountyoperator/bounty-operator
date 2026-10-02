@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Which bug classes get accepted: acceptance rates by vulnerability class | Bounty Operator</title>
+<meta name="description" content="Acceptance rates for 12 smart-contract bug classes from 1,032 judged audit-contest findings, with the sample size on every row. Sortable.">
+<link rel="canonical" href="https://bountyoperator.com/tools/acceptance-rates">
+<meta name="color-scheme" content="dark light">
+<meta name="theme-color" content="#0a1220" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f5f7fb" media="(prefers-color-scheme: light)">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Bounty Operator">
+<meta property="og:title" content="Which bug classes get accepted: acceptance rates by vulnerability class | Bounty Operator">
+<meta property="og:description" content="Acceptance rates for 12 smart-contract bug classes from 1,032 judged audit-contest findings, with the sample size on every row. Sortable.">
+<meta property="og:url" content="https://bountyoperator.com/tools/acceptance-rates">
+<meta property="og:image" content="https://bountyoperator.com/social-v2.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Bounty Operator. Find the hole in your report before the triager does.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Which bug classes get accepted: acceptance rates by vulnerability class | Bounty Operator">
+<meta name="twitter:description" content="Acceptance rates for 12 smart-contract bug classes from 1,032 judged audit-contest findings, with the sample size on every row. Sortable.">
+<meta name="twitter:image" content="https://bountyoperator.com/social-v2.png">
+<meta name="twitter:image:alt" content="Bounty Operator. Find the hole in your report before the triager does.">
+<link rel="icon" href="/favicon.ico" sizes="48x48">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+<script src="/theme.js"></script>
+<link rel="stylesheet" href="/css/base.css">
+<link rel="stylesheet" href="/css/tools.css">
+<link rel="modulepreload" href="/tools/dom.mjs">
+<link rel="modulepreload" href="/tools/ping.mjs">
+<script type="module" src="/tools/acceptance-rates.mjs"></script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Bounty Operator","item":"https://bountyoperator.com/"},{"@type":"ListItem","position":2,"name":"Tools","item":"https://bountyoperator.com/tools"},{"@type":"ListItem","position":3,"name":"Acceptance rates","item":"https://bountyoperator.com/tools/acceptance-rates"}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"Dataset","name":"Acceptance rates by smart-contract bug class","description":"Accepted and judged counts for 12 smart-contract vulnerability classes across 10 audit contests and 1,032 judged findings.","url":"https://bountyoperator.com/tools/acceptance-rates","license":"https://creativecommons.org/publicdomain/zero/1.0/","isBasedOn":"https://github.com/holistis/bug-bounty-intelligence-mcp/blob/main/vulnerability-acceptance-rates.json","dateModified":"2026-07-21","variableMeasured":["acceptance rate","accepted findings","judged findings"],"publisher":{"@type":"Organization","name":"Bounty Operator","url":"https://bountyoperator.com/"}}</script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="site-header">
+<div class="wrap site-header__inner">
+<a class="brand" href="/"><svg class="brand__mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect class="brand__tile" width="64" height="64" rx="14"/><path class="brand__glyph" d="M12.5 15h6.5v31.5h-6.5z"/><path class="brand__glyph" fill-rule="evenodd" d="M25.5 25a10.75 10.75 0 1 0 0 21.5a10.75 10.75 0 0 0 0-21.5zm0 6.25a4.5 4.5 0 1 1 0 9a4.5 4.5 0 0 1 0-9z"/><path class="brand__slash" d="M45.5 13h6.25l-8.6 37.5h-6.25z"/></svg><span class="brand__name">Bounty Operator</span></a>
+<nav class="site-nav" aria-label="Main"><ul><li><a href="/#workspace">Workbench</a></li><li><a href="/method">Method</a></li><li><a href="/tools" aria-current="page">Tools</a></li><li><a href="/guide">Guide</a></li><li><a href="/mcp">MCP</a></li><li><a href="/pricing">Pricing</a></li></ul></nav>
+<div class="site-header__actions">
+<button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch colour theme"><span class="icon theme-toggle__icon" aria-hidden="true"></span></button>
+<a class="btn btn--secondary btn--sm" href="/#account">Account</a>
+</div>
+</div>
+</header>
+<main id="main" tabindex="-1">
+
+<section class="section section--tight wrap">
+<header class="tool-head">
+<nav class="breadcrumbs" aria-label="Breadcrumb"><ol><li><a href="/">Bounty Operator</a></li><li><a href="/tools">Tools</a></li><li aria-current="page">Acceptance rates</li></ol></nav>
+<h1>Which bug classes get accepted</h1>
+<p class="lede">Twelve bug classes, ranked by how often contest judges accepted them. 461 of 1,032 judged findings were accepted; the spread between classes is wide.</p>
+<p class="tool-local"><span class="icon icon--lock" aria-hidden="true"></span><span>Your content never leaves the browser.</span></p>
+</header>
+
+<ul class="rates-facts">
+<li><span class="rates-facts__n">1,032</span><span class="meta">judged findings</span></li>
+<li><span class="rates-facts__n">461</span><span class="meta">accepted</span></li>
+<li><span class="rates-facts__n">10</span><span class="meta">contests</span></li>
+<li><span class="rates-facts__n">12</span><span class="meta">bug classes</span></li>
+</ul>
+
+<div class="table-wrap" tabindex="0" role="region" aria-label="Acceptance rate by bug class">
+<table class="table rates" id="rates">
+<caption>Acceptance rate by bug class</caption>
+<thead><tr>
+<th scope="col" aria-sort="none" data-sort-key="label"><button class="table__sort" type="button">Bug class<span class="icon icon--sort" aria-hidden="true"></span></button></th>
+<th scope="col" class="num" aria-sort="descending" data-sort-key="rate"><button class="table__sort" type="button">Rate<span class="icon icon--sort-down" aria-hidden="true"></span></button></th>
+<th scope="col" class="num" aria-sort="none" data-sort-key="total"><button class="table__sort" type="button">n<span class="icon icon--sort" aria-hidden="true"></span></button></th>
+<th scope="col" class="num" aria-sort="none" data-sort-key="accepted"><button class="table__sort" type="button">Accepted<span class="icon icon--sort" aria-hidden="true"></span></button></th>
+<th scope="col"><span class="visually-hidden">Copy</span></th>
+</tr></thead>
+<tbody><tr id="reentrancy" data-label="Reentrancy" data-rate="78" data-accepted="40" data-total="51">
+<th scope="row"><a class="rates__class" href="#reentrancy"><span class="rates__label">Reentrancy</span><code class="rates__tag">reentrancy</code></a></th>
+<td class="num rates__rate">78%</td>
+<td class="num">51</td>
+<td class="num">40</td>
+<td class="rates__actions"><button class="btn btn--quiet btn--sm btn--icon" type="button" data-copy-row="reentrancy"><span class="icon icon--copy" aria-hidden="true"></span><span class="visually-hidden">Copy the Reentrancy row as Markdown</span></button></td>
+</tr><tr id="overflow" data-label="Overflow" data-rate="58" data-accepted="26" data-total="45">
+<th scope="row"><a class="rates__class" href="#overflow"><span class="rates__label">Overflow</span><code class="rates__tag">overflow</code></a></th>
+<td class="num rates__rate">58%</td>
+<td class="num">45</td>
+<td class="num">26</td>
+<td class="rates__actions"><button class="btn btn--quiet btn--sm btn--icon" type="button" data-copy-row="overflow"><span class="icon icon--copy" aria-hidden="true"></span><span class="visually-hidden">Copy the Overflow row as Markdown</span></button></td>
+</tr><tr id="trusted-actor" data-label="Trusted actor" data-rate="51" data-accepted="159" data-total="311">
+<th scope="row"><a class="rates__class" href="#trusted-actor"><span class="rates__label">Trusted actor</span><code class="rates__tag">trusted-actor</code></a></th>
+<td class="num rates__rate">51%</td>
+<td class="num">311</td>
+<td class="num">159</td>
+<td class="rates__actions"><button class="btn btn--quiet btn--sm btn--icon" type="button" data-copy-row="trusted-actor"><span class="icon icon--copy" aria-hidden="true"></span><span class="visually-hidden">Copy the Trusted actor row as Markdown</span></button></td>
+</tr><tr id="fee-miscalculation" data-label="Fee miscalculation" data-rate="50" data-accepted="55" data-total="109">
+<th scope="row"><a class="rates__class" href="#fee-miscalculation"><span class="rates__label">Fee miscalculation</span><code class="rates__tag">fee-miscalculation</code></a></th>
+<td class="num rates__rate">50%</td>
+<td class="num">109</td>
+<td class="num">55</td>
+<td class="rates__actions"><button class="btn btn--quiet btn--sm btn--icon" type="button" data-copy-row="fee-miscalculation"><span class="icon icon--copy" aria-hidden="true"></span><span class="visually-hidden">Copy the Fee miscalculation row as Markdown</span></button></td>
+</tr><tr id="staleness" data-label="Staleness" data-rate="49" data-accepted="86" data-total="174">
+<th scope="row"><a class="rates__class" href="#staleness"><span class="rates__label">Staleness</span><code class="rates__tag">staleness</code></a></th>
+<td class="num rates__rate">49%</td>
+<td class="num">174</td>
+<td class="num">86</td>
+<td class="rates__actions"><button class="btn btn--quiet btn--sm btn--icon" type="button" data-copy-row="staleness"><span class="icon icon--copy" aria-hidden="true"></span><span class="visually-hidden">Copy the Staleness row as Markdown</span></button></td>
+</tr><tr id="mev-slippage" data-label="MEV and slippage" data-rate="49" data-accepted="44" data-total="89">
+<th scope="row"><a class="rates__class" href="#mev-slippage"><span class="rates__label">MEV and slippage</span><code class="rates__tag">mev-slippage</code></a></th>
+<td class="num rates__rate">49%</td>
+<td class="num">89</td>
+<td class="num">44</td>
+<td class="rates__actions"><button class="btn btn--quiet btn--sm btn--icon" type="button" data-copy-row="mev-slippage"><span class="icon icon--copy" aria-hidden="true"></span><span class="visually-hidden">Copy the MEV and slippage row as Markdown</span></button></td>
+</tr><tr id="access-control" data-label="Access control" data-rate="47" data-accepted="35" data-total="74">
+<th scope="row"><a class="rates__class" href="#access-control"><span class="rates__label">Access control</span><code class="rates__tag">access-control</code></a></th>
+<td class="num rates__rate">47%</td>
+<td class="num">74</td>
+<td class="num">35</td>
+<td class="rates__actions"><button class="btn btn--quiet btn--sm btn--icon" type="button" data-copy-row="access-control"><span class="icon icon--copy" aria-hidden="true"></span><span class="visually-hidden">Copy the Access control row as Markdown</span></button></td>
+</tr><tr id="flash-loan" data-label="Flash loan" data-rate="46" data-accepted="6" data-total="13">
+<th scope="row"><a class="rates__class" href="#flash-loan"><span class="rates__label">Flash loan</span><code class="rates__tag">flash-loan</code></a><span class="chip chip--dashed rates__small" data-tone="unproven">Small sample</span></th>
+<td class="num rates__rate">46%</td>
+<td class="num">13</td>
+<td class="num">6</td>
+<td class="rates__actions"><button class="btn btn--quiet btn--sm btn--icon" type="button" data-copy-row="flash-loan"><span class="icon icon--copy" aria-hidden="true"></span><span class="visually-hidden">Copy the Flash loan row as Markdown</span></button></td>
+</tr><tr id="dos-griefing" data-label="DoS and griefing" data-rate="41" data-accepted="64" data-total="156">
+<th scope="row"><a class="rates__class" href="#dos-griefing"><span class="rates__label">DoS and griefing</span><code class="rates__tag">dos-griefing</code></a></th>
+<td class="num rates__rate">41%</td>
+<td class="num">156</td>
+<td class="num">64</td>
+<td class="rates__actions"><button class="btn btn--quiet btn--sm btn--icon" type="button" data-copy-row="dos-griefing"><span class="icon icon--copy" aria-hidden="true"></span><span class="visually-hidden">Copy the DoS and griefing row as Markdown</span></button></td>
+</tr><tr id="rounding" data-label="Rounding" data-rate="40" data-accepted="25" data-total="63">
+<th scope="row"><a class="rates__class" href="#rounding"><span class="rates__label">Rounding</span><code class="rates__tag">rounding</code></a></th>
+<td class="num rates__rate">40%</td>
+<td class="num">63</td>
+<td class="num">25</td>
+<td class="rates__actions"><button class="btn btn--quiet btn--sm btn--icon" type="button" data-copy-row="rounding"><span class="icon icon--copy" aria-hidden="true"></span><span class="visually-hidden">Copy the Rounding row as Markdown</span></button></td>
+</tr><tr id="oracle-manipulation" data-label="Oracle manipulation" data-rate="36" data-accepted="47" data-total="131">
+<th scope="row"><a class="rates__class" href="#oracle-manipulation"><span class="rates__label">Oracle manipulation</span><code class="rates__tag">oracle-manipulation</code></a></th>
+<td class="num rates__rate">36%</td>
+<td class="num">131</td>
+<td class="num">47</td>
+<td class="rates__actions"><button class="btn btn--quiet btn--sm btn--icon" type="button" data-copy-row="oracle-manipulation"><span class="icon icon--copy" aria-hidden="true"></span><span class="visually-hidden">Copy the Oracle manipulation row as Markdown</span></button></td>
+</tr><tr id="liquidation" data-label="Liquidation" data-rate="29" data-accepted="4" data-total="14">
+<th scope="row"><a class="rates__class" href="#liquidation"><span class="rates__label">Liquidation</span><code class="rates__tag">liquidation</code></a><span class="chip chip--dashed rates__small" data-tone="unproven">Small sample</span></th>
+<td class="num rates__rate">29%</td>
+<td class="num">14</td>
+<td class="num">4</td>
+<td class="rates__actions"><button class="btn btn--quiet btn--sm btn--icon" type="button" data-copy-row="liquidation"><span class="icon icon--copy" aria-hidden="true"></span><span class="visually-hidden">Copy the Liquidation row as Markdown</span></button></td>
+</tr></tbody>
+</table>
+</div>
+
+<p class="tool-table__foot" id="method">Source: Sherlock audit-contest judging repositories on public GitHub, compiled in <a class="link link--external" href="https://github.com/holistis/bug-bounty-intelligence-mcp/blob/main/vulnerability-acceptance-rates.json" target="_blank" rel="noopener noreferrer">vulnerability-acceptance-rates.json<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a> (<a class="link link--external" href="https://github.com/holistis/bug-bounty-intelligence-mcp/blob/main/METHODOLOGY.md" target="_blank" rel="noopener noreferrer">methodology<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a>), licence CC0, snapshot of 21 July 2026. Only contests whose accepted and invalid counts reconcile with Sherlock’s published results are included. Tags are assigned by keyword and a finding can carry more than one, so the rows overlap.</p>
+</section>
+
+<section class="section section--tight wrap" aria-labelledby="read">
+<div class="split">
+<div class="tool-copy">
+<h2 id="read">How to read a row</h2>
+<p><strong>n</strong> is the number of judged findings that carry the tag. <strong>Accepted</strong> is how many of those the judges accepted. <strong>Rate</strong> is the second divided by the first.</p>
+<p>A row with n under 20 is marked as a small sample. Liquidation (14) and flash loan (13) are the two; one more accepted finding moves either rate by more than seven points.</p>
+<p>Every header sorts. Each row has its own link, and the copy button gives the row as one line of Markdown with its source.</p>
+<p>Sorting and copying run in this tab. After the page has loaded it makes one request: a counter that says the tool was used, with nothing of yours in it.</p>
+</div>
+<div class="tool-copy">
+<h2>What stands out</h2>
+<ul class="ticks ticks--plain">
+<li><span class="meta">High</span><span>Reentrancy was accepted 78% (40 of 51), the highest rate in the table. Overflow follows at 58% (26 of 45).</span></li>
+<li><span class="meta">Size</span><span>Trusted actor is the largest tag, 311 findings, and splits down the middle: 51% (159 of 311).</span></li>
+<li><span class="meta">Low</span><span>Oracle manipulation was accepted 36% (47 of 131), rounding 40% (25 of 63), DoS and griefing 41% (64 of 156).</span></li>
+</ul>
+<p>For a class in the lower half, settle three things before you write: who performs each step, whether every precondition is reachable from live state by public calls, and what loss is left after every recovery action.</p>
+</div>
+</div>
+</section>
+
+<section class="section section--tight wrap" aria-labelledby="next-action">
+<div class="tool-next">
+<div class="tool-next__text">
+<h2 class="h3" id="next-action">Find out which side of the rate your finding is on</h2>
+<p>The triager simulation reads your draft as the programme triager, ranks the three likeliest rejection reasons, quotes the sentence that triggers each and names the evidence that flips it.</p>
+</div>
+<div class="cluster">
+<a class="btn btn--primary" href="/?profile=triage#workspace"><span class="btn__label">Run a triager simulation</span><span class="icon icon--arrow-right" aria-hidden="true"></span></a>
+<a class="btn btn--secondary" href="/triager-simulation"><span class="btn__label">How the simulation works</span></a>
+</div>
+</div>
+</section>
+
+<section class="section section--tight wrap" aria-labelledby="more-tools">
+<h2 class="h3" id="more-tools">More free tools</h2>
+<ul class="tool-related"><li><a class="tool-related__link" href="/tools/report-check"><span class="tool-related__name">Report check<span class="icon icon--arrow-right" aria-hidden="true"></span></span><span class="tool-related__text">Paste a draft and see which of 14 checks it passes: pinned commit, quoted impact row, inline proof, trusted roles, leftover secrets.</span></a></li><li><a class="tool-related__link" href="/tools/verify"><span class="tool-related__name">Packet verifier<span class="icon icon--arrow-right" aria-hidden="true"></span></span><span class="tool-related__text">Drop a packet and its source files and get match, mismatch or missing for every SHA-256.</span></a></li><li><a class="tool-related__link" href="/tools/secret-check"><span class="tool-related__name">Secret check<span class="icon icon--arrow-right" aria-hidden="true"></span></span><span class="tool-related__text">Drop a PoC folder and get every key, token, seed phrase and private report link as file:line.</span></a></li><li><a class="tool-related__link" href="/tools/slither-focus"><span class="tool-related__name">Slither triage queue<span class="icon icon--arrow-right" aria-hidden="true"></span></span><span class="tool-related__text">Drop Slither’s JSON and get a ranked Markdown queue of the 13 detectors worth a manual pass.</span></a></li></ul>
+</section>
+</main>
+<footer class="site-footer">
+<div class="wrap site-footer__grid">
+<div class="site-footer__brand">
+<a class="brand" href="/"><svg class="brand__mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect class="brand__tile" width="64" height="64" rx="14"/><path class="brand__glyph" d="M12.5 15h6.5v31.5h-6.5z"/><path class="brand__glyph" fill-rule="evenodd" d="M25.5 25a10.75 10.75 0 1 0 0 21.5a10.75 10.75 0 0 0 0-21.5zm0 6.25a4.5 4.5 0 1 1 0 9a4.5 4.5 0 0 1 0-9z"/><path class="brand__slash" d="M45.5 13h6.25l-8.6 37.5h-6.25z"/></svg><span class="brand__name">Bounty Operator</span></a>
+<p class="site-footer__promise">Find the hole in your report before the triager does.</p>
+</div>
+<nav class="site-footer__col" aria-label="Product"><h2 class="site-footer__title">Product</h2><ul><li><a href="/#workspace">Workbench</a></li><li><a href="/method">Method</a></li><li><a href="/gauntlet">Gauntlet</a></li><li><a href="/panel-review">Panel review</a></li><li><a href="/pricing">Pricing</a></li><li><a href="/#account">Account</a></li></ul></nav>
+<nav class="site-footer__col" aria-label="Tools"><h2 class="site-footer__title">Tools</h2><ul><li><a href="/tools">All tools</a></li><li><a href="/tools/report-check">Report check</a></li><li><a href="/tools/verify">Packet verifier</a></li><li><a href="/tools/secret-check">Secret check</a></li><li><a href="/tools/acceptance-rates">Acceptance rates</a></li><li><a href="/tools/slither-focus">Slither triage queue</a></li></ul></nav>
+<nav class="site-footer__col" aria-label="Resources"><h2 class="site-footer__title">Resources</h2><ul><li><a href="/guide">Report guide</a></li><li><a href="/mcp">MCP setup</a></li><li><a href="/templates">Report templates</a></li><li><a href="/changelog">Changelog</a></li><li><a href="https://github.com/bountyoperator/bounty-operator" target="_blank" rel="noopener noreferrer">Source<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></li></ul></nav>
+<nav class="site-footer__col" aria-label="Legal"><h2 class="site-footer__title">Legal</h2><ul><li><a href="/privacy">Privacy</a></li><li><a href="/terms">Terms</a></li><li><a href="/security">Security</a></li><li><a href="/licenses">Licences</a></li><li><a href="mailto:security@bountyoperator.com">Report a vulnerability</a></li></ul></nav>
+</div>
+<div class="wrap">
+<div class="site-footer__base">
+<p>Built by <a href="https://audits.sherlock.xyz/watson/Tradi3" target="_blank" rel="noopener noreferrer">Tradi3</a></p>
+<p><a href="mailto:support@bountyoperator.com">support@bountyoperator.com</a></p>
+</div>
+</div>
+</footer>
+</body>
+</html>

@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Panel review: multi-model AI security review | Bounty Operator</title>
+<meta name="description" content="Two to four models review your code in parallel on your own key. A cross-examination pass keeps what the cited lines prove and marks agreement.">
+<link rel="canonical" href="https://bountyoperator.com/panel-review">
+<meta name="color-scheme" content="dark light">
+<meta name="theme-color" content="#0a1220" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f5f7fb" media="(prefers-color-scheme: light)">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Bounty Operator">
+<meta property="og:title" content="Panel review: multi-model AI security review | Bounty Operator">
+<meta property="og:description" content="Two to four models review your code in parallel on your own key. A cross-examination pass keeps what the cited lines prove and marks agreement.">
+<meta property="og:url" content="https://bountyoperator.com/panel-review">
+<meta property="og:image" content="https://bountyoperator.com/social-v2.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Bounty Operator. Find the hole in your report before the triager does.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Panel review: multi-model AI security review | Bounty Operator">
+<meta name="twitter:description" content="Two to four models review your code in parallel on your own key. A cross-examination pass keeps what the cited lines prove and marks agreement.">
+<meta name="twitter:image" content="https://bountyoperator.com/social-v2.png">
+<meta name="twitter:image:alt" content="Bounty Operator. Find the hole in your report before the triager does.">
+<link rel="icon" href="/favicon.ico" sizes="48x48">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+<script src="/theme.js"></script>
+<link rel="stylesheet" href="/css/base.css">
+<link rel="stylesheet" href="/css/landing.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Bounty Operator","item":"https://bountyoperator.com/"},{"@type":"ListItem","position":2,"name":"Method","item":"https://bountyoperator.com/method"},{"@type":"ListItem","position":3,"name":"Panel review","item":"https://bountyoperator.com/panel-review"}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Which keys does a panel run on?","acceptedAnswer":{"@type":"Answer","text":"One OpenRouter key reaches models from several labs, so a panel of different models runs on a single key. A panel model on Anthropic, OpenAI, Google Gemini, xAI, DeepSeek, Mistral or Groq takes that provider’s own key."}},{"@type":"Question","name":"How many model calls is a panel?","acceptedAnswer":{"@type":"Answer","text":"One per panel model, plus one for the cross-examination pass. A panel of three is four hosted reviews. Each goes through our server to your provider and is billed to your key."}},{"@type":"Question","name":"Does a panel run on a chat subscription?","acceptedAnswer":{"@type":"Answer","text":"A panel runs hosted, on API keys. The cross-examination is a hosted profile: its method is added on our server and the pass has no prompt to copy."}},{"@type":"Question","name":"Does the majority decide?","acceptedAnswer":{"@type":"Answer","text":"No. Agreement is recorded as k of n and shown next to each finding. The cited lines decide. In the example on this page a finding one model reported is kept, and a finding all three reported is dropped."}},{"@type":"Question","name":"What does the free plan show?","acceptedAnswer":{"@type":"Answer","text":"The example on this page. Panel review runs on Operator at US$10 per week."}}]}</script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="site-header">
+<div class="wrap site-header__inner">
+<a class="brand" href="/"><svg class="brand__mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect class="brand__tile" width="64" height="64" rx="14"/><path class="brand__glyph" d="M12.5 15h6.5v31.5h-6.5z"/><path class="brand__glyph" fill-rule="evenodd" d="M25.5 25a10.75 10.75 0 1 0 0 21.5a10.75 10.75 0 0 0 0-21.5zm0 6.25a4.5 4.5 0 1 1 0 9a4.5 4.5 0 0 1 0-9z"/><path class="brand__slash" d="M45.5 13h6.25l-8.6 37.5h-6.25z"/></svg><span class="brand__name">Bounty Operator</span></a>
+<nav class="site-nav" aria-label="Main"><ul><li><a href="/#workspace">Workbench</a></li><li><a href="/method">Method</a></li><li><a href="/tools">Tools</a></li><li><a href="/guide">Guide</a></li><li><a href="/mcp">MCP</a></li><li><a href="/pricing">Pricing</a></li></ul></nav>
+<div class="site-header__actions">
+<button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch colour theme"><span class="icon theme-toggle__icon" aria-hidden="true"></span></button>
+<a class="btn btn--secondary btn--sm" href="/#account">Account</a>
+</div>
+</div>
+</header>
+<main id="main" tabindex="-1">
+
+
+<section class="lp-hero wrap lp-hero--split">
+  <nav class="breadcrumbs" aria-label="Breadcrumb"><ol><li><a href="/">Bounty Operator</a></li><li><a href="/method">Method</a></li><li aria-current="page">Panel review</li></ol></nav>
+  <div class="lp-hero__grid">
+    <div class="lp-hero__text">
+      <p class="eyebrow"><span class="chip status" data-status="operator">Operator</span></p>
+      <h1>Multi-model AI security review with cross-examination</h1>
+      <p class="lede">Two to four models review the same files in parallel on your own key. A cross-examination pass then reads every claim against the cited lines, keeps what the code proves and marks how many reviewers reported it.</p>
+      <div class="cluster lp-hero__actions"><a class="btn btn--primary btn--lg" href="/pricing"><span class="btn__label">Get Operator</span><span class="icon icon--arrow-right" aria-hidden="true"></span></a><a class="btn btn--secondary btn--lg" href="#how"><span class="btn__label">How it runs</span></a></div>
+      <p class="fine lp-hero__note">US$10 per week. One OpenRouter key covers the whole panel. Model usage is billed by your provider to your key.</p>
+      
+    </div>
+    <div class="lp-hero__aside">
+<div class="example example--narrow">
+  <p class="example__bar"><span class="chip status" data-status="example">Example</span><span class="meta">Example panel · invented contract</span></p>
+  <div class="example__body">
+    <div class="stack">
+      <header class="dossier"><div class="dossier__verdict"><span class="meta">Verdict</span><span class="chip verdict verdict--lg" data-verdict="fix-before-deploy">Fix before deploy</span></div><p class="dossier__headline">Two findings survive cross-examination. Two that most of the panel reported are contradicted by the code.</p><ul class="counts"><li data-sev="critical" data-zero><span class="counts__n">0</span><span class="counts__label">Critical</span></li><li data-sev="high"><span class="counts__n">1</span><span class="counts__label">High</span></li><li data-sev="medium"><span class="counts__n">1</span><span class="counts__label">Medium</span></li><li data-sev="hardening"><span class="counts__n">2</span><span class="counts__label">Hardening</span></li><li data-sev="checked-safe"><span class="counts__n">2</span><span class="counts__label">Checked safe</span></li></ul></header>
+      <div class="panel-seats">
+        <p class="meta">The panel</p>
+        <ul class="panel-seats__list"><li><span class="panel-seats__n">panel-1</span><code>anthropic/claude-sonnet-5.5</code></li><li><span class="panel-seats__n">panel-2</span><code>openai/gpt-6-astra</code></li><li><span class="panel-seats__n">panel-3</span><code>google/gemini-3.8-flash</code></li></ul>
+      </div>
+      
+<div class="panel-seats">
+  <p class="meta">Agreement</p>
+  <ul class="agree-mini"><li><span class="agree-mini__finding"><code>withdraw</code> skips the checkpoint when the balance falls to zero</span><span class="tally" aria-label="3 of 3 reviewers"><span class="tally__n">3/3</span><span class="tally__dot" data-on></span><span class="tally__dot" data-on></span><span class="tally__dot" data-on></span></span><span class="chip" data-tone="observed">Kept</span></li><li><span class="agree-mini__finding">Reward rate truncates to zero for a small <code>notify</code> amount</span><span class="tally" aria-label="1 of 3 reviewers"><span class="tally__n">1/3</span><span class="tally__dot" data-on></span><span class="tally__dot"></span><span class="tally__dot"></span></span><span class="chip" data-tone="observed">Kept</span></li><li><span class="agree-mini__finding">Reentrancy in <code>claim</code></span><span class="tally" aria-label="3 of 3 reviewers"><span class="tally__n">3/3</span><span class="tally__dot" data-on></span><span class="tally__dot" data-on></span><span class="tally__dot" data-on></span></span><span class="chip chip--dashed" data-tone="neutral">Dropped</span></li><li><span class="agree-mini__finding"><code>sweep</code> lets the owner take staked tokens</span><span class="tally" aria-label="2 of 3 reviewers"><span class="tally__n">2/3</span><span class="tally__dot" data-on></span><span class="tally__dot" data-on></span><span class="tally__dot"></span></span><span class="chip chip--dashed" data-tone="neutral">Dropped</span></li></ul>
+</div>
+    </div></div>
+</div></div>
+  </div>
+</section>
+
+<section class="section wrap" aria-labelledby="how">
+  <header class="section-head"><div class="section-head__text"><h2 id="how">How it runs</h2><p class="lede">A panel is a fan-out of hosted reviews from your browser, followed by one merge. Each review goes through our server to your provider. No file, key or review is stored.</p></div></header>
+  <ol class="points points--4"><li class="points__item"><h3 class="points__title">Pick two to four models</h3><p class="points__text">Choose them from the models your OpenRouter key reaches. One key covers models from different labs, so the panel needs no second account. A model on another provider runs on that provider’s own key.</p></li><li class="points__item"><h3 class="points__title">The reviews run in parallel</h3><p class="points__text">Each model runs the same profile on the same pinned files, as its own hosted review. Operator runs four hosted reviews at once.</p></li><li class="points__item"><h3 class="points__title">Cross-examination</h3><p class="points__text">One more hosted review, on the panel model you pick, reads the reviews next to the source and tests every finding against the lines it cites.</p></li><li class="points__item"><h3 class="points__title">One merged review</h3><p class="points__text">What survives comes back as one review, with a count of how many models reported each finding.</p></li></ol>
+</section>
+
+<section class="section wrap" aria-labelledby="rule">
+  <div class="split">
+    <div>
+      <header class="section-head"><div class="section-head__text"><h2 id="rule">Agreement is recorded. The code decides.</h2><p class="lede">The count tells you how many reviewers saw something. The cited lines tell you whether it is there.</p></div></header>
+    </div>
+    <div class="stack">
+      <ul class="ticks"><li><span class="icon icon--check" aria-hidden="true"></span><span>Every finding in the merged review carries its count: how many of the panel reported it.</span></li><li><span class="icon icon--check" aria-hidden="true"></span><span>Every row names the lines that settle it, so you check the ruling against the source yourself.</span></li><li><span class="icon icon--check" aria-hidden="true"></span><span>Kept and dropped findings are both listed. Nothing a model reported leaves without a row.</span></li></ul>
+    </div>
+  </div>
+</section>
+
+<section class="section wrap" aria-labelledby="example">
+  <header class="section-head"><div class="section-head__text"><h2 id="example">What you get</h2><p class="lede">One review in the standard format, plus the agreement table. StreamVault is a staking contract invented for this page.</p></div></header>
+  
+<div class="example">
+  <p class="example__bar"><span class="chip status" data-status="example">Example</span><span class="meta">Example panel review · invented contract · StreamVault</span></p>
+  <div class="example__body">
+    <div class="stack stack--24">
+      <header class="dossier"><div class="dossier__verdict"><span class="meta">Verdict</span><span class="chip verdict verdict--lg" data-verdict="fix-before-deploy">Fix before deploy</span></div><p class="dossier__headline">Two findings survive cross-examination. Two that most of the panel reported are contradicted by the code.</p><ul class="counts"><li data-sev="critical" data-zero><span class="counts__n">0</span><span class="counts__label">Critical</span></li><li data-sev="high"><span class="counts__n">1</span><span class="counts__label">High</span></li><li data-sev="medium"><span class="counts__n">1</span><span class="counts__label">Medium</span></li><li data-sev="hardening"><span class="counts__n">2</span><span class="counts__label">Hardening</span></li><li data-sev="checked-safe"><span class="counts__n">2</span><span class="counts__label">Checked safe</span></li></ul></header>
+      <div class="table-wrap" tabindex="0" role="region" aria-label="Agreement"><table class="table stack-table agreement"><caption>Agreement</caption><thead><tr><th scope="col">Finding</th><th scope="col">Reported by</th><th scope="col">After cross-examination</th><th scope="col">The lines that settle it</th></tr></thead><tbody><tr><th scope="row"><code>withdraw</code> skips the checkpoint when the balance falls to zero</th><td><span class="cell-label">Reported by</span><span class="tally" aria-label="3 of 3 reviewers"><span class="tally__n">3/3</span><span class="tally__dot" data-on></span><span class="tally__dot" data-on></span><span class="tally__dot" data-on></span></span></td><td><span class="cell-label">After cross-examination</span><span class="chip" data-tone="observed">Kept</span></td><td><span class="cell-label">The lines that settle it</span><span class="ref" title="input-1/StreamVault.sol:91-94"><span class="ref__file">input-1/StreamVault.sol</span><span class="ref__lines">:91-94</span></span> <span class="cell-note">The checkpoint sits inside <code>remaining != 0</code>.</span></td></tr><tr><th scope="row">Reward rate truncates to zero for a small <code>notify</code> amount</th><td><span class="cell-label">Reported by</span><span class="tally" aria-label="1 of 3 reviewers"><span class="tally__n">1/3</span><span class="tally__dot" data-on></span><span class="tally__dot"></span><span class="tally__dot"></span></span></td><td><span class="cell-label">After cross-examination</span><span class="chip" data-tone="observed">Kept</span></td><td><span class="cell-label">The lines that settle it</span><span class="ref" title="input-1/StreamVault.sol:118-120"><span class="ref__file">input-1/StreamVault.sol</span><span class="ref__lines">:118-120</span></span> <span class="cell-note"><code>amount / duration</code> rounds down with no minimum. One reviewer reported it; the code proves it.</span></td></tr><tr><th scope="row">Reentrancy in <code>claim</code></th><td><span class="cell-label">Reported by</span><span class="tally" aria-label="3 of 3 reviewers"><span class="tally__n">3/3</span><span class="tally__dot" data-on></span><span class="tally__dot" data-on></span><span class="tally__dot" data-on></span></span></td><td><span class="cell-label">After cross-examination</span><span class="chip chip--dashed" data-tone="neutral">Dropped</span></td><td><span class="cell-label">The lines that settle it</span><span class="ref" title="input-1/StreamVault.sol:101-108"><span class="ref__file">input-1/StreamVault.sol</span><span class="ref__lines">:101-108</span></span> <span class="cell-note"><code>claim</code> is <code>nonReentrant</code> and zeroes <code>earned</code> at line 104, before the transfer at line 106.</span></td></tr><tr><th scope="row"><code>sweep</code> lets the owner take staked tokens</th><td><span class="cell-label">Reported by</span><span class="tally" aria-label="2 of 3 reviewers"><span class="tally__n">2/3</span><span class="tally__dot" data-on></span><span class="tally__dot" data-on></span><span class="tally__dot"></span></span></td><td><span class="cell-label">After cross-examination</span><span class="chip chip--dashed" data-tone="neutral">Dropped</span></td><td><span class="cell-label">The lines that settle it</span><span class="ref" title="input-1/StreamVault.sol:140-146"><span class="ref__file">input-1/StreamVault.sol</span><span class="ref__lines">:140-146</span></span> <span class="cell-note">Line 142 reverts when the token is the staking token.</span></td></tr></tbody></table></div>
+      <div class="findings">
+        <article class="finding" id="panel-f-1" data-sev="high" aria-labelledby="panel-f-1-title"><div class="finding__bar"><span class="icon icon--file" aria-hidden="true"></span><span class="finding__file">input-1/StreamVault.sol</span><span class="hash" title="sha256: b41f07c2e9a6d3580f1c7e24a9d6b03c5e81f7a2d4c9063b7e5a18f2c0d94e6b"><span class="hash__algo">sha256</span>b41f07c2e9a6…</span><span class="finding__tag">163 lines</span></div><header class="finding__head"><div class="finding__tags"><span class="finding__id">F-1</span><span class="chip sev" data-sev="high">High</span><span class="chip status" data-status="proven">Proven in source</span></div><h3 class="finding__title" id="panel-f-1-title"><code>withdraw</code> skips the checkpoint when the balance falls to zero</h3><ul class="finding__refs" aria-label="Locations"><li><span class="ref" title="input-1/StreamVault.sol:88-97"><span class="ref__file">input-1/StreamVault.sol</span><span class="ref__lines">:88-97</span></span></li><li><span class="ref" title="input-1/StreamVault.sol:61-64"><span class="ref__file">input-1/StreamVault.sol</span><span class="ref__lines">:61-64</span></span></li></ul></header><dl class="finding__rows"><div class="rail" data-rail="impact"><dt class="rail__label">Impact</dt><dd class="rail__body"><p>A staker who withdraws everything forfeits the rewards accrued since their last checkpoint. The forfeited amount stays in the vault and is paid out to the remaining stakers.</p></dd></div><div class="rail" data-rail="observed"><dt class="rail__label">Observed</dt><dd class="rail__body"><ol class="steps"><li><code>withdraw</code> calls <code>_checkpoint</code> only when <code>remaining != 0</code> (lines 91-93).</li><li>A full withdrawal sets the balance to 0 at line 94 without settling <code>earned</code> for the period since the last checkpoint.</li><li><code>claim</code> reads <code>earned[msg.sender]</code>, which was never updated for that period (lines 61-64).</li></ol><figure class="code code--numbered"><figcaption class="code__bar"><span class="code__name">input-1/StreamVault.sol</span><span class="code__range">88–97</span><button class="code__copy" type="button" data-copy><span class="icon icon--copy" aria-hidden="true"></span><span data-copy-label>Copy</span></button></figcaption><pre class="code__pre" tabindex="0" role="region" aria-label="Source: input-1/StreamVault.sol"><code><span class="code__line" data-n="88">function withdraw(uint256 shares) external nonReentrant {
+</span><span class="code__line" data-n="89">    if (shares == 0) revert ZeroAmount();
+</span><span class="code__line" data-n="90">    uint256 remaining = balanceOf[msg.sender] - shares;
+</span><span class="code__line is-hl" data-n="91">    if (remaining != 0) {
+</span><span class="code__line is-hl" data-n="92">        _checkpoint(msg.sender);
+</span><span class="code__line is-hl" data-n="93">    }
+</span><span class="code__line" data-n="94">    balanceOf[msg.sender] = remaining;
+</span><span class="code__line" data-n="95">    totalShares -= shares;
+</span><span class="code__line" data-n="96">    token.safeTransfer(msg.sender, shares);
+</span><span class="code__line" data-n="97">}
+</span></code></pre></figure></dd></div><div class="rail" data-rail="counter" data-status="resolved"><dt class="rail__label">Counterargument</dt><dd class="rail__body"><p class="rail__quote">A full exit is meant to go through <code>exit()</code>, which claims first.</p><p class="rail__answer"><span class="chip status" data-status="resolved">Resolved</span><span><code>withdraw</code> is external and accepts the full balance. Nothing at lines 88-97 sends a full withdrawal to <code>exit()</code>.</span></p></dd></div><div class="rail" data-rail="gap" data-status="open"><dt class="rail__label">Evidence gap</dt><dd class="rail__body"><ul class="gaps"><li>No test was run. The forfeited amount follows from lines 61-64 and 91-94.</li></ul></dd></div><div class="rail" data-rail="fix"><dt class="rail__label">Fix</dt><dd class="rail__body"><p>Call <code>_checkpoint(msg.sender)</code> before the balance changes, with no condition on <code>remaining</code>.</p></dd></div><div class="rail" data-rail="next"><dt class="rail__label">Next</dt><dd class="rail__body"><p class="rail__next"><span class="icon icon--arrow-right" aria-hidden="true"></span><span>Write the test: stake, accrue, withdraw the full balance, then assert <code>earned</code> equals the accrued amount.</span></p></dd></div></dl></article>
+      </div>
+    </div></div>
+</div>
+</section>
+
+<section class="section wrap" aria-labelledby="record">
+  <header class="section-head"><div class="section-head__text"><h2 id="record">What is in the record</h2></div></header>
+  <ol class="points points--4"><li class="points__item"><h3 class="points__title">Surviving findings</h3><p class="points__text">Each as a finding card: location, impact, path, the strongest counterargument, the evidence gap, the fix and a test.</p></li><li class="points__item"><h3 class="points__title">Agreement</h3><p class="points__text">Every distinct finding with its k of n count, kept or dropped, the lines that settle it and the reviews that reported it.</p></li><li class="points__item"><h3 class="points__title">Checked and safe</h3><p class="points__text">What the panel flagged and the code clears, each with the line that guards it.</p></li><li class="points__item"><h3 class="points__title">The packet</h3><p class="points__text">One download: the merged review, the models used and the SHA-256 manifest of every file the panel read.</p></li></ol>
+</section>
+
+<section class="section wrap wrap--narrow" aria-labelledby="faq">
+  <header class="section-head"><div class="section-head__text"><h2 id="faq">Questions</h2></div></header>
+  <div class="accordion"><details class="accordion__item" name="panel-faq"><summary class="accordion__summary">Which keys does a panel run on?</summary><div class="accordion__body"><p>One OpenRouter key reaches models from several labs, so a panel of different models runs on a single key. A panel model on Anthropic, OpenAI, Google Gemini, xAI, DeepSeek, Mistral or Groq takes that provider’s own key.</p></div></details><details class="accordion__item" name="panel-faq"><summary class="accordion__summary">How many model calls is a panel?</summary><div class="accordion__body"><p>One per panel model, plus one for the cross-examination pass. A panel of three is four hosted reviews. Each goes through our server to your provider and is billed to your key.</p></div></details><details class="accordion__item" name="panel-faq"><summary class="accordion__summary">Does a panel run on a chat subscription?</summary><div class="accordion__body"><p>A panel runs hosted, on API keys. The cross-examination is a hosted profile: its method is added on our server and the pass has no prompt to copy.</p></div></details><details class="accordion__item" name="panel-faq"><summary class="accordion__summary">Does the majority decide?</summary><div class="accordion__body"><p>No. Agreement is recorded as k of n and shown next to each finding. The cited lines decide. In the example on this page a finding one model reported is kept, and a finding all three reported is dropped.</p></div></details><details class="accordion__item" name="panel-faq"><summary class="accordion__summary">What does the free plan show?</summary><div class="accordion__body"><p>The example on this page. Panel review runs on Operator at US$10 per week.</p></div></details></div>
+</section>
+
+
+<section class="section wrap">
+  <div class="cta-band">
+    <div class="cta-band__text">
+      <h2 class="cta-band__title">Put a panel on your next finding</h2>
+      <p class="cta-band__lede">Panel review, the Gauntlet, unlimited hosted reviews and four reviews running at once.</p>
+    </div>
+    <div class="cta-band__actions">
+      <div class="cluster"><a class="btn btn--primary btn--lg" href="/pricing"><span class="btn__label">Get Operator</span><span class="icon icon--arrow-right" aria-hidden="true"></span></a><a class="btn btn--secondary btn--lg" href="/your-model-your-key"><span class="btn__label">Your model, your key</span></a></div>
+      <p class="fine">US$10 billed weekly, renews until you cancel in the Stripe portal; access runs to the end of the paid week.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section section--tight wrap">
+  
+<nav class="related" aria-label="Related">
+  <p class="meta">Related</p>
+  <ul class="related__list"><li><a class="related__link" href="/gauntlet"><span class="related__label">Gauntlet<span class="icon icon--arrow-right" aria-hidden="true"></span></span><span class="related__text">One run, eight stages, one verdict.</span></a></li><li><a class="related__link" href="/solidity-review"><span class="related__label">Solidity review<span class="icon icon--arrow-right" aria-hidden="true"></span></span><span class="related__text">The single-model review a panel fans out.</span></a></li><li><a class="related__link" href="/pricing"><span class="related__label">Pricing<span class="icon icon--arrow-right" aria-hidden="true"></span></span><span class="related__text">Free and Operator, side by side.</span></a></li></ul>
+</nav>
+</section>
+</main>
+<footer class="site-footer">
+<div class="wrap site-footer__grid">
+<div class="site-footer__brand">
+<a class="brand" href="/"><svg class="brand__mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect class="brand__tile" width="64" height="64" rx="14"/><path class="brand__glyph" d="M12.5 15h6.5v31.5h-6.5z"/><path class="brand__glyph" fill-rule="evenodd" d="M25.5 25a10.75 10.75 0 1 0 0 21.5a10.75 10.75 0 0 0 0-21.5zm0 6.25a4.5 4.5 0 1 1 0 9a4.5 4.5 0 0 1 0-9z"/><path class="brand__slash" d="M45.5 13h6.25l-8.6 37.5h-6.25z"/></svg><span class="brand__name">Bounty Operator</span></a>
+<p class="site-footer__promise">Find the hole in your report before the triager does.</p>
+</div>
+<nav class="site-footer__col" aria-label="Product"><h2 class="site-footer__title">Product</h2><ul><li><a href="/#workspace">Workbench</a></li><li><a href="/method">Method</a></li><li><a href="/gauntlet">Gauntlet</a></li><li><a href="/panel-review">Panel review</a></li><li><a href="/pricing">Pricing</a></li><li><a href="/#account">Account</a></li></ul></nav>
+<nav class="site-footer__col" aria-label="Tools"><h2 class="site-footer__title">Tools</h2><ul><li><a href="/tools">All tools</a></li><li><a href="/tools/report-check">Report check</a></li><li><a href="/tools/verify">Packet verifier</a></li><li><a href="/tools/secret-check">Secret check</a></li><li><a href="/tools/acceptance-rates">Acceptance rates</a></li><li><a href="/tools/slither-focus">Slither triage queue</a></li></ul></nav>
+<nav class="site-footer__col" aria-label="Resources"><h2 class="site-footer__title">Resources</h2><ul><li><a href="/guide">Report guide</a></li><li><a href="/mcp">MCP setup</a></li><li><a href="/templates">Report templates</a></li><li><a href="/changelog">Changelog</a></li><li><a href="https://github.com/bountyoperator/bounty-operator" target="_blank" rel="noopener noreferrer">Source<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></li></ul></nav>
+<nav class="site-footer__col" aria-label="Legal"><h2 class="site-footer__title">Legal</h2><ul><li><a href="/privacy">Privacy</a></li><li><a href="/terms">Terms</a></li><li><a href="/security">Security</a></li><li><a href="/licenses">Licences</a></li><li><a href="mailto:security@bountyoperator.com">Report a vulnerability</a></li></ul></nav>
+</div>
+<div class="wrap">
+<div class="site-footer__base">
+<p>Built by <a href="https://audits.sherlock.xyz/watson/Tradi3" target="_blank" rel="noopener noreferrer">Tradi3</a></p>
+<p><a href="mailto:support@bountyoperator.com">support@bountyoperator.com</a></p>
+</div>
+</div>
+</footer>
+</body>
+</html>

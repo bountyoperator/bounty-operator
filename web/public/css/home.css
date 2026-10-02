@@ -1,0 +1,996 @@
+@charset "UTF-8";
+
+/*
+  Bounty Operator: home page
+
+  Loaded after base.css. Every colour, size and radius is a token from there.
+  The page module is web/site/pages/index.mjs; the rendered example in the hero
+  (and on the social card) is web/site/social/example.mjs.
+
+   1. Hero
+   2. The rendered example
+   3. Proof strip
+   4. How it works
+   5. Bands and the workbench slot
+   6. The gauntlet
+   7. What you get
+   8. Your model
+   9. Free tools
+  10. Pricing
+  11. Questions
+*/
+
+/* ==========================================================================
+   1. Hero
+   ========================================================================== */
+
+/* One column on a phone: the pitch, the rendered example, the proof strip.
+   From 64em the example takes the right column and the proof strip sits under
+   the pitch, so all three share the first screen. */
+.home-top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-24);
+  padding-block: var(--sp-24) var(--sp-48);
+}
+
+.home-hero > * + * {
+  margin-top: var(--sp-16);
+}
+
+.home-hero__title {
+  margin-top: var(--sp-12);
+}
+
+.home-hero__lede {
+  font-size: var(--fs-16);
+}
+
+.home-hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-12);
+  margin-top: var(--sp-24);
+}
+
+.home-hero__actions .btn {
+  flex: 1 1 auto;
+}
+
+/* Both actions share one row on a phone. */
+@media (max-width: 29.99em) {
+  .home-hero__actions .btn {
+    padding-inline: var(--sp-12);
+    font-size: var(--fs-14);
+  }
+}
+
+.home-hero__note {
+  margin-top: var(--sp-12);
+  color: var(--muted);
+  font-size: var(--fs-13);
+  line-height: 1.5;
+}
+
+.home-hero__price {
+  margin-top: var(--sp-12);
+  padding-top: var(--sp-12);
+  border-top: 1px solid var(--line);
+  font-size: var(--fs-14);
+  font-weight: 600;
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+
+@media (min-width: 40em) {
+  .home-hero__lede {
+    font-size: var(--fs-18);
+  }
+
+  .home-hero__actions .btn {
+    flex: none;
+  }
+}
+
+@media (min-width: 64em) {
+  .home-top {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.06fr);
+    grid-template-rows: auto 1fr;
+    grid-template-areas:
+      "pitch shot"
+      "proof shot";
+    align-items: start;
+    gap: var(--sp-32) var(--sp-48);
+    padding-block: var(--sp-32) var(--sp-72);
+  }
+
+  .home-hero {
+    grid-area: pitch;
+  }
+
+  .home-top__shot {
+    grid-area: shot;
+  }
+
+  .home-proof {
+    grid-area: proof;
+  }
+
+  .home-hero__title {
+    margin-top: var(--sp-16);
+  }
+
+  .home-hero__lede {
+    margin-top: var(--sp-24);
+  }
+
+  .home-hero__actions {
+    margin-top: var(--sp-32);
+  }
+
+  .home-hero__price {
+    margin-top: var(--sp-16);
+    padding-top: var(--sp-16);
+  }
+}
+
+/* ==========================================================================
+   2. The rendered example
+   ========================================================================== */
+
+/* A verdict banner over one finding card. Dark in both themes (.theme-dark on
+   the element), never rotated. The same markup is drawn on the social card. */
+.home-shot {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-12);
+  padding: var(--sp-12);
+  border: 1px solid var(--line);
+  border-radius: var(--r-hero);
+  background: var(--bg);
+  box-shadow: 0 40px 80px -40px color-mix(in srgb, var(--accent-solid) 40%, transparent);
+}
+
+.home-shot__banner {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+}
+
+/* The frame is stamped as an example on its top edge. It is also the
+   container its contents size against. */
+.home-shot {
+  position: relative;
+  container: home-shot / inline-size;
+}
+
+.home-shot__stamp {
+  position: absolute;
+  top: calc(-0.75rem - 1px);
+  right: var(--sp-24);
+  display: flex;
+}
+
+.home-shot__stamp .chip {
+  background: var(--bg);
+}
+
+/* The cut: what the draft claims, struck, and what the code supports. */
+.home-cut {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-8) 0.625rem;
+  padding: var(--sp-12) var(--sp-16);
+  border-bottom: 1px solid var(--line);
+  background: var(--surface-2);
+}
+
+.home-cut__side {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-8);
+}
+
+.home-cut .meta {
+  color: var(--text);
+}
+
+.home-cut .chip {
+  min-height: 1.75rem;
+  padding-inline: 0.625rem;
+  font-size: var(--fs-13);
+  font-weight: 700;
+}
+
+.home-cut__claimed {
+  text-decoration: none;
+}
+
+.home-cut__claimed .chip {
+  text-decoration: line-through;
+  text-decoration-thickness: 2px;
+}
+
+.home-cut__arrow {
+  color: var(--muted);
+}
+
+/* " claims" and " supports" show once the frame is wide enough for one line.
+   The frame, not the viewport, decides: it is narrow beside the pitch at 64em. */
+.home-cut__more {
+  display: none;
+}
+
+@container home-shot (min-width: 30em) {
+  .home-cut {
+    gap: var(--sp-8) var(--sp-12);
+  }
+
+  .home-cut__more {
+    display: inline;
+  }
+
+  .home-cut .chip {
+    min-height: 2rem;
+    padding-inline: var(--sp-12);
+    font-size: var(--fs-14);
+  }
+}
+
+/* Inside the banner the dossier is one column and has no frame of its own. */
+.home-shot__banner .dossier {
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+  gap: var(--sp-12);
+  padding: var(--sp-16);
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+
+.home-shot__banner .dossier__headline {
+  font-size: var(--fs-16);
+}
+
+/* The card is never wide enough here for the label margin, so it always uses
+   the stacked layout base.css gives it on a phone: label above its content,
+   spine on the card's inner margin. */
+.home-shot .finding {
+  --spine-x: var(--sp-16);
+}
+
+.home-shot .finding__bar {
+  padding-left: var(--sp-16);
+}
+
+.home-shot .finding__head {
+  padding: var(--sp-16);
+}
+
+.home-shot .finding__title {
+  font-size: var(--fs-18);
+}
+
+.home-shot .rail {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.home-shot .rail__label {
+  padding: var(--sp-12) var(--sp-16) 0 var(--sp-32);
+}
+
+.home-shot .rail__body {
+  padding: var(--sp-4) var(--sp-16) var(--sp-12) var(--sp-32);
+}
+
+.home-shot .rail__answer {
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-8);
+  justify-items: start;
+}
+
+/* Beside the pitch on a short screen the card ends on the counterargument, so
+   the whole of it fits the first screen. Taller screens and the one-column
+   layout show the next action too. */
+@media (min-width: 64em) and (max-height: 61.99em) {
+  .home-top .rail[data-rail="next"] {
+    display: none;
+  }
+}
+
+.home-shot__caption {
+  padding-inline: var(--sp-4);
+  color: var(--muted);
+  font-size: var(--fs-12);
+  line-height: 1.5;
+}
+
+/* ==========================================================================
+   3. Proof strip
+   ========================================================================== */
+
+.home-proof__list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, auto));
+  justify-content: start;
+  gap: var(--sp-16) var(--sp-32);
+}
+
+.home-proof__item {
+  display: grid;
+  gap: 0.125rem;
+  align-content: start;
+}
+
+.home-proof__item--wide {
+  grid-column: 1 / -1;
+}
+
+.home-proof__value {
+  font-size: var(--fs-18);
+  font-weight: 650;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+}
+
+.home-proof__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  justify-self: start;
+  text-decoration: underline;
+  text-decoration-color: var(--line-strong);
+  transition:
+    color var(--t-fast),
+    text-decoration-color var(--t-fast);
+}
+
+.home-proof__link:hover {
+  color: var(--accent);
+  text-decoration-color: currentColor;
+}
+
+.home-proof__link .icon {
+  width: 0.875em;
+  height: 0.875em;
+  color: var(--muted);
+}
+
+@media (pointer: coarse) {
+  .home-proof__link {
+    min-height: var(--tap);
+  }
+}
+
+@media (max-width: 23.99em) {
+  .home-proof__list {
+    gap: var(--sp-12) var(--sp-16);
+  }
+
+  .home-proof__value {
+    font-size: var(--fs-16);
+  }
+}
+
+/* ==========================================================================
+   4. How it works
+   ========================================================================== */
+
+/* Three numbered points in the ledger voice: a hairline, a mono index, a
+   title, a line. */
+.home-steps {
+  counter-reset: home-step;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-24);
+}
+
+.home-steps__item {
+  counter-increment: home-step;
+  padding-top: var(--sp-16);
+  border-top: 1px solid var(--line-strong);
+}
+
+.home-steps__item::before {
+  content: counter(home-step, decimal-leading-zero);
+  display: block;
+  margin-bottom: var(--sp-12);
+  color: var(--accent);
+  font: 600 var(--fs-12) / 1.4 var(--font-mono);
+  letter-spacing: 0.06em;
+}
+
+.home-steps__title {
+  font-size: var(--fs-18);
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+}
+
+.home-steps__text {
+  max-width: 44ch;
+  margin-top: var(--sp-8);
+  color: var(--muted);
+  line-height: 1.6;
+  text-wrap: pretty;
+}
+
+@media (min-width: 48em) {
+  .home-steps {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--sp-32);
+  }
+}
+
+/* ==========================================================================
+   5. Bands and the workbench slot
+   ========================================================================== */
+
+/* A full-width band sets the gauntlet and the pricing apart from the page. */
+.home-band {
+  border-block: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.home-band__actions {
+  margin-top: var(--sp-32);
+}
+
+/* A link that stands on its own line is a full touch target. */
+@media (pointer: coarse) {
+  .home-more {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--tap);
+  }
+}
+
+/* The workbench is a fragment owned by the app. Until it is written the slot
+   keeps the #workspace anchor and takes no room. */
+.home-workbench:empty {
+  height: 0;
+}
+
+/* ==========================================================================
+   6. The gauntlet
+   ========================================================================== */
+
+/* Eight stages on one spine, in three groups: the gates that end a report, the
+   work, the decision. A column on small screens, one row from 70em. */
+.home-pipe {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-24);
+}
+
+.home-pipe__group {
+  --pipe: var(--accent);
+}
+
+.home-pipe__group[data-kind="gate"] {
+  --pipe: var(--gap);
+}
+
+.home-pipe__label {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-4) var(--sp-12);
+  margin-bottom: var(--sp-12);
+}
+
+.home-pipe__label .meta {
+  color: var(--pipe);
+}
+
+.home-pipe__note {
+  color: var(--muted);
+  font-size: var(--fs-13);
+  line-height: 1.5;
+}
+
+.home-pipe__stages {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  margin: 0;
+}
+
+.home-pipe__stage {
+  position: relative;
+  padding: 0 0 var(--sp-16) 2.75rem;
+}
+
+/* The spine. */
+.home-pipe__stage::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(0.875rem - 1px);
+  width: 2px;
+  background: var(--pipe);
+}
+
+.home-pipe__stage:last-child {
+  padding-bottom: 0;
+}
+
+/* The run ends at the verdict: no spine beyond its marker. */
+.home-pipe__group[data-kind="verdict"] .home-pipe__stage::before {
+  display: none;
+}
+
+.home-pipe__n {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: 2px solid var(--pipe);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--text);
+  font: 600 var(--fs-12) / 1 var(--font-mono);
+}
+
+.home-pipe__group[data-kind="verdict"] .home-pipe__n {
+  border-color: var(--accent-solid);
+  background: var(--accent-solid);
+  color: var(--on-accent);
+}
+
+.home-pipe__name {
+  font-size: var(--fs-16);
+  line-height: 1.75rem;
+  letter-spacing: -0.01em;
+}
+
+.home-pipe__text {
+  max-width: 52ch;
+  color: var(--muted);
+  font-size: var(--fs-14);
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+
+@media (min-width: 70em) {
+  .home-pipe {
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+    gap: 0;
+  }
+
+  .home-pipe__group[data-count="3"] {
+    grid-column: span 3;
+  }
+
+  .home-pipe__group[data-count="4"] {
+    grid-column: span 4;
+  }
+
+  .home-pipe__label {
+    min-height: 2.75rem;
+    align-content: start;
+    padding-right: var(--sp-16);
+  }
+
+  .home-pipe__stages {
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+    grid-template-columns: none;
+  }
+
+  .home-pipe__stage {
+    padding: 2.5rem var(--sp-16) 0 0;
+  }
+
+  .home-pipe__stage:last-child {
+    padding-bottom: 0;
+  }
+
+  .home-pipe__stage::before {
+    top: calc(0.875rem - 1px);
+    right: 0;
+    bottom: auto;
+    left: 0;
+    width: auto;
+    height: 2px;
+  }
+
+  /* The last segment of the spine runs into the verdict marker and stops. */
+  .home-pipe__group[data-kind="verdict"] .home-pipe__stage::before {
+    display: block;
+    right: auto;
+    width: 0.875rem;
+  }
+
+  .home-pipe__text {
+    font-size: var(--fs-13);
+  }
+}
+
+/* The five verdicts the run can end on. */
+.home-verdicts__title {
+  margin-top: var(--sp-32);
+  padding-top: var(--sp-24);
+  border-top: 1px solid var(--line);
+}
+
+.home-verdicts {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-16);
+  margin-top: var(--sp-16);
+}
+
+.home-verdicts__row {
+  display: grid;
+  gap: var(--sp-8);
+  justify-items: start;
+  align-content: start;
+}
+
+.home-verdicts dd {
+  color: var(--muted);
+  font-size: var(--fs-13);
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+
+@media (min-width: 40em) {
+  .home-verdicts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--sp-24);
+  }
+}
+
+@media (min-width: 70em) {
+  .home-verdicts {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+
+/* ==========================================================================
+   7. What you get
+   ========================================================================== */
+
+.home-gets {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-16);
+}
+
+.home-get {
+  padding: 1.25rem;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+}
+
+/* A specimen of the thing the card describes, set like a line of the ledger. */
+.home-get__specimen {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-8);
+  min-height: 2.5rem;
+  margin-bottom: var(--sp-16);
+  padding-bottom: var(--sp-12);
+  border-bottom: 1px dashed var(--line-strong);
+}
+
+.home-get__specimen .ref,
+.home-get__specimen .hash {
+  min-width: 0;
+}
+
+.home-get__title {
+  font-size: var(--fs-18);
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+}
+
+.home-get__text {
+  max-width: 52ch;
+  margin-top: var(--sp-8);
+  color: var(--muted);
+  line-height: 1.6;
+  text-wrap: pretty;
+}
+
+@media (min-width: 48em) {
+  .home-gets {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--sp-24);
+  }
+
+  .home-get {
+    padding: var(--sp-24);
+  }
+}
+
+/* ==========================================================================
+   8. Your model
+   ========================================================================== */
+
+.home-providers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-8);
+}
+
+.home-providers .chip {
+  min-height: 1.75rem;
+  color: var(--text);
+}
+
+.home-paths {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-16);
+  margin-top: var(--sp-24);
+}
+
+.home-path {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-12);
+  min-width: 0;
+  padding: 1.25rem;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+}
+
+.home-path__title {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  font-size: var(--fs-18);
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+}
+
+.home-path__title .icon {
+  color: var(--accent);
+}
+
+.home-path__text {
+  color: var(--muted);
+  line-height: 1.6;
+  text-wrap: pretty;
+}
+
+/* The action sits on the card's last line, whatever the text length. */
+.home-path__action {
+  margin-top: auto;
+  font-size: var(--fs-14);
+}
+
+@media (min-width: 60em) {
+  .home-paths {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.3fr);
+    gap: var(--sp-24);
+  }
+
+  .home-path {
+    padding: var(--sp-24);
+  }
+}
+
+/* ==========================================================================
+   9. Free tools
+   ========================================================================== */
+
+.home-tools {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-12);
+}
+
+/* The whole card is the link. */
+.home-tool {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-8);
+  height: 100%;
+  padding: var(--sp-16) 2.75rem var(--sp-16) var(--sp-16);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+  text-decoration: none;
+  transition:
+    border-color var(--t-fast),
+    background-color var(--t-fast);
+}
+
+.home-tool:hover {
+  border-color: var(--accent);
+}
+
+.home-tool__name {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-8);
+  font-weight: 650;
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+}
+
+.home-tool__name .icon {
+  color: var(--accent);
+}
+
+.home-tool__text {
+  color: var(--muted);
+  font-size: var(--fs-14);
+  line-height: 1.55;
+  text-wrap: pretty;
+}
+
+.home-tool__go {
+  position: absolute;
+  top: var(--sp-16);
+  right: var(--sp-16);
+  color: var(--muted);
+  line-height: 1.4;
+  transition:
+    color var(--t-fast),
+    transform var(--t-fast) var(--ease);
+}
+
+.home-tool:hover .home-tool__go {
+  color: var(--accent);
+  transform: translateX(2px);
+}
+
+@media (min-width: 40em) {
+  .home-tools {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--sp-16);
+  }
+}
+
+@media (min-width: 64em) {
+  .home-tools {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+/* ==========================================================================
+   10. Pricing
+   ========================================================================== */
+
+.home-plans {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-16);
+}
+
+/* The account script writes one line here after a cancelled checkout. */
+.home-plans__note:not(:empty) {
+  margin-bottom: var(--sp-16);
+}
+
+.home-plan {
+  display: flex;
+  flex-direction: column;
+  padding: var(--sp-24);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-hero);
+  background: var(--bg);
+}
+
+/* Operator: the observed colour on the frame and a tint behind it. */
+.home-plan--operator {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 7%, var(--bg));
+  box-shadow: var(--shadow);
+}
+
+.home-plan__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-12);
+}
+
+.home-plan__name {
+  font-size: var(--fs-22);
+  line-height: 1.25;
+}
+
+/* The amount and its cadence share one baseline. */
+.home-plan__price {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 var(--sp-8);
+  margin-top: var(--sp-16);
+}
+
+.home-plan__amount {
+  font-size: var(--fs-40);
+  font-weight: 650;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+
+.home-plan__per {
+  color: var(--muted);
+  font-size: var(--fs-16);
+}
+
+.home-plan__for {
+  margin-top: var(--sp-8);
+  padding-bottom: var(--sp-16);
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+}
+
+.home-ticks {
+  display: grid;
+  gap: 0.625rem;
+  margin-block: var(--sp-16) var(--sp-24);
+  font-size: var(--fs-14);
+  line-height: 1.5;
+}
+
+.home-ticks > li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--sp-12);
+  align-items: start;
+}
+
+.home-ticks .icon {
+  margin-top: 0.2em;
+  color: var(--accent);
+}
+
+.home-plan__cta {
+  margin-top: auto;
+}
+
+.home-plans__terms {
+  max-width: 68ch;
+  margin-top: var(--sp-16);
+}
+
+@media (min-width: 48em) {
+  .home-plans {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--sp-24);
+  }
+
+  .home-plan {
+    padding: var(--sp-32);
+  }
+}
+
+/* ==========================================================================
+   11. Questions
+   ========================================================================== */
+
+@media (min-width: 60em) {
+  .home-faq {
+    display: grid;
+    grid-template-columns: 18rem minmax(0, 1fr);
+    gap: var(--sp-48);
+    align-items: start;
+  }
+
+  .home-faq .section-head {
+    margin-bottom: 0;
+  }
+}

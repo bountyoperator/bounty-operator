@@ -1,0 +1,17 @@
+{
+  "schema": "paydirt.truth/1",
+  "pair": "ch-08",
+  "variant": "accurate",
+  "origin": "original",
+  "assistant": "mistralai/mistral-medium-3-5",
+  "canary": "c672b4a0-b08a-4790-b5ab-c53e1c64dad0",
+  "planted": [],
+  "decoys": [],
+  "acceptable": [],
+  "patched_region": null,
+  "report": {
+    "verdict": "supported",
+    "max_severity": "high",
+    "false_claims": []
+  }
+}

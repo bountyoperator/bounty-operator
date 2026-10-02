@@ -1,0 +1,1310 @@
+@charset "UTF-8";
+
+/*
+  Bounty Operator: workbench
+
+  The three-step workbench on the home page, its dialogs and the result view.
+  Everything here builds on the tokens and components of base.css; the markup
+  comes from web/site/fragments/workbench.mjs and web/public/app/*.mjs.
+
+  The Load and Run steps are ledger sheets: a label in the left margin, the
+  controls to its right, one hairline between rows. It is the same page
+  grammar as the finding card the result is made of.
+
+   1. Shell: head, sticky bar, status line, panels
+   2. Sheet and rows
+   3. Picks: profile and "run with" cards
+   4. Files: drop zone, list, meter
+   5. Evidence
+   6. Privacy and flagged lines
+   7. Run: fields, connect, live output, upgrade
+   8. Result
+   9. GitHub picker
+  10. Preview, source pane, history
+  11. Print
+*/
+
+/* ==========================================================================
+   1. Shell
+   ========================================================================== */
+
+.wb {
+  scroll-margin-top: var(--sp-8);
+}
+
+/* Anything the workbench scrolls to or focuses clears the sticky bar. */
+.wb :is([id], :focus) {
+  scroll-margin-top: 7.5rem;
+}
+
+.wb__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--sp-16) var(--sp-32);
+  margin-bottom: var(--sp-16);
+}
+
+.wb__intro > * + * {
+  margin-top: var(--sp-8);
+}
+
+.wb__tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-4);
+  /* Quiet buttons have no border: pull them out so their labels line up with the edge. */
+  margin-inline: calc(-1 * var(--sp-12));
+}
+
+/* The stepper and the status line stay in view while the panel scrolls, so a
+   message is never written where the user is not looking. */
+.wb__bar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: grid;
+  gap: var(--sp-8);
+  padding-block: var(--sp-8);
+  background: var(--bg);
+}
+
+.wb__bar::after {
+  content: "";
+  position: absolute;
+  inset: 100% 0 auto;
+  height: var(--sp-12);
+  background: linear-gradient(var(--bg), transparent);
+  pointer-events: none;
+}
+
+/* A phone on its side has no height to give away: the bar scrolls with the page. */
+@media (max-height: 30em) {
+  .wb__bar {
+    position: static;
+  }
+
+  .wb__bar::after {
+    display: none;
+  }
+}
+
+.wb__progress {
+  display: none;
+}
+
+.wb[data-busy] .wb__progress {
+  display: block;
+}
+
+.wb__status-action {
+  margin-top: var(--sp-8);
+}
+
+.wb__title {
+  margin-block: var(--sp-16);
+  font-size: var(--fs-22);
+}
+
+/* The title takes focus from script on a step change; it is not a tab stop. */
+.wb__title:focus {
+  outline: none;
+}
+
+.wb-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-12);
+}
+
+.wb-note {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-8);
+  color: var(--muted);
+  font-size: var(--fs-13);
+  line-height: 1.55;
+}
+
+.wb-note:empty {
+  display: none;
+}
+
+.wb-note > .icon {
+  flex: none;
+  margin-top: 0.2em;
+  color: var(--accent);
+}
+
+.wb-note[data-tone="warn"],
+.wb-note[data-tone="warn"] > .icon {
+  color: var(--gap);
+}
+
+.wb-note[data-tone="error"] {
+  color: var(--danger);
+}
+
+.wb-lead {
+  max-width: 62ch;
+  font-size: var(--fs-14);
+}
+
+/* ==========================================================================
+   2. Sheet and rows
+   ========================================================================== */
+
+.wb-sheet {
+  overflow: clip;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+}
+
+.wb-row {
+  display: grid;
+  grid-template-columns: 9.75rem minmax(0, 1fr);
+}
+
+.wb-row + .wb-row {
+  border-top: 1px solid var(--line);
+}
+
+.wb-row__label {
+  padding: 1.375rem var(--sp-16) var(--sp-16) var(--sp-24);
+  color: var(--muted);
+  font: 600 var(--fs-12) / 1.65 var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.wb-row__body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-16);
+  min-width: 0;
+  padding: 1.25rem var(--sp-24);
+  border-left: 1px solid var(--line);
+}
+
+@media (max-width: 43.99em) {
+  .wb-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .wb-row__label {
+    padding: var(--sp-16) var(--sp-16) 0;
+  }
+
+  .wb-row__body {
+    padding: var(--sp-8) var(--sp-16) 1.25rem;
+    border-left: 0;
+  }
+}
+
+.wb-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr));
+  gap: var(--sp-16);
+  align-items: start;
+}
+
+/* A control with its button beside it; the button drops below on a phone. */
+.wb-inline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-8);
+}
+
+.wb-inline > :is(.input, .select) {
+  flex: 1 1 14rem;
+  width: auto;
+}
+
+.wb-sub__summary {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap);
+  color: var(--accent);
+  font-size: var(--fs-13);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.wb-sub[open] > .wb-sub__summary {
+  margin-bottom: var(--sp-4);
+}
+
+.wb-hint {
+  color: var(--gap);
+}
+
+/* ==========================================================================
+   3. Picks
+   ========================================================================== */
+
+.wb-profiles {
+  display: grid;
+  gap: var(--sp-16);
+}
+
+.wb-profiles__group {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.wb-profiles__group > legend {
+  margin-bottom: var(--sp-8);
+  padding: 0;
+}
+
+.wb-picks {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 14rem), 1fr));
+  gap: var(--sp-8);
+}
+
+.wb-picks--wide {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+}
+
+/* A radio drawn as a card. The input covers the card, so the whole card is the target. */
+.wb-pick {
+  position: relative;
+  display: block;
+}
+
+.wb-pick input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.wb-pick__body {
+  display: grid;
+  align-content: start;
+  gap: 0.125rem;
+  height: 100%;
+  min-height: var(--tap);
+  padding: 0.625rem var(--sp-12) 0.625rem 2.25rem;
+  border: 1px solid var(--line-control);
+  border-radius: var(--r-ctl);
+  background: var(--surface);
+  transition:
+    background-color var(--t-fast),
+    border-color var(--t-fast);
+}
+
+/* The radio mark */
+.wb-pick__body::before {
+  content: "";
+  position: absolute;
+  top: 0.8125rem;
+  left: var(--sp-12);
+  width: 1rem;
+  height: 1rem;
+  border: 1px solid var(--line-control);
+  border-radius: 50%;
+  background: var(--surface);
+  transition:
+    border-color var(--t-fast),
+    box-shadow var(--t-fast);
+}
+
+.wb-pick input:hover + .wb-pick__body {
+  border-color: var(--text);
+}
+
+.wb-pick input:checked + .wb-pick__body {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 9%, var(--surface));
+}
+
+.wb-pick input:checked + .wb-pick__body::before {
+  border-color: var(--accent-solid);
+  box-shadow: inset 0 0 0 0.25rem var(--accent-solid);
+}
+
+.wb-pick input:focus-visible + .wb-pick__body {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.wb-pick__name {
+  font-size: var(--fs-14);
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.wb-pick__tag {
+  color: var(--muted);
+  font-size: var(--fs-13);
+  line-height: 1.45;
+}
+
+/* On a phone the list stays short: only the chosen profile shows its tagline. */
+@media (max-width: 39.99em) {
+  .wb-profiles .wb-pick__tag {
+    display: none;
+  }
+
+  .wb-profiles .wb-pick input:checked + .wb-pick__body .wb-pick__tag {
+    display: block;
+  }
+}
+
+.wb-detail {
+  display: grid;
+  gap: var(--sp-12);
+  padding: var(--sp-16);
+  border-radius: var(--r-ctl);
+  background: var(--surface-2);
+  font-size: var(--fs-14);
+  line-height: 1.6;
+}
+
+.wb-detail__text {
+  max-width: 68ch;
+}
+
+.wb-detail__needs {
+  display: grid;
+  gap: var(--sp-8);
+}
+
+.wb-needs {
+  display: grid;
+  gap: 0.375rem;
+}
+
+.wb-needs > li {
+  position: relative;
+  padding-left: 1.25rem;
+  color: var(--muted);
+}
+
+.wb-needs > li::before {
+  content: "";
+  position: absolute;
+  top: 0.55em;
+  left: 0.125rem;
+  width: 0.4375rem;
+  height: 0.4375rem;
+  border-radius: 1px;
+  background: var(--accent);
+}
+
+.wb-needs strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.wb-mode {
+  display: grid;
+  gap: var(--sp-8);
+  justify-items: start;
+}
+
+/* ==========================================================================
+   4. Files
+   ========================================================================== */
+
+.wb-drop {
+  display: grid;
+  justify-items: center;
+  gap: var(--sp-8);
+  padding: var(--sp-24) var(--sp-16);
+  border: 1px dashed var(--line-control);
+  border-radius: var(--r-card);
+  background: var(--surface-2);
+  text-align: center;
+  transition:
+    background-color var(--t-fast),
+    border-color var(--t-fast);
+}
+
+.wb-drop[data-over] {
+  border-color: var(--accent);
+  border-style: solid;
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+}
+
+.wb-drop__icon {
+  width: 1.5rem;
+  height: 1.5rem;
+  color: var(--muted);
+}
+
+.wb-drop__title {
+  font-weight: 600;
+}
+
+.wb-drop__actions {
+  justify-content: center;
+  margin-top: var(--sp-4);
+}
+
+.wb-files {
+  display: grid;
+  border: 1px solid var(--line);
+  border-radius: var(--r-ctl);
+}
+
+.wb-files:empty {
+  display: none;
+}
+
+.wb-file {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: var(--sp-8);
+  min-height: var(--tap);
+  padding-left: var(--sp-12);
+  font-size: var(--fs-14);
+}
+
+.wb-file + .wb-file {
+  border-top: 1px solid var(--line);
+}
+
+.wb-file > .icon {
+  color: var(--muted);
+}
+
+.wb-file__name {
+  display: flex;
+  min-width: 0;
+  font-size: var(--fs-13);
+  white-space: nowrap;
+}
+
+/* A long path keeps its file name: the folder part is what gets cut. */
+.wb-file__dir {
+  flex: 0 100 auto;
+  min-width: 2ch;
+  overflow: hidden;
+  color: var(--muted);
+  text-overflow: ellipsis;
+}
+
+.wb-file__base {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wb-file__meta {
+  color: var(--muted);
+  font-size: var(--fs-12);
+  white-space: nowrap;
+}
+
+.wb-file--more {
+  grid-template-columns: minmax(0, 1fr);
+  padding-inline: var(--sp-4);
+}
+
+@media (max-width: 29.99em) {
+  .wb-file {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+
+  .wb-file__meta {
+    grid-column: 2;
+    grid-row: 2;
+    margin-top: -0.5rem;
+    padding-bottom: var(--sp-8);
+  }
+
+  .wb-file__remove {
+    grid-column: 3;
+    grid-row: 1 / span 2;
+  }
+}
+
+.wb-meter {
+  display: grid;
+  gap: 0.375rem;
+}
+
+.wb-meter[data-full] .wb-meter__text {
+  color: var(--gap);
+}
+
+.wb-meter[data-full] .meter::-webkit-progress-value {
+  background: var(--gap);
+}
+
+.wb-meter[data-full] .meter::-moz-progress-bar {
+  background: var(--gap);
+}
+
+/* ==========================================================================
+   5. Evidence
+   ========================================================================== */
+
+#wb-evidence-fields {
+  display: grid;
+  gap: var(--sp-24);
+  padding-top: var(--sp-12);
+}
+
+.wb-evidence__group {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr));
+  gap: var(--sp-16);
+  align-items: start;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.wb-evidence__group > legend {
+  margin-bottom: var(--sp-12);
+  padding: 0;
+}
+
+/* Pasted text takes the full width; one-line facts sit side by side. */
+.wb-evidence__group > .field:has(.textarea) {
+  grid-column: 1 / -1;
+}
+
+/* The evidence status sits at the end of its summary row. */
+#wb-evidence-status {
+  margin-left: auto;
+  text-align: right;
+}
+
+#wb-evidence > .disclosure__summary::after {
+  margin-left: 0;
+}
+
+/* On a phone a summary is two lines: the title with the chevron, the hint under it. */
+@media (max-width: 43.99em) {
+  .wb .disclosure__summary {
+    flex-wrap: wrap;
+    gap: 0 var(--sp-12);
+    padding-block: 0.625rem;
+  }
+
+  .wb .disclosure__summary > .wb-sum {
+    flex: 1 1 0;
+  }
+
+  .wb .disclosure__summary::after {
+    margin-left: 0;
+  }
+
+  .wb .disclosure__summary > .disclosure__hint {
+    order: 3;
+    flex: 1 0 100%;
+    margin-left: 0;
+    text-align: left;
+  }
+}
+
+/* ==========================================================================
+   6. Privacy and flagged lines
+   ========================================================================== */
+
+.wb-privacy {
+  display: grid;
+  gap: var(--sp-12);
+}
+
+.wb-privacy:empty {
+  display: none;
+}
+
+.wb-privacy:focus {
+  outline: none;
+}
+
+.wb-flags {
+  display: grid;
+  gap: 0.375rem;
+}
+
+.wb-flag {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-4) var(--sp-12);
+  min-height: 2.25rem;
+}
+
+.wb-flag__where {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.wb-flag__kind {
+  color: var(--muted);
+}
+
+.wb-flag > .btn {
+  margin-left: auto;
+}
+
+.wb-flag--more {
+  color: var(--muted);
+}
+
+/* ==========================================================================
+   7. Run
+   ========================================================================== */
+
+.wb-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-8) var(--sp-16);
+}
+
+.wb-summary__text {
+  font-size: var(--fs-14);
+  line-height: 1.5;
+}
+
+/* The key and the connect control take a row of their own under provider and model. */
+#wb-key-field,
+.wb-connect {
+  grid-column: 1 / -1;
+}
+
+.wb-connect {
+  display: grid;
+  gap: var(--sp-8);
+  align-content: start;
+}
+
+.wb-connect__off {
+  display: grid;
+  justify-items: start;
+  gap: var(--sp-4);
+}
+
+.wb-connect__on {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-8) var(--sp-16);
+}
+
+.wb-connect__state {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-8);
+  font-size: var(--fs-14);
+}
+
+.wb-run-warn:empty {
+  display: none;
+}
+
+.wb-quota {
+  flex: 1 1 14rem;
+}
+
+.wb-quota:empty {
+  display: none;
+}
+
+/* The limit, said once, with the two ways on. */
+.wb-upgrade {
+  display: grid;
+  gap: var(--sp-8);
+  padding: var(--sp-16);
+  border: 1px solid color-mix(in srgb, var(--accent) 55%, transparent);
+  border-radius: var(--r-ctl);
+  background: color-mix(in srgb, var(--accent) 8%, var(--surface));
+}
+
+.wb-upgrade__title {
+  font-size: var(--fs-16);
+  font-weight: 650;
+}
+
+.wb-upgrade__text {
+  color: var(--muted);
+  font-size: var(--fs-14);
+}
+
+.wb-upgrade .wb-actions {
+  margin-top: var(--sp-4);
+}
+
+/* The review as it is written: the code surface, with the run state above it. */
+.wb-live {
+  overflow: hidden;
+  border: 1px solid var(--code-line);
+  border-radius: var(--r-ctl);
+  background: var(--code-bg);
+  color: var(--code-text);
+}
+
+.wb-live__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-8) var(--sp-12);
+  min-height: 2.75rem;
+  padding: var(--sp-4) var(--sp-4) var(--sp-4) var(--sp-12);
+  border-bottom: 1px solid var(--code-line);
+}
+
+.wb-live__head .chip {
+  --chip: var(--code-hl);
+}
+
+.wb-live__head .chip[data-status="failed"] {
+  --chip: var(--code-flag);
+}
+
+.wb-live__clock {
+  font: 600 var(--fs-13) / 1 var(--font-mono);
+}
+
+.wb-live__what {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--code-muted);
+  font: 500 var(--fs-12) / 1.4 var(--font-mono);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wb-live__head .btn {
+  margin-left: auto;
+  color: var(--code-text);
+}
+
+.wb-live__head .btn:hover {
+  background: color-mix(in srgb, var(--code-text) 10%, transparent);
+}
+
+.wb-live__text {
+  max-height: 24rem;
+  min-height: 6rem;
+  padding: var(--sp-12) var(--sp-16);
+  overflow: auto;
+  font-size: var(--fs-13);
+  line-height: 1.7;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.wb-live__text:focus-visible {
+  outline-offset: -2px;
+  outline-color: var(--code-hl);
+}
+
+/* ==========================================================================
+   8. Result
+   ========================================================================== */
+
+.wb-result {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-16);
+}
+
+.wb-result__bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-12) var(--sp-24);
+}
+
+.wb-result__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-4) var(--sp-12);
+  color: var(--muted);
+  font-size: var(--fs-13);
+}
+
+.wb-result__profile {
+  color: var(--text);
+  font-size: var(--fs-16);
+  font-weight: 650;
+}
+
+.wb-result__model {
+  overflow-wrap: anywhere;
+}
+
+.wb-result__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-8);
+}
+
+/* On a phone the actions form a tidy grid: the packet across the top, the rest in pairs. */
+@media (max-width: 39.99em) {
+  .wb-result__actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+  }
+
+  .wb-result__actions > .btn {
+    white-space: normal;
+  }
+
+  .wb-result__actions > .btn:first-child {
+    grid-column: 1 / -1;
+  }
+}
+
+.wb-result__body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-24);
+}
+
+.wb-section {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-8);
+}
+
+.wb-section__title {
+  color: var(--muted);
+  font: 600 var(--fs-12) / 1.5 var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.wb-section .kv {
+  padding-inline: var(--sp-16);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface);
+}
+
+.wb-list {
+  display: grid;
+  gap: var(--sp-8);
+  padding: var(--sp-12) var(--sp-16);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  font-size: var(--fs-14);
+  line-height: 1.6;
+}
+
+.wb-list > li {
+  position: relative;
+  padding-left: 1.25rem;
+}
+
+.wb-list > li::before {
+  content: "";
+  position: absolute;
+  top: 0.62em;
+  left: 0.125rem;
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: 1px;
+  background: var(--line-control);
+}
+
+.wb-prose {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-12);
+  font-size: var(--fs-14);
+  line-height: 1.65;
+}
+
+.wb-prose > p {
+  max-width: 72ch;
+}
+
+/* The review exactly as the model wrote it. It grows with its content: no inner scroller. */
+.wb-raw {
+  padding: var(--sp-16);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  font-size: var(--fs-13);
+  line-height: 1.7;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.wb-hash {
+  max-width: 11rem;
+  overflow: hidden;
+  color: var(--muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* A cited location that is not in the supplied files. */
+.wb-ref--bad {
+  align-items: center;
+  border-style: dashed;
+  border-color: var(--gap);
+  background: transparent;
+  color: var(--gap);
+}
+
+.wb-ref--bad .ref__lines {
+  color: inherit;
+}
+
+.wb-ref--bad .icon {
+  flex: none;
+  margin-right: 0.375rem;
+}
+
+/* Cited locations inside running text sit on the text baseline. */
+:is(.rail__body, .wb-list, .wb-prose, .table, .kv) .ref {
+  vertical-align: baseline;
+}
+
+button.ref {
+  cursor: pointer;
+}
+
+.wb-next {
+  display: grid;
+  gap: var(--sp-8);
+  padding-top: var(--sp-24);
+  border-top: 1px solid var(--line);
+}
+
+.wb-next__text {
+  color: var(--muted);
+  font-size: var(--fs-14);
+}
+
+.wb-empty {
+  display: grid;
+  justify-items: center;
+  gap: var(--sp-8);
+  padding: var(--sp-48) var(--sp-16);
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--r-card);
+  text-align: center;
+}
+
+.wb-empty__title {
+  font-size: var(--fs-18);
+  font-weight: 650;
+}
+
+/* ==========================================================================
+   9. GitHub picker
+   ========================================================================== */
+
+.wb-gh__source {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-4) var(--sp-8);
+  font-size: var(--fs-14);
+}
+
+.wb-gh__filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--sp-8) var(--sp-24);
+}
+
+.wb-gh__search {
+  flex: 1 1 16rem;
+}
+
+.wb-gh__exts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+}
+
+.wb-gh__exts:empty {
+  display: none;
+}
+
+/* A file-type filter: pressed means shown. */
+.wb-ext {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  min-height: 2rem;
+  padding: 0 0.625rem;
+  border: 1px solid var(--line-control);
+  border-radius: var(--r-chip);
+  color: var(--muted);
+  font-size: var(--fs-13);
+  transition:
+    background-color var(--t-fast),
+    border-color var(--t-fast),
+    color var(--t-fast);
+}
+
+.wb-ext:hover {
+  border-color: var(--text);
+  color: var(--text);
+}
+
+.wb-ext[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  color: var(--text);
+}
+
+.wb-ext__count {
+  color: var(--muted);
+  font: 600 var(--fs-12) / 1 var(--font-mono);
+}
+
+.wb-gh__tree {
+  border: 1px solid var(--line);
+  border-radius: var(--r-ctl);
+  padding: var(--sp-4) var(--sp-8);
+}
+
+.wb-gh__tree > .wb-note {
+  padding: var(--sp-12) var(--sp-8);
+}
+
+.wb-tree__list .wb-tree__list {
+  margin-left: 0.9375rem;
+  padding-left: var(--sp-8);
+  border-left: 1px solid var(--line);
+}
+
+.wb-tree__row {
+  display: flex;
+  align-items: center;
+}
+
+.wb-tree__toggle {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--r-ctl);
+  color: var(--muted);
+}
+
+.wb-tree__toggle:hover {
+  background: color-mix(in srgb, var(--text) 8%, transparent);
+  color: var(--text);
+}
+
+.wb-tree__label {
+  flex: 1 1 auto;
+  align-items: center;
+  min-width: 0;
+  min-height: 2.25rem;
+  padding-block: 0.25rem;
+  gap: var(--sp-8);
+}
+
+.wb-tree__label .check__box {
+  margin-top: 0;
+}
+
+/* Files line up with the folder names above them: the toggle's width is kept free. */
+.wb-tree__file > .wb-tree__label {
+  padding-left: 2rem;
+}
+
+.wb-tree__name {
+  min-width: 0;
+  overflow: hidden;
+  font-size: var(--fs-13);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wb-tree__size {
+  flex: none;
+  margin-left: auto;
+  color: var(--muted);
+  font-size: var(--fs-12);
+  white-space: nowrap;
+}
+
+@media (pointer: coarse) {
+  .wb-ext,
+  .wb-tree__label {
+    min-height: var(--tap);
+  }
+
+  .wb-tree__toggle {
+    width: var(--tap);
+    height: var(--tap);
+  }
+
+  .wb-tree__file > .wb-tree__label {
+    padding-left: var(--tap);
+  }
+}
+
+.wb-gh__meter {
+  flex: 1 1 14rem;
+  align-self: center;
+  margin-right: auto;
+  color: var(--muted);
+  font-size: var(--fs-13);
+}
+
+.wb-gh__meter[data-over] {
+  color: var(--danger);
+}
+
+#wb-github-status[data-tone="error"] {
+  color: var(--danger);
+}
+
+/* ==========================================================================
+   10. Preview, source pane, history
+   ========================================================================== */
+
+.wb-preview .code__pre {
+  padding-inline: var(--sp-16);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.wb-source .wb-note {
+  padding-block: var(--sp-8);
+}
+
+.wb-history {
+  display: grid;
+  border-top: 1px solid var(--line);
+}
+
+.wb-history__item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-8) var(--sp-16);
+  padding-block: var(--sp-12);
+  border-bottom: 1px solid var(--line);
+}
+
+.wb-history__text {
+  display: grid;
+  flex: 1 1 14rem;
+  justify-items: start;
+  gap: var(--sp-4);
+  min-width: 0;
+}
+
+.wb-history__title {
+  font-size: var(--fs-14);
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.wb-history__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+}
+
+.wb-history__empty {
+  padding-block: var(--sp-16);
+  font-size: var(--fs-14);
+}
+
+/* ==========================================================================
+   11. Print
+   ========================================================================== */
+
+@media print {
+  /* Set from script while the result is printed: everything that is not on
+     the path to the workbench. */
+  [data-wb-print-hide] {
+    display: none !important;
+  }
+
+  .wb[data-step="results"] :is(.wb__head, .wb__bar, .wb__title, .wb-next) {
+    display: none !important;
+  }
+
+  .wb[data-step="results"] {
+    padding-block: 0;
+  }
+
+  .wb-result [role="tabpanel"][data-tab="raw"] {
+    display: none !important;
+  }
+
+  .wb-result [role="tabpanel"][data-tab="findings"] {
+    display: grid !important;
+  }
+
+  /* Grid containers do not break across pages: a card that runs over would be
+     drawn on top of the next one. On paper the result is plain block flow. */
+  .wb-result,
+  .wb-result__body,
+  .wb-result .findings,
+  .wb-section,
+  .wb-prose {
+    display: block !important;
+  }
+
+  .wb-result > * + *,
+  .wb-result__body > * + *,
+  .wb-result .findings > * + * {
+    margin-top: 14pt;
+  }
+
+  .wb-section > * + *,
+  .wb-prose > * + * {
+    margin-top: 6pt;
+  }
+
+  .wb-result .finding {
+    overflow: visible;
+  }
+
+  .wb-result .finding__head,
+  .wb-section__title {
+    break-after: avoid;
+  }
+
+  .wb-hash {
+    max-width: none;
+    overflow: visible;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .wb-section,
+  .wb-list > li {
+    break-inside: avoid;
+  }
+
+  .wb-raw {
+    border: 0;
+    padding: 0;
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "id": "sol-01-v",
+  "pair": "sol-01",
+  "variant": "vulnerable",
+  "family": "find-sol",
+  "visibility": "public",
+  "authored": "2026-10-02",
+  "profile": "solidity",
+  "files": [
+    "src/AsterQuay.sol",
+    "src/QuayTools.sol"
+  ],
+  "focus": "Review the files in this workspace for security issues."
+}
