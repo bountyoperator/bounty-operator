@@ -3,5 +3,7 @@
     "openai/gpt-oss-120b": "Its hosts returned tool calls as plain text on 35 of 36 initial inputs. The batch could not be completed and is excluded from the ranking.",
     "meta/muse-spark-1.3": "OpenRouter serves it only to accounts that have made an age confirmation, which the benchmark account has not made."
   },
-  "notes": []
+  "notes": [
+    "Google Gemini 3.5 Flash Lite has 35 finalized raw inputs and one unresolved input after repeated provider failures. Its results are shown for inspection, but it is not ranked or recommended."
+  ]
 }

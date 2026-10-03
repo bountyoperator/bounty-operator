@@ -223,13 +223,41 @@ describe('report check', () => {
 
   test('prior art and limits are present or missing', () => {
     const report = byId(checkReport('# T\n\nNothing else.\n'));
-    assert.equal(report['prior-art'].finding, 'No known-issue or prior-audit comparison found.');
+    assert.equal(report['prior-art'].finding, 'No prior-art reference or search result found.');
     assert.equal(report.limits.finding, 'No limits or non-claims found.');
 
     const present = byId(checkReport('Known issue #4 covers fees only.\n\n## Limitations\nMainnet only.\n'));
     assert.equal(present['prior-art'].status, 'pass');
     assert.equal(present.limits.status, 'pass');
     assert.equal(byId(checkReport('The loss is capped at the pool balance.\n')).limits.status, 'pass');
+  });
+
+  test('prior art: explicit missing checks and bare headings do not pass', () => {
+    for (const text of ['Prior art: not checked.', '**Prior art:** not checked.', 'No duplicate search has been performed.', 'Prior art has not yet been checked.']) {
+      const check = byId(checkReport(text))['prior-art'];
+      assert.equal(check.status, 'missing', text);
+      assert.equal(check.finding, 'Prior-art checking is explicitly marked as incomplete.');
+      assert.equal(check.evidence[0].line, 1);
+    }
+    for (const text of ['## Prior art', '**Known issues:**', 'Prior audit report', 'Prior art:\nNot checked.', '## Known issues and prior audits', '## Prior art & known issues']) {
+      assert.equal(byId(checkReport(text))['prior-art'].status, 'missing', text);
+    }
+  });
+
+  test('prior art: completed negative searches and genuine references retain their limited pass', () => {
+    for (const text of [
+      'We searched known issues and audit reports and found no matching issues.',
+      'Known issue #4 has not been fixed.',
+      'The prior audit does not cover this component.',
+      'Deployment was not checked. Prior audit #7 covers this component.',
+      'Prior audit #7 covers this component. Deployment was not checked.',
+      'No duplicate search has been performed. The published audit note #7 covers this component.',
+    ]) {
+      const check = byId(checkReport(text))['prior-art'];
+      assert.equal(check.status, 'pass', text);
+      assert.equal(check.finding, 'A prior-art reference is present; comparison quality and duplicate status are not verified.');
+      assert.match(check.fix, /whether the same fix applies/);
+    }
   });
 
   test('self-negating phrases are flagged with the sentence that holds them', () => {

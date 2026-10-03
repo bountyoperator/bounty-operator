@@ -17,7 +17,7 @@ const QUESTIONS = [
   },
   {
     q: 'What does 14 of 14 tell me?',
-    a: 'That the parts a triager looks for first are on the page: a commit, a quoted impact row, one severity, an inline proof with its output, a comparison with known issues. The check reads text. Whether the claim survives an adversary is what the workbench challenge answers.',
+    a: 'That the draft contains the text these checks look for: a commit, a quoted impact row, one severity, an inline proof with its output, and a prior-art reference or search result. The check does not verify comparison quality or duplicate status. The workbench challenge reviews the claims against the evidence you supply.',
   },
   {
     q: 'Which report formats does it read?',
@@ -92,7 +92,7 @@ ${panel}
 <section class="section section--tight wrap" aria-labelledby="checks-heading">
 <div class="tool-copy">
 <h2 id="checks-heading">The fourteen checks</h2>
-<p class="lede">Each result is one of three states. <strong>Pass</strong>: the part is on the page, with the line that carries it. <strong>Missing</strong>: nothing in the draft matches. <strong>Flagged</strong>: a line was found that a triager closes on, quoted so you can fix it.</p>
+<p class="lede">Each result is one of three states. <strong>Pass</strong>: the expected text is on the page, with the line that carries it. <strong>Missing</strong>: no matching evidence is stated, or the draft says the check was not done. <strong>Flagged</strong>: a line was found that a triager closes on, quoted so you can fix it.</p>
 </div>
 ${checkTable}
 </section>
@@ -113,7 +113,7 @@ ${phraseList}
 <li>${icon('check')}<span>A title that states mechanism and consequence in one sentence.</span></li>
 <li>${icon('check')}<span>Numbered attack steps, kept separate from test code.</span></li>
 <li>${icon('check')}<span>The impact row quoted verbatim.</span></li>
-<li>${icon('check')}<span>Limits and non-claims stated by the author, and the nearest known issue named and distinguished.</span></li>
+<li>${icon('check')}<span>Limits and non-claims stated by the author, and the nearest known issue compared by root cause and whether the same fix applies.</span></li>
 </ul>
 <p>Twelve checks, distilled from 105 real case files across five platforms. The wins and the closures. For a blank page, start from a <a class="link" href="/templates">report template</a> or the <a class="link" href="/guide">report guide</a>.</p>
 </div>

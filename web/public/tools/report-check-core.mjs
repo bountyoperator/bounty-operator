@@ -136,10 +136,10 @@ export const CHECKS = Object.freeze([
   },
   {
     id: 'prior-art',
-    label: 'Known-issue and prior-audit comparison',
+    label: 'Prior-art reference stated',
     source: 'Prior-art sweep',
-    test: 'A line that names a known issue, an audit note or an earlier report.',
-    fix: 'Name the nearest known issue or audit note and say in one sentence how the root cause differs.',
+    test: 'A known issue, audit note, earlier report or search result, beyond a heading or an explicit not-checked statement.',
+    fix: 'Name the nearest known issue or audit note, compare the root cause and whether the same fix applies, or record the completed search and its result.',
   },
   {
     id: 'limits',
@@ -590,11 +590,24 @@ function checkMocks(lines) {
 // ---------------------------------------------------------------------------
 
 const PRIOR_ART = /\bknown issues?\b|\bprior (?:audit|art|report|finding)s?\b|\bprevious(?:ly)? (?:audit\w*|report\w*|findings?|reviews?)\b|\baudit (?:report|finding|note)s?\b|\baudited by\b|\balready (?:reported|known|fixed)\b|\bduplicates?\b|\backnowledged\b|\bwon['’]?t[- ]fix\b|\bfix[- ]review\b|\bdiffers? from\b|\bdistinct from\b|\bnot (?:covered|listed|mentioned|reported) (?:by|in)\b|\bsimilar (?:issue|finding|report)s?\b/i;
+const PRIOR_ART_LABEL = /^(?:prior[- ]art|known[- ]issues?|(?:prior |previous )?audits?(?: reports?| notes?)?|duplicates?)(?: (?:search|check|comparison))?$/i;
+const PRIOR_ART_UNCHECKED = /\b(?:prior[- ]art|known[- ]issues?|duplicates?)(?: (?:search|check|review|comparison))?\s*[:：]?\s*(?:(?:was|were|is|are|has|have)\s+)?not(?: yet)?(?: been)?\s+(?:checked|searched|reviewed|performed|completed)\b|\bno (?:duplicate|prior[- ]art|known[- ]issue) (?:search|check|review|comparison)(?: (?:has|have) been| was| is)? (?:performed|completed|conducted|done)\b/i;
 
 function checkPriorArt(lines) {
-  const line = lines.find((entry) => !entry.code && PRIOR_ART.test(entry.text));
-  if (line) return result('pass', 'A known-issue or prior-audit comparison is present.', [quoteOf(line)]);
-  return result('missing', 'No known-issue or prior-audit comparison found.');
+  let unchecked = null;
+  for (const line of lines) {
+    if (line.code) continue;
+    // Keep an unrelated negative sentence from cancelling a genuine reference.
+    for (const sentence of line.text.split(/[.!?](?:\s+|$)/)) {
+      if (!PRIOR_ART.test(sentence)) continue;
+      const text = stripEnd(sentence.trim(), '#*_ :：').replace(/^[#>*_\s-]+/, '').replace(/[*_]/g, '');
+      if (text.split(/\s+(?:and|&)\s+/i).every((label) => PRIOR_ART_LABEL.test(label))) continue;
+      if (PRIOR_ART_UNCHECKED.test(text)) { unchecked ??= line; continue; }
+      return result('pass', 'A prior-art reference is present; comparison quality and duplicate status are not verified.', [quoteOf(line)]);
+    }
+  }
+  if (unchecked) return result('missing', 'Prior-art checking is explicitly marked as incomplete.', [quoteOf(unchecked)]);
+  return result('missing', 'No prior-art reference or search result found.');
 }
 
 const LIMITS_HEADING = /^[\s#>*_-]*(?:limitations?|limits|non-claims?|not claimed|caveats|what (?:this|the) (?:report|poc|proof|test) does not (?:show|claim|cover)|limits and non-claims|scope of (?:the )?claim)\b/i;
