@@ -81,7 +81,8 @@ Prints, in run order, what each model is expected to cost on the scored set at o
 - `low` and `high` are the same sum with the profile of each pilot model alone. They are a range of what was seen, not a bound: a model that reasons several times longer than both will cost several times its row.
 - Prices are the list prices of the models API at that moment. Under the routing policy OpenRouter may pick an endpoint that is cheaper or dearer than the listed one.
 - A profile-arm row is priced with the raw-arm profile; in the pilot the profile arm cost the same or less.
-- The plan spends nothing. The real limits are `--max-usd` and `--run-budget-usd` on `run` and the key's own limit. Both stop before the runs in flight could cross the figure: they add the mean cost per run seen so far for each model in flight, or the plan's high estimate while a model has no finished run.
+- The plan spends nothing. `--max-usd` and `--run-budget-usd` are thresholds for starting more runs. The runner reserves the mean cost per run seen so far for each model in flight, or the plan's high estimate while that model has no finished run. Calls already running are allowed to finish, so actual spend can exceed either threshold when those estimates are low.
+- `--run-budget-usd` adds the stored cost read at invocation start to that invocation's spend and estimated in-flight cost. Concurrent invocations do not share an atomic budget: allocate their batch caps together, leave headroom, and monitor both account credit and the provider key's spending limit.
 
 ## Difficulty probe
 
