@@ -1,0 +1,507 @@
+{
+  "schema": "paydirt.results/1",
+  "release": "2026-10",
+  "run_id": "2026-10",
+  "protocol_sha256": "74aad5311600bf53862cb0c5e09dec6e6af0f63feaff7d6805d021905e0cfd35",
+  "hashes": {
+    "protocol": "74aad5311600bf53862cb0c5e09dec6e6af0f63feaff7d6805d021905e0cfd35",
+    "core": "5fea9eb00e3f2bb24d3965bf6854d39742d3324b1b826492eaa1ef51dfe09768",
+    "arms": {
+      "raw": "5fea9eb00e3f2bb24d3965bf6854d39742d3324b1b826492eaa1ef51dfe09768",
+      "solidity": "ad6a658a538ec5ef84c3025febf9dea8a5e076127e2b11e9dcfe346cb2d38a15",
+      "general": "d7f99fc3799b5bf3914fd3aba5668fdf9467a391a1607f896c0e9d26083a01fc",
+      "report": "4550f8a9890f6efd39f757fcea9c5b7ea870a7beccf9fc84c715d66c7a7f6448"
+    }
+  },
+  "harness_commit": "2aa1601b097aea7edc8711d88b4219bc900e8dc7",
+  "omp_version": "omp/18.4.4",
+  "generated_at": "2026-10-03T06:38:16.311Z",
+  "prices_at": "2026-10-03T07:27:58.809Z",
+  "thinking": "max",
+  "repeats": 1,
+  "cases": {
+    "pairs": 6,
+    "inputs": 12,
+    "public": 6,
+    "held": 0,
+    "by_family": {
+      "challenge": 2,
+      "find-sol": 3,
+      "find-ts": 1
+    },
+    "by_author": {
+      "google": 1,
+      "mistralai": 1,
+      "openai": 4
+    }
+  },
+  "scoring": {
+    "headline_arm": "raw",
+    "max_findings": 8,
+    "max_range_lines": 40,
+    "line_tolerance": 3,
+    "line_tolerance_named": 0,
+    "max_functions": 3,
+    "bite_severities": [
+      "medium",
+      "high",
+      "critical",
+      "unrated"
+    ],
+    "max_quotes": 8,
+    "min_quote_chars": 20,
+    "max_quote_chars": 400,
+    "bootstrap": {
+      "resamples": 10000,
+      "seed": "paydirt-v1",
+      "level": 0.95
+    },
+    "budget_usd_per_run": 0.1
+  },
+  "arms": {
+    "find-sol": [
+      "raw",
+      "solidity"
+    ],
+    "find-ts": [
+      "raw",
+      "general"
+    ],
+    "challenge": [
+      "raw",
+      "report"
+    ]
+  },
+  "pairs": [
+    {
+      "pair": "ch-01",
+      "family": "challenge",
+      "visibility": "public",
+      "author": "google",
+      "cases": {
+        "accurate": "ch-01-a",
+        "overclaimed": "ch-01-o"
+      }
+    },
+    {
+      "pair": "ch-08",
+      "family": "challenge",
+      "visibility": "public",
+      "author": "mistralai",
+      "cases": {
+        "accurate": "ch-08-a",
+        "overclaimed": "ch-08-o"
+      }
+    },
+    {
+      "pair": "sol-01",
+      "family": "find-sol",
+      "visibility": "public",
+      "author": "openai",
+      "cases": {
+        "fixed": "sol-01-f",
+        "vulnerable": "sol-01-v"
+      }
+    },
+    {
+      "pair": "sol-04",
+      "family": "find-sol",
+      "visibility": "public",
+      "author": "openai",
+      "cases": {
+        "fixed": "sol-04-f",
+        "vulnerable": "sol-04-v"
+      }
+    },
+    {
+      "pair": "sol-06",
+      "family": "find-sol",
+      "visibility": "public",
+      "author": "openai",
+      "cases": {
+        "fixed": "sol-06-f",
+        "vulnerable": "sol-06-v"
+      }
+    },
+    {
+      "pair": "ts-01",
+      "family": "find-ts",
+      "visibility": "public",
+      "author": "openai",
+      "cases": {
+        "fixed": "ts-01-f",
+        "vulnerable": "ts-01-v"
+      }
+    }
+  ],
+  "commitments": [],
+  "downloads": {
+    "archive": "../paydirt-2026-10-public.tar.gz",
+    "sha256": "04e54b30389b77f7b92fd0f5e57a9c4e0914c52d98bcaac99e792308dc66b591",
+    "bytes": 3608800,
+    "public_runs": 36
+  },
+  "picks": [
+    {
+      "task": "challenge",
+      "tier": "best",
+      "model": "z-ai/glm-5.3-flash",
+      "arm": "raw",
+      "score": 100,
+      "usd_run": 0.007102
+    },
+    {
+      "task": "challenge",
+      "tier": "budget",
+      "model": "z-ai/glm-5.3-flash",
+      "arm": "raw",
+      "score": 100,
+      "usd_run": 0.007102
+    },
+    {
+      "task": "challenge",
+      "tier": "open-weight",
+      "model": "z-ai/glm-5.3-flash",
+      "arm": "raw",
+      "score": 100,
+      "usd_run": 0.007102
+    },
+    {
+      "task": "find-sol",
+      "tier": "best",
+      "model": "openai/gpt-6-luna",
+      "arm": "raw",
+      "score": 100,
+      "usd_run": 0.009195
+    },
+    {
+      "task": "find-sol",
+      "tier": "budget",
+      "model": "openai/gpt-6-luna",
+      "arm": "raw",
+      "score": 100,
+      "usd_run": 0.009195
+    },
+    {
+      "task": "find-sol",
+      "tier": "open-weight",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "arm": "raw",
+      "score": 66.67,
+      "usd_run": 0.017961
+    },
+    {
+      "task": "find-ts",
+      "tier": "best",
+      "model": "z-ai/glm-5.3-flash",
+      "arm": "raw",
+      "score": 100,
+      "usd_run": 0.007102
+    },
+    {
+      "task": "find-ts",
+      "tier": "budget",
+      "model": "z-ai/glm-5.3-flash",
+      "arm": "raw",
+      "score": 100,
+      "usd_run": 0.007102
+    },
+    {
+      "task": "find-ts",
+      "tier": "open-weight",
+      "model": "z-ai/glm-5.3-flash",
+      "arm": "raw",
+      "score": 100,
+      "usd_run": 0.007102
+    }
+  ],
+  "models": [
+    {
+      "slug": "openai/gpt-6-luna",
+      "name": "GPT-6 Luna",
+      "vendor": "openai",
+      "open_weight": false,
+      "cutoff": null,
+      "price": {
+        "in": 0.1,
+        "out": 0.5
+      },
+      "effort": "max",
+      "effort_requested": "max",
+      "effort_mixed": null,
+      "providers": [
+        {
+          "name": "Azure",
+          "runs": 7
+        }
+      ],
+      "tier": 1,
+      "run_tier": 2,
+      "complete": true,
+      "usd_total": 0.103457,
+      "infra_retries": 0,
+      "arms": {
+        "raw": {
+          "pairs": 6,
+          "score": {
+            "median": 100,
+            "min": 100,
+            "max": 100,
+            "majority": 100,
+            "ci95": [
+              100,
+              100
+            ]
+          },
+          "by_family": {
+            "challenge": 100,
+            "find-sol": 100,
+            "find-ts": 100
+          },
+          "by_author": {
+            "google": {
+              "pairs": 1,
+              "score": 100
+            },
+            "mistralai": {
+              "pairs": 1,
+              "score": 100
+            },
+            "openai": {
+              "pairs": 4,
+              "score": 100
+            }
+          },
+          "excl_same_vendor": {
+            "score": 100,
+            "n_pairs": 2
+          },
+          "recall": 1,
+          "fools_gold": 0,
+          "decoy_rate": 0,
+          "line_acc": 1,
+          "sev_exact": 1,
+          "sev_bias": 0,
+          "unrated": 0,
+          "false_reject": 0,
+          "challenge_ba": 1,
+          "failure": 0,
+          "truncated": 0,
+          "repeat_agreement": null,
+          "usd_run": 0.008621,
+          "usd_run_p50": 0.009195,
+          "usd_total": 0.103457,
+          "usd_per_correct_pair": 0.017243,
+          "latency_p50_s": 101.9,
+          "runs": 12,
+          "runs_expected": 12,
+          "unresolved": 0
+        }
+      },
+      "lift": {},
+      "detail": "models/openai__gpt-6-luna.json"
+    },
+    {
+      "slug": "deepseek/deepseek-v4.1-flash",
+      "name": "DeepSeek V4.1 Flash",
+      "vendor": "deepseek",
+      "open_weight": true,
+      "cutoff": null,
+      "price": {
+        "in": 0.3,
+        "out": 1.2
+      },
+      "effort": "max",
+      "effort_requested": "max",
+      "effort_mixed": null,
+      "providers": [
+        {
+          "name": "DeepInfra",
+          "runs": 8
+        },
+        {
+          "name": "AtlasCloud",
+          "runs": 3
+        },
+        {
+          "name": "InferenceNet",
+          "runs": 1
+        }
+      ],
+      "tier": 1,
+      "run_tier": 1,
+      "complete": true,
+      "usd_total": 0.242644,
+      "infra_retries": 0,
+      "arms": {
+        "raw": {
+          "pairs": 6,
+          "score": {
+            "median": 83.33,
+            "min": 83.33,
+            "max": 83.33,
+            "majority": 83.33,
+            "ci95": [
+              50,
+              100
+            ]
+          },
+          "by_family": {
+            "challenge": 100,
+            "find-sol": 66.67,
+            "find-ts": 100
+          },
+          "by_author": {
+            "google": {
+              "pairs": 1,
+              "score": 100
+            },
+            "mistralai": {
+              "pairs": 1,
+              "score": 100
+            },
+            "openai": {
+              "pairs": 4,
+              "score": 75
+            }
+          },
+          "excl_same_vendor": {
+            "score": 83.33,
+            "n_pairs": 6
+          },
+          "recall": 1,
+          "fools_gold": 0,
+          "decoy_rate": 0,
+          "line_acc": 1,
+          "sev_exact": 1,
+          "sev_bias": 0,
+          "unrated": 0,
+          "false_reject": 0,
+          "challenge_ba": 1,
+          "failure": 0.0833,
+          "truncated": 0,
+          "repeat_agreement": null,
+          "usd_run": 0.02022,
+          "usd_run_p50": 0.017961,
+          "usd_total": 0.242644,
+          "usd_per_correct_pair": 0.048529,
+          "latency_p50_s": 293.7,
+          "runs": 12,
+          "runs_expected": 12,
+          "unresolved": 0
+        }
+      },
+      "lift": {},
+      "detail": "models/deepseek__deepseek-v4.1-flash.json"
+    },
+    {
+      "slug": "z-ai/glm-5.3-flash",
+      "name": "GLM 5.3 Flash",
+      "vendor": "z-ai",
+      "open_weight": true,
+      "cutoff": null,
+      "price": {
+        "in": 0.15,
+        "out": 0.5
+      },
+      "effort": "max",
+      "effort_requested": "max",
+      "effort_mixed": null,
+      "providers": [
+        {
+          "name": "StreamLake",
+          "runs": 3
+        },
+        {
+          "name": "Wafer",
+          "runs": 3
+        },
+        {
+          "name": "Relace",
+          "runs": 2
+        },
+        {
+          "name": "DigitalOcean",
+          "runs": 1
+        },
+        {
+          "name": "Friendli",
+          "runs": 1
+        },
+        {
+          "name": "Novita",
+          "runs": 1
+        },
+        {
+          "name": "Together",
+          "runs": 1
+        }
+      ],
+      "tier": 1,
+      "run_tier": 1,
+      "complete": true,
+      "usd_total": 0.131729,
+      "infra_retries": 0,
+      "arms": {
+        "raw": {
+          "pairs": 6,
+          "score": {
+            "median": 66.67,
+            "min": 66.67,
+            "max": 66.67,
+            "majority": 66.67,
+            "ci95": [
+              33.33,
+              100
+            ]
+          },
+          "by_family": {
+            "challenge": 100,
+            "find-sol": 33.33,
+            "find-ts": 100
+          },
+          "by_author": {
+            "google": {
+              "pairs": 1,
+              "score": 100
+            },
+            "mistralai": {
+              "pairs": 1,
+              "score": 100
+            },
+            "openai": {
+              "pairs": 4,
+              "score": 50
+            }
+          },
+          "excl_same_vendor": {
+            "score": 66.67,
+            "n_pairs": 6
+          },
+          "recall": 1,
+          "fools_gold": 0,
+          "decoy_rate": 0,
+          "line_acc": 1,
+          "sev_exact": 0.75,
+          "sev_bias": -0.25,
+          "unrated": 0,
+          "false_reject": 0,
+          "challenge_ba": 1,
+          "failure": 0.1667,
+          "truncated": 0.0833,
+          "repeat_agreement": null,
+          "usd_run": 0.010977,
+          "usd_run_p50": 0.007102,
+          "usd_total": 0.131729,
+          "usd_per_correct_pair": 0.032932,
+          "latency_p50_s": 394.9,
+          "runs": 12,
+          "runs_expected": 12,
+          "unresolved": 0
+        }
+      },
+      "lift": {},
+      "detail": "models/z-ai__glm-5.3-flash.json"
+    }
+  ]
+}

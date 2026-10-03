@@ -1,0 +1,3798 @@
+{
+  "schema": "paydirt.results/1",
+  "release": "2026-10",
+  "run_id": "2026-10",
+  "protocol_sha256": "74aad5311600bf53862cb0c5e09dec6e6af0f63feaff7d6805d021905e0cfd35",
+  "hashes": {
+    "protocol": "74aad5311600bf53862cb0c5e09dec6e6af0f63feaff7d6805d021905e0cfd35",
+    "core": "5fea9eb00e3f2bb24d3965bf6854d39742d3324b1b826492eaa1ef51dfe09768",
+    "arms": {
+      "raw": "5fea9eb00e3f2bb24d3965bf6854d39742d3324b1b826492eaa1ef51dfe09768",
+      "solidity": "ad6a658a538ec5ef84c3025febf9dea8a5e076127e2b11e9dcfe346cb2d38a15",
+      "general": "d7f99fc3799b5bf3914fd3aba5668fdf9467a391a1607f896c0e9d26083a01fc",
+      "report": "4550f8a9890f6efd39f757fcea9c5b7ea870a7beccf9fc84c715d66c7a7f6448"
+    }
+  },
+  "harness_commit": "2aa1601b097aea7edc8711d88b4219bc900e8dc7",
+  "omp_version": "omp/18.4.4",
+  "generated_at": "2026-10-03T07:38:24.413Z",
+  "prices_at": "2026-10-03T07:27:58.809Z",
+  "thinking": "max",
+  "repeats": 1,
+  "cases": {
+    "pairs": 18,
+    "inputs": 36,
+    "public": 0,
+    "held": 18,
+    "by_family": {
+      "challenge": 6,
+      "find-sol": 10,
+      "find-ts": 2
+    },
+    "by_author": {
+      "anthropic": 2,
+      "deepseek": 2,
+      "google": 4,
+      "moonshotai": 1,
+      "openai": 4,
+      "qwen": 1,
+      "x-ai": 3,
+      "z-ai": 1
+    }
+  },
+  "scoring": {
+    "headline_arm": "raw",
+    "max_findings": 8,
+    "max_range_lines": 40,
+    "line_tolerance": 3,
+    "line_tolerance_named": 0,
+    "max_functions": 3,
+    "bite_severities": [
+      "medium",
+      "high",
+      "critical",
+      "unrated"
+    ],
+    "max_quotes": 8,
+    "min_quote_chars": 20,
+    "max_quote_chars": 400,
+    "bootstrap": {
+      "resamples": 10000,
+      "seed": "paydirt-v1",
+      "level": 0.95
+    },
+    "budget_usd_per_run": 0.1
+  },
+  "arms": {
+    "find-sol": [
+      "raw",
+      "solidity"
+    ],
+    "find-ts": [
+      "raw",
+      "general"
+    ],
+    "challenge": [
+      "raw",
+      "report"
+    ]
+  },
+  "pairs": [
+    {
+      "pair": "ch-02",
+      "family": "challenge",
+      "visibility": "held",
+      "author": "qwen",
+      "cases": {
+        "accurate": "ch-02-a",
+        "overclaimed": "ch-02-o"
+      }
+    },
+    {
+      "pair": "ch-05",
+      "family": "challenge",
+      "visibility": "held",
+      "author": "x-ai",
+      "cases": {
+        "accurate": "ch-05-a",
+        "overclaimed": "ch-05-o"
+      }
+    },
+    {
+      "pair": "ch-06",
+      "family": "challenge",
+      "visibility": "held",
+      "author": "google",
+      "cases": {
+        "accurate": "ch-06-a",
+        "overclaimed": "ch-06-o"
+      }
+    },
+    {
+      "pair": "ch-07",
+      "family": "challenge",
+      "visibility": "held",
+      "author": "google",
+      "cases": {
+        "accurate": "ch-07-a",
+        "overclaimed": "ch-07-o"
+      }
+    },
+    {
+      "pair": "hard-01",
+      "family": "find-sol",
+      "visibility": "held",
+      "author": "deepseek",
+      "cases": {
+        "fixed": "hard-01-f",
+        "vulnerable": "hard-01-v"
+      }
+    },
+    {
+      "pair": "hard-02",
+      "family": "find-sol",
+      "visibility": "held",
+      "author": "anthropic",
+      "cases": {
+        "fixed": "hard-02-f",
+        "vulnerable": "hard-02-v"
+      }
+    },
+    {
+      "pair": "hard-03",
+      "family": "find-sol",
+      "visibility": "held",
+      "author": "moonshotai",
+      "cases": {
+        "fixed": "hard-03-f",
+        "vulnerable": "hard-03-v"
+      }
+    },
+    {
+      "pair": "hard-04",
+      "family": "find-sol",
+      "visibility": "held",
+      "author": "z-ai",
+      "cases": {
+        "fixed": "hard-04-f",
+        "vulnerable": "hard-04-v"
+      }
+    },
+    {
+      "pair": "hard-07",
+      "family": "challenge",
+      "visibility": "held",
+      "author": "deepseek",
+      "cases": {
+        "accurate": "hard-07-a",
+        "overclaimed": "hard-07-o"
+      }
+    },
+    {
+      "pair": "hard-08",
+      "family": "challenge",
+      "visibility": "held",
+      "author": "anthropic",
+      "cases": {
+        "accurate": "hard-08-a",
+        "overclaimed": "hard-08-o"
+      }
+    },
+    {
+      "pair": "sol-02",
+      "family": "find-sol",
+      "visibility": "held",
+      "author": "google",
+      "cases": {
+        "fixed": "sol-02-f",
+        "vulnerable": "sol-02-v"
+      }
+    },
+    {
+      "pair": "sol-03",
+      "family": "find-sol",
+      "visibility": "held",
+      "author": "x-ai",
+      "cases": {
+        "fixed": "sol-03-f",
+        "vulnerable": "sol-03-v"
+      }
+    },
+    {
+      "pair": "sol-05",
+      "family": "find-sol",
+      "visibility": "held",
+      "author": "openai",
+      "cases": {
+        "fixed": "sol-05-f",
+        "vulnerable": "sol-05-v"
+      }
+    },
+    {
+      "pair": "sol-09",
+      "family": "find-sol",
+      "visibility": "held",
+      "author": "openai",
+      "cases": {
+        "fixed": "sol-09-f",
+        "vulnerable": "sol-09-v"
+      }
+    },
+    {
+      "pair": "sol-10",
+      "family": "find-sol",
+      "visibility": "held",
+      "author": "openai",
+      "cases": {
+        "fixed": "sol-10-f",
+        "vulnerable": "sol-10-v"
+      }
+    },
+    {
+      "pair": "sol-11",
+      "family": "find-sol",
+      "visibility": "held",
+      "author": "openai",
+      "cases": {
+        "fixed": "sol-11-f",
+        "vulnerable": "sol-11-v"
+      }
+    },
+    {
+      "pair": "ts-02",
+      "family": "find-ts",
+      "visibility": "held",
+      "author": "google",
+      "cases": {
+        "fixed": "ts-02-f",
+        "vulnerable": "ts-02-v"
+      }
+    },
+    {
+      "pair": "ts-03",
+      "family": "find-ts",
+      "visibility": "held",
+      "author": "x-ai",
+      "cases": {
+        "fixed": "ts-03-f",
+        "vulnerable": "ts-03-v"
+      }
+    }
+  ],
+  "commitments": [
+    {
+      "case": "ch-02-a",
+      "sha256": "ececb871cfa9ab9b84eb885dd5647510972452f3100134cf731fa8cca0c09233"
+    },
+    {
+      "case": "ch-02-o",
+      "sha256": "60c243cad8e9380fb63fc95e0af98add72e838976f55211f677b238945465dc9"
+    },
+    {
+      "case": "ch-05-a",
+      "sha256": "72f1a57a6d209646af81d7ad4133948c47279ef892a568b33e8e0aff34ddb444"
+    },
+    {
+      "case": "ch-05-o",
+      "sha256": "4f2ce12b61e51c2f862efce81f49e512c4eb10fa0688848bda0315a6bcd01759"
+    },
+    {
+      "case": "ch-06-a",
+      "sha256": "026562f774747280ff3bc224943210f1795d24c3f9eb32885736405f5bf0d47e"
+    },
+    {
+      "case": "ch-06-o",
+      "sha256": "9c29ef74f5e2b8049378d29c9fd60f76cd95372dec66dafdc2c7c8b38795bb52"
+    },
+    {
+      "case": "ch-07-a",
+      "sha256": "cc51e63c18751b91a9959112bb9ad43701aa1c220e8526ad96ba29a67d9ccca4"
+    },
+    {
+      "case": "ch-07-o",
+      "sha256": "5486548e649f6a931e8f1ca9a4b818f54cb10a01a42e6d876e38f5d1f8474d9d"
+    },
+    {
+      "case": "hard-01-f",
+      "sha256": "cdca16be1c7ff8727847ab38f72eacd2e6959ffb3fe405e4bd11416ecda0a25c"
+    },
+    {
+      "case": "hard-01-v",
+      "sha256": "cf9f1a219bcda82f0d73c46a1be2eacd34db13a0f4e2c0d3341fab1ce00bb378"
+    },
+    {
+      "case": "hard-02-f",
+      "sha256": "20529b97fecd76d6d4c5463d63da6346dd5f9373aaa34bece6d85ea795ca114b"
+    },
+    {
+      "case": "hard-02-v",
+      "sha256": "fae1e900ca128646f34fb17b9ca8f70b5d8ff11dfa12c09fcd773dedd53264e3"
+    },
+    {
+      "case": "hard-03-f",
+      "sha256": "5f133a06d3b50e0a0defe35075907767169373c4c8da236ac17111d0b38ba857"
+    },
+    {
+      "case": "hard-03-v",
+      "sha256": "3d09707a9c612fa1949fd79f98d056c18c1a9ba51e07fbbc6f4caa20ec6f866e"
+    },
+    {
+      "case": "hard-04-f",
+      "sha256": "777a2dcc83257c5696139e310fd73cf36dd8e709e54cc35525b0e39d08726274"
+    },
+    {
+      "case": "hard-04-v",
+      "sha256": "c05cde70735f51b68356d6234a97d476c56f3b932ab33bf26534196a524d9872"
+    },
+    {
+      "case": "hard-07-a",
+      "sha256": "c1d853a3421f7dd2f0431721630b9cac07bd08ea6817be6c362f126c1566edd0"
+    },
+    {
+      "case": "hard-07-o",
+      "sha256": "26d61c8faff0b3b0ee0790d6b317ae9b5aeaa3113e0d17a4c5b4f2b5a6273210"
+    },
+    {
+      "case": "hard-08-a",
+      "sha256": "c345cf1d57d4573504da6e134a306c23e3c704bd4f8b22d28ce405545d811570"
+    },
+    {
+      "case": "hard-08-o",
+      "sha256": "3327301dc3c037892f2b54ca9b26a1f0ca97937d6365719d8be66d218c64f3ea"
+    },
+    {
+      "case": "sol-02-f",
+      "sha256": "383ddadfa7e3444073637efde4448ee53eaa1bc18bcfcd52e4dc01d6469a8a16"
+    },
+    {
+      "case": "sol-02-v",
+      "sha256": "22ce422748fa7d56477a482018df9f4b9535cf68eafba829bd8e67740ff3de57"
+    },
+    {
+      "case": "sol-03-f",
+      "sha256": "c41c1d059ac1545b434b9699a6133c1eccb666d045e8174cf3ba6b74b4e15ab7"
+    },
+    {
+      "case": "sol-03-v",
+      "sha256": "61657eaf9350fe97804257ffd87edce6e1bd8322c08613e24d8728a80aa765ef"
+    },
+    {
+      "case": "sol-05-f",
+      "sha256": "f7f3632b2a1f4841b10f9ad515ddf2fe36475c6468bfafc2a2daa235d6e59faf"
+    },
+    {
+      "case": "sol-05-v",
+      "sha256": "5cee1b9c9620ebb83d339714089f358d19b1a4f7a208835fd0845c5bbd1b6828"
+    },
+    {
+      "case": "sol-09-f",
+      "sha256": "dd6c4ff0e7a43ca592af79a82b2060fcb304aec45aaaf935cc20366d2b86ab14"
+    },
+    {
+      "case": "sol-09-v",
+      "sha256": "ac8b9a4d7b71a811923fc072662d12bc41f0a0e145c40ef948da10f63c46771d"
+    },
+    {
+      "case": "sol-10-f",
+      "sha256": "f5ea713012d8433bac5a9feed133b0526a3aa0e46dac5bd18dba77f49b849403"
+    },
+    {
+      "case": "sol-10-v",
+      "sha256": "64da3d54d6a9da5d0a7b78073b921e63c0cb2c3187ce3d4ba0495bf762f91f66"
+    },
+    {
+      "case": "sol-11-f",
+      "sha256": "e9a1c852bce95d37109d1d6bb4d537e62bed3ad0e681f0c9bb7fdf725616b2a2"
+    },
+    {
+      "case": "sol-11-v",
+      "sha256": "81d04afed21bc9df459d86610aa2c522a05600fada636c23cffed81a9b7f2654"
+    },
+    {
+      "case": "ts-02-f",
+      "sha256": "7f788bbc52c58736ef2e00285d516d1255bf041ea1c76c4e30130ec517831416"
+    },
+    {
+      "case": "ts-02-v",
+      "sha256": "55dca2d224f960a6366d69e80925148e48ee1b797fedef5a6a4517baed1c9dd1"
+    },
+    {
+      "case": "ts-03-f",
+      "sha256": "536499212ca491e02491cb94050a189caa85f4e4d829024714caad9b4146ea5d"
+    },
+    {
+      "case": "ts-03-v",
+      "sha256": "4957685452ea55d41edc4d38d186c9a61772568f27718159eca14ad8cd129d7e"
+    }
+  ],
+  "downloads": {
+    "archive": "paydirt-2026-10-public.tar.gz",
+    "sha256": "04e54b30389b77f7b92fd0f5e57a9c4e0914c52d98bcaac99e792308dc66b591",
+    "bytes": 3608800,
+    "public_runs": 36
+  },
+  "not_run": [
+    {
+      "slug": "openai/gpt-oss-120b",
+      "name": "gpt-oss-120b",
+      "tier": 1,
+      "reason": "Its hosts returned tool calls as plain text on 35 of 36 initial inputs. The batch could not be completed and is excluded from the ranking."
+    },
+    {
+      "slug": "meta/muse-spark-1.3",
+      "name": "Muse Spark 1.3",
+      "tier": 2,
+      "reason": "OpenRouter serves it only to accounts that have made an age confirmation, which the benchmark account has not made."
+    }
+  ],
+  "notes": [
+    "Google Gemini 3.5 Flash Lite has 35 finalized raw inputs and one unresolved input after repeated provider failures. Its results are shown for inspection, but it is not ranked or recommended."
+  ],
+  "picks": [
+    {
+      "task": "challenge",
+      "tier": "best",
+      "model": "z-ai/glm-5.3-flash",
+      "arm": "report",
+      "score": 100,
+      "usd_run": 0.018369
+    },
+    {
+      "task": "challenge",
+      "tier": "budget",
+      "model": "z-ai/glm-5.3-flash",
+      "arm": "report",
+      "score": 100,
+      "usd_run": 0.018369
+    },
+    {
+      "task": "challenge",
+      "tier": "open-weight",
+      "model": "z-ai/glm-5.3-flash",
+      "arm": "report",
+      "score": 100,
+      "usd_run": 0.018369
+    },
+    {
+      "task": "find-sol",
+      "tier": "best",
+      "model": "openai/gpt-6-luna",
+      "arm": "raw",
+      "score": 90,
+      "usd_run": 0.010876
+    },
+    {
+      "task": "find-sol",
+      "tier": "budget",
+      "model": "openai/gpt-6-luna",
+      "arm": "raw",
+      "score": 90,
+      "usd_run": 0.010876
+    },
+    {
+      "task": "find-sol",
+      "tier": "open-weight",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "arm": "solidity",
+      "score": 90,
+      "usd_run": 0.050493
+    },
+    {
+      "task": "find-ts",
+      "tier": "best",
+      "model": "z-ai/glm-5.3-flash",
+      "arm": "raw",
+      "score": 100,
+      "usd_run": 0.013825
+    },
+    {
+      "task": "find-ts",
+      "tier": "budget",
+      "model": "z-ai/glm-5.3-flash",
+      "arm": "raw",
+      "score": 100,
+      "usd_run": 0.013825
+    },
+    {
+      "task": "find-ts",
+      "tier": "open-weight",
+      "model": "z-ai/glm-5.3-flash",
+      "arm": "raw",
+      "score": 100,
+      "usd_run": 0.013825
+    }
+  ],
+  "models": [
+    {
+      "slug": "openai/gpt-6-astra",
+      "name": "GPT-6 Astra",
+      "vendor": "openai",
+      "open_weight": false,
+      "cutoff": null,
+      "price": {
+        "in": 10,
+        "out": 50
+      },
+      "effort": "max",
+      "effort_requested": "max",
+      "effort_mixed": null,
+      "providers": [
+        {
+          "name": "OpenAI",
+          "runs": 23
+        }
+      ],
+      "tier": 1,
+      "run_tier": 3,
+      "complete": true,
+      "usd_total": 18.715038,
+      "infra_retries": 0,
+      "arms": {
+        "raw": {
+          "pairs": 18,
+          "score": {
+            "median": 94.44,
+            "min": 94.44,
+            "max": 94.44,
+            "majority": 94.44,
+            "ci95": [
+              83.33,
+              100
+            ]
+          },
+          "by_family": {
+            "challenge": 100,
+            "find-sol": 90,
+            "find-ts": 100
+          },
+          "by_author": {
+            "anthropic": {
+              "pairs": 2,
+              "score": 50
+            },
+            "deepseek": {
+              "pairs": 2,
+              "score": 100
+            },
+            "google": {
+              "pairs": 4,
+              "score": 100
+            },
+            "moonshotai": {
+              "pairs": 1,
+              "score": 100
+            },
+            "openai": {
+              "pairs": 4,
+              "score": 100
+            },
+            "qwen": {
+              "pairs": 1,
+              "score": 100
+            },
+            "x-ai": {
+              "pairs": 3,
+              "score": 100
+            },
+            "z-ai": {
+              "pairs": 1,
+              "score": 100
+            }
+          },
+          "excl_same_vendor": {
+            "score": 92.86,
+            "n_pairs": 14
+          },
+          "recall": 1,
+          "fools_gold": 0.0833,
+          "decoy_rate": 0.0208,
+          "line_acc": 1,
+          "sev_exact": 1,
+          "sev_bias": 0,
+          "unrated": 0,
+          "false_reject": 0,
+          "challenge_ba": 1,
+          "failure": 0,
+          "truncated": 0,
+          "repeat_agreement": null,
+          "usd_run": 0.519862,
+          "usd_run_p50": 0.408603,
+          "usd_total": 18.715038,
+          "usd_per_correct_pair": 1.100885,
+          "latency_p50_s": 140.5,
+          "runs": 36,
+          "runs_expected": 36,
+          "unresolved": 0
+        }
+      },
+      "lift": {},
+      "detail": "models/openai__gpt-6-astra.json"
+    },
+    {
+      "slug": "openai/gpt-6.1-sol",
+      "name": "GPT-6.1 Sol",
+      "vendor": "openai",
+      "open_weight": false,
+      "cutoff": null,
+      "price": {
+        "in": 2,
+        "out": 10
+      },
+      "effort": "max",
+      "effort_requested": "max",
+      "effort_mixed": null,
+      "providers": [
+        {
+          "name": "OpenAI",
+          "runs": 31
+        }
+      ],
+      "tier": 1,
+      "run_tier": 2,
+      "complete": true,
+      "usd_total": 3.88136,
+      "infra_retries": 0,
+      "arms": {
+        "raw": {
+          "pairs": 18,
+          "score": {
+            "median": 94.44,
+            "min": 94.44,
+            "max": 94.44,
+            "majority": 94.44,
+            "ci95": [
+              83.33,
+              100
+            ]
+          },
+          "by_family": {
+            "challenge": 100,
+            "find-sol": 90,
+            "find-ts": 100
+          },
+          "by_author": {
+            "anthropic": {
+              "pairs": 2,
+              "score": 50
+            },
+            "deepseek": {
+              "pairs": 2,
+              "score": 100
+            },
+            "google": {
+              "pairs": 4,
+              "score": 100
+            },
+            "moonshotai": {
+              "pairs": 1,
+              "score": 100
+            },
+            "openai": {
+              "pairs": 4,
+              "score": 100
+            },
+            "qwen": {
+              "pairs": 1,
+              "score": 100
+            },
+            "x-ai": {
+              "pairs": 3,
+              "score": 100
+            },
+            "z-ai": {
+              "pairs": 1,
+              "score": 100
+            }
+          },
+          "excl_same_vendor": {
+            "score": 92.86,
+            "n_pairs": 14
+          },
+          "recall": 1,
+          "fools_gold": 0.0833,
+          "decoy_rate": 0.0417,
+          "line_acc": 1,
+          "sev_exact": 1,
+          "sev_bias": 0,
+          "unrated": 0,
+          "false_reject": 0,
+          "challenge_ba": 1,
+          "failure": 0,
+          "truncated": 0,
+          "repeat_agreement": null,
+          "usd_run": 0.107816,
+          "usd_run_p50": 0.090515,
+          "usd_total": 3.88136,
+          "usd_per_correct_pair": 0.228315,
+          "latency_p50_s": 154.4,
+          "runs": 36,
+          "runs_expected": 36,
+          "unresolved": 0
+        }
+      },
+      "lift": {},
+      "detail": "models/openai__gpt-6.1-sol.json"
+    },
+    {
+      "slug": "moonshotai/kimi-k3",
+      "name": "Kimi K3",
+      "vendor": "moonshotai",
+      "open_weight": true,
+      "cutoff": null,
+      "price": {
+        "in": 2.7,
+        "out": 13.5
+      },
+      "effort": "max",
+      "effort_requested": "max",
+      "effort_mixed": null,
+      "providers": [
+        {
+          "name": "Wafer",
+          "runs": 6
+        },
+        {
+          "name": "Together",
+          "runs": 5
+        }
+      ],
+      "tier": 1,
+      "run_tier": 1,
+      "complete": true,
+      "usd_total": 7.916948,
+      "infra_retries": 0,
+      "arms": {
+        "raw": {
+          "pairs": 18,
+          "score": {
+            "median": 88.89,
+            "min": 88.89,
+            "max": 88.89,
+            "majority": 88.89,
+            "ci95": [
+              72.22,
+              100
+            ]
+          },
+          "by_family": {
+            "challenge": 100,
+            "find-sol": 80,
+            "find-ts": 100
+          },
+          "by_author": {
+            "anthropic": {
+              "pairs": 2,
+              "score": 100
+            },
+            "deepseek": {
+              "pairs": 2,
+              "score": 100
+            },
+            "google": {
+              "pairs": 4,
+              "score": 100
+            },
+            "moonshotai": {
+              "pairs": 1,
+              "score": 0
+            },
+            "openai": {
+              "pairs": 4,
+              "score": 100
+            },
+            "qwen": {
+              "pairs": 1,
+              "score": 100
+            },
+            "x-ai": {
+              "pairs": 3,
+              "score": 100
+            },
+            "z-ai": {
+              "pairs": 1,
+              "score": 0
+            }
+          },
+          "excl_same_vendor": {
+            "score": 94.12,
+            "n_pairs": 17
+          },
+          "recall": 0.8333,
+          "fools_gold": 0,
+          "decoy_rate": 0,
+          "line_acc": 1,
+          "sev_exact": 0.9,
+          "sev_bias": -0.1,
+          "unrated": 0,
+          "false_reject": 0,
+          "challenge_ba": 1,
+          "failure": 0,
+          "truncated": 0,
+          "repeat_agreement": null,
+          "usd_run": 0.219915,
+          "usd_run_p50": 0.214995,
+          "usd_total": 7.916948,
+          "usd_per_correct_pair": 0.494809,
+          "latency_p50_s": 242.1,
+          "runs": 36,
+          "runs_expected": 36,
+          "unresolved": 0
+        }
+      },
+      "lift": {},
+      "detail": "models/moonshotai__kimi-k3.json"
+    },
+    {
+      "slug": "openai/gpt-5.6-terra",
+      "name": "GPT-5.6 Terra",
+      "vendor": "openai",
+      "open_weight": false,
+      "cutoff": "2026-02-16",
+      "price": {
+        "in": 2,
+        "out": 12
+      },
+      "effort": "max",
+      "effort_requested": "max",
+      "effort_mixed": null,
+      "providers": [
+        {
+          "name": "OpenAI",
+          "runs": 35
+        }
+      ],
+      "tier": 1,
+      "run_tier": 2,
+      "complete": true,
+      "usd_total": 15.596842,
+      "infra_retries": 0,
+      "arms": {
+        "raw": {
+          "pairs": 18,
+          "score": {
+            "median": 88.89,
+            "min": 88.89,
+            "max": 88.89,
+            "majority": 88.89,
+            "ci95": [
+              72.22,
+              100
+            ]
+          },
+          "by_family": {
+            "challenge": 100,
+            "find-sol": 90,
+            "find-ts": 50
+          },
+          "by_author": {
+            "anthropic": {
+              "pairs": 2,
+              "score": 100
+            },
+            "deepseek": {
+              "pairs": 2,
+              "score": 100
+            },
+            "google": {
+              "pairs": 4,
+              "score": 100
+            },
+            "moonshotai": {
+              "pairs": 1,
+              "score": 0
+            },
+            "openai": {
+              "pairs": 4,
+              "score": 100
+            },
+            "qwen": {
+              "pairs": 1,
+              "score": 100
+            },
+            "x-ai": {
+              "pairs": 3,
+              "score": 66.67
+            },
+            "z-ai": {
+              "pairs": 1,
+              "score": 100
+            }
+          },
+          "excl_same_vendor": {
+            "score": 85.71,
+            "n_pairs": 14
+          },
+          "recall": 0.9167,
+          "fools_gold": 0.0833,
+          "decoy_rate": 0.0208,
+          "line_acc": 1,
+          "sev_exact": 0.9091,
+          "sev_bias": 0.091,
+          "unrated": 0,
+          "false_reject": 0,
+          "challenge_ba": 1,
+          "failure": 0,
+          "truncated": 0,
+          "repeat_agreement": null,
+          "usd_run": 0.433246,
+          "usd_run_p50": 0.423957,
+          "usd_total": 15.596842,
+          "usd_per_correct_pair": 0.974803,
+          "latency_p50_s": 308.7,
+          "runs": 36,
+          "runs_expected": 36,
+          "unresolved": 0
+        }
+      },
+      "lift": {},
+      "detail": "models/openai__gpt-5.6-terra.json"
+    },
+    {
+      "slug": "anthropic/claude-opus-5.5",
+      "name": "Claude Opus 5.5",
+      "vendor": "anthropic",
+      "open_weight": false,
+      "cutoff": null,
+      "price": {
+        "in": 4,
+        "out": 20
+      },
+      "effort": "max",
+      "effort_requested": "max",
+      "effort_mixed": null,
+      "providers": [
+        {
+          "name": "Claude Platform on AWS",
+          "runs": 33
+        },
+        {
+          "name": "Amazon Bedrock",
+          "runs": 2
+        }
+      ],
+      "tier": 1,
+      "run_tier": 3,
+      "complete": true,
+      "usd_total": 31.754468,
+      "infra_retries": 0,
+      "arms": {
+        "raw": {
+          "pairs": 18,
+          "score": {
+            "median": 83.33,
+            "min": 83.33,
+            "max": 83.33,
+            "majority": 83.33,
+            "ci95": [
+              66.67,
+              100
+            ]
+          },
+          "by_family": {
+            "challenge": 100,
+            "find-sol": 80,
+            "find-ts": 50
+          },
+          "by_author": {
+            "anthropic": {
+              "pairs": 2,
+              "score": 50
+            },
+            "deepseek": {
+              "pairs": 2,
+              "score": 100
+            },
+            "google": {
+              "pairs": 4,
+              "score": 100
+            },
+            "moonshotai": {
+              "pairs": 1,
+              "score": 100
+            },
+            "openai": {
+              "pairs": 4,
+              "score": 100
+            },
+            "qwen": {
+              "pairs": 1,
+              "score": 100
+            },
+            "x-ai": {
+              "pairs": 3,
+              "score": 66.67
+            },
+            "z-ai": {
+              "pairs": 1,
+              "score": 0
+            }
+          },
+          "excl_same_vendor": {
+            "score": 87.5,
+            "n_pairs": 16
+          },
+          "recall": 0.8333,
+          "fools_gold": 0.0833,
+          "decoy_rate": 0,
+          "line_acc": 1,
+          "sev_exact": 1,
+          "sev_bias": 0,
+          "unrated": 0,
+          "false_reject": 0,
+          "challenge_ba": 1,
+          "failure": 0.1111,
+          "truncated": 0.0556,
+          "repeat_agreement": null,
+          "usd_run": 0.882069,
+          "usd_run_p50": 0.766412,
+          "usd_total": 31.754468,
+          "usd_per_correct_pair": 2.116965,
+          "latency_p50_s": 357.8,
+          "runs": 36,
+          "runs_expected": 36,
+          "unresolved": 0
+        }
+      },
+      "lift": {},
+      "detail": "models/anthropic__claude-opus-5.5.json"
+    },
+    {
+      "slug": "openai/gpt-6-luna",
+      "name": "GPT-6 Luna",
+      "vendor": "openai",
+      "open_weight": false,
+      "cutoff": null,
+      "price": {
+        "in": 0.1,
+        "out": 0.5
+      },
+      "effort": "max",
+      "effort_requested": "max",
+      "effort_mixed": null,
+      "providers": [
+        {
+          "name": "OpenAI",
+          "runs": 63
+        }
+      ],
+      "tier": 1,
+      "run_tier": 2,
+      "complete": true,
+      "usd_total": 1.377636,
+      "infra_retries": 0,
+      "arms": {
+        "raw": {
+          "pairs": 18,
+          "score": {
+            "median": 83.33,
+            "min": 83.33,
+            "max": 83.33,
+            "majority": 83.33,
+            "ci95": [
+              66.67,
+              100
+            ]
+          },
+          "by_family": {
+            "challenge": 83.33,
+            "find-sol": 90,
+            "find-ts": 50
+          },
+          "by_author": {
+            "anthropic": {
+              "pairs": 2,
+              "score": 100
+            },
+            "deepseek": {
+              "pairs": 2,
+              "score": 100
+            },
+            "google": {
+              "pairs": 4,
+              "score": 75
+            },
+            "moonshotai": {
+              "pairs": 1,
+              "score": 0
+            },
+            "openai": {
+              "pairs": 4,
+              "score": 100
+            },
+            "qwen": {
+              "pairs": 1,
+              "score": 100
+            },
+            "x-ai": {
+              "pairs": 3,
+              "score": 66.67
+            },
+            "z-ai": {
+              "pairs": 1,
+              "score": 100
+            }
+          },
+          "excl_same_vendor": {
+            "score": 78.57,
+            "n_pairs": 14
+          },
+          "recall": 0.9167,
+          "fools_gold": 0.0833,
+          "decoy_rate": 0,
+          "line_acc": 1,
+          "sev_exact": 1,
+          "sev_bias": 0,
+          "unrated": 0,
+          "false_reject": 0.1667,
+          "challenge_ba": 0.9167,
+          "failure": 0,
+          "truncated": 0,
+          "repeat_agreement": null,
+          "usd_run": 0.011659,
+          "usd_run_p50": 0.010876,
+          "usd_total": 0.419712,
+          "usd_per_correct_pair": 0.027981,
+          "latency_p50_s": 159.9,
+          "runs": 36,
+          "runs_expected": 36,
+          "unresolved": 0
+        },
+        "report": {
+          "pairs": 6,
+          "score": {
+            "median": 50,
+            "min": 50,
+            "max": 50,
+            "majority": 50,
+            "ci95": [
+              16.67,
+              83.33
+            ]
+          },
+          "by_family": {
+            "challenge": 50
+          },
+          "by_author": {
+            "anthropic": {
+              "pairs": 1,
+              "score": 0
+            },
+            "deepseek": {
+              "pairs": 1,
+              "score": 100
+            },
+            "google": {
+              "pairs": 2,
+              "score": 50
+            },
+            "qwen": {
+              "pairs": 1,
+              "score": 0
+            },
+            "x-ai": {
+              "pairs": 1,
+              "score": 100
+            }
+          },
+          "excl_same_vendor": {
+            "score": 50,
+            "n_pairs": 6
+          },
+          "recall": null,
+          "fools_gold": null,
+          "decoy_rate": null,
+          "line_acc": null,
+          "sev_exact": null,
+          "sev_bias": null,
+          "unrated": null,
+          "false_reject": 0.5,
+          "challenge_ba": 0.6667,
+          "failure": 0.0833,
+          "truncated": 0.0833,
+          "repeat_agreement": null,
+          "usd_run": 0.02878,
+          "usd_run_p50": 0.027779,
+          "usd_total": 0.345354,
+          "usd_per_correct_pair": 0.115118,
+          "latency_p50_s": 454.1,
+          "runs": 12,
+          "runs_expected": 12,
+          "unresolved": 0
+        },
+        "solidity": {
+          "pairs": 10,
+          "score": {
+            "median": 80,
+            "min": 80,
+            "max": 80,
+            "majority": 80,
+            "ci95": [
+              50,
+              100
+            ]
+          },
+          "by_family": {
+            "find-sol": 80
+          },
+          "by_author": {
+            "anthropic": {
+              "pairs": 1,
+              "score": 0
+            },
+            "deepseek": {
+              "pairs": 1,
+              "score": 100
+            },
+            "google": {
+              "pairs": 1,
+              "score": 100
+            },
+            "moonshotai": {
+              "pairs": 1,
+              "score": 0
+            },
+            "openai": {
+              "pairs": 4,
+              "score": 100
+            },
+            "x-ai": {
+              "pairs": 1,
+              "score": 100
+            },
+            "z-ai": {
+              "pairs": 1,
+              "score": 100
+            }
+          },
+          "excl_same_vendor": {
+            "score": 66.67,
+            "n_pairs": 6
+          },
+          "recall": 0.8,
+          "fools_gold": 0,
+          "decoy_rate": 0,
+          "line_acc": 1,
+          "sev_exact": 0.875,
+          "sev_bias": 0.125,
+          "unrated": 0,
+          "false_reject": null,
+          "challenge_ba": null,
+          "failure": 0,
+          "truncated": 0,
+          "repeat_agreement": null,
+          "usd_run": 0.025635,
+          "usd_run_p50": 0.025094,
+          "usd_total": 0.512695,
+          "usd_per_correct_pair": 0.064087,
+          "latency_p50_s": 363.5,
+          "runs": 20,
+          "runs_expected": 20,
+          "unresolved": 0
+        },
+        "general": {
+          "pairs": 2,
+          "score": {
+            "median": 50,
+            "min": 50,
+            "max": 50,
+            "majority": 50,
+            "ci95": [
+              0,
+              100
+            ]
+          },
+          "by_family": {
+            "find-ts": 50
+          },
+          "by_author": {
+            "google": {
+              "pairs": 1,
+              "score": 100
+            },
+            "x-ai": {
+              "pairs": 1,
+              "score": 0
+            }
+          },
+          "excl_same_vendor": {
+            "score": 50,
+            "n_pairs": 2
+          },
+          "recall": 1,
+          "fools_gold": 0.5,
+          "decoy_rate": 0,
+          "line_acc": 1,
+          "sev_exact": 1,
+          "sev_bias": 0,
+          "unrated": 0,
+          "false_reject": null,
+          "challenge_ba": null,
+          "failure": 0,
+          "truncated": 0,
+          "repeat_agreement": null,
+          "usd_run": 0.024968,
+          "usd_run_p50": 0.02406,
+          "usd_total": 0.099874,
+          "usd_per_correct_pair": 0.099874,
+          "latency_p50_s": 327.9,
+          "runs": 4,
+          "runs_expected": 4,
+          "unresolved": 0
+        }
+      },
+      "lift": {
+        "report": {
+          "delta": -33.33,
+          "ci95": [
+            -83.33,
+            33.33
+          ],
+          "n_pairs": 6,
+          "significant": false
+        },
+        "solidity": {
+          "delta": -10,
+          "ci95": [
+            -30,
+            0
+          ],
+          "n_pairs": 10,
+          "significant": false
+        },
+        "general": {
+          "delta": 0,
+          "ci95": [
+            0,
+            0
+          ],
+          "n_pairs": 2,
+          "significant": false
+        }
+      },
+      "detail": "models/openai__gpt-6-luna.json"
+    },
+    {
+      "slug": "anthropic/claude-fable-5.1",
+      "name": "Claude Fable 5.1",
+      "vendor": "anthropic",
+      "open_weight": false,
+      "cutoff": null,
+      "price": {
+        "in": 10,
+        "out": 50
+      },
+      "effort": "max",
+      "effort_requested": "max",
+      "effort_mixed": null,
+      "providers": [
+        {
+          "name": "Google",
+          "runs": 33
+        }
+      ],
+      "tier": 1,
+      "run_tier": 3,
+      "complete": true,
+      "usd_total": 49.74381,
+      "infra_retries": 0,
+      "arms": {
+        "raw": {
+          "pairs": 18,
+          "score": {
+            "median": 77.78,
+            "min": 77.78,
+            "max": 77.78,
+            "majority": 77.78,
+            "ci95": [
+              55.56,
+              94.44
+            ]
+          },
+          "by_family": {
+            "challenge": 83.33,
+            "find-sol": 80,
+            "find-ts": 50
+          },
+          "by_author": {
+            "anthropic": {
+              "pairs": 2,
+              "score": 100
+            },
+            "deepseek": {
+              "pairs": 2,
+              "score": 100
+            },
+            "google": {
+              "pairs": 4,
+              "score": 75
+            },
+            "moonshotai": {
+              "pairs": 1,
+              "score": 0
+            },
+            "openai": {
+              "pairs": 4,
+              "score": 75
+            },
+            "qwen": {
+              "pairs": 1,
+              "score": 100
+            },
+            "x-ai": {
+              "pairs": 3,
+              "score": 66.67
+            },
+            "z-ai": {
+              "pairs": 1,
+              "score": 100
+            }
+          },
+          "excl_same_vendor": {
+            "score": 75,
+            "n_pairs": 16
+          },
+          "recall": 0.8333,
+          "fools_gold": 0.0833,
+          "decoy_rate": 0.0625,
+          "line_acc": 1,
+          "sev_exact": 1,
+          "sev_bias": 0,
+          "unrated": 0,
+          "false_reject": 0,
+          "challenge_ba": 0.9167,
+          "failure": 0.0833,
+          "truncated": 0,
+          "repeat_agreement": null,
+          "usd_run": 1.381772,
+          "usd_run_p50": 1.217385,
+          "usd_total": 49.74381,
+          "usd_per_correct_pair": 3.553129,
+          "latency_p50_s": 257.1,
+          "runs": 36,
+          "runs_expected": 36,
+          "unresolved": 0
+        }
+      },
+      "lift": {},
+      "detail": "models/anthropic__claude-fable-5.1.json"
+    },
+    {
+      "slug": "deepseek/deepseek-v4-pro-0813",
+      "name": "DeepSeek V4 Pro 0813",
+      "vendor": "deepseek",
+      "open_weight": true,
+      "cutoff": null,
+      "price": {
+        "in": 0.66,
+        "out": 1.98
+      },
+      "effort": "max",
+      "effort_requested": "max",
+      "effort_mixed": null,
+      "providers": [
+        {
+          "name": "Wafer",
+          "runs": 8
+        }
+      ],
+      "tier": 1,
+      "run_tier": 1,
+      "complete": true,
+      "usd_total": 3.181733,
+      "infra_retries": 0,
+      "arms": {
+        "raw": {
+          "pairs": 18,
+          "score": {
+            "median": 77.78,
+            "min": 77.78,
+            "max": 77.78,
+            "majority": 77.78,
+            "ci95": [
+              55.56,
+              94.44
+            ]
+          },
+          "by_family": {
+            "challenge": 100,
+            "find-sol": 70,
+            "find-ts": 50
+          },
+          "by_author": {
+            "anthropic": {
+              "pairs": 2,
+              "score": 100
+            },
+            "deepseek": {
+              "pairs": 2,
+              "score": 50
+            },
+            "google": {
+              "pairs": 4,
+              "score": 100
+            },
+            "moonshotai": {
+              "pairs": 1,
+              "score": 0
+            },
+            "openai": {
+              "pairs": 4,
+              "score": 100
+            },
+            "qwen": {
+              "pairs": 1,
+              "score": 100
+            },
+            "x-ai": {
+              "pairs": 3,
+              "score": 66.67
+            },
+            "z-ai": {
+              "pairs": 1,
+              "score": 0
+            }
+          },
+          "excl_same_vendor": {
+            "score": 81.25,
+            "n_pairs": 16
+          },
+          "recall": 0.75,
+          "fools_gold": 0.0833,
+          "decoy_rate": 0.0208,
+          "line_acc": 1,
+          "sev_exact": 0.8889,
+          "sev_bias": -0.111,
+          "unrated": 0,
+          "false_reject": 0,
+          "challenge_ba": 1,
+          "failure": 0,
+          "truncated": 0,
+          "repeat_agreement": null,
+          "usd_run": 0.088381,
+          "usd_run_p50": 0.084274,
+          "usd_total": 3.181733,
+          "usd_per_correct_pair": 0.227267,
+          "latency_p50_s": 119.8,
+          "runs": 36,
+          "runs_expected": 36,
+          "unresolved": 0
+        }
+      },
+      "lift": {},
+      "detail": "models/deepseek__deepseek-v4-pro-0813.json"
+    },
+    {
+      "slug": "deepseek/deepseek-v4.1-flash",
+      "name": "DeepSeek V4.1 Flash",
+      "vendor": "deepseek",
+      "open_weight": true,
+      "cutoff": null,
+      "price": {
+        "in": 0.3,
+        "out": 1.2
+      },
+      "effort": "max",
+      "effort_requested": "max",
+      "effort_mixed": null,
+      "providers": [
+        {
+          "name": "AtlasCloud",
+          "runs": 38
+        },
+        {
+          "name": "Together",
+          "runs": 18
+        },
+        {
+          "name": "InferenceNet",
+          "runs": 4
+        },
+        {
+          "name": "Relace",
+          "runs": 2
+        }
+      ],
+      "tier": 1,
+      "run_tier": 1,
+      "complete": true,
+      "usd_total": 3.993177,
+      "infra_retries": 0,
+      "arms": {
+        "raw": {
+          "pairs": 18,
+          "score": {
+            "median": 77.78,
+            "min": 77.78,
+            "max": 77.78,
+            "majority": 77.78,
+            "ci95": [
+              55.56,
+              94.44
+            ]
+          },
+          "by_family": {
+            "challenge": 100,
+            "find-sol": 70,
+            "find-ts": 50
+          },
+          "by_author": {
+            "anthropic": {
+              "pairs": 2,
+              "score": 50
+            },
+            "deepseek": {
+              "pairs": 2,
+              "score": 100
+            },
+            "google": {
+              "pairs": 4,
+              "score": 100
+            },
+            "moonshotai": {
+              "pairs": 1,
+              "score": 0
+            },
+            "openai": {
+              "pairs": 4,
+              "score": 75
+            },
+            "qwen": {
+              "pairs": 1,
+              "score": 100
+            },
+            "x-ai": {
+              "pairs": 3,
+              "score": 66.67
+            },
+            "z-ai": {
+              "pairs": 1,
+              "score": 100
+            }
+          },
+          "excl_same_vendor": {
+            "score": 75,
+            "n_pairs": 16
+          },
+          "recall": 0.9167,
+          "fools_gold": 0.0833,
+          "decoy_rate": 0.0417,
+          "line_acc": 1,
+          "sev_exact": 1,
+          "sev_bias": 0,
+          "unrated": 0,
+          "false_reject": 0,
+          "challenge_ba": 1,
+          "failure": 0.0556,
+          "truncated": 0.0278,
+          "repeat_agreement": null,
+          "usd_run": 0.063048,
+          "usd_run_p50": 0.051707,
+          "usd_total": 2.269738,
+          "usd_per_correct_pair": 0.162124,
+          "latency_p50_s": 313.1,
+          "runs": 36,
+          "runs_expected": 36,
+          "unresolved": 0
+        },
+        "report": {
+          "pairs": 6,
+          "score": {
+            "median": 100,
+            "min": 100,
+            "max": 100,
+            "majority": 100,
+            "ci95": [
+              100,
+              100
+            ]
+          },
+          "by_family": {
+            "challenge": 100
+          },
+          "by_author": {
+            "anthropic": {
+              "pairs": 1,
+              "score": 100
+            },
+            "deepseek": {
+              "pairs": 1,
+              "score": 100
+            },
+            "google": {
+              "pairs": 2,
+              "score": 100
+            },
+            "qwen": {
+              "pairs": 1,
+              "score": 100
+            },
+            "x-ai": {
+              "pairs": 1,
+              "score": 100
+            }
+          },
+          "excl_same_vendor": {
+            "score": 100,
+            "n_pairs": 5
+          },
+          "recall": null,
+          "fools_gold": null,
+          "decoy_rate": null,
+          "line_acc": null,
+          "sev_exact": null,
+          "sev_bias": null,
+          "unrated": null,
+          "false_reject": 0,
+          "challenge_ba": 1,
+          "failure": 0,
+          "truncated": 0,
+          "repeat_agreement": null,
+          "usd_run": 0.040799,
+          "usd_run_p50": 0.028909,
+          "usd_total": 0.489586,
+          "usd_per_correct_pair": 0.081598,
+          "latency_p50_s": 197.8,
+          "runs": 12,
+          "runs_expected": 12,
+          "unresolved": 0
+        },
+        "solidity": {
+          "pairs": 10,
+          "score": {
+            "median": 90,
+            "min": 90,
+            "max": 90,
+            "majority": 90,
+            "ci95": [
+              70,
+              100
+            ]
+          },
+          "by_family": {
+            "find-sol": 90
+          },
+          "by_author": {
+            "anthropic": {
+              "pairs": 1,
+              "score": 100
+            },
+            "deepseek": {
+              "pairs": 1,
+              "score": 100
+            },
+            "google": {
+              "pairs": 1,
+              "score": 100
+            },
+            "moonshotai": {
+              "pairs": 1,
+              "score": 0
+            },
+            "openai": {
+              "pairs": 4,
+              "score": 100
+            },
+            "x-ai": {
+              "pairs": 1,
+              "score": 100
+            },
+            "z-ai": {
+              "pairs": 1,
+              "score": 100
+            }
+          },
+          "excl_same_vendor": {
+            "score": 88.89,
+            "n_pairs": 9
+          },
+          "recall": 0.9,
+          "fools_gold": 0,
+          "decoy_rate": 0.05,
+          "line_acc": 1,
+          "sev_exact": 1,
+          "sev_bias": 0,
+          "unrated": 0,
+          "false_reject": null,
+          "challenge_ba": null,
+          "failure": 0,
+          "truncated": 0,
+          "repeat_agreement": null,
+          "usd_run": 0.054115,
+          "usd_run_p50": 0.050493,
+          "usd_total": 1.082308,
+          "usd_per_correct_pair": 0.120256,
+          "latency_p50_s": 445.4,
+          "runs": 20,
+          "runs_expected": 20,
+          "unresolved": 0
+        },
+        "general": {
+          "pairs": 2,
+          "score": {
+            "median": 100,
+            "min": 100,
+            "max": 100,
+            "majority": 100,
+            "ci95": [
+              100,
+              100
+            ]
+          },
+          "by_family": {
+            "find-ts": 100
+          },
+          "by_author": {
+            "google": {
+              "pairs": 1,
+              "score": 100
+            },
+            "x-ai": {
+              "pairs": 1,
+              "score": 100
+            }
+          },
+          "excl_same_vendor": {
+            "score": 100,
+            "n_pairs": 2
+          },
+          "recall": 1,
+          "fools_gold": 0,
+          "decoy_rate": 0,
+          "line_acc": 1,
+          "sev_exact": 1,
+          "sev_bias": 0,
+          "unrated": 0,
+          "false_reject": null,
+          "challenge_ba": null,
+          "failure": 0,
+          "truncated": 0,
+          "repeat_agreement": null,
+          "usd_run": 0.037886,
+          "usd_run_p50": 0.03866,
+          "usd_total": 0.151545,
+          "usd_per_correct_pair": 0.075773,
+          "latency_p50_s": 229.4,
+          "runs": 4,
+          "runs_expected": 4,
+          "unresolved": 0
+        }
+      },
+      "lift": {
+        "report": {
+          "delta": 0,
+          "ci95": [
+            0,
+            0
+          ],
+          "n_pairs": 6,
+          "significant": false
+        },
+        "solidity": {
+          "delta": 20,
+          "ci95": [
+            0,
+            50
+          ],
+          "n_pairs": 10,
+          "significant": false
+        },
+        "general": {
+          "delta": 50,
+          "ci95": [
+            0,
+            100
+          ],
+          "n_pairs": 2,
+          "significant": false
+        }
+      },
+      "detail": "models/deepseek__deepseek-v4.1-flash.json"
+    },
+    {
+      "slug": "tencent/hy4-preview",
+      "name": "Hy4 preview",
+      "vendor": "tencent",
+      "open_weight": true,
+      "cutoff": null,
+      "price": {
+        "in": 0.7506,
+        "out": 2.2509
+      },
+      "effort": "high",
+      "effort_requested": "max",
+      "effort_mixed": null,
+      "providers": [
+        {
+          "name": "InferenceNet",
+          "runs": 1
+        }
+      ],
+      "tier": 1,
+      "run_tier": 1,
+      "complete": true,
+      "usd_total": 3.119106,
+      "infra_retries": 0,
+      "arms": {
+        "raw": {
+          "pairs": 18,
+          "score": {
+            "median": 77.78,
+            "min": 77.78,
+            "max": 77.78,
+            "majority": 77.78,
+            "ci95": [
+              55.56,
+              94.44
+            ]
+          },
+          "by_family": {
+            "challenge": 100,
+            "find-sol": 60,
+            "find-ts": 100
+          },
+          "by_author": {
+            "anthropic": {
+              "pairs": 2,
+              "score": 50
+            },
+            "deepseek": {
+              "pairs": 2,
+              "score": 50
+            },
+            "google": {
+              "pairs": 4,
+              "score": 100
+            },
+            "moonshotai": {
+              "pairs": 1,
+              "score": 0
+            },
+            "openai": {
+              "pairs": 4,
+              "score": 100
+            },
+            "qwen": {
+              "pairs": 1,
+              "score": 100
+            },
+            "x-ai": {
+              "pairs": 3,
+              "score": 100
+            },
+            "z-ai": {
+              "pairs": 1,
+              "score": 0
+            }
+          },
+          "excl_same_vendor": {
+            "score": 77.78,
+            "n_pairs": 18
+          },
+          "recall": 0.75,
+          "fools_gold": 0.0833,
+          "decoy_rate": 0.0625,
+          "line_acc": 1,
+          "sev_exact": 0.8889,
+          "sev_bias": -0.111,
+          "unrated": 0,
+          "false_reject": 0,
+          "challenge_ba": 1,
+          "failure": 0,
+          "truncated": 0,
+          "repeat_agreement": null,
+          "usd_run": 0.086642,
+          "usd_run_p50": 0.053873,
+          "usd_total": 3.119106,
+          "usd_per_correct_pair": 0.222793,
+          "latency_p50_s": 278.2,
+          "runs": 36,
+          "runs_expected": 36,
+          "unresolved": 0
+        }
+      },
+      "lift": {},
+      "detail": "models/tencent__hy4-preview.json"
+    },
+    {
+      "slug": "z-ai/glm-5.3",
+      "name": "GLM 5.3",
+      "vendor": "z-ai",
+      "open_weight": true,
+      "cutoff": null,
+      "price": {
+        "in": 1.4,
+        "out": 4.4
+      },
+      "effort": "max",
+      "effort_requested": "max",
+      "effort_mixed": null,
+      "providers": [],
+      "tier": 1,
+      "run_tier": 1,
+      "complete": true,
+      "usd_total": 3.794539,
+      "infra_retries": 0,
+      "arms": {
+        "raw": {
+          "pairs": 18,
+          "score": {
+            "median": 77.78,
+            "min": 77.78,
+            "max": 77.78,
+            "majority": 77.78,
+            "ci95": [
+              55.56,
+              94.44
+            ]
+          },
+          "by_family": {
+            "challenge": 100,
+            "find-sol": 70,
+            "find-ts": 50
+          },
+          "by_author": {
+            "anthropic": {
+              "pairs": 2,
+              "score": 100
+            },
+            "deepseek": {
+              "pairs": 2,
+              "score": 100
+            },
+            "google": {
+              "pairs": 4,
+              "score": 100
+            },
+            "moonshotai": {
+              "pairs": 1,
+              "score": 0
+            },
+            "openai": {
+              "pairs": 4,
+              "score": 75
+            },
+            "qwen": {
+              "pairs": 1,
+              "score": 100
+            },
+            "x-ai": {
+              "pairs": 3,
+              "score": 66.67
+            },
+            "z-ai": {
+              "pairs": 1,
+              "score": 0
+            }
+          },
+          "excl_same_vendor": {
+            "score": 82.35,
+            "n_pairs": 17
+          },
+          "recall": 0.8333,
+          "fools_gold": 0.1667,
+          "decoy_rate": 0,
+          "line_acc": 1,
+          "sev_exact": 1,
+          "sev_bias": 0,
+          "unrated": 0,
+          "false_reject": 0,
+          "challenge_ba": 1,
+          "failure": 0,
+          "truncated": 0,
+          "repeat_agreement": null,
+          "usd_run": 0.105404,
+          "usd_run_p50": 0.099347,
+          "usd_total": 3.794539,
+          "usd_per_correct_pair": 0.271038,
+          "latency_p50_s": 317.7,
+          "runs": 36,
+          "runs_expected": 36,
+          "unresolved": 0
+        }
+      },
+      "lift": {},
+      "detail": "models/z-ai__glm-5.3.json"
+    },
+    {
+      "slug": "qwen/qwen3.8-27b",
+      "name": "Qwen3.8 27B",
+      "vendor": "qwen",
+      "open_weight": true,
+      "cutoff": null,
+      "price": {
+        "in": 0.42,
+        "out": 3
+      },
+      "effort": "high",
+      "effort_requested": "max",
+      "effort_mixed": {
+        "high": 28,
+        "xhigh": 8
+      },
+      "providers": [],
+      "tier": 1,
+      "run_tier": 1,
+      "complete": true,
+      "usd_total": 3.060543,
+      "infra_retries": 0,
+      "arms": {
+        "raw": {
+          "pairs": 18,
+          "score": {
+            "median": 72.22,
+            "min": 72.22,
+            "max": 72.22,
+            "majority": 72.22,
+            "ci95": [
+              50,
+              94.44
+            ]
+          },
+          "by_family": {
+            "challenge": 100,
+            "find-sol": 60,
+            "find-ts": 50
+          },
+          "by_author": {
+            "anthropic": {
+              "pairs": 2,
+              "score": 100
+            },
+            "deepseek": {
+              "pairs": 2,
+              "score": 100
+            },
+            "google": {
+              "pairs": 4,
+              "score": 100
+            },
+            "moonshotai": {
+              "pairs": 1,
+              "score": 0
+            },
+            "openai": {
+              "pairs": 4,
+              "score": 50
+            },
+            "qwen": {
+              "pairs": 1,
+              "score": 100
+            },
+            "x-ai": {
+              "pairs": 3,
+              "score": 66.67
+            },
+            "z-ai": {
+              "pairs": 1,
+              "score": 0
+            }
+          },
+          "excl_same_vendor": {
+            "score": 70.59,
+            "n_pairs": 17
+          },
+          "recall": 0.5833,
+          "fools_gold": 0,
+          "decoy_rate": 0.0625,
+          "line_acc": 1,
+          "sev_exact": 0.8571,
+          "sev_bias": -0.143,
+          "unrated": 0,
+          "false_reject": 0,
+          "challenge_ba": 1,
+          "failure": 0,
+          "truncated": 0,
+          "repeat_agreement": null,
+          "usd_run": 0.085015,
+          "usd_run_p50": 0.058312,
+          "usd_total": 3.060543,
+          "usd_per_correct_pair": 0.235426,
+          "latency_p50_s": 178.1,
+          "runs": 36,
+          "runs_expected": 36,
+          "unresolved": 0
+        }
+      },
+      "lift": {},
+      "detail": "models/qwen__qwen3.8-27b.json"
+    },
+    {
+      "slug": "z-ai/glm-5.3-flash",
+      "name": "GLM 5.3 Flash",
+      "vendor": "z-ai",
+      "open_weight": true,
+      "cutoff": null,
+      "price": {
+        "in": 0.15,
+        "out": 0.5
+      },
+      "effort": "max",
+      "effort_requested": "max",
+      "effort_mixed": null,
+      "providers": [
+        {
+          "name": "Together",
+          "runs": 25
+        },
+        {
+          "name": "Relace",
+          "runs": 23
+        },
+        {
+          "name": "Friendli",
+          "runs": 4
+        },
+        {
+          "name": "StreamLake",
+          "runs": 4
+        },
+        {
+          "name": "GMICloud",
+          "runs": 3
+        },
+        {
+          "name": "Novita",
+          "runs": 2
+        }
+      ],
+      "tier": 1,
+      "run_tier": 1,
+      "complete": true,
+      "usd_total": 1.211337,
+      "infra_retries": 1,
+      "arms": {
+        "raw": {
+          "pairs": 18,
+          "score": {
+            "median": 72.22,
+            "min": 72.22,
+            "max": 72.22,
+            "majority": 72.22,
+            "ci95": [
+              50,
+              88.89
+            ]
+          },
+          "by_family": {
+            "challenge": 66.67,
+            "find-sol": 70,
+            "find-ts": 100
+          },
+          "by_author": {
+            "anthropic": {
+              "pairs": 2,
+              "score": 0
+            },
+            "deepseek": {
+              "pairs": 2,
+              "score": 100
+            },
+            "google": {
+              "pairs": 4,
+              "score": 100
+            },
+            "moonshotai": {
+              "pairs": 1,
+              "score": 0
+            },
+            "openai": {
+              "pairs": 4,
+              "score": 75
+            },
+            "qwen": {
+              "pairs": 1,
+              "score": 100
+            },
+            "x-ai": {
+              "pairs": 3,
+              "score": 66.67
+            },
+            "z-ai": {
+              "pairs": 1,
+              "score": 100
+            }
+          },
+          "excl_same_vendor": {
+            "score": 70.59,
+            "n_pairs": 17
+          },
+          "recall": 0.75,
+          "fools_gold": 0,
+          "decoy_rate": 0,
+          "line_acc": 1,
+          "sev_exact": 1,
+          "sev_bias": 0,
+          "unrated": 0,
+          "false_reject": 0.1667,
+          "challenge_ba": 0.8333,
+          "failure": 0.0556,
+          "truncated": 0,
+          "repeat_agreement": null,
+          "usd_run": 0.015936,
+          "usd_run_p50": 0.013825,
+          "usd_total": 0.573695,
+          "usd_per_correct_pair": 0.04413,
+          "latency_p50_s": 369.1,
+          "runs": 36,
+          "runs_expected": 36,
+          "unresolved": 0
+        },
+        "report": {
+          "pairs": 6,
+          "score": {
+            "median": 100,
+            "min": 100,
+            "max": 100,
+            "majority": 100,
+            "ci95": [
+              100,
+              100
+            ]
+          },
+          "by_family": {
+            "challenge": 100
+          },
+          "by_author": {
+            "anthropic": {
+              "pairs": 1,
+              "score": 100
+            },
+            "deepseek": {
+              "pairs": 1,
+              "score": 100
+            },
+            "google": {
+              "pairs": 2,
+              "score": 100
+            },
+            "qwen": {
+              "pairs": 1,
+              "score": 100
+            },
+            "x-ai": {
+              "pairs": 1,
+              "score": 100
+            }
+          },
+          "excl_same_vendor": {
+            "score": 100,
+            "n_pairs": 6
+          },
+          "recall": null,
+          "fools_gold": null,
+          "decoy_rate": null,
+          "line_acc": null,
+          "sev_exact": null,
+          "sev_bias": null,
+          "unrated": null,
+          "false_reject": 0,
+          "challenge_ba": 1,
+          "failure": 0,
+          "truncated": 0,
+          "repeat_agreement": null,
+          "usd_run": 0.018115,
+          "usd_run_p50": 0.018369,
+          "usd_total": 0.217381,
+          "usd_per_correct_pair": 0.03623,
+          "latency_p50_s": 319,
+          "runs": 12,
+          "runs_expected": 12,
+          "unresolved": 0
+        },
+        "solidity": {
+          "pairs": 10,
+          "score": {
+            "median": 60,
+            "min": 60,
+            "max": 60,
+            "majority": 60,
+            "ci95": [
+              30,
+              90
+            ]
+          },
+          "by_family": {
+            "find-sol": 60
+          },
+          "by_author": {
+            "anthropic": {
+              "pairs": 1,
+              "score": 100
+            },
+            "deepseek": {
+              "pairs": 1,
+              "score": 100
+            },
+            "google": {
+              "pairs": 1,
+              "score": 100
+            },
+            "moonshotai": {
+              "pairs": 1,
+              "score": 0
+            },
+            "openai": {
+              "pairs": 4,
+              "score": 75
+            },
+            "x-ai": {
+              "pairs": 1,
+              "score": 0
+            },
+            "z-ai": {
+              "pairs": 1,
+              "score": 0
+            }
+          },
+          "excl_same_vendor": {
+            "score": 66.67,
+            "n_pairs": 9
+          },
+          "recall": 0.7,
+          "fools_gold": 0,
+          "decoy_rate": 0.025,
+          "line_acc": 1,
+          "sev_exact": 1,
+          "sev_bias": 0,
+          "unrated": 0,
+          "false_reject": null,
+          "challenge_ba": null,
+          "failure": 0.1,
+          "truncated": 0,
+          "repeat_agreement": null,
+          "usd_run": 0.017084,
+          "usd_run_p50": 0.014948,
+          "usd_total": 0.341675,
+          "usd_per_correct_pair": 0.056946,
+          "latency_p50_s": 443.9,
+          "runs": 20,
+          "runs_expected": 20,
+          "unresolved": 0
+        },
+        "general": {
+          "pairs": 2,
+          "score": {
+            "median": 100,
+            "min": 100,
+            "max": 100,
+            "majority": 100,
+            "ci95": [
+              100,
+              100
+            ]
+          },
+          "by_family": {
+            "find-ts": 100
+          },
+          "by_author": {
+            "google": {
+              "pairs": 1,
+              "score": 100
+            },
+            "x-ai": {
+              "pairs": 1,
+              "score": 100
+            }
+          },
+          "excl_same_vendor": {
+            "score": 100,
+            "n_pairs": 2
+          },
+          "recall": 1,
+          "fools_gold": 0,
+          "decoy_rate": 0,
+          "line_acc": 1,
+          "sev_exact": 1,
+          "sev_bias": 0,
+          "unrated": 0,
+          "false_reject": null,
+          "challenge_ba": null,
+          "failure": 0,
+          "truncated": 0,
+          "repeat_agreement": null,
+          "usd_run": 0.019647,
+          "usd_run_p50": 0.018864,
+          "usd_total": 0.078586,
+          "usd_per_correct_pair": 0.039293,
+          "latency_p50_s": 296.3,
+          "runs": 4,
+          "runs_expected": 4,
+          "unresolved": 0
+        }
+      },
+      "lift": {
+        "report": {
+          "delta": 33.33,
+          "ci95": [
+            0,
+            66.67
+          ],
+          "n_pairs": 6,
+          "significant": false
+        },
+        "solidity": {
+          "delta": -10,
+          "ci95": [
+            -40,
+            20
+          ],
+          "n_pairs": 10,
+          "significant": false
+        },
+        "general": {
+          "delta": 0,
+          "ci95": [
+            0,
+            0
+          ],
+          "n_pairs": 2,
+          "significant": false
+        }
+      },
+      "detail": "models/z-ai__glm-5.3-flash.json"
+    },
+    {
+      "slug": "qwen/qwen3.8-max-0902",
+      "name": "Qwen3.8 Max (0902)",
+      "vendor": "qwen",
+      "open_weight": false,
+      "cutoff": null,
+      "price": {
+        "in": 2,
+        "out": 6
+      },
+      "effort": "xhigh",
+      "effort_requested": "max",
+      "effort_mixed": null,
+      "providers": [
+        {
+          "name": "Alibaba",
+          "runs": 20
+        }
+      ],
+      "tier": 1,
+      "run_tier": 1,
+      "complete": true,
+      "usd_total": 6.081222,
+      "infra_retries": 0,
+      "arms": {
+        "raw": {
+          "pairs": 18,
+          "score": {
+            "median": 66.67,
+            "min": 66.67,
+            "max": 66.67,
+            "majority": 66.67,
+            "ci95": [
+              44.44,
+              88.89
+            ]
+          },
+          "by_family": {
+            "challenge": 100,
+            "find-sol": 50,
+            "find-ts": 50
+          },
+          "by_author": {
+            "anthropic": {
+              "pairs": 2,
+              "score": 100
+            },
+            "deepseek": {
+              "pairs": 2,
+              "score": 50
+            },
+            "google": {
+              "pairs": 4,
+              "score": 100
+            },
+            "moonshotai": {
+              "pairs": 1,
+              "score": 0
+            },
+            "openai": {
+              "pairs": 4,
+              "score": 75
+            },
+            "qwen": {
+              "pairs": 1,
+              "score": 100
+            },
+            "x-ai": {
+              "pairs": 3,
+              "score": 33.33
+            },
+            "z-ai": {
+              "pairs": 1,
+              "score": 0
+            }
+          },
+          "excl_same_vendor": {
+            "score": 64.71,
+            "n_pairs": 17
+          },
+          "recall": 0.75,
+          "fools_gold": 0.25,
+          "decoy_rate": 0.1042,
+          "line_acc": 1,
+          "sev_exact": 0.8889,
+          "sev_bias": -0.111,
+          "unrated": 0,
+          "false_reject": 0,
+          "challenge_ba": 1,
+          "failure": 0,
+          "truncated": 0,
+          "repeat_agreement": null,
+          "usd_run": 0.168923,
+          "usd_run_p50": 0.143877,
+          "usd_total": 6.081222,
+          "usd_per_correct_pair": 0.506768,
+          "latency_p50_s": 305.3,
+          "runs": 36,
+          "runs_expected": 36,
+          "unresolved": 0
+        }
+      },
+      "lift": {},
+      "detail": "models/qwen__qwen3.8-max-0902.json"
+    },
+    {
+      "slug": "minimax/minimax-m3",
+      "name": "MiniMax M3",
+      "vendor": "minimax",
+      "open_weight": true,
+      "cutoff": null,
+      "price": {
+        "in": 0.3,
+        "out": 1.2
+      },
+      "effort": "high",
+      "effort_requested": "max",
+      "effort_mixed": null,
+      "providers": [
+        {
+          "name": "Parasail",
+          "runs": 8
+        },
+        {
+          "name": "Novita",
+          "runs": 1
+        }
+      ],
+      "tier": 1,
+      "run_tier": 1,
+      "complete": true,
+      "usd_total": 1.391924,
+      "infra_retries": 0,
+      "arms": {
+        "raw": {
+          "pairs": 18,
+          "score": {
+            "median": 61.11,
+            "min": 61.11,
+            "max": 61.11,
+            "majority": 61.11,
+            "ci95": [
+              38.89,
+              83.33
+            ]
+          },
+          "by_family": {
+            "challenge": 100,
+            "find-sol": 30,
+            "find-ts": 100
+          },
+          "by_author": {
+            "anthropic": {
+              "pairs": 2,
+              "score": 50
+            },
+            "deepseek": {
+              "pairs": 2,
+              "score": 50
+            },
+            "google": {
+              "pairs": 4,
+              "score": 75
+            },
+            "moonshotai": {
+              "pairs": 1,
+              "score": 0
+            },
+            "openai": {
+              "pairs": 4,
+              "score": 75
+            },
+            "qwen": {
+              "pairs": 1,
+              "score": 100
+            },
+            "x-ai": {
+              "pairs": 3,
+              "score": 66.67
+            },
+            "z-ai": {
+              "pairs": 1,
+              "score": 0
+            }
+          },
+          "excl_same_vendor": {
+            "score": 61.11,
+            "n_pairs": 18
+          },
+          "recall": 0.5833,
+          "fools_gold": 0.1667,
+          "decoy_rate": 0.1042,
+          "line_acc": 1,
+          "sev_exact": 0.7143,
+          "sev_bias": -0.286,
+          "unrated": 0,
+          "false_reject": 0,
+          "challenge_ba": 1,
+          "failure": 0.0833,
+          "truncated": 0,
+          "repeat_agreement": null,
+          "usd_run": 0.038665,
+          "usd_run_p50": 0.034387,
+          "usd_total": 1.391924,
+          "usd_per_correct_pair": 0.126539,
+          "latency_p50_s": 170.9,
+          "runs": 36,
+          "runs_expected": 36,
+          "unresolved": 0
+        }
+      },
+      "lift": {},
+      "detail": "models/minimax__minimax-m3.json"
+    },
+    {
+      "slug": "google/gemini-3.8-flash",
+      "name": "Gemini 3.8 Flash",
+      "vendor": "google",
+      "open_weight": false,
+      "cutoff": null,
+      "price": {
+        "in": 0.75,
+        "out": 3.75
+      },
+      "effort": "high",
+      "effort_requested": "max",
+      "effort_mixed": null,
+      "providers": [
+        {
+          "name": "Google",
+          "runs": 35
+        },
+        {
+          "name": "Google AI Studio",
+          "runs": 1
+        }
+      ],
+      "tier": 2,
+      "run_tier": 2,
+      "complete": true,
+      "usd_total": 7.331767,
+      "infra_retries": 0,
+      "arms": {
+        "raw": {
+          "pairs": 18,
+          "score": {
+            "median": 55.56,
+            "min": 55.56,
+            "max": 55.56,
+            "majority": 55.56,
+            "ci95": [
+              33.33,
+              77.78
+            ]
+          },
+          "by_family": {
+            "challenge": 100,
+            "find-sol": 20,
+            "find-ts": 100
+          },
+          "by_author": {
+            "anthropic": {
+              "pairs": 2,
+              "score": 50
+            },
+            "deepseek": {
+              "pairs": 2,
+              "score": 50
+            },
+            "google": {
+              "pairs": 4,
+              "score": 75
+            },
+            "moonshotai": {
+              "pairs": 1,
+              "score": 0
+            },
+            "openai": {
+              "pairs": 4,
+              "score": 50
+            },
+            "qwen": {
+              "pairs": 1,
+              "score": 100
+            },
+            "x-ai": {
+              "pairs": 3,
+              "score": 66.67
+            },
+            "z-ai": {
+              "pairs": 1,
+              "score": 0
+            }
+          },
+          "excl_same_vendor": {
+            "score": 50,
+            "n_pairs": 14
+          },
+          "recall": 0.5833,
+          "fools_gold": 0.1667,
+          "decoy_rate": 0.0417,
+          "line_acc": 1,
+          "sev_exact": 0.8571,
+          "sev_bias": 0.143,
+          "unrated": 0,
+          "false_reject": 0,
+          "challenge_ba": 1,
+          "failure": 0.2222,
+          "truncated": 0.1667,
+          "repeat_agreement": null,
+          "usd_run": 0.20366,
+          "usd_run_p50": 0.197225,
+          "usd_total": 7.331767,
+          "usd_per_correct_pair": 0.733177,
+          "latency_p50_s": 174.5,
+          "runs": 36,
+          "runs_expected": 36,
+          "unresolved": 0
+        }
+      },
+      "lift": {},
+      "detail": "models/google__gemini-3.8-flash.json"
+    },
+    {
+      "slug": "x-ai/grok-4.7",
+      "name": "Grok 4.7",
+      "vendor": "x-ai",
+      "open_weight": false,
+      "cutoff": null,
+      "price": {
+        "in": 2,
+        "out": 6
+      },
+      "effort": "xhigh",
+      "effort_requested": "max",
+      "effort_mixed": null,
+      "providers": [
+        {
+          "name": "xAI",
+          "runs": 36
+        }
+      ],
+      "tier": 2,
+      "run_tier": 2,
+      "complete": true,
+      "usd_total": 13.435536,
+      "infra_retries": 0,
+      "arms": {
+        "raw": {
+          "pairs": 18,
+          "score": {
+            "median": 55.56,
+            "min": 55.56,
+            "max": 55.56,
+            "majority": 55.56,
+            "ci95": [
+              33.33,
+              77.78
+            ]
+          },
+          "by_family": {
+            "challenge": 66.67,
+            "find-sol": 50,
+            "find-ts": 50
+          },
+          "by_author": {
+            "anthropic": {
+              "pairs": 2,
+              "score": 50
+            },
+            "deepseek": {
+              "pairs": 2,
+              "score": 0
+            },
+            "google": {
+              "pairs": 4,
+              "score": 75
+            },
+            "moonshotai": {
+              "pairs": 1,
+              "score": 0
+            },
+            "openai": {
+              "pairs": 4,
+              "score": 100
+            },
+            "qwen": {
+              "pairs": 1,
+              "score": 100
+            },
+            "x-ai": {
+              "pairs": 3,
+              "score": 33.33
+            },
+            "z-ai": {
+              "pairs": 1,
+              "score": 0
+            }
+          },
+          "excl_same_vendor": {
+            "score": 60,
+            "n_pairs": 15
+          },
+          "recall": 0.6667,
+          "fools_gold": 0.1667,
+          "decoy_rate": 0,
+          "line_acc": 1,
+          "sev_exact": 1,
+          "sev_bias": 0,
+          "unrated": 0,
+          "false_reject": 0.3333,
+          "challenge_ba": 0.75,
+          "failure": 0.3056,
+          "truncated": 0,
+          "repeat_agreement": null,
+          "usd_run": 0.373209,
+          "usd_run_p50": 0.350498,
+          "usd_total": 13.435536,
+          "usd_per_correct_pair": 1.343554,
+          "latency_p50_s": 730.1,
+          "runs": 36,
+          "runs_expected": 36,
+          "unresolved": 0
+        }
+      },
+      "lift": {},
+      "detail": "models/x-ai__grok-4.7.json"
+    },
+    {
+      "slug": "anthropic/claude-haiku-4.5",
+      "name": "Claude Haiku 4.5",
+      "vendor": "anthropic",
+      "open_weight": false,
+      "cutoff": null,
+      "price": {
+        "in": 1,
+        "out": 5
+      },
+      "effort": "high",
+      "effort_requested": "max",
+      "effort_mixed": null,
+      "providers": [
+        {
+          "name": "Amazon Bedrock",
+          "runs": 32
+        }
+      ],
+      "tier": 2,
+      "run_tier": 2,
+      "complete": true,
+      "usd_total": 5.946437,
+      "infra_retries": 0,
+      "arms": {
+        "raw": {
+          "pairs": 18,
+          "score": {
+            "median": 44.44,
+            "min": 44.44,
+            "max": 44.44,
+            "majority": 44.44,
+            "ci95": [
+              22.22,
+              66.67
+            ]
+          },
+          "by_family": {
+            "challenge": 66.67,
+            "find-sol": 20,
+            "find-ts": 100
+          },
+          "by_author": {
+            "anthropic": {
+              "pairs": 2,
+              "score": 0
+            },
+            "deepseek": {
+              "pairs": 2,
+              "score": 0
+            },
+            "google": {
+              "pairs": 4,
+              "score": 75
+            },
+            "moonshotai": {
+              "pairs": 1,
+              "score": 0
+            },
+            "openai": {
+              "pairs": 4,
+              "score": 25
+            },
+            "qwen": {
+              "pairs": 1,
+              "score": 100
+            },
+            "x-ai": {
+              "pairs": 3,
+              "score": 100
+            },
+            "z-ai": {
+              "pairs": 1,
+              "score": 0
+            }
+          },
+          "excl_same_vendor": {
+            "score": 50,
+            "n_pairs": 16
+          },
+          "recall": 0.3333,
+          "fools_gold": 0,
+          "decoy_rate": 0.1042,
+          "line_acc": 1,
+          "sev_exact": 0.25,
+          "sev_bias": 0,
+          "unrated": 0,
+          "false_reject": 0,
+          "challenge_ba": 0.8333,
+          "failure": 0,
+          "truncated": 0,
+          "repeat_agreement": null,
+          "usd_run": 0.165179,
+          "usd_run_p50": 0.062351,
+          "usd_total": 5.946437,
+          "usd_per_correct_pair": 0.743305,
+          "latency_p50_s": 46.8,
+          "runs": 36,
+          "runs_expected": 36,
+          "unresolved": 0
+        }
+      },
+      "lift": {},
+      "detail": "models/anthropic__claude-haiku-4.5.json"
+    },
+    {
+      "slug": "google/gemini-3.5-flash-lite",
+      "name": "Gemini 3.5 Flash Lite",
+      "vendor": "google",
+      "open_weight": false,
+      "cutoff": null,
+      "price": {
+        "in": 0.3,
+        "out": 2.5
+      },
+      "effort": "high",
+      "effort_requested": "max",
+      "effort_mixed": null,
+      "providers": [
+        {
+          "name": "Google",
+          "runs": 35
+        }
+      ],
+      "tier": null,
+      "run_tier": 2,
+      "complete": false,
+      "usd_total": 1.477641,
+      "infra_retries": 28,
+      "arms": {
+        "raw": {
+          "pairs": 18,
+          "score": {
+            "median": 44.44,
+            "min": 44.44,
+            "max": 44.44,
+            "majority": 44.44,
+            "ci95": [
+              22.22,
+              66.67
+            ]
+          },
+          "by_family": {
+            "challenge": 83.33,
+            "find-sol": 20,
+            "find-ts": 50
+          },
+          "by_author": {
+            "anthropic": {
+              "pairs": 2,
+              "score": 0
+            },
+            "deepseek": {
+              "pairs": 2,
+              "score": 100
+            },
+            "google": {
+              "pairs": 4,
+              "score": 75
+            },
+            "moonshotai": {
+              "pairs": 1,
+              "score": 0
+            },
+            "openai": {
+              "pairs": 4,
+              "score": 25
+            },
+            "qwen": {
+              "pairs": 1,
+              "score": 100
+            },
+            "x-ai": {
+              "pairs": 3,
+              "score": 33.33
+            },
+            "z-ai": {
+              "pairs": 1,
+              "score": 0
+            }
+          },
+          "excl_same_vendor": {
+            "score": 35.71,
+            "n_pairs": 14
+          },
+          "recall": 0.3333,
+          "fools_gold": 0.0833,
+          "decoy_rate": 0,
+          "line_acc": 1,
+          "sev_exact": 1,
+          "sev_bias": 0,
+          "unrated": 0,
+          "false_reject": 0,
+          "challenge_ba": 0.9167,
+          "failure": 0.0278,
+          "truncated": 0,
+          "repeat_agreement": null,
+          "usd_run": 0.041046,
+          "usd_run_p50": 0.030755,
+          "usd_total": 1.477641,
+          "usd_per_correct_pair": 0.184705,
+          "latency_p50_s": 66.3,
+          "runs": 36,
+          "runs_expected": 36,
+          "unresolved": 1
+        }
+      },
+      "lift": {},
+      "detail": "models/google__gemini-3.5-flash-lite.json"
+    },
+    {
+      "slug": "nvidia/nemotron-3-ultra-550b-a55b",
+      "name": "Nemotron 3 Ultra",
+      "vendor": "nvidia",
+      "open_weight": true,
+      "cutoff": null,
+      "price": {
+        "in": 0.5,
+        "out": 2.2
+      },
+      "effort": "high",
+      "effort_requested": "max",
+      "effort_mixed": null,
+      "providers": [],
+      "tier": 2,
+      "run_tier": 1,
+      "complete": true,
+      "usd_total": 1.618308,
+      "infra_retries": 0,
+      "arms": {
+        "raw": {
+          "pairs": 18,
+          "score": {
+            "median": 44.44,
+            "min": 44.44,
+            "max": 44.44,
+            "majority": 44.44,
+            "ci95": [
+              22.22,
+              66.67
+            ]
+          },
+          "by_family": {
+            "challenge": 83.33,
+            "find-sol": 20,
+            "find-ts": 50
+          },
+          "by_author": {
+            "anthropic": {
+              "pairs": 2,
+              "score": 50
+            },
+            "deepseek": {
+              "pairs": 2,
+              "score": 50
+            },
+            "google": {
+              "pairs": 4,
+              "score": 50
+            },
+            "moonshotai": {
+              "pairs": 1,
+              "score": 0
+            },
+            "openai": {
+              "pairs": 4,
+              "score": 25
+            },
+            "qwen": {
+              "pairs": 1,
+              "score": 100
+            },
+            "x-ai": {
+              "pairs": 3,
+              "score": 66.67
+            },
+            "z-ai": {
+              "pairs": 1,
+              "score": 0
+            }
+          },
+          "excl_same_vendor": {
+            "score": 44.44,
+            "n_pairs": 18
+          },
+          "recall": 0.3333,
+          "fools_gold": 0.1667,
+          "decoy_rate": 0.0833,
+          "line_acc": 1,
+          "sev_exact": 0.75,
+          "sev_bias": 0.25,
+          "unrated": 0,
+          "false_reject": 0,
+          "challenge_ba": 0.9167,
+          "failure": 0.0278,
+          "truncated": 0,
+          "repeat_agreement": null,
+          "usd_run": 0.044953,
+          "usd_run_p50": 0.044577,
+          "usd_total": 1.618308,
+          "usd_per_correct_pair": 0.202288,
+          "latency_p50_s": 308.4,
+          "runs": 36,
+          "runs_expected": 36,
+          "unresolved": 0
+        }
+      },
+      "lift": {},
+      "detail": "models/nvidia__nemotron-3-ultra-550b-a55b.json"
+    },
+    {
+      "slug": "google/gemini-3.1-pro-preview",
+      "name": "Gemini 3.1 Pro Preview",
+      "vendor": "google",
+      "open_weight": false,
+      "cutoff": null,
+      "price": {
+        "in": 2,
+        "out": 12
+      },
+      "effort": "high",
+      "effort_requested": "max",
+      "effort_mixed": null,
+      "providers": [
+        {
+          "name": "Google",
+          "runs": 30
+        }
+      ],
+      "tier": 2,
+      "run_tier": 2,
+      "complete": true,
+      "usd_total": 5.308594,
+      "infra_retries": 0,
+      "arms": {
+        "raw": {
+          "pairs": 18,
+          "score": {
+            "median": 38.89,
+            "min": 38.89,
+            "max": 38.89,
+            "majority": 38.89,
+            "ci95": [
+              16.67,
+              61.11
+            ]
+          },
+          "by_family": {
+            "challenge": 100,
+            "find-sol": 10,
+            "find-ts": 0
+          },
+          "by_author": {
+            "anthropic": {
+              "pairs": 2,
+              "score": 50
+            },
+            "deepseek": {
+              "pairs": 2,
+              "score": 50
+            },
+            "google": {
+              "pairs": 4,
+              "score": 50
+            },
+            "moonshotai": {
+              "pairs": 1,
+              "score": 0
+            },
+            "openai": {
+              "pairs": 4,
+              "score": 25
+            },
+            "qwen": {
+              "pairs": 1,
+              "score": 100
+            },
+            "x-ai": {
+              "pairs": 3,
+              "score": 33.33
+            },
+            "z-ai": {
+              "pairs": 1,
+              "score": 0
+            }
+          },
+          "excl_same_vendor": {
+            "score": 35.71,
+            "n_pairs": 14
+          },
+          "recall": 0.8333,
+          "fools_gold": 0,
+          "decoy_rate": 0,
+          "line_acc": 1,
+          "sev_exact": 0.7,
+          "sev_bias": 0.3,
+          "unrated": 0,
+          "false_reject": 0,
+          "challenge_ba": 1,
+          "failure": 0.3611,
+          "truncated": 0,
+          "repeat_agreement": null,
+          "usd_run": 0.147461,
+          "usd_run_p50": 0.115411,
+          "usd_total": 5.308594,
+          "usd_per_correct_pair": 0.758371,
+          "latency_p50_s": 489,
+          "runs": 36,
+          "runs_expected": 36,
+          "unresolved": 0
+        }
+      },
+      "lift": {},
+      "detail": "models/google__gemini-3.1-pro-preview.json"
+    },
+    {
+      "slug": "anthropic/claude-sonnet-5.5",
+      "name": "Claude Sonnet 5.5",
+      "vendor": "anthropic",
+      "open_weight": false,
+      "cutoff": null,
+      "price": {
+        "in": 2,
+        "out": 10
+      },
+      "effort": "max",
+      "effort_requested": "max",
+      "effort_mixed": null,
+      "providers": [
+        {
+          "name": "Claude Platform on AWS",
+          "runs": 72
+        }
+      ],
+      "tier": 2,
+      "run_tier": 2,
+      "complete": true,
+      "usd_total": 76.786984,
+      "infra_retries": 0,
+      "arms": {
+        "raw": {
+          "pairs": 18,
+          "score": {
+            "median": 33.33,
+            "min": 33.33,
+            "max": 33.33,
+            "majority": 33.33,
+            "ci95": [
+              11.11,
+              55.56
+            ]
+          },
+          "by_family": {
+            "challenge": 66.67,
+            "find-sol": 10,
+            "find-ts": 50
+          },
+          "by_author": {
+            "anthropic": {
+              "pairs": 2,
+              "score": 0
+            },
+            "deepseek": {
+              "pairs": 2,
+              "score": 0
+            },
+            "google": {
+              "pairs": 4,
+              "score": 75
+            },
+            "moonshotai": {
+              "pairs": 1,
+              "score": 0
+            },
+            "openai": {
+              "pairs": 4,
+              "score": 25
+            },
+            "qwen": {
+              "pairs": 1,
+              "score": 100
+            },
+            "x-ai": {
+              "pairs": 3,
+              "score": 33.33
+            },
+            "z-ai": {
+              "pairs": 1,
+              "score": 0
+            }
+          },
+          "excl_same_vendor": {
+            "score": 37.5,
+            "n_pairs": 16
+          },
+          "recall": 0.8333,
+          "fools_gold": 0,
+          "decoy_rate": 0,
+          "line_acc": 1,
+          "sev_exact": 1,
+          "sev_bias": 0,
+          "unrated": 0,
+          "false_reject": 0.1667,
+          "challenge_ba": 0.8333,
+          "failure": 0.3611,
+          "truncated": 0.3056,
+          "repeat_agreement": null,
+          "usd_run": 1.090505,
+          "usd_run_p50": 1.055974,
+          "usd_total": 39.258182,
+          "usd_per_correct_pair": 6.54303,
+          "latency_p50_s": 720.8,
+          "runs": 36,
+          "runs_expected": 36,
+          "unresolved": 0
+        },
+        "report": {
+          "pairs": 6,
+          "score": {
+            "median": 0,
+            "min": 0,
+            "max": 0,
+            "majority": 0,
+            "ci95": [
+              0,
+              0
+            ]
+          },
+          "by_family": {
+            "challenge": 0
+          },
+          "by_author": {
+            "anthropic": {
+              "pairs": 1,
+              "score": 0
+            },
+            "deepseek": {
+              "pairs": 1,
+              "score": 0
+            },
+            "google": {
+              "pairs": 2,
+              "score": 0
+            },
+            "qwen": {
+              "pairs": 1,
+              "score": 0
+            },
+            "x-ai": {
+              "pairs": 1,
+              "score": 0
+            }
+          },
+          "excl_same_vendor": {
+            "score": 0,
+            "n_pairs": 5
+          },
+          "recall": null,
+          "fools_gold": null,
+          "decoy_rate": null,
+          "line_acc": null,
+          "sev_exact": null,
+          "sev_bias": null,
+          "unrated": null,
+          "false_reject": 1,
+          "challenge_ba": 0,
+          "failure": 1,
+          "truncated": 1,
+          "repeat_agreement": null,
+          "usd_run": 0.818513,
+          "usd_run_p50": 0.740341,
+          "usd_total": 9.822154,
+          "usd_per_correct_pair": null,
+          "latency_p50_s": 491.9,
+          "runs": 12,
+          "runs_expected": 12,
+          "unresolved": 0
+        },
+        "solidity": {
+          "pairs": 10,
+          "score": {
+            "median": 0,
+            "min": 0,
+            "max": 0,
+            "majority": 0,
+            "ci95": [
+              0,
+              0
+            ]
+          },
+          "by_family": {
+            "find-sol": 0
+          },
+          "by_author": {
+            "anthropic": {
+              "pairs": 1,
+              "score": 0
+            },
+            "deepseek": {
+              "pairs": 1,
+              "score": 0
+            },
+            "google": {
+              "pairs": 1,
+              "score": 0
+            },
+            "moonshotai": {
+              "pairs": 1,
+              "score": 0
+            },
+            "openai": {
+              "pairs": 4,
+              "score": 0
+            },
+            "x-ai": {
+              "pairs": 1,
+              "score": 0
+            },
+            "z-ai": {
+              "pairs": 1,
+              "score": 0
+            }
+          },
+          "excl_same_vendor": {
+            "score": 0,
+            "n_pairs": 9
+          },
+          "recall": 0.1,
+          "fools_gold": 0,
+          "decoy_rate": 0,
+          "line_acc": 1,
+          "sev_exact": 1,
+          "sev_bias": 0,
+          "unrated": 0,
+          "false_reject": null,
+          "challenge_ba": null,
+          "failure": 0.85,
+          "truncated": 0.85,
+          "repeat_agreement": null,
+          "usd_run": 1.140334,
+          "usd_run_p50": 1.087063,
+          "usd_total": 22.806686,
+          "usd_per_correct_pair": null,
+          "latency_p50_s": 838.4,
+          "runs": 20,
+          "runs_expected": 20,
+          "unresolved": 0
+        },
+        "general": {
+          "pairs": 2,
+          "score": {
+            "median": 0,
+            "min": 0,
+            "max": 0,
+            "majority": 0,
+            "ci95": [
+              0,
+              0
+            ]
+          },
+          "by_family": {
+            "find-ts": 0
+          },
+          "by_author": {
+            "google": {
+              "pairs": 1,
+              "score": 0
+            },
+            "x-ai": {
+              "pairs": 1,
+              "score": 0
+            }
+          },
+          "excl_same_vendor": {
+            "score": 0,
+            "n_pairs": 2
+          },
+          "recall": 0,
+          "fools_gold": 0,
+          "decoy_rate": 0,
+          "line_acc": null,
+          "sev_exact": null,
+          "sev_bias": null,
+          "unrated": null,
+          "false_reject": null,
+          "challenge_ba": null,
+          "failure": 0.75,
+          "truncated": 0.75,
+          "repeat_agreement": null,
+          "usd_run": 1.224991,
+          "usd_run_p50": 1.235054,
+          "usd_total": 4.899962,
+          "usd_per_correct_pair": null,
+          "latency_p50_s": 851.1,
+          "runs": 4,
+          "runs_expected": 4,
+          "unresolved": 0
+        }
+      },
+      "lift": {
+        "report": {
+          "delta": -66.67,
+          "ci95": [
+            -100,
+            -33.33
+          ],
+          "n_pairs": 6,
+          "significant": true
+        },
+        "solidity": {
+          "delta": -10,
+          "ci95": [
+            -30,
+            0
+          ],
+          "n_pairs": 10,
+          "significant": false
+        },
+        "general": {
+          "delta": -50,
+          "ci95": [
+            -100,
+            0
+          ],
+          "n_pairs": 2,
+          "significant": false
+        }
+      },
+      "detail": "models/anthropic__claude-sonnet-5.5.json"
+    },
+    {
+      "slug": "mistralai/mistral-medium-3-5",
+      "name": "Mistral Medium 3.5",
+      "vendor": "mistralai",
+      "open_weight": false,
+      "cutoff": null,
+      "price": {
+        "in": 1.5,
+        "out": 7.5
+      },
+      "effort": "high",
+      "effort_requested": "max",
+      "effort_mixed": null,
+      "providers": [
+        {
+          "name": "Mistral",
+          "runs": 31
+        }
+      ],
+      "tier": 2,
+      "run_tier": 2,
+      "complete": true,
+      "usd_total": 6.280626,
+      "infra_retries": 0,
+      "arms": {
+        "raw": {
+          "pairs": 18,
+          "score": {
+            "median": 33.33,
+            "min": 33.33,
+            "max": 33.33,
+            "majority": 33.33,
+            "ci95": [
+              11.11,
+              55.56
+            ]
+          },
+          "by_family": {
+            "challenge": 66.67,
+            "find-sol": 20,
+            "find-ts": 0
+          },
+          "by_author": {
+            "anthropic": {
+              "pairs": 2,
+              "score": 0
+            },
+            "deepseek": {
+              "pairs": 2,
+              "score": 0
+            },
+            "google": {
+              "pairs": 4,
+              "score": 50
+            },
+            "moonshotai": {
+              "pairs": 1,
+              "score": 0
+            },
+            "openai": {
+              "pairs": 4,
+              "score": 50
+            },
+            "qwen": {
+              "pairs": 1,
+              "score": 100
+            },
+            "x-ai": {
+              "pairs": 3,
+              "score": 33.33
+            },
+            "z-ai": {
+              "pairs": 1,
+              "score": 0
+            }
+          },
+          "excl_same_vendor": {
+            "score": 33.33,
+            "n_pairs": 18
+          },
+          "recall": 0.3333,
+          "fools_gold": 0.4167,
+          "decoy_rate": 0.1667,
+          "line_acc": 0.75,
+          "sev_exact": 0.75,
+          "sev_bias": 0.25,
+          "unrated": 0,
+          "false_reject": 0,
+          "challenge_ba": 0.8333,
+          "failure": 0.0278,
+          "truncated": 0.0278,
+          "repeat_agreement": null,
+          "usd_run": 0.174462,
+          "usd_run_p50": 0.17104,
+          "usd_total": 6.280626,
+          "usd_per_correct_pair": 1.046771,
+          "latency_p50_s": 105.4,
+          "runs": 36,
+          "runs_expected": 36,
+          "unresolved": 0
+        }
+      },
+      "lift": {},
+      "detail": "models/mistralai__mistral-medium-3-5.json"
+    }
+  ]
+}

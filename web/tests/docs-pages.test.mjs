@@ -290,10 +290,15 @@ test('the 0.7.0 changelog entry describes what ships', async () => {
   assert.equal(latest.version, '0.7.0');
   assert.deepEqual(
     latest.blocks.filter((block) => block.type === 'group').map((block) => block.text),
-    ['Reviews', 'Operator', 'Workbench', 'Account', 'Free tools and templates', 'MCP', 'Fixes', 'Site', 'CLI'],
+    ['Skills and Claude Code plugin', 'Paydirt benchmark', 'Reviews', 'Operator', 'Workbench', 'Account', 'Free tools and templates', 'MCP', 'Fixes', 'Site', 'CLI'],
   );
   const entry = source.slice(source.indexOf('## 0.7.0'), source.indexOf('## 0.6.0')).replace(/\s+/g, ' ');
   for (const fact of [
+    'Five skills:',
+    '/benchmark',
+    'Retried runs retain their earlier evidence in a private archive.',
+    'counted run\'s latest stored invocation',
+    'Report check treats explicit "prior art not checked" statements and empty headings as missing evidence.',
     'Eleven review profiles.',
     'eight stages (scope, provenance, prior art, proof, severity, triager, report, verdict)',
     'Panel review: two to four models',
@@ -316,7 +321,7 @@ test('the 0.7.0 changelog entry describes what ships', async () => {
     assert.ok(entry.includes(fact), fact);
   }
   // What an earlier draft of the entry said and the release does not do.
-  for (const stale of [/Nine review profiles/, /five-stage/i, /npx -y bounty-operator-mcp\b/, /PoC review/, /agent pack builder/i, /benchmark/i, /Draft\./]) {
+  for (const stale of [/Nine review profiles/, /five-stage/i, /npx -y bounty-operator-mcp\b/, /PoC review/, /agent pack builder/i, /Draft\./]) {
     assert.doesNotMatch(entry, stale);
   }
   assert.doesNotMatch(source, /<!--/);

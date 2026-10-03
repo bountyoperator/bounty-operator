@@ -98,7 +98,7 @@ function leaderboard(view) {
   const span = COLUMNS.length + 2;
   let order = 0;
   const body = view.tiers.map((group) => {
-    const tierRow = html`<tr class="lb__tier" data-tier="${group.tier}"><td colspan="${span}"><span class="lb__tier-name">Tier ${group.tier}</span>${group.rows.length > 1 && html`<span class="lb__tier-note">not separable at 95%</span>`}</td></tr>`;
+    const tierRow = html`<tr class="lb__tier" data-tier="${group.tier}"><td colspan="${span}"><span class="lb__tier-name">Tier ${group.tier}</span>${group.rows.length > 1 && html`<span class="lb__tier-note">intervals overlap tier leader</span>`}</td></tr>`;
     const rows = group.rows.map((row) => {
       const data = Object.fromEntries(COLUMNS.filter((column) => column.sortable !== false).map((column) => [`data-${column.key}`, sortValue(column.value(row))]));
       const rowAttrs = attrs({ class: 'lb__row', 'data-order': String(order++), 'data-tier': String(group.tier), ...data });
@@ -176,12 +176,12 @@ function picksSection(view) {
       return html`<li class="pick">
   <p class="pick__tags">${entry.tiers.map((tier) => chip(tier === 'budget' && view.budget !== null ? `Under ${fmt.usd(view.budget)} a run` : TIER_LABEL[tier] ?? tier, { tone: tier === 'best' ? 'observed' : 'neutral' }))}</p>
   <p class="pick__name">${entry.row.name}</p>
-  <p class="pick__slug mono">${entry.row.slug}${profile ? html` with the ${profile.name} profile` : ''}</p>
+  <p class="pick__slug mono">${entry.row.slug}${profile ? html` with the ${profile.name} profile` : ' · raw arm'}</p>
   <dl class="pick__nums">
     <div><dt class="meta">Score</dt><dd class="num">${fmt.score(entry.score)}${group.pairs !== null && html`<span class="pick__of">${pairsRight(entry.score, group.pairs)}</span>`}</dd></div>
-    <div><dt class="meta">Median cost per run</dt><dd class="num">${show(fmt.usd(entry.usd_run))}</dd></div>
+    <div><dt class="meta">Median cost across arm</dt><dd class="num">${show(fmt.usd(entry.usd_run))}</dd></div>
   </dl>
-  ${family && link({ label: 'Review with this model', href: workbenchLink(family.profile), className: 'pick__go' })}
+  ${family && link({ label: 'Open the workbench', href: workbenchLink(family.profile), className: 'pick__go' })}
 </li>`;
     });
     return html`<article class="picks__card" aria-labelledby="pick-${group.family}">
@@ -196,7 +196,7 @@ function picksSection(view) {
     lede: `The highest score on each kind of task, the best of the models under ${fmt.usd(view.budget) ?? 'the budget line'} a run, and the best open-weight model. Equal scores go to the cheaper run.`,
   })}
   <div class="picks">${cards}</div>
-  <p class="fine bench-note">Scores here count only the pairs of that task. The link opens the workbench with the matching core profile; pick the model there.</p>
+  <p class="fine bench-note">Scores count only the pairs of that task. Costs are medians across every input in the selected arm, which can include other tasks. The workbench applies the matching core profile; raw scores do not measure that profile. Pick the model there.</p>
 </section>`;
 }
 
@@ -500,7 +500,7 @@ ${pageHero({
 <section class="section section--tight wrap lb-section" aria-labelledby="board">
   ${sectionHeading({ title: 'The leaderboard', id: 'board', lede: 'Ranked by score and grouped by tier, in the order of the results file.' })}
   ${leaderboard(view)}
-  <p class="bench-tier-line">A tier starts at its highest-scoring model and takes in every model whose 95% interval overlaps that model’s. Inside a tier, ${view.pairs} pairs do not tell the models apart.</p>
+  <p class="bench-tier-line">A tier starts at its highest-scoring model and takes in every model whose 95% interval overlaps that model’s. These are descriptive groups; overlapping intervals do not establish equal performance.</p>
   ${columnNotes(view)}
 </section>
 

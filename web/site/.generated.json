@@ -2,6 +2,8 @@
   "comment": "Written by scripts/build-site.mjs. Lists generated files so stale ones can be removed. Do not edit.",
   "files": [
     "404.html",
+    "benchmark.html",
+    "benchmark/method.html",
     "challenge-report.html",
     "changelog.html",
     "code-security-review.html",

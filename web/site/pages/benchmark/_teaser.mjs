@@ -27,8 +27,7 @@ export function teaser(published) {
   <div class="bench-teaser__row bench-teaser__labels" aria-hidden="true"><span></span><span class="meta">Model</span><span class="meta">Score</span><span class="meta">Cost / run</span></div>
   <ol class="bench-teaser__list">${top.map(
     (row) => html`<li class="bench-teaser__row"><span class="bench-teaser__rank num" aria-hidden="true">${row.rank}</span><span class="bench-teaser__name">${row.name}</span><span class="bench-teaser__score num">${fmt.score(row.score)}<span class="visually-hidden"> Paydirt Score</span></span><span class="bench-teaser__cost num">${fmt.usd(row.arm.usd_run) ?? ''}<span class="visually-hidden"> a run</span></span></li>`,
-  )}</ol>
-  ${tiedLeft > 0 && html`<p class="fine">${tiedLeft === 1 ? 'One more model' : `${tiedLeft} more models`} tied at ${fmt.score(top.at(-1).score)}.</p>`}
+  )}</ol>${tiedLeft > 0 && html`<p class="fine">${tiedLeft === 1 ? 'One more model' : `${tiedLeft} more models`} tied at ${fmt.score(top.at(-1).score)}.</p>`}
   </div>
   <a class="bench-teaser__go link" href="${PAGE_PATH}">See the leaderboard${icon('arrow-right')}</a>
 </div>

@@ -8,6 +8,8 @@ A hosted review sends the user's files and provider key through bountyoperator.c
 
 ## Product
 
+- [Benchmark](https://bountyoperator.com/benchmark): Paydirt, the model benchmark: which model finds the planted bug, leaves the fixed twin alone and catches an overclaimed report, with cost per run.
+- [Benchmark method](https://bountyoperator.com/benchmark/method): How Paydirt is built and scored, and how to check every published number.
 - [Workbench](https://bountyoperator.com/#workspace): Select files, pick a review profile and run it on your own model key. The three core profiles also export as a prompt.
 - [Pricing](https://bountyoperator.com/pricing): Free gives 1 hosted review per UTC day, any single profile. Operator is US$10 per week for unlimited reviews, the Gauntlet, Panel review and four reviews at once.
 - [Method](https://bountyoperator.com/method): Why bug bounty reports get closed. Twelve checks, the question each one asks, why reports die on it and the verdict it leads to.

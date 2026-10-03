@@ -196,6 +196,21 @@ The gauntlet needs a connection token and a provider key. Set `BOUNTY_OPERATOR_T
 
 The three review skills carry their full method and run on your own model with no account. The hosted stages run on the Bounty Operator server and are not in this repository.
 
+## Paydirt benchmark
+
+Paydirt measures which model finds the planted bug in a held Solidity or
+TypeScript case, leaves the fixed twin alone and catches an overclaimed draft
+report, and what a run costs. Every model runs through one agent harness at its
+highest reasoning effort, and a pair counts only when both twins are right.
+
+Leaderboard: [bountyoperator.com/benchmark](https://bountyoperator.com/benchmark).
+Method: [bench/METHOD.md](bench/METHOD.md). After cloning this repository, check
+the published numbers with Node 22 or later:
+
+```sh
+node bench/bench.mjs verify --results web/public/bench/latest.json --archive web/public/bench/paydirt-2026-10-public.tar.gz
+```
+
 ## Pricing
 
 **Free:** one hosted review per UTC day, any single profile. **Operator: US$10/week** for unlimited hosted reviews, the Gauntlet, Panel review and four reviews at once. The CLI, the core profiles' prompt export and MCP prepare, and the free tools cost nothing.

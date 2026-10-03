@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.7.0 — 2026-10-03
 
 Skills and Claude Code plugin
 
@@ -15,11 +15,6 @@ Skills and Claude Code plugin
 - `/.well-known/agent-skills/index.json` lists the five skills with their
   SHA-256, so `npx skills add https://bountyoperator.com` installs them.
 - `/mcp` has a section on the skills and the plugin.
-
-Site
-
-- On narrow screens the header's scrolling nav fades at the right edge, and the
-  current page's link scrolls into view.
 
 Paydirt benchmark
 
@@ -36,15 +31,13 @@ Paydirt benchmark
   check every number. Columns sort and hide in the browser.
 - `/benchmark/method`: `bench/METHOD.md`, rendered when the site is built.
 - The home page shows the first three places, with every model tied with the
-  third, under the proof strip. Neither page, the strip nor the nav item exists
-  until results are published.
+  third, under the proof strip. The benchmark pages, strip and navigation link
+  are generated from the published results.
 - `bench.mjs publish` writes `not_run` (every model of the release's tiers
   with no counted answer, with a reason from `bench/release-notes/<release>.json`
-  or the default) and `notes`, counts the infrastructure retries of each
-  model's counted runs (`infra_retries`), and takes `--harness-commit <sha>`.
+  or the default) and `notes`, counts the infrastructure retries in each
+  counted run's latest stored invocation (`infra_retries`), and takes `--harness-commit <sha>`.
   `verify` recomputes all three.
-
-## 0.7.0 — 2026-10-03
 
 Reviews
 
@@ -114,6 +107,9 @@ Free tools and templates
 
 - Five free tools that run in the browser: report check, packet verifier,
   secret check, acceptance rates and Slither triage queue.
+- Report check treats explicit "prior art not checked" statements and empty
+  headings as missing evidence. A reference only confirms that text is present;
+  it does not verify comparison quality or duplicate status.
 - Five templates: Immunefi, Sherlock, Cantina, HackerOne and a Foundry PoC
   scaffold.
 - New pages: the twelve checks, the report guide with a worked example,
@@ -150,6 +146,8 @@ Fixes
 
 Site
 
+- On narrow screens the header's scrolling nav fades at the right edge, and the
+  current page's link scrolls into view.
 - New design with dark and light themes. Extensionless URLs, one content
   security policy on every response and no third-party scripts.
 
