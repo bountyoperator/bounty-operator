@@ -134,7 +134,7 @@ function columnNotes(view) {
     ['Fool’s gold', `Fixed twins whose patched code was reported as a bug rated ${listingOr(view.biteSeverities)} ÷ fixed twins.`],
     ['Challenge accuracy', 'The mean of two shares: overclaimed drafts caught with a quote of a false statement, and accurate drafts accepted.'],
     ['Failure rate', 'Inputs that ended with no readable answer (refusal, timeout, truncation, a provider error of the model’s own, an answer sheet that does not parse) ÷ inputs.'],
-    ['Cost per run', 'The mean amount billed for one run, in US dollars.'],
+    ['Cost per run', 'The mean recorded cost per input in US dollars, including preserved retries. Unpreserved attempts are excluded, so the recorded cost can be lower than total account spend.'],
     ['Median time', 'Wall time of the median run.'],
     ['Effort sent', 'The reasoning effort the recorded requests carried. The harness asks every model for its highest.'],
   ];
@@ -151,7 +151,7 @@ function factsStrip(view) {
     ['Models ranked', fmt.count(view.rows.length)],
     ['Held pairs', fmt.count(view.pairs)],
     ['Inputs per model', fmt.count(view.inputs)],
-    ['Inference spend', fmt.usd(view.usdTotal)],
+    ['Recorded inference cost', fmt.usd(view.usdTotal)],
     ['Published', fmt.date(results.generated_at)],
     ['Harness', typeof results.omp_version === 'string' ? results.omp_version.replace('/', ' ') : null],
   ].filter(([, value]) => value !== null && value !== undefined);
@@ -202,7 +202,7 @@ function picksSection(view) {
 
 function liftSection(view) {
   if (!view.lifts.length && !view.liftsPending.length) return '';
-  const pending = view.liftsPending.map(({ row, arm, answered, inputs }) => `${row.name} with the ${reviewProfile(arm).name} profile (${answered} of ${inputs} inputs answered)`);
+  const pending = view.liftsPending.map(({ row, arm, answered, inputs }) => `${row.name} with the ${reviewProfile(arm).name} profile (${answered} of ${inputs} inputs completed)`);
   const rows = view.lifts.map(({ row, arm, families, lift, profileScore, rawScore }) => {
     const profile = reviewProfile(arm);
     const interval = lift.ci95 ? `${fmt.delta(lift.ci95[0])} to ${fmt.delta(lift.ci95[1])}` : null;
@@ -383,7 +383,7 @@ function notRunSection(view) {
       name: entry.name,
       slug: entry.slug,
       tier: entry.tier,
-      reason: `Its runs were not finished when this release was published: ${entry.answered} of ${entry.inputs} inputs answered.`,
+      reason: `Its runs were not finished when this release was published: ${entry.answered} of ${entry.inputs} inputs completed.`,
     })),
   ];
   if (!rows.length && !view.notes.length) return '';
@@ -423,7 +423,7 @@ function faqItems(view) {
     },
     {
       q: 'Why is a model missing from the table?',
-      a: 'Models run in tiers, the cheapest first inside a tier, until the release’s credit is used. A model the credit did not reach, or whose host returned no answer, is listed under Not run with the reason. A model whose runs had not finished at publication is listed there too, with how many of its inputs were answered. None of them is given a low score.',
+      a: 'Models run in tiers, the cheapest first inside a tier, until the release’s credit is used. A model the credit did not reach, or whose host returned no answer, is listed under Not run with the reason. A model whose runs had not finished at publication is listed there too, with how many of its inputs were completed. None of them is given a low score.',
     },
     {
       q: 'Is the benchmark tuned to Bounty Operator?',

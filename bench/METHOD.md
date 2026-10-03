@@ -88,7 +88,7 @@ Only models whose raw arm is complete receive a tier. Task picks require both a 
 | Challenge balanced accuracy | (overclaims caught + accurate drafts accepted) ÷ 2 |
 | Failure rate | failed inputs ÷ inputs |
 | Repeat agreement | pairs with the same outcome in every repeat ÷ pairs (not reported with one repeat) |
-| Cost per run, cost per correct pair | billed USD |
+| Cost per run, cost per correct pair | recorded USD, including preserved retries |
 | Median wall time | seconds per run |
 | By drafting vendor, excluding own vendor | the score on the pairs each vendor drafted, and the score without the pairs the model's own vendor drafted |
 
@@ -290,7 +290,7 @@ Models run in three tiers, tier 1 first, and inside a tier the cheapest model fi
 
 The release has a fixed amount of credit. Models are run in that order until it is used, and a model the credit did not reach is listed as not run, not as a low score.
 
-All models are reached through OpenRouter. Each slug is checked against OpenRouter's model list when a run is planned, and prices are recorded at that moment. Cost includes the recorded attempts for each input, including infrastructure retries; where a provider reports no cost it is computed from the token counts and the recorded prices. Earlier attempts that were replaced before preservation was added cannot be reconstructed, so the recorded costs may be lower than the total account spend. The serving provider is recorded per run.
+All models are reached through OpenRouter. Each slug is checked against OpenRouter's model list when a run is planned, and prices are recorded at that moment. Cost includes the recorded attempts for each input, including infrastructure retries; where a provider reports no cost it is computed from the token counts and the recorded prices. Earlier attempts that were replaced before preservation was added cannot be reconstructed. Interrupted attempts without a finalized cost record are also excluded. The published costs may therefore be lower than total account spend. The serving provider is recorded per run.
 
 Bounty Operator itself is not a row in the table.
 

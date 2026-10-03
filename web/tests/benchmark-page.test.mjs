@@ -288,7 +288,7 @@ test('every number in the leaderboard is the file’s number through the page’
     // the facts strip
     const facts = textOf(markup.slice(markup.indexOf('bench-facts'), markup.indexOf('id="board"')));
     const spend = results.models.reduce((sum, m) => sum + m.usd_total, 0);
-    for (const value of [`Models ranked ${view.rows.length}`, `Held pairs ${results.cases.pairs}`, `Inputs per model ${results.cases.inputs}`, `Inference spend ${fmt.usd(spend)}`, `Published ${fmt.date(results.generated_at)}`, 'Harness omp 18.4.4']) {
+    for (const value of [`Models ranked ${view.rows.length}`, `Held pairs ${results.cases.pairs}`, `Inputs per model ${results.cases.inputs}`, `Recorded inference cost ${fmt.usd(spend)}`, `Published ${fmt.date(results.generated_at)}`, 'Harness omp 18.4.4']) {
       assert.ok(facts.includes(value), `${name}: ${value} in ${facts}`);
     }
   }
@@ -333,7 +333,7 @@ test('picks, lift, the pair grid and the not-run list show the file’s values a
   assert.ok(partialText.includes('XA Mini'));
   assert.ok(partialText.includes(NOT_RUN_REASON));
   const gg = partial.view.incomplete[0];
-  assert.ok(partialText.includes(`${gg.answered} of ${gg.inputs} inputs answered`));
+  assert.ok(partialText.includes(`${gg.answered} of ${gg.inputs} inputs completed`));
   assert.ok(!/GG Pro[^.]*\b\d+(?:\.\d)? of 18 pairs/.test(partialText.slice(0, partialText.indexOf('Not run'))), 'the unfinished model has no score');
   assert.ok(text.includes('One repeat per input in this release.'), 'the release notes are shown');
   assert.ok(text.includes('gpt-oss-x'));
@@ -573,5 +573,5 @@ test('an unfinished profile arm of a ranked model gets no lift row, and the page
   assert.ok(pending && pending.answered === ranked.arms[arm].runs_expected - 3);
   const text = textOf(String(benchmarkPages(published)[0].body));
   assert.ok(text.includes('No lift is shown for '), 'the unfinished arm is named');
-  assert.ok(text.includes(`${ranked.name} with the `) && text.includes(`(${pending.answered} of ${pending.inputs} inputs answered)`), 'with its model and its count');
+  assert.ok(text.includes(`${ranked.name} with the `) && text.includes(`(${pending.answered} of ${pending.inputs} inputs completed)`), 'with its model and its count');
 });
