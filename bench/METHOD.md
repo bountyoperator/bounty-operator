@@ -92,6 +92,8 @@ Only models whose raw arm is complete receive a tier. Task picks require both a 
 | Median wall time | seconds per run |
 | By drafting vendor, excluding own vendor | the score on the pairs each vendor drafted, and the score without the pairs the model's own vendor drafted |
 
+Wall time includes provider latency and local tool execution on a shared host. Concurrency varied between batches to stay within available memory and credit. These times describe the observed runs; they do not isolate model speed. The 30-minute limit and the scoring rules stayed fixed.
+
 ## Profile lift
 
 A family can also be run with the matching Bounty Operator review profile.
@@ -134,7 +136,9 @@ What each part does:
 - **Time limit.** 30 minutes per run inside `omp`, and an external kill of the whole process tree 90 seconds later. A run that reaches the limit after the model has produced output is a timeout and counts as wrong.
 - **A run counts** only when the final assistant message ends with stop reason `stop`.
 
-Retries exist only for infrastructure failures (HTTP 429, 5xx, network errors, a stream the harness reports as stalled, a timeout before the model produced anything), at most 2 per run. One more case counts as infrastructure: a host that cannot parse a model's native tool-call format hands the call back as text, so the message carries no tool call and no answer sheet and ends in an unparsed call: a file tool's arguments (`{"path": "src/Vault.sol"}`) or call markup in the model's own token format (`<invoke name="read">…</invoke>`). No call was made and no answer exists, so the run is retried like a network error and is never scored. A model whose inputs cannot be completed for that reason is listed as not run. So is a model the provider refuses to serve to the benchmark's account (an age confirmation, a region or a terms acceptance the account has not made): such a refusal concerns the account, not the request, and is never scored. A completed answer is never run again: each run has a key, sha256(hash of its arm, model, case hash, arm, repeat), and a stored run with that key is skipped.
+Retries exist only for infrastructure failures (HTTP 429, 5xx, network errors, a stream the harness reports as stalled, a timeout before the model produced anything), up to 2 retries per input within one runner invocation. Unresolved infrastructure failures can be retried in later invocations. One more case counts as infrastructure: a host that cannot parse a model's native tool-call format hands the call back as text, so the message carries no tool call and no answer sheet and ends in an unparsed call: a file tool's arguments (`{"path": "src/Vault.sol"}`) or call markup in the model's own token format (`<invoke name="read">…</invoke>`). No call was made and no answer exists, so the run is retried like a network error and is never scored. A model whose inputs cannot be completed for that reason is listed as not run. So is a model the provider refuses to serve to the benchmark's account (an age confirmation, a region or a terms acceptance the account has not made): such a refusal concerns the account, not the request, and is never scored. A completed answer is never run again: each run has a key, sha256(hash of its arm, model, case hash, arm, repeat), and a stored run with that key is skipped.
+
+The published `infra_retries` count covers retries within the invocation that produced each current stored record. Earlier invocations and interrupted records are excluded from this count. Recorded costs also include finalized archived invocations, subject to the cost limitations below.
 
 `protocol.json` holds the model list, tiers, arms, the three sets of pairs and the rule that made them, flags, the routing policy, scoring constants, the answer-sheet schema, the hashes of every prompt and harness file and the hashes of the frozen product texts. Its own hash, the protocol hash, is printed with the results.
 

@@ -297,7 +297,7 @@ function honestSection(view) {
     },
     {
       title: 'One routing policy, faults retried',
-      text: `Every request carries the same provider-routing block: no endpoint that declares less than 8-bit precision, slow endpoints last. A rate limit, a server error or a dropped connection is retried, never scored.${view.retries !== null ? ` The counted runs record ${view.retries === 1 ? 'one retried attempt' : `${fmt.count(view.retries)} retried attempts`}.` : ''}`,
+      text: `Every request carries the same provider-routing block: no endpoint that declares less than 8-bit precision, slow endpoints last. A rate limit, a server error or a dropped connection is retried, never scored.${view.retries !== null ? ` The latest stored invocations record ${view.retries === 1 ? 'one automatic retry' : `${fmt.count(view.retries)} automatic retries`}; earlier invocations and interrupted records are excluded from this count.` : ''}`,
     },
   ];
 
