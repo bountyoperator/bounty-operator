@@ -286,7 +286,7 @@ test('the MCP page counts a copied install command by name, and says which profi
 
 test('the 0.7.0 changelog entry describes what ships', async () => {
   const source = await readFile(path.join(WEB_DIR, '..', 'CHANGELOG.md'), 'utf8');
-  const [latest] = parseChangelog(source);
+  const latest = parseChangelog(source).find((entry) => entry.version === '0.7.0');
   assert.equal(latest.version, '0.7.0');
   assert.deepEqual(
     latest.blocks.filter((block) => block.type === 'group').map((block) => block.text),

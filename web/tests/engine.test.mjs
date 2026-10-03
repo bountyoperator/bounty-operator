@@ -1123,7 +1123,7 @@ describe('profiles', () => {
 
 describe('providers', () => {
   const expected = {
-    openrouter: { url: 'https://openrouter.ai/api/v1/chat/completions', model: 'anthropic/claude-sonnet-5.5', cap: 'max_tokens' },
+    openrouter: { url: 'https://openrouter.ai/api/v1/chat/completions', model: 'deepseek/deepseek-v4.1-flash', cap: 'max_tokens' },
     anthropic: { url: 'https://api.anthropic.com/v1/messages', model: 'claude-opus-5-5', cap: 'max_tokens' },
     openai: { url: 'https://api.openai.com/v1/chat/completions', model: 'gpt-6.1-sol', cap: 'max_completion_tokens' },
     gemini: { url: 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', model: 'gemini-3.8-flash', cap: null },
@@ -1156,9 +1156,10 @@ describe('providers', () => {
       );
       assert.equal(entry.defaultModel, expected[entry.id].model);
       assert.equal(entry.models[0].id, entry.defaultModel);
-      // DeepSeek serves two chat models; every other provider lists three to five.
+      // OpenRouter includes the benchmarked choices; direct providers stay compact.
       const fewest = entry.id === 'deepseek' ? 2 : 3;
-      assert.ok(entry.models.length >= fewest && entry.models.length <= 5, entry.id);
+      const most = entry.id === 'openrouter' ? 9 : 5;
+      assert.ok(entry.models.length >= fewest && entry.models.length <= most, entry.id);
       assert.equal(new Set(entry.models.map((model) => model.id)).size, entry.models.length, entry.id);
       for (const model of entry.models) assert.doesNotThrow(() => validateProviderRequest({ provider: entry.id, model: model.id, apiKey: API_KEY }), model.id);
       assert.ok(entry.models.every((model) => model.id && model.label));
@@ -1261,7 +1262,7 @@ describe('providers', () => {
 
   test('every provider lists current models, and OpenRouter only verified slugs', () => {
     assert.deepEqual(Object.fromEntries(PROVIDERS.map((entry) => [entry.id, entry.models.map((model) => model.id)])), {
-      openrouter: ['anthropic/claude-sonnet-5.5', 'anthropic/claude-opus-5.5', 'openai/gpt-6-astra', 'google/gemini-3.8-flash', 'x-ai/grok-4.7'],
+      openrouter: ['deepseek/deepseek-v4.1-flash', 'anthropic/claude-sonnet-5.5', 'anthropic/claude-opus-5.5', 'openai/gpt-6-astra', 'google/gemini-3.8-flash', 'x-ai/grok-4.7', 'z-ai/glm-5.3-flash', 'openai/gpt-6-luna', 'openai/gpt-6.1-sol'],
       anthropic: ['claude-opus-5-5', 'claude-sonnet-5-5', 'claude-fable-5-1', 'claude-haiku-4-5'],
       openai: ['gpt-6.1-sol', 'gpt-6-astra', 'gpt-6-luna'],
       gemini: ['gemini-3.8-flash', 'gemini-3.1-pro-preview', 'gemini-3.5-flash-lite'],

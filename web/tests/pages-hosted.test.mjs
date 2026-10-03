@@ -220,7 +220,7 @@ test('every install line is the one that works today', () => {
   }
   assert.ok(text('index.html').includes(remote));
   assert.ok(release.includes(remote) && release.includes(local));
-  assert.ok(readme.includes('pip install "git+https://github.com/bountyoperator/bounty-operator@v0.7.0"'));
+  assert.ok(readme.includes('pip install "git+https://github.com/bountyoperator/bounty-operator@v0.7.1"'));
 });
 
 test('the error codes the documents list are codes the service raises', async () => {

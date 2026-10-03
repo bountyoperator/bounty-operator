@@ -435,7 +435,7 @@ test('run_review takes the model from BOUNTY_OPERATOR_MODEL, and asks for one wh
   const body = failure(await server({ fetch: none.fetch, env: HOSTED_ENV }).tool('run_review', { files, provider: 'openrouter' }));
   assert.equal(body.code, 'bad_model');
   assert.match(body.error, /pass model, or set BOUNTY_OPERATOR_MODEL/);
-  assert.match(body.error, /OpenRouter models: anthropic\/claude-sonnet-5\.5,/);
+  assert.match(body.error, /OpenRouter models: deepseek\/deepseek-v4\.1-flash,/);
   assert.equal(none.calls.length, 0);
 });
 

@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.7.1 — 2026-10-03
+
+Reviews
+
+- OpenRouter defaults to DeepSeek V4.1 Flash, which completed all 36 core-profile
+  inputs in the October benchmark. GLM 5.3 Flash, GPT-6 Luna and GPT-6.1 Sol
+  are also available in the model picker. A model the user chose is preserved.
+- The website and downloadable MCP server list the same model choices.
+  The published October benchmark results and review profiles are unchanged.
+
 ## 0.7.0 — 2026-10-03
 
 Skills and Claude Code plugin
