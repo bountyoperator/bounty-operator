@@ -259,14 +259,16 @@ const DECISION_FIELDS = Object.freeze({
 
 const DECISION_LINE = /^\s*(?:[-*]\s+)?\**([A-Za-z][A-Za-z ]{0,30}?)\**\s*[:：]\**\s*(.*)$/;
 const EMPTY = /^(?:none|n\/a|not given|not stated|-)\.?$/i;
+const NONE_MEANS_STATED = new Set(['blocker', 'action', 'deadline']);
 
 function blankDecision() {
   return { why: '', rule: '', blocker: '', action: '', severity: '', deadline: '', firstReproduced: '' };
 }
 
 /**
- * The Decision section of a verdict review as fields. A field the review
- * leaves out, or answers with "none", is ''.
+ * The Decision section of a verdict review as fields. Missing or unknown
+ * fields are ''. An explicit "none" remains for blocker, action and deadline
+ * so the dossier can distinguish it from an unanswered field.
  *
  * @param {{ sections?: { title: string, text: string }[] } | null} parsed
  */
@@ -287,7 +289,9 @@ export function decisionOf(parsed) {
     }
   }
   for (const field of Object.keys(decision)) {
-    if (EMPTY.test(decision[field].trim())) decision[field] = '';
+    const value = decision[field].trim();
+    const statedNone = NONE_MEANS_STATED.has(field) && /^none\.?$/i.test(value);
+    if (!statedNone && EMPTY.test(value)) decision[field] = '';
   }
   return decision;
 }
@@ -594,9 +598,9 @@ function gauntletBody(result, shown) {
   const decision = complete ? decisionOf(parsed) : gateDecision(last);
 
   const facts = el('dl', { class: 'gd__facts' },
-    fact('blocker', 'Blocker', decision.blocker, source, 'None. Nothing stops submission.'),
-    fact('action', 'Cheapest action', decision.action, source, 'None needed.'),
-    fact('deadline', 'Filing deadline', decision.deadline, source, 'None.',
+    fact('blocker', 'Blocker', decision.blocker, source, 'Not stated in this review.'),
+    fact('action', 'Cheapest action', decision.action, source, 'Not stated in this review.'),
+    fact('deadline', 'Filing deadline', decision.deadline, source, 'Not stated in this review.',
       decision.firstReproduced ? el('span', { class: 'gd__aside', text: `First reproduced: ${decision.firstReproduced}` }) : null));
 
   const more = [

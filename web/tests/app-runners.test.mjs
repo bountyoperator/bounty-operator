@@ -271,12 +271,19 @@ describe('the decision', () => {
     assert.match(decision.why, /input-1\/src\/Vault\.sol:12/);
   });
 
-  test('none, not given and a missing section are empty, not text', () => {
+  test('an explicit absence of a blocker, action or deadline remains distinct from missing evidence', () => {
     const submit = decisionOf(parseReview(answer({ sections: '## Decision\nWhy: Every stage passes.\nRule: every stage passes\nBlocker: none\nCheapest action: None.\nSeverity to claim: Critical\nDeadline: none\nFirst reproduced: not given\n' })));
-    assert.deepEqual([submit.blocker, submit.action, submit.deadline, submit.firstReproduced], ['', '', '', '']);
+    assert.deepEqual([submit.blocker, submit.action, submit.deadline, submit.firstReproduced], ['none', 'None.', 'none', '']);
     assert.equal(submit.severity, 'Critical');
     assert.deepEqual(Object.values(decisionOf(parseReview(answer()))), ['', '', '', '', '', '', '']);
     assert.deepEqual(Object.values(decisionOf(null)), ['', '', '', '', '', '', '']);
+  });
+
+  test('unknown decision fields never become an explicit none', () => {
+    for (const value of ['not given', 'Not stated.', 'n/a', '-', '']) {
+      const decision = decisionOf(parseReview(answer({ sections: `## Decision\nBlocker: ${value}\nCheapest action: ${value}\nDeadline: ${value}\n` })));
+      assert.deepEqual([decision.blocker, decision.action, decision.deadline], ['', '', ''], value);
+    }
   });
 
   test('labels written as bullets or in bold, and wrapped lines, are still read', () => {

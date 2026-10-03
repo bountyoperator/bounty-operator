@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.7.2 — 2026-10-03
+
+Workbench
+
+- A missing blocker, action or deadline now reads "Not stated in this review."
+  An explicit "None" is preserved. An omitted field no longer implies that
+  a report is ready to submit.
+
 ## 0.7.1 — 2026-10-03
 
 Reviews
