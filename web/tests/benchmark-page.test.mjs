@@ -565,6 +565,7 @@ test('an unfinished profile arm of a ranked model gets no lift row, and the page
   const ranked = results.models.find((m) => Object.keys(m.lift ?? {}).length && m.arms.raw?.unresolved === 0);
   const arm = Object.keys(ranked.lift)[0];
   ranked.arms[arm] = { ...ranked.arms[arm], unresolved: 3, runs: ranked.arms[arm].runs_expected - 3 };
+  delete ranked.lift[arm]; // The scorer emits no comparison for an unfinished arm.
   const published = { ...many.published, results };
   const view = buildView(published);
   assert.ok(!view.lifts.some((entry) => entry.row.slug === ranked.slug && entry.arm === arm));

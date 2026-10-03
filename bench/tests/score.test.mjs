@@ -283,6 +283,51 @@ test('tiers, picks and determinism', () => {
   assert.equal(JSON.stringify(aggregate(shuffled)), JSON.stringify(res), 'input order does not matter');
 });
 
+test('unfinished raw arms cannot change completed models\' tiers or take their picks', () => {
+  const testPairs = Array.from({ length: 18 }, (_, i) => ({ pair: `p${i}`, family: 'find-ts', visibility: 'held', author: 'test', cases: { vulnerable: `p${i}-v`, fixed: `p${i}-f` } }));
+  const make = (slug, correct) => model(slug, testPairs.flatMap((p, i) => Object.entries(p.cases).map(([variant, id]) => ({ case: id, pair: p.pair, family: p.family, variant, arm: 'raw', rep: 1, status: 'ok', failure: null, correct: i < correct, usd: 0.01, hits: [], planted: variant === 'vulnerable' ? 1 : 0, decoys: 0, decoy_bites: 0, bite: false }))));
+  const input = { meta: { ...meta, repeats: 1 }, scoring: S, arms: { 'find-ts': ['raw'] }, pairs: testPairs, models: [make('test/complete-a', 14), make('test/complete-b', 10)] };
+  const baseline = aggregate(input);
+  assert.deepEqual(baseline.models.map((m) => m.tier), [1, 1]);
+  for (const failure of ['missing', 'infra']) {
+    const partial = make('test/incomplete', 17);
+    const last = partial.outcomes.at(-1);
+    if (failure === 'missing') partial.outcomes.pop();
+    else Object.assign(last, { status: 'failed', failure, correct: false });
+    const result = aggregate({ ...input, models: [...input.models, partial] });
+    const unfinished = result.models.find((m) => m.slug === partial.slug);
+    assert.equal(unfinished.complete, false);
+    assert.equal(unfinished.tier, null);
+    assert.deepEqual(result.models.filter((m) => m.slug !== partial.slug), baseline.models);
+    assert.deepEqual(result.picks, baseline.picks);
+  }
+});
+
+test('an unfinished profile leaves its completed raw arm ranked, without a profile pick or lift', () => {
+  const list = outcomes(1, [], ['sol-01-f|solidity|1']).map((o) => o.arm === 'raw' ? { ...o, correct: false } : o);
+  const result = aggregate({ meta: { ...meta, repeats: 1 }, scoring: S, arms, pairs, models: [model('test/partial-profile', list)] });
+  const m = result.models[0];
+  assert.equal(m.complete, false);
+  assert.equal(m.arms.raw.unresolved, 0);
+  assert.equal(m.tier, 1);
+  assert.equal(m.arms.solidity.unresolved, 1);
+  assert.equal(m.lift.solidity, undefined);
+  assert.equal(m.lift.general.delta, 100, 'complete profile comparisons remain available');
+  assert.equal(m.lift.report.delta, 100);
+  assert.equal(result.picks.find((p) => p.task === 'find-sol' && p.tier === 'best').arm, 'raw');
+});
+
+test('a complete profile on an unfinished raw arm has no tier, pick or lift', () => {
+  const result = aggregate({ meta: { ...meta, repeats: 1 }, scoring: S, arms, pairs, models: [model('test/partial-raw', outcomes(1, [], ['sol-01-f|raw|1']))] });
+  const m = result.models[0];
+  assert.equal(m.arms.solidity.unresolved, 0);
+  assert.equal(m.tier, null);
+  assert.deepEqual(m.lift, {});
+  assert.deepEqual(result.picks, []);
+  const details = [{ slug: m.slug, outcomes: outcomes(1, [], ['sol-01-f|raw|1']) }];
+  assert.deepEqual(aggregate(aggregateInputFromPublished(result, details)), result, 'partial publications still verify from their retained outcomes');
+});
+
 test('published results can be recomputed from the per-model detail files', () => {
   const models = [model('a/one', outcomes(2, ['sol-01-f|raw|1', 'ch-01-o|report|2'])), model('b/two', outcomes(2, ['ts-01-v|raw|1', 'ts-01-v|raw|2']))];
   const res = aggregate({ meta: { ...meta, commitments: [{ case: 'sol-02-v', sha256: 'x' }], downloads: { archive: 'a.tar.gz', sha256: 'y', bytes: 1, public_runs: 0 } }, scoring: S, arms, pairs, models });

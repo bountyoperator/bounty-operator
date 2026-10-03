@@ -16,6 +16,7 @@ node bench/bench.mjs run      [--tier 1|2|3 | --models a,b] [--repeats N] [--arm
                               [--gen-stats ends|all|off] [--dry-run] [--no-lint] [--allow-core-change]
 node bench/bench.mjs score    [--run-id <id>] [--models a,b] [--cases <glob>] [--repeats N] [--out <file>] [--any-protocol]
 node bench/bench.mjs publish  [--run-id <id>] [--release <name>] [--out-dir <dir>] [--salts <file>] [--allow-incomplete]
+                              [--harness-commit <sha>] [--release-notes <file>]
 node bench/bench.mjs verify   [--results <latest.json>] [--archive <paydirt-<release>-public.tar.gz>]
 node bench/bench.mjs freeze   [--no-engine] [--dry-run]
 node bench/bench.mjs hashes   [--json]
@@ -111,6 +112,7 @@ A cheap single-shot calibration: each twin of each pair is sent once per probe t
 | `bench/runs/<run-id>/plan.json` | verified slugs, prices and their timestamp, harness commit | no |
 | `bench/runs/<run-id>/protocols/<hash>/` | `protocol.json`, the prompt files and the frozen product texts each invocation ran under. `<hash>` is the protocol hash, which every run's `meta.json` carries, so each freeze gets a folder of its own | no |
 | `bench/runs/<run-id>/raw/<model>/<case>.<arm>.<rep>/` | one run (see below) | no |
+| `bench/runs/<run-id>/superseded/` | previous attempts retained when a run is replaced; included in the recorded budget, excluded from scoring | no |
 | `bench/runs/<run-id>/results.json`, `models/*.json` | output of `score` | no |
 | `web/public/bench/latest.json`, `<release>.json` | published results | yes |
 | `web/public/bench/models/<model>.json` | per-run outcomes of one model | yes |
@@ -195,6 +197,10 @@ Every command that starts `omp` (`plan`, `run`, `selftest`) reads the two settin
 | `missing` | the run was never made | no |
 
 Final failures count as wrong and are never re-rolled unless `--redo <kind>` names them. `infra` and `missing` also count as wrong in `score`, mark the model `[incomplete]`, and block `publish`.
+
+If a release intentionally includes unresolved inputs, `publish --allow-incomplete` retains their outcomes but leaves those models unranked. Only complete arms can supply recommendations or profile comparisons. `--release-notes` supplies a JSON object with `not_run` reasons and a `notes` array; the default is `bench/release-notes/<release>.json`. `--harness-commit` records the public commit containing the harness used to prepare the release.
+
+The runner preserves replaced directories under `superseded/`. `node bench/tools/sweep-stray.mjs --run-id <id>` previews provider-fault records; `--apply` archives them before a later run retries them. Neither operation deletes completed answers. Published costs include recorded retry attempts for each input. Earlier attempts removed before preservation was introduced cannot be reconstructed.
 
 ## Product engine
 

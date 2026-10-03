@@ -73,6 +73,8 @@ A hit and a bite are decided by location, not by reading the claim. A different 
 
 **Interval and tiers.** Each pair is reduced to one outcome: with one repeat, that run; with more, the majority. The 95% interval is a percentile bootstrap over pairs, 10,000 resamples, from a seeded generator, so the same outcomes always give the same interval. With 18 pairs the interval is wide, and it is published so that nobody reads a two-pair difference as a ranking. Models are ranked by score. A model joins the best tier whose leader's interval overlaps its own; a model that overlaps no leader starts the next tier.
 
+Only models whose raw arm is complete receive a tier. Task picks require both a complete raw arm and a complete selected arm. Profile lift is published only when both arms are complete. Unfinished arms retain their outcomes and completion counts but do not affect those comparisons; an unfinished profile does not remove a complete raw arm from the ranking.
+
 **Other columns**, all computed from the same answer sheets:
 
 | Column | Definition |
@@ -132,7 +134,7 @@ What each part does:
 - **Time limit.** 30 minutes per run inside `omp`, and an external kill of the whole process tree 90 seconds later. A run that reaches the limit after the model has produced output is a timeout and counts as wrong.
 - **A run counts** only when the final assistant message ends with stop reason `stop`.
 
-Retries exist only for infrastructure failures (HTTP 429, 5xx, network errors, a timeout before the model produced anything), at most 2 per run. One more case counts as infrastructure: a host that cannot parse a model's native tool-call format hands the call back as text, so the message carries no tool call and no answer sheet and ends in an unparsed call: a file tool's arguments (`{"path": "src/Vault.sol"}`) or call markup in the model's own token format (`<invoke name="read">…</invoke>`). No call was made and no answer exists, so the run is retried like a network error and is never scored. A model whose inputs cannot be completed for that reason is listed as not run. So is a model the provider refuses to serve to the benchmark's account (an age confirmation, a region or a terms acceptance the account has not made): such a refusal concerns the account, not the request, and is never scored. A completed answer is never run again: each run has a key, sha256(hash of its arm, model, case hash, arm, repeat), and a stored run with that key is skipped.
+Retries exist only for infrastructure failures (HTTP 429, 5xx, network errors, a stream the harness reports as stalled, a timeout before the model produced anything), at most 2 per run. One more case counts as infrastructure: a host that cannot parse a model's native tool-call format hands the call back as text, so the message carries no tool call and no answer sheet and ends in an unparsed call: a file tool's arguments (`{"path": "src/Vault.sol"}`) or call markup in the model's own token format (`<invoke name="read">…</invoke>`). No call was made and no answer exists, so the run is retried like a network error and is never scored. A model whose inputs cannot be completed for that reason is listed as not run. So is a model the provider refuses to serve to the benchmark's account (an age confirmation, a region or a terms acceptance the account has not made): such a refusal concerns the account, not the request, and is never scored. A completed answer is never run again: each run has a key, sha256(hash of its arm, model, case hash, arm, repeat), and a stored run with that key is skipped.
 
 `protocol.json` holds the model list, tiers, arms, the three sets of pairs and the rule that made them, flags, the routing policy, scoring constants, the answer-sheet schema, the hashes of every prompt and harness file and the hashes of the frozen product texts. Its own hash, the protocol hash, is printed with the results.
 
@@ -288,7 +290,7 @@ Models run in three tiers, tier 1 first, and inside a tier the cheapest model fi
 
 The release has a fixed amount of credit. Models are run in that order until it is used, and a model the credit did not reach is listed as not run, not as a low score.
 
-All models are reached through OpenRouter. Each slug is checked against OpenRouter's model list when a run is planned, and prices are recorded at that moment. Cost is the amount OpenRouter billed for the run; where a provider reports no cost it is computed from the token counts and the recorded prices. The serving provider is recorded per run.
+All models are reached through OpenRouter. Each slug is checked against OpenRouter's model list when a run is planned, and prices are recorded at that moment. Cost includes the recorded attempts for each input, including infrastructure retries; where a provider reports no cost it is computed from the token counts and the recorded prices. Earlier attempts that were replaced before preservation was added cannot be reconstructed, so the recorded costs may be lower than the total account spend. The serving provider is recorded per run.
 
 Bounty Operator itself is not a row in the table.
 

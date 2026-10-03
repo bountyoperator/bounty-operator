@@ -88,6 +88,12 @@ test('an account-level gate on a model stops that model and is never scored', as
   assert.equal(classifyError(403, 'Your chosen model requires moderation and your input was flagged for violence').kind, 'error', 'a moderation refusal stays the model\'s own failure');
 });
 
+test('a stalled provider stream is infrastructure; a reasoning loop the harness stops is the model\'s own failure', async () => {
+  const { classifyError } = await import('../lib/runs.mjs');
+  assert.deepEqual(classifyError(null, 'OpenAI responses stream stalled while waiting for the next event'), { kind: 'infra', retry: true, halt: null });
+  assert.equal(classifyError(null, 'Thinking loop detected: the model repeated near-identical content (5 near-identical segments within the last 4000 characters)').kind, 'error');
+});
+
 test('a real tool call in the last message is not a stray one', () => {
   const calling = classify(assistant([{ type: 'thinking', thinking: 'read it {"path": "a.sol"}' }, { type: 'toolCall', id: 't2', name: 'read', arguments: { path: 'a.sol' } }], 'toolUse'));
   assert.equal(calling.failure, 'timeout', 'a session that ends on a tool call ran out of time between turns');

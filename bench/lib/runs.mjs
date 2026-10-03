@@ -65,7 +65,7 @@ export function classifyError(status, message) {
   if (code === 404 || /no endpoints found|model not found|not a valid model|no allowed providers|unknown model|does not exist/i.test(text)) return { kind: 'unavailable', retry: false, halt: 'model' };
   // An account-level gate (an attestation, a region, a terms acceptance) says nothing about the model.
   if (code === 403 && /requires you to (?:complete|accept|confirm)|age confirmation|confirm at https?:\/\/|not available in your (?:region|country)|accept the terms/i.test(text)) return { kind: 'unavailable', retry: false, halt: 'model' };
-  if ([408, 409, 425, 429].includes(code) || code >= 500 || /rate.?limit|overloaded|timed? ?out|ECONN|ENOTFOUND|EAI_AGAIN|ETIMEDOUT|socket|network|fetch failed|terminated|connection|stream (?:ended|closed|error)|upstream|provider returned error|temporarily|try again/i.test(text)) return { kind: 'infra', retry: true, halt: null };
+  if ([408, 409, 425, 429].includes(code) || code >= 500 || /rate.?limit|overloaded|timed? ?out|ECONN|ENOTFOUND|EAI_AGAIN|ETIMEDOUT|socket|network|fetch failed|terminated|connection|stream (?:ended|closed|error)|stream stalled|stalled while waiting|upstream|provider returned error|temporarily|try again/i.test(text)) return { kind: 'infra', retry: true, halt: null };
   return { kind: 'error', retry: false, halt: null };
 }
 
@@ -119,8 +119,10 @@ export function classifyRun({ res, ev, checks, stderr = '' }) {
 /** The per-run facts copied into every outcome record. */
 export function runFacts(meta) {
   const u = meta.usage ?? {};
+  const currentCost = typeof meta.usd_all_attempts === 'number' ? meta.usd_all_attempts : meta.usd;
+  const priorCost = typeof meta.usd_prior_attempts === 'number' ? meta.usd_prior_attempts : 0;
   return {
-    usd: typeof meta.usd === 'number' ? meta.usd : null,
+    usd: typeof currentCost === 'number' ? Math.round((currentCost + priorCost) * 1e9) / 1e9 : null,
     wall_s: typeof meta.wall_s === 'number' ? meta.wall_s : null,
     tokens_in: (u.input ?? 0) + (u.cacheRead ?? 0) + (u.cacheWrite ?? 0),
     tokens_out: u.output ?? 0,

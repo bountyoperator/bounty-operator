@@ -23,6 +23,11 @@ Site
 
 Paydirt benchmark
 
+- Unfinished models cannot change the tiers or recommendations for finished
+  models, and profile comparisons require both arms to be complete.
+- Retried runs retain their earlier evidence in a private archive. Recorded
+  retry costs count toward the budget and the published cost per input.
+
 - `/benchmark`: the Paydirt leaderboard, generated from the published results
   file. Score with its 95% interval and tier, recall, fool's-gold rate,
   challenge accuracy, failure rate, cost per run, median time and the

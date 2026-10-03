@@ -252,6 +252,7 @@ export function aggregate(input) {
   const families = [...new Set(pairs.map((p) => p.family))].sort();
   const armList = [...new Set(families.flatMap((f) => input.arms[f] ?? []))];
   const headline = scoring.headline_arm;
+  const completeArm = (arm) => !!arm && arm.unresolved === 0 && arm.runs === arm.runs_expected;
   const maxRep = Math.max(0, ...input.models.flatMap((m) => m.outcomes.map((o) => o.rep)));
   const repeats = Number.isInteger(input.meta?.repeats) && input.meta.repeats > 0 ? input.meta.repeats : maxRep;
   const reps = Array.from({ length: repeats }, (_, i) => i + 1);
@@ -342,6 +343,7 @@ export function aggregate(input) {
     const lift = {};
     for (const arm of armList) {
       if (arm === headline || !majorityByArm[arm] || !majorityByArm[headline]) continue;
+      if (!completeArm(arms[arm]) || !completeArm(arms[headline])) continue;
       const ids = [...majorityByArm[arm].keys()].filter((id) => majorityByArm[headline].has(id));
       const a = ids.map((id) => majorityByArm[arm].get(id)), b = ids.map((id) => majorityByArm[headline].get(id));
       const res = pairedBootstrap(a, b, { resamples: scoring.bootstrap.resamples, level: scoring.bootstrap.level, seed: `${scoring.bootstrap.seed}|${model.slug}|${arm}|lift` });
@@ -378,7 +380,7 @@ export function aggregate(input) {
     };
   });
 
-  const ranked = models.filter((m) => m.arms[headline]);
+  const ranked = models.filter((m) => completeArm(m.arms[headline]));
   const tiers = tiersByOverlap(ranked.map((m) => ({ key: m.slug, score: m.arms[headline].score.majority, ci: m.arms[headline].score.ci95 })));
   for (const m of ranked) m.tier = tiers.get(m.slug);
   const key = (m) => (m.arms[headline] ? [m.arms[headline].score.median, m.arms[headline].score.majority] : [-1, -1]);
@@ -388,9 +390,9 @@ export function aggregate(input) {
   const picks = [];
   for (const family of families) {
     const candidates = [];
-    for (const m of models) for (const arm of input.arms[family] ?? []) {
+    for (const m of ranked) for (const arm of input.arms[family] ?? []) {
       const a = m.arms[arm];
-      if (!a || a.by_family[family] === null || a.by_family[family] === undefined || a.usd_run === null) continue;
+      if (!completeArm(a) || a.by_family[family] === null || a.by_family[family] === undefined || a.usd_run === null) continue;
       candidates.push({ model: m.slug, arm, score: a.by_family[family], usd: a.usd_run_p50 ?? a.usd_run, open: m.open_weight });
     }
     const best = (list) => [...list].sort((x, y) => y.score - x.score || x.usd - y.usd || cmp(x.model, y.model) || cmp(x.arm, y.arm))[0];

@@ -102,7 +102,8 @@ test('release notes: both keys optional, anything else refused', () => {
   const shipped = parseReleaseNotes(fs.readFileSync(path.join(BENCH, 'release-notes', '2026-10.json'), 'utf8'));
   const tiered = Object.values(protocol.tiers).flat();
   for (const slug of Object.keys(shipped.not_run)) assert.ok(tiered.includes(slug), slug);
-  assert.equal(shipped.not_run['openai/gpt-oss-120b'], "Its hosts returned the model's tool calls as plain text, so its runs produced no answer to score.");
+  assert.match(shipped.not_run['openai/gpt-oss-120b'], /35 of 36 initial inputs/);
+  assert.match(shipped.not_run['openai/gpt-oss-120b'], /excluded from the ranking/);
 });
 
 test('publish writes not_run and notes, infra_retries and --harness-commit; verify recomputes them', () => sandbox((tmp) => {

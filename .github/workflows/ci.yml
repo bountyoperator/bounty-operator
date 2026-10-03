@@ -96,6 +96,21 @@ jobs:
       - name: Check the MCP download matches the package
         run: node ../scripts/build-mcp.mjs --check
 
+  benchmark:
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Test the benchmark with offline fixtures
+        run: node --test --test-concurrency=2 bench/tests
+
   pack:
     runs-on: ubuntu-latest
     timeout-minutes: 5

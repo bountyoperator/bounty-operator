@@ -19,6 +19,7 @@ import { RUN_SCHEMA, canonical, classifyRun, countsUnder, harnessChecks, modelDi
 import { findHashesBlock, hashesDrift, headlineArm, profileArmIds, protocolHashes, recordedHashes, renderHashesBlock, replaceHashesBlock, stampHashes } from './lib/protocol.mjs';
 import { packTarGz, unpackTarGz } from './lib/tar.mjs';
 import { budgetPlan, profileClass, workspaceBytes } from './lib/budget.mjs';
+import { archiveStoredRun, priorAttemptSpend, resolveRunRoot, storedSpend } from './lib/evidence.mjs';
 
 const BENCH = path.dirname(fileURLToPath(import.meta.url));
 const REPO = path.resolve(BENCH, '..');
@@ -568,7 +569,9 @@ async function runTask(env, task, workerIndex) {
     const now = await armHashOnDisk(env.protocolFile, task.arm);
     if (now !== armSha) throw new Error(`protocol.json has changed since this invocation started: the ${task.arm} arm now runs under ${now ? short(now) : 'no hash (the file cannot be read)'}, this invocation under ${short(armSha)}; nothing was sent for ${task.model} ${runName(task.kase.id, task.arm, task.rep)}. Run the command again: it reloads protocol.json`);
   }
-  fs.rmSync(dir, { recursive: true, force: true });
+  const key = resumeKey({ armSha, model: task.model, inputHash: task.kase.inputHash, arm: task.arm, rep: task.rep });
+  if (fs.existsSync(runRoot)) archiveStoredRun(runRoot, dir);
+  const priorSpend = priorAttemptSpend(runRoot, key);
   const attempts = [];
   let last = null, spent = 0;
   for (let attempt = 0; ; attempt++) {
@@ -604,7 +607,7 @@ async function runTask(env, task, workerIndex) {
   for (const t of ev.tools) toolCounts[t.name] = (toolCounts[t.name] ?? 0) + 1;
   const meta = {
     schema: RUN_SCHEMA,
-    key: resumeKey({ armSha, model: task.model, inputHash: task.kase.inputHash, arm: task.arm, rep: task.rep }),
+    key,
     // arm_sha256 is the hash this run is resumed and counted under (the core hash for the raw arm, the
     // profile's own hash for a profile arm); protocol_sha256 names the whole protocol.json it ran under
     run_id: runId, arm_sha256: armSha, core_sha256: hashes.core, protocol_sha256: hashes.protocol, omp_version: ompVer,
@@ -615,6 +618,7 @@ async function runTask(env, task, workerIndex) {
     status: failure ? 'failed' : 'ok', failure, failure_detail: verdict.detail ?? (failure ? `answer sheet: ${sheet?.reason}` : null), final: verdict.final,
     stop_reason: ev.stopReason, turns: ev.assistant.length, tool_calls: toolCounts, tools_blocked: ev.tools.filter((t) => t.blocked).length,
     usage: ev.usage, usd: cost.usd, usd_source: cost.source, usd_all_attempts: Math.round(spent * 1e9) / 1e9,
+    usd_prior_attempts: priorSpend,
     effort: res.requests.efforts.length === 1 ? res.requests.efforts[0] : res.requests.efforts.length ? res.requests.efforts.join('+') : null,
     thinking_requested: protocol.omp.thinking, wire: res.requests.summaries[0]?.wire ?? null, routing: res.requests.routing,
     providers, response_cache_hit: cacheHit, checks, attempts,
@@ -663,8 +667,7 @@ async function cmdRun(flags) {
   const { protocol, sha, hashes } = loadProtocol();
   const head = headlineArm(protocol);
   const runId = String(flags['run-id'] ?? protocol.release);
-  if (!/^[A-Za-z0-9._-]+$/.test(runId)) throw new Error('--run-id may contain letters, digits, dot, dash and underscore only');
-  const runRoot = path.join(runsDir(flags), runId);
+  const runRoot = resolveRunRoot(runsDir(flags), runId);
   const drift = protocolDrift(protocol);
   if (drift.length) throw new Error(`protocol.json does not match: ${drift.join(', ')}. Run "node bench/bench.mjs freeze" after a deliberate change.`);
   const staleBlock = hashesDrift(protocol);
@@ -738,7 +741,7 @@ async function cmdRun(flags) {
     // --run-budget-usd: a ceiling on everything stored under this run id, earlier invocations included
     const runBudget = flags['run-budget-usd'] !== undefined ? Number(flags['run-budget-usd']) : Infinity;
     if (Number.isNaN(maxUsd) || Number.isNaN(runBudget)) throw new Error('--max-usd and --run-budget-usd must be numbers');
-    const spentBefore = collectMetas(runRoot).reduce((s, { meta }) => s + (typeof meta.usd_all_attempts === 'number' ? meta.usd_all_attempts : typeof meta.usd === 'number' ? meta.usd : 0), 0);
+    const spentBefore = storedSpend(runRoot);
     // --max-minutes: the invocation must end inside this window. A run started now may take the
     // whole time limit plus the hard-kill grace, so no run (and no retry) starts later than that
     // before the end; what is left is picked up by the next invocation of the same command.
@@ -753,7 +756,7 @@ async function cmdRun(flags) {
     out(`hashes: ${hashLine(protocol, hashes, Object.keys(hashes.arms).filter((arm) => planned.has(arm)))}`);
     out(`omp: ${describeOmp(ctx.omp)}`);
     out(`${plan.tasks.length} runs planned, ${skipped} already stored, ${queue.length} to do; concurrency ${concurrency} (${perModel} per model); max-usd ${maxUsd === Infinity ? 'none' : maxUsd}; key floor $${floor}`);
-    for (const [arm, n] of Object.entries(again)) out(`note: ${n} stored ${arm} run${n === 1 ? ' was' : 's were'} made under another ${arm === head ? 'core' : arm} hash${arm === head ? '' : ' (the profile text was frozen again since)'}; ${n === 1 ? 'it is' : 'they are'} made again and replaced.`);
+    for (const [arm, n] of Object.entries(again)) out(`note: ${n} stored ${arm} run${n === 1 ? ' was' : 's were'} made under another ${arm === head ? 'core' : arm} hash${arm === head ? '' : ' (the profile text was frozen again since)'}; ${n === 1 ? 'it is' : 'they are'} archived before being made again.`);
     if (runBudget !== Infinity) out(`run budget $${runBudget}: $${spentBefore.toFixed(2)} already stored under ${runId}, $${Math.max(0, runBudget - spentBefore).toFixed(2)} left`);
     if (maxMinutes !== Infinity) out(`time window ${maxMinutes} min: no run starts after minute ${((env.noLaunchAfter - startedMs) / 60000).toFixed(0)}`);
     if (flags['dry-run']) { for (const t of queue.slice(0, 40)) out(`  ${t.model}  ${runName(t.kase.id, t.arm, t.rep)}`); if (queue.length > 40) out(`  ... ${queue.length - 40} more`); return 0; }

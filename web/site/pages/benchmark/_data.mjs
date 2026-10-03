@@ -239,7 +239,8 @@ export function buildView(published) {
   // Profile arms of ranked models that had not finished: no lift is shown, and the page says so.
   const liftsPending = [];
   for (const row of rows) {
-    for (const [arm, lift] of Object.entries(row.model.lift ?? {})) {
+    for (const arm of Object.keys(row.model.arms ?? {}).filter((id) => id !== headline)) {
+      const lift = row.model.lift?.[arm];
       if (!complete(row.model, arm) && row.model.arms?.[arm]) {
         const a = row.model.arms[arm];
         liftsPending.push({ row, arm, answered: a.runs_expected - a.unresolved, inputs: a.runs_expected });

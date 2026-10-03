@@ -20,6 +20,7 @@ import { buildPlan, lintSets, loadProtocol, pairFilter, runsArm } from '../bench
 const BENCH = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const FIXTURES = path.join(BENCH, 'tests', 'fixtures');
 const FIXTURE_CASES = path.join(FIXTURES, 'cases');
+const HELD_CASES = path.join(BENCH, 'private', 'cases');
 const { protocol } = loadProtocol();
 const F = '```';
 const cli = (args, env = {}) => spawnSync(process.execPath, [path.join(BENCH, 'bench.mjs'), ...args], { encoding: 'utf8', env: { ...process.env, ...env } });
@@ -98,8 +99,18 @@ test('protocol.json: one repeat, four profile-arm models, and sets that match th
   for (const m of s.probe.models) assert.ok(!ranked.includes(m), `${m} must not be ranked`);
 });
 
-test('the sets on disk: every pair in exactly one set, public pairs in bench/cases, family minimums kept', () => {
-  const cases = loadCases([path.join(BENCH, 'cases'), path.join(BENCH, 'private', 'cases')]);
+test('the public set on disk contains exactly the published pairs, all marked public', () => {
+  const cases = loadCases([path.join(BENCH, 'cases')]);
+  assert.deepEqual(pairsOf(cases).map((p) => p.pair).sort(), [...protocol.sets.public].sort());
+  for (const c of cases) assert.equal(c.case?.visibility, 'public', `${c.id} must be public`);
+});
+
+test('the full sets on disk: every pair in exactly one set, public pairs in bench/cases, family minimums kept', {
+  skip: !fs.existsSync(HELD_CASES) && 'Held dataset is absent from this public checkout; the public set is checked separately',
+}, () => {
+  const cases = loadCases([path.join(BENCH, 'cases'), HELD_CASES]);
+  const expected = [...protocol.sets.scored, ...protocol.sets.public, ...protocol.sets.reserve].sort();
+  assert.deepEqual(pairsOf(cases).map((p) => p.pair).sort(), expected);
   assert.deepEqual(lintSets(protocol, pairsOf(cases)), []);
   for (const c of cases) assert.equal(/[\\/]private[\\/]/.test(c.dir), !protocol.sets.public.includes(c.pair), `${c.id} is in the wrong folder`);
 });
