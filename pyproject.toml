@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "bounty-operator-kit"
-version = "0.7.2"
+version = "0.7.3"
 description = "CLI for Bounty Operator: scoped agent packs, evidence gates and sanitised AI source review for bug bounty work."
 readme = "README.md"
 requires-python = ">=3.10"

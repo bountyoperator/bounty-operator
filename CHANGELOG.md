@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.7.3 — 2026-10-03
+
+Reviews
+
+- OpenRouter defaults to GPT-6.1 Sol following checks of its report decisions
+  and source references. DeepSeek V4.1 Flash remains a lower-cost option.
+- A new Panel starts with GPT-6.1 Sol, Claude Sonnet 5.5 and DeepSeek V4.1 Flash,
+  with Sol selected for cross-examination. Existing model choices are preserved.
+
 ## 0.7.2 — 2026-10-03
 
 Workbench

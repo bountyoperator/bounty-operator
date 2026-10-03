@@ -1123,7 +1123,7 @@ describe('profiles', () => {
 
 describe('providers', () => {
   const expected = {
-    openrouter: { url: 'https://openrouter.ai/api/v1/chat/completions', model: 'deepseek/deepseek-v4.1-flash', cap: 'max_tokens' },
+    openrouter: { url: 'https://openrouter.ai/api/v1/chat/completions', model: 'openai/gpt-6.1-sol', cap: 'max_tokens' },
     anthropic: { url: 'https://api.anthropic.com/v1/messages', model: 'claude-opus-5-5', cap: 'max_tokens' },
     openai: { url: 'https://api.openai.com/v1/chat/completions', model: 'gpt-6.1-sol', cap: 'max_completion_tokens' },
     gemini: { url: 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', model: 'gemini-3.8-flash', cap: null },
@@ -1262,7 +1262,7 @@ describe('providers', () => {
 
   test('every provider lists current models, and OpenRouter only verified slugs', () => {
     assert.deepEqual(Object.fromEntries(PROVIDERS.map((entry) => [entry.id, entry.models.map((model) => model.id)])), {
-      openrouter: ['deepseek/deepseek-v4.1-flash', 'anthropic/claude-sonnet-5.5', 'anthropic/claude-opus-5.5', 'openai/gpt-6-astra', 'google/gemini-3.8-flash', 'x-ai/grok-4.7', 'z-ai/glm-5.3-flash', 'openai/gpt-6-luna', 'openai/gpt-6.1-sol'],
+      openrouter: ['openai/gpt-6.1-sol', 'anthropic/claude-sonnet-5.5', 'deepseek/deepseek-v4.1-flash', 'anthropic/claude-opus-5.5', 'openai/gpt-6-astra', 'google/gemini-3.8-flash', 'x-ai/grok-4.7', 'z-ai/glm-5.3-flash', 'openai/gpt-6-luna'],
       anthropic: ['claude-opus-5-5', 'claude-sonnet-5-5', 'claude-fable-5-1', 'claude-haiku-4-5'],
       openai: ['gpt-6.1-sol', 'gpt-6-astra', 'gpt-6-luna'],
       gemini: ['gemini-3.8-flash', 'gemini-3.1-pro-preview', 'gemini-3.5-flash-lite'],
