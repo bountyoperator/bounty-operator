@@ -1,0 +1,33 @@
+{
+  "name": "bounty-operator",
+  "displayName": "Bounty Operator",
+  "version": "0.7.0",
+  "description": "Find the hole in your report before the triager does. Skills that argue against a security finding or a draft report before it is filed, on your own model, and the Bounty Operator MCP server for the hosted eight-stage gauntlet.",
+  "author": {
+    "name": "Tradi3",
+    "url": "https://bountyoperator.com"
+  },
+  "homepage": "https://bountyoperator.com",
+  "repository": "https://github.com/bountyoperator/bounty-operator",
+  "license": "MIT",
+  "keywords": [
+    "bug-bounty",
+    "security",
+    "smart-contracts",
+    "solidity",
+    "audit",
+    "code-review",
+    "triage",
+    "mcp"
+  ],
+  "mcpServers": {
+    "bounty-operator": {
+      "type": "http",
+      "url": "https://bountyoperator.com/api/mcp",
+      "headers": {
+        "Authorization": "Bearer ${BOUNTY_OPERATOR_TOKEN:-}",
+        "X-Provider-Key": "${BOUNTY_OPERATOR_PROVIDER_KEY:-}"
+      }
+    }
+  }
+}

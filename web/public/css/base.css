@@ -3065,11 +3065,14 @@ button.ref:hover {
     overflow-x: auto;
     border-top: 1px solid var(--line);
     scrollbar-width: none;
+    /* The row scrolls: the right edge fades, so a link cut at the edge reads as "more". */
+    mask-image: linear-gradient(to right, var(--text) calc(100% - 2.5rem), transparent);
   }
 
   .site-nav ul {
     width: max-content;
-    padding-inline: calc(var(--gutter) - var(--sp-12));
+    /* The extra room on the right lets the last link scroll clear of the fade. */
+    padding-inline: calc(var(--gutter) - var(--sp-12)) calc(var(--gutter) + 1.5rem);
     gap: 0;
   }
 

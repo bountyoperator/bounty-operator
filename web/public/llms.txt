@@ -4,7 +4,7 @@
 
 Built by Tradi3. Platform-neutral: Immunefi, Cantina, Sherlock, HackerOne. Every URL below is canonical and extensionless. Source code: https://github.com/bountyoperator/bounty-operator (MIT). The three core profiles, the free tools, the CLI and the MCP server are in that repository. The gauntlet stages and the panel cross-examination run on the hosted service.
 
-A hosted review sends the user's files and provider key through bountyoperator.com to the provider the user chose. The server adds the review method and stores no files, prompts, keys or results. The method of a hosted profile exists on the server only: no page, download or tool returns it.
+A hosted review sends the user's files and provider key through bountyoperator.com to the provider the user chose. The server adds the review method and stores no files, prompts, keys or results. For a hosted profile that method goes only to the provider the user chose: no page, download or tool returns it.
 
 ## Product
 
@@ -70,6 +70,7 @@ A hosted review sends the user's files and provider key through bountyoperator.c
 - A failed tool call returns `isError` with `{ error, code }`. Codes: `hosted_profile`, `privacy_block`, `privacy_warn`, `daily_used`, `operator_only`, `review_running`, `provider`, `output_withheld`. `operator_only`: `run_review` was called with `verdict` or `panel` on an account without Operator; nothing was sent and the review of the day is not used. `output_withheld`: the model repeated its instructions instead of reviewing, so the answer was stopped and the call used one review; run it again or choose a stronger model.
 - Limits per call: 50 files, 120 KB per file, 240 KB and 20,000 lines in total.
 - Local MCP server: `npx -y https://bountyoperator.com/dl/bounty-operator-mcp.tgz`. It has six tools: it adds `run_gauntlet_plan` (no account) and reads files by path. SHA-256 of the package: https://bountyoperator.com/dl/SHA256SUMS.txt
+- Skills and Claude Code plugin: `claude plugin marketplace add bountyoperator/bounty-operator` then `claude plugin install bounty-operator@bounty-operator`; any agent: `npx skills add bountyoperator/bounty-operator`. Five skills: challenge-report, solidity-review and code-security-review run the core methods on the agent's own model; gauntlet runs the hosted stages over MCP; hunt-with-gate is manual only and never submits.
 - Health: https://bountyoperator.com/api/health returns `status`, `version`, `reviews` and `profiles` (`hosted` on this site).
 - Sitemap: https://bountyoperator.com/sitemap.xml
 - Security contact: https://bountyoperator.com/.well-known/security.txt

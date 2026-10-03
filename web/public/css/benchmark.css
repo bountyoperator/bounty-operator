@@ -1,0 +1,1126 @@
+@charset "UTF-8";
+
+/*
+  Paydirt: /benchmark, /benchmark/method and the strip on the home page.
+  Loaded after base.css (and landing.css or docs.css). Tokens only.
+
+    1. Facts strip
+    2. Leaderboard
+    3. Column tools and notes
+    4. What the numbers say
+    5. Picks
+    6. Profile lift
+    7. Pair by pair
+    8. How it is kept honest
+    9. Check it yourself
+   10. Not run, questions
+   11. Method page
+   12. Home strip
+*/
+
+/* ==========================================================================
+   1. Facts strip
+   ========================================================================== */
+
+.bench-facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  margin-top: var(--sp-32);
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--line);
+}
+
+.bench-facts__item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  padding: var(--sp-12) var(--sp-16);
+  background: var(--surface);
+}
+
+.bench-facts__value {
+  font-size: var(--fs-18);
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+@media (min-width: 40em) {
+  .bench-facts {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* The hero text column is 46rem; the facts run the full width of the page. */
+.lp-hero__text > .bench-facts {
+  margin-top: var(--sp-32);
+}
+
+.lp-hero:has(.bench-facts) {
+  padding-bottom: var(--sp-24);
+}
+
+@media (min-width: 64em) {
+  .lp-hero__text:has(> .bench-facts) {
+    max-width: none;
+  }
+
+  .lp-hero__text:has(> .bench-facts) > :is(h1, .lede) {
+    max-width: 46rem;
+  }
+
+  .bench-facts {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}
+
+.bench-none {
+  color: var(--muted);
+}
+
+.bench-note {
+  max-width: 75ch;
+  margin-top: var(--sp-16);
+}
+
+/* ==========================================================================
+   2. Leaderboard
+   ========================================================================== */
+
+.lb-section {
+  padding-top: var(--sp-8);
+}
+
+.lb-section .section-head {
+  margin-bottom: var(--sp-16);
+}
+
+.lb th,
+.lb td {
+  vertical-align: middle;
+}
+
+.lb .lb__col--rank,
+.lb .lb__rank {
+  width: 3rem;
+  min-width: 0;
+  color: var(--muted);
+  font-family: var(--font-mono);
+}
+
+.lb tbody .lb__rank {
+  color: var(--text);
+  font-weight: 650;
+}
+
+.lb .lb__model {
+  min-width: 14rem;
+}
+
+.lb__who {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+}
+
+.lb__name {
+  font-weight: 650;
+}
+
+.lb__slug {
+  color: var(--muted);
+  font-size: var(--fs-12);
+  font-weight: 400;
+  overflow-wrap: anywhere;
+}
+
+@media (min-width: 60em) {
+  .lb__slug {
+    overflow-wrap: normal;
+    white-space: nowrap;
+  }
+}
+
+.lb__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-4);
+  margin-top: var(--sp-4);
+}
+
+.lb td.lb__col--score {
+  min-width: 8.5rem;
+}
+
+.lb__score {
+  display: inline-block;
+  margin-right: var(--sp-8);
+  font-size: var(--fs-22);
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.lb__pairs {
+  color: var(--muted);
+  font-size: var(--fs-13);
+  white-space: nowrap;
+}
+
+.lb__ci {
+  display: block;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: var(--fs-12);
+}
+
+.lb__asked {
+  display: block;
+  color: var(--muted);
+  font-size: var(--fs-12);
+  white-space: nowrap;
+}
+
+.lb td:not(.lb__col--score, .lb__col--effort) {
+  white-space: nowrap;
+}
+
+/* Header labels wrap onto two lines rather than widening the table. */
+.lb thead th {
+  white-space: normal;
+  line-height: 1.3;
+}
+
+.lb thead th.num:not(.lb__col--rank) {
+  min-width: 5.25rem;
+}
+
+.lb .lb__col--effort {
+  min-width: 7rem;
+  white-space: normal;
+}
+
+.lb .lb__col--effort .lb__asked {
+  white-space: normal;
+}
+
+/* The effort column is the last one: it keeps to its own width, not the 14rem
+   base.css gives a last column of text. */
+.table.lb tbody td.lb__col--effort:last-child {
+  min-width: 7rem;
+}
+
+.lb thead .table__sort {
+  text-align: inherit;
+}
+
+.lb thead th.num .table__sort {
+  justify-content: flex-end;
+}
+
+/* The tier rows: one quiet band per group. */
+.lb__tier td {
+  padding-block: var(--sp-8);
+  background: var(--surface-2);
+  font: 600 var(--fs-12) / 1.4 var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.lb__tier:hover {
+  background: none;
+}
+
+.lb__tier-name {
+  color: var(--accent);
+}
+
+.lb__tier-note {
+  margin-left: var(--sp-8);
+  color: var(--muted);
+}
+
+/* The 95% interval: a range on 0 to 100 with the score marked. */
+.ci {
+  display: block;
+  width: 100%;
+  max-width: 8rem;
+  height: 0.5rem;
+  margin-top: var(--sp-8);
+  overflow: visible;
+}
+
+.lb .ci {
+  margin-left: auto;
+}
+
+.ci__track {
+  fill: var(--line);
+}
+
+.ci__range {
+  fill: color-mix(in srgb, var(--accent) 35%, transparent);
+}
+
+.ci__mark {
+  fill: var(--accent);
+}
+
+.ci__zero {
+  fill: var(--muted);
+}
+
+/* Columns the picker hides. */
+.lb[data-hide~="recall"] [data-col="recall"],
+.lb[data-hide~="fools"] [data-col="fools"],
+.lb[data-hide~="challenge"] [data-col="challenge"],
+.lb[data-hide~="failure"] [data-col="failure"],
+.lb[data-hide~="cost"] [data-col="cost"],
+.lb[data-hide~="time"] [data-col="time"],
+.lb[data-hide~="effort"] [data-col="effort"] {
+  display: none;
+}
+
+/* Stacked, below 60em: rank and model on one line, the score under them, the
+   figures three abreast. Overrides the plain stack of .stack-table--wide. */
+@media (max-width: 59.99em) {
+  .table-wrap > .table.lb,
+  .table-wrap > .table.lb tbody {
+    display: block;
+  }
+
+  .table-wrap > .table.lb thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .table-wrap > .table.lb tbody tr.lb__row {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: var(--sp-12) var(--sp-12);
+    padding: var(--sp-16);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .table-wrap > .table.lb tbody tr.lb__tier {
+    display: block;
+  }
+
+  .table-wrap > .table.lb tbody tr.lb__tier[hidden] {
+    display: none;
+  }
+
+  .table-wrap > .table.lb tbody tr.lb__tier > td {
+    display: block;
+    padding: var(--sp-8) var(--sp-16);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .table-wrap > .table.lb tbody tr.lb__row > * {
+    display: block;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    text-align: left;
+    white-space: normal;
+  }
+
+  .table-wrap > .table.lb tbody tr.lb__row > .lb__rank {
+    grid-column: span 1;
+    width: auto;
+    font-size: var(--fs-18);
+    line-height: 1.35;
+  }
+
+  .table-wrap > .table.lb tbody tr.lb__row > .lb__model {
+    grid-column: span 5;
+  }
+
+  .table-wrap > .table.lb tbody tr.lb__row > .lb__col--score {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--sp-4) var(--sp-8);
+    grid-column: 1 / -1;
+    padding: var(--sp-12);
+    border-radius: var(--r-ctl);
+    background: var(--surface-2);
+  }
+
+  .lb__col--score .cell-label {
+    flex-basis: 100%;
+  }
+
+  .lb__col--score .ci {
+    flex-basis: 100%;
+    max-width: none;
+    margin: var(--sp-4) 0 0;
+  }
+
+  .lb__col--score .lb__ci {
+    flex-basis: 100%;
+  }
+
+  .table-wrap > .table.lb tbody tr.lb__row > td:not(.lb__col--score, .lb__rank) {
+    grid-column: span 2;
+  }
+
+  .lb .cell-label {
+    display: block;
+    margin-bottom: 0.125rem;
+    color: var(--muted);
+    font: 600 var(--fs-12) / 1.4 var(--font-mono);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .lb .lb__model {
+    min-width: 0;
+  }
+}
+
+@media (max-width: 22.49em) {
+  .table-wrap > .table.lb tbody tr.lb__row > td:not(.lb__col--score, .lb__rank) {
+    grid-column: span 3;
+  }
+}
+
+/* ==========================================================================
+   3. Column tools and notes
+   ========================================================================== */
+
+.lb-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--sp-8) var(--sp-16);
+  margin-bottom: var(--sp-12);
+}
+
+.lb-tools[hidden] {
+  display: none;
+}
+
+.lb-cols {
+  flex: 0 1 auto;
+  min-width: 12rem;
+}
+
+.lb-cols[open] {
+  flex: 1 1 100%;
+}
+
+.lb-cols__list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+  gap: var(--sp-4) var(--sp-16);
+}
+
+@media (min-width: 60em) {
+  /* The sort reset makes no sense on a stacked table. */
+  .lb-tools {
+    justify-content: space-between;
+  }
+
+  .lb-cols {
+    order: -1;
+  }
+
+  .lb-cols[open] {
+    flex: 0 1 40rem;
+  }
+}
+
+@media (max-width: 59.99em) {
+  [data-lb-reset] {
+    display: none;
+  }
+}
+
+.bench-tier-line {
+  max-width: 75ch;
+  margin-top: var(--sp-16);
+  color: var(--muted);
+  font-size: var(--fs-14);
+}
+
+.lb-notes {
+  margin-top: var(--sp-16);
+}
+
+.lb-notes__list dd {
+  max-width: 60ch;
+}
+
+/* ==========================================================================
+   4. What the numbers say
+   ========================================================================== */
+
+.bench-findings {
+  display: grid;
+  gap: var(--sp-12);
+  counter-reset: finding;
+}
+
+.bench-findings__item {
+  position: relative;
+  max-width: 62rem;
+  padding: var(--sp-16) var(--sp-16) var(--sp-16) 3.25rem;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  font-size: var(--fs-18);
+  line-height: 1.5;
+  counter-increment: finding;
+}
+
+.bench-findings__item::before {
+  position: absolute;
+  top: var(--sp-16);
+  left: var(--sp-16);
+  color: var(--accent);
+  content: counter(finding, decimal-leading-zero);
+  font: 600 var(--fs-13) / 1.9 var(--font-mono);
+}
+
+/* ==========================================================================
+   5. Picks
+   ========================================================================== */
+
+.picks {
+  display: grid;
+  gap: var(--sp-16);
+}
+
+@media (min-width: 60em) {
+  .picks {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.picks__card {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+}
+
+.picks__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-8);
+  padding: var(--sp-16);
+  border-bottom: 1px solid var(--line);
+}
+
+.picks__title {
+  font-size: var(--fs-18);
+}
+
+.picks__list {
+  display: grid;
+}
+
+.pick {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  padding: var(--sp-16);
+}
+
+.pick + .pick {
+  border-top: 1px solid var(--line);
+}
+
+.pick__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-4);
+}
+
+.pick__name {
+  margin-top: var(--sp-4);
+  font-size: var(--fs-18);
+  font-weight: 650;
+}
+
+.pick__slug {
+  color: var(--muted);
+  font-size: var(--fs-12);
+  overflow-wrap: anywhere;
+}
+
+.pick__nums {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-8) var(--sp-24);
+  margin-top: var(--sp-8);
+}
+
+.pick__nums dd {
+  font-size: var(--fs-18);
+  font-weight: 650;
+}
+
+.pick__of {
+  margin-left: var(--sp-8);
+  color: var(--muted);
+  font-size: var(--fs-13);
+  font-weight: 400;
+}
+
+.pick__go {
+  align-self: flex-start;
+  margin-top: var(--sp-8);
+}
+
+/* ==========================================================================
+   6. Profile lift
+   ========================================================================== */
+
+.lift .lift__model {
+  min-width: 12rem;
+}
+
+.lift__pairs {
+  display: block;
+  color: var(--muted);
+  font-size: var(--fs-13);
+}
+
+.lift__delta {
+  font-weight: 650;
+}
+
+.lift__delta[data-sign="up"] {
+  color: var(--ok);
+}
+
+.lift__delta[data-sign="down"] {
+  color: var(--danger);
+}
+
+.lift__ci {
+  min-width: 9rem;
+}
+
+.lift__ci .ci {
+  margin: 0 0 var(--sp-4) auto;
+}
+
+@media (max-width: 59.99em) {
+  .lift__ci .ci {
+    margin-left: 0;
+  }
+}
+
+/* ==========================================================================
+   7. Pair by pair
+   ========================================================================== */
+
+.pg-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-8) var(--sp-24);
+  margin-bottom: var(--sp-16);
+  color: var(--muted);
+  font-size: var(--fs-14);
+}
+
+.pg-legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-8);
+}
+
+.pg {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: var(--fs-13);
+}
+
+.pg th,
+.pg td {
+  padding: var(--sp-4);
+  border-bottom: 1px solid var(--line);
+  text-align: center;
+}
+
+.pg tbody tr:last-child > * {
+  border-bottom: 0;
+}
+
+.pg thead th {
+  background: var(--surface-2);
+  color: var(--muted);
+  font: 600 var(--fs-12) / 1.3 var(--font-mono);
+  letter-spacing: 0.04em;
+}
+
+.pg__families th {
+  padding-top: var(--sp-8);
+  border-left: 1px solid var(--line);
+  text-transform: uppercase;
+}
+
+.pg__corner {
+  background: var(--surface-2);
+}
+
+.pg__pair span {
+  display: inline-block;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  padding-block: var(--sp-4);
+  white-space: nowrap;
+}
+
+/* The model column stays in view while the grid scrolls sideways. */
+.pg .pg__model,
+.pg .pg__model-head {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  min-width: 9rem;
+  max-width: 14rem;
+  padding-inline: var(--sp-12);
+  border-right: 1px solid var(--line);
+  text-align: left;
+}
+
+.pg .pg__model {
+  background: var(--surface);
+  font-weight: 600;
+}
+
+.pg .pg__model-head {
+  background: var(--surface-2);
+  vertical-align: bottom;
+}
+
+.pg .pg__total {
+  min-width: 3.5rem;
+  padding-inline: var(--sp-12);
+  border-left: 1px solid var(--line);
+  font-weight: 650;
+  text-align: right;
+}
+
+.pg__cell {
+  min-width: 1.75rem;
+}
+
+.pg__cell .icon {
+  width: 1rem;
+  height: 1rem;
+  vertical-align: middle;
+}
+
+.pg__cell[data-outcome="right"] {
+  background: color-mix(in srgb, var(--ok) var(--chip-fill), transparent);
+  color: var(--ok);
+}
+
+.pg__cell[data-outcome="wrong"] {
+  color: var(--danger);
+}
+
+.pg__cell[data-outcome="failed"] {
+  background: var(--gap-bg);
+  color: var(--gap);
+}
+
+.pg-legend__mark {
+  display: inline-grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border: 1px solid var(--line);
+  border-radius: var(--r-chip);
+}
+
+/* ==========================================================================
+   8. How it is kept honest
+   ========================================================================== */
+
+.bench-honest {
+  display: grid;
+  gap: var(--sp-16);
+}
+
+@media (min-width: 40em) {
+  .bench-honest {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 64em) {
+  .bench-honest {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.bench-honest__card {
+  padding: var(--sp-16) var(--sp-24) var(--sp-24);
+  border: 1px solid var(--line);
+  border-top: 2px solid var(--accent);
+  border-radius: var(--r-card);
+  background: var(--surface);
+}
+
+.bench-honest__title {
+  font-size: var(--fs-16);
+  line-height: 1.4;
+}
+
+.bench-honest__text {
+  margin-top: var(--sp-8);
+  color: var(--muted);
+  font-size: var(--fs-14);
+  line-height: 1.6;
+}
+
+.bench-proof {
+  display: grid;
+  gap: var(--sp-32);
+  margin-top: var(--sp-32);
+}
+
+@media (min-width: 64em) {
+  .bench-proof {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+}
+
+.bench-links {
+  display: grid;
+  gap: var(--sp-16);
+}
+
+.bench-links > li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--sp-12);
+  align-items: start;
+}
+
+.bench-links > li > .icon {
+  margin-top: 0.2rem;
+  color: var(--accent);
+}
+
+.bench-links .fine {
+  display: block;
+  margin-top: 0.125rem;
+}
+
+.bench-links__hash .mono {
+  font-size: var(--fs-12);
+}
+
+.bench-links__hash {
+  display: block;
+  margin-top: var(--sp-4);
+  font-size: var(--fs-12);
+  overflow-wrap: anywhere;
+}
+
+.bench-files__list {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.bench-files.disclosure {
+  border: 0;
+  background: none;
+  box-shadow: none;
+}
+
+.bench-files .disclosure__summary {
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.bench-proof__hashes .meta {
+  margin-bottom: var(--sp-8);
+}
+
+.bench-hashes .table th {
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.bench-hashes__value {
+  overflow-wrap: anywhere;
+}
+
+.bench-hashes .table tbody td:last-child {
+  min-width: 0;
+}
+
+/* ==========================================================================
+   9. Check it yourself
+   ========================================================================== */
+
+.bench-steps {
+  display: grid;
+  gap: var(--sp-24);
+  counter-reset: step;
+}
+
+.bench-steps__item {
+  display: grid;
+  gap: var(--sp-12);
+  min-width: 0;
+  counter-increment: step;
+}
+
+.bench-steps__head > * + * {
+  margin-top: var(--sp-8);
+}
+
+@media (min-width: 60em) {
+  .bench-steps__item {
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+    gap: var(--sp-32);
+    align-items: start;
+  }
+}
+
+.bench-steps__title {
+  font-size: var(--fs-16);
+}
+
+.bench-steps__title::before {
+  margin-right: var(--sp-8);
+  color: var(--accent);
+  content: counter(step);
+  font-family: var(--font-mono);
+}
+
+.bench-steps__text {
+  color: var(--muted);
+  font-size: var(--fs-14);
+  line-height: 1.6;
+}
+
+.bench-steps__item .code {
+  min-width: 0;
+}
+
+.bench-practice {
+  margin-top: var(--sp-48);
+}
+
+.bench-practice__title {
+  font-size: var(--fs-18);
+}
+
+.bench-practice__text {
+  max-width: 75ch;
+  margin-block: var(--sp-8) var(--sp-16);
+  color: var(--muted);
+}
+
+/* ==========================================================================
+   10. Not run, questions
+   ========================================================================== */
+
+.notrun__why {
+  max-width: 28rem;
+  font-weight: 500;
+}
+
+.notrun__models {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-8) var(--sp-24);
+}
+
+.notrun__models > li {
+  min-width: 0;
+}
+
+.notrun__tier {
+  display: block;
+}
+
+.notrun__name {
+  display: block;
+  font-weight: 600;
+}
+
+.notrun__slug {
+  display: block;
+  color: var(--muted);
+  font-size: var(--fs-12);
+  font-weight: 400;
+  overflow-wrap: anywhere;
+}
+
+.notrun tbody td:last-child {
+  min-width: 18rem;
+}
+
+@media (max-width: 43.99em) {
+  .notrun tbody td:last-child,
+  .notrun .notrun__why {
+    min-width: 0;
+  }
+}
+
+.bench-release-notes {
+  max-width: 75ch;
+  margin-top: var(--sp-24);
+}
+
+.bench-release-notes > * + * {
+  margin-top: var(--sp-8);
+}
+
+.bench-faq {
+  max-width: 52rem;
+}
+
+/* ==========================================================================
+   11. Method page
+   ========================================================================== */
+
+/* Tables in the method are wider than a line of prose: they take the column. */
+.method-doc .prose {
+  max-width: none;
+}
+
+.method-doc .prose > :is(p, ul, ol, blockquote, h3) {
+  max-width: 70ch;
+}
+
+.method-doc .prose > .table-wrap,
+.method-doc .prose > .code {
+  max-width: 100%;
+}
+
+.method-doc .md-table thead th {
+  white-space: normal;
+}
+
+.method-doc .md-table tbody :is(th, td) {
+  min-width: 0;
+}
+
+.method-doc .md-table tbody td:not(.num, .mono):last-child {
+  min-width: 0;
+}
+
+.method-doc .md-table code {
+  overflow-wrap: normal;
+  white-space: nowrap;
+}
+
+.method-doc .prose ol ol {
+  margin-top: var(--sp-8);
+  padding-left: 1.5rem;
+  list-style-type: lower-alpha;
+}
+
+.method-doc .docs-head__actions {
+  margin-top: var(--sp-24);
+}
+
+/* ==========================================================================
+   12. Home strip
+   ========================================================================== */
+
+.bench-teaser {
+  margin-top: var(--sp-24);
+}
+
+.bench-teaser__inner {
+  display: grid;
+  gap: var(--sp-16);
+  padding: var(--sp-16) var(--sp-24);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface);
+}
+
+.bench-teaser__title {
+  margin-top: var(--sp-4);
+  font-size: var(--fs-18);
+  line-height: 1.35;
+}
+
+.bench-teaser__table,
+.bench-teaser__list {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.bench-teaser__labels .meta:last-child {
+  text-align: right;
+}
+
+.bench-teaser__row {
+  display: grid;
+  grid-template-columns: 1.5rem minmax(0, 1fr) auto auto;
+  gap: var(--sp-12);
+  align-items: baseline;
+  font-size: var(--fs-14);
+}
+
+.bench-teaser__rank {
+  color: var(--muted);
+  font-family: var(--font-mono);
+}
+
+.bench-teaser__name {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.bench-teaser__score {
+  font-weight: 650;
+}
+
+.bench-teaser__cost {
+  min-width: 4.5rem;
+  color: var(--muted);
+  text-align: right;
+}
+
+.bench-teaser__go {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-4);
+  justify-self: start;
+  min-height: var(--tap);
+}
+
+@media (min-width: 64em) {
+  .bench-teaser__inner {
+    grid-template-columns: minmax(0, 15rem) minmax(0, 1fr) auto;
+    align-items: center;
+    gap: var(--sp-32);
+  }
+
+  .bench-teaser__go {
+    justify-self: end;
+  }
+}

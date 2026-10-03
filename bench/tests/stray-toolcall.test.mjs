@@ -81,6 +81,13 @@ test('an empty reply with ordinary reasoning stays the model\'s own failure', ()
   assert.deepEqual([noReasoning.status, noReasoning.final], ['ok', true]);
 });
 
+test('an account-level gate on a model stops that model and is never scored', async () => {
+  const { classifyError } = await import('../lib/runs.mjs');
+  assert.deepEqual(classifyError(403, '403 This model requires you to complete the following before use: 18+ age confirmation. Confirm at https://openrouter.ai/settings/preferences.'), { kind: 'unavailable', retry: false, halt: 'model' });
+  assert.deepEqual(classifyError(403, 'This model is not available in your region'), { kind: 'unavailable', retry: false, halt: 'model' });
+  assert.equal(classifyError(403, 'Your chosen model requires moderation and your input was flagged for violence').kind, 'error', 'a moderation refusal stays the model\'s own failure');
+});
+
 test('a real tool call in the last message is not a stray one', () => {
   const calling = classify(assistant([{ type: 'thinking', thinking: 'read it {"path": "a.sol"}' }, { type: 'toolCall', id: 't2', name: 'read', arguments: { path: 'a.sol' } }], 'toolUse'));
   assert.equal(calling.failure, 'timeout', 'a session that ends on a tool call ran out of time between turns');

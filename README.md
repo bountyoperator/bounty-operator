@@ -166,6 +166,36 @@ the same check on your own machine.
 Sherlock, Cantina and HackerOne, and a Foundry PoC scaffold that ends on the
 impact assertion.
 
+## Skills and Claude Code plugin
+
+Five skills for coding agents. In Claude Code and omp the plugin also adds the Bounty Operator MCP server.
+
+| Skill | What it does |
+|---|---|
+| `challenge-report` | Checks a draft report against the code it cites and ends in one verdict |
+| `solidity-review` | Solidity security review, every finding with file and line |
+| `code-security-review` | Security review of any other codebase |
+| `gauntlet` | Runs the eight hosted stages through the MCP server and builds the packet |
+| `hunt-with-gate` | Manual only. Gates a finding before any report is written. It never submits |
+
+Claude Code:
+
+    claude plugin marketplace add bountyoperator/bounty-operator
+    claude plugin install bounty-operator@bounty-operator
+
+Codex, Cursor and other agents:
+
+    npx skills add bountyoperator/bounty-operator
+
+omp:
+
+    omp plugin marketplace add bountyoperator/bounty-operator
+    omp plugin install --scope user bounty-operator@bounty-operator
+
+The gauntlet needs a connection token and a provider key. Set `BOUNTY_OPERATOR_TOKEN` and `BOUNTY_OPERATOR_PROVIDER_KEY` before you start the agent. Other clients add the server with the commands at [bountyoperator.com/mcp](https://bountyoperator.com/mcp).
+
+The three review skills carry their full method and run on your own model with no account. The hosted stages run on the Bounty Operator server and are not in this repository.
+
 ## Pricing
 
 **Free:** one hosted review per UTC day, any single profile. **Operator: US$10/week** for unlimited hosted reviews, the Gauntlet, Panel review and four reviews at once. The CLI, the core profiles' prompt export and MCP prepare, and the free tools cost nothing.

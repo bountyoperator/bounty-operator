@@ -1,0 +1,22 @@
+{
+  "name": "bounty-operator",
+  "description": "Bounty Operator: pre-submission review for bug bounty findings and draft reports.",
+  "owner": {
+    "name": "Tradi3",
+    "url": "https://bountyoperator.com"
+  },
+  "plugins": [
+    {
+      "name": "bounty-operator",
+      "source": "./",
+      "description": "Challenge a draft report, review Solidity or any code for security bugs on your own model, and run the hosted gauntlet through the Bounty Operator MCP server.",
+      "category": "security",
+      "tags": [
+        "bug-bounty",
+        "security",
+        "solidity",
+        "audit"
+      ]
+    }
+  ]
+}

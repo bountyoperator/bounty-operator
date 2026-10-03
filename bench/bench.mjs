@@ -13,7 +13,7 @@ import { DRAFT, caseHash, inputHash, lintCases, lintProofs, listFiles, loadCases
 import { ENGINE_FILES, buildArm, engineCheckInputs, engineFileHashes, frozenHashes, liveProfile, profileHashes, profileRecord, writeFrozen } from './lib/arms.mjs';
 import { createInvocation, describeOmp, ompVersion, runOmp } from './lib/omp.mjs';
 import { extractSheet, parseEvents } from './lib/parse.mjs';
-import { aggregate, aggregateInputFromPublished, modelFile, scoreInput, vendorOf } from './lib/score.mjs';
+import { aggregate, aggregateInputFromPublished, modelFile, notRun, parseReleaseNotes, scoreInput, vendorOf } from './lib/score.mjs';
 import { costFromTokens, fetchModels, generationStats, keyStatus, readKey } from './lib/openrouter.mjs';
 import { RUN_SCHEMA, canonical, classifyRun, countsUnder, harnessChecks, modelDir, resumeKey, runName, toScoreRun } from './lib/runs.mjs';
 import { findHashesBlock, hashesDrift, headlineArm, profileArmIds, protocolHashes, recordedHashes, renderHashesBlock, replaceHashesBlock, stampHashes } from './lib/protocol.mjs';
@@ -860,6 +860,13 @@ function collectMetas(runRoot) {
 const draftOf = (kase) => kase.workspace.find((f) => f.path === DRAFT)?.text ?? null;
 
 /**
+ * An outcome with `infra_retries`: how many attempts of the stored run failed for infrastructure
+ * reasons and were made again (meta.attempts, one entry per retried attempt). A run stored
+ * without that record gets no field, so the count is never guessed.
+ */
+const withRetries = (outcome, meta) => (Array.isArray(meta?.attempts) ? { ...outcome, infra_retries: meta.attempts.length } : outcome);
+
+/**
  * Stored runs + cases -> { input, cases, notes, used, staleArms }. Deterministic: no clock, no network.
  * A run counts when it was stored under the hash its arm runs under now (`hashes.arms`): the
  * core hash for the raw arm, the profile's own hash for a profile arm. So after a profile text
@@ -893,7 +900,7 @@ function scoreRunId({ protocol, hashes, runId, flags, set = 'scored' }) {
     const eventsText = fs.existsSync(path.join(dir, 'events.jsonl')) ? fs.readFileSync(path.join(dir, 'events.jsonl'), 'utf8') : '';
     const outcome = scoreInput(kase, kase.truth, toScoreRun({ meta, eventsText, draft: draftOf(kase) }), protocol.scoring);
     if (!perModel.has(meta.model)) perModel.set(meta.model, []);
-    perModel.get(meta.model).push({ ...outcome, arm: meta.arm, rep: meta.rep });
+    perModel.get(meta.model).push(withRetries({ ...outcome, arm: meta.arm, rep: meta.rep }, meta));
     used.push({ dir, meta });
     if (!latest || meta.finished_at > latest) latest = meta.finished_at;
   }
@@ -982,6 +989,7 @@ and to rerun them.
 - bench/cases/      the public practice cases: workspace, case.json, truth.json, truth.md
 - bench/verify/     the executable proof for each public pair
 - bench/commitments.json   one salted SHA-256 per held case (the scored set and the reserve)
+- bench/release-notes/     the reasons given for models that were not run, when the release has any
 - raw/<model>/<case>.<arm>.<repeat>/   the stored output of every run on a public case:
   events.jsonl (omp's event stream without streaming deltas), request.json (the first
   request exactly as sent: system prompt, tool schemas, task), requests.jsonl (model id,
@@ -1017,10 +1025,25 @@ async function cmdPublish(flags) {
   if (loose.length) throw new Error(`Refusing to publish: ${loose.join(', ')} ${loose.length === 1 ? 'is' : 'are'} not what protocol.json records, so the download would not show what the runs were told. Restore ${loose.length === 1 ? 'it' : 'them'}, or freeze and run again.`);
   const staleBlock = hashesDrift(protocol);
   if (staleBlock.length) throw new Error(`Refusing to publish: ${STALE_BLOCK(staleBlock)}. "node bench/bench.mjs freeze --dry-run" shows what a freeze would change.`);
+  // the public repository gets its own history, so the commit that holds the harness is known only after the first push
+  const harnessCommit = flags['harness-commit'] === undefined ? undefined : String(flags['harness-commit']);
+  if (harnessCommit !== undefined && !/^[0-9a-f]{7,40}$/i.test(harnessCommit)) throw new Error(`--harness-commit takes a commit id (7 to 40 hex characters), not ${JSON.stringify(harnessCommit)}`);
+  // the release's hand-written notes: a reason per model that was not run, and sentences for the page
+  const notesFile = releaseNotesFile(flags, release);
+  const notesText = fs.existsSync(notesFile) ? fs.readFileSync(notesFile, 'utf8') : null;
+  if (flags['release-notes'] && notesText === null) throw new Error(`--release-notes: ${notesFile} does not exist`);
+  const releaseNotes = parseReleaseNotes(notesText, path.relative(REPO, notesFile) || notesFile);
   const { input, cases, notes, used, staleArms } = scoreRunId({ protocol, hashes, runId, flags });
   if (!input.models.length) throw new Error(`No scoreable runs under bench/runs/${runId}.${notes.stale_protocol ? ` ${notes.stale_protocol} stored run(s) were made under another hash than their arm has now.` : ''}`);
   input.meta.release = release;
+  if (harnessCommit !== undefined) input.meta.harness_commit = harnessCommit;
   input.meta.commitments = commitments(cases, flags);
+  const plan = readJsonIf(path.join(runsDir(flags), runId, 'plan.json')) ?? {};
+  const names = Object.fromEntries(Object.entries(plan.models ?? {}).filter(([, m]) => typeof m?.name === 'string').map(([slug, m]) => [slug, m.name]));
+  input.meta.not_run = notRun({ tiers: protocol.tiers, models: input.models, reasons: releaseNotes.not_run, names });
+  input.meta.notes = releaseNotes.notes;
+  const notListed = Object.keys(releaseNotes.not_run).filter((slug) => !input.meta.not_run.some((m) => m.slug === slug));
+  if (notListed.length) out(`note: the release notes give a reason for ${notListed.join(', ')}, which ${notListed.length === 1 ? 'has' : 'have'} counted answers or ${notListed.length === 1 ? 'is' : 'are'} in no tier; the reason is not published`);
 
   // archive: harness + public cases + their proofs + raw outputs of runs on public cases
   const prefix = `paydirt-${release}`;
@@ -1028,6 +1051,8 @@ async function cmdPublish(flags) {
   const add = (abs, rel) => entries.push({ path: `${prefix}/${rel}`, data: fs.readFileSync(abs) });
   add(protocolFile(), 'bench/protocol.json'); // the protocol these results were made under
   for (const rel of ['bench.mjs', 'commitments.json', 'METHOD.md', 'README.md']) if (fs.existsSync(path.join(BENCH, rel))) add(path.join(BENCH, rel), `bench/${rel}`);
+  // the notes the "not run" list was made from, where verify looks for them
+  if (notesText !== null) entries.push({ path: `${prefix}/bench/release-notes/${release}.json`, data: notesText });
   const skipBuild = (rel, e) => e.isDirectory() && ['out', 'cache', 'node_modules', 'broadcast', '_lib'].includes(e.name);
   for (const sub of ['lib', 'harness', 'prompts', 'tools', 'tests']) for (const rel of listFiles(path.join(BENCH, sub), skipBuild)) add(path.join(BENCH, sub, rel), `bench/${sub}/${rel}`);
   // every public pair goes into the download, whether it is scored or practice material
@@ -1072,6 +1097,7 @@ async function cmdPublish(flags) {
   if (practice?.input.models.length) {
     // same schema, its own folder: practice/latest.json, practice/<release>.json, practice/models/
     practice.input.meta.release = release;
+    if (harnessCommit !== undefined) practice.input.meta.harness_commit = harnessCommit;
     practice.input.meta.commitments = [];
     practice.input.meta.downloads = { ...input.meta.downloads, archive: `../${archiveName}` };
     const practiceResults = aggregate(practice.input);
@@ -1083,8 +1109,13 @@ async function cmdPublish(flags) {
     out(`practice set: ${practicePairs.length} public pairs, ${practice.input.models.length} models -> practice/latest.json${partial.length ? ` (incomplete: ${partial.join(', ')})` : ''}`);
   } else if (practicePairs.length) out(`practice set: ${practicePairs.length} public pairs in the download; no model was run on them under this run id`);
   out(`held-case commitments: ${input.meta.commitments.length} (salts in ${path.relative(REPO, saltsFile(flags))})`);
+  out(`not run: ${input.meta.not_run.length} model(s)${input.meta.not_run.length ? ` (${input.meta.not_run.map((m) => m.slug).join(', ')})` : ''}; release notes: ${notesText === null ? 'none' : `${path.relative(REPO, notesFile) || notesFile}, ${input.meta.notes.length} sentence(s)`}`);
+  if (harnessCommit !== undefined) out(`harness commit: ${harnessCommit} (--harness-commit; plan.json says ${plan.harness_commit ?? 'nothing'})`);
   return 0;
 }
+
+/** bench/release-notes/<release>.json, or the file --release-notes names. */
+const releaseNotesFile = (flags, release) => (flags['release-notes'] ? path.resolve(String(flags['release-notes'])) : path.join(BENCH, 'release-notes', `${release}.json`));
 
 // ---------------------------------------------------------------- verify
 
@@ -1144,6 +1175,26 @@ async function cmdVerify(flags) {
       }
       if (stated.mixed) out(`note: these results count ${stated.mixed} run(s) made under other hashes (score --any-protocol); the hash of each run is not checked`);
     } else out('note: these results state no per-arm hashes (written before the hashes were split); the hash of each run is not checked');
+
+    // 2b. the "not run" list and the release notes follow from the tiers of the protocol in the download,
+    //     the published outcomes and the release-notes file in the download (no file: every reason is the default)
+    if (Array.isArray(published.not_run) || Array.isArray(published.notes)) {
+      const kept = JSON.parse(text('bench/protocol.json') ?? 'null');
+      const notesRel = `bench/release-notes/${published.release}.json`;
+      let releaseNotes = null;
+      try { releaseNotes = parseReleaseNotes(text(notesRel), `${notesRel} in the download`); } catch (error) { problems++; out(`MISMATCH archive: ${error.message}`); }
+      if (!kept) { problems++; out('MISMATCH archive: bench/protocol.json is not in the download, so the "not run" list cannot be checked'); }
+      else if (releaseNotes) {
+        const before = problems;
+        const detailOf = new Map(details.map((d) => [d.slug, d]));
+        // the display names come from the plan, which is not in the download: they are taken as published
+        const names = Object.fromEntries((published.not_run ?? []).map((m) => [m.slug, m.name]));
+        const want = notRun({ tiers: kept.tiers, models: published.models.map((m) => ({ slug: m.slug, outcomes: detailOf.get(m.slug)?.outcomes ?? [] })), reasons: releaseNotes.not_run, names });
+        if (Array.isArray(published.not_run)) { const d = firstDiff(published.not_run, want, 'not_run'); if (d) { problems++; out(`MISMATCH ${d}`); } }
+        if (Array.isArray(published.notes)) { const d = firstDiff(published.notes, releaseNotes.notes, 'notes'); if (d) { problems++; out(`MISMATCH ${d}`); } }
+        if (problems === before) out(`ok  "not run" list (${want.length} model(s)) and release notes recomputed from the tiers in bench/protocol.json and ${text(notesRel) === null ? 'the default reason (no release-notes file in the download)' : notesRel}`);
+      }
+    }
     const outcomeOf = new Map();
     for (const d of details) for (const o of d.outcomes) outcomeOf.set(`${d.slug}|${o.case}|${o.arm}|${o.rep}`, o);
     // the download may also hold raw runs of the other results file (leaderboard and practice set share it)
@@ -1167,7 +1218,7 @@ async function cmdVerify(flags) {
       if (typeof meta.arm_sha256 === 'string' && meta.arm_sha256 && meta.key !== resumeKey({ armSha: meta.arm_sha256, model: meta.model, inputHash: meta.input_hash, arm: meta.arm, rep: meta.rep })) { problems++; out(`MISMATCH ${dir}: the key in meta.json is not the key of this run`); continue; }
       const eventsText = text(`${dir}/events.jsonl`) ?? '';
       if (meta.usd_source === 'omp') { const c = parseEvents(eventsText).costReported; if (c === null || Math.abs(c - meta.usd) > 1e-9) { problems++; out(`MISMATCH ${dir}: cost in meta.json differs from the event stream`); } }
-      const outcome = { ...scoreInput(kase, truth, toScoreRun({ meta, eventsText, draft: text(`bench/cases/${meta.case}/workspace/${DRAFT}`) }), published.scoring), arm: meta.arm, rep: meta.rep };
+      const outcome = withRetries({ ...scoreInput(kase, truth, toScoreRun({ meta, eventsText, draft: text(`bench/cases/${meta.case}/workspace/${DRAFT}`) }), published.scoring), arm: meta.arm, rep: meta.rep }, meta);
       const id = `${meta.model}|${meta.case}|${meta.arm}|${meta.rep}`;
       seen.add(id);
       const d = firstDiff(outcomeOf.get(id) ?? null, outcome, dir);
@@ -1274,6 +1325,8 @@ const USAGE = `Paydirt benchmark harness
                                 [--allow-core-change]  go on although raw-arm runs are stored under another core hash
   node bench/bench.mjs score    [--run-id <id>] [--models a,b] [--cases <glob>] [--repeats N] [--out <file>] [--any-protocol]
   node bench/bench.mjs publish  [--run-id <id>] [--release <name>] [--out-dir <dir>] [--salts <file>] [--allow-incomplete]
+                                [--harness-commit <sha>]   the commit that holds the harness, instead of plan.json's
+                                [--release-notes <file>]   instead of bench/release-notes/<release>.json
   node bench/bench.mjs verify   [--results <latest.json>] [--archive <paydirt-<release>-public.tar.gz>]
   node bench/bench.mjs freeze   [--no-engine] [--dry-run]   record the prompt and harness file hashes, the product text of every
                                 profile arm and the hashes in protocol.json. --no-engine leaves the product texts as they are;

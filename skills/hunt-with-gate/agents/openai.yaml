@@ -1,0 +1,5 @@
+interface:
+  display_name: "Hunt with a gate"
+  short_description: "Gate a finding before any report is written"
+policy:
+  allow_implicit_invocation: false

@@ -63,6 +63,8 @@ export function classifyError(status, message) {
   if (code === 402 || /insufficient credits?|payment required|requires more credits|can only afford|negative balance/i.test(text)) return { kind: 'budget', retry: false, halt: 'all' };
   if (code === 401 || /invalid api key|no auth credentials|unauthorized|user not found|missing authentication/i.test(text)) return { kind: 'auth', retry: false, halt: 'all' };
   if (code === 404 || /no endpoints found|model not found|not a valid model|no allowed providers|unknown model|does not exist/i.test(text)) return { kind: 'unavailable', retry: false, halt: 'model' };
+  // An account-level gate (an attestation, a region, a terms acceptance) says nothing about the model.
+  if (code === 403 && /requires you to (?:complete|accept|confirm)|age confirmation|confirm at https?:\/\/|not available in your (?:region|country)|accept the terms/i.test(text)) return { kind: 'unavailable', retry: false, halt: 'model' };
   if ([408, 409, 425, 429].includes(code) || code >= 500 || /rate.?limit|overloaded|timed? ?out|ECONN|ENOTFOUND|EAI_AGAIN|ETIMEDOUT|socket|network|fetch failed|terminated|connection|stream (?:ended|closed|error)|upstream|provider returned error|temporarily|try again/i.test(text)) return { kind: 'infra', retry: true, halt: null };
   return { kind: 'error', retry: false, halt: null };
 }

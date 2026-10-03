@@ -1,0 +1,7 @@
+{
+  "not_run": {
+    "openai/gpt-oss-120b": "Its hosts returned the model's tool calls as plain text, so its runs produced no answer to score.",
+    "meta/muse-spark-1.3": "OpenRouter serves it only to accounts that have made an age confirmation, which the benchmark account has not made."
+  },
+  "notes": []
+}

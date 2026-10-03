@@ -353,6 +353,9 @@ export function aggregate(input) {
     const efforts = mode(seen.map((o) => o.effort).filter((v) => typeof v === 'string'));
     const providers = mode(seen.flatMap((o) => o.providers ?? []));
     const totalUsd = seen.reduce((s, o) => s + (typeof o.usd === 'number' ? o.usd : 0), 0);
+    // attempts of the counted runs that failed for infrastructure reasons and were made again;
+    // only runs stored with their attempt record carry the count, and without any the field is left out
+    const retried = seen.filter((o) => Number.isInteger(o.infra_retries));
     return {
       slug: model.slug,
       name: model.name ?? model.slug,
@@ -368,6 +371,7 @@ export function aggregate(input) {
       run_tier: model.run_tier ?? null,
       complete: Object.values(arms).every((a) => a.unresolved === 0),
       usd_total: round(totalUsd, 6),
+      ...(retried.length ? { infra_retries: retried.reduce((n, o) => n + o.infra_retries, 0) } : {}),
       arms,
       lift,
       detail: `models/${modelFile(model.slug)}`,
@@ -423,9 +427,56 @@ export function aggregate(input) {
     pairs: pairs.map((p) => ({ pair: p.pair, family: p.family, visibility: p.visibility, author: p.author, cases: p.cases })),
     commitments: input.meta?.commitments ?? [],
     downloads: input.meta?.downloads ?? null,
+    // models of the protocol's tiers with no counted answer, and the release's own notes (see notRun)
+    ...(Array.isArray(input.meta?.not_run) ? { not_run: input.meta.not_run } : {}),
+    ...(Array.isArray(input.meta?.notes) ? { notes: input.meta.notes } : {}),
     picks,
     models,
   };
+}
+
+/** The reason a model of the protocol's tiers is listed as not run when the release notes give none. */
+export const NOT_RUN_REASON = "The release's credit did not reach it.";
+
+/**
+ * Every model of the protocol's tiers that has no counted answer in the release, in run order:
+ * [{ slug, name, tier, reason }]. A counted answer is an outcome that is neither missing nor an
+ * unresolved infrastructure failure, on any arm.
+ *   tiers    protocol.tiers ({ "1": [slug, ...], ... })
+ *   models   [{ slug, outcomes }] of the release
+ *   reasons  { slug: sentence } from the release notes; NOT_RUN_REASON otherwise
+ *   names    { slug: display name } where one is known (the plan); the slug otherwise
+ */
+export function notRun({ tiers = {}, models = [], reasons = {}, names = {} } = {}) {
+  const answered = new Set(models.filter((m) => (m.outcomes ?? []).some((o) => !UNRESOLVED.includes(o.failure))).map((m) => m.slug));
+  const list = [];
+  for (const [tier, slugs] of Object.entries(tiers).sort(([a], [b]) => Number(a) - Number(b))) {
+    for (const slug of slugs ?? []) {
+      if (answered.has(slug) || list.some((entry) => entry.slug === slug)) continue;
+      list.push({ slug, name: names[slug] ?? slug, tier: Number(tier), reason: reasons[slug] ?? NOT_RUN_REASON });
+    }
+  }
+  return list;
+}
+
+/**
+ * Read a release-notes file: { "not_run": { "<slug>": "<one short sentence>" }, "notes": ["<sentence>", ...] }.
+ * Both keys are optional. Throws on any other shape, so a typo cannot publish silently.
+ */
+export function parseReleaseNotes(text, where = 'release notes') {
+  if (text === null || text === undefined) return { not_run: {}, notes: [] };
+  let value;
+  try { value = JSON.parse(text); } catch (error) { throw new Error(`${where} is not JSON: ${error.message}`); }
+  if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error(`${where} must be an object with "not_run" and/or "notes"`);
+  const extra = Object.keys(value).filter((k) => k !== 'not_run' && k !== 'notes');
+  if (extra.length) throw new Error(`${where} has unknown key(s): ${extra.join(', ')}`);
+  const reasons = value.not_run ?? {};
+  if (!reasons || typeof reasons !== 'object' || Array.isArray(reasons) || Object.values(reasons).some((v) => typeof v !== 'string' || !v.trim())) {
+    throw new Error(`${where}: "not_run" must map model slugs to one non-empty sentence each`);
+  }
+  const notes = value.notes ?? [];
+  if (!Array.isArray(notes) || notes.some((v) => typeof v !== 'string' || !v.trim())) throw new Error(`${where}: "notes" must be a list of non-empty sentences`);
+  return { not_run: Object.fromEntries(Object.entries(reasons).map(([k, v]) => [k, v.trim()])), notes: notes.map((v) => v.trim()) };
 }
 
 /** Rebuild aggregate()'s input from a published results object plus its per-model detail files. */
@@ -436,6 +487,7 @@ export function aggregateInputFromPublished(results, details) {
       release: results.release, run_id: results.run_id, protocol_sha256: results.protocol_sha256, ...(results.hashes ? { hashes: results.hashes } : {}), harness_commit: results.harness_commit,
       omp_version: results.omp_version, generated_at: results.generated_at, prices_at: results.prices_at, repeats: results.repeats,
       thinking: results.thinking ?? null, commitments: results.commitments, downloads: results.downloads,
+      ...(Array.isArray(results.not_run) ? { not_run: results.not_run } : {}), ...(Array.isArray(results.notes) ? { notes: results.notes } : {}),
     },
     scoring: results.scoring,
     arms: results.arms,

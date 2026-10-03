@@ -95,3 +95,16 @@ jobs:
         run: npm test
       - name: Check the MCP download matches the package
         run: node ../scripts/build-mcp.mjs --check
+
+  pack:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Check the skills match the engine they are built from
+        run: node scripts/build-pack.mjs --check
+      - name: Test the skills and the plugin manifests
+        run: node --test pack/tests/*.test.mjs

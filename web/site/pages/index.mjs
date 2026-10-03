@@ -44,6 +44,7 @@ import { LIMITS } from '../../public/review-core.mjs';
 import { EXAMPLE, exampleShot } from '../social/example.mjs';
 import { LEADERBOARDS, STAGES, VERDICTS } from './method/_shared.mjs';
 import { TOOLS } from './tools/_shared.mjs';
+import { BENCH_TEASER, BENCH_TEASER_STYLES } from './benchmark/_teaser.mjs';
 
 const LASTMOD = '2026-10-03';
 const DEV_BUILD = process.argv.includes('--dev');
@@ -468,7 +469,7 @@ const questions = html`
 // ---------------------------------------------------------------------------
 
 const body = html`
-${hero}
+${hero}${BENCH_TEASER}
 ${howItWorks}
 ${workbenchSection()}
 ${gauntlet}
@@ -486,6 +487,7 @@ const styles = unique([
   ...lists(workbenchModule, 'styles'),
   ...lists(accountModule, 'styles'),
   ...(publicFile('/css/workbench.css') ? ['/css/workbench.css'] : []),
+  ...BENCH_TEASER_STYLES,
 ]);
 const scripts = unique(['/app/main.mjs', ...lists(workbenchModule, 'scripts'), ...lists(accountModule, 'scripts')]);
 

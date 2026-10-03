@@ -295,6 +295,23 @@ ${PROMPTS.map(
 </div>`;
 
 // ---------------------------------------------------------------------------
+// Agent pack: the repository is a plugin and a skills source (pack/, skills/)
+// ---------------------------------------------------------------------------
+
+const REPO_SLUG = 'bountyoperator/bounty-operator';
+const PROVIDER_KEY_VAR = 'BOUNTY_OPERATOR_PROVIDER_KEY';
+
+const pack = html`
+<div class="prose">
+<p>${inline('The repository is also a Claude Code plugin with five skills. `challenge-report`, `solidity-review` and `code-security-review` carry the three core methods and run on your agent’s own model with no account. `gauntlet` runs the eight stages through this server. `hunt-with-gate` runs only when you call it by name: it checks a finding before any report is written and never submits anything.')}</p>
+</div>
+${shell(`claude plugin marketplace add ${REPO_SLUG}\nclaude plugin install bounty-operator@bounty-operator`, 'Install the Claude Code plugin')}
+<div class="prose">
+<p>${inline(`The plugin adds this server too. It reads \`${TOKEN_VAR}\` and \`${PROVIDER_KEY_VAR}\` from the environment you start Claude Code in; both can stay unset for the core skills. Codex, Cursor and other agents take the skills with one command and the server with the commands above:`)}</p>
+</div>
+${shell(`npx skills add ${REPO_SLUG}`, 'Install the skills in any agent')}`;
+
+// ---------------------------------------------------------------------------
 // Account token
 // ---------------------------------------------------------------------------
 
@@ -464,6 +481,7 @@ const body = docPage({
     { id: 'tools', title: 'The tools it exposes', label: 'Tools', body: tools, prose: false },
     { id: 'hosted', title: 'Core and hosted profiles', body: hosted, prose: false },
     { id: 'prompts', title: 'Three slash commands', label: 'Slash commands', body: prompts, prose: false },
+    { id: 'skills', title: 'Skills and the plugin', label: 'Agent pack', body: pack, prose: false },
     { id: 'token', title: 'What needs an account token', label: 'Account token', body: token, prose: false },
     { id: 'permissions', title: 'What the server can reach', label: 'Permissions', body: permissions, prose: false },
     { id: 'errors', title: 'When a call fails', label: 'Failed calls', body: errors, prose: false },

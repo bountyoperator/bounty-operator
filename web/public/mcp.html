@@ -178,7 +178,7 @@
 <div class="docs-body">
 <nav class="docs-toc" aria-label="On this page">
 <p class="meta">On this page</p>
-<ul><li><a href="#tools">Tools</a></li><li><a href="#hosted">Core and hosted profiles</a></li><li><a href="#prompts">Slash commands</a></li><li><a href="#token">Account token</a></li><li><a href="#permissions">Permissions</a></li><li><a href="#errors">Failed calls</a></li><li><a href="#faq">Questions</a></li></ul>
+<ul><li><a href="#tools">Tools</a></li><li><a href="#hosted">Core and hosted profiles</a></li><li><a href="#prompts">Slash commands</a></li><li><a href="#skills">Agent pack</a></li><li><a href="#token">Account token</a></li><li><a href="#permissions">Permissions</a></li><li><a href="#errors">Failed calls</a></li><li><a href="#faq">Questions</a></li></ul>
 </nav>
 <div class="docs-content">
 
@@ -279,6 +279,20 @@
 <p><code>challenge-report</code> and <code>solidity-review</code> prepare the review with <code>prepare_review</code>, have your agent’s own model answer and end with <code>build_packet</code>, so both work with no account.</p>
 <p><code>gauntlet</code> lists the eight stages with the tool that runs each one. Seven are hosted and run through <code>run_review</code>. The report stage is a core profile, so your agent’s own model answers it from <code>prepare_review</code>. The run needs an account token and your provider key, and it uses seven hosted reviews. Free covers one hosted review per UTC day, so a full run takes Operator. On the local server the prompt starts from <code>run_gauntlet_plan</code>.</p>
 </div>
+</section><section class="docs-section" aria-labelledby="skills">
+<h2 class="docs-section__title" id="skills">Skills and the plugin</h2>
+
+<div class="prose">
+<p>The repository is also a Claude Code plugin with five skills. <code>challenge-report</code>, <code>solidity-review</code> and <code>code-security-review</code> carry the three core methods and run on your agent’s own model with no account. <code>gauntlet</code> runs the eight stages through this server. <code>hunt-with-gate</code> runs only when you call it by name: it checks a finding before any report is written and never submits anything.</p>
+</div>
+<figure class="code code--wrap"><figcaption class="code__bar"><span class="code__name">Terminal</span><button class="code__copy" type="button" data-copy><span class="icon icon--copy" aria-hidden="true"></span><span data-copy-label>Copy</span></button></figcaption><pre class="code__pre" tabindex="0" role="region" aria-label="Install the Claude Code plugin"><code><span class="code__line">claude plugin marketplace add bountyoperator/bounty-operator
+</span><span class="code__line">claude plugin install bounty-operator@bounty-operator
+</span></code></pre></figure>
+<div class="prose">
+<p>The plugin adds this server too. It reads <code>BOUNTY_OPERATOR_TOKEN</code> and <code>BOUNTY_OPERATOR_PROVIDER_KEY</code> from the environment you start Claude Code in; both can stay unset for the core skills. Codex, Cursor and other agents take the skills with one command and the server with the commands above:</p>
+</div>
+<figure class="code code--wrap"><figcaption class="code__bar"><span class="code__name">Terminal</span><button class="code__copy" type="button" data-copy><span class="icon icon--copy" aria-hidden="true"></span><span data-copy-label>Copy</span></button></figcaption><pre class="code__pre" tabindex="0" role="region" aria-label="Install the skills in any agent"><code><span class="code__line">npx skills add bountyoperator/bounty-operator
+</span></code></pre></figure>
 </section><section class="docs-section" aria-labelledby="token">
 <h2 class="docs-section__title" id="token">What needs an account token</h2>
 

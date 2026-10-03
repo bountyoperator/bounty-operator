@@ -1,5 +1,44 @@
 # Changelog
 
+## Unreleased
+
+Skills and Claude Code plugin
+
+- The repository is a Claude Code plugin and its own marketplace. Five skills:
+  `challenge-report`, `solidity-review`, `code-security-review`, `gauntlet`
+  and `hunt-with-gate`. They install with `claude plugin install`,
+  `npx skills add` or `omp plugin install`. The plugin adds the remote MCP
+  endpoint and reads `BOUNTY_OPERATOR_TOKEN` and `BOUNTY_OPERATOR_PROVIDER_KEY`.
+- `scripts/build-pack.mjs` writes the three review skills from the engine and
+  `--check` fails on drift. It refuses to build when a hosted profile's method
+  is in reach.
+- `/.well-known/agent-skills/index.json` lists the five skills with their
+  SHA-256, so `npx skills add https://bountyoperator.com` installs them.
+- `/mcp` has a section on the skills and the plugin.
+
+Site
+
+- On narrow screens the header's scrolling nav fades at the right edge, and the
+  current page's link scrolls into view.
+
+Paydirt benchmark
+
+- `/benchmark`: the Paydirt leaderboard, generated from the published results
+  file. Score with its 95% interval and tier, recall, fool's-gold rate,
+  challenge accuracy, failure rate, cost per run, median time and the
+  reasoning effort sent; picks per task, profile lift, the outcome of every
+  model on every held pair, the models not run and why, and the commands that
+  check every number. Columns sort and hide in the browser.
+- `/benchmark/method`: `bench/METHOD.md`, rendered when the site is built.
+- The home page shows the first three places, with every model tied with the
+  third, under the proof strip. Neither page, the strip nor the nav item exists
+  until results are published.
+- `bench.mjs publish` writes `not_run` (every model of the release's tiers
+  with no counted answer, with a reason from `bench/release-notes/<release>.json`
+  or the default) and `notes`, counts the infrastructure retries of each
+  model's counted runs (`infra_retries`), and takes `--harness-commit <sha>`.
+  `verify` recomputes all three.
+
 ## 0.7.0 — 2026-10-03
 
 Reviews
