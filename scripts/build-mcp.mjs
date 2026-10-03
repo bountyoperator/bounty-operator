@@ -15,7 +15,7 @@
 // answers an MCP handshake. The package ships the core profiles only: the
 // installed server must refuse to prepare a hosted one.
 
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -81,6 +81,17 @@ try {
   const files = await verifyTarball(packed.bytes);
   await smokeTest(packed.path, directory, packed.version);
   const versioned = packed.filename;
+  // Keep earlier versioned downloads and their checksums available when the
+  // unversioned alias advances. A pinned URL must keep serving the same bytes.
+  const earlier = [];
+  for (const name of (await readdir(OUTPUT).catch((error) => {
+    if (error.code === 'ENOENT') return [];
+    throw error;
+  })).sort()) {
+    if (name !== versioned && /^bounty-operator-mcp-\d+\.\d+\.\d+\.tgz$/.test(name)) {
+      earlier.push([name, await readFile(join(OUTPUT, name))]);
+    }
+  }
 
   if (check) {
     // The comparison is by content: two machines can gzip the same files into different bytes.
@@ -97,7 +108,7 @@ try {
       const [built, served] = [digest(files), digest(readTarball(published))];
       const changed = [...new Set([...Object.keys(built), ...Object.keys(served)])].filter((path) => built[path] !== served[path]);
       if (changed.length) problems.push(`${versioned} is stale: ${changed.join(', ')}`);
-      if (sums.toString('utf8') !== sumsFor([[versioned, published], [LATEST, latest]])) problems.push(`${SUMS} does not list the hashes of the two tarballs`);
+      if (sums.toString('utf8') !== sumsFor([[versioned, published], [LATEST, latest], ...earlier])) problems.push(`${SUMS} does not list the hashes of the current and retained tarballs`);
     }
 
     if (problems.length) {
@@ -110,7 +121,7 @@ try {
     await mkdir(OUTPUT, { recursive: true });
     await writeFile(join(OUTPUT, versioned), packed.bytes);
     await writeFile(join(OUTPUT, LATEST), packed.bytes);
-    await writeFile(join(OUTPUT, SUMS), sumsFor([[versioned, packed.bytes], [LATEST, packed.bytes]]));
+    await writeFile(join(OUTPUT, SUMS), sumsFor([[versioned, packed.bytes], [LATEST, packed.bytes], ...earlier]));
 
     console.log(`MCP download: ${versioned}, ${files.size} files, ${packed.bytes.length} bytes`);
     for (const path of [...files.keys()].sort()) console.log(`  ${path.slice('package/'.length)}`);
