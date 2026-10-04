@@ -110,7 +110,7 @@ const LINE_RANGE = `[\`*]{0,3}(?::L?|#L)${LINE_NUMBER}(?:\\s?[-\\u2012-\\u2015]\
 // Further ranges after the first, as in ":64-67,90,120-125".
 const MORE_RANGES = '((?:,L?\\d{1,9}(?!\\d)(?:[-\\u2012-\\u2015]L?\\d{1,9}(?!\\d))?)*)';
 const TAIL_RANGE = /,L?(\d{1,9})(?:[-\u2012-\u2015]L?(\d{1,9}))?/g;
-const GENERIC_REF = `input-\\d{1,3}\\/${LABEL_CHARS}{1,300}`;
+const GENERIC_REF = `input-\\d{1,3}(?:\\/${LABEL_CHARS}{1,300})?`;
 const INPUT_PREFIX = /^input-\d{1,3}\//;
 // A reference never starts in the middle of a longer path or word.
 const REF_START = '(?<![A-Za-z0-9_./-])';
@@ -669,17 +669,18 @@ function labelAliases(labels) {
 
 /**
  * The label a citation means when it keeps the input number and shortens the
- * path: `input-1/Vault.sol` for `input-1/src/vault/Vault.sol`. An input number
- * names one file, so the citation resolves when what it wrote is the end of
- * that file's path. Anything else is returned unchanged and reported.
+ * path: `input-1/Vault.sol` or just `input-1` for `input-1/src/vault/Vault.sol`.
+ * An input number must name exactly one file. A remaining path must be the
+ * end of that file's path. Anything else stays unchanged and is reported.
  */
 function resolveShortened(cited, known) {
   if (known.includes(cited)) return cited;
-  const prefix = cited.match(INPUT_PREFIX);
+  const prefix = cited.match(/^input-\d{1,3}(?=\/|$)/);
   if (!prefix) return cited;
-  const owners = known.filter((label) => label.startsWith(prefix[0]));
+  const owners = known.filter((label) => label.startsWith(`${prefix[0]}/`));
   if (owners.length !== 1) return cited;
-  return owners[0].endsWith(`/${cited.slice(prefix[0].length)}`) ? owners[0] : cited;
+  if (cited === prefix[0]) return owners[0];
+  return owners[0].endsWith(`/${cited.slice(prefix[0].length + 1)}`) ? owners[0] : cited;
 }
 
 /** Every range of one match: the first, and any that follow it after a comma. */
@@ -697,7 +698,7 @@ function matchedRanges(first, last, tail) {
  * punctuation exactly, and to resolve a citation that leaves the `input-N/`
  * prefix out (`src/Vault.sol:64`, `Vault.sol:64`) when only one supplied file
  * answers to that name, or keeps the prefix and shortens the path after it
- * (`input-1/Vault.sol:64` for `input-1/src/Vault.sol`).
+ * (`input-1/Vault.sol:64` or `input-1:64` for `input-1/src/Vault.sol`).
  *
  * @param {unknown} text
  * @param {string[]} [labels]

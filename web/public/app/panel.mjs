@@ -42,7 +42,7 @@ import { account, currentAccount, planOf, streamReview, subscribeAccount, track 
 import { VERDICT_LABELS, openExampleRun, panelFileName, panelResult, seatRecord } from './dossier.mjs';
 import { EVENTS } from './events.mjs';
 import { compactFile, effectiveMode, extraInputs, liveBox, preflight, signatureOf, upgradeNote } from './gauntlet.mjs';
-import { checkCredentials, heldKey, holdKey } from './providers-ui.mjs';
+import { checkCredentials, heldKey, holdKey, modelUsageNote } from './providers-ui.mjs';
 import { ensureSignedIn, failureFor } from './run.mjs';
 import { EXPORT_PROVIDER, readSession, removeSession, workbench, writeSession } from './state.mjs';
 import { button, clear, el, formatElapsed, icon, notice, on, qs, setBusy } from './ui.mjs';
@@ -273,6 +273,7 @@ function keyedAbove() {
 
 function seatRow(seat, index) {
   const provider = providerOf(seat.provider);
+  const usage = modelUsageNote(provider.id, seat.model || provider.defaultModel);
   const n = index + 1;
   const listId = `wb-seat-${index}-models`;
   return el('div', { class: 'rn-seat', dataset: { seat: index } },
@@ -286,7 +287,7 @@ function seatRow(seat, index) {
       list: listId,
       placeholder: provider.defaultModel,
       'aria-label': `Model ${n}`,
-      'aria-describedby': `wb-seat-${index}-error`,
+      'aria-describedby': `wb-seat-${index}-usage wb-seat-${index}-error`,
       spellcheck: 'false',
       autocomplete: 'off',
       autocapitalize: 'off',
@@ -313,6 +314,7 @@ function seatRow(seat, index) {
       dataset: { seatKey: provider.id },
       value: heldKey(provider.id),
     }),
+    el('p', { class: 'help rn-seat__usage', id: `wb-seat-${index}-usage`, text: usage, hidden: !usage }),
     el('p', { class: 'field-error rn-seat__error', id: `wb-seat-${index}-error`, role: 'alert', hidden: true }));
 }
 
@@ -713,6 +715,10 @@ export function initPanel() {
     const index = Number(control.dataset.seatModel);
     pristine = false;
     seats = seats.map((seat, at) => (at === index ? { ...seat, model: control.value.trim() } : seat));
+    const provider = providerOf(seats[index].provider);
+    const usage = modelUsageNote(provider.id, seats[index].model || provider.defaultModel);
+    const hint = qs(`#wb-seat-${index}-usage`);
+    if (hint) { hint.textContent = usage; hint.hidden = !usage; }
     control.removeAttribute('aria-invalid');
     seatError(index, '');
     saveSeats();

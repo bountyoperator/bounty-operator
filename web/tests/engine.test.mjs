@@ -481,6 +481,22 @@ describe('prepareReview', () => {
     assert.deepEqual(splitLines(''), []);
   });
 
+  test('citation boundaries count physical lines, including one-line paragraphs and empty files', async () => {
+    const prepared = await prepareReview([
+      file('First sentence. Second sentence. Third sentence.\n', 'one line.md'),
+      file('first\r\n\r\nthird\r\n', 'multi.txt'),
+      file('', 'empty.txt'),
+    ], '', 'report');
+    const text = prepared.messages[1].content;
+    const index = text.slice(text.indexOf('## Citation boundaries'));
+    assert.match(index, /input-1\/one line\.md: only line 1 exists\./);
+    assert.match(index, /input-2\/multi\.txt: lines 1 through 3\./);
+    assert.match(index, /input-3\/empty\.txt: empty file; no citable lines\./);
+    assert.match(index, /Never invent extra line numbers for its sentences/);
+    assert.match(index, /If evidence is missing, say what is missing/);
+    assert.ok(text.indexOf('## Citation boundaries') > text.lastIndexOf('```'));
+  });
+
   test('the system message is the contract, the profile method and the output format', async () => {
     const prepared = await prepareReview(files, '', 'solidity');
     const system = prepared.messages[0].content;
@@ -504,7 +520,8 @@ describe('prepareReview', () => {
     assert.ok(system.indexOf('Output exactly the structure below') < system.indexOf('# Review\nVerdict:'));
 
     // The last file is untrusted, so it does not get the last word.
-    assert.ok(user.endsWith('```\n\nEnd of files. Write the review now, starting at "# Review".'));
+    assert.ok(user.indexOf('## Citation boundaries') > user.lastIndexOf('```'));
+    assert.ok(user.endsWith('End of files. Write the review now, starting at "# Review".'));
 
     const exported = promptExport(prepared);
     assert.ok(exported.includes('or none>\n\n---\n\n## Request\n'));
@@ -1260,6 +1277,26 @@ describe('providers', () => {
     });
   });
 
+  test('affected OpenRouter models get room for reasoning and a final answer in both call modes', async () => {
+    for (const model of ['google/gemini-3.8-flash', 'qwen/qwen3.8-27b', 'qwen/qwen3.8-max-0902', 'tencent/hy4-preview', 'z-ai/glm-5.3']) {
+      for (const stream of [false, true]) {
+        await withFetch(() => json(chatAnswer()), async (calls) => {
+          const request = { provider: 'openrouter', model, apiKey: API_KEY, prepared: PREPARED };
+          if (stream) await collect(await providerStream(request));
+          else await providerReview(request);
+          assert.equal(calls.length, 1);
+          assert.equal(calls[0].body.max_tokens, 64000, model);
+          assert.equal(calls[0].body.reasoning, undefined, 'provider reasoning defaults are preserved');
+          assert.deepEqual(calls[0].body.messages, PREPARED.messages);
+        });
+      }
+    }
+    await withFetch(() => json(chatAnswer()), async (calls) => {
+      await providerReview({ provider: 'openrouter', model: 'qwen/unknown-model', apiKey: API_KEY, prepared: PREPARED });
+      assert.equal(calls[0].body.max_tokens, 16000, 'unverified model ids retain the existing allowance');
+    });
+  });
+
   test('every provider lists current models, and OpenRouter only verified slugs', () => {
     assert.deepEqual(Object.fromEntries(PROVIDERS.map((entry) => [entry.id, entry.models.map((model) => model.id)])), {
       openrouter: ['openai/gpt-6.1-sol', 'anthropic/claude-sonnet-5.5', 'deepseek/deepseek-v4.1-flash', 'anthropic/claude-opus-5.5', 'openai/gpt-6-astra', 'google/gemini-3.8-flash', 'x-ai/grok-4.7', 'z-ai/glm-5.3-flash', 'openai/gpt-6-luna'],
@@ -1548,7 +1585,7 @@ describe('providers', () => {
     assert.match((await run(new Response('<html>'))).message, /^Provider returned a response that is not valid JSON/);
     assert.match((await run(json({ choices: [] }))).message, /^Provider did not return a text review/);
     assert.match((await run(json(chatAnswer({ choices: [{ message: { content: '  ' }, finish_reason: 'stop' }] })))).message, /^Provider did not return a text review/);
-    assert.match((await run(json(chatAnswer({ choices: [{ message: { content: '' }, finish_reason: 'length' }] })))).message, /^Provider returned no review text: the model spent the whole 16000-token output limit/);
+    assert.match((await run(json(chatAnswer({ choices: [{ message: { content: '' }, finish_reason: 'length' }] })))).message, /^Provider returned no review text before the answer was cut short/);
     assert.match((await run(json({ error: { message: `No credits for ${API_KEY}`, code: 402 } }))).message, /^Provider returned an error: No credits for \[key\]/);
     assert.match((await run(new Response('x'.repeat(2000001)))).message, /^Provider response exceeded the 2 MB limit/);
     assert.match((await run(json({ type: 'error', error: { message: 'bad' } }), 'anthropic')).message, /^Provider returned an error: bad/);
@@ -1772,10 +1809,10 @@ describe('providers', () => {
     assert.equal(noBody.kind, 'response');
 
     // The model reasoned until the cap and wrote nothing.
-    assert.match(await failure(dataLines({ choices: [{ delta: {}, finish_reason: 'length' }] }, '[DONE]')), /^Provider returned no review text: the model spent the whole 16000-token output limit/);
+    assert.match(await failure(dataLines({ choices: [{ delta: {}, finish_reason: 'length' }] }, '[DONE]')), /^Provider returned no review text before the answer was cut short/);
     assert.match(
       await failure(anthropicEvents({ type: 'message_delta', delta: { stop_reason: 'max_tokens' }, usage: { output_tokens: 16000 } }, { type: 'message_stop' }), 'anthropic'),
-      /^Provider returned no review text: the model spent the whole 16000-token output limit/,
+      /^Provider returned no review text before the answer was cut short/,
     );
   });
 
@@ -2616,6 +2653,28 @@ describe('path numbering', () => {
 });
 
 describe('references', () => {
+  test('an input number alone resolves uniquely and still checks every cited line', () => {
+    const manifest = [{ label: 'input-1/draft.md', lines: 4 }, { label: 'input-2/My Notes.md', lines: 1 }];
+    const labels = manifest.map(file => file.label);
+    assert.deepEqual(extractRefs('See `input-1:2-3` and input-2#L1,1.', labels), [
+      { label: 'input-1/draft.md', start: 2, end: 3 },
+      { label: 'input-2/My Notes.md', start: 1, end: 1 },
+      { label: 'input-2/My Notes.md', start: 1, end: 1 },
+    ]);
+    assert.deepEqual(checkRefs({ raw: 'input-2:1-2,0; input-9:1; input-1:4-2' }, manifest), [
+      { ref: { label: 'input-2/My Notes.md', start: 1, end: 2 }, problem: 'line-out-of-range' },
+      { ref: { label: 'input-2/My Notes.md', start: 0, end: 0 }, problem: 'line-out-of-range' },
+      { ref: { label: 'input-9', start: 1, end: 1 }, problem: 'unknown-file' },
+      { ref: { label: 'input-1/draft.md', start: 4, end: 2 }, problem: 'line-out-of-range' },
+    ]);
+    assert.deepEqual(extractRefs('input-1:2'), [{ label: 'input-1', start: 2, end: 2 }]);
+    assert.deepEqual(extractRefs('xinput-1:2 src/input-1:2 input-1000:2 input-1:1234567890', labels), []);
+    const ambiguous = [...manifest, { label: 'input-1/other.md', lines: 4 }];
+    assert.equal(checkRefs({ raw: 'input-1:2' }, ambiguous)[0].problem, 'unknown-file');
+    const finding = parseReview('# Review\nVerdict: drop\n## F-1: display\nLocation: input-1:2-3', { labels }).findings[0];
+    assert.deepEqual(finding.locations, [{ label: 'input-1/draft.md', start: 2, end: 3 }]);
+  });
+
   test('extractRefs reads single lines, ranges and the common variants', () => {
     const text = 'See input-1/src/Vault.sol:64-67, `input-2/a.ts:9`, (input-3/x.py:L5-L8); **input-1/src/Vault.sol:120\u2013125** and input-12/deep/dir/file.rs:7.';
     assert.deepEqual(extractRefs(text), [

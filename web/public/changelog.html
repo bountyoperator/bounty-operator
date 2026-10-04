@@ -49,20 +49,23 @@
 <header class="docs-head">
 <nav class="breadcrumbs" aria-label="Breadcrumb"><ol><li><a href="/">Bounty Operator</a></li><li aria-current="page">Changelog</li></ol></nav>
 <h1>Bounty Operator changelog</h1>
-<p class="lede">Every release, newest first, with its date. The current version is 0.7.3.</p>
-<p class="meta docs-head__meta">9 releases · latest <time datetime="2026-10-03">3 October 2026</time></p>
+<p class="lede">Every release, newest first, with its date. The current version is 0.7.4.</p>
+<p class="meta docs-head__meta">10 releases · latest <time datetime="2026-10-04">4 October 2026</time></p>
 
 </header>
 
 <div class="docs-body">
 <nav class="docs-toc" aria-label="On this page">
 <p class="meta">On this page</p>
-<ul><li><a href="#v0-7-3">0.7.3</a></li><li><a href="#v0-7-2">0.7.2</a></li><li><a href="#v0-7-1">0.7.1</a></li><li><a href="#v0-7-0">0.7.0</a></li><li><a href="#v0-6-0">0.6.0</a></li><li><a href="#v0-5-0">0.5.0</a></li><li><a href="#v0-3-0">0.3.0</a></li><li><a href="#v0-2-0">0.2.0</a></li><li><a href="#v0-1-0">0.1.0</a></li></ul>
+<ul><li><a href="#v0-7-4">0.7.4</a></li><li><a href="#v0-7-3">0.7.3</a></li><li><a href="#v0-7-2">0.7.2</a></li><li><a href="#v0-7-1">0.7.1</a></li><li><a href="#v0-7-0">0.7.0</a></li><li><a href="#v0-6-0">0.6.0</a></li><li><a href="#v0-5-0">0.5.0</a></li><li><a href="#v0-3-0">0.3.0</a></li><li><a href="#v0-2-0">0.2.0</a></li><li><a href="#v0-1-0">0.1.0</a></li></ul>
 </nav>
 <div class="docs-content">
 
-<section class="docs-section" aria-labelledby="v0-7-3">
-<h2 class="docs-section__title" id="v0-7-3">0.7.3<span class="release__date"><time datetime="2026-10-03">3 October 2026</time></span><span class="release__latest"><span class="chip" data-tone="observed">Latest</span></span></h2>
+<section class="docs-section" aria-labelledby="v0-7-4">
+<h2 class="docs-section__title" id="v0-7-4">0.7.4<span class="release__date"><time datetime="2026-10-04">4 October 2026</time></span><span class="release__latest"><span class="chip" data-tone="observed">Latest</span></span></h2>
+<div class="prose"><h3 class="release__group">Review compatibility</h3><ul><li>Prepared reviews list every file&#39;s physical line boundaries. Wrapped text and sentences within a single numbered line do not create extra citable lines.</li><li>Citations such as <code>input-1:4</code> resolve to the one supplied file with that input number. Unknown, ambiguous and out-of-range locations remain flagged, and valid shorthand opens the cited source in the workbench.</li><li>Gemini 3.8 Flash, Qwen3.8 27B, Qwen3.8 Max 0902, HY4 Preview and GLM 5.3 on OpenRouter have a 64,000-token total output allowance, including reasoning. Their reasoning defaults are preserved. The model and panel controls disclose the larger allowance before a run; provider billing follows actual usage.</li><li>Empty responses report that no completed review was received. The Python preparer now counts an empty file as zero lines, matching the shared engine.</li><li>Published Paydirt results remain the original frozen measurements.</li></ul></div>
+</section><section class="docs-section" aria-labelledby="v0-7-3">
+<h2 class="docs-section__title" id="v0-7-3">0.7.3<span class="release__date"><time datetime="2026-10-03">3 October 2026</time></span></h2>
 <div class="prose"><h3 class="release__group">Reviews</h3><ul><li>OpenRouter defaults to GPT-6.1 Sol following checks of its report decisions and source references. DeepSeek V4.1 Flash remains a lower-cost option.</li><li>A new Panel starts with GPT-6.1 Sol, Claude Sonnet 5.5 and DeepSeek V4.1 Flash, with Sol selected for cross-examination. Existing model choices are preserved.</li></ul></div>
 </section><section class="docs-section" aria-labelledby="v0-7-2">
 <h2 class="docs-section__title" id="v0-7-2">0.7.2<span class="release__date"><time datetime="2026-10-03">3 October 2026</time></span></h2>

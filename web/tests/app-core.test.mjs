@@ -669,6 +669,21 @@ describe('result analysis', () => {
     assert.deepEqual(textBlocks(''), []);
   });
 
+  test('shorthand citations link to the supplied file and keep unknown locations visible', () => {
+    const labels = ['input-1/draft.md'];
+    assert.deepEqual(splitInline('See `input-1:2-3`, input-1:4 and input-9:1.', labels), [
+      { type: 'text', text: 'See ' },
+      { type: 'ref', ref: { label: 'input-1/draft.md', start: 2, end: 3 } },
+      { type: 'text', text: ', ' },
+      { type: 'ref', ref: { label: 'input-1/draft.md', start: 4, end: 4 } },
+      { type: 'text', text: ' and ' },
+      { type: 'ref', ref: { label: 'input-9', start: 1, end: 1 } },
+      { type: 'text', text: '.' },
+    ]);
+    const prose = 'xinput-1:2 src/input-1:2 input-1:1234567890';
+    assert.deepEqual(splitInline(prose, labels), [{ type: 'text', text: prose }]);
+  });
+
   test('the issue body, the manifest and the packet', async () => {
     const result = { review, manifest, profile: { id: 'report', name: 'Challenge a draft report' }, mode: 'bounty', provider: 'openrouter', model: 'anthropic/claude-sonnet-5.5', source: 'ai', timestamp: '2026-10-02T14:05:09.000Z' };
     const analysis = analyse(result);

@@ -76,10 +76,23 @@ class PrepareTests(unittest.TestCase):
     def test_files_are_sent_with_line_numbers_and_counted_in_the_manifest(self) -> None:
         source = "contract Vault {\r\n    uint256 total;\n}\n"
         prepared = prepare_text_review([("Vault.sol", source)], "", AIReviewConfig())
-        sent = json.loads(prepared.messages[1]["content"].split("\n", 1)[1])
+        sent = json.loads(prepared.messages[1]["content"].split("\n", 1)[1].split("\n\n## Citation boundaries", 1)[0])
         self.assertEqual(sent["label"], "input-1/Vault.sol")
         self.assertEqual(sent["content"], "1| contract Vault {\n2|     uint256 total;\n3| }")
         self.assertEqual(prepared.manifest[0]["lines"], 3)
+
+    def test_citation_boundaries_use_physical_lines_and_identify_empty_files(self) -> None:
+        prepared = prepare_text_review(
+            [("paragraph.md", "One sentence. Another sentence.\n"), ("multi.txt", "one\r\n\r\nthree\r\n"), ("empty.txt", "")],
+            "",
+            AIReviewConfig(),
+        )
+        index = prepared.messages[1]["content"].split("## Citation boundaries\n", 1)[1]
+        self.assertIn("input-1/paragraph.md: only line 1 exists.", index)
+        self.assertIn("input-2/multi.txt: lines 1 through 3.", index)
+        self.assertIn("input-3/empty.txt: empty file; no citable lines.", index)
+        self.assertEqual([entry["lines"] for entry in prepared.manifest], [1, 3, 0])
+        self.assertIn("Never invent extra line numbers for its sentences", index)
 
     def test_file_count_is_bounded(self) -> None:
         too_many = [(f"file-{index}.txt", "text") for index in range(51)]

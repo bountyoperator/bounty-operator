@@ -272,7 +272,7 @@ export function sectionShape(section) {
   return { kind: 'blocks', blocks: textBlocks(section.text) };
 }
 
-const REF_IN_TEXT = /input-\d{1,3}\/[^\s:;|,()[\]{}<>`'"*]{1,300}(?::L?|#L)\d{1,9}(?:\s?[-‒-―]\s?L?\d{1,9})?/g;
+const REF_IN_TEXT = /(?<![A-Za-z0-9_./-])input-\d{1,3}(?:\/[^\s:;|,()[\]{}<>`'"*]{1,300})?(?::L?|#L)\d{1,9}(?!\d)(?:\s?[-‒-―]\s?L?\d{1,9}(?!\d))?/g;
 const STRONG = /(\*\*[^*\n]+\*\*)/;
 
 /**
@@ -308,7 +308,9 @@ export function splitInline(text, labels = []) {
     if (part.length > 2 && part.startsWith('`') && part.endsWith('`')) {
       const inner = part.slice(1, -1);
       const refs = extractRefs(inner, labels);
-      const whole = refs.length === 1 && inner.trim().startsWith(refs[0].label);
+      const cited = inner.trim().match(REF_IN_TEXT);
+      const whole = refs.length === 1 && (inner.trim().startsWith(refs[0].label)
+        || (cited?.length === 1 && cited[0] === inner.trim()));
       if (whole) tokens.push({ type: 'ref', ref: refs[0] });
       else tokens.push({ type: 'code', text: inner });
     } else {

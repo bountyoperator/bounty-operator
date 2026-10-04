@@ -162,6 +162,7 @@ button.rn-pipe__stage:focus-visible {
 }
 
 .rn-seat__key,
+.rn-seat__usage,
 .rn-seat__error {
   grid-column: 2 / -1;
 }

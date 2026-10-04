@@ -457,6 +457,10 @@ const FAQ = [
     a: `The three core profiles: ${CORE_SENTENCE}. \`prepare_review\` returns their method and the request. Every other profile is hosted: \`prepare_review\` refuses it with \`hosted_profile\` and \`run_review\` runs it on the service, on your provider key.`,
   },
   {
+    q: 'How much output can a hosted model use?',
+    a: 'Most calls have a 16,000-token output allowance. On OpenRouter, Gemini 3.8 Flash, Qwen3.8 27B, Qwen3.8 Max 0902, HY4 Preview and GLM 5.3 have 64,000 tokens so reasoning has room to finish before the final answer. Their reasoning defaults are preserved. Your provider bills actual usage, including reasoning; the larger allowance can cost more. The direct Gemini endpoint uses its provider allowance.',
+  },
+  {
     q: 'How do I check the service before a long run?',
     a: '`GET https://bountyoperator.com/api/health` returns the version, `reviews` (whether hosted reviews are on) and `profiles`. `profiles` reads `hosted` when the service carries the full method of every hosted profile. A Worker built from the public repository reads `community`: it runs the hosted profiles on short stand-in instructions.',
   },

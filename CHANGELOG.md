@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.7.4 — 2026-10-04
+
+Review compatibility
+
+- Prepared reviews list every file's physical line boundaries. Wrapped text and
+  sentences within a single numbered line do not create extra citable lines.
+- Citations such as `input-1:4` resolve to the one supplied file with that input
+  number. Unknown, ambiguous and out-of-range locations remain flagged, and
+  valid shorthand opens the cited source in the workbench.
+- Gemini 3.8 Flash, Qwen3.8 27B, Qwen3.8 Max 0902, HY4 Preview and GLM 5.3 on
+  OpenRouter have a 64,000-token total output allowance, including reasoning.
+  Their reasoning defaults are preserved. The model and panel controls disclose
+  the larger allowance before a run; provider billing follows actual usage.
+- Empty responses report that no completed review was received. The Python
+  preparer now counts an empty file as zero lines, matching the shared engine.
+- Published Paydirt results remain the original frozen measurements.
+
 ## 0.7.3 — 2026-10-03
 
 Reviews

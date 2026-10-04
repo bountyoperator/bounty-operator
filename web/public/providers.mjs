@@ -4,6 +4,17 @@
 import { boundedBody } from './review-core.mjs';
 
 const OUTPUT_TOKENS = 16000;
+// Reasoning and the final answer share OpenRouter's output allowance. These
+// exact models exhausted 16k in native document checks and support at least 64k.
+// Keep their own reasoning defaults; give the answer room to finish.
+const EXTENDED_OUTPUT_TOKENS = 64000;
+const EXTENDED_OPENROUTER_MODELS = new Set([
+  'google/gemini-3.8-flash',
+  'qwen/qwen3.8-27b',
+  'qwen/qwen3.8-max-0902',
+  'tencent/hy4-preview',
+  'z-ai/glm-5.3',
+]);
 const TIMEOUT_MS = 180000;
 const CALL_LIMIT_MS = 900000;
 const RESPONSE_BYTES = 2000000;
@@ -234,6 +245,13 @@ const WIRE = Object.freeze({
   },
 });
 
+/** The total output allowance sent to this provider, including any reasoning. */
+export function outputTokenLimit(providerId, modelId) {
+  if (!WIRE[providerId]?.tokenParam) return null;
+  return providerId === 'openrouter' && EXTENDED_OPENROUTER_MODELS.has(modelId)
+    ? EXTENDED_OUTPUT_TOKENS : OUTPUT_TOKENS;
+}
+
 /**
  * Every failure of a provider call. The message always starts with "Provider"
  * and never contains the API key.
@@ -307,7 +325,7 @@ function buildRequest(providerId, { model: modelId, apiKey, prepared }, { stream
     headers['anthropic-version'] = ANTHROPIC_VERSION;
     body = {
       model: modelId,
-      max_tokens: OUTPUT_TOKENS,
+      max_tokens: outputTokenLimit(providerId, modelId),
       system: system.content,
       messages: [{ role: 'user', content: user.content }],
     };
@@ -320,7 +338,7 @@ function buildRequest(providerId, { model: modelId, apiKey, prepared }, { stream
     headers.Authorization = `Bearer ${apiKey}`;
     Object.assign(headers, wire.headers);
     body = { model: modelId, messages: prepared.messages, ...wire.body };
-    if (wire.tokenParam) body[wire.tokenParam] = OUTPUT_TOKENS;
+    if (wire.tokenParam) body[wire.tokenParam] = outputTokenLimit(providerId, modelId);
     if (stream && wire.streamUsage) body.stream_options = { include_usage: true };
   }
   if (stream) body.stream = true;
@@ -615,7 +633,7 @@ function readMessage(data, request) {
 /** The error for an answer with no text. `cause` is 'limit', 'closed' or '' when neither is known. */
 function emptyAnswer(cause) {
   const messages = {
-    limit: `Provider returned no review text: the model spent the whole ${OUTPUT_TOKENS}-token output limit before writing. Pick a model that reasons less.`,
+    limit: 'Provider returned no review text before the answer was cut short. No completed review was received.',
     closed: 'Provider closed the stream before sending any review text. Run the review again.',
   };
   return new ProviderError(messages[cause] || 'Provider did not return a text review.', { kind: 'response' });

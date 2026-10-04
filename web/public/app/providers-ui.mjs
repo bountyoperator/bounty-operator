@@ -28,7 +28,7 @@
  * visibility of #wb-row-model, #wb-row-run, #wb-row-prompt, #wb-row-reply.
  */
 
-import { PROVIDERS, provider as findProvider, validateProviderRequest } from '../providers.mjs';
+import { PROVIDERS, outputTokenLimit, provider as findProvider, validateProviderRequest } from '../providers.mjs';
 import { EXPORT_PROVIDER, readSession, removeSession, saveWorkbench, workbench, writeSession } from './state.mjs';
 import { clear, el, icon, on, qs, qsa, setBusy } from './ui.mjs';
 import { hostedLine, isHosted, say, view } from './workbench.mjs';
@@ -238,7 +238,6 @@ function paintModel(id) {
   const selected = findProvider(id);
   const field = qs('#wb-model');
   const list = qs('#wb-models');
-  const help = qs('#wb-model-help');
   if (field) {
     field.placeholder = selected.defaultModel;
     const value = models.get(id) ?? '';
@@ -247,7 +246,20 @@ function paintModel(id) {
   if (list) {
     clear(list).append(...selected.models.map((entry) => el('option', { value: entry.id, label: entry.note ? `${entry.label} · ${entry.note}` : entry.label })));
   }
-  if (help) help.textContent = `Left empty, ${selected.defaultModel} is used. Any model id ${selected.label} serves works.`;
+  paintModelHelp(id);
+}
+
+/** The larger allowance matters to users paying their provider for each call. */
+export function modelUsageNote(providerId, modelId) {
+  return outputTokenLimit(providerId, modelId) === 64000
+    ? 'This model can use up to 64,000 output tokens, including reasoning. Your provider bills the tokens used.' : '';
+}
+
+function paintModelHelp(id) {
+  const selected = findProvider(id);
+  const help = qs('#wb-model-help');
+  const note = modelUsageNote(id, (models.get(id) ?? '').trim() || selected.defaultModel);
+  if (help) help.textContent = `Left empty, ${selected.defaultModel} is used. Any model id ${selected.label} serves works.${note ? ` ${note}` : ''}`;
 }
 
 function paintKey(id) {
@@ -500,6 +512,7 @@ export function initProviders() {
   on(qs('#wb-model'), 'input', (event) => {
     event.target.removeAttribute('aria-invalid');
     models.set(activeProviderId(), event.target.value);
+    paintModelHelp(activeProviderId());
     commit();
   });
   on(qs('#wb-key'), 'input', (event) => {

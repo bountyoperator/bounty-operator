@@ -162,6 +162,8 @@ def _safe_label(name: str, index: int) -> str:
 
 
 def _source_lines(content: str) -> list[str]:
+    if not content:
+        return []
     lines = content.replace("\r\n", "\n").replace("\r", "\n").split("\n")
     if len(lines) > 1 and lines[-1] == "":
         lines.pop()
@@ -171,6 +173,21 @@ def _source_lines(content: str) -> list[str]:
 def _numbered(lines: list[str]) -> str:
     """Prefix each line with its 1-based number so the model can cite exact lines."""
     return "\n".join(f"{number}| {line}" for number, line in enumerate(lines, start=1))
+
+
+def _citation_boundaries(manifest: list[dict]) -> str:
+    rows = [
+        "## Citation boundaries",
+        "Use only the supplied file labels and physical line numbers below. "
+        "A paragraph printed on one numbered line is one line, even when it has several "
+        "sentences or wraps on screen. Never invent extra line numbers for its sentences. "
+        "If evidence is missing, say what is missing instead of citing a location that does not exist.",
+    ]
+    for entry in manifest:
+        count = entry["lines"]
+        bounds = "empty file; no citable lines" if count == 0 else "only line 1 exists" if count == 1 else f"lines 1 through {count}"
+        rows.append(f"- {entry['label']}: {bounds}.")
+    return "\n".join(rows)
 
 
 def _sensitive_input_error(findings: list[Finding]) -> ValueError:
@@ -224,6 +241,7 @@ def prepare_text_review(inputs: list[tuple[str, str]], prompt: str, config: AIRe
         parts.append("## Untrusted file\n" + json.dumps({"label": label, "content": _numbered(lines)}, ensure_ascii=False))
     if findings and not config.allow_sensitive:
         raise _sensitive_input_error(findings)
+    parts.append(_citation_boundaries(manifest))
     return PreparedReview(
         messages=[{"role": "system", "content": SYSTEM_PROMPT}, {"role": "user", "content": "\n\n".join(parts)}],
         manifest=manifest,
