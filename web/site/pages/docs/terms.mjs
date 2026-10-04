@@ -8,6 +8,7 @@ import { LIMITS } from '../../../public/review-core.mjs';
 import { html, table } from '../../components.mjs';
 import { breadcrumbsLd } from '../../layout.mjs';
 import { DOCS_STYLES, UPDATED, docPage, facts, supportLink, time } from './_shared.mjs';
+import { FREE_LINE, OPERATOR_LINE } from '../../plans.mjs';
 
 const PATH = '/terms';
 
@@ -16,8 +17,8 @@ const thousands = (value) => value.toLocaleString('en-US');
 
 const glance = facts(
   [
-    { icon: 'check', title: 'Free', text: 'One hosted review per UTC day, any single profile. No payment method.' },
-    { icon: 'refresh', title: 'Operator: US$10 per week', text: 'Unlimited hosted reviews, the Gauntlet, Panel review and four reviews at once. Renews weekly until you cancel.' },
+    { icon: 'check', title: 'Free', text: `${FREE_LINE} No payment method.` },
+    { icon: 'refresh', title: 'Operator: US$10 per week', text: `${OPERATOR_LINE} Renews weekly until you cancel.` },
     { icon: 'clock', title: 'Cancel any time', text: 'Access runs to the end of the paid week.' },
     { icon: 'key', title: 'Your key, your provider bill', text: 'The subscription does not include model usage.' },
   ],
@@ -36,17 +37,17 @@ const plansTable = table({
   dense: true,
   className: 'plans-table',
   rows: [
-    ['Hosted reviews', '1 per UTC day, any single profile', 'Unlimited'],
+    ['Reviews on your API key', '1 a day, any review type', 'Unlimited'],
     ['Reviews running at once', '1', '4'],
     ['Gauntlet and Panel review', 'Example only', 'Included'],
-    ['Prompt export and MCP prepare for the three core profiles', 'Included', 'Included'],
+    ['Copy-paste reviews and MCP prepare for code security, Solidity and draft-report reviews', 'Included', 'Included'],
     ['Free tools, repo import, local history', 'Included', 'Included'],
   ],
 });
 
 const limits = html`
 <p>Both plans accept up to ${LIMITS.files} UTF-8 text files per review, ${kb(LIMITS.fileBytes)} per file, ${kb(LIMITS.totalBytes)} and ${thousands(LIMITS.totalLines)} lines in total, with instructions up to ${thousands(LIMITS.promptChars)} characters.</p>
-<p>A hosted review is one profile run through our server on your key, from the workbench or through the MCP server. A review the provider fails, refuses or cuts off at the start is not counted.</p>
+<p>A review is one review type run through our server on your key, from the website or through the MCP server. The free review resets at 00:00 UTC. A review the provider fails, refuses or cuts off at the start is not counted.</p>
 <p>Our server adds the method of a hosted profile to your request and sends both to the provider you chose, under your key. No page, tool or download returns it. Do not use a review to obtain it: an answer that repeats the method is stopped and counts as a review.</p>
 <p>One person per account. No bulk automation, resale or limit bypassing. Rate limits apply.</p>`;
 

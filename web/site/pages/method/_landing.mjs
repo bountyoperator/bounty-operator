@@ -44,7 +44,7 @@ ${pageHero({
   title: hero.title,
   lede: hero.lede,
   actions: html`${open()}${button({ label: checksButton, href: '#checks', size: 'lg' })}`,
-  note: `Opens the workbench with ${profileName} selected. 1 hosted review per UTC day on your own key. No card.`,
+  note: 'Free: 1 review a day on your own key. No card.',
   aside: exampleFrame({ label: hero.exampleLabel, body: hero.example, className: 'example--narrow' }),
   stickyText: true,
 })}
@@ -83,7 +83,7 @@ ${ctaBand({
   title: cta.title,
   lede: cta.lede,
   actions: html`${open()}${button({ label: 'Read the method', href: '/method', size: 'lg' })}`,
-  note: `Opens the workbench with ${profileName} selected. Free: 1 hosted review per UTC day. Operator: unlimited, US$10 per week.`,
+  note: 'Free: 1 review a day. Operator: unlimited, US$10 per week.',
 })}
 
 <section class="section section--tight wrap">

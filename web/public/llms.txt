@@ -1,6 +1,6 @@
 # Bounty Operator
 
-> Pre-submission review for bug bounty reports and smart-contract findings. The AI argues against the finding. The hunter writes the report. Reviews run on the user's own model key. Free: 1 hosted review per UTC day. Operator: US$10 per week.
+> Pre-submission review for bug bounty reports and smart-contract findings. The AI argues against the finding. The hunter writes the report. Reviews run on the user's own model key. Free: 1 review a day. Operator: US$10 per week for unlimited reviews.
 
 Built by Tradi3. Platform-neutral: Immunefi, Cantina, Sherlock, HackerOne. Every URL below is canonical and extensionless. Source code: https://github.com/bountyoperator/bounty-operator (MIT). The three core profiles, the free tools, the CLI and the MCP server are in that repository. The gauntlet stages and the panel cross-examination run on the hosted service.
 
@@ -11,7 +11,7 @@ A hosted review sends the user's files and provider key through bountyoperator.c
 - [Benchmark](https://bountyoperator.com/benchmark): Paydirt, the model benchmark: which model finds the planted bug, leaves the fixed twin alone and catches an overclaimed report, with cost per run.
 - [Benchmark method](https://bountyoperator.com/benchmark/method): How Paydirt is built and scored, and how to check every published number.
 - [Workbench](https://bountyoperator.com/#workspace): Select files, pick a review profile and run it on your own model key. The three core profiles also export as a prompt.
-- [Pricing](https://bountyoperator.com/pricing): Free gives 1 hosted review per UTC day, any single profile. Operator is US$10 per week for unlimited reviews, the Gauntlet, Panel review and four reviews at once.
+- [Pricing](https://bountyoperator.com/pricing): Free gives you 1 review a day, any review type (reset at 00:00 UTC). Operator is US$10 per week for unlimited reviews, the Gauntlet, Panel review and 4 reviews at once.
 - [Method](https://bountyoperator.com/method): Why bug bounty reports get closed. Twelve checks, the question each one asks, why reports die on it and the verdict it leads to.
 - [Gauntlet](https://bountyoperator.com/gauntlet): One run through eight stages (scope, provenance, prior art, proof, severity, triager, report, verdict) that ends in one verdict.
 - [Panel review](https://bountyoperator.com/panel-review): Two to four models review in parallel, then a cross-examination pass keeps what the cited lines prove.

@@ -475,10 +475,10 @@ describe('run failures', () => {
     const base = { loaded: true, signedIn: true, csrf: 'x', billing: 'live', hasSubscription: false, limits: null, price: null, version: '' };
     const usage = (plan, remainingToday) => ({ plan, usedToday: 0, remainingToday, running: 0, concurrency: 1, resetsAt: '2026-10-03T00:00:00.000Z', paidUntil: null });
     assert.deepEqual(quotaLine({ ...base, loaded: false, signedIn: false, usage: null }), { text: '', used: false, pastDue: false });
-    assert.match(quotaLine({ ...base, signedIn: false, usage: null }).text, /One free hosted review a day/);
-    assert.deepEqual(quotaLine({ ...base, usage: usage('free', 1) }), { text: 'Free plan: 1 hosted review left today.', used: false, pastDue: false });
+    assert.match(quotaLine({ ...base, signedIn: false, usage: null }).text, /1 free review a day/);
+    assert.deepEqual(quotaLine({ ...base, usage: usage('free', 1) }), { text: 'Free plan: 1 review left today.', used: false, pastDue: false });
     assert.equal(quotaLine({ ...base, usage: usage('free', 0) }).used, true);
-    assert.deepEqual(quotaLine({ ...base, usage: usage('weekly', null) }), { text: 'Operator: unlimited hosted reviews.', used: false, pastDue: false });
+    assert.deepEqual(quotaLine({ ...base, usage: usage('weekly', null) }), { text: 'Operator: unlimited reviews.', used: false, pastDue: false });
     const pastDue = quotaLine({ ...base, usage: usage('past_due', 0) });
     assert.equal(pastDue.used, true);
     assert.equal(pastDue.pastDue, true);

@@ -129,8 +129,8 @@ your own model key.
   agent's own model.
 - **Hosted** profiles run at bountyoperator.com or through `run_review` over
   MCP. Your files and your key go through the service to your provider, and
-  the service adds the method. Free runs one hosted review per UTC day, any
-  profile. The method is not in this repository: a checkout runs the hosted
+  the service adds the method. Free runs 1 review a day (reset at 00:00 UTC),
+  any profile. The method is not in this repository: a checkout runs the hosted
   profiles on the short stand-in instructions in
   `web/src/operator-profiles.stub.mjs`.
 
@@ -213,7 +213,7 @@ node bench/bench.mjs verify --results web/public/bench/latest.json --archive web
 
 ## Pricing
 
-**Free:** one hosted review per UTC day, any single profile. **Operator: US$10/week** for unlimited hosted reviews, the Gauntlet, Panel review and four reviews at once. The CLI, the core profiles' prompt export and MCP prepare, and the free tools cost nothing.
+**Free:** 1 review a day, any review type. **Operator: US$10/week** for unlimited reviews, the Gauntlet, Panel review and 4 reviews at once. The CLI, the core profiles' prompt export and MCP prepare, and the free tools cost nothing.
 
 ## Built by Tradi3
 

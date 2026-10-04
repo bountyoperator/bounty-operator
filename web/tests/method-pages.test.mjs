@@ -146,12 +146,12 @@ test('a landing page offers prompt export for a core profile and a hosted review
     const body = textOf(markup);
     if (reviewProfile(profileId).hosted) {
       hosted += 1;
-      assert.equal(found(body, /export the prompt/i), null, `${file}: a hosted profile has no prompt to export`);
-      assert.match(body, /It runs as a hosted review: one per UTC day on Free, unlimited on Operator\./, file);
+      assert.equal(found(body, /export the prompt|copy the prompt/i), null, `${file}: a hosted profile has no prompt to copy`);
+      assert.match(body, /It counts as a review: 1 a day on Free, unlimited on Operator\./, file);
       assert.match(markup, />What it answers</, `${file}: says what it answers, not what it checks`);
     } else {
       core += 1;
-      assert.match(body, /export the prompt/i, file);
+      assert.match(body, /copy the prompt into ChatGPT or Claude and paste the answer back/i, file);
     }
   }
   assert.equal(core, 3);

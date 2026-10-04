@@ -6,6 +6,7 @@
 
 import { button, card, faq, html, icon, inline, kv, link, sectionHeading, stackTable, statusChip } from '../../components.mjs';
 import { breadcrumbsLd, faqPageLd } from '../../layout.mjs';
+import { WHY_PAY } from '../../plans.mjs';
 import { PROVIDERS } from '../../../public/providers.mjs';
 import { LIMITS_LINE } from './_landing.mjs';
 import { LASTMOD, STYLES, ctaBand, pageHero, relatedLinks, tickList, workbenchLink } from './_shared.mjs';
@@ -89,7 +90,7 @@ const providerTable = stackTable({
 const FAQ_ITEMS = [
   {
     q: 'Can I use my ChatGPT or Claude subscription?',
-    a: 'Yes, for the three core profiles: code security review, Solidity review and challenge a draft report. Export the prompt, paste it into your chat app and paste the answer back. The workbench turns the answer into finding cards and a packet. A hosted review needs an API key, which providers bill separately from a chat subscription.',
+    a: 'Yes, for 3 review types: Code security review, Solidity review and Challenge a draft report. Copy the prompt into your chat, then paste the answer back. You get the same findings and download as with an API key. The other review types need an API key, which providers bill separately from a chat subscription.',
   },
   {
     q: 'Does Bounty Operator see my API key?',
@@ -100,8 +101,8 @@ const FAQ_ITEMS = [
     a: 'The review instructions: the output format every review shares, and the method of the profile you picked. The three core profiles carry their method in the open, so their preview is the whole prompt. Every other profile is hosted: the preview shows the request that leaves your tab, with your focus, your context and the files, and the server adds the method before it goes to your provider.',
   },
   {
-    q: 'Who bills the model usage?',
-    a: 'Your provider, on your key. Operator at US$10 per week covers the hosted workbench: unlimited reviews, the Gauntlet, Panel review and four reviews running at once.',
+    q: 'Who bills the model usage, and what does the US$10 pay for?',
+    a: WHY_PAY,
   },
   {
     q: 'What does the provider keep?',
@@ -119,8 +120,8 @@ ${pageHero({
   eyebrow: 'Bring your own model',
   title: 'Your model, your key: where your code goes',
   lede: `A review runs on the model you choose, under your own API key: ${PROVIDER_SENTENCE}. Your files and your key pass through our server in memory. It adds the review method and sends the request to that provider. Bounty Operator stores no code, no prompts, no keys and no results.`,
-  actions: html`${button({ label: 'Open the workbench', href: workbenchLink(), variant: 'primary', size: 'lg', iconEnd: 'arrow-right' })}${button({ label: 'See the providers', href: '#providers', size: 'lg' })}`,
-  note: 'No key at hand: export the prompt of a core profile to your chat app, with no daily limit.',
+  actions: html`${button({ label: 'Start a review', href: workbenchLink(), variant: 'primary', size: 'lg', iconEnd: 'arrow-right' })}${button({ label: 'See the providers', href: '#providers', size: 'lg' })}`,
+  note: 'No API key? Code security, Solidity and draft-report reviews also work in ChatGPT or Claude, with no daily limit.',
   aside: html`
     <div class="glance">
       <p class="meta">At a glance</p>
@@ -129,8 +130,8 @@ ${pageHero({
         ['Files', 'Sent through our server to the provider you choose. Not stored by Bounty Operator.'],
         ['Method', 'Added on our server. Open source for the three core profiles.'],
         ['Providers', `${PROVIDERS.length}, each called at one fixed endpoint`],
-        ['Chat plan', 'Prompt export of a core profile, then paste the answer back'],
-        ['Coding agent', 'MCP: prepare a core review, or run any profile hosted'],
+        ['Chat plan', 'Copy the prompt into ChatGPT or Claude, paste the answer back (3 review types)'],
+        ['Coding agent', 'Claude Code, Codex or Cursor over MCP'],
         ['Record', 'A packet with a SHA-256 manifest of every file'],
       ])}
     </div>`,
@@ -154,22 +155,22 @@ ${pageHero({
   })}
   <div class="grid grid--3">
     ${card({
-      title: 'Hosted review, your API key',
+      title: 'Your API key',
       meta: icon('key'),
       body: html`<div class="stack stack--12">
         <p>Paste a key from one of eight providers and run the review in the workbench. It goes through our server to your provider, and the answer streams into finding cards.</p>
-        ${tickList(['Every profile, the Gauntlet and Panel review', 'Free: 1 hosted review per UTC day, any single profile', 'Operator: unlimited, four at once', 'The key is used for that request only'])}
+        ${tickList(['All 11 review types, the Gauntlet and Panel review', 'Free: 1 review a day, any review type', 'Operator: unlimited, 4 at once', 'The key is used for that request only'])}
       </div>`,
-      foot: html`<a class="link" href="${workbenchLink()}">Open the workbench</a>`,
+      foot: html`<a class="link" href="${workbenchLink()}">Start a review</a>`,
     })}
     ${card({
-      title: 'Prompt export, your chat subscription',
+      title: 'Your ChatGPT or Claude chat',
       meta: icon('copy'),
       body: html`<div class="stack stack--12">
-        <p>For the three core profiles the workbench hands you the full prompt as one document. Paste it into your chat app or a local model, then paste the answer back.</p>
-        ${tickList(['Code security review, Solidity review, challenge a draft report', 'No API key, no account and no daily limit', 'Your files stay in your browser until you paste the prompt', 'Paste-back gives you the same cards and packet'])}
+        <p>For 3 review types you get the full prompt as one document. Paste it into your chat app or a local model, then paste the answer back.</p>
+        ${tickList(['Code security review, Solidity review, challenge a draft report', 'No API key, no account and no daily limit', 'Your files stay in your browser until you paste the prompt', 'The pasted answer gives you the same findings and download'])}
       </div>`,
-      foot: html`<a class="link" href="${workbenchLink()}">Export a prompt</a>`,
+      foot: html`<a class="link" href="${workbenchLink()}">Copy a prompt</a>`,
     })}
     ${card({
       title: 'MCP, your coding agent',
@@ -240,7 +241,7 @@ ${pageHero({
   ${sectionHeading({
     title: 'Providers supported',
     id: 'providers',
-    lede: 'One key from any of these runs every single profile. The default model is preselected and the others are suggestions in the model list.',
+    lede: 'One key from any of these runs every review type. The default model is preselected and the others are suggestions in the model list.',
   })}
   ${providerTable}
 </section>
@@ -253,8 +254,8 @@ ${pageHero({
 ${ctaBand({
   title: 'Run it on the model you already pay for',
   lede: 'Paste a key, or export the prompt of a core profile to your chat app.',
-  actions: html`${button({ label: 'Open the workbench', href: workbenchLink(), variant: 'primary', size: 'lg', iconEnd: 'arrow-right' })}${button({ label: 'MCP setup', href: '/mcp', size: 'lg' })}`,
-  note: 'Free: 1 hosted review per UTC day. No card.',
+  actions: html`${button({ label: 'Start a review', href: workbenchLink(), variant: 'primary', size: 'lg', iconEnd: 'arrow-right' })}${button({ label: 'MCP setup', href: '/mcp', size: 'lg' })}`,
+  note: 'Free: 1 review a day. No card.',
 })}
 
 <section class="section section--tight wrap">

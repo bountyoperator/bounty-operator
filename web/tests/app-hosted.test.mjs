@@ -28,7 +28,7 @@ describe('hosted profiles in the workbench', () => {
   test('the one line names the profile, says where it runs and lists the three that can be exported', () => {
     assert.equal(
       hostedLine('scope'),
-      'Scope and impact fit runs on our server with your key. Prompt export covers Code security review, Solidity review and Challenge a draft report.',
+      'Scope and impact fit runs on our server with your key. Copy-paste prompts cover Code security review, Solidity review and Challenge a draft report.',
     );
     for (const profile of PROFILES.filter((entry) => entry.hosted)) {
       const line = hostedLine(profile.id);

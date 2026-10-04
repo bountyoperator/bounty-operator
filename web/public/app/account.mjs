@@ -96,7 +96,7 @@ export const REASONS = Object.freeze({
     next: 'open billing',
   },
   account: {
-    create: 'A free account runs one hosted review a day. One passkey prompt, no email.',
+    create: 'A free account runs 1 review a day on your own key. One passkey prompt, no email.',
     signin: 'Sign in with the passkey on this device. No password, no email.',
     next: '',
   },

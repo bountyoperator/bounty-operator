@@ -91,16 +91,15 @@ test('every document names the three core profiles and lists every hosted one as
   const hostedLine = /Every other profile is hosted: ([^.]+)\./.exec(mcpReadme)[1];
   assert.deepEqual([...hostedLine.matchAll(/`([a-z-]+)`/g)].map((match) => match[1]), HOSTED.map((profile) => profile.id));
 
-  // The pricing page lists them by name, read from the engine.
+  // The pricing page names the three that run in a chat app, read from the engine, and counts the rest.
   const pricing = text('pricing.html');
-  assert.ok(pricing.includes('Code security review, Solidity review and Challenge a draft report are the three core profiles'));
-  for (const profile of HOSTED) assert.ok(pricing.toLowerCase().includes(profile.name.toLowerCase()), profile.name);
-  assert.ok(pricing.includes('The other eight run hosted only, in the workbench or through run_review'));
+  assert.ok(pricing.includes('Yes, for 3 review types: Code security review, Solidity review and Challenge a draft report.'));
+  assert.ok(pricing.includes(`The other ${HOSTED.length} review types, the Gauntlet and Panel review need an API key.`));
 });
 
 test('no page or document offers prompt export, paste-back or prepare_review for a hosted profile', () => {
   const names = PROFILES.filter((profile) => profile.hosted).map((profile) => profile.name.toLowerCase());
-  const offer = /\bexport|paste-back|paste the answer back|prepare_review|\bprepared?\b/i;
+  const offer = /\bexport|paste-back|paste the answer back|copy the prompt|copy-paste|prepare_review|\bprepared?\b/i;
   const refusal = /refus|hosted_profile|fails with|failed call|no prompt|"error"\s*:/i;
 
   // Separate blocks are separate claims. Otherwise an unpunctuated Free-plan
@@ -121,14 +120,14 @@ test('no page or document offers prompt export, paste-back or prepare_review for
   // The two hosted landing pages say where the review runs and how an agent reaches it.
   for (const file of ['triager-simulation.html', 'prior-art-check.html']) {
     const body = text(file);
-    assert.match(body, /It runs as a hosted review: one per UTC day on Free, unlimited on Operator\. From a coding agent it runs through run_review over MCP, on the same allowance\./, file);
+    assert.match(body, /It counts as a review: 1 a day on Free, unlimited on Operator\. From a coding agent it runs through run_review over MCP, on the same allowance\./, file);
     assert.match(body, /Through our server to the model provider you choose, with your key, for that one request\. The server adds the method of this profile on the way\./, file);
     assert.doesNotMatch(body, /prepare_review/, file);
   }
   // The three core ones offer all three routes.
   for (const file of ['solidity-review.html', 'challenge-report.html', 'code-security-review.html']) {
     const body = text(file);
-    assert.match(body, /export the prompt, paste it into your chat app and paste the answer back/, file);
+    assert.match(body, /copy the prompt into ChatGPT or Claude and paste the answer back/, file);
     assert.match(body, /prepare_review hands the same request to the agent’s own model over MCP/, file);
   }
 });
@@ -191,7 +190,6 @@ test('the gauntlet over MCP is seven hosted reviews and one stage on the agent�
   assert.match(flat(mcpReadme), /A run uses seven hosted reviews\. Free covers one hosted review per UTC day, so a full run takes Operator\./);
   assert.match(llms, /seven hosted through `run_review`, and the report stage through `prepare_review` on the agent's own model/);
   assert.match(flat(release), /The `gauntlet` prompt runs seven stages through `run_review` and the report stage on your agent's own model, so a full run over MCP takes Operator\./);
-  assert.match(text('pricing.html'), /The gauntlet from a coding agent over MCP uses seven hosted reviews, so it runs on Operator too\./);
   assert.match(text('gauntlet.html'), /seven hosted reviews through run_review with a connection token, and the report stage on your agent’s own model/);
 });
 
@@ -315,31 +313,38 @@ test('the data flow of a hosted review is stated the way the Worker runs it', as
 test('the two plans read the same wherever they are summarised', () => {
   // Operator: unlimited reviews, the full gauntlet, panel review, four at once.
   const home = text('index.html');
-  for (const line of ['Operator US$10 per week', 'Unlimited hosted reviews, four at once', 'Gauntlet: eight checks and a final verdict', 'Panel review: compare two to four models']) {
+  for (const line of ['Operator US$10 per week', 'Unlimited reviews, 4 at once', 'Gauntlet: 8 checks on one finding, then a verdict', 'Panel review: compare 2 to 4 models']) {
     assert.ok(home.includes(line), `home: ${line}`);
   }
-  const operator = 'Operator is US$10 per week for unlimited reviews, the Gauntlet, Panel review and four reviews at once.';
+  const operator = 'Operator is US$10 per week for unlimited reviews, the Gauntlet, Panel review and 4 reviews at once.';
   assert.ok(description('pricing.html').includes(operator));
   assert.ok(llms.includes(operator));
-  assert.match(readme, /\*\*Operator: US\$10\/week\*\* for unlimited hosted reviews, the Gauntlet, Panel review and four reviews at once\./);
-  assert.match(text('terms.html'), /Unlimited hosted reviews, the Gauntlet, Panel review and four reviews at once\. Renews weekly until you cancel\./);
+  assert.match(readme, /\*\*Operator: US\$10\/week\*\* for unlimited reviews, the Gauntlet, Panel review and 4 reviews at once\./);
+  assert.match(text('terms.html'), /Unlimited reviews, the Gauntlet, Panel review and 4 reviews at once\. Renews weekly until you cancel\./);
   const pricing = text('pricing.html');
-  for (const line of ['Unlimited hosted reviews', 'Gauntlet: eight stages, one verdict dossier', 'Panel review: two to four models, then cross-examination', '4 hosted reviews running at once']) {
+  for (const line of ['Unlimited reviews', 'Gauntlet: 8 checks on one finding, then a verdict', 'Panel review: 2 to 4 models, then a cross-check', '4 reviews running at once']) {
     assert.ok(pricing.includes(line), line);
   }
 
-  // Free: one hosted review per UTC day, any single profile.
-  assert.ok(pricing.includes('Any of the eleven single profiles'));
-  assert.ok(pricing.includes('Any single profile, all eleven.'));
-  assert.ok(home.includes('Any of the eleven single review types'));
-  assert.ok(home.includes('1 hosted review per UTC day'));
-  assert.ok(text('terms.html').includes('1 per UTC day, any single profile'));
-  assert.ok(llms.includes('Free gives 1 hosted review per UTC day, any single profile.'));
-  assert.ok(readme.includes('**Free:** one hosted review per UTC day, any single profile.'));
+  // Free: 1 review a day, any review type.
+  assert.ok(pricing.includes('1 review a day, any review type'));
+  assert.ok(home.includes('1 review a day, any of the 11 review types'));
+  assert.ok(text('terms.html').includes('1 review a day, any review type. No payment method.'));
+  assert.ok(text('terms.html').includes('1 a day, any review type'));
+  assert.ok(llms.includes('Free gives you 1 review a day, any review type (reset at 00:00 UTC).'));
+  assert.ok(readme.includes('**Free:** 1 review a day, any review type.'));
+  // Why pay: answered on the home page and on /pricing in the same words.
+  const whyPay = 'Your provider charges for the model. The US$10 pays for Bounty Operator: no daily limit, the Gauntlet, Panel review and 4 reviews running at once. Model usage is not included.';
+  assert.ok(home.includes(whyPay));
+  assert.ok(pricing.includes(whyPay));
+  // No buyer-facing plan summary uses the internal words.
+  for (const [file, body] of [['index.html', home], ['pricing.html', pricing]]) {
+    assert.doesNotMatch(body, /hosted review|single profile|core profile|prompt export|UTC day/i, file);
+  }
   assert.match(flat(release), /A free account runs any single profile as its hosted review of the day\./);
 
   // What counts: stated once on the pricing page and once in the terms, as the Worker settles it.
-  assert.ok(pricing.includes('A review the provider fails, refuses or cuts off at the start does not use the day’s allowance.'));
+  assert.ok(pricing.includes('The free review resets at 00:00 UTC. A review the provider fails, refuses or cuts off at the start does not count.'));
   assert.ok(text('terms.html').includes('A review the provider fails, refuses or cuts off at the start is not counted.'));
 });
 

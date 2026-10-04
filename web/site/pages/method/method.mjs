@@ -126,8 +126,8 @@ ${pageHero({
   eyebrow: 'Why bug bounty reports get rejected',
   title: TITLE,
   lede: `${RECORD_CLAIM} Every check exists because real reports were closed for that reason. For each one: the question it asks, why reports die on it and the verdict it leads to.`,
-  actions: html`${button({ label: 'Run a check free', href: workbenchLink(), variant: 'primary', size: 'lg', iconEnd: 'arrow-right' })}${button({ label: 'Go to the gauntlet', href: '#gauntlet', size: 'lg' })}`,
-  note: '1 hosted review per UTC day on your own model. No card.',
+  actions: html`${button({ label: 'Start a free review', href: workbenchLink(), variant: 'primary', size: 'lg', iconEnd: 'arrow-right' })}${button({ label: 'Go to the gauntlet', href: '#gauntlet', size: 'lg' })}`,
+  note: 'Free: 1 review a day on your own model. No card.',
   after: proofLine(),
   aside: heroAside,
 })}
@@ -191,27 +191,27 @@ ${pageHero({
   })}
   <div class="grid grid--2">
     ${card({
-      title: 'One profile at a time',
+      title: 'One review type at a time',
       meta: statusChip('free'),
       body: html`<div class="stack stack--12">
-        <p>Pick the profile that matches the check you are on: scope, provenance, prior art, proof, severity, triager or report. One hosted review per UTC day.</p>
+        <p>Pick the review type that matches the check you are on: scope, design intent, prior art, proof, severity, triager or report. Free: 1 review a day.</p>
         ${tickList([
-          'All eleven single profiles, hosted on your own key',
-          'The three core profiles also export as a prompt for any chat app or local model, with paste-back',
-          'Review packet with a SHA-256 manifest of every file',
+          'All 11 review types, on your own key',
+          'Code security, Solidity and draft-report reviews also work in ChatGPT or Claude: copy the prompt, paste the answer back',
+          'A downloadable review packet with a SHA-256 hash of every file',
         ])}
       </div>`,
-      foot: html`${button({ label: 'Open the workbench', href: workbenchLink(), variant: 'secondary', iconEnd: 'arrow-right' })}`,
+      foot: html`${button({ label: 'Start a review', href: workbenchLink(), variant: 'secondary', iconEnd: 'arrow-right' })}`,
     })}
     ${card({
       title: 'The full gauntlet',
       meta: statusChip('operator', 'Operator · US$10/week'),
       variant: 'accent',
       body: html`<div class="stack stack--12">
-        <p>One run takes the draft through all eight stages and returns the verdict dossier. Each stage reads the output of the stages before it.</p>
-        ${tickList(['Unlimited hosted reviews', 'The Gauntlet and Panel review', 'Four hosted reviews running at once'])}
+        <p>One run takes the draft through all eight stages and ends in one verdict. Each stage reads the output of the stages before it.</p>
+        ${tickList(['Unlimited reviews', 'The Gauntlet and Panel review', '4 reviews running at once'])}
       </div>`,
-      foot: html`<div class="cluster">${button({ label: 'Get Operator', href: '/pricing', variant: 'primary', iconEnd: 'arrow-right' })}${button({ label: 'See a gauntlet run', href: '/gauntlet', variant: 'quiet' })}</div>`,
+      foot: html`<div class="cluster">${button({ label: 'See pricing', href: '/pricing', variant: 'primary', iconEnd: 'arrow-right' })}${button({ label: 'See a gauntlet run', href: '/gauntlet', variant: 'quiet' })}</div>`,
     })}
   </div>
 </section>

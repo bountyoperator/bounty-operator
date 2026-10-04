@@ -12,6 +12,7 @@
 
 import { button, chip, dossier, faq, findingCard, html, inline, refChip, sectionHeading, stackTable, statusChip } from '../../components.mjs';
 import { breadcrumbsLd, faqPageLd } from '../../layout.mjs';
+import { OPERATOR_LINE, RENEWAL } from '../../plans.mjs';
 import { PROVIDERS } from '../../../public/providers.mjs';
 import { LASTMOD, STYLES, ctaBand, exampleFrame, operatorActions, pageHero, points, relatedLinks, tickList } from './_shared.mjs';
 
@@ -152,7 +153,7 @@ const STEPS = [
     text: 'Each model runs the same profile on the same pinned files, as its own hosted review. Operator runs four hosted reviews at once.',
   },
   {
-    title: 'Cross-examination',
+    title: 'Cross-check',
     text: 'One more hosted review, on the panel model you pick, reads the reviews next to the source and tests every finding against the lines it cites.',
   },
   {
@@ -188,8 +189,8 @@ const body = html`
 ${pageHero({
   trail: [{ label: 'Bounty Operator', href: '/' }, { label: 'Method', href: '/method' }, { label: 'Panel review' }],
   eyebrow: html`${statusChip('operator')}`,
-  title: 'Multi-model AI security review with cross-examination',
-  lede: 'Two to four models review the same files in parallel on your own key. A cross-examination pass then reads every claim against the cited lines, keeps what the code proves and marks how many reviewers reported it.',
+  title: 'Run 2 to 4 models on the same code, then cross-check their findings',
+  lede: 'Each model reviews the same files on your own key. A final pass checks every finding against the lines it cites, keeps what the code proves and shows how many models reported it.',
   actions: operatorActions({ secondary: button({ label: 'How it runs', href: '#how', size: 'lg' }) }),
   note: 'US$10 per week. One OpenRouter key covers the whole panel. Model usage is billed by your provider to your key.',
   aside: heroAside,
@@ -199,7 +200,7 @@ ${pageHero({
   ${sectionHeading({
     title: 'How it runs',
     id: 'how',
-    lede: 'A panel is a fan-out of hosted reviews from your browser, followed by one merge. Each review goes through our server to your provider. No file, key or review is stored.',
+    lede: 'Each model reviews the files separately. One more pass cross-checks them. Each review goes through our server to your provider. No file, key or review is stored.',
   })}
   ${points(STEPS, { columns: 4 })}
 </section>
@@ -208,7 +209,7 @@ ${pageHero({
   <div class="split">
     <div>
       ${sectionHeading({
-        title: 'Agreement is recorded. The code decides.',
+        title: 'The code decides, not the vote',
         id: 'rule',
         lede: 'The count tells you how many reviewers saw something. The cited lines tell you whether it is there.',
       })}
@@ -217,7 +218,7 @@ ${pageHero({
       ${tickList([
         'Every finding in the merged review carries its count: how many of the panel reported it.',
         'Every row names the lines that settle it, so you check the ruling against the source yourself.',
-        'Kept and dropped findings are both listed. Nothing a model reported leaves without a row.',
+        'Kept and dropped findings are both listed, so nothing a model reported goes missing.',
       ])}
     </div>
   </div>
@@ -266,14 +267,14 @@ ${pageHero({
 
 ${ctaBand({
   title: 'Put a panel on your next finding',
-  lede: 'Panel review, the Gauntlet, unlimited hosted reviews and four reviews running at once.',
+  lede: OPERATOR_LINE,
   actions: html`${button({ label: 'Get Operator', href: '/pricing', variant: 'primary', size: 'lg', iconEnd: 'arrow-right' })}${button({ label: 'Your model, your key', href: '/your-model-your-key', size: 'lg' })}`,
-  note: 'US$10 billed weekly, renews until you cancel in the Stripe portal; access runs to the end of the paid week.',
+  note: RENEWAL,
 })}
 
 <section class="section section--tight wrap">
   ${relatedLinks([
-    { label: 'Gauntlet', href: '/gauntlet', text: 'One run, eight stages, one verdict.' },
+    { label: 'Gauntlet', href: '/gauntlet', text: 'One finding, 8 checks, one verdict.' },
     { label: 'Solidity review', href: '/solidity-review', text: 'The single-model review a panel fans out.' },
     { label: 'Pricing', href: '/pricing', text: 'Free and Operator, side by side.' },
   ])}
@@ -283,7 +284,7 @@ export default {
   path: PATH,
   title: 'Panel review: multi-model AI security review | Bounty Operator',
   description:
-    'Two to four models review your code in parallel on your own key. A cross-examination pass keeps what the cited lines prove and marks agreement.',
+    'Run 2 to 4 models on the same code with your own key. A final cross-check keeps what the cited lines prove and shows how many models agreed.',
   label: 'Panel review',
   styles: STYLES,
   jsonld: [breadcrumbsLd([{ name: 'Method', path: '/method' }, { name: 'Panel review', path: PATH }]), faqPageLd(FAQ_ITEMS)],

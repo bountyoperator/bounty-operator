@@ -68,7 +68,7 @@ export function failureFor(error, via = 'key') {
     case 'aborted':
       return { message: partial ? 'Stopped. What arrived can be opened as a cut-off review.' : 'Stopped. No review was produced.', tone: 'info', partial };
     case 'signin':
-      return { message: 'Sign in to run a hosted review. The chat-subscription path needs no account.', tone: 'warn', signin: true };
+      return { message: 'Sign in to run a review on your API key. Copy-paste reviews in your chat app need no account.', tone: 'warn', signin: true };
     case 'daily_used':
       return { message: "Today's free review is used.", tone: 'warn', upgrade: true };
     case 'operator_only':
@@ -141,11 +141,11 @@ export function quotaLine(current) {
   const usage = current.usage;
   const used = plan !== 'operator' && Boolean(usage) && usage.remainingToday === 0;
   if (!current.loaded) return { text: '', used: false, pastDue: false };
-  if (plan === 'anon') return { text: 'One free hosted review a day with your own key. The account is asked for when you run it.', used: false, pastDue: false };
-  if (plan === 'operator') return { text: 'Operator: unlimited hosted reviews.', used: false, pastDue: false };
+  if (plan === 'anon') return { text: '1 free review a day with your own key. You create the account when you run it.', used: false, pastDue: false };
+  if (plan === 'operator') return { text: 'Operator: unlimited reviews.', used: false, pastDue: false };
   if (plan === 'past_due') return { text: 'Operator payment failed. Update the card in your account to get unlimited reviews back.', used, pastDue: true };
   const left = usage?.remainingToday ?? 1;
-  return { text: `Free plan: ${left} hosted review${left === 1 ? '' : 's'} left today.`, used, pastDue: false };
+  return { text: `Free plan: ${left} review${left === 1 ? '' : 's'} left today.`, used, pastDue: false };
 }
 
 // ---------------------------------------------------------------------------
@@ -427,7 +427,7 @@ export async function runReview(options = {}) {
   }
 
   if (!(await ensureSignedIn())) {
-    say('Sign in to run a hosted review. The chat-subscription path needs no account.', {
+    say('Sign in to run a review on your API key. Copy-paste reviews in your chat app need no account.', {
       tone: 'warn',
       hold: true,
       action: { label: 'Use my chat subscription', onClick: () => setVia('export', { focus: true }) },

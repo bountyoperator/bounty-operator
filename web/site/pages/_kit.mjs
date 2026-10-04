@@ -4,6 +4,7 @@
 // and is never listed in the sitemap. The example review is the TidalStaking
 // staking contract: one file, two findings, four items checked and found safe.
 
+import { CHAT_LINE, FREE_LINE, OPERATOR_LINE } from '../plans.mjs';
 import {
   button,
   card,
@@ -524,15 +525,15 @@ const codeSection = kitSection(
 const FAQ_ITEMS = [
   {
     q: 'What does the free plan include?',
-    a: 'One hosted review per UTC day with any single profile. Prompt export with paste-back for the three core profiles, the free tools, repo import and local history have no daily limit.',
+    a: `${FREE_LINE} ${CHAT_LINE}. The free tools, repo import and local history have no limit.`,
   },
   {
     q: 'What does Operator add?',
-    a: 'Unlimited hosted reviews, the Gauntlet, Panel review and four concurrent reviews. US$10 per week.',
+    a: `${OPERATOR_LINE} US$10 per week.`,
   },
   {
     q: 'Which models can I use?',
-    a: 'Your own key for OpenRouter, Anthropic, OpenAI, Gemini, xAI, DeepSeek, Mistral or Groq. With a chat subscription, export the prompt of a core profile and paste the answer back.',
+    a: 'Your own key for OpenRouter, Anthropic, OpenAI, Gemini, xAI, DeepSeek, Mistral or Groq. With ChatGPT or Claude, copy the prompt of a code, Solidity or draft-report review and paste the answer back.',
   },
 ];
 
@@ -608,7 +609,7 @@ const cardsSection = kitSection(
       title: 'Operator',
       variant: 'accent',
       meta: statusChip('operator'),
-      body: html`<div class="stack stack--12"><p class="h2">US$10 <span class="muted small">per week</span></p><p class="muted small">Unlimited hosted reviews, the Gauntlet, Panel review and four concurrent reviews.</p></div>`,
+      body: html`<div class="stack stack--12"><p class="h2">US$10 <span class="muted small">per week</span></p><p class="muted small">${OPERATOR_LINE}</p></div>`,
       foot: 'Renews weekly until cancelled.',
     })}
   </div>`,

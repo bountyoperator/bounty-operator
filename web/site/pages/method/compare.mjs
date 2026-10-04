@@ -109,7 +109,7 @@ const ROWS = [
   ],
   [
     'Access and cost shape',
-    cell('Open to anyone. Free: 1 hosted review per UTC day. Operator: US$10 per week, flat. Your provider bills model usage to your key.'),
+    cell('Open to anyone. Free: 1 review a day. Operator: US$10 per week, unlimited. Your provider bills model usage to your key.'),
     cell('Your chat subscription.'),
     cells(cell('A folder you install.', 5), cell('Model usage is billed by the plan your coding agent runs on.')),
     cells(cell('Studio Review is in invite-only beta.', 2), cell('Report Assistant is optional in the report form.', 4), cell('Neither page cited states a price.')),
@@ -204,7 +204,7 @@ ${pageHero({
   eyebrow: 'Compare',
   title: 'Bounty Operator vs a chat app, a local audit skill and platform pre-checks',
   lede: 'Four ways to check a finding before you file it, and four tools that cover part of the same ground. The tables say what each one gives you: pinned inputs and hashes, method, counterargument, verdict, cost shape and privacy. Facts about other products are numbered, linked and dated.',
-  actions: html`${button({ label: 'Open the workbench', href: workbenchLink(), variant: 'primary', size: 'lg', iconEnd: 'arrow-right' })}${button({ label: 'Read the method', href: '/method', size: 'lg' })}`,
+  actions: html`${button({ label: 'Start a free review', href: workbenchLink(), variant: 'primary', size: 'lg', iconEnd: 'arrow-right' })}${button({ label: 'Read the method', href: '/method', size: 'lg' })}`,
 })}
 
 <section class="section section--tight wrap" aria-labelledby="table">
@@ -256,8 +256,8 @@ ${pageHero({
 
 ${ctaBand({
   title: 'Put your next finding through it',
-  lede: 'One hosted review per UTC day is free, on your own model and key.',
-  actions: html`${button({ label: 'Open the workbench', href: workbenchLink(), variant: 'primary', size: 'lg', iconEnd: 'arrow-right' })}${button({ label: 'See pricing', href: '/pricing', size: 'lg' })}`,
+  lede: 'Free: 1 review a day, on your own model and key.',
+  actions: html`${button({ label: 'Start a free review', href: workbenchLink(), variant: 'primary', size: 'lg', iconEnd: 'arrow-right' })}${button({ label: 'See pricing', href: '/pricing', size: 'lg' })}`,
 })}
 
 <section class="section section--tight wrap">

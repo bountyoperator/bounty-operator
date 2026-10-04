@@ -138,7 +138,7 @@ export function parseReviewInputs(body: Record<string, unknown>, profileId: stri
 
 function assertReviewsEnabled(env: Env): void {
   if (env.AI_REVIEW_ENABLED !== 'true') {
-    throw new ApiError('Hosted reviews are paused. Prompt export and paste-back still work.', 503, 'reviews_paused');
+    throw new ApiError('Reviews on your API key are paused. Copy-paste reviews in your chat app still work.', 503, 'reviews_paused');
   }
 }
 

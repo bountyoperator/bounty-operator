@@ -4,6 +4,7 @@
 // under web/site/pages. The page contract is documented in COMPONENTS.md.
 
 import { attrs, brandMark, cx, esc, html, icon, inline, raw, textOf } from './components.mjs';
+import { CHAT_LINE, FREE_LINE, OPERATOR_LINE } from './plans.mjs';
 
 export const SITE = {
   origin: 'https://bountyoperator.com',
@@ -100,7 +101,7 @@ export function softwareApplicationLd() {
         name: 'Free',
         price: '0',
         priceCurrency: 'USD',
-        description: 'One hosted review a day, any single profile; prompt export for the three core profiles. Free tools, repo import and local history.',
+        description: `${FREE_LINE} ${CHAT_LINE}. Free tools, repo import and local history.`,
         url: absoluteUrl('/pricing'),
       },
       {
@@ -108,7 +109,7 @@ export function softwareApplicationLd() {
         name: 'Operator',
         price: '10.00',
         priceCurrency: 'USD',
-        description: 'Unlimited hosted reviews, the Gauntlet, Panel review and four concurrent reviews.',
+        description: OPERATOR_LINE,
         url: absoluteUrl('/pricing'),
         priceSpecification: {
           '@type': 'UnitPriceSpecification',

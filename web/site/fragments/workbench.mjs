@@ -119,10 +119,10 @@ ${field({
 <div class="wb-meter" id="wb-meter" hidden></div>`;
 
   const focus = html`${textarea({ id: 'wb-focus', rows: 3, attrs: { maxlength: '16000', 'aria-describedby': 'wb-focus-help' } })}
-<p class="help" id="wb-focus-help">Optional. Left empty, the profile's own request is used.</p>`;
+<p class="help" id="wb-focus-help">Optional. Tell the review what to focus on. Left empty, it uses its standard request.</p>`;
 
   const evidence = html`<details class="disclosure" id="wb-evidence">
-<summary class="disclosure__summary"><span class="wb-sum">Programme and proof facts</span><span class="disclosure__hint" id="wb-evidence-status"></span></summary>
+<summary class="disclosure__summary"><span class="wb-sum">Program rules and PoC details</span><span class="disclosure__hint" id="wb-evidence-status"></span></summary>
 <div class="disclosure__body" id="wb-evidence-fields"></div>
 </details>`;
 
@@ -153,7 +153,7 @@ ${button({ label: 'Edit', variant: 'quiet', size: 'sm', attrs: { 'data-step-targ
   const via = html`<div class="wb-picks wb-picks--wide" id="wb-via" role="radiogroup" aria-labelledby="wb-via-label">
 ${viaChoice({ value: 'connect', title: 'OpenRouter, one click', text: 'Connect your OpenRouter account. Every model, billed to your own credits.' })}
 ${viaChoice({ value: 'key', title: 'My own API key', text: 'Anthropic, OpenAI, Gemini, xAI, DeepSeek, Mistral, Groq or OpenRouter.' })}
-${viaChoice({ value: 'export', title: 'My chat subscription', text: 'Copy the prompt into ChatGPT, Claude or Gemini and paste the reply back. Covers the three core profiles. No account, no daily limit.' })}
+${viaChoice({ value: 'export', title: 'My chat subscription', text: 'Copy the prompt into ChatGPT, Claude or Gemini and paste the reply back. Code security, Solidity and draft-report reviews only. No account, no daily limit.' })}
 </div>`;
 
   const model = html`<div class="wb-fields">

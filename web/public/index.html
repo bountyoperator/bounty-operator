@@ -62,8 +62,8 @@
 <script type="module" src="/app/main.mjs"></script>
 <script type="module" src="/app/account.mjs"></script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"Bounty Operator","url":"https://bountyoperator.com/","logo":"https://bountyoperator.com/icon-512.png","email":"support@bountyoperator.com","sameAs":["https://github.com/bountyoperator/bounty-operator"]}</script>
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Bounty Operator","url":"https://bountyoperator.com/","applicationCategory":"SecurityApplication","operatingSystem":"Web","description":"Pre-submission review for bug bounty reports and smart-contract findings. The AI argues against the finding. The hunter writes the report.","image":"https://bountyoperator.com/social-v2.png","creator":{"@type":"Organization","name":"Tradi3","url":"https://audits.sherlock.xyz/watson/Tradi3"},"offers":[{"@type":"Offer","name":"Free","price":"0","priceCurrency":"USD","description":"One hosted review a day, any single profile; prompt export for the three core profiles. Free tools, repo import and local history.","url":"https://bountyoperator.com/pricing"},{"@type":"Offer","name":"Operator","price":"10.00","priceCurrency":"USD","description":"Unlimited hosted reviews, the Gauntlet, Panel review and four concurrent reviews.","url":"https://bountyoperator.com/pricing","priceSpecification":{"@type":"UnitPriceSpecification","price":"10.00","priceCurrency":"USD","billingDuration":"P1W","unitText":"week"}}]}</script>
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Can I use my ChatGPT or Claude subscription?","acceptedAnswer":{"@type":"Answer","text":"Yes. Code review, Solidity review and report review can be copied into your chat app. Paste the answer back to view it here. Other review types need an API key. Model options"}},{"@type":"Question","name":"Where do my files go?","acceptedAnswer":{"@type":"Answer","text":"Your files and API key pass through our server to your provider. The server adds the review instructions and stores no files, prompts, keys or results. Prompt export stays in your browser until you copy it elsewhere. Privacy details"}},{"@type":"Question","name":"Which models can I use?","acceptedAnswer":{"@type":"Answer","text":"Choose a model from OpenRouter, Anthropic, OpenAI, Google Gemini, xAI, DeepSeek, Mistral or Groq. The three core reviews also work through prompt export with your chat or local model."}},{"@type":"Question","name":"How do I cancel or get help?","acceptedAnswer":{"@type":"Answer","text":"Cancel in the Stripe billing portal. Access continues until the end of your paid week. Contact support@bountyoperator.com for access problems or billing help. Refund terms"}}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Bounty Operator","url":"https://bountyoperator.com/","applicationCategory":"SecurityApplication","operatingSystem":"Web","description":"Pre-submission review for bug bounty reports and smart-contract findings. The AI argues against the finding. The hunter writes the report.","image":"https://bountyoperator.com/social-v2.png","creator":{"@type":"Organization","name":"Tradi3","url":"https://audits.sherlock.xyz/watson/Tradi3"},"offers":[{"@type":"Offer","name":"Free","price":"0","priceCurrency":"USD","description":"1 review a day, any review type. Unlimited copy-paste reviews in ChatGPT or Claude for code, Solidity and draft reports. Free tools, repo import and local history.","url":"https://bountyoperator.com/pricing"},{"@type":"Offer","name":"Operator","price":"10.00","priceCurrency":"USD","description":"Unlimited reviews, the Gauntlet, Panel review and 4 reviews at once.","url":"https://bountyoperator.com/pricing","priceSpecification":{"@type":"UnitPriceSpecification","price":"10.00","priceCurrency":"USD","billingDuration":"P1W","unitText":"week"}}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"I already pay for my model. Why pay for this?","acceptedAnswer":{"@type":"Answer","text":"Your provider charges for the model. The US$10 pays for Bounty Operator: no daily limit, the Gauntlet, Panel review and 4 reviews running at once. Model usage is not included. Pricing"}},{"@type":"Question","name":"Can I use my ChatGPT or Claude subscription?","acceptedAnswer":{"@type":"Answer","text":"Yes, for 3 review types: code security, Solidity and draft reports. Copy the prompt into your chat and paste the answer back here. The other review types need an API key. Model options"}},{"@type":"Question","name":"Where do my files go?","acceptedAnswer":{"@type":"Answer","text":"Your files and API key pass through our server to your provider. The server adds the review instructions and stores no files, prompts, keys or results. A copy-paste prompt stays in your browser until you copy it. Privacy details"}},{"@type":"Question","name":"Which models can I use?","acceptedAnswer":{"@type":"Answer","text":"Choose a model from OpenRouter, Anthropic, OpenAI, Google Gemini, xAI, DeepSeek, Mistral or Groq, on your own API key."}},{"@type":"Question","name":"How do I cancel or get help?","acceptedAnswer":{"@type":"Answer","text":"Cancel in the Stripe billing portal. Access continues until the end of your paid week. Contact support@bountyoperator.com for access problems or billing help. Refund terms"}}]}</script>
 </head>
 <body>
 <a class="skip-link" href="#main">Skip to content</a>
@@ -90,7 +90,7 @@
       <a class="btn btn--secondary btn--lg" href="#workspace" data-demo data-example=""><span class="btn__label">View example</span></a>
     </div>
     <p class="home-hero__note">The example needs no account or API key.</p>
-    <p class="home-hero__links"><a class="link" href="/benchmark#comparison">Compare the results</a><a class="link" href="/mcp">Use in your coding agent</a></p>
+    <p class="home-hero__links"><a class="link" href="/benchmark#comparison">See the model benchmark</a><a class="link" href="/mcp">Use in your coding agent</a></p>
   </section>
   <div class="home-top__shot">
     <figure class="home-shot theme-dark">
@@ -110,7 +110,7 @@
   <h2 class="visually-hidden" id="how">How it works</h2>
   <ol class="home-steps">
     <li class="home-steps__item"><h3 class="home-steps__title">Add your files</h3><p class="home-steps__text">Paste text, drop files or import from GitHub.</p></li>
-    <li class="home-steps__item"><h3 class="home-steps__title">Choose your model</h3><p class="home-steps__text">Use an API key or copy a core review into your chat app.</p></li>
+    <li class="home-steps__item"><h3 class="home-steps__title">Choose your model</h3><p class="home-steps__text">Use your own API key, or your ChatGPT or Claude chat.</p></li>
     <li class="home-steps__item"><h3 class="home-steps__title">Read the result</h3><p class="home-steps__text">See the verdict, source citations and next steps.</p></li></ol>
 </section>
 <section class="section wrap wb" id="workspace" aria-labelledby="wb-title" data-step="files">
@@ -196,14 +196,14 @@
 <h4 class="wb-row__label"><label for="wb-focus">Focus</label></h4>
 <div class="wb-row__body">
 <textarea class="textarea" id="wb-focus" name="wb-focus" rows="3" maxlength="16000" aria-describedby="wb-focus-help"></textarea>
-<p class="help" id="wb-focus-help">Optional. Left empty, the profile's own request is used.</p>
+<p class="help" id="wb-focus-help">Optional. Tell the review what to focus on. Left empty, it uses its standard request.</p>
 </div>
 </div>
 <div class="wb-row">
 <h4 class="wb-row__label">Evidence</h4>
 <div class="wb-row__body">
 <details class="disclosure" id="wb-evidence">
-<summary class="disclosure__summary"><span class="wb-sum">Programme and proof facts</span><span class="disclosure__hint" id="wb-evidence-status"></span></summary>
+<summary class="disclosure__summary"><span class="wb-sum">Program rules and PoC details</span><span class="disclosure__hint" id="wb-evidence-status"></span></summary>
 <div class="disclosure__body" id="wb-evidence-fields"></div>
 </details>
 </div>
@@ -238,7 +238,7 @@
 <div class="wb-picks wb-picks--wide" id="wb-via" role="radiogroup" aria-labelledby="wb-via-label">
 <label class="wb-pick wb-pick--wide"><input type="radio" name="wb-via" value="connect"><span class="wb-pick__body"><span class="wb-pick__name">OpenRouter, one click</span><span class="wb-pick__tag">Connect your OpenRouter account. Every model, billed to your own credits.</span></span></label>
 <label class="wb-pick wb-pick--wide"><input type="radio" name="wb-via" value="key"><span class="wb-pick__body"><span class="wb-pick__name">My own API key</span><span class="wb-pick__tag">Anthropic, OpenAI, Gemini, xAI, DeepSeek, Mistral, Groq or OpenRouter.</span></span></label>
-<label class="wb-pick wb-pick--wide"><input type="radio" name="wb-via" value="export"><span class="wb-pick__body"><span class="wb-pick__name">My chat subscription</span><span class="wb-pick__tag">Copy the prompt into ChatGPT, Claude or Gemini and paste the reply back. Covers the three core profiles. No account, no daily limit.</span></span></label>
+<label class="wb-pick wb-pick--wide"><input type="radio" name="wb-via" value="export"><span class="wb-pick__body"><span class="wb-pick__name">My chat subscription</span><span class="wb-pick__tag">Copy the prompt into ChatGPT, Claude or Gemini and paste the reply back. Code security, Solidity and draft-report reviews only. No account, no daily limit.</span></span></label>
 </div>
 </div>
 </div>
@@ -400,32 +400,32 @@
 
 <section class="section home-band" id="pricing" aria-labelledby="pricing-title">
   <div class="wrap">
-    <header class="section-head"><div class="section-head__text"><h2 id="pricing-title">Start free. Upgrade when you need more.</h2><p class="lede">API model usage is billed separately by your provider.</p></div></header>
+    <header class="section-head"><div class="section-head__text"><h2 id="pricing-title">Free for 1 review a day. US$10 a week for unlimited.</h2><p class="lede">Your model provider bills model usage to your own key.</p></div></header>
     <div class="home-plans__note" data-checkout-note></div>
     <div class="home-plans">
       <article class="home-plan" aria-labelledby="plan-free">
         <h3 class="home-plan__name" id="plan-free">Free</h3>
         <p class="home-plan__price"><span class="home-plan__amount">US$0</span></p>
         <p class="home-plan__for">No card needed.</p>
-        <ul class="home-ticks"><li><span class="icon icon--check" aria-hidden="true"></span><span>1 hosted review per UTC day</span></li><li><span class="icon icon--check" aria-hidden="true"></span><span>Any of the eleven single review types</span></li><li><span class="icon icon--check" aria-hidden="true"></span><span>Unlimited prompt export for the three core reviews</span></li></ul>
+        <ul class="home-ticks"><li><span class="icon icon--check" aria-hidden="true"></span><span>1 review a day, any of the 11 review types</span></li><li><span class="icon icon--check" aria-hidden="true"></span><span>Unlimited copy-paste reviews in ChatGPT or Claude (3 review types)</span></li></ul>
         <div class="home-plan__cta"><a class="btn btn--secondary btn--lg btn--block" href="#workspace"><span class="btn__label">Start a free review</span></a></div>
       </article>
       <article class="home-plan home-plan--operator" aria-labelledby="plan-operator">
         <h3 class="home-plan__name" id="plan-operator">Operator</h3>
         <p class="home-plan__price"><span class="home-plan__amount">US$10</span><span class="home-plan__per">per week</span></p>
         <p class="home-plan__for">Everything in Free, plus:</p>
-        <ul class="home-ticks"><li><span class="icon icon--check" aria-hidden="true"></span><span>Unlimited hosted reviews, four at once</span></li><li><span class="icon icon--check" aria-hidden="true"></span><span><a class="link" href="/gauntlet">Gauntlet</a>: eight checks and a final verdict</span></li><li><span class="icon icon--check" aria-hidden="true"></span><span><a class="link" href="/panel-review">Panel review</a>: compare two to four models</span></li></ul>
+        <ul class="home-ticks"><li><span class="icon icon--check" aria-hidden="true"></span><span>Unlimited reviews, 4 at once</span></li><li><span class="icon icon--check" aria-hidden="true"></span><span><a class="link" href="/gauntlet">Gauntlet</a>: 8 checks on one finding, then a verdict</span></li><li><span class="icon icon--check" aria-hidden="true"></span><span><a class="link" href="/panel-review">Panel review</a>: compare 2 to 4 models</span></li></ul>
         <div class="home-plan__cta"><button class="btn btn--primary btn--lg btn--block" type="button" id="upgrade" data-upgrade data-account-action="checkout"><span class="btn__label">Get Operator</span></button></div>
       </article>
     </div>
-    <p class="fine home-plans__terms">US$10 billed weekly, renews until you cancel in the Stripe portal; access runs to the end of the paid week. <a class="link" href="/pricing">Full plan comparison</a> · <a class="link" href="/terms">Terms</a></p>
+    <p class="fine home-plans__terms">Billed weekly. Cancel any time in the Stripe portal and keep access until the paid week ends. <a class="link" href="/pricing">Full plan comparison</a> · <a class="link" href="/terms">Terms</a></p>
   </div>
 </section>
 
 <section class="section section--tight wrap" aria-labelledby="faq">
   <div class="home-faq">
     <header class="section-head"><div class="section-head__text"><h2 id="faq">Questions</h2></div></header>
-    <div class="accordion"><details class="accordion__item" name="home-faq"><summary class="accordion__summary">Can I use my ChatGPT or Claude subscription?</summary><div class="accordion__body">Yes. Code review, Solidity review and report review can be copied into your chat app. Paste the answer back to view it here. Other review types need an API key. <a class="link" href="/your-model-your-key">Model options</a></div></details><details class="accordion__item" name="home-faq"><summary class="accordion__summary">Where do my files go?</summary><div class="accordion__body">Your files and API key pass through our server to your provider. The server adds the review instructions and stores no files, prompts, keys or results. Prompt export stays in your browser until you copy it elsewhere. <a class="link" href="/privacy">Privacy details</a></div></details><details class="accordion__item" name="home-faq"><summary class="accordion__summary">Which models can I use?</summary><div class="accordion__body"><p>Choose a model from OpenRouter, Anthropic, OpenAI, Google Gemini, xAI, DeepSeek, Mistral or Groq. The three core reviews also work through prompt export with your chat or local model.</p></div></details><details class="accordion__item" name="home-faq"><summary class="accordion__summary">How do I cancel or get help?</summary><div class="accordion__body">Cancel in the Stripe billing portal. Access continues until the end of your paid week. Contact <a class="link" href="mailto:support@bountyoperator.com">support@bountyoperator.com</a> for access problems or billing help. <a class="link" href="/terms">Refund terms</a></div></details></div>
+    <div class="accordion"><details class="accordion__item" name="home-faq"><summary class="accordion__summary">I already pay for my model. Why pay for this?</summary><div class="accordion__body">Your provider charges for the model. The US$10 pays for Bounty Operator: no daily limit, the Gauntlet, Panel review and 4 reviews running at once. Model usage is not included. <a class="link" href="/pricing">Pricing</a></div></details><details class="accordion__item" name="home-faq"><summary class="accordion__summary">Can I use my ChatGPT or Claude subscription?</summary><div class="accordion__body">Yes, for 3 review types: code security, Solidity and draft reports. Copy the prompt into your chat and paste the answer back here. The other review types need an API key. <a class="link" href="/your-model-your-key">Model options</a></div></details><details class="accordion__item" name="home-faq"><summary class="accordion__summary">Where do my files go?</summary><div class="accordion__body">Your files and API key pass through our server to your provider. The server adds the review instructions and stores no files, prompts, keys or results. A copy-paste prompt stays in your browser until you copy it. <a class="link" href="/privacy">Privacy details</a></div></details><details class="accordion__item" name="home-faq"><summary class="accordion__summary">Which models can I use?</summary><div class="accordion__body"><p>Choose a model from OpenRouter, Anthropic, OpenAI, Google Gemini, xAI, DeepSeek, Mistral or Groq, on your own API key.</p></div></details><details class="accordion__item" name="home-faq"><summary class="accordion__summary">How do I cancel or get help?</summary><div class="accordion__body">Cancel in the Stripe billing portal. Access continues until the end of your paid week. Contact <a class="link" href="mailto:support@bountyoperator.com">support@bountyoperator.com</a> for access problems or billing help. <a class="link" href="/terms">Refund terms</a></div></details></div>
   </div>
 </section>
 </main>

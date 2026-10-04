@@ -340,8 +340,8 @@ function paint() {
   const busy = controller !== null;
   let label = 'Run the panel';
   let hint = plan === 'operator'
-    ? `${seats.length} hosted reviews at once, then one cross-examination.`
-    : 'An Operator run: four hosted reviews at a time.';
+    ? `${seats.length} reviews at once, then one cross-check.`
+    : 'An Operator run: four reviews at a time.';
   if (example && exampleHasRun && !kept) {
     label = 'Show the panel on this example';
     hint = 'Stored with the example: the model reviews and their cross-examination. No account needed.';

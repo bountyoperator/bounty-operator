@@ -32,6 +32,7 @@ import { PROVIDERS } from '../../public/providers.mjs';
 import { exampleShot } from '../social/example.mjs';
 import { LEADERBOARDS } from './method/_shared.mjs';
 import { BENCH_TEASER, BENCH_TEASER_STYLES } from './benchmark/_teaser.mjs';
+import { RENEWAL, WHY_PAY } from '../plans.mjs';
 
 const LASTMOD = '2026-10-04';
 const DEV_BUILD = process.argv.includes('--dev');
@@ -93,14 +94,9 @@ const publicFile = (path) => existsSync(fileURLToPath(new URL(`../../public${pat
 // Facts
 // ---------------------------------------------------------------------------
 
-const WORDS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen'];
-const word = (count) => WORDS[count] ?? String(count);
-
-const PROFILE_COUNT = word(PROFILES.filter((profile) => profile.listed).length);
+const PROFILE_TOTAL = PROFILES.filter((profile) => profile.listed).length;
 const PROVIDER_NAMES = PROVIDERS.map((provider) => provider.label);
 const PROVIDER_SENTENCE = `${PROVIDER_NAMES.slice(0, -1).join(', ')} or ${PROVIDER_NAMES.at(-1)}`;
-
-const RENEWAL = 'US$10 billed weekly, renews until you cancel in the Stripe portal; access runs to the end of the paid week.';
 
 // ---------------------------------------------------------------------------
 // A short introduction, the review itself, and optional supporting pages.
@@ -117,7 +113,7 @@ const hero = html`
       ${button({ label: 'View example', href: '#workspace', size: 'lg', attrs: { 'data-demo': true, 'data-example': '' } })}
     </div>
     <p class="home-hero__note">The example needs no account or API key.</p>
-    <p class="home-hero__links">${BENCH_TEASER && html`<a class="link" href="/benchmark#comparison">Compare the results</a>`}<a class="link" href="/mcp">Use in your coding agent</a></p>
+    <p class="home-hero__links">${BENCH_TEASER && html`<a class="link" href="/benchmark#comparison">See the model benchmark</a>`}<a class="link" href="/mcp">Use in your coding agent</a></p>
   </section>
   <div class="home-top__shot">
     ${exampleShot({ id: 'hero', compact: true, caption: 'Saved example. Tessera Staking is an invented protocol.' })}
@@ -127,7 +123,7 @@ const hero = html`
 
 const STEPS = [
   { title: 'Add your files', text: 'Paste text, drop files or import from GitHub.' },
-  { title: 'Choose your model', text: 'Use an API key or copy a core review into your chat app.' },
+  { title: 'Choose your model', text: 'Use your own API key, or your ChatGPT or Claude chat.' },
   { title: 'Read the result', text: 'See the verdict, source citations and next steps.' },
 ];
 
@@ -154,14 +150,14 @@ const ticks = (items) => html`<ul class="home-ticks">${items.map((item) => html`
 const pricing = html`
 <section class="section home-band" id="pricing" aria-labelledby="pricing-title">
   <div class="wrap">
-    ${sectionHeading({ title: 'Start free. Upgrade when you need more.', id: 'pricing-title', lede: 'API model usage is billed separately by your provider.' })}
+    ${sectionHeading({ title: 'Free for 1 review a day. US$10 a week for unlimited.', id: 'pricing-title', lede: 'Your model provider bills model usage to your own key.' })}
     <div class="home-plans__note" data-checkout-note></div>
     <div class="home-plans">
       <article class="home-plan" aria-labelledby="plan-free">
         <h3 class="home-plan__name" id="plan-free">Free</h3>
         <p class="home-plan__price"><span class="home-plan__amount">US$0</span></p>
         <p class="home-plan__for">No card needed.</p>
-        ${ticks(['1 hosted review per UTC day', `Any of the ${PROFILE_COUNT} single review types`, 'Unlimited prompt export for the three core reviews'])}
+        ${ticks([`1 review a day, any of the ${PROFILE_TOTAL} review types`, 'Unlimited copy-paste reviews in ChatGPT or Claude (3 review types)'])}
         <div class="home-plan__cta">${button({ label: 'Start a free review', href: '#workspace', size: 'lg', block: true })}</div>
       </article>
       <article class="home-plan home-plan--operator" aria-labelledby="plan-operator">
@@ -169,9 +165,9 @@ const pricing = html`
         <p class="home-plan__price"><span class="home-plan__amount">US$10</span><span class="home-plan__per">per week</span></p>
         <p class="home-plan__for">Everything in Free, plus:</p>
         ${ticks([
-          'Unlimited hosted reviews, four at once',
-          html`<a class="link" href="/gauntlet">Gauntlet</a>: eight checks and a final verdict`,
-          html`<a class="link" href="/panel-review">Panel review</a>: compare two to four models`,
+          'Unlimited reviews, 4 at once',
+          html`<a class="link" href="/gauntlet">Gauntlet</a>: 8 checks on one finding, then a verdict`,
+          html`<a class="link" href="/panel-review">Panel review</a>: compare 2 to 4 models`,
         ])}
         <div class="home-plan__cta">${button({ label: 'Get Operator', id: 'upgrade', variant: 'primary', size: 'lg', block: true, attrs: { 'data-upgrade': true, 'data-account-action': 'checkout' } })}</div>
       </article>
@@ -182,16 +178,20 @@ const pricing = html`
 
 const FAQ_ITEMS = [
   {
+    q: 'I already pay for my model. Why pay for this?',
+    a: html`${WHY_PAY} <a class="link" href="/pricing">Pricing</a>`,
+  },
+  {
     q: 'Can I use my ChatGPT or Claude subscription?',
-    a: html`Yes. Code review, Solidity review and report review can be copied into your chat app. Paste the answer back to view it here. Other review types need an API key. <a class="link" href="/your-model-your-key">Model options</a>`,
+    a: html`Yes, for 3 review types: code security, Solidity and draft reports. Copy the prompt into your chat and paste the answer back here. The other review types need an API key. <a class="link" href="/your-model-your-key">Model options</a>`,
   },
   {
     q: 'Where do my files go?',
-    a: html`Your files and API key pass through our server to your provider. The server adds the review instructions and stores no files, prompts, keys or results. Prompt export stays in your browser until you copy it elsewhere. <a class="link" href="/privacy">Privacy details</a>`,
+    a: html`Your files and API key pass through our server to your provider. The server adds the review instructions and stores no files, prompts, keys or results. A copy-paste prompt stays in your browser until you copy it. <a class="link" href="/privacy">Privacy details</a>`,
   },
   {
     q: 'Which models can I use?',
-    a: `Choose a model from ${PROVIDER_SENTENCE}. The three core reviews also work through prompt export with your chat or local model.`,
+    a: `Choose a model from ${PROVIDER_SENTENCE}, on your own API key.`,
   },
   {
     q: 'How do I cancel or get help?',

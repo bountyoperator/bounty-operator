@@ -7,6 +7,7 @@
 
 import { button, dossier, faq, findingCard, html, inline, kv, sectionHeading, stackTable, statusChip, verdictChip } from '../../components.mjs';
 import { breadcrumbsLd, faqPageLd } from '../../layout.mjs';
+import { OPERATOR_LINE, RENEWAL } from '../../plans.mjs';
 import {
   GAUNTLET_EXAMPLE,
   LASTMOD,
@@ -132,7 +133,7 @@ const todoTable = stackTable({
 
 const heroAside = exampleFrame({
   className: 'example--narrow',
-  label: 'Example dossier · invented protocol',
+  label: 'Result · invented protocol',
   body: html`
     <div class="stack">
       ${dossier({ verdict: GAUNTLET_EXAMPLE.verdict, headline: GAUNTLET_EXAMPLE.headline, counts: GAUNTLET_EXAMPLE.counts })}
@@ -150,7 +151,7 @@ const HAND_OVER = [
   { title: 'The severity scale', text: 'The programme’s own scale with its thresholds and downgrade clauses, pasted in.' },
   { title: 'Asset and revisions', text: 'The scoped asset, the revision your proof ran against and the revision that is deployed.' },
   { title: 'Prior material', text: 'Known issues, audits and fix-review notes, team branches, and your own earlier reports on the programme.' },
-  { title: 'Clock and read-back', text: 'The date you first reproduced it, the fee and duplicate rules, and what the platform stored after you filled in the form.' },
+  { title: 'Dates and what the platform saved', text: 'The date you first reproduced it, the fee and duplicate rules, and what the platform stored after you filled in the form.' },
 ];
 
 const FAQ_ITEMS = [
@@ -160,15 +161,15 @@ const FAQ_ITEMS = [
   },
   {
     q: 'Which model runs the stages?',
-    a: 'The one you choose. Every stage is a hosted review: your files and your API key go through our server, which adds the method of the stage, to your provider. That is OpenRouter, Anthropic, OpenAI, Google Gemini, xAI, DeepSeek, Mistral or Groq. No file, key or review is stored.',
+    a: 'The one you choose, on your own API key: OpenRouter, Anthropic, OpenAI, Google Gemini, xAI, DeepSeek, Mistral or Groq. Your files and key pass through our server, which adds the method of each stage. No file, key or review is stored.',
   },
   {
     q: 'Can I run the stages on a chat subscription or from a coding agent?',
-    a: 'The stages run hosted, on an API key. The report stage is the Challenge a draft report profile, which also exports as a prompt on its own. From a coding agent, the `gauntlet` prompt of the MCP server runs the same order: seven hosted reviews through `run_review` with a connection token, and the report stage on your agent’s own model.',
+    a: 'The stages need an API key. The report stage is the Challenge a draft report review, which also works on its own in ChatGPT or Claude. From a coding agent, the `gauntlet` prompt of the MCP server runs the same order: seven hosted reviews through `run_review` with a connection token, and the report stage on your agent’s own model.',
   },
   {
     q: 'What happens when an early stage ends the report?',
-    a: 'The run stops there. A drop or a hold-duplicate from scope, provenance or prior art ends the report before the proof stage costs you a day, and the dossier opens on that verdict. One button runs the remaining stages anyway.',
+    a: 'The run stops there. If scope, design intent or prior art says drop or likely duplicate, the run stops before you spend time on a PoC, and the result opens on that verdict. One button runs the remaining stages anyway.',
   },
   {
     q: 'Does the gauntlet run code or touch the target?',
@@ -176,7 +177,7 @@ const FAQ_ITEMS = [
   },
   {
     q: 'What does the free plan show?',
-    a: 'The example dossier on this page and every single profile, one hosted review per UTC day. Each gauntlet stage except the final verdict is also a profile you run on its own.',
+    a: 'The example on this page, and 1 review a day of any review type. Every gauntlet stage except the final verdict is also a review type you can run on its own.',
   },
 ];
 
@@ -184,8 +185,8 @@ const body = html`
 ${pageHero({
   trail: [{ label: 'Bounty Operator', href: '/' }, { label: 'Method', href: '/method' }, { label: 'Gauntlet' }],
   eyebrow: html`${statusChip('operator')}`,
-  title: 'One run, eight stages, one verdict on your bug bounty report',
-  lede: 'Hand over the draft, the code and the programme rules. The Gauntlet runs eight stages in the order that saves work and returns one decision, the one blocker behind it and the cheapest action that removes it.',
+  title: 'Run one finding through 8 checks and get a verdict',
+  lede: 'Give it your draft, your code and the program rules. You get one verdict (submit, rewrite then submit, prove first, hold as duplicate, or drop), the main thing blocking it, and the quickest fix.',
   actions: operatorActions({ secondary: button({ label: 'See the eight stages', href: '#stages', size: 'lg' }) }),
   note: 'US$10 per week. Runs on your own model and key.',
   aside: heroAside,
@@ -198,7 +199,7 @@ ${pageHero({
       ${sectionHeading({
         title: 'The verdict is one of five',
         id: 'verdicts',
-        lede: 'Words a hunter already uses. The dossier never ends on “consider” or “it depends”.',
+        lede: 'Each verdict tells you what to do next with the report.',
       })}
       ${tickList([
         'One verdict for the whole report.',
@@ -238,12 +239,12 @@ ${pageHero({
 
 <section class="section wrap" aria-labelledby="example">
   ${sectionHeading({
-    title: 'The dossier, in full',
+    title: 'A full example',
     id: 'example',
     lede: 'A draft claims a Critical pool drain in Brinewell Lend, a lending protocol invented for this page. Eight stages later the finding stands, the severity moves, and one test is missing.',
   })}
   ${exampleFrame({
-    label: 'Example dossier · invented protocol · Brinewell Lend',
+    label: 'Result · invented protocol · Brinewell Lend',
     body: html`
     <div class="stack stack--24">
       ${dossier({ verdict: GAUNTLET_EXAMPLE.verdict, headline: GAUNTLET_EXAMPLE.headline, counts: GAUNTLET_EXAMPLE.counts })}
@@ -262,9 +263,9 @@ ${pageHero({
 
 <section class="section wrap" aria-labelledby="hand-over">
   ${sectionHeading({
-    title: 'What you hand over',
+    title: 'What to paste in',
     id: 'hand-over',
-    lede: 'The run asks for the evidence that decides outcomes. A field left empty is named in the dossier as not supplied.',
+    lede: 'The run asks for the evidence that decides outcomes. Anything you leave empty is marked as not supplied in the result.',
   })}
   ${points(HAND_OVER, { columns: 3 })}
 </section>
@@ -273,13 +274,13 @@ ${pageHero({
   ${sectionHeading({
     title: 'How it runs',
     id: 'how',
-    lede: 'No new machinery. The Gauntlet is eight hosted reviews, run in order from your browser on your own key.',
+    lede: 'The Gauntlet is eight reviews, run in order from your browser on your own key.',
   })}
   ${points(
     [
       {
         title: 'Eight reviews, one after another',
-        text: 'Each stage is a hosted review with its own profile. It goes through our server, which adds the method of the stage, to your provider. Your provider bills each call to your key.',
+        text: 'Each stage is its own review type. It goes through our server, which adds the method of the stage, to your provider. Your provider bills each call to your key.',
       },
       {
         title: 'Earlier stages become evidence',
@@ -289,7 +290,7 @@ ${pageHero({
         title: 'Finished stages are kept',
         text: 'A cancelled run, a provider error or a reload keeps every stage that finished. The run picks up at the stage that did not.',
       },
-      { title: 'One packet', text: 'The dossier downloads as one record with the SHA-256 manifest of every file the run read.' },
+      { title: 'One download', text: 'The result downloads as one file, with a SHA-256 hash of every file the run read.' },
     ],
     { columns: 2 },
   )}
@@ -302,15 +303,15 @@ ${pageHero({
 
 ${ctaBand({
   title: 'Run the gauntlet before the triager does',
-  lede: 'Unlimited hosted reviews, the Gauntlet, Panel review and four reviews running at once.',
+  lede: OPERATOR_LINE,
   actions: html`${button({ label: 'Get Operator', href: '/pricing', variant: 'primary', size: 'lg', iconEnd: 'arrow-right' })}${button({ label: 'Read the method', href: '/method', size: 'lg' })}`,
-  note: 'US$10 billed weekly, renews until you cancel in the Stripe portal; access runs to the end of the paid week.',
+  note: RENEWAL,
 })}
 
 <section class="section section--tight wrap">
   ${relatedLinks([
     { label: 'The twelve checks', href: '/method', text: 'The question each check asks, and why reports die on it.' },
-    { label: 'Panel review', href: '/panel-review', text: 'Two to four models, then a cross-examination pass.' },
+    { label: 'Panel review', href: '/panel-review', text: '2 to 4 models on the same code, then a cross-check.' },
     { label: 'Pricing', href: '/pricing', text: 'Free and Operator, side by side.' },
   ])}
 </section>`;
@@ -319,7 +320,7 @@ export default {
   path: PATH,
   title: 'Gauntlet: eight-stage bug bounty report check | Bounty Operator',
   description:
-    'One run takes your draft through eight stages and returns one verdict, one blocker and the cheapest action that removes it. Example dossier included.',
+    'One run takes your draft through eight stages and returns one verdict, the main blocker and the quickest fix. Full example included.',
   label: 'Gauntlet',
   styles: STYLES,
   jsonld: [breadcrumbsLd([{ name: 'Method', path: '/method' }, { name: 'Gauntlet', path: PATH }]), faqPageLd(FAQ_ITEMS)],

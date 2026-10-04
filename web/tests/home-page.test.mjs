@@ -97,7 +97,8 @@ test('pricing states the two fixed plans and nothing else', () => {
   const text = textOf(pricing);
   assert.match(text, /US\$0/);
   assert.match(text, /US\$10 per week/);
-  assert.match(text, /Unlimited hosted reviews/);
+  assert.match(text, /Unlimited reviews, 4 at once/);
+  assert.match(text, /1 review a day/);
   assert.match(text, /Start a free review/);
   assert.match(text, /Get Operator/);
   assert.doesNotMatch(text, /trial|discount|per month|\/mo\b|coupon/i);
@@ -117,7 +118,8 @@ test('structured data: organization, the two offers, and an FAQ that matches the
   assert.deepEqual(offers, [['Free', '0'], ['Operator', '10.00']]);
 
   const faq = home.jsonld[2].mainEntity;
-  assert.equal(faq.length, 4);
+  assert.equal(faq.length, 5);
+  assert.equal(faq[0].name, 'I already pay for my model. Why pay for this?');
   const visible = textOf(main.slice(main.indexOf('id="faq"')));
   for (const entry of faq) {
     assert.ok(visible.includes(entry.name), entry.name);

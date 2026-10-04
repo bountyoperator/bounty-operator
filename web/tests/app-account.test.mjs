@@ -425,12 +425,12 @@ describe('the plan', () => {
     assert.equal(PRICE_LINE, 'US$10 a week');
     assert.equal(OPERATOR_ACTIVE, 'Operator is active. Unlimited reviews, gauntlet and panel are unlocked.');
     const row = (feature) => PLAN_ROWS.find((entry) => entry.feature === feature);
-    assert.deepEqual([row('Hosted reviews').free, row('Hosted reviews').operator], ['1 per UTC day', 'Unlimited']);
+    assert.deepEqual([row('Reviews on your API key').free, row('Reviews on your API key').operator], ['1 a day (resets 00:00 UTC)', 'Unlimited']);
     assert.deepEqual([row('Gauntlet').free, row('Gauntlet').operator], ['Example', 'Included']);
     assert.deepEqual([row('Panel review').free, row('Panel review').operator], ['Example', 'Included']);
     assert.deepEqual([row('Reviews at once').free, row('Reviews at once').operator], ['1', '4']);
     assert.match(row('Gauntlet').detail, /Eight stages/);
-    for (const entry of PLAN_ROWS.filter((item) => !['Hosted reviews', 'Gauntlet', 'Panel review', 'Reviews at once'].includes(item.feature))) {
+    for (const entry of PLAN_ROWS.filter((item) => !['Reviews on your API key', 'Gauntlet', 'Panel review', 'Reviews at once'].includes(item.feature))) {
       assert.deepEqual([entry.free, entry.operator], ['Included', 'Included'], entry.feature);
     }
   });

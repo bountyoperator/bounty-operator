@@ -313,13 +313,13 @@ export function liveBox(label) {
 const FEATURES = Object.freeze({
   gauntlet: {
     title: 'The gauntlet runs on Operator.',
-    text: 'Eight hosted reviews on one finding, one after another. Operator has no daily limit. The free plan has one hosted review a day.',
+    text: 'Eight reviews on one finding, one after another. Operator has no daily limit. The free plan has 1 review a day.',
     example: 'See the gauntlet on the example',
     unit: 'stage',
   },
   panel: {
     title: 'The panel runs on Operator.',
-    text: 'Up to four hosted reviews at once, then the cross-examination. Operator runs four at a time with no daily limit. The free plan runs one review a day.',
+    text: 'Up to four reviews at once, then a cross-check. Operator runs four at a time with no daily limit. The free plan has 1 review a day.',
     example: 'See the panel on the example',
     unit: 'model review',
   },
@@ -557,7 +557,7 @@ function paint() {
   let label = 'Run the gauntlet';
   let alt = null;
   let hint = plan === 'operator'
-    ? 'Eight hosted reviews on the model chosen above, one after another.'
+    ? 'Eight reviews on the model chosen above, one after another.'
     : 'An Operator run. The example shows a whole one without an account.';
   if (example && run.status === 'idle') {
     label = exampleHasRun ? 'Show the gauntlet on this example' : 'Run the gauntlet';

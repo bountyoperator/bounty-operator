@@ -646,8 +646,8 @@ function pastDueNotice() {
 }
 
 const PLAN_LINES = {
-  free: ['Free plan', 'One hosted review per UTC day. Prompt export and the free tools have no limit.'],
-  operator: ['Operator', 'Unlimited hosted reviews, the gauntlet and panel review. Four reviews at once.'],
+  free: ['Free plan', '1 review a day on your API key, reset at 00:00 UTC. Copy-paste reviews and the free tools have no limit.'],
+  operator: ['Operator', 'Unlimited reviews, the Gauntlet and Panel review. 4 reviews at once.'],
 };
 
 function overviewStats(summary) {
@@ -705,7 +705,7 @@ function renderOverview() {
             }),
           )
         : data
-          ? empty('No hosted review yet.', workbenchLink())
+          ? empty('No review yet.', workbenchLink())
           : skeleton(),
     ),
   ];
@@ -725,7 +725,7 @@ function renderReviews() {
   return [
     section(
       'Recent reviews',
-      'The last 30 hosted reviews, kept for seven days. Only the profile, the channel, the time and the status are stored.',
+      'The last 30 reviews, kept for seven days. Only the review type, the channel, the time and the status are stored.',
       rows.length
         ? el(
             'ul',
@@ -738,7 +738,7 @@ function renderReviews() {
               }),
             ),
           )
-        : empty('No hosted review yet. Run one from the workbench or from a connected AI client.', workbenchLink()),
+        : empty('No review yet. Run one on the website or from a connected coding agent.', workbenchLink()),
     ),
   ];
 }
@@ -1136,7 +1136,7 @@ function renderBilling() {
   } else if (subscribed) {
     current = ['Free plan', 'A subscription exists on this account and is not active. Open Stripe to see its state.'];
   } else {
-    current = ['Free plan', `One hosted review per UTC day. Operator is ${PRICE_LINE}, billed by Stripe until you cancel.`];
+    current = ['Free plan', `1 review a day, reset at 00:00 UTC. Operator is ${PRICE_LINE}, billed by Stripe until you cancel.`];
   }
 
   return [

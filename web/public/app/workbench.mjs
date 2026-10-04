@@ -689,7 +689,7 @@ export function isHosted(profileId) {
  */
 export function hostedLine(profileId) {
   const names = CORE_PROFILE_IDS.map((id) => reviewProfile(id).name);
-  return `${safeProfile(profileId).name} runs on our server with your key. Prompt export covers ${names.slice(0, -1).join(', ')} and ${names.at(-1)}.`;
+  return `${safeProfile(profileId).name} runs on our server with your key. Copy-paste prompts cover ${names.slice(0, -1).join(', ')} and ${names.at(-1)}.`;
 }
 
 /** True when the current work can be sent: files are there and the privacy check lets them through. Reports the reason when not. */

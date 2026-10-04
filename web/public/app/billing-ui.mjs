@@ -45,12 +45,12 @@ export const OPERATOR_ACTIVE = `${OPERATOR_ACTIVE_TITLE} ${OPERATOR_ACTIVE_BODY}
 
 /** SPEC section 2, in the order a buyer reads it. `free` and `operator` are the cell texts. */
 export const PLAN_ROWS = Object.freeze([
-  { feature: 'Hosted reviews', free: '1 per UTC day', operator: 'Unlimited' },
+  { feature: 'Reviews on your API key', free: '1 a day (resets 00:00 UTC)', operator: 'Unlimited' },
   { feature: 'Gauntlet', detail: 'Eight stages, from scope to a verdict dossier.', free: 'Example', operator: 'Included' },
   { feature: 'Panel review', detail: 'Two to four models in parallel, then a cross-examination.', free: 'Example', operator: 'Included' },
   { feature: 'Reviews at once', free: '1', operator: '4' },
-  { feature: 'Every single profile', free: 'Included', operator: 'Included' },
-  { feature: 'Prompt export, paste-back, free tools, repo import', free: 'Included', operator: 'Included' },
+  { feature: 'All 11 review types', free: 'Included', operator: 'Included' },
+  { feature: 'Copy-paste reviews in your chat app, free tools, repo import', free: 'Included', operator: 'Included' },
 ]);
 
 const CHECKOUT_PATH = '/api/billing/checkout';
