@@ -329,6 +329,7 @@ describe('tool browser modules', () => {
   test('engine functions are imported, not copied', () => {
     assert.match(read('report-check-core.mjs'), /import \{[^}]*splitLines[^}]*\} from '\.\.\/review-core\.mjs'/);
     assert.match(read('report-check-core.mjs'), /import \{ scanFile \} from '\.\/secret-check-core\.mjs'/);
+    assert.match(read('report-evidence-core.mjs'), /import \{[^}]*manifestFor[^}]*splitLines[^}]*\} from '\.\.\/review-core\.mjs'/);
     assert.match(read('secret-check-core.mjs'), /import \{[^}]*checkInputs[^}]*\} from '\.\.\/review-core\.mjs'/);
     assert.match(read('verify-core.mjs'), /import \{ manifestFor \} from '\.\.\/review-core\.mjs'/);
     for (const name of modules) {
@@ -338,7 +339,7 @@ describe('tool browser modules', () => {
 
   test('page scripts preload the modules they import', async () => {
     const reportCheckPreloads = await modulePreloads(['/tools/report-check.mjs'], PUBLIC_DIR);
-    assert.deepEqual(reportCheckPreloads.slice(0, 4), ['/tools/report-check-core.mjs', '/tools/dom.mjs', '/tools/ping.mjs', '/review-core.mjs']);
+    assert.deepEqual(reportCheckPreloads.slice(0, 5), ['/tools/report-check-core.mjs', '/tools/dom.mjs', '/tools/ping.mjs', '/tools/report-evidence-core.mjs', '/review-core.mjs']);
     assert.deepEqual(await modulePreloads(['/tools/acceptance-rates.mjs'], PUBLIC_DIR), ['/tools/dom.mjs', '/tools/ping.mjs']);
     assert.deepEqual(await modulePreloads(['/tools/slither-focus.mjs'], PUBLIC_DIR), ['/tools/slither-focus-core.mjs', '/tools/dom.mjs', '/tools/ping.mjs']);
   });

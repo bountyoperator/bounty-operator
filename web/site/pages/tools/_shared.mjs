@@ -24,9 +24,9 @@ export const TOOLS = [
     path: '/tools/report-check',
     name: 'Report check',
     heading: 'Bug bounty report check',
-    outcome: 'Check your draft for missing evidence, scope details and common report mistakes.',
-    input: 'draft report',
-    output: '14 checks',
+    outcome: 'Check your draft for missing evidence, scope details, common report mistakes and broken file:line citations.',
+    input: 'draft + cited files',
+    output: '14 checks + citations',
     icon: 'search',
   },
   {

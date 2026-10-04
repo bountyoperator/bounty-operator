@@ -621,8 +621,17 @@ function checkLimits(lines) {
 
 function checkPhrases(lines) {
   const hits = [];
+  // Under the author's own Limits heading a phrase is a stated non-claim, which
+  // the limits check rewards. Flagging it there too would contradict that check.
+  let limitsLevel = null;
   for (const line of lines) {
     if (line.code) continue;
+    const heading = headingOf(line.text);
+    if (heading) {
+      if (limitsLevel !== null && heading.level <= limitsLevel) limitsLevel = null;
+      if (LIMITS_HEADING.test(heading.text)) limitsLevel = heading.level;
+    }
+    if (limitsLevel !== null) continue;
     for (const entry of PHRASES) {
       const match = line.text.match(entry.pattern);
       if (!match) continue;
@@ -747,16 +756,20 @@ export function checklistMarkdown(report) {
 }
 
 /**
- * What the workbench receives when the draft is handed over: the draft as one
- * file, the report profile, and a focus line that lists the open checks.
+ * What the workbench receives when the draft is handed over: the draft and any
+ * attached evidence files, the report profile, and a focus line that lists the
+ * open checks.
  *
  * @param {string} text
  * @param {ReportCheck} [report]
+ * @param {{ name: string, content: string }[] | null} [files]  The draft plus its evidence, draft last.
  */
-export function workbenchHandoff(text, report = checkReport(text)) {
+export function workbenchHandoff(text, report = checkReport(text), files = null) {
   const open = report.checks.filter((check) => check.status !== 'pass').map((check) => `${check.label} (${check.status})`);
+  const withEvidence = Array.isArray(files) && files.length > 1;
+  const cite = withEvidence ? ' Test every file:line citation against the attached files.' : '';
   const focus = open.length
-    ? `Challenge this draft report. A text check left these items open: ${open.join('; ')}. Test each one against the draft and name the sentence a triager would close on.`
-    : 'Challenge this draft report. Name the sentence a triager would close on.';
-  return { files: [{ name: DRAFT_NAME, content: text }], profile: 'report', focus, context: {} };
+    ? `Challenge this draft report. A text check left these items open: ${open.join('; ')}. Test each one against the draft and name the sentence a triager would close on.${cite}`
+    : `Challenge this draft report. Name the sentence a triager would close on.${cite}`;
+  return { files: withEvidence ? files.map(({ name, content }) => ({ name, content })) : [{ name: DRAFT_NAME, content: text }], profile: 'report', focus, context: {} };
 }

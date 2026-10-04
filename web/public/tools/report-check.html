@@ -3,24 +3,24 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Bug bounty report check: 14 instant checks on a draft | Bounty Operator</title>
-<meta name="description" content="Paste a draft bug bounty report and get 14 instant checks: pinned commit, quoted impact row, inline proof, trusted roles, leftover secrets. Runs in the browser.">
+<title>Bug bounty report check: 14 instant checks and a citation check | Bounty Operator</title>
+<meta name="description" content="Paste a draft bug bounty report: 14 instant checks (pinned commit, impact row, inline proof, trusted roles, secrets) and a file:line citation check. In-browser.">
 <link rel="canonical" href="https://bountyoperator.com/tools/report-check">
 <meta name="color-scheme" content="dark light">
 <meta name="theme-color" content="#0a1220" media="(prefers-color-scheme: dark)">
 <meta name="theme-color" content="#f5f7fb" media="(prefers-color-scheme: light)">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Bounty Operator">
-<meta property="og:title" content="Bug bounty report check: 14 instant checks on a draft | Bounty Operator">
-<meta property="og:description" content="Paste a draft bug bounty report and get 14 instant checks: pinned commit, quoted impact row, inline proof, trusted roles, leftover secrets. Runs in the browser.">
+<meta property="og:title" content="Bug bounty report check: 14 instant checks and a citation check | Bounty Operator">
+<meta property="og:description" content="Paste a draft bug bounty report: 14 instant checks (pinned commit, impact row, inline proof, trusted roles, secrets) and a file:line citation check. In-browser.">
 <meta property="og:url" content="https://bountyoperator.com/tools/report-check">
 <meta property="og:image" content="https://bountyoperator.com/social-v2.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Bounty Operator. Find the hole in your report before the triager does.">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Bug bounty report check: 14 instant checks on a draft | Bounty Operator">
-<meta name="twitter:description" content="Paste a draft bug bounty report and get 14 instant checks: pinned commit, quoted impact row, inline proof, trusted roles, leftover secrets. Runs in the browser.">
+<meta name="twitter:title" content="Bug bounty report check: 14 instant checks and a citation check | Bounty Operator">
+<meta name="twitter:description" content="Paste a draft bug bounty report: 14 instant checks (pinned commit, impact row, inline proof, trusted roles, secrets) and a file:line citation check. In-browser.">
 <meta name="twitter:image" content="https://bountyoperator.com/social-v2.png">
 <meta name="twitter:image:alt" content="Bounty Operator. Find the hole in your report before the triager does.">
 <link rel="icon" href="/favicon.ico" sizes="48x48">
@@ -33,6 +33,7 @@
 <link rel="modulepreload" href="/tools/report-check-core.mjs">
 <link rel="modulepreload" href="/tools/dom.mjs">
 <link rel="modulepreload" href="/tools/ping.mjs">
+<link rel="modulepreload" href="/tools/report-evidence-core.mjs">
 <link rel="modulepreload" href="/review-core.mjs">
 <link rel="modulepreload" href="/tools/secret-check-core.mjs">
 <link rel="modulepreload" href="/profiles.mjs">
@@ -40,7 +41,7 @@
 <link rel="modulepreload" href="/parse.mjs">
 <script type="module" src="/tools/report-check.mjs"></script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Bounty Operator","item":"https://bountyoperator.com/"},{"@type":"ListItem","position":2,"name":"Tools","item":"https://bountyoperator.com/tools"},{"@type":"ListItem","position":3,"name":"Report check","item":"https://bountyoperator.com/tools/report-check"}]}</script>
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Where does my draft go?","acceptedAnswer":{"@type":"Answer","text":"Nowhere. The fourteen checks are JavaScript that runs in this tab, and the page sends no request with your text. After the page has loaded it makes one request: a counter that says the tool was used, with nothing of yours in it. Pressing “Run the full challenge on your model” moves the draft to the workbench through this browser’s session storage. A model sees it only when you start a review there."}},{"@type":"Question","name":"What does 14 of 14 tell me?","acceptedAnswer":{"@type":"Answer","text":"That the draft contains the text these checks look for: a commit, a quoted impact row, one severity, an inline proof with its output, and a prior-art reference or search result. The check does not verify comparison quality or duplicate status. The workbench challenge reviews the claims against the evidence you supply."}},{"@type":"Question","name":"Which report formats does it read?","acceptedAnswer":{"@type":"Answer","text":"Markdown and plain text. Immunefi, Cantina, Sherlock and HackerOne reports all carry these parts, under different headings. The checks look for the content, so the heading names do not matter."}}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Where does my draft go?","acceptedAnswer":{"@type":"Answer","text":"Nowhere. The fourteen checks and the citation check are JavaScript that runs in this tab, and the page sends no request with your text or your files. After the page has loaded it makes one request: a counter that says the tool was used, with nothing of yours in it. Pressing “Run the full challenge on your model” moves the draft and its files to the workbench through this browser’s session storage. A model sees them only when you start a review there."}},{"@type":"Question","name":"What does 14 of 14 tell me?","acceptedAnswer":{"@type":"Answer","text":"That the draft contains the text these checks look for: a commit, a quoted impact row, one severity, an inline proof with its output, and a prior-art reference or search result. The check does not verify comparison quality or duplicate status. The workbench challenge reviews the claims against the evidence you supply."}},{"@type":"Question","name":"How does the citation check work?","acceptedAnswer":{"@type":"Answer","text":"Attach the files your draft cites. Every citation such as src/Vault.sol:42-48, Vault.sol#L42 or input-1/src/Vault.sol:42 is matched to an attached file, and the cited lines open in place. A citation to a file you did not attach, a line past the end of the file, or a short name that matches two files is listed so you can fix it before a triager finds it. Links to websites are counted, never opened."}},{"@type":"Question","name":"What is the evidence packet?","acceptedAnswer":{"@type":"Answer","text":"One JSON file with the draft, the attached files and a SHA-256 checksum of each. Open it here later to carry on with the same files; a file that changed since it was saved is refused. It holds your full draft and files, so keep it private."}},{"@type":"Question","name":"Which report formats does it read?","acceptedAnswer":{"@type":"Answer","text":"Markdown and plain text. Immunefi, Cantina, Sherlock and HackerOne reports all carry these parts, under different headings. The checks look for the content, so the heading names do not matter."}}]}</script>
 </head>
 <body>
 <a class="skip-link" href="#main">Skip to content</a>
@@ -60,15 +61,15 @@
 <header class="tool-head">
 <nav class="breadcrumbs" aria-label="Breadcrumb"><ol><li><a href="/">Bounty Operator</a></li><li><a href="/tools">Tools</a></li><li aria-current="page">Report check</li></ol></nav>
 <h1>Bug bounty report check</h1>
-<p class="lede">Paste a draft. Fourteen checks answer at once: what is on the page, what is missing, and which sentence a triager will quote back at you.</p>
+<p class="lede">Paste a draft and attach the files it cites. Fourteen checks answer at once: what is on the page, what is missing, which sentence a triager will quote back at you, and which citation points at nothing.</p>
 <p class="tool-local"><span class="icon icon--lock" aria-hidden="true"></span><span>Your content never leaves the browser.</span></p>
 </header>
-<div class="tool-panel" id="report-check">
-<div class="tool-panel__bar"><span class="icon icon--terminal" aria-hidden="true"></span><span class="tool-panel__name">report-check</span><span class="tool-panel__tag">Local · 14 checks</span></div>
+<div class="tool-panel report-check" id="report-check">
+<div class="tool-panel__bar"><span class="icon icon--terminal" aria-hidden="true"></span><span class="tool-panel__name">report-check</span><span class="tool-panel__tag">Local · 14 checks + citations</span></div>
 <div class="tool-panel__body">
 <div class="tool-split">
 <div class="tool-split__in">
-<div class="field"><label class="label" for="draft">Draft report</label><textarea class="textarea mono tool-draft" id="draft" name="draft" rows="18" placeholder="# Missing checkpoint in stake() lets a new staker drain accrued rewards
+<div class="field"><label class="label" for="draft">Draft report</label><textarea class="textarea mono tool-draft" id="draft" name="draft" rows="16" placeholder="# Missing checkpoint in stake() lets a new staker drain accrued rewards
 
 Severity: High
 …" spellcheck="false" autocomplete="off" aria-describedby="draft-help"></textarea><p class="help" id="draft-help">Markdown or plain text. The checks run as you type.</p></div>
@@ -77,6 +78,29 @@ Severity: High
 <button class="btn btn--quiet" type="button" id="check-example"><span class="btn__label">Load example</span></button>
 <button class="btn btn--quiet" type="button" id="check-clear"><span class="btn__label">Clear</span></button>
 </div>
+<h2 class="h3" id="evidence-heading">Attach the files it cites <span class="label__hint">Optional</span></h2>
+<p class="fine">Source, test output or logs. Each <code>file:line</code> in the draft is checked against them. Up to 49 text files, 120 KB each, 240 KB with the draft.</p>
+<div class="drop" id="evidence-drop" data-drop>
+<label class="drop__label" for="evidence-drop-input">
+<span class="icon icon--upload" aria-hidden="true"></span>
+<span class="drop__title">Choose files or drop them here</span>
+<span class="drop__hint">They stay in this tab.</span>
+<input class="drop__input" type="file" id="evidence-drop-input" multiple>
+</label>
+<label class="drop__folder" for="evidence-drop-folder"><span class="icon icon--file" aria-hidden="true"></span><span>Choose a folder</span><input class="drop__input" type="file" id="evidence-drop-folder" webkitdirectory multiple></label>
+</div>
+<details class="disclosure">
+<summary>Paste a file instead</summary>
+<div class="report-evidence-paste">
+<div class="field"><label class="label" for="evidence-name">File name</label><input class="input mono" id="evidence-name" type="text" placeholder="forge-output.txt" autocomplete="off" spellcheck="false" maxlength="240"></div>
+<div class="field"><label class="label" for="evidence-content">Content</label><textarea class="textarea mono" id="evidence-content" name="evidence-content" rows="5" spellcheck="false" autocomplete="off"></textarea></div>
+<button class="btn btn--secondary" type="button" id="evidence-add"><span class="icon icon--plus" aria-hidden="true"></span><span class="btn__label">Add file</span></button>
+</div>
+</details>
+<ul class="report-attachments" id="evidence-files" aria-label="Attached files"></ul>
+<p class="fine" id="evidence-file-count" role="status">No files attached.</p>
+<div id="evidence-notice"></div>
+<label class="drop__folder report-restore" for="evidence-restore"><span class="icon icon--file" aria-hidden="true"></span><span>Open a saved evidence packet</span><input class="drop__input" type="file" id="evidence-restore" accept=".json,application/json"></label>
 </div>
 <div class="tool-split__out">
 <h2 class="visually-hidden">Result</h2>
@@ -88,8 +112,14 @@ Severity: High
 <div class="cluster tool-actions">
 <a class="btn btn--primary" href="/?profile=report#workspace" id="check-handoff"><span class="btn__label">Run the full challenge on your model</span><span class="icon icon--arrow-right" aria-hidden="true"></span></a>
 <button class="btn btn--secondary" type="button" id="check-copy" disabled><span class="icon icon--copy" aria-hidden="true"></span><span class="btn__label">Copy checklist as Markdown</span></button>
+<button class="btn btn--quiet" type="button" id="check-save" disabled><span class="icon icon--download" aria-hidden="true"></span><span class="btn__label">Save evidence packet</span></button>
 </div>
 <div id="check-notice"></div>
+<section class="report-evidence-result" aria-labelledby="evidence-result-heading">
+<h3 class="h4" id="evidence-result-heading">Citations</h3>
+<p id="evidence-summary" role="status">No file:line citations in the draft yet.</p>
+<ul class="report-references" id="evidence-refs" aria-label="Citations in the draft"></ul>
+</section>
 <ol class="checks" id="checks" aria-label="Check results"><li class="check" data-status="pending"><div class="check__head"><span class="chip chip--dashed" data-tone="neutral">Not run</span><h3 class="check__label">Title states mechanism and consequence</h3></div></li><li class="check" data-status="pending"><div class="check__head"><span class="chip chip--dashed" data-tone="neutral">Not run</span><h3 class="check__label">Scoped asset named</h3></div></li><li class="check" data-status="pending"><div class="check__head"><span class="chip chip--dashed" data-tone="neutral">Not run</span><h3 class="check__label">Pinned revision</h3></div></li><li class="check" data-status="pending"><div class="check__head"><span class="chip chip--dashed" data-tone="neutral">Not run</span><h3 class="check__label">Impact row quoted verbatim</h3></div></li><li class="check" data-status="pending"><div class="check__head"><span class="chip chip--dashed" data-tone="neutral">Not run</span><h3 class="check__label">Severity stated once and consistent</h3></div></li><li class="check" data-status="pending"><div class="check__head"><span class="chip chip--dashed" data-tone="neutral">Not run</span><h3 class="check__label">Trusted roles in the attack path</h3></div></li><li class="check" data-status="pending"><div class="check__head"><span class="chip chip--dashed" data-tone="neutral">Not run</span><h3 class="check__label">Proof inline with command and output</h3></div></li><li class="check" data-status="pending"><div class="check__head"><span class="chip chip--dashed" data-tone="neutral">Not run</span><h3 class="check__label">Final assertion on a balance, owner or stored record</h3></div></li><li class="check" data-status="pending"><div class="check__head"><span class="chip chip--dashed" data-tone="neutral">Not run</span><h3 class="check__label">Mocks and pranks of privileged roles</h3></div></li><li class="check" data-status="pending"><div class="check__head"><span class="chip chip--dashed" data-tone="neutral">Not run</span><h3 class="check__label">Prior-art reference stated</h3></div></li><li class="check" data-status="pending"><div class="check__head"><span class="chip chip--dashed" data-tone="neutral">Not run</span><h3 class="check__label">Limits and non-claims stated</h3></div></li><li class="check" data-status="pending"><div class="check__head"><span class="chip chip--dashed" data-tone="neutral">Not run</span><h3 class="check__label">Self-negating phrases</h3></div></li><li class="check" data-status="pending"><div class="check__head"><span class="chip chip--dashed" data-tone="neutral">Not run</span><h3 class="check__label">Secrets and private report links</h3></div></li><li class="check" data-status="pending"><div class="check__head"><span class="chip chip--dashed" data-tone="neutral">Not run</span><h3 class="check__label">Local paths</h3></div></li></ol>
 </div>
 </div></div>
@@ -108,7 +138,7 @@ Severity: High
 <div class="split">
 <div class="tool-copy">
 <h2 id="phrases-heading">Seven phrases that close a report</h2>
-<p>Each one concedes a point before the triager has to make it. The check quotes the sentence so you can prove the condition or cut the claim.</p>
+<p>Each one concedes a point before the triager has to make it. The check quotes the sentence so you can prove the condition or cut the claim. Under your own Limits heading they are stated non-claims and are not flagged.</p>
 <dl class="phrases"><div class="phrases__row"><dt>“closest impact”</dt><dd>Says the selected impact row does not fit.</dd></div><div class="phrases__row"><dt>“if compromised”</dt><dd>Makes a trusted party the attacker.</dd></div><div class="phrases__row"><dt>“assuming”</dt><dd>States a precondition with no route to it from live state.</dd></div><div class="phrases__row"><dt>“could potentially”</dt><dd>Describes an outcome the proof did not produce.</dd></div><div class="phrases__row"><dt>“currently zero”</dt><dd>Says nothing is at risk today.</dd></div><div class="phrases__row"><dt>“can be avoided by”</dt><dd>Names an action that removes the loss.</dd></div><div class="phrases__row"><dt>“does not establish”</dt><dd>Concedes the claim is unproven.</dd></div></dl>
 </div>
 <div class="tool-copy">
@@ -122,21 +152,21 @@ Severity: High
 <li><span class="icon icon--check" aria-hidden="true"></span><span>The impact row quoted verbatim.</span></li>
 <li><span class="icon icon--check" aria-hidden="true"></span><span>Limits and non-claims stated by the author, and the nearest known issue compared by root cause and whether the same fix applies.</span></li>
 </ul>
-<p>Twelve checks, distilled from 105 real case files across five platforms. The wins and the closures. For a blank page, start from a <a class="link" href="/templates">report template</a> or the <a class="link" href="/guide">report guide</a>.</p>
+<p>The list comes from 105 real case files across five platforms, the paid ones and the closed ones. For a blank page, start from a <a class="link" href="/templates">report template</a> or the <a class="link" href="/guide">report guide</a>.</p>
 </div>
 </div>
 </section>
 
 <section class="section section--tight wrap wrap--narrow" aria-labelledby="questions">
 <h2 id="questions">Questions</h2>
-<div class="accordion tool-faq"><details class="accordion__item"><summary class="accordion__summary">Where does my draft go?</summary><div class="accordion__body"><p>Nowhere. The fourteen checks are JavaScript that runs in this tab, and the page sends no request with your text. After the page has loaded it makes one request: a counter that says the tool was used, with nothing of yours in it. Pressing “Run the full challenge on your model” moves the draft to the workbench through this browser’s session storage. A model sees it only when you start a review there.</p></div></details><details class="accordion__item"><summary class="accordion__summary">What does 14 of 14 tell me?</summary><div class="accordion__body"><p>That the draft contains the text these checks look for: a commit, a quoted impact row, one severity, an inline proof with its output, and a prior-art reference or search result. The check does not verify comparison quality or duplicate status. The workbench challenge reviews the claims against the evidence you supply.</p></div></details><details class="accordion__item"><summary class="accordion__summary">Which report formats does it read?</summary><div class="accordion__body"><p>Markdown and plain text. Immunefi, Cantina, Sherlock and HackerOne reports all carry these parts, under different headings. The checks look for the content, so the heading names do not matter.</p></div></details></div>
+<div class="accordion tool-faq"><details class="accordion__item"><summary class="accordion__summary">Where does my draft go?</summary><div class="accordion__body"><p>Nowhere. The fourteen checks and the citation check are JavaScript that runs in this tab, and the page sends no request with your text or your files. After the page has loaded it makes one request: a counter that says the tool was used, with nothing of yours in it. Pressing “Run the full challenge on your model” moves the draft and its files to the workbench through this browser’s session storage. A model sees them only when you start a review there.</p></div></details><details class="accordion__item"><summary class="accordion__summary">What does 14 of 14 tell me?</summary><div class="accordion__body"><p>That the draft contains the text these checks look for: a commit, a quoted impact row, one severity, an inline proof with its output, and a prior-art reference or search result. The check does not verify comparison quality or duplicate status. The workbench challenge reviews the claims against the evidence you supply.</p></div></details><details class="accordion__item"><summary class="accordion__summary">How does the citation check work?</summary><div class="accordion__body"><p>Attach the files your draft cites. Every citation such as src/Vault.sol:42-48, Vault.sol#L42 or input-1/src/Vault.sol:42 is matched to an attached file, and the cited lines open in place. A citation to a file you did not attach, a line past the end of the file, or a short name that matches two files is listed so you can fix it before a triager finds it. Links to websites are counted, never opened.</p></div></details><details class="accordion__item"><summary class="accordion__summary">What is the evidence packet?</summary><div class="accordion__body"><p>One JSON file with the draft, the attached files and a SHA-256 checksum of each. Open it here later to carry on with the same files; a file that changed since it was saved is refused. It holds your full draft and files, so keep it private.</p></div></details><details class="accordion__item"><summary class="accordion__summary">Which report formats does it read?</summary><div class="accordion__body"><p>Markdown and plain text. Immunefi, Cantina, Sherlock and HackerOne reports all carry these parts, under different headings. The checks look for the content, so the heading names do not matter.</p></div></details></div>
 </section>
 
 <section class="section section--tight wrap" aria-labelledby="next-action">
 <div class="tool-next">
 <div class="tool-next__text">
 <h2 class="h3" id="next-action">The text is in order. Now test the claim.</h2>
-<p>In the workbench your own model splits the draft into claims and marks each one confirmed, overstated, contradicted or unverifiable, with the line that decides it.</p>
+<p>In the workbench your own model splits the draft into claims and marks each one confirmed, overstated, contradicted or unverifiable, with the line that decides it. The files you attached here go with the draft.</p>
 </div>
 <div class="cluster">
 <a class="btn btn--primary" href="/?profile=report#workspace"><span class="btn__label">Challenge a draft report</span><span class="icon icon--arrow-right" aria-hidden="true"></span></a>

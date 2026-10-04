@@ -415,6 +415,28 @@ describe('report check', () => {
     assert.doesNotThrow(() => JSON.stringify(handoff));
   });
 
+  test('workbenchHandoff carries attached evidence files, draft last, and asks for the citations to be tested', () => {
+    const files = [{ name: 'src/Vault.sol', content: 'contract V {}\n', extra: true }, { name: DRAFT_NAME, content: STRONG }];
+    const handoff = workbenchHandoff(STRONG, checkReport(STRONG), files);
+    assert.deepEqual(handoff.files, [{ name: 'src/Vault.sol', content: 'contract V {}\n' }, { name: DRAFT_NAME, content: STRONG }]);
+    assert.equal(handoff.focus, 'Challenge this draft report. Name the sentence a triager would close on. Test every file:line citation against the attached files.');
+    // The draft alone is the old single-file contract.
+    assert.deepEqual(workbenchHandoff(STRONG, checkReport(STRONG), [{ name: DRAFT_NAME, content: STRONG }]).files, [{ name: DRAFT_NAME, content: STRONG }]);
+  });
+
+  test('a listed phrase under the author’s own Limits heading is a stated non-claim, not a flag', () => {
+    const phrases = (text) => byId(checkReport(text)).phrases;
+    const limited = phrases('# T\n\nThe attacker drains the pool.\n\n## Limits\nThe test does not establish that mainnet is affected.\nAssuming the oracle is honest.\n');
+    assert.equal(limited.status, 'pass');
+    // The same sentence in the body is still flagged, and a later section ends the Limits block.
+    assert.equal(phrases('# T\n\nThe test does not establish that mainnet is affected.\n').status, 'flagged');
+    const after = phrases('# T\n\n## Limits\nThe test does not establish mainnet impact.\n\n## Impact\nAn attacker could potentially drain it.\n');
+    assert.equal(after.status, 'flagged');
+    assert.deepEqual(after.evidence.map((entry) => entry.line), [7]);
+    // A sub-heading inside Limits stays inside it.
+    assert.equal(phrases('# T\n\n## Limitations\n### Mainnet\nAssuming the keeper runs.\n').status, 'pass');
+  });
+
   test('a hostile line does not stall the checks', () => {
     const hostile = `${'a '.repeat(40000)}\n${'if '.repeat(30000)}compromised\n${'0x'.repeat(50000)}\n`;
     const started = Date.now();

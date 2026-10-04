@@ -138,6 +138,108 @@
   }
 }
 
+/* Report check: attached files and their citations. */
+.report-check .tool-split__in {
+  position: static;
+}
+
+.report-evidence-paste,
+.report-evidence-result,
+.report-source {
+  display: grid;
+  gap: var(--sp-12);
+}
+
+.report-evidence-paste {
+  padding-top: var(--sp-16);
+}
+
+.report-attachments,
+.report-references {
+  display: grid;
+  gap: var(--sp-8);
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+
+.report-attachments > li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-12);
+}
+
+/* One row: the citation, its status, then the draft line that holds it. */
+.report-reference-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-8) var(--sp-12);
+}
+
+.report-reference-head > code {
+  flex: 1 1 12rem;
+}
+
+.report-attachments > li > span,
+.report-reference-head > code {
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+
+.report-references > li {
+  display: grid;
+  justify-items: start;
+  gap: var(--sp-4);
+  padding: var(--sp-8) var(--sp-12);
+  border: 1px solid var(--line);
+  border-radius: var(--r-ctl);
+  min-width: 0;
+}
+
+.report-reference-head,
+.report-source {
+  width: 100%;
+  min-width: 0;
+}
+
+.report-source > summary,
+.report-found summary {
+  cursor: pointer;
+  min-height: 2.75rem;
+  padding-block: var(--sp-8);
+  overflow-wrap: anywhere;
+}
+
+.report-source > pre {
+  margin: 0;
+  max-height: 20rem;
+  overflow: auto;
+  padding: var(--sp-12);
+  background: var(--surface-2);
+  border-radius: var(--r-ctl);
+  font: var(--fs-12) / 1.65 var(--font-mono);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.report-source:not([open]) {
+  gap: 0;
+}
+
+.report-found {
+  list-style: none;
+}
+
+.report-restore {
+  position: relative;
+  min-height: 2.75rem;
+}
+
 /* Two numbered inputs side by side. */
 .tool-pair {
   display: grid;
