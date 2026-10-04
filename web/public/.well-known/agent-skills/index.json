@@ -6,21 +6,21 @@
       "type": "skill-md",
       "description": "Checks a draft bug bounty report against the code it cites before it is filed. Marks every claim confirmed, overstated, contradicted or unverifiable with the line that decides it, runs the submission checks and ends in one verdict: submit, rewrite-then-submit, prove-first, hold-duplicate or drop. Use before filing a bug bounty or audit-contest report on Immunefi, Cantina, Sherlock, HackerOne or a similar platform, and whenever the user asks whether a finding write-up is ready to submit. Runs on your own model with no account.",
       "url": "/.well-known/agent-skills/challenge-report/SKILL.md",
-      "digest": "sha256:368fab25112f0d1a0618b76b95d898c70a705937fd75269fcb8ec924d42b9bfa"
+      "digest": "sha256:aa84f2576f73b253ea4de7095838e58ed05fc637d0636a98791d0c398d5c202f"
     },
     {
       "name": "solidity-review",
       "type": "skill-md",
       "description": "Security review of Solidity contracts. Maps who can call what, compares sibling functions, checks every writer of each accounting invariant, then sweeps rounding, checkpoints, external calls, signatures, oracles, upgrade paths and edge inputs, citing file and line for every finding. Use when asked to review Solidity or other EVM smart contracts for security issues, before deploying a contract, or to test a suspected smart-contract finding against the code. Runs on your own model with no account.",
       "url": "/.well-known/agent-skills/solidity-review/SKILL.md",
-      "digest": "sha256:98583bef7d265be72dd7b474b00ff233be5d1f4a4f8a1dffd00c1985685b96d7"
+      "digest": "sha256:7a691cc33135faa9dc65bf44cc6e59a210be18d20cd00b9ea814fc599131bf8b"
     },
     {
       "name": "code-security-review",
       "type": "skill-md",
       "description": "Security review of any codebase that is not Solidity. Traces each reachable handler from input to effect and reports the access-control, injection, data-exposure and failure-path bugs the code proves, each with file, line and fix. Use when asked to review a web app, API, service, CLI or library for security vulnerabilities, before a release, or to test a suspected web or backend finding against the code. Runs on your own model with no account.",
       "url": "/.well-known/agent-skills/code-security-review/SKILL.md",
-      "digest": "sha256:f5c57c0644c38166e454ce0dfdb4fcac814fb2c4aa4788bb27c86fb0ce0fa5a7"
+      "digest": "sha256:6a766c52d149ab61bf56a2f5775f6fbb0a8c65ec4ae75d10db290182aa5b9167"
     },
     {
       "name": "gauntlet",

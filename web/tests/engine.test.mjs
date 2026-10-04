@@ -968,7 +968,7 @@ describe('profiles', () => {
   test('the general review writes out each assumption before it names a bug class', () => {
     const { instructions, extraFormat } = reviewProfile('general');
     assert.match(instructions, /put each assumption the code relies on into plain words and ask who can make it false/);
-    assert.match(instructions, /Reread every path that looked clean from its last line back to its first/);
+    assert.match(instructions, /Cover each step once, then write the answer; do not re-audit a path you have already cleared\./);
     assert.match(instructions, /This is working method: it never appears in the output/);
     assert.ok(instructions.indexOf('put each assumption') < instructions.indexOf('1. Entry points.'));
     assert.deepEqual(extraFormat.match(/^## .+$/gm), ['## Entry points']);
@@ -1067,9 +1067,9 @@ describe('profiles', () => {
     assert.match(instructions, /name the concrete value, command or output from the supplied files that replaces it/);
     assert.match(instructions, /concrete-detail: the root cause, the path and the proof each name something a reader can check: an identifier, a value, a command, an output line/);
     // A correct report still gets confirmed: a listed passage is advice, a failed check is a blocker.
-    assert.match(instructions, /Listing a passage does not change the Verdict; a failed check does/);
-    assert.match(instructions, /A draft whose decisive claims are all confirmed and whose submission checks pass gets Verdict submit/);
-    assert.match(instructions, /submit when every decisive claim is confirmed and no submission check fails/);
+    assert.match(instructions, /Listing a passage does not change the Verdict; a failed blocking check does/);
+    assert.match(instructions, /A draft whose decisive claims are all confirmed and whose blocking submission checks pass or are not-supplied gets Verdict submit/);
+    assert.match(instructions, /submit when every decisive claim is confirmed and no blocking submission check fails; form-check fixes stay in their rows/);
     assert.match(extraFormat, /## Submission checks\n- <proof-inline\|form-matches-body\|limits-stated\|title\|steps-separate\|read-back\|concrete-detail> \| <pass\|fail\|not-supplied>/);
     assert.match(extraFormat, /## Generic passages\n- "<passage, shortened>" \| <ref> \| <the concrete value, command or output that replaces it>/);
     assert.match(extraFormat, /Limits: <what the finding does not reach>/);

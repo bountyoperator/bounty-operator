@@ -59,7 +59,7 @@ const GENERAL = {
 Profile: code security review.
 Read the code as an attacker who controls every input it accepts. Work in this order.
 
-Before you name any bug class, put each assumption the code relies on into plain words and ask who can make it false. Reread every path that looked clean from its last line back to its first. This is working method: it never appears in the output.
+Before you name any bug class, put each assumption the code relies on into plain words and ask who can make it false. This is working method: it never appears in the output. Cover each step once, then write the answer; do not re-audit a path you have already cleared.
 
 1. Entry points. List every externally reachable handler, route, job, command or exported function, and who can reach it: anyone, an authenticated user, a named role, another service.
 2. Trace each one from input to effect. Follow the data into queries, shell commands, file paths, templates, deserialisers, outbound requests and cryptographic calls.
@@ -91,7 +91,7 @@ Work through the contracts in this order before writing anything.
 
 Frame. Name the protocol type from the code: lending market, vault, exchange, bridge, staking, governance or another. Name the adversaries that type draws and the invariants it always carries, and test those invariants in step 3 whether or not the code states them. For each parameter a privileged role can change, ask what the change does to an operation already in flight. Record which privileged actions take effect at once and which functions a pause stops.
 
-Assumptions. Before you name any bug class, put each assumption the code relies on into plain words and ask who can make it false. Reread every path that looked clean from its last line back to its first. Frame and Assumptions are working method: neither appears in the output.
+Assumptions. Before you name any bug class, put each assumption the code relies on into plain words and ask who can make it false. Frame and Assumptions are working method: neither appears in the output. Cover each step once, then write the answer; do not re-audit a path you have already cleared.
 
 1. Entry points. List every external or public function that changes state. Leave out view and pure functions, interfaces, library internals, mocks and tests. Decide from each function body who can call it: anyone, a named role, or the owner or admin. A caller check written inside the body counts the same as a modifier. A reentrancy guard is not access control: record it on its own, as guard=yes when the function carries one and guard=no when it does not. Note whether value moves in, out or not at all.
 
@@ -112,7 +112,7 @@ Assumptions. Before you name any bug class, put each assumption the code relies 
 
 5. Repeats. Once a flaw is confirmed, search every other supplied contract for the same construction. Report the worst instance and list the others in its Location.
 
-6. Crossings. Last, make one more pass for bugs that exist only where two sweep items meet: rounding inside a callback, a stale checkpoint behind a signature path, an oracle read in the middle of an upgrade.
+6. Crossings. While sweeping, note bugs that exist only where two sweep items meet: rounding inside a callback, a stale checkpoint behind a signature path, an oracle read in the middle of an upgrade.
 
 A path that needs the owner, an admin or another trusted role to act is a finding only when an ordinary caller performs a named step that triggers the damage or makes it larger; name that step in Path. With no such step it is Hardening, unless Context puts privileged roles in scope.
 List at most 12 entry points, value-moving ones first.
@@ -141,16 +141,16 @@ Profile: challenge a draft report. One supplied file is the draft; the rest is t
 
 Read the draft as the triager who has to pay for it. Split it into its claims: the root cause, each step of the attack path, the stated preconditions, the impact, the severity and the fix. Check each claim against the code. List at most 10 claims, the ones that decide the report first.
 
-- Agreeing with the draft is a valid result. When the code and the supplied proof support a claim, mark it confirmed and move on. A draft whose decisive claims are all confirmed and whose submission checks pass gets Verdict submit. Do not manufacture objections to look thorough, and do not ask for evidence the draft already contains.
+- Agreeing with the draft is a valid result. When the code and the supplied proof support a claim, mark it confirmed and move on. A draft whose decisive claims are all confirmed and whose blocking submission checks pass or are not-supplied gets Verdict submit. Do not manufacture objections to look thorough, and do not ask for evidence the draft already contains.
 - Never lower or withhold a severity that the code and a supplied test demonstrate. In the claim row for the draft's severity, state the severity the evidence supports and the one assumption that would move it.
 - F-1 is the finding the code supports, at the severity it supports. For a correct draft that is the draft's own finding. For a draft that overclaims it is the smaller finding that survives, and each overclaim goes under Claims as overstated or contradicted, with the line that limits it.
 - The draft's own steps and test stand in for Path and Test. Write Path only for the steps the draft gets wrong or leaves out, and Test only for the assertion its proof lacks. Otherwise both are none.
 - When the code contradicts the root cause and no smaller finding survives, cite the line, set Verdict drop and write no F-n block.
-- Check the draft's fix and its proof: does the fix close the path, does the test assert the claimed end state, and would that assertion fail once the fix is applied.
+- Check the draft's fix and, when one is supplied, its proof: does the fix close the path, does the test assert the claimed end state, and would that assertion fail once the fix is applied.
 - List only gaps that change the decision. Skip any gap the draft already discloses.
 
-Submission checks. These close reports whose finding is real. Mark each pass, fail or not-supplied.
-- proof-inline: the proof source, the command and the captured output sit in the report body and in the proof field. A proof that exists only behind a link is read as no proof.
+Submission checks. These close reports whose finding is real. Mark each pass, fail or not-supplied. A missing Context field is never a fail on its own. proof-inline, form-matches-body and read-back are blocking: a fail blocks submit. limits-stated, title, steps-separate and concrete-detail are form checks: a fail is a fix note in its row and does not change the Verdict on its own.
+- proof-inline: the proof source, the command and the captured output sit in the report body and in the proof field. A proof that exists only behind a link is read as no proof. When Context gives no proof-field contents, judge the body alone; the stored field is checked under read-back.
 - form-matches-body: the severity and the impact row on the form are the ones the body argues. not-supplied when Context holds no selected row.
 - limits-stated: the draft says where the finding stops: the bound on the loss, the preconditions, what was not tested. One sentence is enough.
 - title: the title states mechanism and consequence in one sentence.
@@ -158,11 +158,11 @@ Submission checks. These close reports whose finding is real. Mark each pass, fa
 - read-back: the stored submission in Context equals the draft field by field. An empty or link-only proof field fails. not-supplied when Context holds no read-back.
 - concrete-detail: the root cause, the path and the proof each name something a reader can check: an identifier, a value, a command, an output line. fail when one of the three holds none.
 
-Generic passages. A report with no reproduction detail and no concrete value is closed as spam, without a rebuttal. Quote each passage that reads as generic or machine-written: security background that fits any project, impact stated with no figure, a step with no function name or value, a claimed result with no command or output. Beside each, name the concrete value, command or output from the supplied files that replaces it. List at most 5. Listing a passage does not change the Verdict; a failed check does.
+Generic passages. A report with no reproduction detail and no concrete value is closed as spam, without a rebuttal. Quote each passage that reads as generic or machine-written: security background that fits any project, impact stated with no figure, a step with no function name or value, a claimed result with no command or output. Beside each, name the concrete value, command or output from the supplied files that replaces it. List at most 5. Listing a passage does not change the Verdict; a failed blocking check does.
 
 When stage outputs are supplied, the draft must say what they settled: the row from the scope stage, the level from the severity stage, the nearest known issue from the prior-art stage. Where the draft and a stage disagree, the code decides.
 
-Verdict, the first that fits: drop when nothing reportable survives: the code contradicts the root cause and no smaller finding remains, or the behaviour is documented as intended. hold-duplicate when the supplied material contains prior art with the same root cause. prove-first when the decisive claim is unverifiable from what was supplied. rewrite-then-submit when a finding holds and the draft misstates its root cause, severity, impact, preconditions or fix, or a submission check fails. submit when every decisive claim is confirmed and no submission check fails.
+Verdict, the first that fits: drop when nothing reportable survives: the code contradicts the root cause and no smaller finding remains, or the behaviour is documented as intended. hold-duplicate when the supplied material contains prior art with the same root cause. prove-first when the decisive claim is unverifiable from what was supplied. rewrite-then-submit when a finding holds and the draft misstates its root cause, severity, impact, preconditions or fix, or a blocking submission check fails. submit when every decisive claim is confirmed and no blocking submission check fails; form-check fixes stay in their rows.
 Write Rewritten report only when the Verdict is rewrite-then-submit.
 `.trim(),
   extraFormat: `
