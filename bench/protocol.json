@@ -338,44 +338,44 @@
     "prompts/system.txt": "a3577b467cf2b16bdb1e3f2f26a794a5edc0c07549b1f9582eecbe7065ca6461",
     "prompts/raw-task.md": "9277fe8e020bb94ba152bae975e48f6974f462a7d7438ae7732c12248f5252bf",
     "prompts/answer-sheet.md": "38560aec15ebdd5edc99052486baf24a498bf7e2d267d455a1e0ba13157fd1f3",
-    "prompts/profile-bridge.md": "f3fcf8cadb3161553153bd3becd90729dcf9391247a0aabcad3753785eacae4f"
+    "prompts/profile-bridge.md": "4c6222ddc4505920843640bf1157d1ba49b296a74e8b36fa12297a2389f8843d"
   },
   "engine": {
-    "commit": "aaad1e1d5830395a547082419ce922ea1ecf0916",
-    "dirty": true,
+    "commit": "7c57e62ebf5e0a51289b34a421bd09764be9a6bd",
+    "dirty": false,
     "files": {
-      "web/public/review-core.mjs": "82abb845320be4400d0e29853f88c4ee69bda605d29c60477db754f111cec440",
-      "web/public/profiles.mjs": "f6614db1156d94891d4af47c9e5d852cdc717414121669af3d6dc1cce88ab03e"
+      "web/public/review-core.mjs": "e29f58446d6121f983de85e241f0ec805d2ffed25acdad7c82c3f264026637c7",
+      "web/public/profiles.mjs": "bd553bd0120d1d1b74d79a1c58ff5e534ff9a5385ca1d8bacbc07786fd21dce7"
     },
     "profiles": {
       "solidity": {
-        "system_sha256": "a9748fae948eb2ed569dc6416dc50b7c21093635522ca2636a760b68099562fa",
+        "system_sha256": "599752033e30492229391daee7ada8f9be229c4c0234b5f235b75b5c57ccd8d1",
         "engine_profile": "solidity",
         "mode": "bounty",
-        "chars": 11555
+        "chars": 11567
       },
       "general": {
-        "system_sha256": "9fdc1d037ea25d9c78c07adc8e80c550ad022b7daba4c912ed334b5503071f22",
+        "system_sha256": "63af567f53cf766ea7b821e58a049e25d390a54fee852282e7c02d8606c5d6ab",
         "engine_profile": "general",
         "mode": "bounty",
-        "chars": 7442
+        "chars": 7462
       },
       "report": {
-        "system_sha256": "f5361b35e946a65d6d45993223603658a42b2d7be22e0054287fc801b2a5c025",
+        "system_sha256": "c58d25215888ca485500641d954490573aa26beec5d15af5924ec3a180fac475",
         "engine_profile": "report",
         "mode": "bounty",
-        "chars": 10766
+        "chars": 11277
       }
     }
   },
   "hashes": {
-    "protocol": "74aad5311600bf53862cb0c5e09dec6e6af0f63feaff7d6805d021905e0cfd35",
+    "protocol": "c7f6f15c6436385e61d165215cf5df65ca13dbfbc51483c3567299faa7731f29",
     "core": "5fea9eb00e3f2bb24d3965bf6854d39742d3324b1b826492eaa1ef51dfe09768",
     "arms": {
       "raw": "5fea9eb00e3f2bb24d3965bf6854d39742d3324b1b826492eaa1ef51dfe09768",
-      "solidity": "ad6a658a538ec5ef84c3025febf9dea8a5e076127e2b11e9dcfe346cb2d38a15",
-      "general": "d7f99fc3799b5bf3914fd3aba5668fdf9467a391a1607f896c0e9d26083a01fc",
-      "report": "4550f8a9890f6efd39f757fcea9c5b7ea870a7beccf9fc84c715d66c7a7f6448"
+      "solidity": "f908e192edd19d3f97bdd8afdb998ba5980dc5d49a7a0ca69cd50d7455fe3471",
+      "general": "d12d33dd21a6463c07ccc74db504f77f7d5d887e4c8cec524bf540c8a775eaed",
+      "report": "a13c02939c448309353befd6ffae395e32bcbb2d6d0008f1d8a58c0b4eb169f5"
     }
   }
 }
