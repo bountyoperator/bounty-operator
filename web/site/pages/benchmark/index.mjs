@@ -10,7 +10,7 @@
 // condition does not hold, the sentence is left out. No case text exists in
 // the published files and none is described here.
 //
-// Sections: hero and facts, leaderboard, what the numbers say, picks, profile
+// Sections: hero and facts, with/without comparison, leaderboard, findings, picks, profile
 // lift, pair by pair, how it is kept honest, check it yourself, not run, FAQ.
 // /benchmark/leaderboard.mjs adds column sorting and a column picker; the
 // table reads the same without it.
@@ -200,6 +200,37 @@ function picksSection(view) {
 </section>`;
 }
 
+function comparisonSection(view) {
+  if (!view.comparisons.length) return '';
+  const resultCell = (entry, kind, label) => {
+    const score = kind === 'raw' ? entry.rawScore : entry.profileScore;
+    const right = kind === 'raw' ? entry.rawRight : entry.profileRight;
+    return html`<td class="num"><span class="cell-label">${label}</span><span class="comparison__score">${fmt.score(score)}%</span><span class="comparison__detail">${fmt.score(right)} of ${entry.pairs} pairs right</span>${entry.failures[kind] > 0 && html`<span class="comparison__failure">${entry.failures[kind]} of ${entry.inputs} answers failed${entry.truncated[kind] > 0 ? `; ${entry.truncated[kind]} cut short` : ''}</span>`}</td>`;
+  };
+  const rows = view.comparisons.map((entry) => html`<tr>
+<th scope="row">${modelCell(entry.row, { level: 'none' })}</th>
+${resultCell(entry, 'raw', 'Without Bounty Operator')}
+${resultCell(entry, 'profile', 'With Bounty Operator')}
+<td class="num lift__delta" data-sign="${entry.delta > 0 ? 'up' : entry.delta < 0 ? 'down' : 'flat'}"><span class="cell-label">Change</span><span class="comparison__score">${fmt.delta(entry.delta)}<span class="comparison__unit"> pp</span></span><span class="comparison__detail">${fmt.delta(entry.profileRight - entry.rawRight)} ${Math.abs(entry.profileRight - entry.rawRight) === 1 ? 'pair' : 'pairs'} right</span></td>
+</tr>`);
+  return html`<section class="section section--tight wrap" aria-labelledby="comparison">
+  ${sectionHeading({
+    title: 'With and without Bounty Operator',
+    id: 'comparison',
+    lede: `The same ${inWords(view.comparisons.length)} models, the same ${view.pairs} pairs, the same harness and answer format. “With” adds the matching Bounty Operator core profile to the system prompt. Both improvements and declines are shown.`,
+  })}
+  <p class="bench-note">This tests the core review profiles. Gauntlet and Panel were not tested here. The larger leaderboard below shows models without Bounty Operator.</p>
+  <div class="table-wrap" tabindex="0" role="region" aria-label="The same models with and without Bounty Operator" aria-describedby="comparison-notes">
+  <table class="table stack-table stack-table--wide comparison">
+  <thead><tr><th scope="col">Model</th><th scope="col" class="num">Without Bounty Operator<span class="comparison__detail">Model alone</span></th><th scope="col" class="num">With Bounty Operator<span class="comparison__detail">Matching core profiles</span></th><th scope="col" class="num">Change<span class="comparison__detail">Percentage points</span></th></tr></thead>
+  <tbody>${rows}</tbody>
+  </table>
+  </div>
+  <p class="fine bench-note" id="comparison-notes">A pair is right only when both answers are right. ${view.repeats > 1 ? `Counts are medians across ${view.repeats} repeats, combining the matching profiles within each repeat first.` : 'Each input was run once per arm.'} Failed or cut-short answers count against the score. These results describe this harness and its output limits.</p>
+  <p class="fine bench-note">This combined summary is descriptive and was added after the runs; it does not establish a general improvement. <a class="link" href="#lift">See each profile’s comparison and uncertainty</a>. <a class="link" href="${METHOD_PATH}">Read the full method</a>.</p>
+</section>`;
+}
+
 function liftSection(view) {
   if (!view.lifts.length && !view.liftsPending.length) return '';
   const pending = view.liftsPending.map(({ row, arm, answered, inputs }) => `${row.name} with the ${reviewProfile(arm).name} profile (${answered} of ${inputs} inputs completed)`);
@@ -209,8 +240,8 @@ function liftSection(view) {
     return html`<tr>
 <th scope="row" class="lift__model">${modelCell(row, { level: 'none' })}</th>
 <td><span class="cell-label">Profile</span>${profile.name}<span class="lift__pairs">${lift.n_pairs} ${families.map((family) => FAMILIES[family]?.noun ?? family).join(', ')} pairs</span></td>
-<td class="num"><span class="cell-label">Raw</span>${show(fmt.score(rawScore))}</td>
-<td class="num"><span class="cell-label">With profile</span>${show(fmt.score(profileScore))}</td>
+<td class="num"><span class="cell-label">Without Bounty Operator</span>${show(fmt.score(rawScore))}</td>
+<td class="num"><span class="cell-label">With Bounty Operator</span>${show(fmt.score(profileScore))}</td>
 <td class="num lift__delta" data-sign="${lift.delta > 0 ? 'up' : lift.delta < 0 ? 'down' : 'flat'}"><span class="cell-label">Lift</span>${fmt.delta(lift.delta)}</td>
 <td class="num lift__ci"><span class="cell-label">95% interval</span>${intervalBar(lift.ci95, lift.delta, { min: -100, max: 100, zero: true })}${show(interval)}</td>
 <td><span class="cell-label">Significant</span>${lift.significant ? chip('Yes', { tone: 'observed' }) : chip('No', { tone: 'neutral' })}</td>
@@ -220,13 +251,13 @@ function liftSection(view) {
   const total = view.results.models.filter((model) => Object.keys(model.lift ?? {}).length).length;
   return html`<section class="section section--tight wrap" aria-labelledby="lift">
   ${sectionHeading({
-    title: 'Profile lift',
+    title: 'With and without, by profile',
     id: 'lift',
     lede: `The same model on the same pairs, once raw and once with the matching Bounty Operator core profile. A profile arm differs from the raw arm in one thing: the profile’s system message is appended to the system prompt. The task and the answer sheet are the same. Profile arms ran for ${total === 1 ? 'one model' : `${inWords(total)} models`}, chosen before any scored run.`,
   })}
   ${rows.length > 0 && html`<div class="table-wrap" tabindex="0" role="region" aria-label="Lift of each finished profile arm">
   <table class="table stack-table stack-table--wide lift">
-  <thead><tr><th scope="col">Model</th><th scope="col">Profile</th><th scope="col" class="num">Raw</th><th scope="col" class="num">With profile</th><th scope="col" class="num">Lift</th><th scope="col" class="num">95% interval</th><th scope="col">Significant</th></tr></thead>
+  <thead><tr><th scope="col">Model</th><th scope="col">Profile</th><th scope="col" class="num">Without Bounty Operator</th><th scope="col" class="num">With Bounty Operator</th><th scope="col" class="num">Lift</th><th scope="col" class="num">95% interval</th><th scope="col">Significant</th></tr></thead>
   <tbody>${rows}</tbody>
   </table>
   </div>`}
@@ -493,12 +524,14 @@ ${pageHero({
   eyebrow: `Paydirt · release ${view.release}`,
   title: 'Which model finds the real bug, leaves the fixed code alone and catches an overclaimed report',
   lede: `Every model runs through one agent harness at its highest reasoning effort on ${view.pairs} held pairs. A pair counts only when the model is right on both twins.`,
-  actions: html`${button({ label: 'See the leaderboard', href: '#board', variant: 'primary', iconEnd: 'arrow-right' })}${button({ label: 'Read the method', href: METHOD_PATH })}`,
+  actions: html`${view.comparisons.length > 0 && button({ label: 'Compare with and without', href: '#comparison', variant: 'primary', iconEnd: 'arrow-right' })}${button({ label: 'See the model leaderboard', href: '#board', variant: view.comparisons.length > 0 ? 'secondary' : 'primary' })}${button({ label: 'Read the method', href: METHOD_PATH })}`,
   after: factsStrip(view),
 })}
 
+${comparisonSection(view)}
+
 <section class="section section--tight wrap lb-section" aria-labelledby="board">
-  ${sectionHeading({ title: 'The leaderboard', id: 'board', lede: 'Ranked by score and grouped by tier, in the order of the results file.' })}
+  ${sectionHeading({ title: 'Models without Bounty Operator', id: 'board', lede: 'The model leaderboard uses the raw arm: the shared harness and answer format, without a Bounty Operator core profile. Ranked by score and grouped by tier.' })}
   ${leaderboard(view)}
   <p class="bench-tier-line">A tier starts at its highest-scoring model and takes in every model whose 95% interval overlaps that model’s. These are descriptive groups; overlapping intervals do not establish equal performance.</p>
   ${columnNotes(view)}

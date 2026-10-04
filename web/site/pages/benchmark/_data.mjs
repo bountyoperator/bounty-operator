@@ -179,6 +179,50 @@ function pairOutcome(outcomes, pair, arm, repeats) {
   return count('failed') > count('wrong') ? 'failed' : 'wrong';
 }
 
+/** Combine the matching core profiles over the same pairs, before taking the median repeat. */
+function coreComparison(row, results, outcomes, complete) {
+  const pairs = results.pairs ?? [];
+  const repeats = results.repeats ?? 1;
+  if (!outcomes || !pairs.length || row.arm.pairs !== pairs.length) return null;
+  const profiles = pairs.map((pair) => FAMILIES[pair.family]?.profile);
+  if (profiles.some((arm, index) => !arm || !results.arms?.[pairs[index].family]?.includes(arm) || !complete(row.model, arm))) return null;
+  const records = new Map(outcomes.map((entry) => [`${entry.case}|${entry.arm}|${entry.rep}`, entry]));
+  const without = [], withTool = [];
+  const failures = { raw: 0, profile: 0 }, truncated = { raw: 0, profile: 0 };
+  let inputs = 0;
+  for (let rep = 1; rep <= repeats; rep += 1) {
+    let rawRight = 0, profileRight = 0;
+    for (const [index, pair] of pairs.entries()) {
+      const cases = Object.values(pair.cases ?? {});
+      if (cases.length !== 2) return null;
+      const raw = cases.map((id) => records.get(`${id}|raw|${rep}`));
+      const profile = cases.map((id) => records.get(`${id}|${profiles[index]}|${rep}`));
+      if ([...raw, ...profile].some((entry) => !entry || !['ok', 'failed'].includes(entry.status))) return null;
+      if (raw.every((entry) => entry.status === 'ok' && entry.correct === true)) rawRight += 1;
+      if (profile.every((entry) => entry.status === 'ok' && entry.correct === true)) profileRight += 1;
+      for (const [kind, entries] of Object.entries({ raw, profile })) {
+        failures[kind] += entries.filter((entry) => entry.status === 'failed').length;
+        truncated[kind] += entries.filter((entry) => entry.failure === 'truncated').length;
+      }
+      inputs += cases.length;
+    }
+    without.push(rawRight);
+    withTool.push(profileRight);
+  }
+  const median = (values) => {
+    const sorted = [...values].sort((a, b) => a - b);
+    return (sorted[Math.floor((sorted.length - 1) / 2)] + sorted[Math.floor(sorted.length / 2)]) / 2;
+  };
+  const rawRight = median(without), profileRight = median(withTool);
+  return {
+    row, pairs: pairs.length, rawRight, profileRight,
+    rawScore: rawRight / pairs.length * 100,
+    profileScore: profileRight / pairs.length * 100,
+    delta: (profileRight - rawRight) / pairs.length * 100,
+    failures, truncated, inputs,
+  };
+}
+
 /**
  * Everything the benchmark page shows.
  *
@@ -277,6 +321,12 @@ export function buildView(published) {
   });
   const gridComplete = grid.every((line) => line.cells.every(Boolean));
 
+  // A descriptive overview, not a replacement for the prespecified per-profile lifts.
+  // Include only models with the raw arm and every matching profile fully resolved.
+  const comparisons = headline === 'raw'
+    ? rows.map((row) => coreComparison(row, results, details.get(row.slug), complete)).filter(Boolean)
+    : [];
+
   const usdTotal = results.models.reduce((sum, model) => sum + (typeof model.usd_total === 'number' ? model.usd_total : 0), 0);
   const retries = results.models.filter((model) => Number.isInteger(model.infra_retries));
 
@@ -294,6 +344,7 @@ export function buildView(published) {
     notes: results.notes ?? [],
     lifts,
     liftsPending,
+    comparisons,
     liftModels: [...new Set(lifts.map((lift) => lift.row.slug))].length,
     picks,
     pairList,

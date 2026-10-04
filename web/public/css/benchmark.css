@@ -590,6 +590,53 @@
    6. Profile lift
    ========================================================================== */
 
+.comparison__score {
+  display: block;
+  font-size: var(--fs-22);
+  font-weight: 650;
+  line-height: 1.3;
+}
+
+.comparison__unit,
+.comparison__detail,
+.comparison__failure {
+  font-size: var(--fs-13);
+  font-weight: 400;
+}
+
+.comparison__detail,
+.comparison__failure {
+  display: block;
+  margin-top: var(--sp-4);
+  color: var(--muted);
+}
+
+.comparison__failure {
+  max-width: 17rem;
+  margin-left: auto;
+}
+
+@media (max-width: 59.99em) {
+  .table-wrap > .table.comparison tbody tr {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--sp-12) var(--sp-16);
+  }
+
+  .table-wrap > .table.comparison tbody tr > th,
+  .table-wrap > .table.comparison tbody tr > td:last-child {
+    grid-column: 1 / -1;
+  }
+
+  .table-wrap > .table.comparison tbody tr > * + * {
+    margin-top: 0;
+  }
+
+  .comparison__failure {
+    margin-left: 0;
+  }
+}
+
 .lift .lift__model {
   min-width: 12rem;
 }

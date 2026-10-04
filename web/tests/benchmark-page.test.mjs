@@ -339,6 +339,68 @@ test('picks, lift, the pair grid and the not-run list show the file’s values a
   assert.ok(text.includes('gpt-oss-x'));
 });
 
+test('the with/without overview precedes the raw leaderboard and includes declines and test limits', () => {
+  const { many, six, partial } = fixtures;
+  const markup = String(many.page.body);
+  assert.equal(many.view.comparisons.length, 2);
+  assert.ok(markup.indexOf('id="comparison"') < markup.indexOf('id="board"'));
+  assert.match(markup, /href="#comparison"/);
+  const section = markup.slice(markup.indexOf('id="comparison"'), markup.indexOf('aria-labelledby="board"'));
+  for (const entry of many.view.comparisons) {
+    assert.ok(section.includes(entry.row.name));
+    assert.ok(section.includes(`${fmt.score(entry.rawRight)} of 18 pairs right`));
+    assert.ok(section.includes(`${fmt.score(entry.profileRight)} of 18 pairs right`));
+    assert.ok(section.includes(fmt.delta(entry.delta)));
+    assert.equal(fmt.score(entry.rawScore), fmt.score(entry.row.score));
+  }
+  assert.ok(many.view.comparisons.some((entry) => entry.delta < 0));
+  assert.match(section, /data-sign="down"/);
+  assert.match(section, /Without Bounty Operator/);
+  assert.match(section, /With Bounty Operator/);
+  assert.match(section, /Matching core profiles/);
+  assert.match(section, /Gauntlet and Panel were not tested here/);
+  assert.match(section, /descriptive and was added after the runs/);
+  assert.match(markup, /Models without Bounty Operator/);
+  for (const fixture of [six, partial]) {
+    assert.equal(fixture.view.comparisons.length, 0);
+    assert.doesNotMatch(String(fixture.page.body), /(?:id|href)="#?comparison"/);
+  }
+});
+
+test('combined profiles are scored within each repeat before the median, with failed answers retained', () => {
+  const pairs = Object.keys(ARMS).map((family) => SCORED.find((pair) => pair.family === family));
+  const entry = model('test/repeated', 'Repeated', 1, 0);
+  const outcomes = [];
+  for (let rep = 1; rep <= 3; rep += 1) {
+    pairs.forEach((pair, index) => {
+      for (const arm of ARMS[pair.family]) {
+        for (const variant of VARIANTS[pair.family]) {
+          outcomes.push({ ...outcome({ pair, variant, arm, model: entry, correct: arm === 'raw' || index === rep - 1, failed: false, usd: 0 }), rep });
+        }
+      }
+    });
+  }
+  // An already-wrong answer ends without output: it must remain in the denominator.
+  const cut = outcomes.find((o) => o.rep === 1 && o.arm === 'general');
+  Object.assign(cut, { status: 'failed', failure: 'truncated', correct: false });
+  const results = aggregate({ meta: { release: 'repeated', repeats: 3 }, scoring: DEFAULT_SCORING, arms: ARMS, pairs, models: [{ ...entry, vendor: 'test', outcomes }] });
+  const published = { results, details: new Map([[entry.slug, outcomes]]), practice: null };
+  const [comparison] = buildView(published).comparisons;
+  assert.equal(comparison.rawRight, 3);
+  assert.equal(comparison.profileRight, 1, 'summing the three per-family medians would incorrectly give zero');
+  assert.equal(fmt.score(comparison.profileScore), '33.3');
+  assert.equal(comparison.inputs, 18);
+  assert.deepEqual(comparison.failures, { raw: 0, profile: 1 });
+  assert.deepEqual(comparison.truncated, { raw: 0, profile: 1 });
+  const markup = String(benchmarkPages(published)[0].body);
+  assert.match(markup, /1 of 18 answers failed; 1 cut short/);
+  assert.match(markup, /Counts are medians across 3 repeats/);
+  const missing = { ...published, details: new Map([[entry.slug, outcomes.slice(1)]]) };
+  assert.equal(buildView(missing).comparisons.length, 0, 'missing detail data is not scored as a failure or guessed');
+  const absent = { ...published, details: new Map([[entry.slug, null]]) };
+  assert.equal(buildView(absent).comparisons.length, 0);
+});
+
 test('each finding is true of the data or left out', () => {
   const { many } = fixtures;
   const list = findings(many.view);
@@ -569,6 +631,7 @@ test('an unfinished profile arm of a ranked model gets no lift row, and the page
   const published = { ...many.published, results };
   const view = buildView(published);
   assert.ok(!view.lifts.some((entry) => entry.row.slug === ranked.slug && entry.arm === arm));
+  assert.ok(!view.comparisons.some((entry) => entry.row.slug === ranked.slug), 'partial profiles cannot enter the combined comparison');
   const pending = view.liftsPending.find((entry) => entry.row.slug === ranked.slug && entry.arm === arm);
   assert.ok(pending && pending.answered === ranked.arms[arm].runs_expected - 3);
   const text = textOf(String(benchmarkPages(published)[0].body));
