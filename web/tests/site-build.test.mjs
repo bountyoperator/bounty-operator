@@ -193,14 +193,14 @@ test('renderPage emits the head contract and no markup the CSP would block', () 
 });
 
 test('the header and footer link the method, the pricing page and the security page once those pages exist', () => {
-  const page = { path: '/gauntlet', title: 'Gauntlet | Bounty Operator', description: DESCRIPTION, nav: 'method', body: html`<h1>Gauntlet</h1>` };
+  const page = { path: '/guide', title: 'Guide | Bounty Operator', description: DESCRIPTION, nav: 'guide', body: html`<h1>Guide</h1>` };
   const all = { has: () => true, pages: [page] };
   const inner = renderPage(page, all);
-  assert.match(inner, /<a href="\/method" aria-current="page">Method<\/a>/);
+  assert.match(inner, /<a href="\/guide" aria-current="page">Guide<\/a>/);
   // Off the home page, Pricing is the pricing page: its button starts checkout there.
   assert.match(inner, /<nav class="site-nav"[\s\S]*?<a href="\/pricing">Pricing<\/a>/);
   assert.doesNotMatch(inner, /href="\/#pricing"/);
-  for (const href of ['/method', '/gauntlet', '/panel-review', '/pricing', '/security']) {
+  for (const href of ['/method', '/mcp', '/templates', '/pricing', '/security']) {
     assert.match(inner.slice(inner.indexOf('<footer')), new RegExp(`<a href="${href}">`), href);
   }
 

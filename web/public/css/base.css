@@ -3045,8 +3045,8 @@ button.ref:hover {
   height: 1.25rem;
 }
 
-/* Narrow screens: brand and actions on the first row, the full nav on a
-   second row that scrolls sideways. No link is hidden. */
+/* Narrow screens: brand and actions on the first row, navigation on the
+   second. Keep horizontal scrolling as a fallback for enlarged text. */
 @media (max-width: 57.99em) {
   .site-header__inner {
     flex-wrap: wrap;
@@ -3065,14 +3065,13 @@ button.ref:hover {
     overflow-x: auto;
     border-top: 1px solid var(--line);
     scrollbar-width: none;
-    /* The row scrolls: the right edge fades, so a link cut at the edge reads as "more". */
-    mask-image: linear-gradient(to right, var(--text) calc(100% - 2.5rem), transparent);
   }
 
   .site-nav ul {
     width: max-content;
-    /* The extra room on the right lets the last link scroll clear of the fade. */
-    padding-inline: calc(var(--gutter) - var(--sp-12)) calc(var(--gutter) + 1.5rem);
+    min-width: 100%;
+    justify-content: space-between;
+    padding-inline: var(--sp-4);
     gap: 0;
   }
 
@@ -3083,6 +3082,10 @@ button.ref:hover {
 
 /* Under 360px the header keeps the mark and drops the wordmark to stay on one row. */
 @media (max-width: 22.49em) {
+  .site-nav a {
+    padding-inline: var(--sp-4);
+  }
+
   .site-header .brand__name {
     position: absolute;
     width: 1px;
@@ -3188,7 +3191,7 @@ button.ref:hover {
 
 @media (min-width: 52em) {
   .site-footer__grid {
-    grid-template-columns: minmax(0, 1.5fr) repeat(4, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1.5fr) repeat(3, minmax(0, 1fr));
   }
 
   .site-footer__brand {

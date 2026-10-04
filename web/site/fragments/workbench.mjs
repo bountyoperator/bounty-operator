@@ -133,9 +133,9 @@ ${button({ label: 'Continue', id: 'wb-continue', variant: 'primary', iconEnd: 'a
 </div>`;
 
   return html`<div class="wb__panel" id="wb-panel-files" data-panel="files" role="group" aria-labelledby="wb-files-title">
-<h3 class="wb__title" id="wb-files-title" tabindex="-1">Load the material</h3>
+<h3 class="wb__title" id="wb-files-title" tabindex="-1">Add your files</h3>
 <div class="wb-sheet">
-${row({ label: 'Profile', labelId: 'wb-profile-label', body: review })}
+${row({ label: 'Review type', labelId: 'wb-profile-label', body: review })}
 ${row({ label: 'Files', body: files })}
 ${row({ label: 'Focus', labelFor: 'wb-focus', body: focus })}
 ${row({ label: 'Evidence', body: evidence })}
@@ -218,23 +218,31 @@ ${button({ label: 'Cancel', id: `wb-${name}-cancel`, variant: 'quiet', size: 'sm
 <pre class="wb-live__text" id="wb-${name}-text" tabindex="0" role="log" aria-live="off" aria-label="${label}"></pre>
 </div>`;
 
-  const gauntlet = html`<p class="wb-lead rn-lead">${statusChip('operator')} Eight stages on one finding, each reading the ones before it. The gates that end a report run first.</p>
+  const gauntlet = html`<details class="disclosure">
+<summary class="disclosure__summary">Eight-stage review ${statusChip('operator')}</summary>
+<div class="disclosure__body">
+<p class="wb-lead rn-lead">Eight stages on one finding, each reading the ones before it. The gates that end a report run first.</p>
 <ol class="rn-pipe" id="wb-gauntlet-stages" aria-label="Gauntlet stages"></ol>
 <div class="rn-note" id="wb-gauntlet-note"></div>
 <div class="wb-actions" id="wb-gauntlet-actions">
 ${button({ label: 'Run the gauntlet', id: 'wb-gauntlet-run', icon: 'play' })}
 <p class="fine wb-quota" id="wb-gauntlet-hint"></p>
 </div>
-${liveBox('gauntlet', 'The stage as it is written')}`;
+${liveBox('gauntlet', 'The stage as it is written')}
+</div></details>`;
 
-  const panel = html`<p class="wb-lead rn-lead">${statusChip('operator')} Two to four models review the same files at once. One of them then cross-examines the reviews against the source and keeps what the code proves.</p>
+  const panel = html`<details class="disclosure">
+<summary class="disclosure__summary">Compare multiple models ${statusChip('operator')}</summary>
+<div class="disclosure__body">
+<p class="wb-lead rn-lead">Two to four models review the same files at once. One of them then cross-examines the reviews against the source and keeps what the code proves.</p>
 <div class="rn-seats" id="wb-panel-seats" role="group" aria-label="Panel models"></div>
 <div class="rn-note" id="wb-panel-note"></div>
 <div class="wb-actions" id="wb-panel-actions">
 ${button({ label: 'Run the panel', id: 'wb-panel-run', icon: 'play' })}
 <p class="fine wb-quota" id="wb-panel-hint"></p>
 </div>
-<div class="rn-streams" id="wb-panel-live" hidden></div>`;
+<div class="rn-streams" id="wb-panel-live" hidden></div>
+</div></details>`;
 
   const prompt = html`<p class="wb-lead">Paste the prompt into a new chat with any model. It carries the method and your files, every line numbered.</p>
 <div class="wb-actions">
@@ -283,7 +291,7 @@ function resultPanel() {
  * The workbench section. Its title is an <h2>; the panel titles are <h3> and
  * the row labels <h4>, so it belongs directly under the page's <h1>.
  */
-export function workbench({ title = 'Run a review', lede = 'Load the code or the draft, pick the check, and run it on your own model.' } = {}) {
+export function workbench({ title = 'Run a review', lede = 'Choose a review and add your files.' } = {}) {
   const steps = WORKBENCH_STEPS.map((step, index) => ({
     label: step.label,
     state: index === 0 ? 'current' : 'todo',

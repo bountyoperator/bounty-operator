@@ -17,7 +17,7 @@ import { createHash } from 'node:crypto';
 import { EXAMPLES } from '../../public/example.mjs';
 import { extractRefs, parseReview } from '../../public/parse.mjs';
 import { splitLines } from '../../public/review-core.mjs';
-import { cx, dossier, findingCard, html, icon, severityChip, statusChip } from '../components.mjs';
+import { cx, dossier, findingCard, html, icon, refChip, severityChip, statusChip } from '../components.mjs';
 
 const SOURCE = EXAMPLES[0];
 const LABELS = SOURCE.files.map((file, index) => `input-${index + 1}/${file.name}`);
@@ -92,6 +92,7 @@ export function severityCut({ claimed = EXAMPLE.claimed, supported = EXAMPLE.sup
  *   id         id prefix, so the card never collides with a live result
  *   caption    line under the card; false leaves it out
  *   reveal     add the entrance animation of the finding card
+ *   compact    show the verdict and its source without the full finding card
  */
 export function exampleShot({
   rows = ['impact', 'observed', 'counter', 'next'],
@@ -100,6 +101,7 @@ export function exampleShot({
   id = 'example',
   caption = `Example review, as the model wrote it. ${EXAMPLE.protocol} is an invented protocol.`,
   reveal = false,
+  compact = false,
   className,
 } = {}) {
   const shown = steps ? EXAMPLE.finding : { ...EXAMPLE.finding, path: [] };
@@ -109,7 +111,7 @@ export function exampleShot({
 ${severityCut()}
 ${dossier({ verdict: EXAMPLE.verdict, headline: EXAMPLE.headline })}
 </div>
-${findingCard(shown, {
+${compact ? html`<p class="home-shot__source"><span class="meta">Source</span>${refChip(location)}</p>` : findingCard(shown, {
   level,
   id: `${id}-finding`,
   rows,

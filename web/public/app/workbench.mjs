@@ -145,12 +145,6 @@ export function stepStates(state, viewState = {}) {
   return Object.fromEntries(STEPS.map((step) => [step, step === current ? 'current' : done[step] ? 'done' : 'todo']));
 }
 
-const GROUP_TITLES = Object.freeze({
-  either: 'Review code',
-  bounty: 'Test a finding before you file it',
-  'own-code': 'Review your own code',
-});
-
 /**
  * The listed profiles, grouped by what they are for.
  *
@@ -158,14 +152,12 @@ const GROUP_TITLES = Object.freeze({
  * @returns {{ title: string, profiles: object[] }[]}
  */
 export function profileGroups(profiles = PROFILES) {
-  const groups = new Map();
-  for (const profile of profiles) {
-    if (!profile.listed) continue;
-    const title = GROUP_TITLES[profile.mode] ?? GROUP_TITLES.either;
-    if (!groups.has(title)) groups.set(title, []);
-    groups.get(title).push(profile);
-  }
-  return [...groups].map(([title, members]) => ({ title, profiles: members }));
+  const featured = ['report', 'general', 'solidity'];
+  const listed = profiles.filter((profile) => profile.listed);
+  return [
+    { title: 'Common reviews', profiles: featured.flatMap((id) => listed.filter((profile) => profile.id === id)) },
+    { title: 'More review types', profiles: listed.filter((profile) => !featured.includes(profile.id)) },
+  ].filter((group) => group.profiles.length);
 }
 
 const EVIDENCE_GROUPS = Object.freeze([
@@ -838,13 +830,18 @@ function renderProfiles() {
   if (!target) return;
   clear(target);
   for (const group of profileGroups()) {
-    target.append(el('fieldset', { class: 'wb-profiles__group' },
+    const fieldset = el('fieldset', { class: 'wb-profiles__group' },
       el('legend', { class: 'meta', text: group.title }),
       el('div', { class: 'wb-picks' }, group.profiles.map((profile) => el('label', { class: 'wb-pick' },
         el('input', { type: 'radio', name: 'wb-profile', value: profile.id }),
         el('span', { class: 'wb-pick__body' },
           el('span', { class: 'wb-pick__name', text: profile.name }),
-          el('span', { class: 'wb-pick__tag', text: profile.tagline })))))));
+          el('span', { class: 'wb-pick__tag', text: profile.tagline }))))));
+    if (group.title === 'More review types') {
+      target.append(el('details', { class: 'disclosure wb-profiles__more', id: 'wb-more-profiles' },
+        el('summary', { class: 'disclosure__summary', text: `More review types (${group.profiles.length})` }),
+        el('div', { class: 'disclosure__body' }, fieldset)));
+    } else target.append(fieldset);
   }
 }
 
@@ -858,12 +855,13 @@ function paintProfile() {
   const profile = safeProfile(state.profile);
 
   for (const radio of qsa('input[name="wb-profile"]')) radio.checked = radio.value === profile.id;
+  const more = qs('#wb-more-profiles');
+  if (more?.querySelector('input:checked')) more.open = true;
 
   const detail = qs('#wb-profile-detail');
   if (detail) {
     const needs = profileNeeds(profile.id).inputs;
     clear(detail).append(
-      el('p', { class: 'wb-detail__text', text: profile.description }),
       needs.length
         ? el('div', { class: 'wb-detail__needs' },
           el('p', { class: 'meta', text: 'What to load' }),

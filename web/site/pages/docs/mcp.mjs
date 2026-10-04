@@ -149,10 +149,7 @@ ${CLIENTS.map(
 <p class="install__label"><span class="meta">Remote endpoint</span>${chip('Nothing to install', { tone: 'observed' })}</p>
 ${client.remote}
 </div>
-<div class="install__route">
-<p class="install__label"><span class="meta">Local server</span>${chip('Node 22 or later', { tone: 'neutral' })}</p>
-${client.local}
-</div>
+${disclosure({ summary: 'Run a local server instead', hint: 'Node 22 or later', body: client.local })}
 ${disclosure({ summary: 'Add your account token', hint: 'for account and run_review', body: html`<div class="install__token">${client.token}</div>` })}
 </div>`,
 )}
@@ -477,8 +474,8 @@ const FAQ = [
 const body = docPage({
   head: {
     crumbs: [{ label: 'Bounty Operator', href: '/' }, { label: 'MCP server' }],
-    title: 'Bounty Operator MCP server',
-    lede: 'Run the pre-submission checks from your coding agent. One command adds the server. Preparing a core review and building the packet need no account.',
+    title: 'Connect your coding agent',
+    lede: 'Choose your app and copy the setup command. Core reviews need no Bounty Operator account.',
   },
   lead: install,
   sections: [
@@ -504,7 +501,6 @@ export default {
   label: 'MCP setup',
   description:
     'Copy-paste install for the Bounty Operator MCP server in Claude Code, Codex and Cursor, with its tools, three prompts and token setup.',
-  nav: 'mcp',
   styles: DOCS_STYLES,
   scripts: ['/docs/tabs.mjs', '/docs/copy-ping.mjs'],
   jsonld: [breadcrumbsLd([{ name: 'MCP server', path: PATH }]), faqPageLd(FAQ)],

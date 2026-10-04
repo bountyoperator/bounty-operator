@@ -217,7 +217,7 @@ ${resultCell(entry, 'profile', 'With Bounty Operator')}
   ${sectionHeading({
     title: 'With and without Bounty Operator',
     id: 'comparison',
-    lede: `The same ${inWords(view.comparisons.length)} models, the same ${view.pairs} pairs, the same harness and answer format. “With” adds the matching Bounty Operator core profile to the system prompt. Both improvements and declines are shown.`,
+    lede: `${inWords(view.comparisons.length).replace(/^./, (letter) => letter.toUpperCase())} models. ${view.pairs} paired tests. Same harness and answer format. “With” adds the matching Bounty Operator core profile.`,
   })}
   <p class="bench-note">This tests the core review profiles. Gauntlet and Panel were not tested here. The larger leaderboard below shows models without Bounty Operator.</p>
   <div class="table-wrap" tabindex="0" role="region" aria-label="The same models with and without Bounty Operator" aria-describedby="comparison-notes">
@@ -522,13 +522,16 @@ export function benchmarkPages(published) {
 ${pageHero({
   trail: [{ label: 'Bounty Operator', href: '/' }, { label: 'Benchmark' }],
   eyebrow: `Paydirt · release ${view.release}`,
-  title: 'Which model finds the real bug, leaves the fixed code alone and catches an overclaimed report',
-  lede: `Every model runs through one agent harness at its highest reasoning effort on ${view.pairs} held pairs. A pair counts only when the model is right on both twins.`,
+  title: 'AI model benchmark',
+  lede: `Compare ${view.rows.length} models on ${view.pairs} paired tests, then see what changes with Bounty Operator.`,
   actions: html`${view.comparisons.length > 0 && button({ label: 'Compare with and without', href: '#comparison', variant: 'primary', iconEnd: 'arrow-right' })}${button({ label: 'See the model leaderboard', href: '#board', variant: view.comparisons.length > 0 ? 'secondary' : 'primary' })}${button({ label: 'Read the method', href: METHOD_PATH })}`,
-  after: factsStrip(view),
 })}
 
 ${comparisonSection(view)}
+
+<section class="section section--tight wrap" aria-label="Test setup">
+<details class="disclosure"><summary class="disclosure__summary">Test setup and recorded cost</summary><div class="disclosure__body">${factsStrip(view)}<p class="fine">The harness requests each model’s highest reasoning effort. A pair counts only when both answers are right. <a class="link" href="${METHOD_PATH}">Full benchmark method</a></p></div></details>
+</section>
 
 <section class="section section--tight wrap lb-section" aria-labelledby="board">
   ${sectionHeading({ title: 'Models without Bounty Operator', id: 'board', lede: 'The model leaderboard uses the raw arm: the shared harness and answer format, without a Bounty Operator core profile. Ranked by score and grouped by tier.' })}
@@ -557,6 +560,7 @@ ${notRunSection(view)}
       path: PAGE_PATH,
       title: 'Paydirt: AI security review benchmark | Bounty Operator',
       label: 'Benchmark',
+      bodyClass: 'benchmark-page',
       description: describe(view),
       nav: 'benchmark',
       og: { title: `Paydirt ${view.release}: which model finds the real bug`, description: describe(view) },

@@ -93,8 +93,8 @@ const body = html`
 ${pageHero({
   trail: [{ label: 'Bounty Operator', href: '/' }, { label: 'Pricing' }],
   eyebrow: 'Pricing',
-  title: 'Bounty Operator pricing: Free, or Operator at US$10 per week',
-  lede: 'Two plans. No seats, no credits, no per-line metering. Both run on your own model and your own key, so your provider bills the model usage and Bounty Operator bills a flat week.',
+  title: 'Start free. Operator is US$10 a week.',
+  lede: 'API model usage is billed separately by your provider. Prompt export works with your existing chat subscription.',
 })}
 
 <section class="section section--tight wrap" aria-labelledby="plans">
@@ -111,10 +111,8 @@ ${pageHero({
       ${tickList([
         '1 hosted review per UTC day',
         'Any of the eleven single profiles',
-        'Gauntlet and Panel review: the worked examples',
-        '1 hosted review running at a time',
-        'Prompt export with paste-back and MCP prepare for the three core profiles, no daily limit',
-        'Free tools, repository import and local history',
+        'Unlimited prompt export for the three core reviews',
+        'Free tools and GitHub import',
       ])}
       <div class="plan__cta">${button({ label: 'Run today’s free review', href: workbenchLink(), variant: 'secondary', size: 'lg', block: true })}</div>
     </article>
@@ -127,9 +125,8 @@ ${pageHero({
       <p class="plan__for">For contest weeks and live hunts.</p>
       ${tickList([
         'Unlimited hosted reviews',
-        'All eleven single profiles',
-        'The Gauntlet: eight stages, one verdict dossier',
-        'Panel review: two to four models, then cross-examination',
+        'Gauntlet: eight checks and a final verdict',
+        'Panel review: compare two to four models',
         '4 hosted reviews running at once',
         'Everything in Free',
       ])}
@@ -140,8 +137,10 @@ ${pageHero({
 </section>
 
 <section class="section wrap" aria-labelledby="compare-plans">
-  ${sectionHeading({ title: 'Line by line', id: 'compare-plans' })}
+  <h2 class="visually-hidden" id="compare-plans">Full plan comparison</h2>
+  <details class="disclosure"><summary class="disclosure__summary">Compare every feature</summary><div class="disclosure__body">
   ${planTable}
+  </div></details>
 </section>
 
 <section class="section wrap wrap--narrow" aria-labelledby="faq">
@@ -164,6 +163,7 @@ export default {
   description:
     'Free gives you 1 hosted review per UTC day. Operator is US$10 per week for unlimited reviews, the Gauntlet, Panel review and four reviews at once.',
   label: 'Pricing',
+  bodyClass: 'pricing-page',
   nav: 'pricing',
   styles: [...STYLES, ...ACCOUNT_STYLES],
   scripts: ACCOUNT_SCRIPTS,

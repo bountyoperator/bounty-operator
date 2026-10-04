@@ -13,7 +13,7 @@ import { CHECKS, checksRunLine } from '../method/_shared.mjs';
 import { DOCS_STYLES, UPDATED, checklist, docPage, nextStep } from './_shared.mjs';
 
 const PATH = '/guide';
-const TITLE = 'How to write a bug bounty report that survives triage';
+const TITLE = 'Bug bounty report guide';
 const DESCRIPTION =
   'Twelve checks to run and the evidence to attach before you submit a bug bounty report, with a worked example rewritten line by line.';
 
@@ -354,7 +354,7 @@ const body = docPage({
   head: {
     crumbs: [{ label: 'Bounty Operator', href: '/' }, { label: 'Report guide' }],
     title: TITLE,
-    lede: 'A triager needs one sentence to close a weak report, and about ten minutes to find it. This guide covers what a report needs to get past that, the twelve checks to run before you file, and one report rewritten fragment by fragment.',
+    lede: 'What to include, what to check and a worked example you can follow.',
     actions: html`${button({ label: 'Check a draft', href: '/tools/report-check', variant: 'primary', iconEnd: 'arrow-right' })}${button({ label: 'Report templates', href: '/templates' })}`,
   },
   before: html`<div class="docs-record">${record}</div>`,

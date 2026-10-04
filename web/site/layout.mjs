@@ -27,12 +27,10 @@ export const SITE = {
  * but the home page, which keeps the section link in `href`.
  */
 export const NAV = [
-  { id: 'workbench', label: 'Workbench', href: '/#workspace' },
-  { id: 'method', label: 'Method', href: '/method', requires: '/method' },
-  { id: 'tools', label: 'Tools', href: '/tools' },
+  { id: 'workbench', label: 'Review', href: '/#workspace' },
   { id: 'benchmark', label: 'Benchmark', href: '/benchmark', requires: '/benchmark' },
+  { id: 'tools', label: 'Tools', href: '/tools' },
   { id: 'guide', label: 'Guide', href: '/guide' },
-  { id: 'mcp', label: 'MCP', href: '/mcp' },
   { id: 'pricing', label: 'Pricing', href: '/#pricing', page: '/pricing' },
 ];
 
@@ -40,8 +38,6 @@ export const NAV = [
 function pricingHref(page, site) {
   return page.path !== '/' && site.has('/pricing') ? '/pricing' : '/#pricing';
 }
-
-const FOOTER_TOOL_LIMIT = 6;
 
 export function absoluteUrl(path) {
   if (/^https?:\/\//.test(path)) return path;
@@ -256,12 +252,6 @@ function footerColumn(title, links) {
 
 function siteFooter(page, site) {
   const optional = (path, label) => (site.has(path) ? { href: path, label } : null);
-  const toolPages = (site.pages ?? [])
-    .filter((entry) => entry.path.startsWith('/tools/') && isIndexable(entry))
-    .sort((a, b) => (a.order ?? 100) - (b.order ?? 100) || a.path.localeCompare(b.path))
-    .slice(0, FOOTER_TOOL_LIMIT)
-    .map((entry) => ({ href: entry.path, label: pageLabel(entry) }));
-
   return html`<footer class="site-footer">
 <div class="wrap site-footer__grid">
 <div class="site-footer__brand">
@@ -269,18 +259,16 @@ function siteFooter(page, site) {
 <p class="site-footer__promise">${SITE.promise}</p>
 </div>
 ${footerColumn('Product', [
-    { href: '/#workspace', label: 'Workbench' },
-    optional('/method', 'Method'),
-    optional('/gauntlet', 'Gauntlet'),
-    optional('/panel-review', 'Panel review'),
+    { href: '/#workspace', label: 'Review a report' },
+    optional('/benchmark', 'Benchmark'),
+    { href: '/tools', label: 'Free tools' },
     { href: pricingHref(page, site), label: 'Pricing' },
     { href: '/#account', label: 'Account' },
-    optional('/benchmark', 'Benchmark'),
   ])}
-${footerColumn('Tools', [{ href: '/tools', label: 'All tools' }, ...toolPages])}
 ${footerColumn('Resources', [
     { href: '/guide', label: 'Report guide' },
     { href: '/mcp', label: 'MCP setup' },
+    optional('/method', 'Review method'),
     optional('/templates', 'Report templates'),
     optional('/changelog', 'Changelog'),
     { href: SITE.source, label: 'Source', external: true },

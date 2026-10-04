@@ -31,6 +31,11 @@
   padding-block: var(--sp-24) var(--sp-48);
 }
 
+.pricing-page .lp-hero,
+.benchmark-page .lp-hero {
+  padding-bottom: var(--sp-16);
+}
+
 .lp-hero .breadcrumbs {
   margin-bottom: var(--sp-32);
 }

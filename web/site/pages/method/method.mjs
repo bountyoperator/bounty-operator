@@ -264,7 +264,6 @@ export default {
   title: 'Why bug bounty reports get rejected: the twelve checks | Bounty Operator',
   description: DESCRIPTION,
   label: 'Method',
-  nav: 'method',
   styles: STYLES,
   og: { type: 'article', title: TITLE },
   jsonld: [breadcrumbsLd([{ name: 'Method', path: PATH }]), articleLd, checksLd],

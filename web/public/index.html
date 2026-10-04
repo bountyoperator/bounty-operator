@@ -3,24 +3,24 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Bounty Operator — find the hole in your bug bounty report before the triager does</title>
-<meta name="description" content="Your own model checks a draft report against the code it cites and returns one verdict: submit, rewrite then submit, prove first, hold as a duplicate, or drop.">
+<title>Bounty Operator | Review your report before you submit</title>
+<meta name="description" content="Review your bug bounty report against its supporting files. Get a verdict, source citations and next steps using your own AI model.">
 <link rel="canonical" href="https://bountyoperator.com/">
 <meta name="color-scheme" content="dark light">
 <meta name="theme-color" content="#0a1220" media="(prefers-color-scheme: dark)">
 <meta name="theme-color" content="#f5f7fb" media="(prefers-color-scheme: light)">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Bounty Operator">
-<meta property="og:title" content="Find the hole in your report before the triager does">
-<meta property="og:description" content="Your own model checks a draft report against the code it cites and returns one verdict: submit, rewrite then submit, prove first, hold as a duplicate, or drop.">
+<meta property="og:title" content="Check your report before you submit">
+<meta property="og:description" content="Review your bug bounty report against its supporting files. Get a verdict, source citations and next steps using your own AI model.">
 <meta property="og:url" content="https://bountyoperator.com/">
 <meta property="og:image" content="https://bountyoperator.com/social-v2.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Bounty Operator. A draft report claiming Critical, cut to Medium by a review that cites file and line.">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Find the hole in your report before the triager does">
-<meta name="twitter:description" content="Your own model checks a draft report against the code it cites and returns one verdict: submit, rewrite then submit, prove first, hold as a duplicate, or drop.">
+<meta name="twitter:title" content="Check your report before you submit">
+<meta name="twitter:description" content="Review your bug bounty report against its supporting files. Get a verdict, source citations and next steps using your own AI model.">
 <meta name="twitter:image" content="https://bountyoperator.com/social-v2.png">
 <meta name="twitter:image:alt" content="Bounty Operator. A draft report claiming Critical, cut to Medium by a review that cites file and line.">
 <link rel="icon" href="/favicon.ico" sizes="48x48">
@@ -63,14 +63,14 @@
 <script type="module" src="/app/account.mjs"></script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"Bounty Operator","url":"https://bountyoperator.com/","logo":"https://bountyoperator.com/icon-512.png","email":"support@bountyoperator.com","sameAs":["https://github.com/bountyoperator/bounty-operator"]}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Bounty Operator","url":"https://bountyoperator.com/","applicationCategory":"SecurityApplication","operatingSystem":"Web","description":"Pre-submission review for bug bounty reports and smart-contract findings. The AI argues against the finding. The hunter writes the report.","image":"https://bountyoperator.com/social-v2.png","creator":{"@type":"Organization","name":"Tradi3","url":"https://audits.sherlock.xyz/watson/Tradi3"},"offers":[{"@type":"Offer","name":"Free","price":"0","priceCurrency":"USD","description":"One hosted review a day, any single profile; prompt export for the three core profiles. Free tools, repo import and local history.","url":"https://bountyoperator.com/pricing"},{"@type":"Offer","name":"Operator","price":"10.00","priceCurrency":"USD","description":"Unlimited hosted reviews, the Gauntlet, Panel review and four concurrent reviews.","url":"https://bountyoperator.com/pricing","priceSpecification":{"@type":"UnitPriceSpecification","price":"10.00","priceCurrency":"USD","billingDuration":"P1W","unitText":"week"}}]}</script>
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Can I use my ChatGPT or Claude subscription?","acceptedAnswer":{"@type":"Answer","text":"Yes, for the three core profiles: code security review, Solidity review and challenge a draft report. Export the prompt, paste it into your chat app and paste the answer back. The workbench turns the answer into finding cards and a packet, with no key and no daily limit. Every other profile, the Gauntlet and Panel review run hosted on an API key, which providers bill separately from a chat subscription. A free account runs any single profile hosted once per UTC day. Claude Code, Codex and Cursor connect over MCP."}},{"@type":"Question","name":"What do you keep?","acceptedAnswer":{"@type":"Answer","text":"No code, no prompts, no keys, no results. A hosted review passes through our server in memory: it adds the review method and sends your files, with your key, to the provider you chose. We store a random account identifier, your passkey public keys, hashed tokens, seven days of review activity (status, profile and timestamps) and Stripe references. No ad cookies, no tracking pixels, no third-party analytics scripts."}},{"@type":"Question","name":"What is in a review?","acceptedAnswer":{"@type":"Answer","text":"One verdict and a one-sentence headline. Then each finding: severity, the lines it rests on, who loses what, the path step by step, the strongest counterargument and whether it is resolved, the one missing artefact, a fix, a test and the next action. After the findings come hardening notes, what was checked and found safe, and which files were read. It downloads as one packet with a SHA-256 manifest. A review reads the files you supply; it runs no code and touches no target."}},{"@type":"Question","name":"Which models does it run on?","acceptedAnswer":{"@type":"Answer","text":"The one you pick, for every review. Hosted reviews run on your key at OpenRouter, Anthropic, OpenAI, Google Gemini, xAI, DeepSeek, Mistral or Groq, and an OpenRouter key reaches models from several labs. The prompt export of the core profiles works with any chat or local model."}},{"@type":"Question","name":"What does Operator add?","acceptedAnswer":{"@type":"Answer","text":"Unlimited hosted reviews, the Gauntlet (eight stages, one verdict dossier), Panel review (two to four models, then a cross-examination pass) and four hosted reviews running at once. US$10 per week."}},{"@type":"Question","name":"Who runs it, and what about refunds?","acceptedAnswer":{"@type":"Answer","text":"Tradi3 builds it and submits to the same queues: 2nd of 133 in Immunefi’s Firelight competition, 8th of 65 in Quantus. Payment runs through Stripe. Cancel in the billing portal and access runs to the end of the paid week. If you paid and got no access, or the service was down for a material part of your week, we fix it or refund that charge. Support: support@bountyoperator.com."}}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Can I use my ChatGPT or Claude subscription?","acceptedAnswer":{"@type":"Answer","text":"Yes. Code review, Solidity review and report review can be copied into your chat app. Paste the answer back to view it here. Other review types need an API key. Model options"}},{"@type":"Question","name":"Where do my files go?","acceptedAnswer":{"@type":"Answer","text":"Your files and API key pass through our server to your provider. The server adds the review instructions and stores no files, prompts, keys or results. Prompt export stays in your browser until you copy it elsewhere. Privacy details"}},{"@type":"Question","name":"Which models can I use?","acceptedAnswer":{"@type":"Answer","text":"Choose a model from OpenRouter, Anthropic, OpenAI, Google Gemini, xAI, DeepSeek, Mistral or Groq. The three core reviews also work through prompt export with your chat or local model."}},{"@type":"Question","name":"How do I cancel or get help?","acceptedAnswer":{"@type":"Answer","text":"Cancel in the Stripe billing portal. Access continues until the end of your paid week. Contact support@bountyoperator.com for access problems or billing help. Refund terms"}}]}</script>
 </head>
 <body>
 <a class="skip-link" href="#main">Skip to content</a>
 <header class="site-header">
 <div class="wrap site-header__inner">
 <a class="brand" href="/"><svg class="brand__mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect class="brand__tile" width="64" height="64" rx="14"/><path class="brand__glyph" d="M12.5 15h6.5v31.5h-6.5z"/><path class="brand__glyph" fill-rule="evenodd" d="M25.5 25a10.75 10.75 0 1 0 0 21.5a10.75 10.75 0 0 0 0-21.5zm0 6.25a4.5 4.5 0 1 1 0 9a4.5 4.5 0 0 1 0-9z"/><path class="brand__slash" d="M45.5 13h6.25l-8.6 37.5h-6.25z"/></svg><span class="brand__name">Bounty Operator</span></a>
-<nav class="site-nav" aria-label="Main"><ul><li><a href="/#workspace">Workbench</a></li><li><a href="/method">Method</a></li><li><a href="/tools">Tools</a></li><li><a href="/benchmark">Benchmark</a></li><li><a href="/guide">Guide</a></li><li><a href="/mcp">MCP</a></li><li><a href="/#pricing">Pricing</a></li></ul></nav>
+<nav class="site-nav" aria-label="Main"><ul><li><a href="/#workspace">Review</a></li><li><a href="/benchmark">Benchmark</a></li><li><a href="/tools">Tools</a></li><li><a href="/guide">Guide</a></li><li><a href="/#pricing">Pricing</a></li></ul></nav>
 <div class="site-header__actions">
 <button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch colour theme"><span class="icon theme-toggle__icon" aria-hidden="true"></span></button>
 <button id="account-button" class="btn btn--secondary btn--sm" type="button">Sign in</button>
@@ -82,17 +82,16 @@
 
 <div class="home-top wrap">
   <section class="home-hero" aria-labelledby="hero-title">
-    <p class="eyebrow">Pre-submission review for bug bounty hunters and auditors</p>
-    <h1 class="display home-hero__title" id="hero-title">Find the hole in your report before the triager does.</h1>
-    <p class="lede home-hero__lede">Paste the draft and the code it cites. Your own model checks every claim against file and line, writes the strongest case against it and returns one verdict: submit, rewrite then submit, prove first, hold as a duplicate, or drop.</p>
+    <p class="eyebrow">AI review for bug bounty reports</p>
+    <h1 class="display home-hero__title" id="hero-title">Check your report before you submit.</h1>
+    <p class="lede home-hero__lede">Add your draft and supporting files. Get a review of the claims, the evidence and what to fix.</p>
     <div class="home-hero__actions">
-      <a class="btn btn--primary btn--lg" href="#workspace" data-demo data-example=""><span class="btn__label">Run the example</span><span class="icon icon--arrow-right" aria-hidden="true"></span></a>
-      <a class="btn btn--secondary btn--lg" href="/?profile=report#workspace"><span class="btn__label">Challenge my report</span></a>
+      <a class="btn btn--primary btn--lg" href="/?profile=report#workspace"><span class="btn__label">Review my report</span><span class="icon icon--arrow-right" aria-hidden="true"></span></a>
+      <a class="btn btn--secondary btn--lg" href="#workspace" data-demo data-example=""><span class="btn__label">View example</span></a>
     </div>
-    <p class="home-hero__note">The example runs with no account and no key.</p>
-    <p class="home-hero__price">Free: one hosted review a day. Operator: US$10 a week for unlimited reviews, the full gauntlet, panel review and four at once.</p>
+    <p class="home-hero__note">The example needs no account or API key.</p>
+    <p class="home-hero__links"><a class="link" href="/benchmark#comparison">Compare the results</a><a class="link" href="/mcp">Use in your coding agent</a></p>
   </section>
-
   <div class="home-top__shot">
     <figure class="home-shot theme-dark">
 <p class="home-shot__stamp"><span class="chip status" data-status="example">Example</span></p>
@@ -100,71 +99,25 @@
 <p class="home-cut"><span class="home-cut__side"><span class="meta">Draft<span class="home-cut__more"> claims</span></span><s class="home-cut__claimed"><span class="chip sev" data-sev="critical">Critical</span></s></span><span class="icon icon--arrow-right home-cut__arrow" aria-hidden="true"></span><span class="home-cut__side"><span class="meta">Code<span class="home-cut__more"> supports</span></span><span class="chip sev" data-sev="medium">Medium</span></span></p>
 <header class="dossier"><div class="dossier__verdict"><span class="meta">Verdict</span><span class="chip verdict verdict--lg" data-verdict="rewrite-then-submit">Rewrite, then submit</span></div><p class="dossier__headline">stake() skips settlement, so a fresh staker claims the whole reward reserve; principal is untouched, so the bug is Medium, not Critical</p></header>
 </div>
-<article class="finding finding--reveal" id="hero-finding" data-sev="medium" aria-labelledby="hero-finding-title"><div class="finding__bar"><span class="icon icon--file" aria-hidden="true"></span><span class="finding__file">input-1/src/TesseraStaking.sol</span><span class="hash" title="sha256: 575d099f9d224c96bce959c1c5c3a63d3e68ed84c153ae0ecbb665f2666e87ff"><span class="hash__algo">sha256</span>575d099f9d22…</span><span class="finding__tag">152 lines</span></div><header class="finding__head"><div class="finding__tags"><span class="finding__id">F-1</span><span class="chip sev" data-sev="medium">Medium</span><span class="chip status" data-status="proven">Proven in source</span></div><h2 class="finding__title" id="hero-finding-title">Unsettled stake() lets a fresh account claim the whole reward reserve</h2><ul class="finding__refs" aria-label="Locations"><li><span class="ref" title="input-1/src/TesseraStaking.sol:87-94"><span class="ref__file">input-1/src/TesseraStaking.sol</span><span class="ref__lines">:87-94</span></span></li></ul></header><dl class="finding__rows"><div class="rail" data-rail="observed"><dt class="rail__label">Observed</dt><dd class="rail__body"><figure class="code code--numbered"><pre class="code__pre" tabindex="0" role="region" aria-label="Source: input-1/src/TesseraStaking.sol"><code><span class="code__line is-hl" data-n="87">function stake(uint256 amount) external {
-</span><span class="code__line" data-n="88">    if (amount == 0) revert ZeroAmount();
-</span><span class="code__line is-hl" data-n="89">    _updateGlobal();
-</span><span class="code__line" data-n="90">    balanceOf[msg.sender] += amount;
-</span><span class="code__line" data-n="91">    totalStaked += amount;
-</span></code></pre></figure></dd></div><div class="rail" data-rail="counter" data-status="resolved"><dt class="rail__label">Counterargument</dt><dd class="rail__body"><p class="rail__quote">The exit() revert is known issue N-1</p><p class="rail__answer"><span class="chip status" data-status="resolved">Resolved</span><span>input-4/docs/known-issues.md:13 covers only the exit() revert, and no entry there covers the reward theft.</span></p></dd></div><div class="rail" data-rail="next"><dt class="rail__label">Next</dt><dd class="rail__body"><p class="rail__next"><span class="icon icon--arrow-right" aria-hidden="true"></span><span>Rewrite the report as Medium, select &quot;Medium: Theft of unclaimed rewards&quot;, and inline the full test file.</span></p></dd></div></dl></article>
-<figcaption class="home-shot__caption">Example review, as the model wrote it. Tessera Staking is an invented protocol.</figcaption>
+<p class="home-shot__source"><span class="meta">Source</span><span class="ref" title="input-1/src/TesseraStaking.sol:87-94"><span class="ref__file">input-1/src/TesseraStaking.sol</span><span class="ref__lines">:87-94</span></span></p>
+<figcaption class="home-shot__caption">Saved example. Tessera Staking is an invented protocol.</figcaption>
 </figure>
   </div>
-
-  <section class="home-proof" aria-label="Who built it, and from what">
-    <ul class="home-proof__list">
-      <li class="home-proof__item">
-        <span class="meta">Built by</span>
-        <span class="home-proof__value">Tradi3</span>
-      </li>
-      <li class="home-proof__item">
-        <span class="meta">Firelight</span>
-        <a class="home-proof__value home-proof__link" href="https://immunefi.com/audit-competition/audit-comp-firelight-1/leaderboard/" target="_blank" rel="noopener noreferrer">2nd of 133<span class="icon icon--arrow-up-right" aria-hidden="true"></span><span class="visually-hidden">, Immunefi Firelight leaderboard</span></a>
-      </li>
-      <li class="home-proof__item">
-        <span class="meta">Quantus</span>
-        <a class="home-proof__value home-proof__link" href="https://immunefi.com/audit-competition/audit-comp-quantus/leaderboard/" target="_blank" rel="noopener noreferrer">8th of 65<span class="icon icon--arrow-up-right" aria-hidden="true"></span><span class="visually-hidden">, Immunefi Quantus leaderboard</span></a>
-      </li>
-      <li class="home-proof__item home-proof__item--wide">
-        <span class="meta">The method</span>
-        <a class="home-proof__value home-proof__link" href="/method">Twelve checks from 105 real case files<span class="icon icon--arrow-right" aria-hidden="true"></span></a>
-      </li>
-    </ul>
-  </section>
-</div><section class="wrap bench-teaser" aria-labelledby="bench-teaser-title">
-<div class="bench-teaser__inner">
-  <div class="bench-teaser__head">
-    <p class="eyebrow">Benchmark · release 2026-10</p>
-    <h2 class="bench-teaser__title" id="bench-teaser-title">Paydirt: 22 models on 18 held pairs</h2>
-  </div>
-  <div class="bench-teaser__table">
-  <div class="bench-teaser__row bench-teaser__labels" aria-hidden="true"><span></span><span class="meta">Model</span><span class="meta">Score</span><span class="meta">Cost / run</span></div>
-  <ol class="bench-teaser__list"><li class="bench-teaser__row"><span class="bench-teaser__rank num" aria-hidden="true">1</span><span class="bench-teaser__name">GPT-6 Astra</span><span class="bench-teaser__score num">94.4<span class="visually-hidden"> Paydirt Score</span></span><span class="bench-teaser__cost num">$0.52<span class="visually-hidden"> a run</span></span></li><li class="bench-teaser__row"><span class="bench-teaser__rank num" aria-hidden="true">1</span><span class="bench-teaser__name">GPT-6.1 Sol</span><span class="bench-teaser__score num">94.4<span class="visually-hidden"> Paydirt Score</span></span><span class="bench-teaser__cost num">$0.108<span class="visually-hidden"> a run</span></span></li><li class="bench-teaser__row"><span class="bench-teaser__rank num" aria-hidden="true">3</span><span class="bench-teaser__name">Kimi K3</span><span class="bench-teaser__score num">88.9<span class="visually-hidden"> Paydirt Score</span></span><span class="bench-teaser__cost num">$0.22<span class="visually-hidden"> a run</span></span></li><li class="bench-teaser__row"><span class="bench-teaser__rank num" aria-hidden="true">3</span><span class="bench-teaser__name">GPT-5.6 Terra</span><span class="bench-teaser__score num">88.9<span class="visually-hidden"> Paydirt Score</span></span><span class="bench-teaser__cost num">$0.433<span class="visually-hidden"> a run</span></span></li></ol>
-  </div>
-  <a class="bench-teaser__go link" href="/benchmark">See the leaderboard<span class="icon icon--arrow-right" aria-hidden="true"></span></a>
+  <p class="home-proof fine">Built by Tradi3. <a class="link" href="https://immunefi.com/audit-competition/audit-comp-firelight-1/leaderboard/" target="_blank" rel="noopener noreferrer">2nd of 133 in Firelight</a> · <a class="link" href="https://immunefi.com/audit-competition/audit-comp-quantus/leaderboard/" target="_blank" rel="noopener noreferrer">8th of 65 in Quantus</a>.</p>
 </div>
-</section>
 
-<section class="section wrap" aria-labelledby="how">
-  <header class="section-head"><div class="section-head__text"><h2 id="how">How it works</h2></div></header>
+<section class="section section--tight wrap" aria-labelledby="how">
+  <h2 class="visually-hidden" id="how">How it works</h2>
   <ol class="home-steps">
-    <li class="home-steps__item">
-      <h3 class="home-steps__title">Load the code and the draft</h3>
-      <p class="home-steps__text">Drop files, paste them, or import from GitHub at a pinned commit. Up to 50 files and 240 KB per review. Pick one of eleven profiles.</p>
-    </li>
-    <li class="home-steps__item">
-      <h3 class="home-steps__title">Run it on your model</h3>
-      <p class="home-steps__text">Use your own API key, connect OpenRouter in one click, or call it from your coding agent over MCP. The review goes through our server to your provider. The three core profiles also export as a prompt for your chat app. Read what is sent before it leaves the tab.</p>
-    </li>
-    <li class="home-steps__item">
-      <h3 class="home-steps__title">Take the verdict and the packet</h3>
-      <p class="home-steps__text">One verdict, every finding tied to file and line, and the next action. The review, your evidence notes and a SHA-256 manifest download as one record. Bounty Operator stores none of it.</p>
-    </li></ol>
+    <li class="home-steps__item"><h3 class="home-steps__title">Add your files</h3><p class="home-steps__text">Paste text, drop files or import from GitHub.</p></li>
+    <li class="home-steps__item"><h3 class="home-steps__title">Choose your model</h3><p class="home-steps__text">Use an API key or copy a core review into your chat app.</p></li>
+    <li class="home-steps__item"><h3 class="home-steps__title">Read the result</h3><p class="home-steps__text">See the verdict, source citations and next steps.</p></li></ol>
 </section>
 <section class="section wrap wb" id="workspace" aria-labelledby="wb-title" data-step="files">
 <header class="wb__head">
 <div class="wb__intro">
 <h2 id="wb-title">Run a review</h2>
-<p class="lede">Load the code or the draft, pick the check, and run it on your own model.</p>
+<p class="lede">Choose a review and add your files.</p>
 </div>
 <div class="wb__tools no-print">
 <button class="btn btn--quiet btn--sm" type="button" id="wb-example" data-example=""><span class="icon icon--play" aria-hidden="true"></span><span class="btn__label">Load the example</span></button>
@@ -178,10 +131,10 @@
 <div class="notice notice--info wb__status" id="wb-status" role="status"></div>
 </div>
 <div class="wb__panel" id="wb-panel-files" data-panel="files" role="group" aria-labelledby="wb-files-title">
-<h3 class="wb__title" id="wb-files-title" tabindex="-1">Load the material</h3>
+<h3 class="wb__title" id="wb-files-title" tabindex="-1">Add your files</h3>
 <div class="wb-sheet">
 <div class="wb-row">
-<h4 class="wb-row__label" id="wb-profile-label">Profile</h4>
+<h4 class="wb-row__label" id="wb-profile-label">Review type</h4>
 <div class="wb-row__body">
 <div class="wb-profiles" id="wb-profiles"></div>
 <div class="wb-detail" id="wb-profile-detail"></div>
@@ -351,7 +304,10 @@
 <div class="wb-row" id="wb-row-gauntlet">
 <h4 class="wb-row__label">Gauntlet</h4>
 <div class="wb-row__body">
-<p class="wb-lead rn-lead"><span class="chip status" data-status="operator">Operator</span> Eight stages on one finding, each reading the ones before it. The gates that end a report run first.</p>
+<details class="disclosure">
+<summary class="disclosure__summary">Eight-stage review <span class="chip status" data-status="operator">Operator</span></summary>
+<div class="disclosure__body">
+<p class="wb-lead rn-lead">Eight stages on one finding, each reading the ones before it. The gates that end a report run first.</p>
 <ol class="rn-pipe" id="wb-gauntlet-stages" aria-label="Gauntlet stages"></ol>
 <div class="rn-note" id="wb-gauntlet-note"></div>
 <div class="wb-actions" id="wb-gauntlet-actions">
@@ -367,12 +323,16 @@
 </div>
 <pre class="wb-live__text" id="wb-gauntlet-text" tabindex="0" role="log" aria-live="off" aria-label="The stage as it is written"></pre>
 </div>
+</div></details>
 </div>
 </div>
 <div class="wb-row" id="wb-row-panel">
 <h4 class="wb-row__label">Panel</h4>
 <div class="wb-row__body">
-<p class="wb-lead rn-lead"><span class="chip status" data-status="operator">Operator</span> Two to four models review the same files at once. One of them then cross-examines the reviews against the source and keeps what the code proves.</p>
+<details class="disclosure">
+<summary class="disclosure__summary">Compare multiple models <span class="chip status" data-status="operator">Operator</span></summary>
+<div class="disclosure__body">
+<p class="wb-lead rn-lead">Two to four models review the same files at once. One of them then cross-examines the reviews against the source and keeps what the code proves.</p>
 <div class="rn-seats" id="wb-panel-seats" role="group" aria-label="Panel models"></div>
 <div class="rn-note" id="wb-panel-note"></div>
 <div class="wb-actions" id="wb-panel-actions">
@@ -380,6 +340,7 @@
 <p class="fine wb-quota" id="wb-panel-hint"></p>
 </div>
 <div class="rn-streams" id="wb-panel-live" hidden></div>
+</div></details>
 </div>
 </div>
 <div class="wb-row" id="wb-row-prompt" hidden>
@@ -414,202 +375,57 @@
 </div>
 <noscript><p class="notice notice--warn"><span class="notice__content">The workbench runs in the browser and needs JavaScript. The <a class="link" href="/mcp">MCP server</a> runs the same reviews from an editor.</span></p></noscript>
 </section>
-
-<section class="section home-band" aria-labelledby="gauntlet">
-  <div class="wrap">
-    <header class="section-head"><div class="section-head__text"><p class="eyebrow"><span class="chip status" data-status="operator">Operator</span></p><h2 id="gauntlet">The gauntlet: eight stages, one verdict</h2><p class="lede">Hand over the draft, the code and the programme rules. One run takes the report through eight stages in the order that saves work, and ends on one decision.</p></div><div class="section-head__aside"><a class="link home-more" href="/gauntlet">See a full example dossier</a></div></header>
-    
-<div class="home-pipe">
-  <div class="home-pipe__group" data-kind="gate" data-count="3">
-    <p class="home-pipe__label"><span class="meta">Gates</span><span class="home-pipe__note">These end a report before the proof costs you a day.</span></p>
-    <ol class="home-pipe__stages" start="1">
-      <li class="home-pipe__stage">
-        <span class="home-pipe__n" aria-hidden="true">1</span>
-        <h3 class="home-pipe__name">Scope</h3>
-        <p class="home-pipe__text">Asset, revision, exclusions and the impact row, clause by clause.</p>
-      </li>
-      <li class="home-pipe__stage">
-        <span class="home-pipe__n" aria-hidden="true">2</span>
-        <h3 class="home-pipe__name">Provenance</h3>
-        <p class="home-pipe__text">Who performs each step, and whether the project meant it.</p>
-      </li>
-      <li class="home-pipe__stage">
-        <span class="home-pipe__n" aria-hidden="true">3</span>
-        <h3 class="home-pipe__name">Prior art</h3>
-        <p class="home-pipe__text">Same root cause, or only the same symptom.</p>
-      </li></ol>
+<section class="wrap bench-teaser" aria-labelledby="bench-teaser-title">
+<div class="bench-teaser__inner">
+  <div class="bench-teaser__head">
+    <p class="eyebrow">Benchmark · release 2026-10</p>
+    <h2 class="bench-teaser__title" id="bench-teaser-title">Paydirt: 22 models on 18 held pairs</h2>
   </div>
-  <div class="home-pipe__group" data-kind="work" data-count="4">
-    <p class="home-pipe__label"><span class="meta">Work</span><span class="home-pipe__note">What the draft has to show.</span></p>
-    <ol class="home-pipe__stages" start="4">
-      <li class="home-pipe__stage">
-        <span class="home-pipe__n" aria-hidden="true">4</span>
-        <h3 class="home-pipe__name">Proof</h3>
-        <p class="home-pipe__text">Checks that the proof shows the impact and not only the defect.</p>
-      </li>
-      <li class="home-pipe__stage">
-        <span class="home-pipe__n" aria-hidden="true">5</span>
-        <h3 class="home-pipe__name">Severity</h3>
-        <p class="home-pipe__text">One level, graded on the programme&#39;s own table.</p>
-      </li>
-      <li class="home-pipe__stage">
-        <span class="home-pipe__n" aria-hidden="true">6</span>
-        <h3 class="home-pipe__name">Triager</h3>
-        <p class="home-pipe__text">The three reasons a triager closes this report, ranked.</p>
-      </li>
-      <li class="home-pipe__stage">
-        <span class="home-pipe__n" aria-hidden="true">7</span>
-        <h3 class="home-pipe__name">Report</h3>
-        <p class="home-pipe__text">Every claim in your draft, checked against the code.</p>
-      </li></ol>
+  <div class="bench-teaser__table">
+  <div class="bench-teaser__row bench-teaser__labels" aria-hidden="true"><span></span><span class="meta">Model</span><span class="meta">Score</span><span class="meta">Cost / run</span></div>
+  <ol class="bench-teaser__list"><li class="bench-teaser__row"><span class="bench-teaser__rank num" aria-hidden="true">1</span><span class="bench-teaser__name">GPT-6 Astra</span><span class="bench-teaser__score num">94.4<span class="visually-hidden"> Paydirt Score</span></span><span class="bench-teaser__cost num">$0.52<span class="visually-hidden"> a run</span></span></li><li class="bench-teaser__row"><span class="bench-teaser__rank num" aria-hidden="true">1</span><span class="bench-teaser__name">GPT-6.1 Sol</span><span class="bench-teaser__score num">94.4<span class="visually-hidden"> Paydirt Score</span></span><span class="bench-teaser__cost num">$0.108<span class="visually-hidden"> a run</span></span></li><li class="bench-teaser__row"><span class="bench-teaser__rank num" aria-hidden="true">3</span><span class="bench-teaser__name">Kimi K3</span><span class="bench-teaser__score num">88.9<span class="visually-hidden"> Paydirt Score</span></span><span class="bench-teaser__cost num">$0.22<span class="visually-hidden"> a run</span></span></li><li class="bench-teaser__row"><span class="bench-teaser__rank num" aria-hidden="true">3</span><span class="bench-teaser__name">GPT-5.6 Terra</span><span class="bench-teaser__score num">88.9<span class="visually-hidden"> Paydirt Score</span></span><span class="bench-teaser__cost num">$0.433<span class="visually-hidden"> a run</span></span></li></ol>
   </div>
-  <div class="home-pipe__group" data-kind="verdict" data-count="1">
-    <p class="home-pipe__label"><span class="meta">Decision</span><span class="home-pipe__note">One of five.</span></p>
-    <ol class="home-pipe__stages" start="8">
-      <li class="home-pipe__stage">
-        <span class="home-pipe__n" aria-hidden="true">8</span>
-        <h3 class="home-pipe__name">Verdict</h3>
-        <p class="home-pipe__text">One verdict, one blocker, the cheapest action that removes it.</p>
-      </li></ol>
-  </div></div>
-    <h3 class="home-verdicts__title meta">The run ends on one of five verdicts</h3>
-    
-<dl class="home-verdicts"><div class="home-verdicts__row"><dt><span class="chip verdict" data-verdict="submit">Submit</span></dt><dd>Every decisive claim is backed by the supplied code and proof. File it.</dd></div><div class="home-verdicts__row"><dt><span class="chip verdict" data-verdict="rewrite-then-submit">Rewrite, then submit</span></dt><dd>The finding holds. The draft misstates its severity, impact, preconditions or fix.</dd></div><div class="home-verdicts__row"><dt><span class="chip verdict" data-verdict="prove-first">Prove first</span></dt><dd>The claimed impact is not demonstrated on the real path yet. One artefact is missing.</dd></div><div class="home-verdicts__row"><dt><span class="chip verdict" data-verdict="hold-duplicate">Hold: duplicate</span></dt><dd>A known issue, an audit note, a branch or your own earlier report has the same root cause or the same fix.</dd></div><div class="home-verdicts__row"><dt><span class="chip verdict" data-verdict="drop">Drop</span></dt><dd>The code contradicts the root cause, the behaviour is the design, or the rules exclude it.</dd></div></dl>
-    <div class="cluster home-band__actions">
-      <a class="btn btn--primary" href="#pricing"><span class="btn__label">Get Operator</span><span class="icon icon--arrow-right" aria-hidden="true"></span></a>
-      <a class="btn btn--secondary" href="/gauntlet"><span class="btn__label">How the gauntlet runs</span></a>
-    </div>
-  </div>
+  <a class="bench-teaser__go link" href="/benchmark">See the leaderboard<span class="icon icon--arrow-right" aria-hidden="true"></span></a>
+</div>
 </section>
 
-<section class="section wrap" aria-labelledby="what-you-get">
-  <header class="section-head"><div class="section-head__text"><h2 id="what-you-get">Any model can read code. This makes it argue like a triager.</h2></div></header>
-  <ul class="home-gets">
-    <li class="home-get">
-      <div class="home-get__specimen" aria-hidden="true"><span class="ref" title="input-1/src/TesseraStaking.sol:87-94"><span class="ref__file">input-1/src/TesseraStaking.sol</span><span class="ref__lines">:87-94</span></span></div>
-      <h3 class="home-get__title">Every claim tied to file and line</h3>
-      <p class="home-get__text">No reference, no claim. A finding cites the lines it rests on, and every reference is checked against the files you supplied.</p>
-    </li>
-    <li class="home-get">
-      <div class="home-get__specimen" aria-hidden="true"><span class="chip status" data-status="resolved">Resolved</span><span class="chip status" data-status="open">Open</span></div>
-      <h3 class="home-get__title">The triager’s objection first</h3>
-      <p class="home-get__text">Each finding carries the strongest case against it and says whether your evidence beats it: resolved or open.</p>
-    </li>
-    <li class="home-get">
-      <div class="home-get__specimen" aria-hidden="true"><span class="chip verdict" data-verdict="prove-first">Prove first</span><span class="chip chip--dashed" data-tone="unproven">1 blocker</span></div>
-      <h3 class="home-get__title">One verdict with one blocker</h3>
-      <p class="home-get__text">Submit, rewrite then submit, prove first, hold as a duplicate, or drop. Each finding names the one artefact still missing and the next action.</p>
-    </li>
-    <li class="home-get">
-      <div class="home-get__specimen" aria-hidden="true"><span class="hash" title="sha256: 575d099f9d224c96bce959c1c5c3a63d3e68ed84c153ae0ecbb665f2666e87ff"><span class="hash__algo">sha256</span>575d099f9d22…</span></div>
-      <h3 class="home-get__title">Nothing leaves unseen</h3>
-      <p class="home-get__text">A scan in your browser stops private keys, API and GitHub tokens, seed phrases and private report links. You read the request before it leaves the tab. The packet lists every file with its SHA-256.</p>
-    </li></ul>
-</section>
-
-<section class="section wrap" aria-labelledby="your-model">
-  <header class="section-head"><div class="section-head__text"><h2 id="your-model">Your model, your key</h2><p class="lede">A review runs on the model you choose, under your own key. It passes through our server in memory, which adds the review method and stores no file, key or review. Your provider bills the usage.</p></div><div class="section-head__aside"><a class="link home-more" href="/your-model-your-key">Where your code goes</a></div></header>
-  <ul class="home-providers" aria-label="Providers a hosted review runs on"><li><span class="chip" data-tone="neutral">OpenRouter</span></li><li><span class="chip" data-tone="neutral">Anthropic</span></li><li><span class="chip" data-tone="neutral">OpenAI</span></li><li><span class="chip" data-tone="neutral">Google Gemini</span></li><li><span class="chip" data-tone="neutral">xAI</span></li><li><span class="chip" data-tone="neutral">DeepSeek</span></li><li><span class="chip" data-tone="neutral">Mistral</span></li><li><span class="chip" data-tone="neutral">Groq</span></li></ul>
-  <div class="home-paths">
-    <article class="home-path">
-      <h3 class="home-path__title"><span class="icon icon--key" aria-hidden="true"></span>API key</h3>
-      <p class="home-path__text">Paste a key for any of the eight providers, or connect OpenRouter in one click and pick any model it carries. The key is used for the one request it belongs to.</p>
-      <p class="home-path__action"><a class="btn btn--secondary btn--sm" href="#workspace"><span class="btn__label">Run with a key</span><span class="icon icon--arrow-right" aria-hidden="true"></span></a></p>
-    </article>
-    <article class="home-path">
-      <h3 class="home-path__title"><span class="icon icon--copy" aria-hidden="true"></span>Chat subscription</h3>
-      <p class="home-path__text">No key at hand. Export the prompt of a core profile (code security review, Solidity review or challenge a draft report), paste it into ChatGPT, Claude or a local model, then paste the answer back. The workbench turns it into finding cards and a packet. No daily limit.</p>
-      <p class="home-path__action"><a class="btn btn--secondary btn--sm" href="#workspace"><span class="btn__label">Run without a key</span><span class="icon icon--arrow-right" aria-hidden="true"></span></a></p>
-    </article>
-    <article class="home-path home-path--wide">
-      <h3 class="home-path__title"><span class="icon icon--terminal" aria-hidden="true"></span>Coding agent</h3>
-      <p class="home-path__text">Add the MCP endpoint to Claude Code, Codex or Cursor. Your agent prepares a core review from the files in your repository and answers it on its own model, or runs any profile hosted with a connection token and your provider key.</p>
-      <figure class="code code--wrap"><figcaption class="code__bar"><span class="code__name">Terminal</span><button class="code__copy" type="button" data-copy><span class="icon icon--copy" aria-hidden="true"></span><span data-copy-label>Copy</span></button></figcaption><pre class="code__pre" tabindex="0" role="region" aria-label="Claude Code: add the MCP endpoint"><code><span class="code__line">claude mcp add --transport http bounty-operator https://bountyoperator.com/api/mcp
-</span></code></pre></figure>
-      <p class="home-path__action"><a class="link home-more" href="/mcp">MCP setup for Codex, Cursor and tokens</a></p>
-    </article>
-  </div>
-</section>
-
-<section class="section wrap" aria-labelledby="free-tools">
-  <header class="section-head"><div class="section-head__text"><h2 id="free-tools">Free tools</h2><p class="lede">No account, no key. Each tool runs in your browser.</p></div><div class="section-head__aside"><a class="link home-more" href="/tools">All tools</a></div></header>
-  <ul class="home-tools">
-    <li><a class="home-tool" href="/tools/report-check">
-      <span class="home-tool__name"><span class="icon icon--search" aria-hidden="true"></span>Report check</span>
-      <span class="home-tool__text">Paste a draft and see which of 14 checks it passes: pinned commit, quoted impact row, inline proof, trusted roles, leftover secrets.</span>
-      <span class="home-tool__go" aria-hidden="true"><span class="icon icon--arrow-right" aria-hidden="true"></span></span>
-    </a></li>
-    <li><a class="home-tool" href="/tools/verify">
-      <span class="home-tool__name"><span class="icon icon--hash" aria-hidden="true"></span>Packet verifier</span>
-      <span class="home-tool__text">Drop a packet and its source files and get match, mismatch or missing for every SHA-256.</span>
-      <span class="home-tool__go" aria-hidden="true"><span class="icon icon--arrow-right" aria-hidden="true"></span></span>
-    </a></li>
-    <li><a class="home-tool" href="/tools/secret-check">
-      <span class="home-tool__name"><span class="icon icon--key" aria-hidden="true"></span>Secret check</span>
-      <span class="home-tool__text">Drop a PoC folder and get every key, token, seed phrase and private report link as file:line.</span>
-      <span class="home-tool__go" aria-hidden="true"><span class="icon icon--arrow-right" aria-hidden="true"></span></span>
-    </a></li>
-    <li><a class="home-tool" href="/tools/acceptance-rates">
-      <span class="home-tool__name"><span class="icon icon--sort" aria-hidden="true"></span>Acceptance rates</span>
-      <span class="home-tool__text">Twelve bug classes ranked by how often judges accepted them, with the sample size on every row.</span>
-      <span class="home-tool__go" aria-hidden="true"><span class="icon icon--arrow-right" aria-hidden="true"></span></span>
-    </a></li>
-    <li><a class="home-tool" href="/tools/slither-focus">
-      <span class="home-tool__name"><span class="icon icon--terminal" aria-hidden="true"></span>Slither triage queue</span>
-      <span class="home-tool__text">Drop Slither’s JSON and get a ranked Markdown queue of the 13 detectors worth a manual pass.</span>
-      <span class="home-tool__go" aria-hidden="true"><span class="icon icon--arrow-right" aria-hidden="true"></span></span>
-    </a></li>
-    <li><a class="home-tool" href="/templates">
-      <span class="home-tool__name"><span class="icon icon--file" aria-hidden="true"></span>Report templates</span>
-      <span class="home-tool__text">Report skeletons for Immunefi, Sherlock, Cantina and HackerOne, and a Foundry proof that asserts the impact.</span>
-      <span class="home-tool__go" aria-hidden="true"><span class="icon icon--arrow-right" aria-hidden="true"></span></span>
-    </a></li>
-    <li><a class="home-tool" href="/guide">
-      <span class="home-tool__name"><span class="icon icon--eye" aria-hidden="true"></span>Report guide</span>
-      <span class="home-tool__text">What a report needs to survive its first read, and one report rewritten fragment by fragment.</span>
-      <span class="home-tool__go" aria-hidden="true"><span class="icon icon--arrow-right" aria-hidden="true"></span></span>
-    </a></li>
-    <li><a class="home-tool" href="/method">
-      <span class="home-tool__name"><span class="icon icon--shield" aria-hidden="true"></span>The twelve checks</span>
-      <span class="home-tool__text">Every check exists because real reports were closed for that reason. The question each one asks, and why reports die on it.</span>
-      <span class="home-tool__go" aria-hidden="true"><span class="icon icon--arrow-right" aria-hidden="true"></span></span>
-    </a></li></ul>
+<section class="section section--tight wrap" aria-labelledby="free-tools">
+  <header class="section-head"><div class="section-head__text"><h2 id="free-tools">More ways to use Bounty Operator</h2></div></header>
+  <ul class="home-resources">
+    <li><a class="link" href="/tools">Free tools</a><span>Check a draft, scan for secrets or verify a review packet.</span></li>
+    <li><a class="link" href="/mcp">Coding agent setup</a><span>Connect Claude Code, Codex or Cursor.</span></li>
+    <li><a class="link" href="/method">How the review works</a><span>The checks behind each verdict.</span></li>
+  </ul>
 </section>
 
 <section class="section home-band" id="pricing" aria-labelledby="pricing-title">
   <div class="wrap">
-    <header class="section-head"><div class="section-head__text"><h2 id="pricing-title">US$10 a week. Unlimited reviews. Your model.</h2><p class="lede">Two plans. No seats, no credits, no per-line metering.</p></div></header>
+    <header class="section-head"><div class="section-head__text"><h2 id="pricing-title">Start free. Upgrade when you need more.</h2><p class="lede">API model usage is billed separately by your provider.</p></div></header>
     <div class="home-plans__note" data-checkout-note></div>
     <div class="home-plans">
       <article class="home-plan" aria-labelledby="plan-free">
-        <div class="home-plan__head">
-          <h3 class="home-plan__name" id="plan-free">Free</h3>
-          <span class="chip status" data-status="free">Free</span>
-        </div>
+        <h3 class="home-plan__name" id="plan-free">Free</h3>
         <p class="home-plan__price"><span class="home-plan__amount">US$0</span></p>
-        <p class="home-plan__for">One hosted review per UTC day. No card.</p>
-        <ul class="home-ticks"><li><span class="icon icon--check" aria-hidden="true"></span><span>1 hosted review per UTC day</span></li><li><span class="icon icon--check" aria-hidden="true"></span><span>Any of the eleven single profiles</span></li><li><span class="icon icon--check" aria-hidden="true"></span><span><a class="link" href="/gauntlet">Gauntlet</a> and <a class="link" href="/panel-review">Panel review</a>: the worked examples</span></li><li><span class="icon icon--check" aria-hidden="true"></span><span>Prompt export and MCP prepare for the three core profiles, no daily limit</span></li><li><span class="icon icon--check" aria-hidden="true"></span><span>Free tools, GitHub import and local history</span></li></ul>
-        <div class="home-plan__cta"><a class="btn btn--secondary btn--lg btn--block" href="#workspace"><span class="btn__label">Run today’s free review</span></a></div>
+        <p class="home-plan__for">No card needed.</p>
+        <ul class="home-ticks"><li><span class="icon icon--check" aria-hidden="true"></span><span>1 hosted review per UTC day</span></li><li><span class="icon icon--check" aria-hidden="true"></span><span>Any of the eleven single review types</span></li><li><span class="icon icon--check" aria-hidden="true"></span><span>Unlimited prompt export for the three core reviews</span></li></ul>
+        <div class="home-plan__cta"><a class="btn btn--secondary btn--lg btn--block" href="#workspace"><span class="btn__label">Start a free review</span></a></div>
       </article>
       <article class="home-plan home-plan--operator" aria-labelledby="plan-operator">
-        <div class="home-plan__head">
-          <h3 class="home-plan__name" id="plan-operator">Operator</h3>
-          <span class="chip status" data-status="operator">Operator</span>
-        </div>
+        <h3 class="home-plan__name" id="plan-operator">Operator</h3>
         <p class="home-plan__price"><span class="home-plan__amount">US$10</span><span class="home-plan__per">per week</span></p>
-        <p class="home-plan__for">For contest weeks and live hunts.</p>
-        <ul class="home-ticks"><li><span class="icon icon--check" aria-hidden="true"></span><span>Unlimited hosted reviews</span></li><li><span class="icon icon--check" aria-hidden="true"></span><span>The <a class="link" href="/gauntlet">Gauntlet</a>: eight stages, one verdict dossier</span></li><li><span class="icon icon--check" aria-hidden="true"></span><span><a class="link" href="/panel-review">Panel review</a>: two to four models, then cross-examination</span></li><li><span class="icon icon--check" aria-hidden="true"></span><span>Four hosted reviews running at once</span></li><li><span class="icon icon--check" aria-hidden="true"></span><span>Everything in Free</span></li></ul>
-        <div class="home-plan__cta"><button class="btn btn--primary btn--lg btn--block" type="button" id="upgrade" data-upgrade data-account-action="checkout"><span class="btn__label">Get Operator</span><span class="icon icon--arrow-right" aria-hidden="true"></span></button></div>
+        <p class="home-plan__for">Everything in Free, plus:</p>
+        <ul class="home-ticks"><li><span class="icon icon--check" aria-hidden="true"></span><span>Unlimited hosted reviews, four at once</span></li><li><span class="icon icon--check" aria-hidden="true"></span><span><a class="link" href="/gauntlet">Gauntlet</a>: eight checks and a final verdict</span></li><li><span class="icon icon--check" aria-hidden="true"></span><span><a class="link" href="/panel-review">Panel review</a>: compare two to four models</span></li></ul>
+        <div class="home-plan__cta"><button class="btn btn--primary btn--lg btn--block" type="button" id="upgrade" data-upgrade data-account-action="checkout"><span class="btn__label">Get Operator</span></button></div>
       </article>
     </div>
-    <p class="fine home-plans__terms">US$10 billed weekly, renews until you cancel in the Stripe portal; access runs to the end of the paid week. <a class="link" href="/terms">Terms</a></p>
+    <p class="fine home-plans__terms">US$10 billed weekly, renews until you cancel in the Stripe portal; access runs to the end of the paid week. <a class="link" href="/pricing">Full plan comparison</a> · <a class="link" href="/terms">Terms</a></p>
   </div>
 </section>
 
-<section class="section wrap" aria-labelledby="faq">
+<section class="section section--tight wrap" aria-labelledby="faq">
   <div class="home-faq">
-    <header class="section-head"><div class="section-head__text"><h2 id="faq">Questions</h2><p class="lede">The rest is in the <a class="link" href="/terms">terms</a> and the <a class="link" href="/privacy">privacy page</a>.</p></div></header>
-    <div class="accordion"><details class="accordion__item" name="home-faq"><summary class="accordion__summary">Can I use my ChatGPT or Claude subscription?</summary><div class="accordion__body"><p>Yes, for the three core profiles: code security review, Solidity review and challenge a draft report. Export the prompt, paste it into your chat app and paste the answer back. The workbench turns the answer into finding cards and a packet, with no key and no daily limit. Every other profile, the Gauntlet and Panel review run hosted on an API key, which providers bill separately from a chat subscription. A free account runs any single profile hosted once per UTC day. Claude Code, Codex and Cursor connect over MCP.</p></div></details><details class="accordion__item" name="home-faq"><summary class="accordion__summary">What do you keep?</summary><div class="accordion__body"><p>No code, no prompts, no keys, no results. A hosted review passes through our server in memory: it adds the review method and sends your files, with your key, to the provider you chose. We store a random account identifier, your passkey public keys, hashed tokens, seven days of review activity (status, profile and timestamps) and Stripe references. No ad cookies, no tracking pixels, no third-party analytics scripts.</p></div></details><details class="accordion__item" name="home-faq"><summary class="accordion__summary">What is in a review?</summary><div class="accordion__body"><p>One verdict and a one-sentence headline. Then each finding: severity, the lines it rests on, who loses what, the path step by step, the strongest counterargument and whether it is resolved, the one missing artefact, a fix, a test and the next action. After the findings come hardening notes, what was checked and found safe, and which files were read. It downloads as one packet with a SHA-256 manifest. A review reads the files you supply; it runs no code and touches no target.</p></div></details><details class="accordion__item" name="home-faq"><summary class="accordion__summary">Which models does it run on?</summary><div class="accordion__body"><p>The one you pick, for every review. Hosted reviews run on your key at OpenRouter, Anthropic, OpenAI, Google Gemini, xAI, DeepSeek, Mistral or Groq, and an OpenRouter key reaches models from several labs. The prompt export of the core profiles works with any chat or local model.</p></div></details><details class="accordion__item" name="home-faq"><summary class="accordion__summary">What does Operator add?</summary><div class="accordion__body"><p>Unlimited hosted reviews, the Gauntlet (eight stages, one verdict dossier), Panel review (two to four models, then a cross-examination pass) and four hosted reviews running at once. US$10 per week.</p></div></details><details class="accordion__item" name="home-faq"><summary class="accordion__summary">Who runs it, and what about refunds?</summary><div class="accordion__body"><p>Tradi3 builds it and submits to the same queues: 2nd of 133 in Immunefi’s Firelight competition, 8th of 65 in Quantus. Payment runs through Stripe. Cancel in the billing portal and access runs to the end of the paid week. If you paid and got no access, or the service was down for a material part of your week, we fix it or refund that charge. Support: support@bountyoperator.com.</p></div></details></div>
+    <header class="section-head"><div class="section-head__text"><h2 id="faq">Questions</h2></div></header>
+    <div class="accordion"><details class="accordion__item" name="home-faq"><summary class="accordion__summary">Can I use my ChatGPT or Claude subscription?</summary><div class="accordion__body">Yes. Code review, Solidity review and report review can be copied into your chat app. Paste the answer back to view it here. Other review types need an API key. <a class="link" href="/your-model-your-key">Model options</a></div></details><details class="accordion__item" name="home-faq"><summary class="accordion__summary">Where do my files go?</summary><div class="accordion__body">Your files and API key pass through our server to your provider. The server adds the review instructions and stores no files, prompts, keys or results. Prompt export stays in your browser until you copy it elsewhere. <a class="link" href="/privacy">Privacy details</a></div></details><details class="accordion__item" name="home-faq"><summary class="accordion__summary">Which models can I use?</summary><div class="accordion__body"><p>Choose a model from OpenRouter, Anthropic, OpenAI, Google Gemini, xAI, DeepSeek, Mistral or Groq. The three core reviews also work through prompt export with your chat or local model.</p></div></details><details class="accordion__item" name="home-faq"><summary class="accordion__summary">How do I cancel or get help?</summary><div class="accordion__body">Cancel in the Stripe billing portal. Access continues until the end of your paid week. Contact <a class="link" href="mailto:support@bountyoperator.com">support@bountyoperator.com</a> for access problems or billing help. <a class="link" href="/terms">Refund terms</a></div></details></div>
   </div>
 </section>
 </main>
@@ -619,9 +435,8 @@
 <a class="brand" href="/"><svg class="brand__mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect class="brand__tile" width="64" height="64" rx="14"/><path class="brand__glyph" d="M12.5 15h6.5v31.5h-6.5z"/><path class="brand__glyph" fill-rule="evenodd" d="M25.5 25a10.75 10.75 0 1 0 0 21.5a10.75 10.75 0 0 0 0-21.5zm0 6.25a4.5 4.5 0 1 1 0 9a4.5 4.5 0 0 1 0-9z"/><path class="brand__slash" d="M45.5 13h6.25l-8.6 37.5h-6.25z"/></svg><span class="brand__name">Bounty Operator</span></a>
 <p class="site-footer__promise">Find the hole in your report before the triager does.</p>
 </div>
-<nav class="site-footer__col" aria-label="Product"><h2 class="site-footer__title">Product</h2><ul><li><a href="/#workspace">Workbench</a></li><li><a href="/method">Method</a></li><li><a href="/gauntlet">Gauntlet</a></li><li><a href="/panel-review">Panel review</a></li><li><a href="/#pricing">Pricing</a></li><li><a href="/#account">Account</a></li><li><a href="/benchmark">Benchmark</a></li></ul></nav>
-<nav class="site-footer__col" aria-label="Tools"><h2 class="site-footer__title">Tools</h2><ul><li><a href="/tools">All tools</a></li><li><a href="/tools/report-check">Report check</a></li><li><a href="/tools/verify">Packet verifier</a></li><li><a href="/tools/secret-check">Secret check</a></li><li><a href="/tools/acceptance-rates">Acceptance rates</a></li><li><a href="/tools/slither-focus">Slither triage queue</a></li></ul></nav>
-<nav class="site-footer__col" aria-label="Resources"><h2 class="site-footer__title">Resources</h2><ul><li><a href="/guide">Report guide</a></li><li><a href="/mcp">MCP setup</a></li><li><a href="/templates">Report templates</a></li><li><a href="/changelog">Changelog</a></li><li><a href="https://github.com/bountyoperator/bounty-operator" target="_blank" rel="noopener noreferrer">Source<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></li></ul></nav>
+<nav class="site-footer__col" aria-label="Product"><h2 class="site-footer__title">Product</h2><ul><li><a href="/#workspace">Review a report</a></li><li><a href="/benchmark">Benchmark</a></li><li><a href="/tools">Free tools</a></li><li><a href="/#pricing">Pricing</a></li><li><a href="/#account">Account</a></li></ul></nav>
+<nav class="site-footer__col" aria-label="Resources"><h2 class="site-footer__title">Resources</h2><ul><li><a href="/guide">Report guide</a></li><li><a href="/mcp">MCP setup</a></li><li><a href="/method">Review method</a></li><li><a href="/templates">Report templates</a></li><li><a href="/changelog">Changelog</a></li><li><a href="https://github.com/bountyoperator/bounty-operator" target="_blank" rel="noopener noreferrer">Source<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></li></ul></nav>
 <nav class="site-footer__col" aria-label="Legal"><h2 class="site-footer__title">Legal</h2><ul><li><a href="/privacy">Privacy</a></li><li><a href="/terms">Terms</a></li><li><a href="/security">Security</a></li><li><a href="/licenses">Licences</a></li><li><a href="mailto:security@bountyoperator.com">Report a vulnerability</a></li></ul></nav>
 </div>
 <div class="wrap">

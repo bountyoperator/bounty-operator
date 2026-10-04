@@ -511,7 +511,8 @@ test('the site with results: both pages, the nav item, the footer link and the h
   assert.match(site.pages['guide.html'], /<li><a href="\/benchmark">Benchmark<\/a><\/li>/);
   const home = site.pages['index.html'];
   assert.match(home, /<link rel="stylesheet" href="\/css\/benchmark\.css">/);
-  const strip = textOf(home.slice(home.indexOf('bench-teaser'), home.indexOf('id="how"')));
+  const start = home.indexOf('class="wrap bench-teaser"');
+  const strip = textOf(home.slice(start, home.indexOf('</section>', start)));
   assert.ok(strip.includes(`Paydirt: ${many.view.rows.length} models on 18 held pairs`));
   // the first three places and every model tied with the third, five rows at most
   const cut = many.view.rows[2].rank;

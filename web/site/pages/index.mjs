@@ -1,10 +1,9 @@
 // "/": the home page.
 //
-// Sections, in order: hero, proof strip, how it works, the workbench, the
-// gauntlet, what you get, your model, free tools, pricing, questions.
+// Sections: introduction, three steps, workbench, benchmark, resources, pricing and FAQ.
 //
 // Hooks other streams rely on:
-//   [data-demo]      the hero's "Run the example" control; it also carries
+//   [data-demo]      the hero's "View example" control; it also carries
 //                    [data-example], the attribute /app/main.mjs listens for
 //   #workspace       the workbench section (fragment owned by APP)
 //   #pricing         the pricing section
@@ -12,41 +11,29 @@
 //                    data-account-action="checkout", the attribute /app/account.mjs listens for
 //   [data-checkout-note]  where the account script writes its line after a cancelled checkout
 //
-// Facts are read from the engine at build time (providers, profile count,
-// stage taglines, file limits) so the page cannot drift from what runs. The
-// rendered result in the hero is the first bundled example, the one "Run the
-// example" opens in the workbench: see ../social/example.mjs.
+// Providers and the profile count come from the engine at build time. The
+// compact result is the first bundled example, opened by "View example".
 
 import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 import {
   button,
-  chip,
-  codeBlock,
   faq,
-  hashChip,
   html,
   icon,
-  inline,
   isHtml,
-  link,
   raw,
-  refChip,
   sectionHeading,
-  statusChip,
-  verdictChip,
 } from '../components.mjs';
 import { SITE, faqPageLd, organizationLd, softwareApplicationLd } from '../layout.mjs';
-import { PROFILES, reviewProfile } from '../../public/profiles.mjs';
+import { PROFILES } from '../../public/profiles.mjs';
 import { PROVIDERS } from '../../public/providers.mjs';
-import { LIMITS } from '../../public/review-core.mjs';
-import { EXAMPLE, exampleShot } from '../social/example.mjs';
-import { LEADERBOARDS, STAGES, VERDICTS } from './method/_shared.mjs';
-import { TOOLS } from './tools/_shared.mjs';
+import { exampleShot } from '../social/example.mjs';
+import { LEADERBOARDS } from './method/_shared.mjs';
 import { BENCH_TEASER, BENCH_TEASER_STYLES } from './benchmark/_teaser.mjs';
 
-const LASTMOD = '2026-10-03';
+const LASTMOD = '2026-10-04';
 const DEV_BUILD = process.argv.includes('--dev');
 
 // ---------------------------------------------------------------------------
@@ -110,356 +97,112 @@ const WORDS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'e
 const word = (count) => WORDS[count] ?? String(count);
 
 const PROFILE_COUNT = word(PROFILES.filter((profile) => profile.listed).length);
-const PROVIDER_COUNT = word(PROVIDERS.length);
 const PROVIDER_NAMES = PROVIDERS.map((provider) => provider.label);
 const PROVIDER_SENTENCE = `${PROVIDER_NAMES.slice(0, -1).join(', ')} or ${PROVIDER_NAMES.at(-1)}`;
-const FILE_LIMIT = `Up to ${LIMITS.files} files and ${LIMITS.totalBytes / 1000} KB per review.`;
 
-const MCP_COMMAND = `claude mcp add --transport http bounty-operator ${SITE.origin}/api/mcp`;
 const RENEWAL = 'US$10 billed weekly, renews until you cancel in the Stripe portal; access runs to the end of the paid week.';
 
 // ---------------------------------------------------------------------------
-// 1. Hero and 2. proof strip
+// A short introduction, the review itself, and optional supporting pages.
 // ---------------------------------------------------------------------------
 
 const hero = html`
 <div class="home-top wrap">
   <section class="home-hero" aria-labelledby="hero-title">
-    <p class="eyebrow">Pre-submission review for bug bounty hunters and auditors</p>
-    <h1 class="display home-hero__title" id="hero-title">Find the hole in your report before the triager does.</h1>
-    <p class="lede home-hero__lede">Paste the draft and the code it cites. Your own model checks every claim against file and line, writes the strongest case against it and returns one verdict: submit, rewrite then submit, prove first, hold as a duplicate, or drop.</p>
+    <p class="eyebrow">AI review for bug bounty reports</p>
+    <h1 class="display home-hero__title" id="hero-title">Check your report before you submit.</h1>
+    <p class="lede home-hero__lede">Add your draft and supporting files. Get a review of the claims, the evidence and what to fix.</p>
     <div class="home-hero__actions">
-      ${button({ label: 'Run the example', href: '#workspace', variant: 'primary', size: 'lg', iconEnd: 'arrow-right', attrs: { 'data-demo': true, 'data-example': '' } })}
-      ${button({ label: 'Challenge my report', href: '/?profile=report#workspace', size: 'lg' })}
+      ${button({ label: 'Review my report', href: '/?profile=report#workspace', variant: 'primary', size: 'lg', iconEnd: 'arrow-right' })}
+      ${button({ label: 'View example', href: '#workspace', size: 'lg', attrs: { 'data-demo': true, 'data-example': '' } })}
     </div>
-    <p class="home-hero__note">The example runs with no account and no key.</p>
-    <p class="home-hero__price">Free: one hosted review a day. Operator: US$10 a week for unlimited reviews, the full gauntlet, panel review and four at once.</p>
+    <p class="home-hero__note">The example needs no account or API key.</p>
+    <p class="home-hero__links">${BENCH_TEASER && html`<a class="link" href="/benchmark#comparison">Compare the results</a>`}<a class="link" href="/mcp">Use in your coding agent</a></p>
   </section>
-
   <div class="home-top__shot">
-    ${exampleShot({ id: 'hero', rows: ['observed', 'counter', 'next'], steps: false, reveal: true })}
+    ${exampleShot({ id: 'hero', compact: true, caption: 'Saved example. Tessera Staking is an invented protocol.' })}
   </div>
-
-  <section class="home-proof" aria-label="Who built it, and from what">
-    <ul class="home-proof__list">
-      <li class="home-proof__item">
-        <span class="meta">Built by</span>
-        <span class="home-proof__value">Tradi3</span>
-      </li>
-      <li class="home-proof__item">
-        <span class="meta">Firelight</span>
-        <a class="home-proof__value home-proof__link" href="${LEADERBOARDS.firelight}" target="_blank" rel="noopener noreferrer">2nd of 133${icon('arrow-up-right')}<span class="visually-hidden">, Immunefi Firelight leaderboard</span></a>
-      </li>
-      <li class="home-proof__item">
-        <span class="meta">Quantus</span>
-        <a class="home-proof__value home-proof__link" href="${LEADERBOARDS.quantus}" target="_blank" rel="noopener noreferrer">8th of 65${icon('arrow-up-right')}<span class="visually-hidden">, Immunefi Quantus leaderboard</span></a>
-      </li>
-      <li class="home-proof__item home-proof__item--wide">
-        <span class="meta">The method</span>
-        <a class="home-proof__value home-proof__link" href="/method">Twelve checks from 105 real case files${icon('arrow-right')}</a>
-      </li>
-    </ul>
-  </section>
+  <p class="home-proof fine">Built by Tradi3. <a class="link" href="${LEADERBOARDS.firelight}" target="_blank" rel="noopener noreferrer">2nd of 133 in Firelight</a> · <a class="link" href="${LEADERBOARDS.quantus}" target="_blank" rel="noopener noreferrer">8th of 65 in Quantus</a>.</p>
 </div>`;
 
-// ---------------------------------------------------------------------------
-// 3. How it works
-// ---------------------------------------------------------------------------
-
 const STEPS = [
-  {
-    title: 'Load the code and the draft',
-    text: `Drop files, paste them, or import from GitHub at a pinned commit. ${FILE_LIMIT} Pick one of ${PROFILE_COUNT} profiles.`,
-  },
-  {
-    title: 'Run it on your model',
-    text: 'Use your own API key, connect OpenRouter in one click, or call it from your coding agent over MCP. The review goes through our server to your provider. The three core profiles also export as a prompt for your chat app. Read what is sent before it leaves the tab.',
-  },
-  {
-    title: 'Take the verdict and the packet',
-    text: 'One verdict, every finding tied to file and line, and the next action. The review, your evidence notes and a SHA-256 manifest download as one record. Bounty Operator stores none of it.',
-  },
+  { title: 'Add your files', text: 'Paste text, drop files or import from GitHub.' },
+  { title: 'Choose your model', text: 'Use an API key or copy a core review into your chat app.' },
+  { title: 'Read the result', text: 'See the verdict, source citations and next steps.' },
 ];
 
 const howItWorks = html`
-<section class="section wrap" aria-labelledby="how">
-  ${sectionHeading({ title: 'How it works', id: 'how' })}
-  <ol class="home-steps">${STEPS.map(
-    (step) => html`
-    <li class="home-steps__item">
-      <h3 class="home-steps__title">${step.title}</h3>
-      <p class="home-steps__text">${inline(step.text)}</p>
-    </li>`,
+<section class="section section--tight wrap" aria-labelledby="how">
+  <h2 class="visually-hidden" id="how">How it works</h2>
+  <ol class="home-steps">${STEPS.map((step) => html`
+    <li class="home-steps__item"><h3 class="home-steps__title">${step.title}</h3><p class="home-steps__text">${step.text}</p></li>`
   )}</ol>
 </section>`;
 
-// ---------------------------------------------------------------------------
-// 5. The gauntlet
-// ---------------------------------------------------------------------------
-
-// The order runs the gates that end a report before the stages that cost work.
-const STAGE_GROUPS = [
-  { kind: 'gate', label: 'Gates', note: 'These end a report before the proof costs you a day.', ids: ['scope', 'provenance', 'prior-art'] },
-  { kind: 'work', label: 'Work', note: 'What the draft has to show.', ids: ['poc', 'severity', 'triage', 'report'] },
-  { kind: 'verdict', label: 'Decision', note: 'One of five.', ids: ['verdict'] },
-];
-
-const stageById = new Map(STAGES.map((stage) => [stage.id, stage]));
-
-const pipeline = html`
-<div class="home-pipe">${STAGE_GROUPS.map((group) => {
-  const stages = group.ids.map((id) => stageById.get(id));
-  return html`
-  <div class="home-pipe__group" data-kind="${group.kind}" data-count="${stages.length}">
-    <p class="home-pipe__label"><span class="meta">${group.label}</span><span class="home-pipe__note">${group.note}</span></p>
-    <ol class="home-pipe__stages" start="${stages[0].n}">${stages.map(
-      (stage) => html`
-      <li class="home-pipe__stage">
-        <span class="home-pipe__n" aria-hidden="true">${stage.n}</span>
-        <h3 class="home-pipe__name">${stage.name}</h3>
-        <p class="home-pipe__text">${reviewProfile(stage.id).tagline}</p>
-      </li>`,
-    )}</ol>
-  </div>`;
-})}</div>`;
-
-const verdicts = html`
-<dl class="home-verdicts">${VERDICTS.map(
-  (verdict) => html`<div class="home-verdicts__row"><dt>${verdictChip(verdict.id)}</dt><dd>${verdict.meaning}</dd></div>`,
-)}</dl>`;
-
-const gauntlet = html`
-<section class="section home-band" aria-labelledby="gauntlet">
-  <div class="wrap">
-    ${sectionHeading({
-      title: 'The gauntlet: eight stages, one verdict',
-      id: 'gauntlet',
-      eyebrow: statusChip('operator'),
-      lede: 'Hand over the draft, the code and the programme rules. One run takes the report through eight stages in the order that saves work, and ends on one decision.',
-      aside: link({ label: 'See a full example dossier', href: '/gauntlet', className: 'home-more' }),
-    })}
-    ${pipeline}
-    <h3 class="home-verdicts__title meta">The run ends on one of five verdicts</h3>
-    ${verdicts}
-    <div class="cluster home-band__actions">
-      ${button({ label: 'Get Operator', href: '#pricing', variant: 'primary', iconEnd: 'arrow-right' })}
-      ${button({ label: 'How the gauntlet runs', href: '/gauntlet' })}
-    </div>
-  </div>
+const resources = html`
+<section class="section section--tight wrap" aria-labelledby="free-tools">
+  ${sectionHeading({ title: 'More ways to use Bounty Operator', id: 'free-tools' })}
+  <ul class="home-resources">
+    <li><a class="link" href="/tools">Free tools</a><span>Check a draft, scan for secrets or verify a review packet.</span></li>
+    <li><a class="link" href="/mcp">Coding agent setup</a><span>Connect Claude Code, Codex or Cursor.</span></li>
+    <li><a class="link" href="/method">How the review works</a><span>The checks behind each verdict.</span></li>
+  </ul>
 </section>`;
-
-// ---------------------------------------------------------------------------
-// 6. What you get
-// ---------------------------------------------------------------------------
-
-const GETS = [
-  {
-    title: 'Every claim tied to file and line',
-    text: 'No reference, no claim. A finding cites the lines it rests on, and every reference is checked against the files you supplied.',
-    specimen: refChip(EXAMPLE.finding.locations[0]),
-  },
-  {
-    title: 'The triager’s objection first',
-    text: 'Each finding carries the strongest case against it and says whether your evidence beats it: resolved or open.',
-    specimen: html`${statusChip('resolved')}${statusChip('open')}`,
-  },
-  {
-    title: 'One verdict with one blocker',
-    text: 'Submit, rewrite then submit, prove first, hold as a duplicate, or drop. Each finding names the one artefact still missing and the next action.',
-    specimen: html`${verdictChip('prove-first')}${chip('1 blocker', { tone: 'unproven', dashed: true })}`,
-  },
-  {
-    title: 'Nothing leaves unseen',
-    text: 'A scan in your browser stops private keys, API and GitHub tokens, seed phrases and private report links. You read the request before it leaves the tab. The packet lists every file with its SHA-256.',
-    specimen: hashChip(EXAMPLE.sha256),
-  },
-];
-
-const whatYouGet = html`
-<section class="section wrap" aria-labelledby="what-you-get">
-  ${sectionHeading({
-    title: 'Any model can read code. This makes it argue like a triager.',
-    id: 'what-you-get',
-  })}
-  <ul class="home-gets">${GETS.map(
-    (item) => html`
-    <li class="home-get">
-      <div class="home-get__specimen" aria-hidden="true">${item.specimen}</div>
-      <h3 class="home-get__title">${item.title}</h3>
-      <p class="home-get__text">${inline(item.text)}</p>
-    </li>`,
-  )}</ul>
-</section>`;
-
-// ---------------------------------------------------------------------------
-// 7. Your model
-// ---------------------------------------------------------------------------
-
-const yourModel = html`
-<section class="section wrap" aria-labelledby="your-model">
-  ${sectionHeading({
-    title: 'Your model, your key',
-    id: 'your-model',
-    lede: 'A review runs on the model you choose, under your own key. It passes through our server in memory, which adds the review method and stores no file, key or review. Your provider bills the usage.',
-    aside: link({ label: 'Where your code goes', href: '/your-model-your-key', className: 'home-more' }),
-  })}
-  <ul class="home-providers" aria-label="Providers a hosted review runs on">${PROVIDER_NAMES.map((name) => html`<li>${chip(name, { tone: 'neutral' })}</li>`)}</ul>
-  <div class="home-paths">
-    <article class="home-path">
-      <h3 class="home-path__title">${icon('key')}API key</h3>
-      <p class="home-path__text">Paste a key for any of the ${PROVIDER_COUNT} providers, or connect OpenRouter in one click and pick any model it carries. The key is used for the one request it belongs to.</p>
-      <p class="home-path__action">${button({ label: 'Run with a key', href: '#workspace', size: 'sm', iconEnd: 'arrow-right' })}</p>
-    </article>
-    <article class="home-path">
-      <h3 class="home-path__title">${icon('copy')}Chat subscription</h3>
-      <p class="home-path__text">No key at hand. Export the prompt of a core profile (code security review, Solidity review or challenge a draft report), paste it into ChatGPT, Claude or a local model, then paste the answer back. The workbench turns it into finding cards and a packet. No daily limit.</p>
-      <p class="home-path__action">${button({ label: 'Run without a key', href: '#workspace', size: 'sm', iconEnd: 'arrow-right' })}</p>
-    </article>
-    <article class="home-path home-path--wide">
-      <h3 class="home-path__title">${icon('terminal')}Coding agent</h3>
-      <p class="home-path__text">Add the MCP endpoint to Claude Code, Codex or Cursor. Your agent prepares a core review from the files in your repository and answers it on its own model, or runs any profile hosted with a connection token and your provider key.</p>
-      ${codeBlock({ code: MCP_COMMAND, name: 'Terminal', numbers: false, wrap: true, copy: true, label: 'Claude Code: add the MCP endpoint' })}
-      <p class="home-path__action">${link({ label: 'MCP setup for Codex, Cursor and tokens', href: '/mcp', className: 'home-more' })}</p>
-    </article>
-  </div>
-</section>`;
-
-// ---------------------------------------------------------------------------
-// 8. Free tools
-// ---------------------------------------------------------------------------
-
-const FREE = [
-  ...TOOLS.map((tool) => ({ href: tool.path, icon: tool.icon, name: tool.name, text: tool.outcome })),
-  {
-    href: '/templates',
-    icon: 'file',
-    name: 'Report templates',
-    text: 'Report skeletons for Immunefi, Sherlock, Cantina and HackerOne, and a Foundry proof that asserts the impact.',
-  },
-  {
-    href: '/guide',
-    icon: 'eye',
-    name: 'Report guide',
-    text: 'What a report needs to survive its first read, and one report rewritten fragment by fragment.',
-  },
-  {
-    href: '/method',
-    icon: 'shield',
-    name: 'The twelve checks',
-    text: 'Every check exists because real reports were closed for that reason. The question each one asks, and why reports die on it.',
-  },
-];
-
-const freeTools = html`
-<section class="section wrap" aria-labelledby="free-tools">
-  ${sectionHeading({
-    title: 'Free tools',
-    id: 'free-tools',
-    lede: 'No account, no key. Each tool runs in your browser.',
-    aside: link({ label: 'All tools', href: '/tools', className: 'home-more' }),
-  })}
-  <ul class="home-tools">${FREE.map(
-    (item) => html`
-    <li><a class="home-tool" href="${item.href}">
-      <span class="home-tool__name">${icon(item.icon)}${item.name}</span>
-      <span class="home-tool__text">${item.text}</span>
-      <span class="home-tool__go" aria-hidden="true">${icon('arrow-right')}</span>
-    </a></li>`,
-  )}</ul>
-</section>`;
-
-// ---------------------------------------------------------------------------
-// 9. Pricing
-// ---------------------------------------------------------------------------
 
 const ticks = (items) => html`<ul class="home-ticks">${items.map((item) => html`<li>${icon('check')}<span>${item}</span></li>`)}</ul>`;
 
 const pricing = html`
 <section class="section home-band" id="pricing" aria-labelledby="pricing-title">
   <div class="wrap">
-    ${sectionHeading({
-      title: 'US$10 a week. Unlimited reviews. Your model.',
-      id: 'pricing-title',
-      lede: 'Two plans. No seats, no credits, no per-line metering.',
-    })}
+    ${sectionHeading({ title: 'Start free. Upgrade when you need more.', id: 'pricing-title', lede: 'API model usage is billed separately by your provider.' })}
     <div class="home-plans__note" data-checkout-note></div>
     <div class="home-plans">
       <article class="home-plan" aria-labelledby="plan-free">
-        <div class="home-plan__head">
-          <h3 class="home-plan__name" id="plan-free">Free</h3>
-          ${statusChip('free')}
-        </div>
+        <h3 class="home-plan__name" id="plan-free">Free</h3>
         <p class="home-plan__price"><span class="home-plan__amount">US$0</span></p>
-        <p class="home-plan__for">One hosted review per UTC day. No card.</p>
-        ${ticks([
-          '1 hosted review per UTC day',
-          `Any of the ${PROFILE_COUNT} single profiles`,
-          html`<a class="link" href="/gauntlet">Gauntlet</a> and <a class="link" href="/panel-review">Panel review</a>: the worked examples`,
-          'Prompt export and MCP prepare for the three core profiles, no daily limit',
-          'Free tools, GitHub import and local history',
-        ])}
-        <div class="home-plan__cta">${button({ label: 'Run today’s free review', href: '#workspace', size: 'lg', block: true })}</div>
+        <p class="home-plan__for">No card needed.</p>
+        ${ticks(['1 hosted review per UTC day', `Any of the ${PROFILE_COUNT} single review types`, 'Unlimited prompt export for the three core reviews'])}
+        <div class="home-plan__cta">${button({ label: 'Start a free review', href: '#workspace', size: 'lg', block: true })}</div>
       </article>
       <article class="home-plan home-plan--operator" aria-labelledby="plan-operator">
-        <div class="home-plan__head">
-          <h3 class="home-plan__name" id="plan-operator">Operator</h3>
-          ${statusChip('operator')}
-        </div>
+        <h3 class="home-plan__name" id="plan-operator">Operator</h3>
         <p class="home-plan__price"><span class="home-plan__amount">US$10</span><span class="home-plan__per">per week</span></p>
-        <p class="home-plan__for">For contest weeks and live hunts.</p>
+        <p class="home-plan__for">Everything in Free, plus:</p>
         ${ticks([
-          'Unlimited hosted reviews',
-          html`The <a class="link" href="/gauntlet">Gauntlet</a>: eight stages, one verdict dossier`,
-          html`<a class="link" href="/panel-review">Panel review</a>: two to four models, then cross-examination`,
-          'Four hosted reviews running at once',
-          'Everything in Free',
+          'Unlimited hosted reviews, four at once',
+          html`<a class="link" href="/gauntlet">Gauntlet</a>: eight checks and a final verdict`,
+          html`<a class="link" href="/panel-review">Panel review</a>: compare two to four models`,
         ])}
-        <div class="home-plan__cta">${button({ label: 'Get Operator', id: 'upgrade', variant: 'primary', size: 'lg', block: true, iconEnd: 'arrow-right', attrs: { 'data-upgrade': true, 'data-account-action': 'checkout' } })}</div>
+        <div class="home-plan__cta">${button({ label: 'Get Operator', id: 'upgrade', variant: 'primary', size: 'lg', block: true, attrs: { 'data-upgrade': true, 'data-account-action': 'checkout' } })}</div>
       </article>
     </div>
-    <p class="fine home-plans__terms">${RENEWAL} <a class="link" href="/terms">Terms</a></p>
+    <p class="fine home-plans__terms">${RENEWAL} <a class="link" href="/pricing">Full plan comparison</a> · <a class="link" href="/terms">Terms</a></p>
   </div>
 </section>`;
-
-// ---------------------------------------------------------------------------
-// 10. Questions
-// ---------------------------------------------------------------------------
 
 const FAQ_ITEMS = [
   {
     q: 'Can I use my ChatGPT or Claude subscription?',
-    a: 'Yes, for the three core profiles: code security review, Solidity review and challenge a draft report. Export the prompt, paste it into your chat app and paste the answer back. The workbench turns the answer into finding cards and a packet, with no key and no daily limit. Every other profile, the Gauntlet and Panel review run hosted on an API key, which providers bill separately from a chat subscription. A free account runs any single profile hosted once per UTC day. Claude Code, Codex and Cursor connect over MCP.',
+    a: html`Yes. Code review, Solidity review and report review can be copied into your chat app. Paste the answer back to view it here. Other review types need an API key. <a class="link" href="/your-model-your-key">Model options</a>`,
   },
   {
-    q: 'What do you keep?',
-    a: 'No code, no prompts, no keys, no results. A hosted review passes through our server in memory: it adds the review method and sends your files, with your key, to the provider you chose. We store a random account identifier, your passkey public keys, hashed tokens, seven days of review activity (status, profile and timestamps) and Stripe references. No ad cookies, no tracking pixels, no third-party analytics scripts.',
+    q: 'Where do my files go?',
+    a: html`Your files and API key pass through our server to your provider. The server adds the review instructions and stores no files, prompts, keys or results. Prompt export stays in your browser until you copy it elsewhere. <a class="link" href="/privacy">Privacy details</a>`,
   },
   {
-    q: 'What is in a review?',
-    a: 'One verdict and a one-sentence headline. Then each finding: severity, the lines it rests on, who loses what, the path step by step, the strongest counterargument and whether it is resolved, the one missing artefact, a fix, a test and the next action. After the findings come hardening notes, what was checked and found safe, and which files were read. It downloads as one packet with a SHA-256 manifest. A review reads the files you supply; it runs no code and touches no target.',
+    q: 'Which models can I use?',
+    a: `Choose a model from ${PROVIDER_SENTENCE}. The three core reviews also work through prompt export with your chat or local model.`,
   },
   {
-    q: 'Which models does it run on?',
-    a: `The one you pick, for every review. Hosted reviews run on your key at ${PROVIDER_SENTENCE}, and an OpenRouter key reaches models from several labs. The prompt export of the core profiles works with any chat or local model.`,
-  },
-  {
-    q: 'What does Operator add?',
-    a: 'Unlimited hosted reviews, the Gauntlet (eight stages, one verdict dossier), Panel review (two to four models, then a cross-examination pass) and four hosted reviews running at once. US$10 per week.',
-  },
-  {
-    q: 'Who runs it, and what about refunds?',
-    a: `Tradi3 builds it and submits to the same queues: 2nd of 133 in Immunefi’s Firelight competition, 8th of 65 in Quantus. Payment runs through Stripe. Cancel in the billing portal and access runs to the end of the paid week. If you paid and got no access, or the service was down for a material part of your week, we fix it or refund that charge. Support: ${SITE.support}.`,
+    q: 'How do I cancel or get help?',
+    a: html`Cancel in the Stripe billing portal. Access continues until the end of your paid week. Contact <a class="link" href="mailto:${SITE.support}">${SITE.support}</a> for access problems or billing help. <a class="link" href="/terms">Refund terms</a>`,
   },
 ];
 
 const questions = html`
-<section class="section wrap" aria-labelledby="faq">
+<section class="section section--tight wrap" aria-labelledby="faq">
   <div class="home-faq">
-    ${sectionHeading({
-      title: 'Questions',
-      id: 'faq',
-      lede: html`The rest is in the <a class="link" href="/terms">terms</a> and the <a class="link" href="/privacy">privacy page</a>.`,
-    })}
+    ${sectionHeading({ title: 'Questions', id: 'faq' })}
     ${faq(FAQ_ITEMS, { exclusive: 'home-faq' })}
   </div>
 </section>`;
@@ -469,13 +212,11 @@ const questions = html`
 // ---------------------------------------------------------------------------
 
 const body = html`
-${hero}${BENCH_TEASER}
+${hero}
 ${howItWorks}
 ${workbenchSection()}
-${gauntlet}
-${whatYouGet}
-${yourModel}
-${freeTools}
+${BENCH_TEASER}
+${resources}
 ${pricing}
 ${questions}`;
 
@@ -493,12 +234,12 @@ const scripts = unique(['/app/main.mjs', ...lists(workbenchModule, 'scripts'), .
 
 export default {
   path: '/',
-  title: 'Bounty Operator — find the hole in your bug bounty report before the triager does',
+  title: 'Bounty Operator | Review your report before you submit',
   description:
-    'Your own model checks a draft report against the code it cites and returns one verdict: submit, rewrite then submit, prove first, hold as a duplicate, or drop.',
+    'Review your bug bounty report against its supporting files. Get a verdict, source citations and next steps using your own AI model.',
   label: 'Bounty Operator',
   og: {
-    title: 'Find the hole in your report before the triager does',
+    title: 'Check your report before you submit',
     alt: 'Bounty Operator. A draft report claiming Critical, cut to Medium by a review that cites file and line.',
   },
   styles,

@@ -101,9 +101,12 @@ test('every document names the three core profiles and lists every hosted one as
 test('no page or document offers prompt export, paste-back or prepare_review for a hosted profile', () => {
   const names = PROFILES.filter((profile) => profile.hosted).map((profile) => profile.name.toLowerCase());
   const offer = /\bexport|paste-back|paste the answer back|prepare_review|\bprepared?\b/i;
-  const refusal = /refus|hosted_profile|fails with|failed call|no prompt/i;
+  const refusal = /refus|hosted_profile|fails with|failed call|no prompt|"error"\s*:/i;
 
-  const sources = [...[...pages].map(([file, markup]) => [file, textOf(markup)]), ['README.md', flat(readme)], ['mcp/README.md', flat(mcpReadme)], ['llms.txt', llms], ['CHANGELOG.md 0.7.0', flat(release)], ['docs/website.md', flat(websiteDoc)]];
+  // Separate blocks are separate claims. Otherwise an unpunctuated Free-plan
+  // bullet is joined to an unrelated hosted feature in the Operator card.
+  const pageClaims = (markup) => textOf(markup.replace(/<\/(?:p|li|h[1-6]|th|td|summary)>/g, '. '));
+  const sources = [...[...pages].map(([file, markup]) => [file, pageClaims(markup)]), ['README.md', flat(readme)], ['mcp/README.md', flat(mcpReadme)], ['llms.txt', llms], ['CHANGELOG.md 0.7.0', flat(release)], ['docs/website.md', flat(websiteDoc)]];
   const hits = [];
   for (const [file, body] of sources) {
     for (const sentence of body.split(/(?<=[.?!])\s+/)) {
@@ -218,7 +221,7 @@ test('every install line is the one that works today', () => {
     assert.doesNotMatch(body, /npx -y bounty-operator-mcp\b/, file);
     assert.doesNotMatch(body, /npm (?:i|install) (?:-g )?bounty-operator-mcp\b/, file);
   }
-  assert.ok(text('index.html').includes(remote));
+  assert.match(pages.get('index.html'), /href="\/mcp"/, 'the home page links to the install instructions');
   assert.ok(release.includes(remote) && release.includes(local));
   assert.ok(readme.includes('pip install "git+https://github.com/bountyoperator/bounty-operator@v0.7.4"'));
 });
@@ -291,7 +294,7 @@ test('the data flow of a hosted review is stated the way the Worker runs it', as
   assert.match(privacy, /The Worker adds the review method of the profile and holds everything in memory for that one request\./);
   assert.match(privacy, /Your files, your instructions and your key are never written to our database or our logs, and neither is the review that comes back\./);
 
-  assert.match(text('index.html'), /A hosted review passes through our server in memory: it adds the review method and sends your files, with your key, to the provider you chose\./);
+  assert.match(text('index.html'), /Your files and API key pass through our server to your provider\. The server adds the review instructions and stores no files, prompts, keys or results\./);
   assert.match(text('terms.html'), /A hosted review sends your files and your key through our server to that provider\. Our server adds the review method and stores none of the request or the answer\./);
   assert.match(text('compare.html'), /Through our server to the model provider you choose, on your key\./);
   assert.match(llms, /A hosted review sends the user's files and provider key through bountyoperator\.com to the provider the user chose\. The server adds the review method and stores no files, prompts, keys or results\./);
@@ -311,23 +314,25 @@ test('the data flow of a hosted review is stated the way the Worker runs it', as
 
 test('the two plans read the same wherever they are summarised', () => {
   // Operator: unlimited reviews, the full gauntlet, panel review, four at once.
-  assert.match(text('index.html'), /Operator: US\$10 a week for unlimited reviews, the full gauntlet, panel review and four at once\./);
-  assert.match(text('index.html'), /Unlimited hosted reviews, the Gauntlet \(eight stages, one verdict dossier\), Panel review \(two to four models, then a cross-examination pass\) and four hosted reviews running at once\. US\$10 per week\./);
+  const home = text('index.html');
+  for (const line of ['Operator US$10 per week', 'Unlimited hosted reviews, four at once', 'Gauntlet: eight checks and a final verdict', 'Panel review: compare two to four models']) {
+    assert.ok(home.includes(line), `home: ${line}`);
+  }
   const operator = 'Operator is US$10 per week for unlimited reviews, the Gauntlet, Panel review and four reviews at once.';
   assert.ok(description('pricing.html').includes(operator));
   assert.ok(llms.includes(operator));
   assert.match(readme, /\*\*Operator: US\$10\/week\*\* for unlimited hosted reviews, the Gauntlet, Panel review and four reviews at once\./);
   assert.match(text('terms.html'), /Unlimited hosted reviews, the Gauntlet, Panel review and four reviews at once\. Renews weekly until you cancel\./);
   const pricing = text('pricing.html');
-  for (const line of ['Unlimited hosted reviews', 'The Gauntlet: eight stages, one verdict dossier', 'Panel review: two to four models, then cross-examination', '4 hosted reviews running at once']) {
+  for (const line of ['Unlimited hosted reviews', 'Gauntlet: eight stages, one verdict dossier', 'Panel review: two to four models, then cross-examination', '4 hosted reviews running at once']) {
     assert.ok(pricing.includes(line), line);
   }
 
   // Free: one hosted review per UTC day, any single profile.
   assert.ok(pricing.includes('Any of the eleven single profiles'));
   assert.ok(pricing.includes('Any single profile, all eleven.'));
-  assert.ok(text('index.html').includes('Any of the eleven single profiles'));
-  assert.ok(text('index.html').includes('A free account runs any single profile hosted once per UTC day.'));
+  assert.ok(home.includes('Any of the eleven single review types'));
+  assert.ok(home.includes('1 hosted review per UTC day'));
   assert.ok(text('terms.html').includes('1 per UTC day, any single profile'));
   assert.ok(llms.includes('Free gives 1 hosted review per UTC day, any single profile.'));
   assert.ok(readme.includes('**Free:** one hosted review per UTC day, any single profile.'));

@@ -321,7 +321,6 @@ export default {
   description:
     'One run takes your draft through eight stages and returns one verdict, one blocker and the cheapest action that removes it. Example dossier included.',
   label: 'Gauntlet',
-  nav: 'method',
   styles: STYLES,
   jsonld: [breadcrumbsLd([{ name: 'Method', path: '/method' }, { name: 'Gauntlet', path: PATH }]), faqPageLd(FAQ_ITEMS)],
   lastmod: LASTMOD,

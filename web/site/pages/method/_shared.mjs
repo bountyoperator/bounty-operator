@@ -256,7 +256,7 @@ export function pageHero({ trail, eyebrow, title, lede, actions, note, aside, af
       <p class="lede">${lede}</p>
       ${actions && html`<div class="cluster lp-hero__actions">${actions}</div>`}
       ${note && html`<p class="fine lp-hero__note">${note}</p>`}
-      ${after}
+${after && html`      ${after}`}
     </div>
     ${aside && html`<div class="lp-hero__aside">${aside}</div>`}
   </div>

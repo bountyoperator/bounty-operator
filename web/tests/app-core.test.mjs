@@ -794,6 +794,7 @@ describe('workbench fragment', () => {
   test('every element the modules look up by id exists once', async () => {
     assert.equal(new Set(ids).size, ids.length, 'duplicate id');
     const dynamic = new Set([
+      'wb-more-profiles',
       // Built by script inside the containers above.
       'wb-privacy-ack', 'wb-files-toggle', 'wb-source-code', 'wb-upgrade-go', 'wb-upgrade-export', 'wb-run-ack', 'wb-result-tabs', 'wb-export-hosted',
       // Owned by other modules or pages.

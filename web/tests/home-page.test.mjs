@@ -11,11 +11,9 @@ import { fileURLToPath } from 'node:url';
 import { scanTags, validateMarkup } from '../../scripts/build-site.mjs';
 import { renderPage } from '../site/layout.mjs';
 import home from '../site/pages/index.mjs';
-import { STAGES, VERDICTS } from '../site/pages/method/_shared.mjs';
 import { CARD, cardDocument } from '../site/social/card.mjs';
 import { EXAMPLE } from '../site/social/example.mjs';
 import { EXAMPLES } from '../public/example.mjs';
-import { GAUNTLET } from '../public/profiles.mjs';
 import { PROVIDERS } from '../public/providers.mjs';
 import { checkRefs, parseReview } from '../public/parse.mjs';
 import { manifestFor } from '../public/review-core.mjs';
@@ -51,8 +49,8 @@ test('the home page passes the generator checks and has one h1', () => {
   assert.deepEqual(errors, []);
   assert.deepEqual(warnings, []);
   assert.equal(home.path, '/');
-  assert.equal(home.title, 'Bounty Operator — find the hole in your bug bounty report before the triager does');
-  assert.match(textOf(main), /Find the hole in your report before the triager does\./);
+  assert.equal(home.title, 'Bounty Operator | Review your report before you submit');
+  assert.match(textOf(main), /Check your report before you submit\./);
 });
 
 test('the hooks other streams rely on are present exactly once', () => {
@@ -77,7 +75,7 @@ test('the hooks other streams rely on are present exactly once', () => {
 });
 
 test('the sections come in the order the brief sets', () => {
-  const order = ['id="hero-title"', 'class="home-proof"', 'id="how"', 'id="workspace"', 'id="gauntlet"', 'id="what-you-get"', 'id="your-model"', 'id="free-tools"', 'id="pricing"', 'id="faq"'];
+  const order = ['id="hero-title"', 'class="home-proof fine"', 'id="how"', 'id="workspace"', 'id="bench-teaser-title"', 'id="free-tools"', 'id="pricing"', 'id="faq"'];
   const positions = order.map((needle) => markup.indexOf(needle));
   assert.ok(positions.every((position) => position > 0), `missing: ${order.filter((_, index) => positions[index] < 0).join(', ')}`);
   assert.deepEqual([...positions].sort((a, b) => a - b), positions);
@@ -92,15 +90,6 @@ test('the proof strip links the two leaderboards and the method', () => {
   assert.match(text, /Built by\s+Tradi3/);
   assert.match(text, /2nd of 133/);
   assert.match(text, /8th of 65/);
-  assert.match(text, /Twelve checks from 105 real case files/);
-});
-
-test('the gauntlet shows the eight stages in engine order and the five verdicts', () => {
-  assert.deepEqual(STAGES.map((stage) => stage.id), [...GAUNTLET]);
-  const names = [...main.matchAll(/class="home-pipe__name">([^<]+)</g)].map((match) => match[1]);
-  assert.deepEqual(names, STAGES.map((stage) => stage.name));
-  const shown = [...main.matchAll(/<dt><span class="chip verdict" data-verdict="([^"]+)"/g)].map((match) => match[1]);
-  assert.deepEqual(shown, VERDICTS.map((verdict) => verdict.id));
 });
 
 test('pricing states the two fixed plans and nothing else', () => {
@@ -109,7 +98,7 @@ test('pricing states the two fixed plans and nothing else', () => {
   assert.match(text, /US\$0/);
   assert.match(text, /US\$10 per week/);
   assert.match(text, /Unlimited hosted reviews/);
-  assert.match(text, /Run today’s free review/);
+  assert.match(text, /Start a free review/);
   assert.match(text, /Get Operator/);
   assert.doesNotMatch(text, /trial|discount|per month|\/mo\b|coupon/i);
   const amounts = [...textOf(own).matchAll(/US\$\d+/g)].map((match) => match[0]);
@@ -128,7 +117,7 @@ test('structured data: organization, the two offers, and an FAQ that matches the
   assert.deepEqual(offers, [['Free', '0'], ['Operator', '10.00']]);
 
   const faq = home.jsonld[2].mainEntity;
-  assert.equal(faq.length, 6);
+  assert.equal(faq.length, 4);
   const visible = textOf(main.slice(main.indexOf('id="faq"')));
   for (const entry of faq) {
     assert.ok(visible.includes(entry.name), entry.name);
@@ -193,14 +182,13 @@ test('the hero shows the bundled example the workbench opens, as the parser read
   assert.ok(shown.some((line) => line && !/^\s/.test(line)), 'the excerpt starts at the left edge');
   for (const line of EXAMPLE.highlight) assert.ok(line >= location.start && line <= EXAMPLE.sourceEnd, `line ${line}`);
   assert.match(lines[location.start - 1], /function stake\(/);
-  assert.ok(markup.includes(`data-n="${location.start}"`));
 });
 
 test('the hero shows the example on an always-dark surface, labelled as an example', () => {
   const hero = main.slice(0, main.indexOf('id="how"'));
   assert.match(hero, /<figure class="home-shot theme-dark"/);
   assert.match(hero, /data-status="example"/);
-  assert.match(textOf(hero), /Example review, as the model wrote it\. Tessera Staking is an invented protocol\./);
+  assert.match(textOf(hero), /Saved example\. Tessera Staking is an invented protocol\./);
   assert.match(textOf(hero), /TesseraStaking\.sol/);
   assert.match(hero, /class="chip sev" data-sev="critical"/);
   assert.match(hero, /class="chip sev" data-sev="medium"/);

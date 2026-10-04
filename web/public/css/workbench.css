@@ -263,6 +263,15 @@
   padding: 0;
 }
 
+.wb-profiles__more .wb-profiles__group > legend {
+  /* The disclosure already names this group. */
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
 .wb-picks {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 14rem), 1fr));
