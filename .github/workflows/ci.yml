@@ -65,6 +65,8 @@ jobs:
         run: node ../scripts/select-profiles.mjs --stub
       - name: Test
         run: npm test
+      - name: Smoke test streaming in the local Workers runtime
+        run: npm run smoke:stream
       - name: Typecheck the Worker
         run: npx --no-install tsc --noEmit
       - name: Check generated pages match their sources

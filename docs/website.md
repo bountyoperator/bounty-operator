@@ -152,12 +152,21 @@ Open `http://localhost:8787`. Passkeys work on `localhost`, and with
 cd web
 node ../scripts/select-profiles.mjs --stub # the Worker reads hosted profiles from the stub
 npm test                                   # node:test suites in web/tests
+npm run smoke:stream                       # local workerd, in-memory D1 and a stand-in provider
 npx --no-install tsc --noEmit              # Worker types
 node ../scripts/build-site.mjs --check     # generated HTML matches the page sources
 ```
 
 `--check` writes nothing and exits non-zero when a committed page differs from
-what its source module generates. CI runs the same four commands.
+what its source module generates. CI runs the same five commands.
+
+`smoke:stream` builds the Worker without deploying it, then runs it in local
+workerd with an in-memory database and a stand-in provider. It checks streamed
+events, quota bookkeeping, disconnect cleanup and the hosted-output guard.
+Cloudflare metadata fetching, telemetry and the banner's update check are disabled;
+it needs no account,
+provider key or production configuration. This checks the selected profile
+source, which is the community stub in CI, not the private production method.
 
 Two smoke scripts run against a local `wrangler dev` and refuse any other host:
 

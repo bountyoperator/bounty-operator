@@ -31,6 +31,7 @@ import * as miniflare from 'miniflare';
 import { reviewProfile } from '../public/profiles.mjs';
 import { SHINGLE_WORDS, words } from '../src/guard.mjs';
 import { OPERATOR_PROFILES } from '../src/operator-profiles.generated.mjs';
+import { OFFLINE_ENV, localWorkerOptions } from './smoke-runtime.mjs';
 
 const { Miniflare, Response: WorkerResponse } = miniflare;
 
@@ -45,7 +46,7 @@ function buildWorker(outDir) {
   const result = spawnSync(process.execPath, [entry, 'deploy', '--dry-run', '--outdir', outDir], {
     cwd: WEB_DIR,
     encoding: 'utf8',
-    env: { ...process.env, CI: 'true' },
+    env: { ...process.env, ...OFFLINE_ENV, CI: 'true' },
   });
   assert.equal(result.status, 0, result.stderr || result.stdout);
   return join(outDir, 'worker.js');
@@ -145,8 +146,7 @@ function providerResponse(request) {
 
 const outDir = mkdtempSync(join(tmpdir(), 'bounty-operator-stream-'));
 const workerOptions = {
-  modules: true,
-  scriptPath: buildWorker(outDir),
+  ...localWorkerOptions(buildWorker(outDir)),
   compatibilityDate: '2026-09-18',
   compatibilityFlags: ['nodejs_compat', 'enable_request_signal'],
   d1Databases: ['DB'],

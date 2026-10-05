@@ -67,6 +67,7 @@ Web app, from `web/`:
 npm ci --ignore-scripts
 node ../scripts/select-profiles.mjs --stub
 npm test
+npm run smoke:stream
 npx --no-install tsc --noEmit
 node ../scripts/build-site.mjs --check
 ```
