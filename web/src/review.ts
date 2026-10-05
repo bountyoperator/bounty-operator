@@ -259,11 +259,12 @@ async function reserve(env: Env, ctx: ExecutionContext, accountId: string, profi
 /**
  * Returns a function that ends the reservation exactly once. The database
  * write runs after the response, so a failed write cannot cost the user a
- * review the provider has already written.
+ * review the provider has already written. A review that does not count also
+ * adds one to `review_fail:<reason>`, so failures can be told apart later.
  */
 function createSettler(env: Env, ctx: ExecutionContext, accountId: string, reviewId: string, profileId: string) {
   let settled = false;
-  return (counted: boolean): void => {
+  return (counted: boolean, reason = 'other'): void => {
     if (settled) return;
     settled = true;
     ctx.waitUntil(
@@ -271,8 +272,26 @@ function createSettler(env: Env, ctx: ExecutionContext, accountId: string, revie
         console.error('Review bookkeeping failed', { name: error instanceof Error ? error.name : 'unknown' });
       }),
     );
-    count(env, ctx, counted ? `review_ok:${profileId}` : 'review_fail');
+    if (counted) count(env, ctx, `review_ok:${profileId}`);
+    else count(env, ctx, 'review_fail', `review_fail:${reason}`);
   };
+}
+
+/**
+ * Why a reserved review failed, as a counter suffix from a fixed set: the
+ * provider error kind, the single-answer limit, a client that left, or other.
+ */
+export function failureReason(error: unknown, clientGone = false): string {
+  if (clientGone) return 'client_gone';
+  if (error instanceof ProviderError) return `provider_${error.kind}`;
+  if (error instanceof Error && error.name === 'TimeoutError') return 'single_answer_limit';
+  if (error instanceof Error && error.name === 'AbortError') return 'client_gone';
+  return 'other';
+}
+
+/** Why a finished answer did not count: a refusal, or text cut short before COUNTED_AFTER_CHARS. */
+function answerReason(answer: { refused: boolean }): string {
+  return answer.refused ? 'refused' : 'cut_short';
 }
 
 /**
@@ -345,10 +364,10 @@ export async function runHostedReview({ env, ctx, request }: Call, accountId: st
         throw withheld();
       }
     }
-    settle(counts(answer, text.length));
+    settle(counts(answer, text.length), answerReason(answer));
     return toResult(prepared, text, answer);
   } catch (error) {
-    settle(false);
+    settle(false, failureReason(error, request.signal.aborted));
     throw reviewFailure(error);
   }
 }
@@ -412,14 +431,14 @@ export async function collectHostedReview(
       } else {
         scanner?.finish();
         stopIfLeaked();
-        settle(counts(event, chars));
+        settle(counts(event, chars), answerReason(event));
         return toResult(prepared, parts.join(''), event);
       }
     }
     throw new Error('The provider stream ended without a result.');
   } catch (error) {
     abort.abort();
-    settle(false);
+    settle(false, failureReason(error, request.signal.aborted));
     throw reviewFailure(error);
   } finally {
     request.signal.removeEventListener('abort', onDisconnect);
@@ -490,7 +509,7 @@ export async function streamHostedReview({ env, ctx, request }: Call, accountId:
   try {
     events = await providerStream(providerCall(input, prepared, abort.signal));
   } catch (error) {
-    settle(false);
+    settle(false, failureReason(error, clientGone));
     throw reviewFailure(error);
   }
 
@@ -546,7 +565,7 @@ export async function streamHostedReview({ env, ctx, request }: Call, accountId:
         } else {
           if (scanner) await deliver(checked(scanner.finish()));
           finished = true;
-          settle(counts(event, delivered));
+          settle(counts(event, delivered), answerReason(event));
           await send(sseEvent('done', toResult(prepared, parts.join(''), event)));
         }
       }
@@ -554,7 +573,7 @@ export async function streamHostedReview({ env, ctx, request }: Call, accountId:
       await writer.close();
     } catch (error) {
       abort.abort();
-      settle(clientGone && delivered >= COUNTED_AFTER_CHARS);
+      settle(clientGone && delivered >= COUNTED_AFTER_CHARS, failureReason(error, clientGone));
       if (!finished && !clientGone) {
         await send(sseEvent('error', errorBody(reviewFailure(error)))).catch(() => {});
       }

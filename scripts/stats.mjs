@@ -123,6 +123,7 @@ function report(rows, options, range) {
   const pages = withPrefix(sums, 'pv:');
   const referrers = withPrefix(sums, 'ref:');
   const reviewsByProfile = withPrefix(sums, 'review_ok:');
+  const failuresByReason = withPrefix(sums, 'review_fail:');
   const pageviews = sum(pages);
   const reviews = sum(reviewsByProfile);
 
@@ -153,8 +154,10 @@ function report(rows, options, range) {
   });
 
   printTable('Completed reviews by profile', reviewsByProfile, (_name, n) => percent(n, reviews));
+  // Counted since 0.7.5: provider_<kind>, cut_short, refused, single_answer_limit, client_gone, other.
+  printTable('Failed reviews by reason', failuresByReason, (_name, n) => percent(n, sum(failuresByReason)));
 
-  const known = (event) => /^(pv|ref|review_ok):/.test(event)
+  const known = (event) => /^(pv|ref|review_ok|review_fail):/.test(event)
     || ['register', 'login', 'review_fail', 'quota_hit', 'checkout_created', 'sub_active'].includes(event);
   const clientEvents = [...sums].filter(([event]) => !known(event)).sort((a, b) => b[1] - a[1]);
   printTable('Client events', clientEvents);

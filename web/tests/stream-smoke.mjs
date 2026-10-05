@@ -266,7 +266,7 @@ try {
   const counters = (await db.prepare('SELECT event, n FROM funnel_daily ORDER BY event').all()).results;
   assert.deepEqual(
     counters.map((row) => `${row.event}=${row.n}`),
-    ['quota_hit=1', 'review_fail=1', 'review_ok:solidity=2'],
+    ['quota_hit=1', 'review_fail=1', 'review_fail:client_gone=1', 'review_ok:solidity=2'],
   );
 
   // 4. A hosted profile. Its method reaches the provider in the system message

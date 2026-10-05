@@ -6,7 +6,7 @@ import test from 'node:test';
 
 import { ProviderError } from '../public/providers.mjs';
 import { ApiError } from '../src/http.ts';
-import { parseReviewRequest, reviewFailure, runHostedReview, streamHostedReview } from '../src/review.ts';
+import { failureReason, parseReviewRequest, reviewFailure, runHostedReview, streamHostedReview } from '../src/review.ts';
 import { SITE_ORIGIN, addAccount, addSubscription, createCall, createContext, createEnv, funnelCounts } from './worker-helpers.mjs';
 
 const ACCOUNT = 'account-1';
@@ -225,7 +225,7 @@ test('a provider failure gives the allowance back and reports the cause', async 
 
   await ctx.settled();
   assert.deepEqual(reviews(env), [{ status: 'failed', profile: 'solidity', channel: 'web' }]);
-  assert.deepEqual(funnelCounts(env.DB), { review_fail: 1 });
+  assert.deepEqual(funnelCounts(env.DB), { review_fail: 1, 'review_fail:provider_auth': 1 });
 });
 
 test('a refusal is returned but not counted against the day', async (t) => {
@@ -410,7 +410,7 @@ test('a provider error in the middle of a stream becomes an error event and free
 
   await ctx.settled();
   assert.deepEqual(reviews(env), [{ status: 'failed', profile: 'solidity', channel: 'web' }]);
-  assert.deepEqual(funnelCounts(env.DB), { review_fail: 1 });
+  assert.deepEqual(funnelCounts(env.DB), { review_fail: 1, 'review_fail:provider_response': 1 });
 });
 
 test('a client that disconnects early stops the provider call and releases the lease', async (t) => {
@@ -458,7 +458,7 @@ test('a stream the provider breaks off after a few characters is delivered and n
 
   await ctx.settled();
   assert.deepEqual(reviews(env), [{ status: 'failed', profile: 'solidity', channel: 'web' }]);
-  assert.deepEqual(funnelCounts(env.DB), { review_fail: 1 });
+  assert.deepEqual(funnelCounts(env.DB), { review_fail: 1, 'review_fail:cut_short': 1 });
 });
 
 test('a long answer cut at the output limit is a review and is counted', async (t) => {
@@ -533,4 +533,14 @@ test('reviewFailure keeps provider messages and hides everything else', () => {
   assert.equal(unknown.status, 502);
   assert.equal(unknown.code, 'review_failed');
   assert(!unknown.message.includes('secret'));
+});
+
+test('failureReason names a failed review from a fixed set and never from the message', () => {
+  assert.equal(failureReason(new ProviderError('Provider rate limit reached.', { status: 429, kind: 'rate' })), 'provider_rate');
+  assert.equal(failureReason(new ProviderError('Provider has no credits left.', { status: 402, kind: 'credit' })), 'provider_credit');
+  assert.equal(failureReason(new DOMException('The operation timed out.', 'TimeoutError')), 'single_answer_limit');
+  assert.equal(failureReason(new DOMException('The operation was aborted.', 'AbortError')), 'client_gone');
+  assert.equal(failureReason(new ProviderError('Provider failed.', { kind: 'server' }), true), 'client_gone', 'a client that left wins');
+  assert.equal(failureReason(new TypeError('secret internal detail')), 'other');
+  assert.equal(failureReason('not an error'), 'other');
 });
