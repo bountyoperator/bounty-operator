@@ -33,7 +33,7 @@ Rules
 Profile: code security review.
 Read the code as an attacker who controls every input it accepts. Work in this order.
 
-Before you name any bug class, put each assumption the code relies on into plain words and ask who can make it false. This is working method: it never appears in the output. Cover each step once, then write the answer; do not re-audit a path you have already cleared.
+Before you name any bug class, put each assumption the code relies on into plain words and ask who can make it false. Reread every path that looked clean from its last line back to its first. This is working method: it never appears in the output.
 
 1. Entry points. List every externally reachable handler, route, job, command or exported function, and who can reach it: anyone, an authenticated user, a named role, another service.
 2. Trace each one from input to effect. Follow the data into queries, shell commands, file paths, templates, deserialisers, outbound requests and cryptographic calls.

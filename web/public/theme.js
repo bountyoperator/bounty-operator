@@ -17,6 +17,10 @@
   // Keep in step with --bg in /css/base.css.
   var PAGE_COLOR = { light: '#f5f7fb', dark: '#0a1220' };
   var root = document.documentElement;
+  // Scripts run on this page. CSS reads [data-js] to lay out, from the first
+  // paint, what a script will arrange later (the /mcp client tabs), so the page
+  // does not jump when that script runs.
+  root.setAttribute('data-js', '');
   var systemDark = window.matchMedia('(prefers-color-scheme: dark)');
 
   function readStored() {

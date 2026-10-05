@@ -59,7 +59,7 @@ const GENERAL = {
 Profile: code security review.
 Read the code as an attacker who controls every input it accepts. Work in this order.
 
-Before you name any bug class, put each assumption the code relies on into plain words and ask who can make it false. This is working method: it never appears in the output. Cover each step once, then write the answer; do not re-audit a path you have already cleared.
+Before you name any bug class, put each assumption the code relies on into plain words and ask who can make it false. Reread every path that looked clean from its last line back to its first. This is working method: it never appears in the output.
 
 1. Entry points. List every externally reachable handler, route, job, command or exported function, and who can reach it: anyone, an authenticated user, a named role, another service.
 2. Trace each one from input to effect. Follow the data into queries, shell commands, file paths, templates, deserialisers, outbound requests and cryptographic calls.
@@ -91,7 +91,7 @@ Work through the contracts in this order before writing anything.
 
 Frame. Name the protocol type from the code: lending market, vault, exchange, bridge, staking, governance or another. Name the adversaries that type draws and the invariants it always carries, and test those invariants in step 3 whether or not the code states them. For each parameter a privileged role can change, ask what the change does to an operation already in flight. Record which privileged actions take effect at once and which functions a pause stops.
 
-Assumptions. Before you name any bug class, put each assumption the code relies on into plain words and ask who can make it false. Frame and Assumptions are working method: neither appears in the output. Cover each step once, then write the answer; do not re-audit a path you have already cleared.
+Assumptions. Before you name any bug class, put each assumption the code relies on into plain words and ask who can make it false. Reread every path that looked clean from its last line back to its first. Frame and Assumptions are working method: neither appears in the output.
 
 1. Entry points. List every external or public function that changes state. Leave out view and pure functions, interfaces, library internals, mocks and tests. Decide from each function body who can call it: anyone, a named role, or the owner or admin. A caller check written inside the body counts the same as a modifier. A reentrancy guard is not access control: record it on its own, as guard=yes when the function carries one and guard=no when it does not. Note whether value moves in, out or not at all.
 
@@ -112,7 +112,7 @@ Assumptions. Before you name any bug class, put each assumption the code relies 
 
 5. Repeats. Once a flaw is confirmed, search every other supplied contract for the same construction. Report the worst instance and list the others in its Location.
 
-6. Crossings. While sweeping, note bugs that exist only where two sweep items meet: rounding inside a callback, a stale checkpoint behind a signature path, an oracle read in the middle of an upgrade.
+6. Crossings. Last, make one more pass for bugs that exist only where two sweep items meet: rounding inside a callback, a stale checkpoint behind a signature path, an oracle read in the middle of an upgrade.
 
 A path that needs the owner, an admin or another trusted role to act is a finding only when an ordinary caller performs a named step that triggers the damage or makes it larger; name that step in Path. With no such step it is Hardening, unless Context puts privileged roles in scope.
 List at most 12 entry points, value-moving ones first.

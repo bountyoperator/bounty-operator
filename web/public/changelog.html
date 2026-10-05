@@ -49,20 +49,23 @@
 <header class="docs-head">
 <nav class="breadcrumbs" aria-label="Breadcrumb"><ol><li><a href="/">Bounty Operator</a></li><li aria-current="page">Changelog</li></ol></nav>
 <h1>Bounty Operator changelog</h1>
-<p class="lede">Every release, newest first, with its date. The current version is 0.7.4.</p>
-<p class="meta docs-head__meta">10 releases · latest <time datetime="2026-10-04">4 October 2026</time></p>
+<p class="lede">Every release, newest first, with its date. The current version is 0.7.5.</p>
+<p class="meta docs-head__meta">11 releases · latest <time datetime="2026-10-05">5 October 2026</time></p>
 
 </header>
 
 <div class="docs-body">
 <nav class="docs-toc" aria-label="On this page">
 <p class="meta">On this page</p>
-<ul><li><a href="#v0-7-4">0.7.4</a></li><li><a href="#v0-7-3">0.7.3</a></li><li><a href="#v0-7-2">0.7.2</a></li><li><a href="#v0-7-1">0.7.1</a></li><li><a href="#v0-7-0">0.7.0</a></li><li><a href="#v0-6-0">0.6.0</a></li><li><a href="#v0-5-0">0.5.0</a></li><li><a href="#v0-3-0">0.3.0</a></li><li><a href="#v0-2-0">0.2.0</a></li><li><a href="#v0-1-0">0.1.0</a></li></ul>
+<ul><li><a href="#v0-7-5">0.7.5</a></li><li><a href="#v0-7-4">0.7.4</a></li><li><a href="#v0-7-3">0.7.3</a></li><li><a href="#v0-7-2">0.7.2</a></li><li><a href="#v0-7-1">0.7.1</a></li><li><a href="#v0-7-0">0.7.0</a></li><li><a href="#v0-6-0">0.6.0</a></li><li><a href="#v0-5-0">0.5.0</a></li><li><a href="#v0-3-0">0.3.0</a></li><li><a href="#v0-2-0">0.2.0</a></li><li><a href="#v0-1-0">0.1.0</a></li></ul>
 </nav>
 <div class="docs-content">
 
-<section class="docs-section" aria-labelledby="v0-7-4">
-<h2 class="docs-section__title" id="v0-7-4">0.7.4<span class="release__date"><time datetime="2026-10-04">4 October 2026</time></span><span class="release__latest"><span class="chip" data-tone="observed">Latest</span></span></h2>
+<section class="docs-section" aria-labelledby="v0-7-5">
+<h2 class="docs-section__title" id="v0-7-5">0.7.5<span class="release__date"><time datetime="2026-10-05">5 October 2026</time></span><span class="release__latest"><span class="chip" data-tone="observed">Latest</span></span></h2>
+<div class="prose"><h3 class="release__group">MCP</h3><ul><li><code>run_review</code> on the remote endpoint answers a client that accepts <code>text/event-stream</code> with a stream: a progress notification every 10 seconds while the review runs, then the result. Claude Code stopped waiting after about a minute and reported &quot;The operation timed out&quot;, so a hosted review that took longer than that never reached the agent. A client that accepts only JSON gets one JSON body, as before.</li><li>On that stream the review reads the model as a stream too, so a slow model is no longer cut off at 270 seconds. A review can run for up to 15 minutes.</li><li><code>/mcp</code>: the Codex remote config sets <code>tool_timeout_sec = 900</code>, and the install panels no longer shift the page when the client tabs load.</li></ul><h3 class="release__group">Challenge a draft report</h3><ul><li>A missing Context field is never a fail on its own.</li><li>Only proof-inline, form-matches-body and read-back block a submit verdict. A failed title, steps, limits or concrete-detail check is a fix note in its row and leaves the verdict as it is.</li><li>When Context gives no proof-field contents, proof-inline judges the report body alone.</li><li>Published Paydirt results remain the original frozen measurements.</li></ul></div>
+</section><section class="docs-section" aria-labelledby="v0-7-4">
+<h2 class="docs-section__title" id="v0-7-4">0.7.4<span class="release__date"><time datetime="2026-10-04">4 October 2026</time></span></h2>
 <div class="prose"><h3 class="release__group">Review compatibility</h3><ul><li>Prepared reviews list every file&#39;s physical line boundaries. Wrapped text and sentences within a single numbered line do not create extra citable lines.</li><li>Citations such as <code>input-1:4</code> resolve to the one supplied file with that input number. Unknown, ambiguous and out-of-range locations remain flagged, and valid shorthand opens the cited source in the workbench.</li><li>Gemini 3.8 Flash, Qwen3.8 27B, Qwen3.8 Max 0902, HY4 Preview and GLM 5.3 on OpenRouter have a 64,000-token total output allowance, including reasoning. Their reasoning defaults are preserved. The model and panel controls disclose the larger allowance before a run; provider billing follows actual usage.</li><li>Empty responses report that no completed review was received. The Python preparer now counts an empty file as zero lines, matching the shared engine.</li><li>Published Paydirt results remain the original frozen measurements.</li></ul></div>
 </section><section class="docs-section" aria-labelledby="v0-7-3">
 <h2 class="docs-section__title" id="v0-7-3">0.7.3<span class="release__date"><time datetime="2026-10-03">3 October 2026</time></span></h2>

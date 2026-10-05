@@ -1,5 +1,30 @@
 # Changelog
 
+## 0.7.5 — 2026-10-05
+
+MCP
+
+- `run_review` on the remote endpoint answers a client that accepts
+  `text/event-stream` with a stream: a progress notification every 10 seconds
+  while the review runs, then the result. Claude Code stopped waiting after
+  about a minute and reported "The operation timed out", so a hosted review
+  that took longer than that never reached the agent. A client that accepts
+  only JSON gets one JSON body, as before.
+- On that stream the review reads the model as a stream too, so a slow model
+  is no longer cut off at 270 seconds. A review can run for up to 15 minutes.
+- `/mcp`: the Codex remote config sets `tool_timeout_sec = 900`, and the
+  install panels no longer shift the page when the client tabs load.
+
+Challenge a draft report
+
+- A missing Context field is never a fail on its own.
+- Only proof-inline, form-matches-body and read-back block a submit verdict.
+  A failed title, steps, limits or concrete-detail check is a fix note in its
+  row and leaves the verdict as it is.
+- When Context gives no proof-field contents, proof-inline judges the report
+  body alone.
+- Published Paydirt results remain the original frozen measurements.
+
 ## 0.7.4 — 2026-10-04
 
 Review compatibility

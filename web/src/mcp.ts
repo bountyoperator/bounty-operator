@@ -1,6 +1,8 @@
-// The remote MCP endpoint: JSON-RPC 2.0 over one POST per message, a JSON
-// response each time, no session and no stream. Written by hand; the protocol
-// surface used here is small enough to read in one sitting.
+// The remote MCP endpoint: JSON-RPC 2.0 over one POST per message and no
+// session. Every reply is one JSON body, except run_review: a client that
+// accepts text/event-stream gets progress notifications while the review runs,
+// then the result, on one stream. Written by hand; the protocol surface used
+// here is small enough to read in one sitting.
 
 import { CONTEXT_FIELDS, evidenceNotes, reviewPacket } from '../public/evidence.mjs';
 import { checkRefs, defang, parseReview } from '../public/parse.mjs';
@@ -15,7 +17,7 @@ import type { Call } from './env.ts';
 import { ApiError, errorBody, json } from './http.ts';
 import { usage } from './quota.mjs';
 import { clientKey, rateLimit } from './rate.ts';
-import { REVIEW_BODY_BYTES, parseReviewInputs, parseReviewRequest, prepareOpen, resolveProfileId, runHostedReview } from './review.ts';
+import { REVIEW_BODY_BYTES, collectHostedReview, parseReviewInputs, parseReviewRequest, prepareOpen, resolveProfileId, runHostedReview } from './review.ts';
 import type { Prepared, ReviewResult } from './review.ts';
 
 export const MCP_PROTOCOL_VERSIONS = ['2025-11-25', '2025-06-18', '2025-03-26', '2024-11-05'] as const;
@@ -24,6 +26,9 @@ const SERVER_NAME = 'bounty-operator';
 const MCP_REQUESTS_PER_10_MIN = 120;
 const MAX_REVIEW_CHARS = 400000;
 const MAX_STAGES = 12;
+// How often a streamed run_review reply says it is still working. Clients drop
+// a reply that has been silent for about a minute.
+const PROGRESS_INTERVAL_MS = 10000;
 
 const PARSE_ERROR = -32700;
 const INVALID_REQUEST = -32600;
@@ -754,7 +759,13 @@ export async function handleMcpMessage(message: unknown, host: McpHost): Promise
 // HTTP
 // ---------------------------------------------------------------------------
 
-function hostFor(call: Call): McpHost {
+/**
+ * `onProgress` is set when the reply is a stream. The review then reads the
+ * provider as a stream too and may run past the single-answer limit, because
+ * the client hears from the server every few seconds. A JSON-only caller keeps
+ * the single-answer limit, which ends inside the timeouts such clients use.
+ */
+function hostFor(call: Call, onProgress?: (chars: number) => void): McpHost {
   const { env, request } = call;
   return {
     async account() {
@@ -767,7 +778,10 @@ function hostFor(call: Call): McpHost {
       if (!apiKey) {
         throw new ApiError('Send your provider API key in the X-Provider-Key header. It is never a tool argument.', 400, 'bad_key');
       }
-      const result = await runHostedReview(call, accountId, parseReviewRequest(args, apiKey), 'mcp');
+      const input = parseReviewRequest(args, apiKey);
+      const result = onProgress
+        ? await collectHostedReview(call, accountId, input, 'mcp', onProgress)
+        : await runHostedReview(call, accountId, input, 'mcp');
 
       // The review is already in hand. The allowance is added when it can be read.
       let allowance: unknown;
@@ -785,8 +799,88 @@ function hostFor(call: Call): McpHost {
   };
 }
 
-/** POST /api/mcp */
-export async function mcpEndpoint(call: Call): Promise<Response> {
+/** A run_review call from a client that reads a stream: it is answered as server-sent events. */
+function streamsReply(message: unknown, request: Request): message is Json {
+  if (!message || typeof message !== 'object' || Array.isArray(message)) return false;
+  const { method, id, params } = message as Json;
+  if (method !== 'tools/call' || id === undefined || !params || typeof params !== 'object') return false;
+  if ((params as Json).name !== 'run_review') return false;
+  return (request.headers.get('accept') ?? '').toLowerCase().includes('text/event-stream');
+}
+
+function progressTokenOf(message: Json): string | number | undefined {
+  const meta = ((message.params as Json)?._meta ?? {}) as Json;
+  const token = meta.progressToken;
+  return typeof token === 'string' || (typeof token === 'number' && Number.isFinite(token)) ? token : undefined;
+}
+
+/**
+ * Answers a run_review call as server-sent events. A review takes minutes, and
+ * clients drop a response that stays silent for about a minute (Claude Code
+ * reports "The operation timed out"). The stream sends a progress notification
+ * every PROGRESS_INTERVAL_MS when the client gave a progress token, a comment
+ * line otherwise, then the one JSON-RPC response.
+ */
+async function streamedReply(call: Call, message: Json, progressIntervalMs: number): Promise<Response> {
+  // A missing or revoked token is still answered with HTTP 401, so the client asks for one.
+  try {
+    await bearerAccount(call);
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 401) {
+      const reply = rpcError(isRpcId(message.id) ? message.id : null, UNAUTHORIZED, error.message, 401, {
+        'WWW-Authenticate': `Bearer realm="${SERVER_NAME}"`,
+      });
+      return json(reply.body, reply.status, { headers: reply.headers });
+    }
+    throw error;
+  }
+
+  const { readable, writable } = new TransformStream<Uint8Array, Uint8Array>();
+  const writer = writable.getWriter();
+  const encoder = new TextEncoder();
+  const write = (text: string): Promise<void> => writer.write(encoder.encode(text)).catch(() => {});
+  const progressToken = progressTokenOf(message);
+  const started = Date.now();
+  let written = 0;
+  let step = 0;
+
+  const beat = (): void => {
+    if (progressToken === undefined) {
+      void write(': keep-alive\n\n');
+      return;
+    }
+    step += 1;
+    const elapsed = Math.round((Date.now() - started) / 1000);
+    const text = written > 0 ? `Review running for ${elapsed} s, ${written} characters written` : `Review running for ${elapsed} s`;
+    const note = { jsonrpc: '2.0', method: 'notifications/progress', params: { progressToken, progress: step, message: text } };
+    void write(`event: message\ndata: ${JSON.stringify(note)}\n\n`);
+  };
+
+  const pump = async (): Promise<void> => {
+    const timer = setInterval(beat, progressIntervalMs);
+    try {
+      // Not awaited: a write resolves only once the reader takes it, and the review must not wait for that.
+      void write(': review started\n\n');
+      const reply = await handleMcpMessage(message, hostFor(call, (chars) => {
+        written = chars;
+      }));
+      clearInterval(timer);
+      if (reply.body !== null) await write(`event: message\ndata: ${JSON.stringify(reply.body)}\n\n`);
+    } finally {
+      clearInterval(timer);
+      await writer.close().catch(() => {});
+    }
+  };
+  // waitUntil keeps the Worker alive to settle the reservation after the client has left.
+  call.ctx.waitUntil(pump());
+
+  return new Response(readable, {
+    headers: { 'Content-Type': 'text/event-stream; charset=utf-8', 'Cache-Control': 'no-cache', 'X-Accel-Buffering': 'no' },
+  });
+}
+
+/** POST /api/mcp. `progressIntervalMs` is only changed by tests. */
+export async function mcpEndpoint(call: Call, { progressIntervalMs = PROGRESS_INTERVAL_MS } = {}): Promise<Response> {
   const { env, request } = call;
   const origin = request.headers.get('origin');
   if (origin && origin !== env.SITE_ORIGIN) throw new ApiError('Request origin is not allowed.', 403, 'origin');
@@ -799,6 +893,8 @@ export async function mcpEndpoint(call: Call): Promise<Response> {
     const reply = rpcError(null, PARSE_ERROR, 'Parse error: the body must be one JSON-RPC message of at most 1.5 MB.', 400);
     return json(reply.body, reply.status);
   }
+
+  if (streamsReply(message, request)) return streamedReply(call, message, progressIntervalMs);
 
   const reply = await handleMcpMessage(message, hostFor(call));
   if (reply.body === null) return new Response(null, { status: reply.status });

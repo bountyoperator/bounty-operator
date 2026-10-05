@@ -582,21 +582,61 @@ test('the account tool reads usage with a valid token and answers 401 without on
   assert.deepEqual(structuredContent.price, { usd: 10, interval: 'week' });
 });
 
-test('run_review takes the provider key from the header, runs the review and reports the allowance', async (t) => {
-  const env = createEnv();
-  await withToken(env);
+/** A provider that answers REVIEW as one JSON body, or as a stream when the request asks for one. */
+function providerAnswer(init, { delayMs = 0 } = {}) {
+  if (JSON.parse(init.body).stream !== true) {
+    return Response.json({ model: 'gpt-test', choices: [{ message: { content: REVIEW }, finish_reason: 'stop' }], usage: { prompt_tokens: 5, completion_tokens: 7 } });
+  }
+  const encoder = new TextEncoder();
+  const pieces = [
+    `data: ${JSON.stringify({ model: 'gpt-test', choices: [{ delta: { content: REVIEW }, finish_reason: null }] })}\n\n`,
+    `data: ${JSON.stringify({ model: 'gpt-test', choices: [{ delta: {}, finish_reason: 'stop' }], usage: { prompt_tokens: 5, completion_tokens: 7 } })}\n\n`,
+    'data: [DONE]\n\n',
+  ];
+  return new Response(new ReadableStream({
+    async start(controller) {
+      if (delayMs) await new Promise((resolve) => setTimeout(resolve, delayMs));
+      for (const piece of pieces) controller.enqueue(encoder.encode(piece));
+      controller.close();
+    },
+  }), { headers: { 'Content-Type': 'text/event-stream' } });
+}
+
+function stubProvider(t, options) {
   const providerCalls = [];
   const originalFetch = globalThis.fetch;
   globalThis.fetch = async (url, init) => {
     providerCalls.push({ url: String(url), init });
-    return Response.json({ model: 'gpt-test', choices: [{ message: { content: REVIEW }, finish_reason: 'stop' }], usage: { prompt_tokens: 5, completion_tokens: 7 } });
+    return providerAnswer(init, options);
   };
   t.after(() => {
     globalThis.fetch = originalFetch;
   });
+  return providerCalls;
+}
+
+/** POST /api/mcp, reading the whole body before the Worker's background work settles. */
+async function endpointText(env, message, headers, options) {
+  const ctx = createContext();
+  const response = await mcpEndpoint(createCall(post(message, headers), env, ctx), options);
+  const text = await response.text();
+  await ctx.settled();
+  return { status: response.status, type: response.headers.get('Content-Type') ?? '', text };
+}
+
+/** The data of every server-sent event in a body, in order. */
+function sseMessages(text) {
+  return text.split('\n\n').filter((block) => block.includes('data: ')).map((block) => JSON.parse(block.slice(block.indexOf('data: ') + 6)));
+}
+
+test('run_review takes the provider key from the header, runs the review and reports the allowance', async (t) => {
+  const env = createEnv();
+  await withToken(env);
+  const providerCalls = stubProvider(t);
 
   const call = request('tools/call', { name: 'run_review', arguments: { files: FILES, provider: 'openai', profile: 'solidity', mode: 'bounty' } });
-  const auth = { Authorization: `Bearer ${TOKEN}` };
+  // A client that reads JSON only gets one JSON body.
+  const auth = { Authorization: `Bearer ${TOKEN}`, Accept: 'application/json' };
 
   const noKey = (await (await endpoint(env, call, auth)).json()).result;
   assert.equal(noKey.isError, true);
@@ -604,6 +644,7 @@ test('run_review takes the provider key from the header, runs the review and rep
   assert.equal(providerCalls.length, 0);
 
   const response = await endpoint(env, call, { ...auth, 'X-Provider-Key': 'sk-test-key-0123456789' });
+  assert.match(response.headers.get('Content-Type'), /^application\/json/);
   const { structuredContent, isError } = (await response.json()).result;
   assert.equal(isError, false);
   assert.equal(structuredContent.verdict, 'prove-first');
@@ -611,9 +652,76 @@ test('run_review takes the provider key from the header, runs the review and rep
   assert.equal(structuredContent.allowance.remainingToday, 0);
   assert.equal(providerCalls.length, 1);
   assert.equal(providerCalls[0].init.headers.Authorization, 'Bearer sk-test-key-0123456789');
+  assert.equal(JSON.parse(providerCalls[0].init.body).stream, undefined, 'a JSON-only client keeps the single-answer call and its limit');
   assert.equal(env.DB.sqlite.prepare("SELECT channel FROM reviews WHERE status = 'completed'").get().channel, 'mcp');
 
   const second = (await (await endpoint(env, call, { ...auth, 'X-Provider-Key': 'sk-test-key-0123456789' })).json()).result;
   assert.equal(second.isError, true);
   assert.equal(JSON.parse(second.content[0].text).code, 'daily_used');
+});
+
+test('run_review streams progress to a client that reads events, then sends the result', async (t) => {
+  const env = createEnv();
+  await withToken(env);
+  const providerCalls = stubProvider(t, { delayMs: 120 });
+  const message = request('tools/call', {
+    name: 'run_review',
+    arguments: { files: FILES, provider: 'openai', profile: 'solidity', mode: 'bounty' },
+    _meta: { progressToken: 'review-1' },
+  });
+  const headers = { Authorization: `Bearer ${TOKEN}`, 'X-Provider-Key': 'sk-test-key-0123456789' };
+
+  const answer = await endpointText(env, message, headers, { progressIntervalMs: 20 });
+  assert.equal(answer.status, 200);
+  assert.match(answer.type, /^text\/event-stream/);
+  assert.equal(JSON.parse(providerCalls[0].init.body).stream, true, 'the provider is read as a stream, so a slow model is not cut off');
+  const messages = sseMessages(answer.text);
+  const progress = messages.filter((entry) => entry.method === 'notifications/progress');
+  assert(progress.length >= 2, `progress while the provider is silent, got ${progress.length}`);
+  assert(progress.every((entry) => entry.params.progressToken === 'review-1'));
+  assert.deepEqual(progress.map((entry) => entry.params.progress), progress.map((_, index) => index + 1), 'progress only grows');
+  const last = messages.at(-1);
+  assert.equal(last.id, message.id, 'the stream ends with the response to the call');
+  assert.equal(last.result.isError, false);
+  assert.equal(last.result.structuredContent.verdict, 'prove-first');
+  assert.equal(env.DB.sqlite.prepare("SELECT COUNT(*) AS n FROM reviews WHERE status = 'completed'").get().n, 1);
+});
+
+test('a streamed run_review without a progress token keeps the connection alive with comments', async (t) => {
+  const env = createEnv();
+  await withToken(env);
+  stubProvider(t, { delayMs: 120 });
+  const message = request('tools/call', { name: 'run_review', arguments: { files: FILES, provider: 'openai', profile: 'solidity', mode: 'bounty' } });
+  const answer = await endpointText(env, message, { Authorization: `Bearer ${TOKEN}`, 'X-Provider-Key': 'sk-test-key-0123456789' }, { progressIntervalMs: 20 });
+  assert.match(answer.type, /^text\/event-stream/);
+  assert(answer.text.split('\n').filter((line) => line === ': keep-alive').length >= 2);
+  const messages = sseMessages(answer.text);
+  assert.equal(messages.length, 1, 'no notifications without a token');
+  assert.equal(messages[0].result.structuredContent.verdict, 'prove-first');
+});
+
+test('a streamed run_review without a valid token is still an HTTP 401 with a Bearer challenge', async (t) => {
+  const env = createEnv();
+  await withToken(env);
+  const providerCalls = stubProvider(t);
+  const message = request('tools/call', { name: 'run_review', arguments: { files: FILES, provider: 'openai', profile: 'solidity' } });
+  for (const auth of [{}, { Authorization: `Bearer bok_${'X'.repeat(43)}` }]) {
+    const answer = await endpointText(env, message, { ...auth, 'X-Provider-Key': 'sk-test-key-0123456789' });
+    assert.equal(answer.status, 401);
+    assert.match(answer.type, /^application\/json/);
+    assert.equal(JSON.parse(answer.text).error.code, -32001);
+  }
+  assert.equal(providerCalls.length, 0);
+});
+
+test('a streamed run_review error is one tool error event the agent can read', async (t) => {
+  const env = createEnv();
+  await withToken(env);
+  stubProvider(t);
+  const message = request('tools/call', { name: 'run_review', arguments: { files: FILES, provider: 'openai', profile: 'solidity' } });
+  const answer = await endpointText(env, message, { Authorization: `Bearer ${TOKEN}` });
+  assert.match(answer.type, /^text\/event-stream/);
+  const [reply] = sseMessages(answer.text);
+  assert.equal(reply.result.isError, true);
+  assert.equal(JSON.parse(reply.result.content[0].text).code, 'bad_key');
 });

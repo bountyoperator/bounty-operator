@@ -93,7 +93,7 @@ ${file(
 url = "${ENDPOINT}"
 bearer_token_env_var = "${TOKEN_VAR}"
 env_http_headers = { "X-Provider-Key" = "${KEY_VAR}" }
-tool_timeout_sec = 300`,
+tool_timeout_sec = 900`,
   '~/.codex/config.toml',
 )}
 <p>Local server:</p>
@@ -105,7 +105,7 @@ env_vars = ["${TOKEN_VAR}", "${KEY_VAR}"]
 tool_timeout_sec = 300`,
   '~/.codex/config.toml',
 )}
-<p class="fine">${inline('Codex stops a tool call after 60 seconds by default. A hosted review runs for up to 270 seconds, so keep the `tool_timeout_sec` line.')}</p>`,
+<p class="fine">${inline('Codex stops a tool call after 60 seconds by default, so keep the `tool_timeout_sec` line. On the remote endpoint a hosted review runs until the model finishes, for up to 15 minutes, and sends progress every 10 seconds. Through the local server it ends within 270 seconds.')}</p>`,
   },
   {
     id: 'cursor',

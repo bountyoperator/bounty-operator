@@ -607,20 +607,28 @@
   border-top: 1px solid var(--line);
 }
 
-/* Without the tab script every panel shows, under its client name. */
+/* Without scripts every panel shows, under its client name. With scripts the
+   tab script shows one panel at a time; theme.js sets [data-js] before the
+   first paint, so the other panels are hidden from the start and the page
+   does not shift when the tab script runs. */
 .install__client {
   font-size: var(--fs-18);
   line-height: 1.35;
 }
 
-.install:not([data-ready]) .tabs {
+:root:not([data-js]) .install:not([data-ready]) .tabs {
   display: none;
 }
 
-.install:not([data-ready]) .install__panel + .install__panel {
+:root:not([data-js]) .install:not([data-ready]) .install__panel + .install__panel {
   border-top: 1px solid var(--line);
 }
 
+:root[data-js] .install:not([data-ready]) .install__panel + .install__panel {
+  display: none;
+}
+
+:root[data-js] .install .install__client,
 .install[data-ready] .install__client {
   position: absolute;
   width: 1px;

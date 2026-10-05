@@ -156,11 +156,11 @@ When the product changes a profile and its text is frozen again, the hash of tha
 | Arm | A run of this arm depends on | Hash it is stored and counted under |
 |---|---|---|
 | `raw` | the core | `5fea9eb00e3f2bb24d3965bf6854d39742d3324b1b826492eaa1ef51dfe09768` |
-| `solidity` | the core, the bridge text and the frozen `solidity` text | `f908e192edd19d3f97bdd8afdb998ba5980dc5d49a7a0ca69cd50d7455fe3471` |
-| `general` | the core, the bridge text and the frozen `general` text | `d12d33dd21a6463c07ccc74db504f77f7d5d887e4c8cec524bf540c8a775eaed` |
-| `report` | the core, the bridge text and the frozen `report` text | `a13c02939c448309353befd6ffae395e32bcbb2d6d0008f1d8a58c0b4eb169f5` |
+| `solidity` | the core, the bridge text and the frozen `solidity` text | `ad6a658a538ec5ef84c3025febf9dea8a5e076127e2b11e9dcfe346cb2d38a15` |
+| `general` | the core, the bridge text and the frozen `general` text | `d7f99fc3799b5bf3914fd3aba5668fdf9467a391a1607f896c0e9d26083a01fc` |
+| `report` | the core, the bridge text and the frozen `report` text | `4550f8a9890f6efd39f757fcea9c5b7ea870a7beccf9fc84c715d66c7a7f6448` |
 
-Protocol hash, over the whole of `protocol.json` except this record of hashes in it: `c7f6f15c6436385e61d165215cf5df65ca13dbfbc51483c3567299faa7731f29`.
+Protocol hash, over the whole of `protocol.json` except this record of hashes in it: `74aad5311600bf53862cb0c5e09dec6e6af0f63feaff7d6805d021905e0cfd35`.
 
 <!-- hashes:end -->
 

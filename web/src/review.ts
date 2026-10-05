@@ -353,6 +353,79 @@ export async function runHostedReview({ env, ctx, request }: Call, accountId: st
   }
 }
 
+/**
+ * Runs a hosted review for a caller that takes the whole answer at once (MCP),
+ * but reads the provider as a stream. Each token restarts the provider's
+ * silence clock and the lease is renewed while the model writes, so a slow
+ * model is not cut off at the single-answer limit. `onProgress` receives the
+ * characters written so far, after each token and whenever the provider is
+ * silent for KEEP_ALIVE_MS.
+ */
+export async function collectHostedReview(
+  { env, ctx, request }: Call,
+  accountId: string,
+  input: ReviewRequest,
+  channel: Channel,
+  onProgress?: (chars: number) => void,
+): Promise<ReviewResult> {
+  assertReviewsEnabled(env);
+  await assertPlanCovers(env, accountId, input.profileId);
+  const prepared = await prepareChecked(input);
+  const reviewId = await reserve(env, ctx, accountId, input.profileId, channel);
+  const settle = createSettler(env, ctx, accountId, reviewId, input.profileId);
+
+  // The caller gets nothing until the end, so a disconnect stops the provider call.
+  const abort = new AbortController();
+  const onDisconnect = (): void => abort.abort();
+  if (request.signal.aborted) onDisconnect();
+  else request.signal.addEventListener('abort', onDisconnect, { once: true });
+
+  let leaseRenewedAt = seconds();
+  const keepLease = (): void => {
+    const now = seconds();
+    if (now - leaseRenewedAt < LEASE_RENEW_SECONDS) return;
+    leaseRenewedAt = now;
+    ctx.waitUntil(extendLease(env.DB, accountId, reviewId, now).catch(() => {}));
+  };
+
+  const scanner = outputScanner(input.profileId);
+  const stopIfLeaked = (): void => {
+    if (!scanner?.leaked) return;
+    settle(true);
+    throw withheld();
+  };
+
+  try {
+    const events = await providerStream(providerCall(input, prepared, abort.signal));
+    const parts: string[] = [];
+    let chars = 0;
+    for await (const event of withKeepAlive(events, KEEP_ALIVE_MS)) {
+      keepLease();
+      if (event === KEEP_ALIVE) {
+        onProgress?.(chars);
+      } else if (event.type === 'delta') {
+        parts.push(event.text);
+        chars += event.text.length;
+        scanner?.push(event.text);
+        stopIfLeaked();
+        onProgress?.(chars);
+      } else {
+        scanner?.finish();
+        stopIfLeaked();
+        settle(counts(event, chars));
+        return toResult(prepared, parts.join(''), event);
+      }
+    }
+    throw new Error('The provider stream ended without a result.');
+  } catch (error) {
+    abort.abort();
+    settle(false);
+    throw reviewFailure(error);
+  } finally {
+    request.signal.removeEventListener('abort', onDisconnect);
+  }
+}
+
 function sseEvent(name: string, data: unknown): string {
   return `event: ${name}\ndata: ${JSON.stringify(data)}\n\n`;
 }

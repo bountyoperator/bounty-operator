@@ -968,7 +968,7 @@ describe('profiles', () => {
   test('the general review writes out each assumption before it names a bug class', () => {
     const { instructions, extraFormat } = reviewProfile('general');
     assert.match(instructions, /put each assumption the code relies on into plain words and ask who can make it false/);
-    assert.match(instructions, /Cover each step once, then write the answer; do not re-audit a path you have already cleared\./);
+    assert.match(instructions, /Reread every path that looked clean from its last line back to its first/);
     assert.match(instructions, /This is working method: it never appears in the output/);
     assert.ok(instructions.indexOf('put each assumption') < instructions.indexOf('1. Entry points.'));
     assert.deepEqual(extraFormat.match(/^## .+$/gm), ['## Entry points']);

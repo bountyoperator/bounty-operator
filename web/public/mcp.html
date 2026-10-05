@@ -93,7 +93,7 @@
 </span><span class="code__line">url = &quot;https://bountyoperator.com/api/mcp&quot;
 </span><span class="code__line">bearer_token_env_var = &quot;BOUNTY_OPERATOR_TOKEN&quot;
 </span><span class="code__line">env_http_headers = { &quot;X-Provider-Key&quot; = &quot;OPENROUTER_API_KEY&quot; }
-</span><span class="code__line">tool_timeout_sec = 300
+</span><span class="code__line">tool_timeout_sec = 900
 </span></code></pre></figure>
 <p>Local server:</p>
 <figure class="code"><figcaption class="code__bar"><span class="code__name">~/.codex/config.toml</span><button class="code__copy" type="button" data-copy><span class="icon icon--copy" aria-hidden="true"></span><span data-copy-label>Copy</span></button></figcaption><pre class="code__pre" tabindex="0" role="region" aria-label="Source: ~/.codex/config.toml"><code><span class="code__line">[mcp_servers.bounty-operator]
@@ -102,7 +102,7 @@
 </span><span class="code__line">env_vars = [&quot;BOUNTY_OPERATOR_TOKEN&quot;, &quot;OPENROUTER_API_KEY&quot;]
 </span><span class="code__line">tool_timeout_sec = 300
 </span></code></pre></figure>
-<p class="fine">Codex stops a tool call after 60 seconds by default. A hosted review runs for up to 270 seconds, so keep the <code>tool_timeout_sec</code> line.</p></div></div></details>
+<p class="fine">Codex stops a tool call after 60 seconds by default, so keep the <code>tool_timeout_sec</code> line. On the remote endpoint a hosted review runs until the model finishes, for up to 15 minutes, and sends progress every 10 seconds. Through the local server it ends within 270 seconds.</p></div></div></details>
 </div><div class="install__panel" id="panel-cursor">
 <h3 class="install__client">Cursor</h3>
 <div class="install__route">

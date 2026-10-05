@@ -6,7 +6,7 @@ import unittest
 import bounty_operator_kit
 
 ROOT = Path(__file__).resolve().parent.parent
-RELEASE = "0.7.4"
+RELEASE = "0.7.5"
 
 
 def _read(relative: str) -> str:
