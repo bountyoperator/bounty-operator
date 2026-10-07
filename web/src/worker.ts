@@ -30,7 +30,7 @@ import type { Call, Env } from './env.ts';
 import { CLIENT_EVENTS, count } from './funnel.ts';
 import { METHOD_SOURCE, missingMethods } from './hosted.ts';
 import { ApiError, aliasRedirect, canonicalRedirect, compressPage, errorResponse, finalize, internalError, json, pageRedirect, readJson, redirectResponse } from './http.ts';
-import { mcpEndpoint } from './mcp.ts';
+import { mcpEndpoint, serverCardEndpoint } from './mcp.ts';
 import { reapStaleLeases, usage } from './quota.mjs';
 import { clientKey, edgeLimit, rateLimit } from './rate.ts';
 import { REVIEWS_PER_10_MIN, REVIEW_BODY_BYTES, parseReviewRequest, runHostedReview, streamHostedReview } from './review.ts';
@@ -243,6 +243,7 @@ const ROUTES: Readonly<Record<string, Readonly<Record<string, Handler>>>> = {
   '/api/client/review': { POST: clientReview },
   '/api/client/account': { GET: clientAccount },
   '/api/mcp': { POST: mcpEndpoint },
+  '/api/mcp/server-card': { GET: async (call: Call) => serverCardEndpoint(call) },
   '/api/event': { POST: fromSite(event) },
 
   '/api/billing/checkout': { POST: checkout },

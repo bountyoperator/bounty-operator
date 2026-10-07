@@ -251,5 +251,8 @@ export function finalize(response: Response, kind: ResponseKind, pathname: strin
   }
   const contentType = result.headers.get('content-type');
   result.headers.set('Cache-Control', failed ? HTML_CACHE : cachePolicy({ kind, pathname, contentType }));
+  // Discovery documents (security.txt, the skills index, the AI catalog) are
+  // public and meant to be read by tools on any origin.
+  if (kind === 'static' && !failed && pathname.startsWith('/.well-known/')) result.headers.set('Access-Control-Allow-Origin', '*');
   return result;
 }

@@ -897,6 +897,49 @@ async function streamedReply(call: Call, message: Json, progressIntervalMs: numb
 const TOOL_NAMES: ReadonlySet<unknown> = new Set(TOOLS.map((tool) => tool.name));
 
 /**
+ * GET /api/mcp/server-card: the MCP Server Card (SEP-2127) at the address the
+ * specification reserves for it, `<endpoint>/server-card`. The name, remote
+ * and headers are the ones mcp/server.json declares for the registry; a test
+ * holds the two together.
+ */
+export function serverCard(siteOrigin: string): Json {
+  return {
+    $schema: 'https://static.modelcontextprotocol.io/schemas/v1/server-card.schema.json',
+    name: 'io.github.bountyoperator/bounty-operator',
+    title: 'Bounty Operator',
+    description: 'Argues against a security finding or a draft bug bounty report before you submit it.',
+    version: VERSION,
+    websiteUrl: `${siteOrigin}/mcp`,
+    repository: { url: 'https://github.com/bountyoperator/bounty-operator', source: 'github', subfolder: 'mcp' },
+    icons: [{ src: `${siteOrigin}/icon-512.png`, mimeType: 'image/png', sizes: ['512x512'] }],
+    remotes: [
+      {
+        type: 'streamable-http',
+        url: `${siteOrigin}/api/mcp`,
+        headers: [
+          {
+            name: 'Authorization',
+            description: 'Connection token from the account panel at bountyoperator.com. The account and run_review tools use it; every other tool works with none.',
+            value: 'Bearer {token}',
+            isRequired: false,
+            isSecret: true,
+            variables: { token: { description: 'Connection token, starting with bok_.', format: 'string', isSecret: true } },
+          },
+          { name: 'X-Provider-Key', description: 'API key of the model provider that run_review calls.', format: 'string', isRequired: false, isSecret: true },
+        ],
+        supportedProtocolVersions: [...MCP_PROTOCOL_VERSIONS],
+      },
+    ],
+  };
+}
+
+export function serverCardEndpoint({ env }: Call): Response {
+  return json(serverCard(env.SITE_ORIGIN), 200, {
+    headers: { 'Content-Type': 'application/mcp-server-card+json; charset=utf-8', 'Access-Control-Allow-Origin': '*' },
+  });
+}
+
+/**
  * A tools/call request, the only message that counts against the address's
  * allowance. A client opens every session with initialize, initialized,
  * tools/list and prompts/list, none of which reads the database, so an agent

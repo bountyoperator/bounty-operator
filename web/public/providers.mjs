@@ -224,7 +224,9 @@ const WIRE = Object.freeze({
     style: 'chat',
     endpoint: 'https://openrouter.ai/api/v1/chat/completions',
     tokenParam: 'max_tokens',
-    headers: { 'HTTP-Referer': APP_URL, 'X-Title': APP_TITLE },
+    // App attribution: OpenRouter credits reviews to bountyoperator.com on its
+    // app pages. X-OpenRouter-Title is the current name; X-Title still works.
+    headers: { 'HTTP-Referer': APP_URL, 'X-OpenRouter-Title': APP_TITLE, 'X-Title': APP_TITLE },
   },
   anthropic: {
     style: 'messages',

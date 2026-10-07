@@ -9,7 +9,7 @@ import { PROVIDERS } from '../public/providers.mjs';
 import { sha256 } from '../src/crypto.ts';
 import { VERSION } from '../src/env.ts';
 import { ApiError } from '../src/http.ts';
-import { MCP_PROTOCOL_VERSIONS, handleMcpMessage, mcpEndpoint } from '../src/mcp.ts';
+import { MCP_PROTOCOL_VERSIONS, handleMcpMessage, mcpEndpoint, serverCard, serverCardEndpoint } from '../src/mcp.ts';
 import { SITE_ORIGIN, addAccount, createCall, createContext, createEnv, funnelCounts } from './worker-helpers.mjs';
 import { assertNoBannedNames } from './private-lists.mjs';
 
@@ -842,4 +842,40 @@ test('an MCP-Protocol-Version the server never offers is refused, a supported on
   assert.match((await refused.json()).error.message, /Unsupported MCP-Protocol-Version "1999-01-01"/);
   assert.equal((await endpoint(env, request('tools/list'), { 'MCP-Protocol-Version': '2025-11-25' })).status, 200);
   assert.equal((await endpoint(env, request('initialize', { protocolVersion: '2026-01-01' }), { 'MCP-Protocol-Version': '2026-01-01' })).status, 200, 'initialize negotiates instead');
+});
+
+test('the server card sits at <endpoint>/server-card and declares what mcp/server.json declares', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const registry = JSON.parse(await readFile(new URL('../../mcp/server.json', import.meta.url), 'utf8'));
+  const card = serverCard(SITE_ORIGIN);
+  assert.equal(card.name, registry.name);
+  assert.equal(card.title, registry.title);
+  assert.equal(card.description, registry.description);
+  assert.equal(card.version, VERSION);
+  assert.deepEqual(card.repository, registry.repository);
+  const [remote] = card.remotes;
+  const { supportedProtocolVersions, ...declared } = remote;
+  assert.deepEqual(declared, registry.remotes[0], 'the remote and its headers match the registry entry');
+  assert.deepEqual(supportedProtocolVersions, [...MCP_PROTOCOL_VERSIONS]);
+
+  const response = serverCardEndpoint({ env: createEnv(), request: new Request(`${SITE_ORIGIN}/api/mcp/server-card`) });
+  assert.match(response.headers.get('Content-Type'), /^application\/mcp-server-card\+json/);
+  assert.equal(response.headers.get('Access-Control-Allow-Origin'), '*');
+});
+
+test('the AI catalog and ARD manifest are the same valid document and point at the server card', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const read = (name) => readFile(new URL(`../public/.well-known/${name}`, import.meta.url), 'utf8');
+  const [catalog, ard] = await Promise.all([read('ai-catalog.json'), read('ard.json')]);
+  assert.equal(catalog, ard);
+  const parsed = JSON.parse(catalog);
+  assert.equal(parsed.specVersion, '1.0');
+  assert.ok(Array.isArray(parsed.entries) && parsed.entries.length > 0);
+  for (const entry of parsed.entries) {
+    assert.match(entry.identifier, /^urn:air:bountyoperator\.com:/);
+    assert.equal(typeof entry.type, 'string');
+    assert.equal(('url' in entry) !== ('data' in entry), true, 'exactly one of url or data');
+    assert.ok(entry.representativeQueries.length >= 2 && entry.representativeQueries.length <= 5);
+  }
+  assert.equal(parsed.entries[0].url, `${SITE_ORIGIN}/api/mcp/server-card`);
 });

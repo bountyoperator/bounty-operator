@@ -1,0 +1,21 @@
+{
+  "specVersion": "1.0",
+  "host": {
+    "displayName": "Bounty Operator",
+    "documentationUrl": "https://bountyoperator.com/mcp"
+  },
+  "entries": [
+    {
+      "identifier": "urn:air:bountyoperator.com:mcp:bounty-operator",
+      "type": "application/mcp-server-card+json",
+      "url": "https://bountyoperator.com/api/mcp/server-card",
+      "displayName": "Bounty Operator MCP server",
+      "description": "Pre-submission review of bug bounty reports and smart-contract findings on your own model key: a verdict, file-and-line citations and the next action.",
+      "representativeQueries": [
+        "review my draft bug bounty report against the code it cites",
+        "check whether this Solidity finding holds before I file it",
+        "calibrate the severity of this finding for a bug bounty programme"
+      ]
+    }
+  ]
+}
