@@ -13,7 +13,9 @@ export async function serveAsset({ env, ctx, request, url }: Call): Promise<Resp
     });
   }
 
-  const response = await env.ASSETS.fetch(request);
+  const asset = await env.ASSETS.fetch(request);
+  // The not-found page asked for by its own address is still a not-found answer.
+  const response = url.pathname === '/404' && asset.status === 200 ? new Response(asset.body, { status: 404, headers: asset.headers }) : asset;
   countVisit(env, ctx, request, url, response);
   return response;
 }

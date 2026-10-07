@@ -29,7 +29,7 @@ import { VERSION, seconds } from './env.ts';
 import type { Call, Env } from './env.ts';
 import { CLIENT_EVENTS, count } from './funnel.ts';
 import { METHOD_SOURCE, missingMethods } from './hosted.ts';
-import { ApiError, aliasRedirect, canonicalRedirect, errorResponse, finalize, internalError, json, readJson, redirectResponse } from './http.ts';
+import { ApiError, aliasRedirect, canonicalRedirect, compressPage, errorResponse, finalize, internalError, json, pageRedirect, readJson, redirectResponse } from './http.ts';
 import { mcpEndpoint } from './mcp.ts';
 import { reapStaleLeases, usage } from './quota.mjs';
 import { clientKey, edgeLimit, rateLimit } from './rate.ts';
@@ -308,11 +308,11 @@ export default {
     const url = new URL(request.url);
     const call: Call = { request, env, ctx, url };
 
-    const location = canonicalRedirect(request.method, url, env.SITE_ORIGIN) ?? aliasRedirect(request.method, url);
+    const location = canonicalRedirect(request.method, url, env.SITE_ORIGIN) ?? aliasRedirect(request.method, url) ?? pageRedirect(request.method, url);
     if (location) return finalize(redirectResponse(location), 'redirect', url.pathname);
 
     if (url.pathname.startsWith('/api/')) return finalize(await handleApi(call), 'api', url.pathname);
-    return finalize(await serveAsset(call), 'static', url.pathname);
+    return compressPage(finalize(await serveAsset(call), 'static', url.pathname), request);
   },
 
   async scheduled(controller: ScheduledController, env: Env): Promise<void> {

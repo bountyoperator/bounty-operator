@@ -104,6 +104,23 @@ export function aliasRedirect(method: string, url: URL): string | null {
   return Object.hasOwn(ALIASES, url.pathname) ? `${url.origin}${ALIASES[url.pathname]}` : null;
 }
 
+/**
+ * A page asked for by its file name (/pricing.html) or with a trailing slash
+ * (/pricing/) moves permanently to its one address (/pricing). The asset
+ * server would send a temporary 307 for the same move, which search engines
+ * do not treat as final. Only the root has an index.html, so this cannot loop.
+ */
+export function pageRedirect(method: string, url: URL): string | null {
+  if (method !== 'GET' && method !== 'HEAD') return null;
+  const { pathname } = url;
+  if (pathname === '/' || pathname.startsWith('/api/') || pathname.startsWith('/.well-known/')) return null;
+  let page = pathname;
+  if (page.endsWith('/index.html')) page = page.slice(0, -'index.html'.length);
+  else if (page.endsWith('.html')) page = page.slice(0, -'.html'.length);
+  page = page.replace(/\/+$/, '') || '/';
+  return page === pathname ? null : `${url.origin}${page}${url.search}`;
+}
+
 export function redirectResponse(location: string, status = 301): Response {
   return new Response(null, { status, headers: { Location: location } });
 }
@@ -189,6 +206,39 @@ export function cachePolicy({ kind, pathname, contentType }: CachePolicyInput): 
  * Every response the Worker sends passes through here, and nothing else sets
  * these headers.
  */
+/** The encodings a client accepts, from the header Cloudflare saw before it normalised it. */
+function acceptedEncodings(request: Request): Set<string> {
+  const cf = (request as Request & { cf?: { clientAcceptEncoding?: string } }).cf;
+  const header = cf?.clientAcceptEncoding ?? request.headers.get('accept-encoding') ?? '';
+  const accepted = new Set<string>();
+  for (const part of header.toLowerCase().split(',')) {
+    const [name, ...params] = part.trim().split(';');
+    const quality = params.map((param) => param.trim()).find((param) => param.startsWith('q='));
+    if (name && !(quality && Number(quality.slice(2)) === 0)) accepted.add(name);
+  }
+  return accepted;
+}
+
+/**
+ * Pages carry `no-transform` (see HTML_CACHE), which also stops Cloudflare
+ * compressing them, so the Worker asks the runtime to: with Content-Encoding
+ * set, the runtime encodes the body as it sends it. Only HTML with a body is
+ * touched; every other type is compressed by Cloudflare as before.
+ */
+export function compressPage(response: Response, request: Request): Response {
+  const type = response.headers.get('content-type') ?? '';
+  if (!type.startsWith('text/html') || !response.body || response.headers.has('content-encoding')) return response;
+  if (request.method === 'HEAD' || response.status === 204 || response.status === 304) return response;
+  const accepted = acceptedEncodings(request);
+  const encoding = accepted.has('br') ? 'br' : accepted.has('gzip') ? 'gzip' : '';
+  if (!encoding) return response;
+  const result = new Response(response.body, response);
+  result.headers.set('Content-Encoding', encoding);
+  result.headers.append('Vary', 'Accept-Encoding');
+  result.headers.delete('Content-Length');
+  return result;
+}
+
 export function finalize(response: Response, kind: ResponseKind, pathname: string): Response {
   const result = new Response(response.body, response);
   for (const [name, value] of Object.entries(SECURITY_HEADERS)) result.headers.set(name, value);

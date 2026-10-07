@@ -12,6 +12,8 @@ import {
   cachePolicy,
   aliasRedirect,
   canonicalRedirect,
+  compressPage,
+  pageRedirect,
   errorResponse,
   finalize,
   internalError,
@@ -51,6 +53,40 @@ test('the top-level security.txt and favicon.png move to the files that exist', 
   assert.equal(aliasRedirect('GET', new URL(`${SITE}/.well-known/security.txt`)), null);
   assert.equal(aliasRedirect('GET', new URL(`${SITE}/security.txt.bak`)), null);
   assert.equal(aliasRedirect('GET', new URL(`${SITE}/constructor`)), null, 'no inherited keys');
+});
+
+test('a page asked for by its file name or with a trailing slash moves permanently to its one address', () => {
+  const move = (path, method = 'GET') => pageRedirect(method, new URL(`${SITE}${path}`));
+  assert.equal(move('/pricing.html'), `${SITE}/pricing`);
+  assert.equal(move('/pricing/'), `${SITE}/pricing`);
+  assert.equal(move('/benchmark/method.html?x=1'), `${SITE}/benchmark/method?x=1`);
+  assert.equal(move('/templates/immunefi/'), `${SITE}/templates/immunefi`);
+  assert.equal(move('/index.html'), `${SITE}/`);
+  assert.equal(move('/404.html'), `${SITE}/404`);
+  for (const path of ['/', '/pricing', '/css/base.css', '/api/mcp/', '/.well-known/agent-skills/', '/dl/bounty-operator-mcp.tgz']) {
+    assert.equal(move(path), null, path);
+  }
+  assert.equal(move('/pricing.html', 'POST'), null);
+});
+
+test('pages ask the runtime for brotli or gzip by what the client accepts; nothing else is touched', () => {
+  const page = () => new Response('<!doctype html><p>hi</p>', { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Content-Length': '24' } });
+  const get = (encoding, init = {}) => new Request(`${SITE}/pricing`, { ...init, headers: encoding === null ? {} : { 'Accept-Encoding': encoding } });
+
+  const br = compressPage(page(), get('gzip, deflate, br'));
+  assert.equal(br.headers.get('Content-Encoding'), 'br');
+  assert.equal(br.headers.get('Vary'), 'Accept-Encoding');
+  assert.equal(br.headers.get('Content-Length'), null, 'the runtime sets the length of the encoded body');
+  assert.equal(compressPage(page(), get('gzip')).headers.get('Content-Encoding'), 'gzip');
+  assert.equal(compressPage(page(), get('br;q=0, gzip')).headers.get('Content-Encoding'), 'gzip', 'q=0 refuses an encoding');
+  assert.equal(compressPage(page(), get(null)).headers.get('Content-Encoding'), null);
+  assert.equal(compressPage(page(), get('identity')).headers.get('Content-Encoding'), null);
+  assert.equal(compressPage(page(), get('br', { method: 'HEAD' })).headers.get('Content-Encoding'), null, 'a HEAD has no body to encode');
+
+  const css = new Response('body{}', { headers: { 'Content-Type': 'text/css' } });
+  assert.equal(compressPage(css, get('br')).headers.get('Content-Encoding'), null, 'Cloudflare compresses other types itself');
+  const already = new Response('x', { headers: { 'Content-Type': 'text/html', 'Content-Encoding': 'gzip' } });
+  assert.equal(compressPage(already, get('br')).headers.get('Content-Encoding'), 'gzip');
 });
 
 test('a hostile path cannot turn the redirect into an open redirect', () => {
