@@ -80,7 +80,7 @@ test('the server imports the engine from lib/ and nothing from outside the packa
 
 test('the package is publishable: one version, a bin with a shebang, a whitelist and no runtime dependency', async () => {
   assert.equal(manifest.name, 'bounty-operator-mcp');
-  assert.equal(manifest.version, '0.7.5');
+  assert.equal(manifest.version, '0.7.6');
   assert.equal(VERSION, manifest.version);
   assert.equal(manifest.private, undefined);
   assert.equal(manifest.type, 'module');

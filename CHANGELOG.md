@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.7.6 — 2026-10-07
+
+MCP
+
+- Opening a session no longer counts against the remote endpoint's
+  allowance. initialize, initialized, tools/list, prompts/list and ping are
+  free; only tool calls count, 300 per address per 10 minutes. An agent that
+  started many short sessions spent the old allowance on these alone and got
+  HTTP 429 on every request for up to ten minutes.
+- A tool call over the allowance comes back as a tool error that says how
+  long to wait, with a Retry-After header, so the agent can wait and retry
+  instead of losing the server.
+
+Site
+
+- /security.txt redirects to /.well-known/security.txt.
+
 ## 0.7.5 — 2026-10-05
 
 MCP

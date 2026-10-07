@@ -74,7 +74,7 @@ test('account reads the usage the Worker reports for the token', { skip }, async
   assert.equal(usage.concurrency, 1);
   assert.deepEqual(price, { usd: 10, interval: 'week' });
   assert.equal(limits.files, 50);
-  assert.equal(version, '0.7.5');
+  assert.equal(version, '0.7.6');
 
   const unknown = failure(await local({ BOUNTY_OPERATOR_TOKEN: `bok_${'Z'.repeat(43)}` }).tool('account'));
   assert.equal(unknown.code, 'token');

@@ -49,20 +49,23 @@
 <header class="docs-head">
 <nav class="breadcrumbs" aria-label="Breadcrumb"><ol><li><a href="/">Bounty Operator</a></li><li aria-current="page">Changelog</li></ol></nav>
 <h1>Bounty Operator changelog</h1>
-<p class="lede">Every release, newest first, with its date. The current version is 0.7.5.</p>
-<p class="meta docs-head__meta">11 releases · latest <time datetime="2026-10-05">5 October 2026</time></p>
+<p class="lede">Every release, newest first, with its date. The current version is 0.7.6.</p>
+<p class="meta docs-head__meta">12 releases · latest <time datetime="2026-10-07">7 October 2026</time></p>
 
 </header>
 
 <div class="docs-body">
 <nav class="docs-toc" aria-label="On this page">
 <p class="meta">On this page</p>
-<ul><li><a href="#v0-7-5">0.7.5</a></li><li><a href="#v0-7-4">0.7.4</a></li><li><a href="#v0-7-3">0.7.3</a></li><li><a href="#v0-7-2">0.7.2</a></li><li><a href="#v0-7-1">0.7.1</a></li><li><a href="#v0-7-0">0.7.0</a></li><li><a href="#v0-6-0">0.6.0</a></li><li><a href="#v0-5-0">0.5.0</a></li><li><a href="#v0-3-0">0.3.0</a></li><li><a href="#v0-2-0">0.2.0</a></li><li><a href="#v0-1-0">0.1.0</a></li></ul>
+<ul><li><a href="#v0-7-6">0.7.6</a></li><li><a href="#v0-7-5">0.7.5</a></li><li><a href="#v0-7-4">0.7.4</a></li><li><a href="#v0-7-3">0.7.3</a></li><li><a href="#v0-7-2">0.7.2</a></li><li><a href="#v0-7-1">0.7.1</a></li><li><a href="#v0-7-0">0.7.0</a></li><li><a href="#v0-6-0">0.6.0</a></li><li><a href="#v0-5-0">0.5.0</a></li><li><a href="#v0-3-0">0.3.0</a></li><li><a href="#v0-2-0">0.2.0</a></li><li><a href="#v0-1-0">0.1.0</a></li></ul>
 </nav>
 <div class="docs-content">
 
-<section class="docs-section" aria-labelledby="v0-7-5">
-<h2 class="docs-section__title" id="v0-7-5">0.7.5<span class="release__date"><time datetime="2026-10-05">5 October 2026</time></span><span class="release__latest"><span class="chip" data-tone="observed">Latest</span></span></h2>
+<section class="docs-section" aria-labelledby="v0-7-6">
+<h2 class="docs-section__title" id="v0-7-6">0.7.6<span class="release__date"><time datetime="2026-10-07">7 October 2026</time></span><span class="release__latest"><span class="chip" data-tone="observed">Latest</span></span></h2>
+<div class="prose"><h3 class="release__group">MCP</h3><ul><li>Opening a session no longer counts against the remote endpoint&#39;s allowance. initialize, initialized, tools/list, prompts/list and ping are free; only tool calls count, 300 per address per 10 minutes. An agent that started many short sessions spent the old allowance on these alone and got HTTP 429 on every request for up to ten minutes.</li><li>A tool call over the allowance comes back as a tool error that says how long to wait, with a Retry-After header, so the agent can wait and retry instead of losing the server.</li></ul><h3 class="release__group">Site</h3><ul><li>/security.txt redirects to /.well-known/security.txt.</li></ul></div>
+</section><section class="docs-section" aria-labelledby="v0-7-5">
+<h2 class="docs-section__title" id="v0-7-5">0.7.5<span class="release__date"><time datetime="2026-10-05">5 October 2026</time></span></h2>
 <div class="prose"><h3 class="release__group">MCP</h3><ul><li><code>run_review</code> on the remote endpoint answers a client that accepts <code>text/event-stream</code> with a stream: a progress notification every 10 seconds while the review runs, then the result. Claude Code stopped waiting after about a minute and reported &quot;The operation timed out&quot;, so a hosted review that took longer than that never reached the agent. A client that accepts only JSON gets one JSON body, as before.</li><li>On that stream the review reads the model as a stream too, so a slow model is no longer cut off at 270 seconds. A review can run for up to 15 minutes.</li><li><code>/mcp</code>: the Codex remote config sets <code>tool_timeout_sec = 900</code>, and the install panels no longer shift the page when the client tabs load.</li></ul><h3 class="release__group">Challenge a draft report</h3><ul><li>A missing Context field is never a fail on its own.</li><li>Only proof-inline, form-matches-body and read-back block a submit verdict. A failed title, steps, limits or concrete-detail check is a fix note in its row and leaves the verdict as it is.</li><li>When Context gives no proof-field contents, proof-inline judges the report body alone.</li><li>Published Paydirt results remain the original frozen measurements.</li></ul></div>
 </section><section class="docs-section" aria-labelledby="v0-7-4">
 <h2 class="docs-section__title" id="v0-7-4">0.7.4<span class="release__date"><time datetime="2026-10-04">4 October 2026</time></span></h2>
