@@ -6,7 +6,7 @@
       "type": "skill-md",
       "description": "Checks a draft bug bounty report against the code it cites before it is filed. Marks every claim confirmed, overstated, contradicted or unverifiable with the line that decides it, runs the submission checks and ends in one verdict: submit, rewrite-then-submit, prove-first, hold-duplicate or drop. Use before filing a bug bounty or audit-contest report on Immunefi, Cantina, Sherlock, HackerOne or a similar platform, and whenever the user asks whether a finding write-up is ready to submit. Runs on your own model with no account.",
       "url": "/.well-known/agent-skills/challenge-report/SKILL.md",
-      "digest": "sha256:0380841c0c0b65790ba8b3c144cd61835dd8e968da326e53c2abb53c6c007410"
+      "digest": "sha256:5a434379156724d2bbe2f8dadd9b4ab7dee6bc5a2c011192d47ca6b7725b2284"
     },
     {
       "name": "solidity-review",

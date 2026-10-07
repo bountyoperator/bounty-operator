@@ -5,10 +5,10 @@
 Immunefi Studio
 
 - Immunefi Studio runs its own MCP server. With it connected next to
-  Bounty Operator, the gauntlet and the report challenge read the Immunefi
-  programme from its `list_programs` tool and, for a smart contract with
-  Instascope access, `get_proxy_history` and `get_target_state`, and pass
-  them to the review as files. Both servers' prompts and the gauntlet and
+  Bounty Operator, the gauntlet and the report challenge find the Immunefi
+  programme with its `list_programs` tool and, for a smart contract with
+  Instascope access, call `get_proxy_history` and `get_target_state`, and
+  pass what they return to the review as files. Both servers' prompts and the gauntlet and
   challenge-report skills say so. Without it, nothing changes.
 - After the report, the gauntlet skill offers to keep the verdict and the
   open counterarguments as a Studio case and tasks, and writes to Studio

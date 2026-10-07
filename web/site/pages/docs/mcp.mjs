@@ -351,7 +351,7 @@ const IMMUNEFI_TOKEN_VAR = 'IMMUNEFI_STUDIO_TOKEN';
 
 const immunefi = html`
 <div class="prose">
-<p>${inline('Immunefi Studio runs its own MCP server. Add it next to this one, and the gauntlet and the report challenge read an Immunefi programme from it: `list_programs` for the assets, impacts and rules in scope and, with Instascope access, `get_proxy_history` and `get_target_state` for the deployed contract the finding names. Studio Review feedback, cases and tasks are there too. The gauntlet writes a case to your Studio workspace only when you say yes.')}</p>
+<p>${inline('Immunefi Studio runs its own MCP server. Add it next to this one, and on an Immunefi programme the gauntlet and the report challenge use it: `list_programs` finds the programme and, with Instascope access, `get_proxy_history` and `get_target_state` read the deployed contract the finding names. What those tools return goes to the review as files. Studio Review feedback, cases and tasks are there too. The gauntlet writes a case to your Studio workspace only when you say yes.')}</p>
 <p>Create a personal access token on <a class="link" href="${IMMUNEFI_AGENTS}">Studio’s agents page</a>. It starts with <code>stu_</code> and acts as you, so keep it in an environment variable. Your agent sends it to Immunefi; Bounty Operator never receives it.</p>
 </div>
 ${shell(`claude mcp add --transport http immunefi-studio ${IMMUNEFI_ENDPOINT} --header "Authorization: Bearer $${IMMUNEFI_TOKEN_VAR}"`, 'Claude Code: add Immunefi Studio’s MCP server')}

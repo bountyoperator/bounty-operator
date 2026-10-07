@@ -196,7 +196,7 @@ The gauntlet needs a connection token and a provider key. Set `BOUNTY_OPERATOR_T
 
 The three review skills carry their full method and run on your own model with no account. The hosted stages run on the Bounty Operator server and are not in this repository.
 
-On an Immunefi programme, add Immunefi Studio's own MCP server next to this one. With it connected, the gauntlet and the report challenge read the programme's assets, impacts and rules in scope from its `list_programs` tool and, with Instascope access, the deployed contract's proxy history and live state. Create a personal access token at [studio.immunefi.com/agents](https://studio.immunefi.com/agents), then:
+On an Immunefi programme, add Immunefi Studio's own MCP server next to this one. With it connected, the gauntlet and the report challenge find the programme with its `list_programs` tool and, with Instascope access, read the deployed contract's proxy history and live state, and pass what those tools return to the review as files. Create a personal access token at [studio.immunefi.com/agents](https://studio.immunefi.com/agents), then:
 
 ```bash
 claude mcp add --transport http immunefi-studio https://studio.immunefi.com/api/mcp --header "Authorization: Bearer $IMMUNEFI_STUDIO_TOKEN"

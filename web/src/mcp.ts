@@ -541,7 +541,7 @@ const CONTEXT_STEP =
 const IMMUNEFI_STEP =
   "If the report is for an Immunefi programme and Immunefi Studio's MCP server is connected, read the programme with its list_programs tool and, for a smart contract, the contract's get_proxy_history and get_target_state, and pass what they return as files to every stage. Without that server, go on without them.";
 const IMMUNEFI_RULES_STEP =
-  "If the report is for an Immunefi programme and Immunefi Studio's MCP server is connected, read the programme with its list_programs tool and pass what it returns about assets, impacts and rules in scope as one more file.";
+  "If the report is for an Immunefi programme and Immunefi Studio's MCP server is connected, find the programme with its list_programs tool and pass what it returns about the programme as one more file.";
 
 function platformLine(platform: string | undefined): string {
   return platform ? ` The report is for ${platform}.` : '';
