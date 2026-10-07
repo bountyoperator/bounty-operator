@@ -7,19 +7,27 @@
 // preview publish). When the folder has no latest.json there is nothing to
 // show: loadPublished() returns null and no benchmark page is generated.
 //
-// Only the published files are read: latest.json, models/<slug>.json and
-// practice/latest.json. They carry outcomes and hashes, never case text. Every
+// Of the results, only the published files are read: latest.json,
+// models/<slug>.json and practice/latest.json. They carry outcomes and hashes,
+// never case text. profileDrift() also reads bench/protocol.json and the
+// frozen profile texts in bench/prompts/frozen, which are public, to tell
+// whether the product still sends each profile as it was measured. Every
 // number a page shows goes through one of the formatters in `fmt`, and the
 // tests run the file's numbers through the same formatters.
 
+import { createHash } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { liveProfile } from '../../../../bench/lib/arms.mjs';
+import { protocolHashes } from '../../../../bench/lib/protocol.mjs';
 import { longDate } from '../docs/_shared.mjs';
 
 export const DEFAULT_DIR = fileURLToPath(new URL('../../../public/bench/', import.meta.url));
 export const PUBLISHED_DIR = process.env.PAYDIRT_PUBLISHED_DIR ? path.resolve(process.env.PAYDIRT_PUBLISHED_DIR) : DEFAULT_DIR;
+/** The harness folder: protocol.json and the frozen profile texts a run sent. */
+export const BENCH_DIR = fileURLToPath(new URL('../../../../bench/', import.meta.url));
 
 /** Where the published files are served on the site. */
 export const SERVED = '/bench';
@@ -73,6 +81,30 @@ export function loadPublished(dir = PUBLISHED_DIR) {
   const practiceFile = path.join(dir, 'practice', 'latest.json');
   const practice = existsSync(practiceFile) ? readJson(practiceFile) : null;
   return { dir, results, details, practice: practice?.schema === SCHEMA && Array.isArray(practice.models) && practice.models.length ? practice : null };
+}
+
+/**
+ * For each profile arm of a published run, whether the product sends that
+ * profile today exactly as the run measured it: { <arm>: 'same' | 'changed' }.
+ * An arm is left out when this checkout cannot tell: the protocol or the
+ * frozen text in `benchDir` is not the one the run recorded.
+ */
+export async function profileDrift(results, benchDir = BENCH_DIR) {
+  const protocolFile = path.join(benchDir, 'protocol.json');
+  if (!existsSync(protocolFile)) return {};
+  const protocol = readJson(protocolFile);
+  const now = protocolHashes(protocol).arms;
+  const drift = {};
+  for (const [arm, recorded] of Object.entries(results.hashes?.arms ?? {})) {
+    const frozenFile = path.join(benchDir, 'prompts', 'frozen', `${arm}.md`);
+    const expected = protocol.engine?.profiles?.[arm]?.system_sha256;
+    if (!expected || now[arm] !== recorded || !existsSync(frozenFile)) continue;
+    const frozen = readFileSync(frozenFile, 'utf8').replace(/\r\n?/g, '\n').trim();
+    if (createHash('sha256').update(frozen).digest('hex') !== expected) continue;
+    const live = (await liveProfile(arm)).sent.trim();
+    drift[arm] = live === frozen ? 'same' : 'changed';
+  }
+  return drift;
 }
 
 // ---------------------------------------------------------------------------
@@ -177,6 +209,24 @@ function pairOutcome(outcomes, pair, arm, repeats) {
   // The pair counts as the aggregate counts it: right when most repeats are right.
   if (count('right') * 2 > perRep.length) return 'right';
   return count('failed') > count('wrong') ? 'failed' : 'wrong';
+}
+
+/** Inputs of `arm` on `pairs`, every repeat: how many there were, failed, and were cut short at the output limit. */
+function armCounts(outcomes, pairs, arm, repeats) {
+  if (!outcomes) return null;
+  const counts = { inputs: 0, failed: 0, truncated: 0 };
+  for (let rep = 1; rep <= repeats; rep += 1) {
+    for (const pair of pairs) {
+      for (const caseId of Object.values(pair.cases ?? {})) {
+        const entry = outcomes.find((o) => o.case === caseId && o.arm === arm && o.rep === rep);
+        if (!entry) return null;
+        counts.inputs += 1;
+        if (entry.status === 'failed') counts.failed += 1;
+        if (entry.failure === 'truncated') counts.truncated += 1;
+      }
+    }
+  }
+  return counts;
 }
 
 /** Combine the matching core profiles over the same pairs, before taking the median repeat. */
@@ -292,7 +342,12 @@ export function buildView(published) {
       }
       if (!complete(row.model, arm) || typeof lift?.delta !== 'number') continue;
       const families = Object.entries(results.arms ?? {}).filter(([, arms]) => arms.includes(arm)).map(([family]) => family);
-      lifts.push({ row, arm, families, lift, profileScore: row.model.arms[arm].score.median, rawScore: families.length === 1 ? row.arm.by_family?.[families[0]] ?? null : null });
+      // Failed and cut-short answers on the same pairs, arm by arm: a cut-short answer scores as wrong.
+      const armPairs = (results.pairs ?? []).filter((pair) => families.includes(pair.family));
+      const outcomes = details.get(row.slug);
+      const counts = { raw: armCounts(outcomes, armPairs, headline, repeats), profile: armCounts(outcomes, armPairs, arm, repeats) };
+      const mostlyCut = !!counts.profile && counts.profile.truncated * 2 > counts.profile.inputs;
+      lifts.push({ row, arm, families, lift, counts, mostlyCut, profileScore: row.model.arms[arm].score.median, rawScore: families.length === 1 ? row.arm.by_family?.[families[0]] ?? null : null });
     }
   }
 

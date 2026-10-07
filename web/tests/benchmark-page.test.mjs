@@ -639,3 +639,67 @@ test('an unfinished profile arm of a ranked model gets no lift row, and the page
   assert.ok(text.includes('No lift is shown for '), 'the unfinished arm is named');
   assert.ok(text.includes(`${ranked.name} with the `) && text.includes(`(${pending.answered} of ${pending.inputs} inputs completed)`), 'with its model and its count');
 });
+
+test('a lift row counts failed and cut-short answers on its own pairs, and marks an arm that was mostly cut short', () => {
+  const { many } = fixtures;
+  const entry = many.view.lifts.find((lift) => lift.arm === 'report');
+  assert.ok(entry && entry.counts.profile && entry.counts.raw, 'the fixture has a report lift with counts');
+  // Six draft-report pairs, two inputs each, one repeat.
+  assert.equal(entry.counts.profile.inputs, 12);
+  assert.equal(entry.counts.raw.inputs, 12);
+  // Cut every profile answer of that model's report arm short at the output limit.
+  const details = new Map(many.published.details);
+  details.set(entry.row.slug, details.get(entry.row.slug).map((o) => (o.arm === 'report' ? { ...o, status: 'failed', failure: 'truncated', correct: false } : o)));
+  const published = { ...many.published, details };
+  const view = buildView(published);
+  const cut = view.lifts.find((lift) => lift.row.slug === entry.row.slug && lift.arm === 'report');
+  assert.deepEqual(cut.counts.profile, { inputs: 12, failed: 12, truncated: 12 });
+  assert.equal(cut.mostlyCut, true);
+  assert.ok(view.lifts.filter((lift) => lift !== cut).every((lift) => !lift.mostlyCut || lift.row.slug === entry.row.slug));
+  const markup = String(benchmarkPages(published)[0].body);
+  const text = textOf(markup.slice(markup.indexOf('id="lift"')));
+  assert.ok(text.includes('12 of 12 answers failed; 12 cut short'));
+  assert.ok(text.includes('Most answers cut short'));
+  assert.ok(text.includes(`${entry.row.name}: in one profile arm most answers were cut short at the output limit`));
+  assert.ok(text.includes('A cut-short answer scores as wrong, so that lift measures where the limit fell'));
+  // The untouched release says none of it.
+  const plain = textOf(String(many.page.body));
+  assert.ok(!plain.includes('Most answers cut short') && !plain.includes('most answers were cut short'));
+});
+
+test('the lift notes name a profile the product no longer sends as measured, and only one the run recorded', async () => {
+  const { many } = fixtures;
+  const text = textOf(String(benchmarkPages(many.published, { report: 'changed', solidity: 'same', general: 'same' })[0].body));
+  assert.ok(text.includes('Challenge a draft report has changed since these runs'));
+  assert.ok(text.includes('so its rows measure the earlier text. Solidity review and Code security review are sent today exactly as measured.'));
+  assert.ok(!textOf(String(many.page.body)).includes('changed since these runs'), 'no drift given, no note');
+
+  // profileDrift against the published run: one verdict per profile arm, and it agrees with the texts.
+  const { profileDrift, BENCH_DIR } = await import('../site/pages/benchmark/_data.mjs');
+  const { liveProfile, frozenProfile } = await import('../../bench/lib/arms.mjs');
+  const results = JSON.parse(readFileSync(path.join(DEFAULT_DIR, 'latest.json'), 'utf8'));
+  const drift = await profileDrift(results);
+  const arms = Object.keys(results.hashes.arms).filter((arm) => arm !== 'raw');
+  assert.deepEqual(Object.keys(drift).sort(), [...arms].sort());
+  for (const arm of arms) {
+    const same = (await liveProfile(arm)).sent.trim() === frozenProfile(arm);
+    assert.equal(drift[arm], same ? 'same' : 'changed', arm);
+  }
+
+  // A frozen text that is not the one the run recorded, or a protocol that moved: no verdict for that arm.
+  const bench = mkdtempSync(path.join(tmpdir(), 'paydirt-drift-'));
+  try {
+    cpSync(path.join(BENCH_DIR, 'protocol.json'), path.join(bench, 'protocol.json'));
+    cpSync(path.join(BENCH_DIR, 'prompts', 'frozen'), path.join(bench, 'prompts', 'frozen'), { recursive: true });
+    writeFileSync(path.join(bench, 'prompts', 'frozen', 'solidity.md'), 'edited after the run\n');
+    const edited = await profileDrift(results, bench);
+    assert.ok(!('solidity' in edited));
+    assert.deepEqual(Object.keys(edited).sort(), arms.filter((arm) => arm !== 'solidity').sort());
+    const protocol = JSON.parse(readFileSync(path.join(bench, 'protocol.json'), 'utf8'));
+    writeFileSync(path.join(bench, 'protocol.json'), JSON.stringify({ ...protocol, release: `${protocol.release}-moved` }));
+    assert.deepEqual(await profileDrift(results, bench), {});
+    assert.deepEqual(await profileDrift(results, path.join(bench, 'missing')), {});
+  } finally {
+    rmSync(bench, { recursive: true, force: true });
+  }
+});

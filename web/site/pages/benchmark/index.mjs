@@ -21,7 +21,7 @@ import { attrs, button, chip, codeBlock, cx, faq, html, icon, inline, link, sect
 import { SITE, absoluteUrl, breadcrumbsLd, faqPageLd } from '../../layout.mjs';
 import { pageHero, workbenchLink } from '../method/_shared.mjs';
 import { reviewProfile } from '../../../public/profiles.mjs';
-import { FAMILIES, METHOD_PATH, PAGE_PATH, SERVED, buildView, familyLabel, findings, fmt, inWords, listing, listingOr, loadPublished, pairsRight } from './_data.mjs';
+import { FAMILIES, METHOD_PATH, PAGE_PATH, SERVED, buildView, familyLabel, findings, fmt, inWords, listing, listingOr, loadPublished, pairsRight, profileDrift } from './_data.mjs';
 import { BLOB, methodSentence } from './_markdown.mjs';
 import { METHOD_SOURCE } from './method.mjs';
 
@@ -231,18 +231,39 @@ ${resultCell(entry, 'profile', 'With Bounty Operator')}
 </section>`;
 }
 
-function liftSection(view) {
+/** "3 of 12 answers failed; 2 cut short", in the words of the combined comparison, when any failed. */
+function failureLine(counts) {
+  if (!counts || counts.failed === 0) return '';
+  return html`<span class="comparison__failure">${counts.failed} of ${counts.inputs} answers failed${counts.truncated > 0 ? `; ${counts.truncated} cut short` : ''}</span>`;
+}
+
+/**
+ * What a reader needs before judging a lift: rows where most answers were cut
+ * short at the output limit, and profiles the product no longer sends as they
+ * were measured (`drift` from profileDrift()).
+ */
+function liftNotes(view, drift) {
+  const cutRows = view.lifts.filter((entry) => entry.mostlyCut);
+  const cutModels = [...new Map(cutRows.map((entry) => [entry.row.slug, entry.row.name])).values()];
+  const arms = [...new Set(view.lifts.map((entry) => entry.arm))];
+  const changed = arms.filter((arm) => drift[arm] === 'changed').map((arm) => reviewProfile(arm).name);
+  const same = arms.filter((arm) => drift[arm] === 'same').map((arm) => reviewProfile(arm).name);
+  return html`${cutRows.length > 0 && html`<p class="fine bench-note">${listing(cutModels)}: in ${cutRows.length === 1 ? 'one profile arm' : `${inWords(cutRows.length)} profile arms`} most answers were cut short at the output limit, marked under the lift. A cut-short answer scores as wrong, so ${cutRows.length === 1 ? 'that lift measures' : 'those lifts measure'} where the limit fell, not what the profile changed in the review. The harness requests each model’s highest reasoning effort, and reasoning counts toward the same limit. The product does not request the highest effort, and a streamed review on a model it lists gets 64,000 output tokens. Neither setting is measured here.</p>`}
+  ${changed.length > 0 && html`<p class="fine bench-note">${listing(changed)} ${changed.length === 1 ? 'has' : 'have'} changed since these runs (see the <a class="link" href="/changelog">changelog</a>), so ${changed.length === 1 ? 'its rows measure' : 'their rows measure'} the earlier text.${same.length > 0 ? ` ${listing(same)} ${same.length === 1 ? 'is' : 'are'} sent today exactly as measured.` : ''}</p>`}`;
+}
+
+function liftSection(view, drift = {}) {
   if (!view.lifts.length && !view.liftsPending.length) return '';
   const pending = view.liftsPending.map(({ row, arm, answered, inputs }) => `${row.name} with the ${reviewProfile(arm).name} profile (${answered} of ${inputs} inputs completed)`);
-  const rows = view.lifts.map(({ row, arm, families, lift, profileScore, rawScore }) => {
+  const rows = view.lifts.map(({ row, arm, families, lift, counts, mostlyCut, profileScore, rawScore }) => {
     const profile = reviewProfile(arm);
     const interval = lift.ci95 ? `${fmt.delta(lift.ci95[0])} to ${fmt.delta(lift.ci95[1])}` : null;
     return html`<tr>
 <th scope="row" class="lift__model">${modelCell(row, { level: 'none' })}</th>
 <td><span class="cell-label">Profile</span>${profile.name}<span class="lift__pairs">${lift.n_pairs} ${families.map((family) => FAMILIES[family]?.noun ?? family).join(', ')} pairs</span></td>
-<td class="num"><span class="cell-label">Without Bounty Operator</span>${show(fmt.score(rawScore))}</td>
-<td class="num"><span class="cell-label">With Bounty Operator</span>${show(fmt.score(profileScore))}</td>
-<td class="num lift__delta" data-sign="${lift.delta > 0 ? 'up' : lift.delta < 0 ? 'down' : 'flat'}"><span class="cell-label">Lift</span>${fmt.delta(lift.delta)}</td>
+<td class="num"><span class="cell-label">Without Bounty Operator</span>${show(fmt.score(rawScore))}${failureLine(counts?.raw)}</td>
+<td class="num"><span class="cell-label">With Bounty Operator</span>${show(fmt.score(profileScore))}${failureLine(counts?.profile)}</td>
+<td class="num lift__delta" data-sign="${lift.delta > 0 ? 'up' : lift.delta < 0 ? 'down' : 'flat'}"><span class="cell-label">Lift</span>${fmt.delta(lift.delta)}${mostlyCut && html`<span class="comparison__failure">Most answers cut short</span>`}</td>
 <td class="num lift__ci"><span class="cell-label">95% interval</span>${intervalBar(lift.ci95, lift.delta, { min: -100, max: 100, zero: true })}${show(interval)}</td>
 <td><span class="cell-label">Significant</span>${lift.significant ? chip('Yes', { tone: 'observed' }) : chip('No', { tone: 'neutral' })}</td>
 </tr>`;
@@ -263,6 +284,7 @@ function liftSection(view) {
   </div>`}
   ${pending.length > 0 && html`<p class="fine bench-note">No lift is shown for ${listing(pending)}: ${pending.length === 1 ? 'its runs' : 'their runs'} had not finished when this release was published.</p>`}
   <p class="fine bench-note">Lift is the profile score minus the raw score on the same pairs, in points, with a paired bootstrap interval. It is called significant only when the interval excludes zero. Negative lifts are published as they are.</p>
+  ${liftNotes(view, drift)}
 </section>`;
 }
 
@@ -508,8 +530,11 @@ function datasetLd(view) {
   };
 }
 
-/** The /benchmark page for one publication, or [] when nothing is published. */
-export function benchmarkPages(published) {
+/**
+ * The /benchmark page for one publication, or [] when nothing is published.
+ * `drift`: profileDrift() of the publication, { <arm>: 'same' | 'changed' }.
+ */
+export function benchmarkPages(published, drift = {}) {
   if (!published) return [];
   const view = buildView(published);
   if (!view.rows.length) return [];
@@ -542,7 +567,7 @@ ${comparisonSection(view)}
 
 ${findingsSection(view)}
 ${picksSection(view)}
-${liftSection(view)}
+${liftSection(view, drift)}
 ${pairGrid(view, distribution)}
 ${honestSection(view)}
 ${verifySection(view)}
@@ -573,4 +598,5 @@ ${notRunSection(view)}
   ];
 }
 
-export default benchmarkPages(loadPublished());
+const published = loadPublished();
+export default benchmarkPages(published, published ? await profileDrift(published.results) : {});
