@@ -537,6 +537,11 @@ const ANSWER_STEP =
   'Answer the returned request yourself, as the reviewer the instructions describe. Read the files you already hold, cite every location as <label>:<line> with the labels from the manifest, start at "# Review" and follow the output format exactly.';
 const CONTEXT_STEP =
   'a context object holding only what I have told you: target, scope, version, proof (none, local or deployment), prior (unchecked, searched, overlap or distinct) and any programme rules';
+// Immunefi Studio's own MCP server, when the client has it. The same sentences are in mcp/src/prompts.mjs.
+const IMMUNEFI_STEP =
+  "If the report is for an Immunefi programme and Immunefi Studio's MCP server is connected, read the programme with its list_programs tool and, for a smart contract, the contract's get_proxy_history and get_target_state, and pass what they return as files to every stage. Without that server, go on without them.";
+const IMMUNEFI_RULES_STEP =
+  "If the report is for an Immunefi programme and Immunefi Studio's MCP server is connected, read the programme with its list_programs tool and pass what it returns about assets, impacts and rules in scope as one more file.";
 
 function platformLine(platform: string | undefined): string {
   return platform ? ` The report is for ${platform}.` : '';
@@ -562,11 +567,12 @@ const PROMPTS: readonly Prompt[] = [
         `Challenge my draft report before I submit it.${platformLine(platform)}`,
         '',
         '1. Collect the draft report and every source file it cites. Use repo-relative paths as file names and put the draft first.',
-        `2. Call prepare_review with profile "report", those files, and ${CONTEXT_STEP}.`,
-        `3. ${PRIVACY_STEP}`,
-        `4. ${ANSWER_STEP}`,
-        '5. Call build_packet with your review text, the manifest and the same context.',
-        '6. Show me the verdict, the headline, every open counterargument and every reference problem. Then give me the packet.',
+        `2. ${IMMUNEFI_RULES_STEP}`,
+        `3. Call prepare_review with profile "report", those files, and ${CONTEXT_STEP}.`,
+        `4. ${PRIVACY_STEP}`,
+        `5. ${ANSWER_STEP}`,
+        '6. Call build_packet with your review text, the manifest and the same context.',
+        '7. Show me the verdict, the headline, every open counterargument and every reference problem. Then give me the packet.',
       ].join('\n'),
   },
   {
@@ -599,6 +605,7 @@ const PROMPTS: readonly Prompt[] = [
         gauntletStages(),
         '',
         'Collect the draft report, the source files it cites and any proof I have. Use repo-relative paths as file names and put the draft first.',
+        IMMUNEFI_STEP,
         'Ask me once which provider and model to run on. A run_review stage runs on the Bounty Operator server: it needs my connection token in the Authorization header and my provider key in the X-Provider-Key header. Call account first and tell me how many reviews the plan allows today. The last stage runs on an Operator plan: on a free plan, tell me before stage 1.',
         '',
         'For each stage:',

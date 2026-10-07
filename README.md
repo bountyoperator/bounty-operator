@@ -196,6 +196,14 @@ The gauntlet needs a connection token and a provider key. Set `BOUNTY_OPERATOR_T
 
 The three review skills carry their full method and run on your own model with no account. The hosted stages run on the Bounty Operator server and are not in this repository.
 
+On an Immunefi programme, add Immunefi Studio's own MCP server next to this one. With it connected, the gauntlet and the report challenge read the programme's assets, impacts and rules in scope from its `list_programs` tool and, with Instascope access, the deployed contract's proxy history and live state. Create a personal access token at [studio.immunefi.com/agents](https://studio.immunefi.com/agents), then:
+
+```bash
+claude mcp add --transport http immunefi-studio https://studio.immunefi.com/api/mcp --header "Authorization: Bearer $IMMUNEFI_STUDIO_TOKEN"
+```
+
+The token goes from your agent to Immunefi; Bounty Operator never receives it. The gauntlet writes to your Studio workspace only when you say yes.
+
 ## Paydirt benchmark
 
 Paydirt measures which model finds the planted bug in a held Solidity or

@@ -217,3 +217,16 @@ test('build_packet returns the same verdict, reference check and packet', { skip
   const { here, there } = await both('tools/call', { name: 'build_packet', arguments: { review: 'x', manifest: [] } });
   assert.deepEqual(JSON.parse(here.content[0].text), JSON.parse(there.content[0].text));
 });
+
+test('both servers tell the agent to read an Immunefi programme from Immunefi Studio\'s MCP server when it is connected', { skip }, async () => {
+  for (const name of ['gauntlet', 'challenge-report']) {
+    const { here, there } = await both('prompts/get', { name, arguments: { platform: 'Immunefi' } });
+    for (const text of [here.messages[0].content.text, there.messages[0].content.text]) {
+      assert.match(text, /If the report is for an Immunefi programme and Immunefi Studio's MCP server is connected, read the programme with its list_programs tool/, name);
+    }
+  }
+  const { here, there } = await both('prompts/get', { name: 'gauntlet', arguments: {} });
+  for (const text of [here.messages[0].content.text, there.messages[0].content.text]) {
+    assert.match(text, /get_proxy_history and get_target_state, and pass what they return as files to every stage\. Without that server, go on without them\./);
+  }
+});

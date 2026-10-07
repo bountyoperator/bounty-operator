@@ -19,6 +19,7 @@ The gauntlet takes one finding through eight stages, in the order that ends a we
 - A connection token. Create one in the account panel at https://bountyoperator.com/#account. The plugin reads it from `BOUNTY_OPERATOR_TOKEN`; the local server reads the same variable.
 - A provider key for the model the hosted stages run on. The plugin sends `BOUNTY_OPERATOR_PROVIDER_KEY` as the `X-Provider-Key` header. The local server reads the provider's own variable, such as `OPENROUTER_API_KEY`.
 - Operator, US$10 per week. A run uses seven hosted reviews and the verdict stage runs on Operator only. Free covers one hosted review per UTC day.
+- Optional, for an Immunefi programme: Immunefi Studio's MCP server, described under "On an Immunefi programme".
 
 When one of these is missing, say in one sentence what is needed and where to get it, then offer the `challenge-report` skill: it runs the report stage's method on your own model with no account.
 
@@ -37,6 +38,16 @@ When one of these is missing, say in one sentence what is needed and where to ge
 7. Gate. When a stage's verdict is `drop` or `hold-duplicate`, stop. Show that stage's headline and the lines of its review that decide it, and ask whether to continue. Continue only when the user says so.
 8. After stage 8, call `build_packet` with `review` set to the stage 8 review, `manifest` set to the manifest stage 8 returned, the same context, `profile` `verdict`, `source` `gauntlet`, the model and provider, and `stages` with one `{ "profile", "verdict", "headline" }` entry per earlier stage, in order.
 9. Report, in this order: the final verdict; the blocker and the cheapest action that removes it, as the stage 8 review states them; one line per stage with its verdict and headline; every open counterargument; every reference problem `build_packet` returned. Then give the packet. Do not file, post or send the report.
+
+## On an Immunefi programme
+
+Immunefi Studio runs its own MCP server. When the report is for an Immunefi programme and that server is connected (it is often named `immunefi-studio`; https://bountyoperator.com/mcp has the command to add it), read from it before stage 1:
+
+- Find the programme with its `list_programs` tool. Keep what it returns about the assets in scope, the impacts in scope, the known issues and the programme rules as a file named `immunefi-program.md`, and pass it with the collected files to every stage.
+- For a smart-contract finding, when the Studio token has Instascope access, call `get_proxy_history` and `get_target_state` for the affected contract. Pass their results as `immunefi-proxy-history.md` and `immunefi-target-state.md`: the provenance and proof stages check the deployed code and the live state against them.
+- When the user has a Studio Review of this draft, `get_review` returns its feedback. Pass it to the report stage as `immunefi-studio-review.md`, as one more reviewer's notes, never as a verdict.
+
+After the report, offer to keep the result in the user's Studio workspace: `create_case` with the report title and the final verdict, and one `create_task` per open counterargument. Write to Studio only when the user says yes, because a Studio token acts as the user. If the Immunefi server is not connected, run the gauntlet as above without it.
 
 ## When a call fails
 

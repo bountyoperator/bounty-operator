@@ -6,7 +6,7 @@
       "type": "skill-md",
       "description": "Checks a draft bug bounty report against the code it cites before it is filed. Marks every claim confirmed, overstated, contradicted or unverifiable with the line that decides it, runs the submission checks and ends in one verdict: submit, rewrite-then-submit, prove-first, hold-duplicate or drop. Use before filing a bug bounty or audit-contest report on Immunefi, Cantina, Sherlock, HackerOne or a similar platform, and whenever the user asks whether a finding write-up is ready to submit. Runs on your own model with no account.",
       "url": "/.well-known/agent-skills/challenge-report/SKILL.md",
-      "digest": "sha256:4b867b022ed659f5484538a76cb3eff11b87184712aae1dfa153585c594e9d12"
+      "digest": "sha256:cced3b29936495ced11fbb4e613c032264e0b01dd333df7fdcd0f7b3f3bf5943"
     },
     {
       "name": "solidity-review",
@@ -27,7 +27,7 @@
       "type": "skill-md",
       "description": "Runs a security finding through Bounty Operator's eight pre-submission stages in order (scope, provenance, prior art, proof, severity, triager, report, verdict) on the bounty-operator MCP server, stops at a drop or duplicate gate, then builds the evidence packet and reports the verdict, the blocker and the cheapest action that removes it. Use when the user wants the full pre-submission check on a bug bounty finding and has a Bounty Operator connection token and a provider key. Without them, use challenge-report.",
       "url": "/.well-known/agent-skills/gauntlet/SKILL.md",
-      "digest": "sha256:9ec3f39add247cca54f2ee3b0da13fd7d31e91e16b1ff172617185706078cba2"
+      "digest": "sha256:b4d0401c9096a2da598ec14464e37ec194ee8831939b34f682bc8c0627e23b39"
     },
     {
       "name": "hunt-with-gate",

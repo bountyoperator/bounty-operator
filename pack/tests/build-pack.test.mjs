@@ -283,3 +283,15 @@ test('the discovery index lists every skill with the digest of its file', async 
     assert.ok(entry.description.length <= DESCRIPTION_MAX);
   }
 });
+
+test('the gauntlet reads an Immunefi programme from Immunefi Studio\'s server, and writes to Studio only on a yes', async () => {
+  const gauntlet = await read('skills/gauntlet/SKILL.md');
+  const section = gauntlet.slice(gauntlet.indexOf('## On an Immunefi programme'), gauntlet.indexOf('## When a call fails'));
+  for (const tool of ['list_programs', 'get_proxy_history', 'get_target_state', 'get_review', 'create_case', 'create_task']) assert.ok(section.includes(`\`${tool}\``), tool);
+  assert.match(section, /Write to Studio only when the user says yes, because a Studio token acts as the user\./);
+  assert.match(section, /If the Immunefi server is not connected, run the gauntlet as above without it\./);
+  // These are Immunefi's tools, not this server's: none of them is defined here.
+  const tools = (await read('mcp/src/tools.mjs')) + (await read('web/src/mcp.ts'));
+  for (const tool of ['list_programs', 'get_proxy_history', 'get_target_state']) assert.ok(!tools.includes(`name: '${tool}'`), tool);
+  assert.match(await read('skills/challenge-report/SKILL.md'), /Immunefi Studio's MCP server connected, add one more file last: what its `list_programs` tool returns/);
+});

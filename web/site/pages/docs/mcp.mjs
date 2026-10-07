@@ -340,6 +340,32 @@ ${shell(`claude plugin marketplace add ${REPO_SLUG}\nclaude plugin install bount
 ${shell(`npx skills add ${REPO_SLUG}`, 'Install the skills in any agent')}`;
 
 // ---------------------------------------------------------------------------
+// Immunefi Studio's own MCP server, next to this one. The prompts and the
+// gauntlet skill use its tools when the client has it (mcp/src/prompts.mjs,
+// web/src/mcp.ts, pack/gauntlet.md).
+// ---------------------------------------------------------------------------
+
+const IMMUNEFI_ENDPOINT = 'https://studio.immunefi.com/api/mcp';
+const IMMUNEFI_AGENTS = 'https://studio.immunefi.com/agents';
+const IMMUNEFI_TOKEN_VAR = 'IMMUNEFI_STUDIO_TOKEN';
+
+const immunefi = html`
+<div class="prose">
+<p>${inline('Immunefi Studio runs its own MCP server. Add it next to this one, and the gauntlet and the report challenge read an Immunefi programme from it: `list_programs` for the assets, impacts and rules in scope and, with Instascope access, `get_proxy_history` and `get_target_state` for the deployed contract the finding names. Studio Review feedback, cases and tasks are there too. The gauntlet writes a case to your Studio workspace only when you say yes.')}</p>
+<p>Create a personal access token on <a class="link" href="${IMMUNEFI_AGENTS}">Studio’s agents page</a>. It starts with <code>stu_</code> and acts as you, so keep it in an environment variable. Your agent sends it to Immunefi; Bounty Operator never receives it.</p>
+</div>
+${shell(`claude mcp add --transport http immunefi-studio ${IMMUNEFI_ENDPOINT} --header "Authorization: Bearer $${IMMUNEFI_TOKEN_VAR}"`, 'Claude Code: add Immunefi Studio’s MCP server')}
+${file(
+  `[mcp_servers.immunefi-studio]
+url = "${IMMUNEFI_ENDPOINT}"
+bearer_token_env_var = "${IMMUNEFI_TOKEN_VAR}"`,
+  '~/.codex/config.toml',
+  'Codex: Immunefi Studio’s MCP server',
+)}
+${file(json({ mcpServers: { 'immunefi-studio': { url: IMMUNEFI_ENDPOINT, headers: { Authorization: `Bearer \${env:${IMMUNEFI_TOKEN_VAR}}` } } } }), '~/.cursor/mcp.json', 'Cursor: Immunefi Studio’s MCP server')}
+<p class="fine">${inline('Immunefi runs that server and decides what its tools do; Studio’s agents page lists them. The Instascope and Studio Review tools need those features on your Studio account. Without the server, the prompts and the skills run as before.')}</p>`;
+
+// ---------------------------------------------------------------------------
 // Account token
 // ---------------------------------------------------------------------------
 
@@ -514,6 +540,7 @@ const body = docPage({
     { id: 'hosted', title: 'Core and hosted profiles', body: hosted, prose: false },
     { id: 'prompts', title: 'Three slash commands', label: 'Slash commands', body: prompts, prose: false },
     { id: 'skills', title: 'Skills and the plugin', label: 'Skills and plugin', body: pack, prose: false },
+    { id: 'immunefi', title: 'With Immunefi Studio’s MCP server', label: 'Immunefi Studio', body: immunefi, prose: false },
     { id: 'token', title: 'What needs an account token', label: 'Account token', body: token, prose: false },
     { id: 'permissions', title: 'What the server can reach', label: 'Permissions', body: permissions, prose: false },
     { id: 'errors', title: 'When a call fails', label: 'Failed calls', body: errors, prose: false },

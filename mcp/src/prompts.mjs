@@ -9,6 +9,11 @@ const ANSWER_STEP =
   'Answer the returned request yourself, as the reviewer the instructions describe. Read the files from disk, cite every location as <label>:<line> with the labels from the manifest, start at "# Review" and follow the output format exactly.';
 const CONTEXT_STEP =
   'a context object holding only what I have told you: target, scope, version, proof (none, local or deployment), prior (unchecked, searched, overlap or distinct) and any programme rules';
+// Immunefi Studio's own MCP server, when the client has it. The remote endpoint's prompts use the same sentences.
+const IMMUNEFI_STEP =
+  "If the report is for an Immunefi programme and Immunefi Studio's MCP server is connected, read the programme with its list_programs tool and, for a smart contract, the contract's get_proxy_history and get_target_state, and pass what they return as files to every stage. Without that server, go on without them.";
+const IMMUNEFI_RULES_STEP =
+  "If the report is for an Immunefi programme and Immunefi Studio's MCP server is connected, read the programme with its list_programs tool and pass what it returns about assets, impacts and rules in scope as one more file.";
 
 function platformLine(platform) {
   return platform ? ` The report is for ${platform}.` : '';
@@ -35,11 +40,12 @@ export const PROMPTS = Object.freeze([
         `Challenge my draft report before I submit it.${platformLine(platform)}`,
         '',
         '1. Find the draft report and every source file it cites. Name them as paths under the working directory and put the draft first.',
-        `2. Call prepare_review with profile "report", those paths, and ${CONTEXT_STEP}.`,
-        `3. ${PRIVACY_STEP}`,
-        `4. ${ANSWER_STEP}`,
-        '5. Call build_packet with your review text, the manifest and the same context.',
-        '6. Show me the verdict, the headline, every open counterargument and every reference problem. Then give me the packet.',
+        `2. ${IMMUNEFI_RULES_STEP}`,
+        `3. Call prepare_review with profile "report", those paths, and ${CONTEXT_STEP}.`,
+        `4. ${PRIVACY_STEP}`,
+        `5. ${ANSWER_STEP}`,
+        '6. Call build_packet with your review text, the manifest and the same context.',
+        '7. Show me the verdict, the headline, every open counterargument and every reference problem. Then give me the packet.',
       ].join('\n'),
   },
   {
@@ -69,13 +75,14 @@ export const PROMPTS = Object.freeze([
         `Run the gauntlet on my finding before I submit it.${platformLine(platform)}`,
         '',
         '1. Find the draft report, the source files it cites and any proof I have. Name them as paths under the working directory and put the draft first.',
-        `2. Call run_gauntlet_plan with ${CONTEXT_STEP}.`,
-        '3. Ask me once for the fields the plan lists under "ask". I will leave out what I do not have.',
-        '4. Follow the plan: run each stage in order with its instruction and keep every review under its saveAs name. A run_review stage runs on the Bounty Operator server with my connection token and my provider key, so ask me once which provider and model to use. A prepare_review stage you answer yourself.',
-        `5. ${PRIVACY_STEP}`,
-        '6. If a stage ends in drop or hold-duplicate, show me why and ask whether to continue.',
-        '7. After the last stage, call build_packet with the arguments the plan gives under "finish".',
-        '8. Show me the final verdict, what each stage decided in one line, every open counterargument and every reference problem. Then give me the packet.',
+        `2. ${IMMUNEFI_STEP}`,
+        `3. Call run_gauntlet_plan with ${CONTEXT_STEP}.`,
+        '4. Ask me once for the fields the plan lists under "ask". I will leave out what I do not have.',
+        '5. Follow the plan: run each stage in order with its instruction and keep every review under its saveAs name. A run_review stage runs on the Bounty Operator server with my connection token and my provider key, so ask me once which provider and model to use. A prepare_review stage you answer yourself.',
+        `6. ${PRIVACY_STEP}`,
+        '7. If a stage ends in drop or hold-duplicate, show me why and ask whether to continue.',
+        '8. After the last stage, call build_packet with the arguments the plan gives under "finish".',
+        '9. Show me the final verdict, what each stage decided in one line, every open counterargument and every reference problem. Then give me the packet.',
       ].join('\n'),
   },
 ]);
