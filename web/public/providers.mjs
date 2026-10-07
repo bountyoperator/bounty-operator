@@ -4,9 +4,10 @@
 import { boundedBody } from './review-core.mjs';
 
 const OUTPUT_TOKENS = 16000;
-// Reasoning and the final answer share OpenRouter's output allowance. These
-// exact models exhausted 16k in native document checks and support at least 64k.
-// Keep their own reasoning defaults; give the answer room to finish.
+// Reasoning and the final answer share one output allowance. These exact
+// OpenRouter models exhausted 16k in native document checks and support at
+// least 64k, so they get the larger allowance on every call. Keep their own
+// reasoning defaults; give the answer room to finish.
 const EXTENDED_OUTPUT_TOKENS = 64000;
 const EXTENDED_OPENROUTER_MODELS = new Set([
   'google/gemini-3.8-flash',
@@ -15,6 +16,27 @@ const EXTENDED_OPENROUTER_MODELS = new Set([
   'tencent/hy4-preview',
   'z-ai/glm-5.3',
 ]);
+// Exact models documented to take at least 64,000 output tokens, which get it
+// whenever the answer is streamed. Claude 5.x thinks on every call and GPT-6.x
+// reasons by default, and either can spend 16,000 tokens on reasoning alone
+// and return an empty answer cut off at the cap. Without a stream they keep
+// 16,000: an answer that long would outlast the single-answer limit anyway. A
+// model id the user typed keeps 16,000, since its own ceiling is unknown.
+const LONG_OUTPUT_MODELS = Object.freeze({
+  openrouter: new Set([
+    'openai/gpt-6.1-sol',
+    'anthropic/claude-sonnet-5.5',
+    'deepseek/deepseek-v4.1-flash',
+    'anthropic/claude-opus-5.5',
+    'openai/gpt-6-astra',
+    'x-ai/grok-4.7',
+    'z-ai/glm-5.3-flash',
+    'openai/gpt-6-luna',
+  ]),
+  anthropic: new Set(['claude-opus-5-5', 'claude-sonnet-5-5', 'claude-fable-5-1']),
+  openai: new Set(['gpt-6.1-sol', 'gpt-6-astra', 'gpt-6-luna']),
+  xai: new Set(['grok-4.7']),
+});
 const TIMEOUT_MS = 180000;
 const CALL_LIMIT_MS = 900000;
 const RESPONSE_BYTES = 2000000;
@@ -245,11 +267,15 @@ const WIRE = Object.freeze({
   },
 });
 
-/** The total output allowance sent to this provider, including any reasoning. */
-export function outputTokenLimit(providerId, modelId) {
+/**
+ * The total output allowance sent to this provider, including any reasoning.
+ * `stream` says whether the answer is read as a stream, as every review on the
+ * website and every streamed MCP review is.
+ */
+export function outputTokenLimit(providerId, modelId, { stream = false } = {}) {
   if (!WIRE[providerId]?.tokenParam) return null;
-  return providerId === 'openrouter' && EXTENDED_OPENROUTER_MODELS.has(modelId)
-    ? EXTENDED_OUTPUT_TOKENS : OUTPUT_TOKENS;
+  if (providerId === 'openrouter' && EXTENDED_OPENROUTER_MODELS.has(modelId)) return EXTENDED_OUTPUT_TOKENS;
+  return stream && LONG_OUTPUT_MODELS[providerId]?.has(modelId) ? EXTENDED_OUTPUT_TOKENS : OUTPUT_TOKENS;
 }
 
 /**
@@ -325,7 +351,7 @@ function buildRequest(providerId, { model: modelId, apiKey, prepared }, { stream
     headers['anthropic-version'] = ANTHROPIC_VERSION;
     body = {
       model: modelId,
-      max_tokens: outputTokenLimit(providerId, modelId),
+      max_tokens: outputTokenLimit(providerId, modelId, { stream }),
       system: system.content,
       messages: [{ role: 'user', content: user.content }],
     };
@@ -338,7 +364,7 @@ function buildRequest(providerId, { model: modelId, apiKey, prepared }, { stream
     headers.Authorization = `Bearer ${apiKey}`;
     Object.assign(headers, wire.headers);
     body = { model: modelId, messages: prepared.messages, ...wire.body };
-    if (wire.tokenParam) body[wire.tokenParam] = outputTokenLimit(providerId, modelId);
+    if (wire.tokenParam) body[wire.tokenParam] = outputTokenLimit(providerId, modelId, { stream });
     if (stream && wire.streamUsage) body.stream_options = { include_usage: true };
   }
   if (stream) body.stream = true;

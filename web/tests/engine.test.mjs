@@ -22,6 +22,7 @@ import {
   ProviderError,
   provider,
   providerReview,
+  outputTokenLimit,
   providerStream,
   validateProviderRequest,
 } from '../public/providers.mjs';
@@ -1277,6 +1278,20 @@ describe('providers', () => {
     });
   });
 
+  test('a streamed answer from a model known to take 64k output gets 64k; everything else keeps 16k', async () => {
+    const limit = (provider, model, stream) => outputTokenLimit(provider, model, { stream });
+    // Claude 5.x thinks on every call; GPT-6.x reasons by default.
+    for (const [provider, model] of [['anthropic', 'claude-opus-5-5'], ['anthropic', 'claude-sonnet-5-5'], ['anthropic', 'claude-fable-5-1'], ['openai', 'gpt-6.1-sol'], ['openrouter', 'openai/gpt-6.1-sol'], ['openrouter', 'anthropic/claude-sonnet-5.5'], ['openrouter', 'deepseek/deepseek-v4.1-flash'], ['xai', 'grok-4.7']]) {
+      assert.equal(limit(provider, model, true), 64000, `${provider} ${model} streamed`);
+      assert.equal(limit(provider, model, false), 16000, `${provider} ${model} as one answer`);
+    }
+    assert.equal(limit('anthropic', 'claude-haiku-4-5', true), 16000, 'Haiku 4.5 does not think unless asked');
+    assert.equal(limit('openrouter', 'someone/typed-this', true), 16000, 'an unknown model keeps the safe allowance');
+    assert.equal(limit('deepseek', 'deepseek-v4-pro', true), 16000, 'the direct DeepSeek ceiling is not documented here');
+    assert.equal(limit('openrouter', 'google/gemini-3.8-flash', false), 64000, 'the measured five keep 64k in both modes');
+    assert.equal(limit('gemini', 'gemini-3.8-flash', true), null, 'no cap is sent to the direct Gemini endpoint');
+  });
+
   test('affected OpenRouter models get room for reasoning and a final answer in both call modes', async () => {
     for (const model of ['google/gemini-3.8-flash', 'qwen/qwen3.8-27b', 'qwen/qwen3.8-max-0902', 'tencent/hy4-preview', 'z-ai/glm-5.3']) {
       for (const stream of [false, true]) {
@@ -1891,7 +1906,7 @@ describe('providers', () => {
           { type: 'done', truncated: false, refused: false, model: 'claude-opus-5-5', usage: { input: 350, output: 77 } },
         ]);
         assert.equal(calls[0].body.stream, true);
-        assert.equal(calls[0].body.max_tokens, 16000);
+        assert.equal(calls[0].body.max_tokens, 64000, "a streamed Claude 5.x answer gets room past its reasoning");
         assert.equal(calls[0].body.system, 'system text');
       });
     }

@@ -249,9 +249,9 @@ function paintModel(id) {
   paintModelHelp(id);
 }
 
-/** The larger allowance matters to users paying their provider for each call. */
+/** The larger allowance matters to users paying their provider for each call. Website reviews are streamed. */
 export function modelUsageNote(providerId, modelId) {
-  return outputTokenLimit(providerId, modelId) === 64000
+  return outputTokenLimit(providerId, modelId, { stream: true }) === 64000
     ? 'This model can use up to 64,000 output tokens, including reasoning. Your provider bills the tokens used.' : '';
 }
 
