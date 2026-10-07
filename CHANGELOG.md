@@ -1,5 +1,69 @@
 # Changelog
 
+## 0.7.7 — 2026-10-07
+
+Reviews
+
+- A streamed review gets a 64,000-token output allowance on the models that
+  take it: Claude Opus 5.5, Sonnet 5.5 and Fable 5.1, GPT-6.1 Sol, Astra and
+  Luna, Grok 4.7, and the models in the OpenRouter list. These models reason
+  inside the same allowance as the answer, and at 16,000 tokens a large review
+  could spend it all on reasoning and come back empty. A model id you type,
+  and a review read as one answer, keep 16,000. Your provider bills the
+  tokens used.
+- An answer the provider breaks off after it has started writing is kept and
+  marked cut short. Before, an agent on MCP received nothing for an answer
+  its key had paid for.
+- A review read as one answer is no longer stopped by the 180-second silence
+  limit, which only a stream can use: it runs to the single-answer limit.
+- A full review that a provider's filter flags at its end counts like any
+  other review, and so does one that broke off after 2,000 characters
+  reached you.
+
+Gauntlet and Panel
+
+- Layout never changes a verdict. A proof that is in your files but not
+  pasted into the report, unnumbered steps, the title or the limits
+  sentence become To do items, and a supported report stays submit.
+- Missing evidence leads to prove-first, naming the file or output to add.
+  A drop, or any verdict harsher than every stage or every panel seat, now
+  quotes the supplied line or rule that settles it.
+- The Panel marks a finding unproven when nothing supplied contradicts it
+  but its evidence is missing. An unproven finding is prove-first, not drop.
+- These answer the measured results of 3 October, when the Gauntlet asked
+  for rewrites of three supported reports and the Panel dropped a finding
+  all three seats said to prove first. The new rules have not been
+  re-measured yet.
+
+MCP
+
+- A streamed run_review over its token's limit comes back as a tool error the
+  agent can read, not an HTTP error. It checks the token once, and it shares
+  the account's review limit with the website.
+- An MCP-Protocol-Version the server does not offer gets HTTP 400. Batches
+  from 2025-03-26 clients are answered.
+- GET /api/mcp/server-card serves the MCP Server Card, and
+  /.well-known/ai-catalog.json and /.well-known/ard.json list it.
+
+Account and billing
+
+- Removing a passkey also revokes your connection tokens: create a new one
+  for your AI clients.
+- A late update from Stripe can no longer store a canceled subscription as
+  unpaid, and deleting an account checks Stripe for a subscription that has
+  not ended.
+- The data export includes every stored review row and the billing records.
+
+Site and privacy
+
+- Pages are compressed: /benchmark went from 171 KB to about 15 KB.
+- /pricing.html and /pricing/ move permanently to /pricing, and /404 answers
+  404.
+- The service no longer keeps Cloudflare's per-request logs, which held each
+  visitor's IP address and browser for seven days.
+- The output guard also stops a copy of the method disguised with invisible
+  characters, look-alike letters or spaced-out letters.
+
 ## 0.7.6 — 2026-10-07
 
 MCP
