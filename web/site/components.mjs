@@ -90,6 +90,9 @@ export function inline(text) {
 export function textOf(value) {
   const source = Array.isArray(value) ? value.map(render).join('') : render(value);
   return source
+    // An inline tag joins its text to the words around it ("`run_review`." reads "run_review.");
+    // any other tag is a word break.
+    .replace(/<\/?(?:a|abbr|b|code|em|i|kbd|mark|small|span|strong|sub|sup|time)(?=[\s>/])[^>]*>/gi, '')
     .replace(/<[^>]*>/g, ' ')
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>')
