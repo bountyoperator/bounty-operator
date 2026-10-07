@@ -233,6 +233,32 @@ test('a settled paid period is stored as active and counted once', async () => {
   assert.deepEqual(funnelCounts(env.DB), { sub_active: 1 }, 'a second webhook for the same period is not a new subscriber');
 });
 
+test('a burst of concurrent syncs for one new subscription counts it once', async () => {
+  // Checkout sends about six webhooks at once; each one syncs the subscription.
+  const env = createEnv();
+  addAccount(env.DB);
+  const paid = { kind: 'paid', periodEnd: PERIOD_END, invoiceId: 'in_1' };
+  await Promise.all(Array.from({ length: 6 }, () => store(env, paid)));
+  assert.deepEqual(stored(env), { status: 'active', paid_until: PERIOD_END + RENEWAL_GRACE_SECONDS });
+  assert.deepEqual(funnelCounts(env.DB), { sub_active: 1 });
+});
+
+test('a subscription Stripe ended stays ended: a slower sync cannot write an older state over it', async () => {
+  for (const ended of ['canceled', 'incomplete_expired']) {
+    const env = createEnv();
+    addAccount(env.DB);
+    addSubscription(env.DB, { status: ended, paidUntil: 0 });
+
+    await store(env, { kind: 'paid', periodEnd: PERIOD_END, invoiceId: 'in_1' });
+    assert.deepEqual(stored(env), { status: ended, paid_until: 0 }, `${ended}: a stale paid read`);
+    await store(env, { kind: 'lapsed', status: 'past_due' });
+    assert.deepEqual(stored(env), { status: ended, paid_until: 0 }, `${ended}: a stale past_due read`);
+    await store(env, { kind: 'paid', periodEnd: PERIOD_END, invoiceId: 'in_1' }, false);
+    assert.deepEqual(stored(env), { status: ended, paid_until: 0 }, `${ended}: a stale unsettled read`);
+    assert.deepEqual(funnelCounts(env.DB), {});
+  }
+});
+
 test('a paid invoice whose payments do not add up grants nothing', async () => {
   const env = createEnv();
   addAccount(env.DB);

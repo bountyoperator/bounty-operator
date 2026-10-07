@@ -180,13 +180,47 @@ async function invoiceSettled(api: Stripe, invoiceId: string): Promise<boolean> 
   return settled >= PRICE_CENTS;
 }
 
+// A subscription Stripe has ended never comes back, so a stored end is final.
+// Syncs run concurrently and a slower one may have read Stripe before the end:
+// it must not write an older state over it.
+const FINAL = `subscriptions.status NOT IN (${ENDED_STATUSES.map((status) => `'${status}'`).join(', ')})`;
+
 function writeSubscription(env: Env, id: string, accountId: string, status: string, paidUntil: number): Promise<unknown> {
   return env.DB.prepare(
     `INSERT INTO subscriptions (id, account_id, status, paid_until, updated_at) VALUES (?, ?, ?, ?, ?)
-     ON CONFLICT(id) DO UPDATE SET status = excluded.status, paid_until = excluded.paid_until, updated_at = excluded.updated_at`,
+     ON CONFLICT(id) DO UPDATE SET status = excluded.status, paid_until = excluded.paid_until, updated_at = excluded.updated_at
+     WHERE ${FINAL}`,
   )
     .bind(id, accountId, status, paidUntil, seconds())
     .run();
+}
+
+/**
+ * Stores a paid subscription as active. Returns true only for the one write
+ * that turned it active: a first insert, or a stored row that was not active.
+ * Every statement is atomic, so a burst of concurrent syncs (Checkout sends
+ * about six webhooks at once) reports the activation once.
+ */
+async function activate(env: Env, id: string, accountId: string, paidUntil: number): Promise<boolean> {
+  const now = seconds();
+  const inserted = await env.DB.prepare(
+    "INSERT INTO subscriptions (id, account_id, status, paid_until, updated_at) VALUES (?, ?, 'active', ?, ?) ON CONFLICT(id) DO NOTHING",
+  )
+    .bind(id, accountId, paidUntil, now)
+    .run();
+  if (inserted.meta.changes > 0) return true;
+
+  const turned = await env.DB.prepare(
+    `UPDATE subscriptions SET status = 'active', paid_until = ?, updated_at = ? WHERE id = ? AND status <> 'active' AND ${FINAL}`,
+  )
+    .bind(paidUntil, now, id)
+    .run();
+  if (turned.meta.changes > 0) return true;
+
+  await env.DB.prepare("UPDATE subscriptions SET paid_until = ?, updated_at = ? WHERE id = ? AND status = 'active'")
+    .bind(paidUntil, now, id)
+    .run();
+  return false;
 }
 
 /** Extends an entitlement that is already active. Returns false when there was none. */
@@ -212,9 +246,7 @@ export async function storeStanding(
   settled: boolean,
 ): Promise<void> {
   if (standing.kind === 'paid' && settled) {
-    const before = await env.DB.prepare('SELECT status FROM subscriptions WHERE id = ?').bind(subscriptionId).first<{ status: string }>();
-    await writeSubscription(env, subscriptionId, accountId, 'active', paidUntilFor(standing.periodEnd));
-    if (before?.status !== 'active') count(env, ctx, 'sub_active');
+    if (await activate(env, subscriptionId, accountId, paidUntilFor(standing.periodEnd))) count(env, ctx, 'sub_active');
     return;
   }
   // A renewal in progress extends access that exists. It never creates access.
@@ -240,7 +272,22 @@ export async function syncSubscription(env: Env, ctx: ExecutionContext, subscrip
   await storeStanding(env, ctx, subscription.id, account.id, standing, settled);
 }
 
-/** True while the account has a subscription that Stripe may still bill. */
+/**
+ * True while Stripe may still bill the account: a stored subscription that has
+ * not ended, or one at Stripe that never reached this database (its webhooks
+ * failed and the success page was closed before it synced). A Stripe customer
+ * is asked directly; without billing configured the link alone counts.
+ */
+export async function mayStillBill(env: Env, accountId: string): Promise<boolean> {
+  if (await hasLiveSubscription(env.DB, accountId)) return true;
+  const account = await env.DB.prepare('SELECT stripe_customer FROM accounts WHERE id = ?').bind(accountId).first<{ stripe_customer: string | null }>();
+  if (!account?.stripe_customer) return false;
+  if (!billingReady(env)) return true;
+  const subscriptions = await stripeClient(env).subscriptions.list({ customer: account.stripe_customer, status: 'all', limit: 100 });
+  return subscriptions.data.some((subscription) => !ENDED_STATUSES.includes(subscription.status));
+}
+
+/** True while the account has a stored subscription that Stripe may still bill. */
 export async function hasLiveSubscription(db: D1Database, accountId: string): Promise<boolean> {
   const placeholders = ENDED_STATUSES.map(() => '?').join(', ');
   const row = await db

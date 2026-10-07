@@ -6,7 +6,7 @@ import { LIMITS } from '../public/review-core.mjs';
 
 import { clearSessionCookie, currentSession } from './auth.ts';
 import type { Session } from './auth.ts';
-import { billingReady, hasLiveSubscription } from './billing.ts';
+import { billingReady, hasLiveSubscription, mayStillBill } from './billing.ts';
 import { PRICE, VERSION, seconds } from './env.ts';
 import type { Call, Env } from './env.ts';
 import { currentProfileId } from './hosted.ts';
@@ -79,8 +79,18 @@ export async function portal({ env }: Call, session: Session): Promise<Response>
 
 /** Everything stored about the account, minus the hashes that guard it. */
 export async function exportAccount({ env }: Call, session: Session): Promise<Response> {
+  const accountId = session.account_id;
+  const [panel, account, subscriptions, reviews] = await Promise.all([
+    portalData(env, accountId),
+    env.DB.prepare('SELECT stripe_customer FROM accounts WHERE id = ?').bind(accountId).first<{ stripe_customer: string | null }>(),
+    env.DB.prepare('SELECT id, status, paid_until, updated_at FROM subscriptions WHERE account_id = ? ORDER BY updated_at').bind(accountId).all(),
+    // Every stored review row, not only the panel's most recent ones.
+    env.DB.prepare('SELECT id, created_at, day, status, profile, channel FROM reviews WHERE account_id = ? ORDER BY created_at DESC').bind(accountId).all(),
+  ]);
   return json({
-    ...(await portalData(env, session.account_id)),
+    ...panel,
+    reviews: reviews.results.map((row) => (typeof row.profile === 'string' ? { ...row, profile: currentProfileId(row.profile) } : row)),
+    billing: { stripeCustomer: account?.stripe_customer ?? null, subscriptions: subscriptions.results },
     exportedAt: new Date().toISOString(),
     note: 'Files, prompts, API keys and review text are never stored. Token hashes and passkey public keys are left out of this export.',
   });
@@ -89,7 +99,7 @@ export async function exportAccount({ env }: Call, session: Session): Promise<Re
 export async function deleteAccount({ env }: Call, session: Session): Promise<Response> {
   // Deleting the account while Stripe can still bill would leave a
   // subscription nobody is able to cancel.
-  if (await hasLiveSubscription(env.DB, session.account_id)) {
+  if (await mayStillBill(env, session.account_id)) {
     throw new ApiError('Cancel the subscription in Manage subscription first. The account can be deleted once it has ended.', 409, 'billing_exists');
   }
   await env.DB.prepare('DELETE FROM accounts WHERE id = ?').bind(session.account_id).run();

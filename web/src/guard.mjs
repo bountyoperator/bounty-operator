@@ -34,7 +34,33 @@ export function limitsFor(methodWords) {
   };
 }
 
-const WORD = /[\p{L}\p{N}]+/gu;
+// A word starts with a letter or digit and may carry invisible format
+// characters (zero-width spaces and joiners, soft hyphens, bidi marks) and
+// combining marks inside it, which `canonical` then drops. So a copy with an
+// invisible character between every letter still reads as the same words.
+const WORD = /[\p{L}\p{N}][\p{L}\p{N}\p{Cf}\p{M}]*/gu;
+const INVISIBLE = /[\p{Cf}\p{M}]/gu;
+
+// Letters from other scripts that look like Latin ones, as a copy disguised
+// with them would use. Only the common look-alikes; anything else stays as it is.
+const LOOK_ALIKES = new Map(Object.entries({
+  а: 'a', в: 'b', е: 'e', ё: 'e', к: 'k', м: 'm', н: 'h', о: 'o', р: 'p', с: 'c', т: 't', у: 'y', х: 'x',
+  ѕ: 's', і: 'i', ї: 'i', ј: 'j', ԁ: 'd', ԛ: 'q', ԝ: 'w', һ: 'h', ӏ: 'l',
+  α: 'a', β: 'b', ε: 'e', η: 'n', ι: 'i', κ: 'k', ν: 'v', ο: 'o', ρ: 'p', τ: 't', υ: 'u', χ: 'x', ω: 'w',
+}));
+
+/** One word as the guard compares it: NFKC, no invisible marks, lower case, look-alikes folded. */
+function canonical(word) {
+  const plain = word.normalize('NFKC').replace(INVISIBLE, '').toLowerCase();
+  let out = '';
+  for (const char of plain) out += LOOK_ALIKES.get(char) ?? char;
+  return out;
+}
+
+// A run of at least this many one-letter words is read as one word, so a
+// letter-spaced copy ("p r o f i l e", "t o") reads as the word it spells.
+// Two lone letters one space apart hardly occur in a review.
+const SPELLED_LETTERS = 2;
 
 /** FNV-1a over the eight words, twice with different offsets, joined into one 53-bit number. */
 function hashShingle(ring, first) {
@@ -55,15 +81,55 @@ function hashShingle(ring, first) {
 }
 
 /**
- * The words of a text as the guard compares them: lower case, letters and
- * digits only. Punctuation, markup and line breaks do not count, so a quoted,
- * bulleted or re-wrapped copy still matches.
+ * Joins one-letter words that spell a word. Letters one separator apart
+ * ("p r o f i l e") belong to the same word; a wider gap ("p r o  m p t", two
+ * spaces) starts the next one. A group of SPELLED_LETTERS or more letters
+ * becomes one word at the offset of its first letter; a shorter group stays
+ * as it is. Each entry is `{ word, offset, end }`, offsets in the source text.
+ *
+ * @param {{ word: string, offset: number, end: number }[]} letters
+ * @returns {{ word: string, offset: number }[]}
+ */
+function spelled(letters) {
+  const out = [];
+  let group = [];
+  const flush = () => {
+    if (group.length >= SPELLED_LETTERS) out.push({ word: group.map((entry) => entry.word).join(''), offset: group[0].offset });
+    else out.push(...group);
+    group = [];
+  };
+  for (const entry of letters) {
+    if (group.length && entry.offset - group[group.length - 1].end > 1) flush();
+    group.push(entry);
+  }
+  flush();
+  return out;
+}
+
+/**
+ * The words of a text as the guard compares them: letters and digits in lower
+ * case, with invisible marks dropped, look-alike letters folded and spelled-out
+ * runs joined (see canonical and spelled). Punctuation, markup and line breaks
+ * do not count, so a quoted, bulleted or re-wrapped copy still matches.
  *
  * @param {string} text
  * @returns {string[]}
  */
 export function words(text) {
-  return (String(text).match(WORD) ?? []).map((word) => word.toLowerCase());
+  const out = [];
+  let letters = [];
+  for (const match of String(text).matchAll(WORD)) {
+    const word = canonical(match[0]);
+    if (!word) continue;
+    if (word.length === 1 && /\p{L}/u.test(word)) {
+      letters.push({ word, offset: match.index, end: match.index + match[0].length });
+      continue;
+    }
+    out.push(...spelled(letters).map((entry) => entry.word), word);
+    letters = [];
+  }
+  out.push(...spelled(letters).map((entry) => entry.word));
+  return out;
 }
 
 /**
@@ -133,6 +199,17 @@ export function createScanner(fingerprints, { runWords = RUN_WORDS, totalWords =
     }
   }
 
+  // One-letter words read but not taken yet: the next ones may spell a word.
+  let letters = [];
+
+  function takeLetters() {
+    for (const entry of spelled(letters)) {
+      if (leaked) break;
+      take(entry.word, entry.offset);
+    }
+    letters = [];
+  }
+
   /** Reads the complete words in the held text. With `final`, a word at the very end is complete too. */
   function scan(final) {
     const text = held.slice(scanAt - heldAt);
@@ -142,18 +219,30 @@ export function createScanner(fingerprints, { runWords = RUN_WORDS, totalWords =
       const end = match.index + match[0].length;
       // A word that touches the end of the text may continue in the next piece.
       if (end === text.length && !final) break;
-      take(match[0].toLowerCase(), scanAt + match.index);
       consumed = end;
+      const word = canonical(match[0]);
+      if (!word) continue;
+      const offset = scanAt + match.index;
+      if (word.length === 1 && /\p{L}/u.test(word)) {
+        letters.push({ word, offset, end: scanAt + end });
+        continue;
+      }
+      takeLetters();
+      if (!leaked) take(word, offset);
     }
     scanAt += consumed;
+    if (final && !leaked) takeLetters();
   }
 
   /** The offset up to which text can leave: nothing that might open a verbatim run. */
   function safeUpTo() {
-    if (hits > 0) return runStart;
-    if (wordCount < SHINGLE_WORDS - 1) return wordCount ? starts[0] : scanAt;
+    let upTo;
+    if (hits > 0) upTo = runStart;
+    else if (wordCount < SHINGLE_WORDS - 1) upTo = wordCount ? starts[0] : scanAt;
     // The last seven words may be the start of a run the next word completes.
-    return Math.min(starts[(wordCount - (SHINGLE_WORDS - 1)) % SHINGLE_WORDS], scanAt);
+    else upTo = Math.min(starts[(wordCount - (SHINGLE_WORDS - 1)) % SHINGLE_WORDS], scanAt);
+    // Waiting one-letter words may spell the word that opens a run.
+    return letters.length ? Math.min(upTo, letters[0].offset) : upTo;
   }
 
   function release(upTo) {

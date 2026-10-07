@@ -288,7 +288,42 @@ test('words drops case, punctuation and markup, and fingerprints are per eight w
   assert.equal(fingerprint(['one two three']).size, 0);
   assert.deepEqual([...fingerprint([text])], [...fingerprint(['ONE, two; three\nfour (five) "six" seven - eight: nine. ten!'])]);
   // Word boundaries count.
-  assert.notDeepEqual([...fingerprint(['ab c d e f g h i'])], [...fingerprint(['a bc d e f g h i'])]);
+  assert.notDeepEqual([...fingerprint(['xa bc dd ee ff gg hh ii'])], [...fingerprint(['x abc dd ee ff gg hh ii'])]);
+});
+
+test('a disguised copy reads as the same words: invisible marks, look-alike letters, spelled-out letters', () => {
+  const plain = words('Reread every path that looked clean from its last line');
+  // Zero-width space, soft hyphen, zero-width joiner, word joiner, BOM inside words.
+  assert.deepEqual(words('Re​read ev­ery pa‍th th⁠at lo﻿oked clean from its last line'), plain);
+  // Cyrillic е, а, о and Greek ο in place of Latin letters.
+  assert.deepEqual(words('Rеrеаd every pаth that lооked clean frοm its last line'), plain);
+  // Letter-spaced, with a wider gap between words.
+  assert.deepEqual(words('R e r e a d  e v e r y  p a t h  t h a t  l o o k e d  c l e a n  from its last line'), plain);
+  // NFKC: full-width and mathematical letters.
+  assert.deepEqual(words('Ｒｅｒｅａｄ every 𝐩𝐚𝐭𝐡 that looked clean from its last line'), plain);
+  // Ordinary text is untouched: single letters stay single, a list stays a list.
+  assert.deepEqual(words('Options a, b and c; x = 1'), ['options', 'a', 'b', 'and', 'c', 'x', '1']);
+  assert.deepEqual(words('café naïve résumé'), ['café', 'naïve', 'résumé']);
+});
+
+test('the scanner stops a disguised copy of the method as it streams', () => {
+  const method = 'Reread every path that looked clean from its last line back to its first and name the guard that holds it';
+  const prints = fingerprint([method]);
+  const limits = { runWords: 12, totalWords: 24 };
+  const disguised = [
+    method.replace(/(\p{L})(?=\p{L})/gu, '$1​'),
+    method.replace(/e/g, 'е').replace(/a/g, 'а'),
+    method.split(' ').map((word) => [...word].join(' ')).join('  '),
+  ];
+  for (const text of disguised) {
+    const scanner = createScanner(prints, limits);
+    let sent = '';
+    for (const piece of text.match(/.{1,7}/gsu)) sent += scanner.push(piece);
+    sent += scanner.finish();
+    assert.equal(scanner.leaked, true, JSON.stringify(text.slice(0, 40)));
+    assert.ok(words(sent).length < limits.runWords, 'nothing of the run left before the stop');
+  }
+  assert.equal(leaks(prints, 'The vault checks the caller, so this path is safe.', limits), false);
 });
 
 test('limits scale with the length of the method', () => {
@@ -617,6 +652,22 @@ test('GET /api/profiles returns metadata only, with the hosted flag', async () =
 test('GET /api/health says whether the build carries the hosted method', async () => {
   const health = await (await fetchWorker('/api/health')).json();
   assert.equal(health.profiles, PROFILE_SOURCE === 'private' ? 'hosted' : 'community');
+});
+
+test('GET /api/health is degraded on a public origin without the address-hash secret', async () => {
+  const healthWith = async (overrides) => {
+    const env = createEnv(overrides);
+    const ctx = createContext();
+    const body = await (await worker.fetch(new Request(`${env.SITE_ORIGIN}/api/health`), env, ctx)).json();
+    await ctx.settled();
+    return body;
+  };
+  const missing = await healthWith({ IP_HASH_KEY: '' });
+  assert.deepEqual([missing.status, missing.ipKey], ['degraded', 'missing']);
+  const set = await healthWith({});
+  assert.deepEqual([set.status, set.ipKey], ['ok', 'ok']);
+  const local = await healthWith({ IP_HASH_KEY: '', SITE_ORIGIN: 'http://localhost:8787' });
+  assert.deepEqual([local.status, local.ipKey], ['ok', 'ok'], 'local development derives its own key');
 });
 
 test('the remote prepare_review refuses every hosted profile with hosted_profile and names run_review', async () => {

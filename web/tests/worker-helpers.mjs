@@ -76,6 +76,8 @@ export function createEnv(overrides = {}) {
     AI_REVIEW_ENABLED: 'true',
     BILLING_MODE: 'disabled',
     STRIPE_PRICE_ID: 'price_test',
+    // Production sets this secret; /api/health reports a public origin without it.
+    IP_HASH_KEY: 'test-ip-hash-key',
     ...overrides,
   };
 }

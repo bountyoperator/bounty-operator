@@ -952,7 +952,7 @@ async function addAnotherPasskey(control) {
 async function removePasskey(control, passkey) {
   const removed = await act(control, () => withReauth(() => request('/api/passkeys/remove', { body: { id: passkey.id } })), {
     busy: 'Removing',
-    success: 'Passkey removed. Other browsers signed in to this account are signed out.',
+    success: 'Passkey removed. Other browsers signed in to this account are signed out, and connection tokens are revoked: create a new one for your AI clients.',
   });
   confirming = '';
   if (removed) await load();

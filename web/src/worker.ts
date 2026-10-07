@@ -92,8 +92,11 @@ function recentlyVerified(handler: SessionHandler): Handler {
 // ---------------------------------------------------------------------------
 
 async function health({ env }: Call): Promise<Response> {
+  // On a public origin the address hashes need their secret key: without it
+  // they fall back to a value derived from the origin, which anyone can compute.
+  const ipKey = env.IP_HASH_KEY || !env.SITE_ORIGIN.startsWith('https:') ? 'ok' : 'missing';
   const body = {
-    status: 'ok',
+    status: ipKey === 'ok' ? 'ok' : 'degraded',
     version: VERSION,
     billing: billingReady(env) ? 'live' : 'unavailable',
     reviews: env.AI_REVIEW_ENABLED === 'true',
@@ -101,6 +104,7 @@ async function health({ env }: Call): Promise<Response> {
     // from the community stub, or one that lacks a profile, says so here.
     profiles: METHOD_SOURCE === 'private' && missingMethods().length === 0 ? 'hosted' : 'community',
     db: 'ok',
+    ipKey,
     deployment: env.CF_VERSION_METADATA?.id,
   };
   try {

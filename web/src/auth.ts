@@ -375,9 +375,14 @@ export async function removePasskey({ env, request }: Call, session: Session): P
     .first();
   if (!removed) throw new ApiError('Keep at least one passkey. Add another before removing this one.', 400, 'last_passkey');
 
-  // Whoever held the removed passkey may still hold a session it opened.
-  await env.DB.prepare('DELETE FROM sessions WHERE account_id = ? AND token_hash <> ?').bind(session.account_id, session.token_hash).run();
-  return json({ removed: true });
+  // Whoever held the removed passkey may still hold a session it opened, or a
+  // connection token it created. A token does not record which passkey made
+  // it, so every token goes, as on recovery and on signing out everywhere.
+  const [, tokens] = await env.DB.batch([
+    env.DB.prepare('DELETE FROM sessions WHERE account_id = ? AND token_hash <> ?').bind(session.account_id, session.token_hash),
+    env.DB.prepare('DELETE FROM api_tokens WHERE account_id = ?').bind(session.account_id),
+  ]);
+  return json({ removed: true, connectionsRevoked: tokens.meta.changes });
 }
 
 // ---------------------------------------------------------------------------
