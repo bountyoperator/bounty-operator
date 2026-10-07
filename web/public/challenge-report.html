@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Check a bug bounty report before you submit | Bounty Operator</title>
+<title>Check a bug bounty report draft | Bounty Operator</title>
 <meta name="description" content="Every claim in your draft marked confirmed, overstated, contradicted or unverifiable against the code, with the line that decides it. Runs on your own model.">
 <link rel="canonical" href="https://bountyoperator.com/challenge-report">
 <meta name="color-scheme" content="dark light">
@@ -11,7 +11,7 @@
 <meta name="theme-color" content="#f5f7fb" media="(prefers-color-scheme: light)">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Bounty Operator">
-<meta property="og:title" content="Check a bug bounty report before you submit | Bounty Operator">
+<meta property="og:title" content="Check a bug bounty report draft | Bounty Operator">
 <meta property="og:description" content="Every claim in your draft marked confirmed, overstated, contradicted or unverifiable against the code, with the line that decides it. Runs on your own model.">
 <meta property="og:url" content="https://bountyoperator.com/challenge-report">
 <meta property="og:image" content="https://bountyoperator.com/social-v2.png">
@@ -19,7 +19,7 @@
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Bounty Operator. Find the hole in your report before the triager does.">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Check a bug bounty report before you submit | Bounty Operator">
+<meta name="twitter:title" content="Check a bug bounty report draft | Bounty Operator">
 <meta name="twitter:description" content="Every claim in your draft marked confirmed, overstated, contradicted or unverifiable against the code, with the line that decides it. Runs on your own model.">
 <meta name="twitter:image" content="https://bountyoperator.com/social-v2.png">
 <meta name="twitter:image:alt" content="Bounty Operator. Find the hole in your report before the triager does.">
@@ -31,7 +31,7 @@
 <link rel="stylesheet" href="/css/base.css">
 <link rel="stylesheet" href="/css/landing.css">
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Bounty Operator","item":"https://bountyoperator.com/"},{"@type":"ListItem","position":2,"name":"Method","item":"https://bountyoperator.com/method"},{"@type":"ListItem","position":3,"name":"Challenge a report","item":"https://bountyoperator.com/challenge-report"}]}</script>
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Does it rewrite my report?","acceptedAnswer":{"@type":"Answer","text":"Only when the verdict is rewrite-then-submit, and only the title, severity, summary and impact. You write the report. The review marks which claims the code does not support."}},{"@type":"Question","name":"What if my report is correct?","acceptedAnswer":{"@type":"Answer","text":"Every decisive claim is marked confirmed and the verdict is submit. The profile is instructed to agree when the code and the proof support the draft, and to manufacture no objections."}},{"@type":"Question","name":"Which model runs the review?","acceptedAnswer":{"@type":"Answer","text":"The one you choose, on your own key: OpenRouter, Anthropic, OpenAI, Google Gemini, xAI, DeepSeek, Mistral or Groq. Or copy the prompt into ChatGPT or Claude and paste the answer back. From a coding agent, prepare_review hands the same request to the agent’s own model over MCP."}},{"@type":"Question","name":"Where do my files go?","acceptedAnswer":{"@type":"Answer","text":"To the model provider you choose, through our server, for that one request. Bounty Operator does not store your files, prompts, keys or results. With an exported prompt they go from your browser to the chat app you paste into. The packet you download carries a SHA-256 manifest of every file reviewed."}}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Does it rewrite my report?","acceptedAnswer":{"@type":"Answer","text":"Only when the verdict is rewrite-then-submit, and only the title, severity, summary and impact. You write the report. The review marks which claims the code does not support."}},{"@type":"Question","name":"What if my report is correct?","acceptedAnswer":{"@type":"Answer","text":"Every decisive claim is marked confirmed and the verdict is submit. The profile is instructed to agree when the code and the proof support the draft, and to manufacture no objections."}},{"@type":"Question","name":"Which model runs the review?","acceptedAnswer":{"@type":"Answer","text":"The one you choose, on your own key: OpenRouter, Anthropic, OpenAI, Google Gemini, xAI, DeepSeek, Mistral or Groq. That is the review of the day on Free. Or copy the prompt into ChatGPT or Claude and paste the answer back. From a coding agent, prepare_review hands the same request to the agent’s own model over MCP. Those two routes need no account and are not counted."}},{"@type":"Question","name":"Where do my files go?","acceptedAnswer":{"@type":"Answer","text":"To the model provider you choose, through our server, for that one request. Bounty Operator does not store your files, prompts, keys or results. With an exported prompt they go from your browser to the chat app you paste into. The packet you download carries a SHA-256 manifest of every file reviewed."}}]}</script>
 </head>
 <body>
 <a class="skip-link" href="#main">Skip to content</a>
@@ -70,7 +70,7 @@
   <div class="finding__bar"><span class="icon icon--file" aria-hidden="true"></span><span class="finding__file">input-1/draft-report.md</span><span class="finding__tag">5 claims</span></div>
   <header class="finding__head">
     <div class="finding__tags"><span class="finding__id">Claims</span></div>
-    <h3 class="finding__title" id="claims-title">Five claims in the draft, checked against <code>RewardPool.sol</code></h3>
+    <p class="finding__title" id="claims-title">Five claims in the draft, checked against <code>RewardPool.sol</code></p>
   </header>
   <dl class="finding__rows">
     
@@ -174,7 +174,7 @@
 
 <section class="section wrap wrap--narrow" aria-labelledby="faq">
   <header class="section-head"><div class="section-head__text"><h2 id="faq">Questions</h2></div></header>
-  <div class="accordion"><details class="accordion__item" name="report-faq"><summary class="accordion__summary">Does it rewrite my report?</summary><div class="accordion__body"><p>Only when the verdict is rewrite-then-submit, and only the title, severity, summary and impact. You write the report. The review marks which claims the code does not support.</p></div></details><details class="accordion__item" name="report-faq"><summary class="accordion__summary">What if my report is correct?</summary><div class="accordion__body"><p>Every decisive claim is marked confirmed and the verdict is submit. The profile is instructed to agree when the code and the proof support the draft, and to manufacture no objections.</p></div></details><details class="accordion__item" name="report-faq"><summary class="accordion__summary">Which model runs the review?</summary><div class="accordion__body"><p>The one you choose, on your own key: OpenRouter, Anthropic, OpenAI, Google Gemini, xAI, DeepSeek, Mistral or Groq. Or copy the prompt into ChatGPT or Claude and paste the answer back. From a coding agent, <code>prepare_review</code> hands the same request to the agent’s own model over MCP.</p></div></details><details class="accordion__item" name="report-faq"><summary class="accordion__summary">Where do my files go?</summary><div class="accordion__body"><p>To the model provider you choose, through our server, for that one request. Bounty Operator does not store your files, prompts, keys or results. With an exported prompt they go from your browser to the chat app you paste into. The packet you download carries a SHA-256 manifest of every file reviewed.</p></div></details></div>
+  <div class="accordion"><details class="accordion__item" name="report-faq"><summary class="accordion__summary">Does it rewrite my report?</summary><div class="accordion__body"><p>Only when the verdict is rewrite-then-submit, and only the title, severity, summary and impact. You write the report. The review marks which claims the code does not support.</p></div></details><details class="accordion__item" name="report-faq"><summary class="accordion__summary">What if my report is correct?</summary><div class="accordion__body"><p>Every decisive claim is marked confirmed and the verdict is submit. The profile is instructed to agree when the code and the proof support the draft, and to manufacture no objections.</p></div></details><details class="accordion__item" name="report-faq"><summary class="accordion__summary">Which model runs the review?</summary><div class="accordion__body"><p>The one you choose, on your own key: OpenRouter, Anthropic, OpenAI, Google Gemini, xAI, DeepSeek, Mistral or Groq. That is the review of the day on Free. Or copy the prompt into ChatGPT or Claude and paste the answer back. From a coding agent, <code>prepare_review</code> hands the same request to the agent’s own model over MCP. Those two routes need no account and are not counted.</p></div></details><details class="accordion__item" name="report-faq"><summary class="accordion__summary">Where do my files go?</summary><div class="accordion__body"><p>To the model provider you choose, through our server, for that one request. Bounty Operator does not store your files, prompts, keys or results. With an exported prompt they go from your browser to the chat app you paste into. The packet you download carries a SHA-256 manifest of every file reviewed.</p></div></details></div>
 </section>
 
 

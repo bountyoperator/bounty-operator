@@ -32,7 +32,7 @@
 <link rel="stylesheet" href="/css/docs.css">
 <script type="module" src="/docs/handoff.mjs"></script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Bounty Operator","item":"https://bountyoperator.com/"},{"@type":"ListItem","position":2,"name":"Report guide","item":"https://bountyoperator.com/guide"}]}</script>
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Bug bounty report guide","description":"Twelve checks to run and the evidence to attach before you submit a bug bounty report, with a worked example rewritten line by line.","url":"https://bountyoperator.com/guide","mainEntityOfPage":"https://bountyoperator.com/guide","datePublished":"2026-10-03","dateModified":"2026-10-03","author":{"@type":"Organization","name":"Tradi3","url":"https://audits.sherlock.xyz/watson/Tradi3"},"publisher":{"@type":"Organization","name":"Bounty Operator","url":"https://bountyoperator.com/"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Bug bounty report guide","description":"Twelve checks to run and the evidence to attach before you submit a bug bounty report, with a worked example rewritten line by line.","url":"https://bountyoperator.com/guide","mainEntityOfPage":"https://bountyoperator.com/guide","datePublished":"2026-10-07","dateModified":"2026-10-07","author":{"@type":"Organization","name":"Tradi3","url":"https://audits.sherlock.xyz/watson/Tradi3"},"publisher":{"@type":"Organization","name":"Bounty Operator","url":"https://bountyoperator.com/"}}</script>
 </head>
 <body>
 <a class="skip-link" href="#main">Skip to content</a>
@@ -422,7 +422,7 @@
 </li>
 </ol>
 <div class="prose">
-<p>Every stage but the last is a review profile in the workbench, run as a hosted review with your own model key. Free covers 1 review a day, any review type. Operator runs all eight in order as one <a href="/gauntlet">Gauntlet</a> and ends with a single verdict:</p>
+<p>Every stage but the last is a review profile in the workbench, run as a hosted review with your own model key. Free covers 1 hosted review a day, any review type, on this site or with <code>run_review</code> from a coding agent. The report stage is a core profile: as a copy-paste review in ChatGPT or Claude, or on your coding agent’s own model with <code>prepare_review</code>, it needs no account and is not counted. Operator runs all eight in order as one <a href="/gauntlet">Gauntlet</a> and ends with a single verdict:</p>
 </div>
 <p class="cluster cluster--tight guide-verdicts"><span class="chip verdict" data-verdict="submit">Submit</span><span class="chip verdict" data-verdict="rewrite-then-submit">Rewrite, then submit</span><span class="chip verdict" data-verdict="prove-first">Prove first</span><span class="chip verdict" data-verdict="hold-duplicate">Hold: duplicate</span><span class="chip verdict" data-verdict="drop">Drop</span></p>
 </section><section class="docs-section" aria-labelledby="evidence">

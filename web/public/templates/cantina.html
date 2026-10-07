@@ -96,7 +96,7 @@
       <div class="tpl__content">
         <h3 class="tpl__heading">Finding Description</h3>
         <p class="tpl__rule">Why it happens, and where. Highlight the exact lines on the audit branch with the code-highlighting feature, then explain which logic they connect to.</p>
-        <div class="tpl__fill"><ul class="tpl__list"><li>Location: <code><span class="slot">path/File.sol</span></code> lines <span class="slot">start</span>-<span class="slot">end</span> on <code><span class="slot">audit branch</span></code> at commit <code><span class="slot">commit</span></code></li><li>Root cause: <span class="slot">the mistake, and why the surrounding checks do not stop it</span></li></ul><figure class="code code--wrap tpl__code"><pre class="code__pre" tabindex="0" role="region" aria-label="Code: solidity"><code><span class="code__line">{The smallest excerpt that shows the root cause}
+        <div class="tpl__fill"><ul class="tpl__list"><li>Location: <code><span class="slot">path/File.sol</span></code> lines <span class="slot">start</span>-<span class="slot">end</span> on <code><span class="slot">audit branch</span></code> at commit <code><span class="slot">commit</span></code></li><li>Root cause: <span class="slot">the mistake, and why the surrounding checks do not stop it</span></li></ul><figure class="code code--wrap tpl__code"><pre class="code__pre" tabindex="0" role="region" aria-label="Finding Description code (solidity)"><code><span class="code__line">{The smallest excerpt that shows the root cause}
 </span></code></pre></figure><p>Path:</p><ol class="steps tpl__steps"><li><span class="slot">Actor</span> calls <code><span class="slot">function</span></code> with <span class="slot">arguments</span>. <span class="slot">State after the call.</span></li><li><span class="slot">Actor</span> calls <code><span class="slot">function</span></code> with <span class="slot">arguments</span>. <span class="slot">State after the call.</span></li><li><span class="slot">Final state, with the number.</span></li></ol></div>
       </div>
     </section><section class="tpl__section" id="s-impact" data-origin="platform">
@@ -118,8 +118,8 @@
       <div class="tpl__content">
         <h3 class="tpl__heading">Proof of Concept</h3>
         <p class="tpl__rule">In a competition, High and Medium need a coded PoC before the competition ends unless your reputation score is 80 or above. It has to compile and demonstrate the impact. Name the test file, confirm it runs on the audit branch, list anything else it needs, paste the output, and set the output against what was expected.</p>
-        <div class="tpl__fill"><ul class="tpl__list"><li>Test file: <code><span class="slot">test/path/File.t.sol</span></code>, added to the project&#39;s own suite</li><li>Branch and commit: <code><span class="slot">audit branch</span></code> at <code><span class="slot">commit</span></code></li><li>Extra setup: <span class="slot">none, or what the reviewer installs or sets</span></li><li>Command: <code><span class="slot">forge test --match-test test_name -vvv</span></code></li></ul><figure class="code code--wrap tpl__code"><pre class="code__pre" tabindex="0" role="region" aria-label="Code: solidity"><code><span class="code__line">{The test}
-</span></code></pre></figure><p>Output:</p><figure class="code code--wrap tpl__code"><pre class="code__pre" tabindex="0" role="region" aria-label="Code: text"><code><span class="code__line">{Pasted output}
+        <div class="tpl__fill"><ul class="tpl__list"><li>Test file: <code><span class="slot">test/path/File.t.sol</span></code>, added to the project&#39;s own suite</li><li>Branch and commit: <code><span class="slot">audit branch</span></code> at <code><span class="slot">commit</span></code></li><li>Extra setup: <span class="slot">none, or what the reviewer installs or sets</span></li><li>Command: <code><span class="slot">forge test --match-test test_name -vvv</span></code></li></ul><figure class="code code--wrap tpl__code"><pre class="code__pre" tabindex="0" role="region" aria-label="Proof of Concept code (solidity)"><code><span class="code__line">{The test}
+</span></code></pre></figure><p>Output:</p><figure class="code code--wrap tpl__code"><pre class="code__pre" tabindex="0" role="region" aria-label="Proof of Concept code (text)"><code><span class="code__line">{Pasted output}
 </span></code></pre></figure><p>Expected against actual: <span class="slot">what a correct implementation prints, and what this prints</span></p></div>
       </div>
     </section><section class="tpl__section" id="s-recommendation" data-origin="platform">
@@ -127,7 +127,7 @@
       <div class="tpl__content">
         <h3 class="tpl__heading">Recommendation</h3>
         <p class="tpl__rule">Cantina’s criteria recommend a mitigation with every finding. A fix that goes against the protocol’s design philosophy marks the finding as informational at most, so propose one the team would merge.</p>
-        <div class="tpl__fill"><p><span class="slot">The change, in the file and function it belongs to.</span></p><figure class="code code--wrap tpl__code"><pre class="code__pre" tabindex="0" role="region" aria-label="Code: diff"><code><span class="code__line">- {vulnerable line}
+        <div class="tpl__fill"><p><span class="slot">The change, in the file and function it belongs to.</span></p><figure class="code code--wrap tpl__code"><pre class="code__pre" tabindex="0" role="region" aria-label="Recommendation code (diff)"><code><span class="code__line">- {vulnerable line}
 </span><span class="code__line">+ {fixed line}
 </span></code></pre></figure></div>
       </div>

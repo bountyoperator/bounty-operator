@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Privacy policy | Bounty Operator</title>
-<meta name="description" content="What Bounty Operator stores, what it never stores, the two cookies it sets, what Stripe sees, and how to export or delete your account.">
+<meta name="description" content="What Bounty Operator stores and never stores, the two cookies, what your browser keeps, what Stripe sees, and how to export or delete your account.">
 <link rel="canonical" href="https://bountyoperator.com/privacy">
 <meta name="color-scheme" content="dark light">
 <meta name="theme-color" content="#0a1220" media="(prefers-color-scheme: dark)">
@@ -12,7 +12,7 @@
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Bounty Operator">
 <meta property="og:title" content="Privacy policy | Bounty Operator">
-<meta property="og:description" content="What Bounty Operator stores, what it never stores, the two cookies it sets, what Stripe sees, and how to export or delete your account.">
+<meta property="og:description" content="What Bounty Operator stores and never stores, the two cookies, what your browser keeps, what Stripe sees, and how to export or delete your account.">
 <meta property="og:url" content="https://bountyoperator.com/privacy">
 <meta property="og:image" content="https://bountyoperator.com/social-v2.png">
 <meta property="og:image:width" content="1200">
@@ -20,7 +20,7 @@
 <meta property="og:image:alt" content="Bounty Operator. Find the hole in your report before the triager does.">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Privacy policy | Bounty Operator">
-<meta name="twitter:description" content="What Bounty Operator stores, what it never stores, the two cookies it sets, what Stripe sees, and how to export or delete your account.">
+<meta name="twitter:description" content="What Bounty Operator stores and never stores, the two cookies, what your browser keeps, what Stripe sees, and how to export or delete your account.">
 <meta name="twitter:image" content="https://bountyoperator.com/social-v2.png">
 <meta name="twitter:image:alt" content="Bounty Operator. Find the hole in your report before the triager does.">
 <link rel="icon" href="/favicon.ico" sizes="48x48">
@@ -50,7 +50,7 @@
 <nav class="breadcrumbs" aria-label="Breadcrumb"><ol><li><a href="/">Bounty Operator</a></li><li aria-current="page">Privacy</li></ol></nav>
 <h1>Privacy policy</h1>
 <p class="lede">Built by Tradi3. Operated by Vaytric, which is responsible for the data described here. This page covers the hosted site at bountyoperator.com. The open-source command-line kit runs on your own machine.</p>
-<p class="meta docs-head__meta">Last updated <time datetime="2026-10-03">3 October 2026</time></p>
+<p class="meta docs-head__meta">Last updated <time datetime="2026-10-07">7 October 2026</time></p>
 
 </header>
 
@@ -91,19 +91,16 @@
 <li><code>__Host-bounty-challenge</code> ties a passkey prompt to the request that started it. It lasts five minutes.</li>
 </ul>
 <p>Both are <code>HttpOnly</code>, <code>Secure</code> and <code>SameSite=Lax</code>.</p>
-<p>Your browser also keeps two things on your device:</p>
-<ul>
-<li>your colour theme</li>
-<li>review history, when you turn it on</li>
-</ul>
-<p>History is optional and is saved only in this browser. It never includes API keys or GitHub tokens, it is never sent to our server, and one button clears it.</p>
-<p>When a free tool, a template page or the guide hands a draft to the workbench, the draft passes through the tab’s session storage and is gone when the tab closes.</p></div>
+<p>The site’s scripts keep the following in your browser. None of it is a cookie, and our server never reads it. “This tab” is the tab’s session storage: closing the tab removes it. “This browser” is local storage, or the history database, and stays until you clear it.</p>
+<div class="table-wrap" tabindex="0" role="region" aria-label="What your browser keeps"><table class="table table--dense stack-table"><thead><tr><th scope="col">Name</th><th scope="col">Kept in</th><th scope="col">What it holds</th></tr></thead><tbody><tr><th scope="row"><code>bo-theme</code></th><td><span class="cell-label">Kept in</span>This browser</td><td><span class="cell-label">What it holds</span>The colour theme you picked, when it differs from your system’s.</td></tr><tr><th scope="row"><code>bo:history</code>, <code>bo-history</code></th><td><span class="cell-label">Kept in</span>This browser</td><td><span class="cell-label">What it holds</span>Review history, when you turn it on: the packet, manifest and text of each finished review, with its profile, model, verdict and time.</td></tr><tr><th scope="row"><code>bo:known</code></th><td><span class="cell-label">Kept in</span>This browser</td><td><span class="cell-label">What it holds</span>The value 1 once you have signed in here, so the sign-in dialog offers Sign in first. Deleting the account removes it.</td></tr><tr><th scope="row"><code>bo-bench-hidden</code></th><td><span class="cell-label">Kept in</span>This browser</td><td><span class="cell-label">What it holds</span>The leaderboard columns you hid on the benchmark page.</td></tr><tr><th scope="row"><code>bo:workbench</code></th><td><span class="cell-label">Kept in</span>This tab</td><td><span class="cell-label">What it holds</span>The files you loaded, your focus and context, the review type, provider and model you chose, the step you are on and the last result.</td></tr><tr><th scope="row"><code>bo:workbench:view</code>, <code>bo:workbench:stash</code></th><td><span class="cell-label">Kept in</span>This tab</td><td><span class="cell-label">What it holds</span>Whether an example is open, how the review runs, which provider’s key field is open and the privacy warnings you accepted; and your own work while an example is shown.</td></tr><tr><th scope="row"><code>bo:handoff</code></th><td><span class="cell-label">Kept in</span>This tab</td><td><span class="cell-label">What it holds</span>A draft or files a free tool, a template page or the guide passes to the workbench. The workbench removes it when it reads it.</td></tr><tr><th scope="row"><code>bo:openrouter:kept</code></th><td><span class="cell-label">Kept in</span>This tab</td><td><span class="cell-label">What it holds</span>Your OpenRouter key, only when you tick “Keep the key for this tab session” as you connect OpenRouter.</td></tr><tr><th scope="row"><code>bo:openrouter:pkce</code></th><td><span class="cell-label">Kept in</span>This tab</td><td><span class="cell-label">What it holds</span>The one-time code of an OpenRouter connection while it completes.</td></tr><tr><th scope="row"><code>bo:gauntlet:run</code></th><td><span class="cell-label">Kept in</span>This tab</td><td><span class="cell-label">What it holds</span>The answers of the Gauntlet stages that have finished, so a run picks up where it stopped. No key and no source file.</td></tr><tr><th scope="row"><code>bo:panel:seats</code>, <code>bo:panel:run</code></th><td><span class="cell-label">Kept in</span>This tab</td><td><span class="cell-label">What it holds</span>The providers and models of your Panel seats, and the reviews the Panel has finished. No key and no source file.</td></tr><tr><th scope="row"><code>bo:return</code></th><td><span class="cell-label">Kept in</span>This tab</td><td><span class="cell-label">What it holds</span>Where to put you back on the page after Stripe Checkout, for up to two hours.</td></tr></tbody></table></div>
+<p>History is optional and is saved only in this browser. It never includes source files, API keys or GitHub tokens, it is never sent to our server, and one button clears it. A GitHub token you type for an import is held in the tab’s memory and is not stored.</p></div>
 </section><section class="docs-section" aria-labelledby="usage">
 <h2 class="docs-section__title" id="usage">Usage records and abuse limits</h2>
 <div class="prose">
 <p>For each hosted review we store the account identifier, the status (running, completed or failed), the review profile, the channel (web or MCP) and the timestamps. These rows enforce the daily allowance and the concurrency limit. They are deleted after seven days.</p>
 <p>Abuse limits use a keyed hash of your IP address that expires within a day. Expired sessions, sign-in challenges and rate-limit rows are deleted daily.</p>
-<p>Our logs record the request path and an error name, and for a failed billing call Stripe’s error type and code. They never record request bodies, file contents, API keys or Stripe payloads.</p></div>
+<p>The Worker keeps no invocation logs. When a request fails, its own log line holds the request path and an error name, and for a failed billing call Stripe’s error type and code. No log line holds an IP address, a request body, file contents, an API key or a Stripe payload.</p>
+<p>Cloudflare, which hosts the site, processes each request’s IP address to deliver it.</p></div>
 </section><section class="docs-section" aria-labelledby="counters">
 <h2 class="docs-section__title" id="counters">Page and funnel counters</h2>
 <div class="prose">
@@ -121,7 +118,7 @@
 </section><section class="docs-section" aria-labelledby="third-parties">
 <h2 class="docs-section__title" id="third-parties">Cloudflare, GitHub, OpenRouter and MCP</h2>
 <div class="prose">
-<p>Cloudflare hosts the site and processes request metadata, including IP addresses, under its own policies.</p>
+<p>Cloudflare, which hosts the site, processes each request’s IP address and other request metadata to deliver it, under its own policies.</p>
 <p>A GitHub import goes from your browser straight to <code>api.github.com</code>, with the link you chose and your read-only token if you supply one. The token is held in tab memory. The imported files reach our server only when you run a hosted review.</p>
 <p>Connecting OpenRouter happens between your browser and <code>openrouter.ai</code>.</p>
 <p>The MCP server handles the file contents your agent passes to a tool. <code>list_profiles</code>, <code>prepare_review</code> and <code>build_packet</code> keep none of it. <code>run_review</code> is a hosted review and is recorded like one. Your agent’s own model provider receives tool results under its own terms.</p>

@@ -96,7 +96,7 @@
       <div class="tpl__content">
         <h3 class="tpl__heading">Root Cause</h3>
         <p class="tpl__rule">Link the exact lines on the contest commit. Judges group duplicates by root cause, so name the mistake and not its symptom. A design decision that causes no loss is informational.</p>
-        <div class="tpl__fill"><p>In <code><span class="slot">path/File.sol</span></code> lines <span class="slot">start</span>-<span class="slot">end</span> at the contest commit <code><span class="slot">commit</span></code> (<span class="slot">permalink</span>), <span class="slot">the mistake: the missing check, the wrong order, the unsafe cast</span>.</p><figure class="code code--wrap tpl__code"><pre class="code__pre" tabindex="0" role="region" aria-label="Code: solidity"><code><span class="code__line">{The smallest excerpt that shows it}
+        <div class="tpl__fill"><p>In <code><span class="slot">path/File.sol</span></code> lines <span class="slot">start</span>-<span class="slot">end</span> at the contest commit <code><span class="slot">commit</span></code> (<span class="slot">permalink</span>), <span class="slot">the mistake: the missing check, the wrong order, the unsafe cast</span>.</p><figure class="code code--wrap tpl__code"><pre class="code__pre" tabindex="0" role="region" aria-label="Root Cause code (solidity)"><code><span class="code__line">{The smallest excerpt that shows it}
 </span></code></pre></figure></div>
       </div>
     </section><section class="tpl__section" id="s-internal" data-origin="platform">
@@ -132,8 +132,8 @@
       <div class="tpl__content">
         <h3 class="tpl__heading">PoC</h3>
         <p class="tpl__rule">Sherlock recommends a coded PoC for complex paths, non-trivial input constraints, precision loss, reentrancy, and gas or revert attacks. A report that cannot be understood without a PoC is invalid without one. Paste the test, the command and the output.</p>
-        <div class="tpl__fill"><p>Command: <code><span class="slot">forge test --match-test test_name -vvv</span></code> on the contest commit.</p><figure class="code code--wrap tpl__code"><pre class="code__pre" tabindex="0" role="region" aria-label="Code: solidity"><code><span class="code__line">{The test}
-</span></code></pre></figure><figure class="code code--wrap tpl__code"><pre class="code__pre" tabindex="0" role="region" aria-label="Code: text"><code><span class="code__line">{Pasted output, with the final assertion and the measured loss}
+        <div class="tpl__fill"><p>Command: <code><span class="slot">forge test --match-test test_name -vvv</span></code> on the contest commit.</p><figure class="code code--wrap tpl__code"><pre class="code__pre" tabindex="0" role="region" aria-label="PoC code (solidity)"><code><span class="code__line">{The test}
+</span></code></pre></figure><figure class="code code--wrap tpl__code"><pre class="code__pre" tabindex="0" role="region" aria-label="PoC code (text)"><code><span class="code__line">{Pasted output, with the final assertion and the measured loss}
 </span></code></pre></figure></div>
       </div>
     </section><section class="tpl__section" id="s-mitigation" data-origin="platform">
@@ -141,7 +141,7 @@
       <div class="tpl__content">
         <h3 class="tpl__heading">Mitigation</h3>
         <p class="tpl__rule">The fix. Judges separate issues whose fixes differ, so a precise fix also marks where your root cause ends.</p>
-        <div class="tpl__fill"><p><span class="slot">The change, in the file and function it belongs to.</span></p><figure class="code code--wrap tpl__code"><pre class="code__pre" tabindex="0" role="region" aria-label="Code: diff"><code><span class="code__line">- {vulnerable line}
+        <div class="tpl__fill"><p><span class="slot">The change, in the file and function it belongs to.</span></p><figure class="code code--wrap tpl__code"><pre class="code__pre" tabindex="0" role="region" aria-label="Mitigation code (diff)"><code><span class="code__line">- {vulnerable line}
 </span><span class="code__line">+ {fixed line}
 </span></code></pre></figure></div>
       </div>
