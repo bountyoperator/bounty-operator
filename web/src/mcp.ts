@@ -14,6 +14,7 @@ import { clientStatus } from './account.ts';
 import { bearerAccount } from './auth.ts';
 import { VERSION, seconds } from './env.ts';
 import type { Call } from './env.ts';
+import { count } from './funnel.ts';
 import { ApiError, errorBody, json } from './http.ts';
 import { usage } from './quota.mjs';
 import { clientKey, rateLimit } from './rate.ts';
@@ -23,7 +24,8 @@ import type { Prepared, ReviewResult } from './review.ts';
 export const MCP_PROTOCOL_VERSIONS = ['2025-11-25', '2025-06-18', '2025-03-26', '2024-11-05'] as const;
 
 const SERVER_NAME = 'bounty-operator';
-const MCP_REQUESTS_PER_10_MIN = 120;
+// Tool calls per network address per 10 minutes. Only tools/call counts: see isToolCall.
+const MCP_TOOL_CALLS_PER_10_MIN = 300;
 const MAX_REVIEW_CHARS = 400000;
 const MAX_STAGES = 12;
 // How often a streamed run_review reply says it is still working. Clients drop
@@ -879,12 +881,39 @@ async function streamedReply(call: Call, message: Json, progressIntervalMs: numb
   });
 }
 
+const TOOL_NAMES: ReadonlySet<unknown> = new Set(TOOLS.map((tool) => tool.name));
+
+/**
+ * A tools/call request, the only message that counts against the address's
+ * allowance. A client opens every session with initialize, initialized,
+ * tools/list and prompts/list, none of which reads the database, so an agent
+ * that starts many short sessions spent the whole allowance on them alone: on
+ * 4 October about 30 Claude Code sessions in six minutes from one address got
+ * HTTP 429 until the window ended. The edge limit in front of every POST still
+ * turns a flood away.
+ */
+function isToolCall(message: unknown): message is Json & { id: RpcId; params: Json } {
+  if (!message || typeof message !== 'object' || Array.isArray(message)) return false;
+  const { method, id, params } = message as Json;
+  return method === 'tools/call' && isRpcId(id) && Boolean(params) && typeof params === 'object' && !Array.isArray(params);
+}
+
+/** First-party counters for the endpoint: fixed names only, never content. */
+function countMessage(call: Call, message: unknown): void {
+  if (!message || typeof message !== 'object' || Array.isArray(message)) return;
+  const { method, params } = message as Json;
+  if (method === 'initialize') count(call.env, call.ctx, 'mcp_session');
+  else if (method === 'tools/call') {
+    const name = (params as Json | undefined)?.name;
+    count(call.env, call.ctx, TOOL_NAMES.has(name) ? `mcp_call:${String(name)}` : 'mcp_call:unknown');
+  }
+}
+
 /** POST /api/mcp. `progressIntervalMs` is only changed by tests. */
 export async function mcpEndpoint(call: Call, { progressIntervalMs = PROGRESS_INTERVAL_MS } = {}): Promise<Response> {
   const { env, request } = call;
   const origin = request.headers.get('origin');
   if (origin && origin !== env.SITE_ORIGIN) throw new ApiError('Request origin is not allowed.', 403, 'origin');
-  await rateLimit(env.DB, `mcp:${await clientKey(env, request)}`, MCP_REQUESTS_PER_10_MIN, 600);
 
   let message: unknown;
   try {
@@ -892,6 +921,20 @@ export async function mcpEndpoint(call: Call, { progressIntervalMs = PROGRESS_IN
   } catch {
     const reply = rpcError(null, PARSE_ERROR, 'Parse error: the body must be one JSON-RPC message of at most 1.5 MB.', 400);
     return json(reply.body, reply.status);
+  }
+
+  countMessage(call, message);
+  if (isToolCall(message)) {
+    try {
+      await rateLimit(env.DB, `mcp:${await clientKey(env, request)}`, MCP_TOOL_CALLS_PER_10_MIN, 600);
+    } catch (error) {
+      if (!(error instanceof ApiError) || error.code !== 'rate_limited') throw error;
+      count(env, call.ctx, 'mcp_limited');
+      // A tool error the model can read and wait out, not a transport failure that drops the server.
+      const reply = rpcResult(message.id, toolFailure(error));
+      const retryAfter = typeof error.extra.retryAfter === 'number' ? error.extra.retryAfter : 60;
+      return json(reply.body, reply.status, { headers: { 'Retry-After': String(retryAfter) } });
+    }
   }
 
   if (streamsReply(message, request)) return streamedReply(call, message, progressIntervalMs);

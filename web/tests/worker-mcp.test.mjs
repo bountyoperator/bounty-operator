@@ -10,7 +10,7 @@ import { sha256 } from '../src/crypto.ts';
 import { VERSION } from '../src/env.ts';
 import { ApiError } from '../src/http.ts';
 import { MCP_PROTOCOL_VERSIONS, handleMcpMessage, mcpEndpoint } from '../src/mcp.ts';
-import { SITE_ORIGIN, addAccount, createCall, createContext, createEnv } from './worker-helpers.mjs';
+import { SITE_ORIGIN, addAccount, createCall, createContext, createEnv, funnelCounts } from './worker-helpers.mjs';
 import { assertNoBannedNames } from './private-lists.mjs';
 
 const FILES = [{ name: 'src/Vault.sol', content: 'contract Vault {\n  function withdraw() external {}\n}\n' }];
@@ -555,11 +555,57 @@ test('the endpoint refuses a request from another web origin', async () => {
   assert.equal((await endpoint(env, request('ping'), { Origin: SITE_ORIGIN })).status, 200);
 });
 
-test('the endpoint is rate-limited per network address', async () => {
+test('session messages never count against the address allowance', async () => {
+  // An agent that opens many short sessions sends initialize, initialized,
+  // tools/list and prompts/list each time; on 4 October that alone ran past
+  // the old allowance and every request got HTTP 429 for ten minutes.
   const env = createEnv();
-  for (let index = 0; index < 120; index += 1) await endpoint(env, request('ping'));
-  await assert.rejects(endpoint(env, request('ping')), (error) => error.code === 'rate_limited' && error.status === 429);
-  assert.equal((await endpoint(env, request('ping'), { 'CF-Connecting-IP': '203.0.113.8' })).status, 200, 'another address is unaffected');
+  for (let session = 0; session < 80; session += 1) {
+    assert.equal((await endpoint(env, request('initialize', { protocolVersion: '2025-11-25' }))).status, 200);
+    assert.equal((await endpoint(env, { jsonrpc: '2.0', method: 'notifications/initialized' })).status, 202);
+    assert.equal((await endpoint(env, request('tools/list'))).status, 200);
+    assert.equal((await endpoint(env, request('prompts/list'))).status, 200);
+    assert.equal((await endpoint(env, request('ping'))).status, 200);
+  }
+  assert.equal(env.DB.sqlite.prepare('SELECT COUNT(*) AS n FROM rate_limits').get().n, 0, 'no allowance row was written');
+  assert.equal(funnelCounts(env.DB).mcp_session, 80);
+});
+
+test('tool calls are limited per network address, and the limit is a tool error the model can wait out', async () => {
+  const env = createEnv();
+  const listProfiles = () => request('tools/call', { name: 'list_profiles', arguments: {} });
+  for (let index = 0; index < 300; index += 1) {
+    const response = await endpoint(env, listProfiles());
+    assert.equal(response.status, 200);
+    assert.equal((await response.json()).result.isError, false);
+  }
+
+  const limited = await endpoint(env, listProfiles());
+  assert.equal(limited.status, 200, 'answered as JSON-RPC, so the client keeps the server');
+  const retryAfter = Number(limited.headers.get('Retry-After'));
+  assert.ok(retryAfter > 0 && retryAfter <= 600, `Retry-After ${retryAfter}`);
+  const { result } = await limited.json();
+  assert.equal(result.isError, true);
+  const body = JSON.parse(result.content[0].text);
+  assert.equal(body.code, 'rate_limited');
+  assert.match(body.error, /^Too many requests\. Try again in \d+ minutes\.$/);
+
+  assert.equal((await endpoint(env, request('ping'))).status, 200, 'session messages still answer');
+  assert.equal((await endpoint(env, listProfiles(), { 'CF-Connecting-IP': '203.0.113.8' })).status, 200, 'another address is unaffected');
+
+  const counts = funnelCounts(env.DB);
+  assert.equal(counts['mcp_call:list_profiles'], 302);
+  assert.equal(counts.mcp_limited, 1);
+});
+
+test('tool-call counters use fixed names, never what the client sent', async () => {
+  const env = createEnv();
+  await endpoint(env, request('tools/call', { name: 'drop table; <script>', arguments: {} }));
+  await endpoint(env, request('tools/call', { name: 'prepare_review', arguments: {} }));
+  const counts = funnelCounts(env.DB);
+  assert.equal(counts['mcp_call:unknown'], 1);
+  assert.equal(counts['mcp_call:prepare_review'], 1);
+  assert.deepEqual(Object.keys(counts).filter((event) => event.startsWith('mcp_call:')).sort(), ['mcp_call:prepare_review', 'mcp_call:unknown']);
 });
 
 test('the account tool reads usage with a valid token and answers 401 without one', async () => {
