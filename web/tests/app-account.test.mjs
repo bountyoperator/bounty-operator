@@ -685,6 +685,10 @@ describe('reviewRows and connectionCommands', () => {
       `claude mcp add --transport http bounty-operator ${MCP_ENDPOINT} --header "Authorization: Bearer ${token}" --header "X-Provider-Key: $OPENROUTER_API_KEY"`,
     );
     assert.equal(codex.code, `export ${TOKEN_VAR}=${token} && codex mcp add bounty-operator --url ${MCP_ENDPOINT} --bearer-token-env-var ${TOKEN_VAR}`);
+    // `codex mcp add` takes neither the provider header nor a timeout, and Codex
+    // ends a call at 60 seconds by default: the note names both lines.
+    assert.ok(codex.note.includes('env_http_headers = { "X-Provider-Key" = "OPENROUTER_API_KEY" }'), codex.note);
+    assert.ok(codex.note.includes('tool_timeout_sec = 1200'), codex.note);
     for (const line of [claude, codex, local]) assert.doesNotMatch(line.code, /\n/, `${line.id} is one line`);
 
     const config = JSON.parse(cursor.code);

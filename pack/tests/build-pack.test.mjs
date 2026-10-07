@@ -243,6 +243,11 @@ test('the MCP declaration reaches the remote endpoint with empty defaults', asyn
     Authorization: `Bearer \${${TOKEN_VAR}:-}`,
     'X-Provider-Key': `\${${PROVIDER_KEY_VAR}:-}`,
   });
+  // Claude Code ends a call at the per-server timeout even while progress
+  // arrives, so it sits above the longest hosted review (15 minutes).
+  const callLimit = Number((await read('web/public/providers.mjs')).match(/const CALL_LIMIT_MS = (\d+);/)[1]);
+  assert.equal(server.timeout, 1200000);
+  assert.ok(server.timeout > callLimit, `${server.timeout} ms is not above the ${callLimit} ms review limit`);
   // The header the endpoint reads, and the token variable the local server reads.
   assert.match(await read('web/src/mcp.ts'), /request\.headers\.get\('x-provider-key'\)/);
   assert.match(await read('mcp/src/hosted.mjs'), new RegExp(`TOKEN_VAR = '${TOKEN_VAR}'`));

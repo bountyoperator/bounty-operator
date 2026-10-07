@@ -213,6 +213,9 @@ function pluginManifest(e) {
           Authorization: `Bearer \${${pack.TOKEN_VAR}:-}`,
           'X-Provider-Key': `\${${pack.PROVIDER_KEY_VAR}:-}`,
         },
+        // Milliseconds. A hosted review runs for up to 15 minutes, and Claude
+        // Code also never aborts a call for idleness sooner than this.
+        timeout: pack.MCP_TIMEOUT_MS,
       },
     },
   };

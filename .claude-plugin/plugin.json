@@ -27,7 +27,8 @@
       "headers": {
         "Authorization": "Bearer ${BOUNTY_OPERATOR_TOKEN:-}",
         "X-Provider-Key": "${BOUNTY_OPERATOR_PROVIDER_KEY:-}"
-      }
+      },
+      "timeout": 1200000
     }
   }
 }

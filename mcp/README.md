@@ -152,7 +152,7 @@ Codex, in `~/.codex/config.toml`:
 command = "npx"
 args = ["-y", "https://bountyoperator.com/dl/bounty-operator-mcp.tgz"]
 env_vars = ["BOUNTY_OPERATOR_TOKEN", "OPENROUTER_API_KEY"]
-tool_timeout_sec = 300
+tool_timeout_sec = 1200
 ```
 
 A hosted review runs for up to 270 seconds. Codex stops a tool call after 60 by default, so keep the `tool_timeout_sec` line.

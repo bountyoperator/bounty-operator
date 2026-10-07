@@ -18,6 +18,8 @@ export const MCP_ENDPOINT = `${SITE}/api/mcp`;
 /** The variables the plugin's MCP declaration reads. Both are names of our own, so no client treats them as its own credential. */
 export const TOKEN_VAR = 'BOUNTY_OPERATOR_TOKEN';
 export const PROVIDER_KEY_VAR = 'BOUNTY_OPERATOR_PROVIDER_KEY';
+/** Claude Code's per-server tool-call timeout, above the longest hosted review (15 minutes). */
+export const MCP_TIMEOUT_MS = 1200000;
 
 /**
  * @typedef {object} SkillSpec

@@ -78,6 +78,8 @@ export const MCP_PACKAGE = 'https://bountyoperator.com/dl/bounty-operator-mcp.tg
 export const TOKEN_VAR = 'BOUNTY_OPERATOR_TOKEN';
 const KEY_VAR = 'OPENROUTER_API_KEY';
 const MCP_SERVER = 'bounty-operator';
+/** Codex ends a tool call at tool_timeout_sec; this is above the longest hosted review, as on /mcp. */
+const CODEX_TIMEOUT_S = 1200;
 const MAX_CONNECTIONS = 3;
 const FREE_DAILY_REVIEWS = 1;
 const COUNTDOWN_MS = 30000;
@@ -185,7 +187,7 @@ export function connectionCommands(token) {
       name: 'Terminal',
       code: `export ${TOKEN_VAR}=${token} && codex mcp add ${MCP_SERVER} --url ${MCP_ENDPOINT} --bearer-token-env-var ${TOKEN_VAR}`,
       wrap: true,
-      note: `Codex reads ${TOKEN_VAR} each time it starts, so keep the export in your shell profile. The provider key header is set in ~/.codex/config.toml.`,
+      note: `Codex reads ${TOKEN_VAR} each time it starts, so keep the export in your shell profile. Then add two lines under [mcp_servers.${MCP_SERVER}] in ~/.codex/config.toml: env_http_headers = { "X-Provider-Key" = "${KEY_VAR}" } sends your provider key, and tool_timeout_sec = ${CODEX_TIMEOUT_S} lets a hosted review run its full 15 minutes.`,
     },
     {
       id: 'cursor',
