@@ -1044,3 +1044,85 @@
     margin-bottom: 0;
   }
 }
+
+/* ==========================================================================
+   Benchmark strip (pages/benchmark/_teaser.mjs). Kept here, not in
+   benchmark.css, so the home page loads one stylesheet fewer.
+   ========================================================================== */
+
+.bench-teaser {
+  margin-top: var(--sp-24);
+}
+
+.bench-teaser__inner {
+  display: grid;
+  gap: var(--sp-16);
+  padding: var(--sp-16) var(--sp-24);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface);
+}
+
+.bench-teaser__title {
+  margin-top: var(--sp-4);
+  font-size: var(--fs-18);
+  line-height: 1.35;
+}
+
+.bench-teaser__table,
+.bench-teaser__list {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.bench-teaser__labels .meta:last-child {
+  text-align: right;
+}
+
+.bench-teaser__row {
+  display: grid;
+  grid-template-columns: 1.5rem minmax(0, 1fr) auto auto;
+  gap: var(--sp-12);
+  align-items: baseline;
+  font-size: var(--fs-14);
+}
+
+.bench-teaser__rank {
+  color: var(--muted);
+  font-family: var(--font-mono);
+}
+
+.bench-teaser__name {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.bench-teaser__score {
+  font-weight: 650;
+}
+
+.bench-teaser__cost {
+  min-width: 4.5rem;
+  color: var(--muted);
+  text-align: right;
+}
+
+.bench-teaser__go {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-4);
+  justify-self: start;
+  min-height: var(--tap);
+}
+
+@media (min-width: 64em) {
+  .bench-teaser__inner {
+    grid-template-columns: minmax(0, 15rem) minmax(0, 1fr) auto;
+    align-items: center;
+    gap: var(--sp-32);
+  }
+
+  .bench-teaser__go {
+    justify-self: end;
+  }
+}

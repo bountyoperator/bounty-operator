@@ -510,7 +510,13 @@ test('the site with results: both pages, the nav item, the footer link and the h
   assert.ok('benchmark.html' in site.pages && 'benchmark/method.html' in site.pages);
   assert.match(site.pages['guide.html'], /<li><a href="\/benchmark">Benchmark<\/a><\/li>/);
   const home = site.pages['index.html'];
-  assert.match(home, /<link rel="stylesheet" href="\/css\/benchmark\.css">/);
+  // The strip is styled by home.css: the home page does not load benchmark.css for it.
+  assert.doesNotMatch(home, /\/css\/benchmark\.css/);
+  assert.match(home, /<link rel="stylesheet" href="\/css\/home\.css">/);
+  const homeCss = readFileSync(path.join(PUBLIC_DIR, 'css', 'home.css'), 'utf8');
+  const benchCss = readFileSync(path.join(PUBLIC_DIR, 'css', 'benchmark.css'), 'utf8');
+  assert.doesNotMatch(benchCss, /\.bench-teaser/);
+  for (const name of ['bench-teaser', 'bench-teaser__inner', 'bench-teaser__row', 'bench-teaser__go']) assert.ok(homeCss.includes(`.${name} {`), `home.css styles .${name}`);
   const start = home.indexOf('class="wrap bench-teaser"');
   const strip = textOf(home.slice(start, home.indexOf('</section>', start)));
   assert.ok(strip.includes(`Paydirt: ${many.view.rows.length} models on 18 held pairs`));

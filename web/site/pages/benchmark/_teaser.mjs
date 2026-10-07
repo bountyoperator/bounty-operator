@@ -34,6 +34,5 @@ export function teaser(published) {
 </section>`;
 }
 
+// Its rules are in home.css: the home page does not load benchmark.css for one strip.
 export const BENCH_TEASER = teaser(loadPublished());
-/** The stylesheet the strip needs, only when it is shown. */
-export const BENCH_TEASER_STYLES = BENCH_TEASER ? ['/css/benchmark.css'] : [];

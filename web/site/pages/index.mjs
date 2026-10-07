@@ -31,7 +31,7 @@ import { PROFILES } from '../../public/profiles.mjs';
 import { PROVIDERS } from '../../public/providers.mjs';
 import { exampleShot } from '../social/example.mjs';
 import { LEADERBOARDS } from './method/_shared.mjs';
-import { BENCH_TEASER, BENCH_TEASER_STYLES } from './benchmark/_teaser.mjs';
+import { BENCH_TEASER } from './benchmark/_teaser.mjs';
 import { AGENT_TICK, CHAT_TICK, RENEWAL, WHY_PAY } from '../plans.mjs';
 
 const LASTMOD = '2026-10-04';
@@ -228,7 +228,6 @@ const styles = unique([
   ...lists(workbenchModule, 'styles'),
   ...lists(accountModule, 'styles'),
   ...(publicFile('/css/workbench.css') ? ['/css/workbench.css'] : []),
-  ...BENCH_TEASER_STYLES,
 ]);
 const scripts = unique(['/app/main.mjs', ...lists(workbenchModule, 'scripts'), ...lists(accountModule, 'scripts')]);
 
