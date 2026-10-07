@@ -218,7 +218,7 @@ ${pageHero({
       ${tickList([
         'Every finding in the merged review carries its count: how many of the panel reported it.',
         'Every row names the lines that settle it, so you check the ruling against the source yourself.',
-        'Kept and dropped findings are both listed, so nothing a model reported goes missing.',
+        'Kept, unproven and dropped findings are all listed, so nothing a model reported goes missing.',
       ])}
     </div>
   </div>
@@ -252,7 +252,7 @@ ${pageHero({
   ${points(
     [
       { title: 'Surviving findings', text: 'Each as a finding card: location, impact, path, the strongest counterargument, the evidence gap, the fix and a test.' },
-      { title: 'Agreement', text: 'Every distinct finding with its k of n count, kept or dropped, the lines that settle it and the reviews that reported it.' },
+      { title: 'Agreement', text: 'Every distinct finding with its k of n count, kept, unproven or dropped, the lines that settle it and the reviews that reported it.' },
       { title: 'Checked and safe', text: 'What the panel flagged and the code clears, each with the line that guards it.' },
       { title: 'The packet', text: 'One download: the merged review, the models used and the SHA-256 manifest of every file the panel read.' },
     ],

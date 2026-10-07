@@ -79,8 +79,8 @@ const STAGE_RESULTS = {
     'Every step is performed by an unprivileged liquidator. The unhealthy state is set through `MockOracle.setPrice`, with no route from live state shown.',
   ],
   'prior-art': [
-    'rewrite-then-submit',
-    'Audit item L-04 has the same symptom and a different root cause. The report has to state the difference in its first paragraph.',
+    'submit',
+    'Audit item L-04 has the same symptom and a different root cause, so it is not a duplicate. Naming the difference in the first paragraph goes in To do.',
   ],
   poc: ['prove-first', 'The final assertion reads the return value of `liquidate`. The impact row names the borrower’s collateral.'],
   severity: ['rewrite-then-submit', 'The proof supports High on the scale supplied. The draft selects Critical.'],

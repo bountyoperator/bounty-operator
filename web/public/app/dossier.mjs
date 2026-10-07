@@ -30,7 +30,7 @@
  *     isComplete(result)                        -> boolean   the verdict stage ran
  *     decisionOf(parsed)                        -> { why, rule, blocker, action, severity, deadline, firstReproduced }
  *     gateDecision(stage)                       -> the same shape, for a run a gate ended
- *     agreementOf(parsed)                       -> [{ finding, k, n, kept, settledBy, reviewers }]
+ *     agreementOf(parsed)                       -> [{ finding, k, n, kept, status, settledBy, reviewers }]   status: kept, unproven or dropped
  *     matchAgreement(findings, rows)            -> (row | null)[]   one per finding
  *     exampleGauntletResult(example)            -> Promise<WorkbenchResult>
  *     examplePanelResult(example)               -> Promise<WorkbenchResult>
@@ -317,20 +317,40 @@ export function gateDecision(stage) {
 // ---------------------------------------------------------------------------
 
 /**
+ * The Result cell of an Agreement row: kept, unproven (open for want of
+ * evidence, not refuted) or dropped. Any other value reads as dropped, as
+ * every value but kept did before unproven existed.
+ *
+ * @param {string} cell
+ * @returns {'kept' | 'unproven' | 'dropped'}
+ */
+function agreementStatus(cell) {
+  const value = String(cell ?? '').trim();
+  if (/^kept\b/i.test(value)) return 'kept';
+  if (/^unproven\b/i.test(value)) return 'unproven';
+  return 'dropped';
+}
+
+/** The chip tone of each Agreement result. */
+const AGREEMENT_TONES = Object.freeze({ kept: 'observed', unproven: 'unproven', dropped: 'danger' });
+
+/**
  * The Agreement rows of a panel cross-examination.
  *
  * @param {{ sections?: { title: string, rows: string[][] | null }[] } | null} parsed
- * @returns {{ finding: string, k: number | null, n: number | null, kept: boolean, settledBy: string, reviewers: string }[]}
+ * @returns {{ finding: string, k: number | null, n: number | null, kept: boolean, status: 'kept' | 'unproven' | 'dropped', settledBy: string, reviewers: string }[]}
  */
 export function agreementOf(parsed) {
   const section = parsed?.sections?.find((entry) => sectionKey(entry.title) === 'agreement');
   return (section?.rows ?? []).filter((row) => row.length >= 3).map((row) => {
     const count = /(\d{1,2})\s*\/\s*(\d{1,2})/.exec(row[1] ?? '');
+    const status = agreementStatus(row[2]);
     return {
       finding: row[0] ?? '',
       k: count ? Number(count[1]) : null,
       n: count ? Number(count[2]) : null,
-      kept: /^kept\b/i.test((row[2] ?? '').trim()),
+      kept: status === 'kept',
+      status,
       settledBy: row[3] ?? '',
       reviewers: row.slice(4).join(' | '),
     };
@@ -348,13 +368,15 @@ function overlaps(a, b) {
 /**
  * Pairs each surviving finding with its Agreement row: by a shared cited line,
  * then by shared words, then by position when both lists have the same length.
+ * A finding card is a kept row, or an unproven one when nothing was kept; a
+ * dropped row never pairs with a card.
  *
  * @param {{ title: string, locations: { label: string, start: number, end: number }[] }[]} findings
  * @param {ReturnType<typeof agreementOf>} rows
  * @returns {(ReturnType<typeof agreementOf>[number] | null)[]}
  */
 export function matchAgreement(findings, rows) {
-  const kept = rows.filter((row) => row.kept);
+  const kept = rows.filter((row) => row.kept || row.status === 'unproven');
   const taken = new Set();
   const scores = findings.map((finding) => {
     const title = words(finding.title);
@@ -693,7 +715,7 @@ function panelBody(result, shown) {
           el('tbody', {}, rows.map((row) => el('tr', {},
             el('th', { scope: 'row' }, inlineNodes(row.finding, source)),
             el('td', { class: 'num nowrap', text: row.k === null ? '' : `${row.k} of ${row.n}` }),
-            el('td', {}, chip(row.kept ? 'kept' : 'dropped', row.kept ? 'observed' : 'danger')),
+            el('td', {}, chip(row.status, AGREEMENT_TONES[row.status])),
             el('td', {}, inlineNodes(row.settledBy, source)),
             el('td', {}, el('span', { class: 'pn-seats' }, seatButtons(row.reviewers)))))))))
     : null;

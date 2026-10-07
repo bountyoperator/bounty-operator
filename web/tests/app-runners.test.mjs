@@ -515,10 +515,24 @@ describe('panel result', () => {
   test('Agreement rows are read as counts, kept or dropped, and the reviews behind them', () => {
     const rows = agreementOf(parseReview(answer({ sections: AGREEMENT })));
     assert.deepEqual(rows.map((row) => [row.k, row.n, row.kept]), [[3, 3, true], [1, 3, false], [2, 3, true]]);
+    assert.deepEqual(rows.map((row) => row.status), ['kept', 'dropped', 'kept']);
     assert.equal(rows[0].settledBy, 'input-1/src/Vault.sol:12-14');
     assert.match(rows[2].reviewers, /panel-1-a\.md, panel-3-c\.md/);
     assert.deepEqual(agreementOf(parseReview(answer())), []);
     assert.deepEqual(agreementOf(null), []);
+  });
+
+  test('an unproven row is neither kept nor dropped, and it can carry the finding card', () => {
+    const rows = agreementOf(parseReview(answer({ sections: `## Agreement
+- shownBytes multiplies by 1000 | 3/3 | unproven | src/conversion.ts not supplied; input-6/observations.txt:1 | panel-1-a.md, panel-2-b.md, panel-3-c.md
+- Header padding changes the count | 1/3 | dropped | input-4/register.md:1 | panel-2-b.md
+- Label wraps on narrow screens | 1/3 | withdrawn | none | panel-3-c.md
+` })));
+    assert.deepEqual(rows.map((row) => [row.status, row.kept]), [['unproven', false], ['dropped', false], ['dropped', false]]);
+    // With nothing kept, the unproven finding is the one a card stands for; a dropped row never is.
+    const [matched] = matchAgreement([{ title: 'shownBytes multiplies kibibytes by 1000', locations: [] }], rows);
+    assert.equal(matched.status, 'unproven');
+    assert.deepEqual(matchAgreement([{ title: 'Header padding', locations: [{ label: 'input-4/register.md', start: 1, end: 1 }] }], rows.slice(1)), [null]);
   });
 
   test('each surviving finding gets its own row: by cited line, then by words, then by order', () => {

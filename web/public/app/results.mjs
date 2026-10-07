@@ -129,7 +129,7 @@ const TAIL_SECTIONS = new Set(['entry points', 'invariants', 'hardening', 'check
 const CELL_TONES = Object.freeze({
   observed: ['pass', 'met', 'holds', 'satisfied', 'confirmed', 'clear', 'answered', 'reachable', 'bound', 'kept', 'executed', 'resolved'],
   danger: ['fail', 'broken', 'contradicted', 'not-met', 'not-satisfied', 'unreachable', 'not-bound', 'match', 'same-root'],
-  unproven: ['overstated', 'unverifiable', 'not-supplied', 'not-shown', 'absent', 'mocked', 'narrated', 'open', 'not-stated', 'same-symptom-different-root'],
+  unproven: ['overstated', 'unverifiable', 'not-supplied', 'not-shown', 'absent', 'mocked', 'narrated', 'open', 'not-stated', 'same-symptom-different-root', 'unproven'],
 });
 
 // ---------------------------------------------------------------------------
