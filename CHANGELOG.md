@@ -1,5 +1,31 @@
 # Changelog
 
+## 0.7.9 — 2026-10-07
+
+Report check
+
+- Three new checks, from the platform rules of 2026, take the tool to
+  seventeen. All three run in your browser, like the rest.
+- Transactions sent to a live network: a `cast send` or
+  `forge script --broadcast` aimed at a remote node, a Hardhat run on a
+  named network, or a link to a transaction the report says you sent.
+  Immunefi bans testing on mainnet or a public testnet. A forked test, a
+  local node and a transaction someone else sent are not flagged.
+- AI use disclosed: a line that says which AI tools helped and how, or that
+  none did. Intigriti's Code of Conduct requires it, and GitHub's private
+  vulnerability report form asks.
+- Placeholders and assistant leftovers: `[insert …]`, `<your …>`, TBD,
+  `TODO:`, and sentences such as "As an AI" or "I hope this helps". A TODO
+  quoted from the target's code, Markdown links and courtesy lines to a
+  triager are not flagged.
+
+Compare
+
+- Intigriti's Submission Draft Agent joins the platform pre-checks, and the
+  tools table adds a local go or no-go check on one finished report, a bounty
+  platform's own report-writing plugin and a bountiability check with
+  exploit simulation. Every row has a dated source.
+
 ## 0.7.8 — 2026-10-07
 
 MCP and agents
