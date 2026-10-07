@@ -1,7 +1,7 @@
 // The template shared by the profile landing pages. No default export, so the
 // generator treats this module as a helper.
 
-import { button, cx, faq, html, icon, inline, sectionHeading } from '../../components.mjs';
+import { button, cx, esc, faq, html, icon, inline, raw, sectionHeading } from '../../components.mjs';
 import { breadcrumbsLd, faqPageLd } from '../../layout.mjs';
 import { LIMITS } from '../../../public/review-core.mjs';
 import { LASTMOD, STYLES, ctaBand, exampleFrame, pageHero, points, relatedLinks, tickList, workbenchLink } from './_shared.mjs';
@@ -106,14 +106,17 @@ ${ctaBand({
  * A ledger card built from finding-card parts, for output that is a list of
  * judged rows (claims, rejection reasons, overlap) instead of one finding.
  * rows: [{ label, kind, status, name, quote, plain, chip, text, refs }]
+ * level: heading level of the title (default 3); 0 makes it a paragraph, as
+ * for the example beside a page's h1.
  */
-export function ledgerCard({ id, tag, title, chips, bar, rows, next }) {
+export function ledgerCard({ id, tag, title, chips, bar, rows, next, level = 3 }) {
+  const titleTag = level ? `h${level}` : 'p';
   return html`
 <article class="finding ledger-card" aria-labelledby="${id}-title">
   ${bar && html`<div class="finding__bar">${icon('file')}<span class="finding__file">${bar.name}</span>${bar.tag && html`<span class="finding__tag">${bar.tag}</span>`}</div>`}
   <header class="finding__head">
     <div class="finding__tags"><span class="finding__id">${tag}</span>${chips}</div>
-    <h3 class="finding__title" id="${id}-title">${inline(title)}</h3>
+    ${raw(`<${titleTag} class="finding__title" id="${esc(id)}-title">`)}${inline(title)}${raw(`</${titleTag}>`)}
   </header>
   <dl class="finding__rows">
     ${rows.map(

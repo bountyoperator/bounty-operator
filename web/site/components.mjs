@@ -726,7 +726,8 @@ function gapRow(gap) {
  *     counterargument: { objection, status, why }, gap, fix, test, next }
  *
  * Options
- *   level   heading level of the title (default 3)
+ *   level   heading level of the title (default 3); 0 makes it a paragraph, for an
+ *           example card that is not a section of the page
  *   bar     { name, hash, tag } renders the window bar above the head
  *   code    codeBlock() options for the excerpt shown under the path
  *   rows    which rows to render, in order (default: every row with content)
@@ -772,5 +773,7 @@ export function findingCard(finding, { level = 3, bar, code, rows, reveal = fals
     'aria-labelledby': titleId,
   });
 
-  return html`<article${cardAttrs}>${barMarkup}<header class="finding__head"><div class="finding__tags"><span class="finding__id">${findingId}</span>${severityChip(finding.severity)}${basis && statusChip(basis)}</div>${raw(`<h${level} class="finding__title" id="${esc(titleId)}">`)}${inline(finding.title)}${raw(`</h${level}>`)}${refs}</header><dl class="finding__rows">${body}</dl></article>`;
+  // level 0: the title is a paragraph, for a card shown as an example rather than as a section.
+  const titleTag = level ? `h${level}` : 'p';
+  return html`<article${cardAttrs}>${barMarkup}<header class="finding__head"><div class="finding__tags"><span class="finding__id">${findingId}</span>${severityChip(finding.severity)}${basis && statusChip(basis)}</div>${raw(`<${titleTag} class="finding__title" id="${esc(titleId)}">`)}${inline(finding.title)}${raw(`</${titleTag}>`)}${refs}</header><dl class="finding__rows">${body}</dl></article>`;
 }

@@ -137,7 +137,7 @@ ${relatedTools(PATH)}`;
 
 export default {
   path: PATH,
-  title: `Slither triage queue: filter Slither JSON to ${DEFAULT_CHECKS.length} detectors | Bounty Operator`,
+  title: `Slither triage queue: ${DEFAULT_CHECKS.length} detectors | Bounty Operator`,
   description: `Drop Slither’s JSON output and get a ranked Markdown queue of the ${DEFAULT_CHECKS.length} detectors worth a manual pass, with file and line. Runs in your browser.`,
   nav: 'tools',
   label: 'Slither triage queue',

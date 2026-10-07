@@ -22,6 +22,7 @@ import { LIMITS } from '../../../public/review-core.mjs';
 import { button, chip, codeBlock, disclosure, faq, html, inline, table, tabs } from '../../components.mjs';
 import { breadcrumbsLd, faqPageLd } from '../../layout.mjs';
 import { DOCS_STYLES, UPDATED, docPage, facts, nextStep } from './_shared.mjs';
+import { NOT_COUNTED } from '../../plans.mjs';
 
 const PATH = '/mcp';
 const SERVER = 'bounty-operator';
@@ -32,8 +33,18 @@ const TOKEN_VAR = 'BOUNTY_OPERATOR_TOKEN';
 const MODEL_VAR = 'BOUNTY_OPERATOR_MODEL';
 const ROOT_VAR = 'BOUNTY_OPERATOR_ROOT';
 const KEY_VAR = 'OPENROUTER_API_KEY';
+// A hosted review on the remote endpoint runs for up to 15 minutes. Claude
+// Code's per-server `timeout` (milliseconds) ends a call at that time even
+// while progress arrives, and Codex stops a call after `tool_timeout_sec`, so
+// both are set above the longest review.
+const CLAUDE_TIMEOUT_MS = 1200000;
+const CODEX_TIMEOUT_S = 1200;
 
 const json = (value) => JSON.stringify(value, null, 2);
+
+/** Said once on this page: the clients that cannot wait for a long hosted review. */
+export const CLIENT_LIMIT =
+  'claude.ai and Claude Desktop stop any tool call after 240 seconds, and a hosted review runs for up to 15 minutes. Run hosted reviews from Claude Code, Codex or the website. `prepare_review` and `build_packet` for the three core profiles work in every client.';
 const capital = (text) => text.charAt(0).toUpperCase() + text.slice(1);
 
 // Read from the engine, so the page cannot drift from what the servers do.
@@ -48,8 +59,8 @@ if (CORE_STAGES.join() !== 'report') throw new Error(`/mcp says the report stage
 
 /** A shell command: one line, wrapped on screen, copied as one line. */
 const shell = (code, label) => codeBlock({ code, name: 'Terminal', numbers: false, wrap: true, copy: true, label });
-/** A config file: lines kept as written. */
-const file = (code, name) => codeBlock({ code, name, numbers: false, copy: true });
+/** A config file: lines kept as written. `label` names the block when two share a file name. */
+const file = (code, name, label) => codeBlock({ code, name, numbers: false, copy: true, label });
 
 // ---------------------------------------------------------------------------
 // Install commands per client
@@ -69,17 +80,32 @@ const CLIENTS = [
     local: html`${shell(`claude mcp add --transport stdio ${SERVER} -- npx -y ${TARBALL}`, 'Claude Code: add the local server')}
 <p class="fine">${inline('On Windows outside WSL, start it through `cmd`: end the command with `-- cmd /c npx -y` and the same address.')}</p>`,
     token: html`
-<p>Remote endpoint. The two headers carry your account token and your provider key:</p>
-${shell(
-  `claude mcp add --transport http ${SERVER} ${ENDPOINT} --header "Authorization: Bearer $${TOKEN_VAR}" --header "X-Provider-Key: $${KEY_VAR}"`,
+<p>${inline('Remote endpoint, in `.mcp.json` at the root of your project. The two headers carry your account token and your provider key, and Claude Code fills in each `${NAME}` from your environment:')}</p>
+${file(
+  json({
+    mcpServers: {
+      [SERVER]: {
+        type: 'http',
+        url: ENDPOINT,
+        headers: { Authorization: `Bearer \${${TOKEN_VAR}}`, 'X-Provider-Key': `\${${KEY_VAR}}` },
+        timeout: CLAUDE_TIMEOUT_MS,
+      },
+    },
+  }),
+  '.mcp.json',
   'Claude Code: remote endpoint with a token',
 )}
 <p>Local server. The same two values go in as environment variables:</p>
-${shell(
-  `claude mcp add --env ${TOKEN_VAR}=$${TOKEN_VAR} --env ${KEY_VAR}=$${KEY_VAR} --transport stdio ${SERVER} -- npx -y ${TARBALL}`,
+${file(
+  json({
+    mcpServers: {
+      [SERVER]: { command: 'npx', args: ['-y', TARBALL], env: { [TOKEN_VAR]: `\${${TOKEN_VAR}}`, [KEY_VAR]: `\${${KEY_VAR}}` }, timeout: CLAUDE_TIMEOUT_MS },
+    },
+  }),
+  '.mcp.json',
   'Claude Code: local server with a token',
 )}
-<p class="fine">${inline(`Your shell fills in \`$${TOKEN_VAR}\` when the command runs. In PowerShell write \`$env:${TOKEN_VAR}\`. If the server is already added, run \`claude mcp remove ${SERVER}\` first.`)}</p>`,
+<p class="fine">${inline(`\`timeout\` is in milliseconds, and the call ends then even while progress arrives: \`${CLAUDE_TIMEOUT_MS}\` is 20 minutes, above the longest hosted review. \`claude mcp add\` has no timeout option, so use the file. If the server is already added, run \`claude mcp remove ${SERVER}\` first. On Windows outside WSL, start the local server through \`cmd\`: \`"command": "cmd"\` with \`"/c", "npx"\` at the front of \`args\`.`)}</p>`,
   },
   {
     id: 'codex',
@@ -93,8 +119,9 @@ ${file(
 url = "${ENDPOINT}"
 bearer_token_env_var = "${TOKEN_VAR}"
 env_http_headers = { "X-Provider-Key" = "${KEY_VAR}" }
-tool_timeout_sec = 900`,
+tool_timeout_sec = ${CODEX_TIMEOUT_S}`,
   '~/.codex/config.toml',
+  'Codex: remote endpoint with a token',
 )}
 <p>Local server:</p>
 ${file(
@@ -102,17 +129,18 @@ ${file(
 command = "npx"
 args = ["-y", "${TARBALL}"]
 env_vars = ["${TOKEN_VAR}", "${KEY_VAR}"]
-tool_timeout_sec = 300`,
+tool_timeout_sec = ${CODEX_TIMEOUT_S}`,
   '~/.codex/config.toml',
+  'Codex: local server with a token',
 )}
-<p class="fine">${inline('Codex stops a tool call after 60 seconds by default, so keep the `tool_timeout_sec` line. On the remote endpoint a hosted review runs until the model finishes, for up to 15 minutes, and sends progress every 10 seconds. Through the local server it ends within 270 seconds.')}</p>`,
+<p class="fine">${inline(`Codex stops a tool call after 60 seconds by default, so keep the \`tool_timeout_sec\` line: ${CODEX_TIMEOUT_S} seconds is above the longest hosted review. On the remote endpoint a hosted review runs until the model finishes, for up to 15 minutes, and sends progress every 10 seconds. Through the local server it ends within 270 seconds.`)}</p>`,
   },
   {
     id: 'cursor',
     label: 'Cursor',
-    remote: html`${file(json({ mcpServers: { [SERVER]: cursorRemote } }), '~/.cursor/mcp.json')}
+    remote: html`${file(json({ mcpServers: { [SERVER]: cursorRemote } }), '~/.cursor/mcp.json', 'Cursor: the remote endpoint')}
 <p class="install__alt">${button({ label: 'Add to Cursor', href: cursorInstallLink, size: 'sm', icon: 'plus' })}<span class="fine">Opens Cursor and adds the remote endpoint.</span></p>`,
-    local: file(json({ mcpServers: { [SERVER]: cursorLocal } }), '~/.cursor/mcp.json'),
+    local: file(json({ mcpServers: { [SERVER]: cursorLocal } }), '~/.cursor/mcp.json', 'Cursor: the local server'),
     token: html`
 <p>${inline('Remote endpoint. Cursor fills `${env:NAME}` from your environment:')}</p>
 ${file(
@@ -125,6 +153,7 @@ ${file(
     },
   }),
   '~/.cursor/mcp.json',
+  'Cursor: remote endpoint with a token',
 )}
 <p>Local server:</p>
 ${file(
@@ -134,6 +163,7 @@ ${file(
     },
   }),
   '~/.cursor/mcp.json',
+  'Cursor: local server with a token',
 )}
 <p class="fine">${inline('Use `.cursor/mcp.json` in a project folder to add the server to that project only.')}</p>`,
   },
@@ -154,6 +184,7 @@ ${disclosure({ summary: 'Add your account token', hint: 'for account and run_rev
 </div>`,
 )}
 <p class="install__foot fine">${inline('No account needed for either route. `list_profiles`, `prepare_review` for the three core profiles and `build_packet` work as soon as the server is added.')} The local package is listed with its SHA-256 in <a href="${CHECKSUMS}">SHA256SUMS.txt</a>.</p>
+<p class="install__foot fine">${inline(CLIENT_LIMIT)}</p>
 </section>`;
 
 // ---------------------------------------------------------------------------
@@ -447,7 +478,7 @@ const FAQ = [
   },
   {
     q: 'What does a hosted review cost through MCP?',
-    a: `\`run_review\` shares one allowance with the website: one hosted review per UTC day on Free, any profile, and unlimited on Operator at US$10 per week. A gauntlet run over MCP uses ${WORDS[HOSTED_STAGES]} hosted reviews, one for every stage but the report stage, so a full run takes Operator. Your model provider bills its own usage to your key.`,
+    a: `\`run_review\` shares one allowance with the website: one hosted review per UTC day on Free, any profile, and unlimited on Operator at US$10 per week. A gauntlet run over MCP uses ${WORDS[HOSTED_STAGES]} hosted reviews, one for every stage but the report stage, so a full run takes Operator. ${NOT_COUNTED} Your model provider bills its own usage to your key.`,
   },
   {
     q: 'Which profiles can my agent’s own model run?',
@@ -482,7 +513,7 @@ const body = docPage({
     { id: 'tools', title: 'The tools it exposes', label: 'Tools', body: tools, prose: false },
     { id: 'hosted', title: 'Core and hosted profiles', body: hosted, prose: false },
     { id: 'prompts', title: 'Three slash commands', label: 'Slash commands', body: prompts, prose: false },
-    { id: 'skills', title: 'Skills and the plugin', label: 'Agent pack', body: pack, prose: false },
+    { id: 'skills', title: 'Skills and the plugin', label: 'Skills and plugin', body: pack, prose: false },
     { id: 'token', title: 'What needs an account token', label: 'Account token', body: token, prose: false },
     { id: 'permissions', title: 'What the server can reach', label: 'Permissions', body: permissions, prose: false },
     { id: 'errors', title: 'When a call fails', label: 'Failed calls', body: errors, prose: false },
@@ -497,7 +528,7 @@ const body = docPage({
 
 export default {
   path: PATH,
-  title: 'Bounty Operator MCP server: install for Claude Code, Codex and Cursor',
+  title: 'MCP server for Claude Code, Codex, Cursor | Bounty Operator',
   label: 'MCP setup',
   description:
     'Copy-paste install for the Bounty Operator MCP server in Claude Code, Codex and Cursor, with its tools, three prompts and token setup.',

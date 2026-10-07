@@ -185,7 +185,7 @@ const body = html`
 ${pageHero({
   trail: [{ label: 'Bounty Operator', href: '/' }, { label: 'Method', href: '/method' }, { label: 'Gauntlet' }],
   eyebrow: html`${statusChip('operator')}`,
-  title: 'Run one finding through 8 checks and get a verdict',
+  title: 'Run one finding through eight stages and get a verdict',
   lede: 'Give it your draft, your code and the program rules. You get one verdict (submit, rewrite then submit, prove first, hold as duplicate, or drop), the main thing blocking it, and the quickest fix.',
   actions: operatorActions({ secondary: button({ label: 'See the eight stages', href: '#stages', size: 'lg' }) }),
   note: 'US$10 per week. Runs on your own model and key.',
@@ -318,7 +318,7 @@ ${ctaBand({
 
 export default {
   path: PATH,
-  title: 'Gauntlet: eight-stage bug bounty report check | Bounty Operator',
+  title: 'Gauntlet: eight-stage report check | Bounty Operator',
   description:
     'One run takes your draft through eight stages and returns one verdict, the main blocker and the quickest fix. Full example included.',
   label: 'Gauntlet',

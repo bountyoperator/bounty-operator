@@ -34,11 +34,23 @@ export function plain(text) {
 // Template body: the Markdown subset used in data.mjs
 // ---------------------------------------------------------------------------
 
-/** Render a template body (paragraphs, lists, fenced code) as HTML. */
-export function renderBody(source) {
+/** The region label of a code block: "Proof of Concept code (solidity)". */
+function codeLabel(heading, language) {
+  const base = heading ? `${heading} code` : 'Code';
+  return language ? `${base} (${language})` : base;
+}
+
+/**
+ * Render a template body (paragraphs, lists, fenced code) as HTML. `heading`
+ * names the section, so every code block on a page has its own region label.
+ */
+export function renderBody(source, { heading } = {}) {
   const lines = String(source).split('\n');
   const blocks = [];
   let index = 0;
+  // Two blocks with the same label in one section are numbered: "…, 1 of 2".
+  const labels = lines.filter((line) => line.startsWith('```')).filter((_, position) => position % 2 === 0).map((line) => codeLabel(heading, line.slice(3).trim()));
+  const used = new Map();
 
   while (index < lines.length) {
     const line = lines[index];
@@ -52,7 +64,10 @@ export function renderBody(source) {
         index += 1;
       }
       index += 1;
-      blocks.push(codeBlock({ code: code.join('\n'), numbers: false, wrap: true, label: language ? `Code: ${language}` : 'Code', className: 'tpl__code' }));
+      const label = codeLabel(heading, language);
+      const total = labels.filter((entry) => entry === label).length;
+      used.set(label, (used.get(label) ?? 0) + 1);
+      blocks.push(codeBlock({ code: code.join('\n'), numbers: false, wrap: true, label: total > 1 ? `${label}, ${used.get(label)} of ${total}` : label, className: 'tpl__code' }));
       continue;
     }
     if (/^- /.test(line)) {
@@ -131,7 +146,7 @@ export function templateArticle(platform) {
       <div class="tpl__content">
         <h3 class="tpl__heading">${section.heading}</h3>
         <p class="tpl__rule">${plain(section.rule)}</p>
-        <div class="tpl__fill">${renderBody(section.body)}</div>
+        <div class="tpl__fill">${renderBody(section.body, { heading: section.heading })}</div>
       </div>
     </section>`;
   });

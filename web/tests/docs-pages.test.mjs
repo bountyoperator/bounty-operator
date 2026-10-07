@@ -94,6 +94,33 @@ test('the privacy policy states the cookie count, the keyed IP hash and the coun
   assert.match(privacy, /No ad cookies\. No tracking pixels\./);
 });
 
+test('the privacy policy lists every key the site scripts keep in the browser', async () => {
+  const { BROWSER_STORAGE } = await import('../site/pages/docs/privacy.mjs');
+  const listed = new Set(BROWSER_STORAGE.flatMap((entry) => entry.keys));
+  // Every storage key a shipped script names: bo:… and bo-… string constants
+  // passed to localStorage, sessionStorage or indexedDB.
+  const { readdir } = await import('node:fs/promises');
+  const scripts = ['theme.js'];
+  for (const dir of ['app', 'benchmark', 'docs', 'templates', 'tools']) {
+    for (const name of await readdir(path.join(PUBLIC_DIR, dir))) if (name.endsWith('.mjs')) scripts.push(`${dir}/${name}`);
+  }
+  const used = new Set();
+  for (const file of scripts) {
+    const source = await readFile(path.join(PUBLIC_DIR, file), 'utf8');
+    if (!/localStorage|sessionStorage|indexedDB|readSession|writeSession|sessionStore/.test(source)) continue;
+    for (const [, key] of source.matchAll(/['"](bo[:-][a-z][a-z:-]*)['"]/g)) used.add(key);
+  }
+  assert.ok(used.size >= 10, `found ${[...used].join(', ')}`);
+  for (const key of used) assert.ok(listed.has(key), `/privacy does not list ${key}`);
+  for (const key of listed) assert.ok(used.has(key), `/privacy lists ${key}, which no script uses`);
+
+  const privacy = textOf(rendered.get('/privacy'));
+  for (const key of listed) assert.ok(privacy.includes(key), key);
+  assert.match(privacy, /The Worker keeps no invocation logs\./);
+  assert.match(privacy, /No log line holds an IP address, a request body, file contents, an API key or a Stripe payload\./);
+  assert.match(privacy, /Cloudflare, which hosts the site, processes each request’s IP address to deliver it\./);
+});
+
 test('the MCP page prints the two install commands exactly', () => {
   const mcp = textOf(rendered.get('/mcp'));
   assert.ok(mcp.includes('claude mcp add --transport http bounty-operator https://bountyoperator.com/api/mcp'));
@@ -249,7 +276,7 @@ test('the privacy policy says page views and named actions are counted in aggreg
   assert.match(privacy, /named actions a page reports from a fixed list: an example loaded, a prompt exported, a packet saved, a free tool run, a template copied, an MCP command copied/);
   assert.match(privacy, /A page reports an action by its name and sends nothing with it\./);
   assert.match(privacy, /what you paste or drop there never leaves the browser\./);
-  assert.match(privacy, /Last updated 3 October 2026/);
+  assert.match(privacy, /Last updated 7 October 2026/);
 });
 
 test('the MCP page counts a copied install command by name, and says which profiles each tool takes', async () => {

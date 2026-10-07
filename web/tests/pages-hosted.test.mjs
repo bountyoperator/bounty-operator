@@ -313,7 +313,7 @@ test('the data flow of a hosted review is stated the way the Worker runs it', as
 test('the two plans read the same wherever they are summarised', () => {
   // Operator: unlimited reviews, the full gauntlet, panel review, four at once.
   const home = text('index.html');
-  for (const line of ['Operator US$10 per week', 'Unlimited reviews, 4 at once', 'Gauntlet: 8 checks on one finding, then a verdict', 'Panel review: compare 2 to 4 models']) {
+  for (const line of ['Operator US$10 per week', 'Unlimited reviews, 4 at once', 'Gauntlet: eight stages on one finding, then a verdict', 'Panel review: compare 2 to 4 models']) {
     assert.ok(home.includes(line), `home: ${line}`);
   }
   const operator = 'Operator is US$10 per week for unlimited reviews, the Gauntlet, Panel review and 4 reviews at once.';
@@ -322,7 +322,7 @@ test('the two plans read the same wherever they are summarised', () => {
   assert.match(readme, /\*\*Operator: US\$10\/week\*\* for unlimited reviews, the Gauntlet, Panel review and 4 reviews at once\./);
   assert.match(text('terms.html'), /Unlimited reviews, the Gauntlet, Panel review and 4 reviews at once\. Renews weekly until you cancel\./);
   const pricing = text('pricing.html');
-  for (const line of ['Unlimited reviews', 'Gauntlet: 8 checks on one finding, then a verdict', 'Panel review: 2 to 4 models, then a cross-check', '4 reviews running at once']) {
+  for (const line of ['Unlimited reviews', 'Gauntlet: eight stages on one finding, then a verdict', 'Panel review: 2 to 4 models, then a cross-check', '4 reviews running at once']) {
     assert.ok(pricing.includes(line), line);
   }
 

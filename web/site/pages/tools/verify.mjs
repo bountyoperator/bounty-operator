@@ -123,7 +123,7 @@ ${relatedTools(PATH)}`;
 
 export default {
   path: PATH,
-  title: 'Verify a review packet: recompute SHA-256 in the browser | Bounty Operator',
+  title: 'Verify a review packet: SHA-256 check | Bounty Operator',
   description: 'Drop a review packet or manifest with its source files and see match, mismatch or missing for every SHA-256. The hashing runs in your browser.',
   nav: 'tools',
   label: 'Packet verifier',

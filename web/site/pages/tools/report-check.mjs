@@ -167,7 +167,7 @@ ${relatedTools(PATH)}`;
 
 export default {
   path: PATH,
-  title: 'Bug bounty report check: 14 instant checks and a citation check | Bounty Operator',
+  title: 'Bug bounty report check: 14 checks | Bounty Operator',
   description: 'Paste a draft bug bounty report: 14 instant checks (pinned commit, impact row, inline proof, trusted roles, secrets) and a file:line citation check. In-browser.',
   nav: 'tools',
   label: 'Report check',

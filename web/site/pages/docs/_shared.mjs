@@ -9,7 +9,7 @@ import { SITE } from '../../layout.mjs';
 export const DOCS_STYLES = ['/css/docs.css'];
 
 /** The date the legal and trust text was last changed. */
-export const UPDATED = '2026-10-03';
+export const UPDATED = '2026-10-07';
 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 

@@ -32,7 +32,7 @@ import { PROVIDERS } from '../../public/providers.mjs';
 import { exampleShot } from '../social/example.mjs';
 import { LEADERBOARDS } from './method/_shared.mjs';
 import { BENCH_TEASER, BENCH_TEASER_STYLES } from './benchmark/_teaser.mjs';
-import { RENEWAL, WHY_PAY } from '../plans.mjs';
+import { AGENT_TICK, CHAT_TICK, RENEWAL, WHY_PAY } from '../plans.mjs';
 
 const LASTMOD = '2026-10-04';
 const DEV_BUILD = process.argv.includes('--dev');
@@ -157,7 +157,7 @@ const pricing = html`
         <h3 class="home-plan__name" id="plan-free">Free</h3>
         <p class="home-plan__price"><span class="home-plan__amount">US$0</span></p>
         <p class="home-plan__for">No card needed.</p>
-        ${ticks([`1 review a day, any of the ${PROFILE_TOTAL} review types`, 'Unlimited copy-paste reviews in ChatGPT or Claude (3 review types)'])}
+        ${ticks([`1 review a day, any of the ${PROFILE_TOTAL} review types`, CHAT_TICK, AGENT_TICK])}
         <div class="home-plan__cta">${button({ label: 'Start a free review', href: '#workspace', size: 'lg', block: true })}</div>
       </article>
       <article class="home-plan home-plan--operator" aria-labelledby="plan-operator">
@@ -166,7 +166,7 @@ const pricing = html`
         <p class="home-plan__for">Everything in Free, plus:</p>
         ${ticks([
           'Unlimited reviews, 4 at once',
-          html`<a class="link" href="/gauntlet">Gauntlet</a>: 8 checks on one finding, then a verdict`,
+          html`<a class="link" href="/gauntlet">Gauntlet</a>: eight stages on one finding, then a verdict`,
           html`<a class="link" href="/panel-review">Panel review</a>: compare 2 to 4 models`,
         ])}
         <div class="home-plan__cta">${button({ label: 'Get Operator', id: 'upgrade', variant: 'primary', size: 'lg', block: true, attrs: { 'data-upgrade': true, 'data-account-action': 'checkout' } })}</div>

@@ -261,7 +261,7 @@ const checksLd = {
 
 export default {
   path: PATH,
-  title: 'Why bug bounty reports get rejected: the twelve checks | Bounty Operator',
+  title: 'Why bug bounty reports get rejected | Bounty Operator',
   description: DESCRIPTION,
   label: 'Method',
   styles: STYLES,

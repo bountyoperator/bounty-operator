@@ -1864,12 +1864,14 @@ button.ref:hover {
   letter-spacing: 0.06em;
 }
 
+/* A heading, or a paragraph when the card is an example (findingCard level 0). */
 .finding__title {
   max-width: 56ch;
   font-size: var(--fs-22);
   font-weight: 650;
   line-height: 1.25;
   letter-spacing: -0.015em;
+  text-wrap: balance;
 }
 
 .finding__refs {

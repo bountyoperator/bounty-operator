@@ -5,10 +5,10 @@
 // is not an audit or certification appears here and nowhere else on the site.
 
 import { LIMITS } from '../../../public/review-core.mjs';
-import { html, table } from '../../components.mjs';
+import { html, inline, table } from '../../components.mjs';
 import { breadcrumbsLd } from '../../layout.mjs';
 import { DOCS_STYLES, UPDATED, docPage, facts, supportLink, time } from './_shared.mjs';
-import { FREE_LINE, OPERATOR_LINE } from '../../plans.mjs';
+import { FREE_LINE, NOT_COUNTED, OPERATOR_LINE } from '../../plans.mjs';
 
 const PATH = '/terms';
 
@@ -37,17 +37,17 @@ const plansTable = table({
   dense: true,
   className: 'plans-table',
   rows: [
-    ['Reviews on your API key', '1 a day, any review type', 'Unlimited'],
+    [html`Reviews on your API key, on the website or with <code>run_review</code>`, '1 a day, any review type', 'Unlimited'],
     ['Reviews running at once', '1', '4'],
     ['Gauntlet and Panel review', 'Example only', 'Included'],
-    ['Copy-paste reviews and MCP prepare for code security, Solidity and draft-report reviews', 'Included', 'Included'],
+    [html`Copy-paste reviews, and reviews your coding agent’s own model writes with <code>prepare_review</code> or the skills (code security, Solidity, draft report)`, 'Unlimited, not counted', 'Unlimited'],
     ['Free tools, repo import, local history', 'Included', 'Included'],
   ],
 });
 
 const limits = html`
 <p>Both plans accept up to ${LIMITS.files} UTF-8 text files per review, ${kb(LIMITS.fileBytes)} per file, ${kb(LIMITS.totalBytes)} and ${thousands(LIMITS.totalLines)} lines in total, with instructions up to ${thousands(LIMITS.promptChars)} characters.</p>
-<p>A review is one review type run through our server on your key, from the website or through the MCP server. The free review resets at 00:00 UTC. A review the provider fails, refuses or cuts off at the start is not counted.</p>
+<p>A review is one review type run through our server on your key, from the website or with <code>run_review</code> through the MCP server. ${inline(NOT_COUNTED)} The free review resets at 00:00 UTC. A review the provider fails, refuses or cuts off at the start is not counted.</p>
 <p>Our server adds the method of a hosted profile to your request and sends both to the provider you chose, under your key. No page, tool or download returns it. Do not use a review to obtain it: an answer that repeats the method is stopped and counts as a review.</p>
 <p>One person per account. No bulk automation, resale or limit bypassing. Rate limits apply.</p>`;
 

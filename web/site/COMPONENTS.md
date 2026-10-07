@@ -442,7 +442,7 @@ findingCard(finding, {
 
 | Option | Meaning |
 |---|---|
-| `level` | Heading level of the title. Default 3. |
+| `level` | Heading level of the title. Default 3. `0` renders the title as a paragraph, for an example card that is not a section of the page (a hero example directly under the `h1`). |
 | `bar` | Window bar: `{ name, hash, tag }`. |
 | `code` | `codeBlock()` options for the excerpt under the path. |
 | `rows` | Rows to render, in order. Default: every row that has content. |

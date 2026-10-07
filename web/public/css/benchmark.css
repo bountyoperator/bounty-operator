@@ -301,6 +301,79 @@
     white-space: nowrap;
   }
 
+  /* With scripts on, the header row becomes the sort control: one button per
+     sortable column above the cards. html[data-js] is set before first paint,
+     so the row is in place before /benchmark/leaderboard.mjs enables it. */
+  [data-js] .table-wrap > .table.lb thead {
+    position: static;
+    display: block;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip-path: none;
+    white-space: normal;
+    border-bottom: 1px solid var(--line);
+    background: var(--surface-2);
+  }
+
+  [data-js] .table-wrap > .table.lb thead tr {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--sp-8);
+    padding: var(--sp-12) var(--sp-16);
+  }
+
+  [data-js] .table-wrap > .table.lb thead tr::before {
+    flex-basis: 100%;
+    color: var(--muted);
+    font: 600 var(--fs-12) / 1.4 var(--font-mono);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    content: "Sort by";
+    content: "Sort by" / "";
+  }
+
+  [data-js] .table-wrap > .table.lb thead th {
+    display: block;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+  }
+
+  /* Rank, model and effort are not sort keys: they stay for assistive technology only. */
+  [data-js] .table-wrap > .table.lb thead th:not([data-sort-key]) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  [data-js] .lb thead .table__sort {
+    min-height: 2.25rem;
+    padding: 0 var(--sp-12);
+    border: 1px solid var(--line-control);
+    border-radius: var(--r-ctl);
+    background: var(--surface);
+    color: var(--text);
+  }
+
+  [data-js] .lb thead th.num .table__sort {
+    justify-content: center;
+  }
+
+  [data-js] .lb thead .table__sort:disabled {
+    cursor: default;
+  }
+
+  [data-js] .lb thead th:is([aria-sort="ascending"], [aria-sort="descending"]) .table__sort {
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 10%, var(--surface));
+  }
+
   .table-wrap > .table.lb tbody tr.lb__row {
     display: grid;
     grid-template-columns: repeat(6, minmax(0, 1fr));
@@ -309,8 +382,11 @@
     border-bottom: 1px solid var(--line);
   }
 
+  /* The tier band spans the card width, without the padding of a stacked row. */
   .table-wrap > .table.lb tbody tr.lb__tier {
     display: block;
+    padding: 0;
+    border-bottom: 0;
   }
 
   .table-wrap > .table.lb tbody tr.lb__tier[hidden] {
@@ -387,6 +463,12 @@
   }
 }
 
+@media (max-width: 59.99em) and (pointer: coarse) {
+  [data-js] .lb thead .table__sort {
+    min-height: var(--tap);
+  }
+}
+
 @media (max-width: 22.49em) {
   .table-wrap > .table.lb tbody tr.lb__row > td:not(.lb__col--score, .lb__rank) {
     grid-column: span 3;
@@ -425,7 +507,6 @@
 }
 
 @media (min-width: 60em) {
-  /* The sort reset makes no sense on a stacked table. */
   .lb-tools {
     justify-content: space-between;
   }
@@ -436,12 +517,6 @@
 
   .lb-cols[open] {
     flex: 0 1 40rem;
-  }
-}
-
-@media (max-width: 59.99em) {
-  [data-lb-reset] {
-    display: none;
   }
 }
 

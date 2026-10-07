@@ -11,7 +11,7 @@ import { button, faq, html, icon, sectionHeading, table } from '../../components
 import { breadcrumbsLd, faqPageLd, softwareApplicationLd } from '../../layout.mjs';
 import { ACCOUNT_SCRIPTS, ACCOUNT_STYLES, accountDialog } from '../../fragments/account-dialog.mjs';
 import { PROFILES } from '../../../public/profiles.mjs';
-import { FREE_LINE, OPERATOR_LINE, RENEWAL, RESET_LINE, WHY_PAY } from '../../plans.mjs';
+import { AGENT_TICK, CHAT_TICK, COUNTED, FREE_LINE, NOT_COUNTED, RENEWAL, RESET_LINE, WHY_PAY } from '../../plans.mjs';
 import { LASTMOD, STYLES, pageHero, relatedLinks, tickList, workbenchLink } from './_shared.mjs';
 
 const PATH = '/pricing';
@@ -33,13 +33,13 @@ const planTable = table({
   label: 'Free and Operator, line by line',
   columns: [{ label: 'What you get' }, { label: 'Free' }, { label: 'Operator · US$10/week' }],
   rows: [
-    ['Reviews on your API key', '1 a day', 'Unlimited'],
+    [html`Reviews on your API key, on this site or with <code>run_review</code> from Claude Code, Codex or Cursor`, '1 a day', 'Unlimited'],
     ['Review types', 'All 11', 'All 11'],
-    [html`<a class="link" href="/gauntlet">Gauntlet</a>: 8 checks on one finding, then a verdict`, no(), yes()],
+    [html`<a class="link" href="/gauntlet">Gauntlet</a>: eight stages on one finding, then a verdict`, no(), yes()],
     [html`<a class="link" href="/panel-review">Panel review</a>: 2 to 4 models, then a cross-check`, no(), yes()],
     ['Reviews running at once', '1', '4'],
-    ['Copy-paste reviews in ChatGPT or Claude (3 review types)', 'Unlimited', 'Unlimited'],
-    ['Reviews from Claude Code, Codex or Cursor', 'Count toward the daily review', 'Unlimited'],
+    ['Copy-paste reviews in ChatGPT or Claude (3 review types)', 'Unlimited, not counted', 'Unlimited'],
+    [html`Reviews your coding agent’s own model writes with <code>prepare_review</code> or the skills (3 review types)`, 'Unlimited, not counted, no account', 'Unlimited'],
     ['Free tools, GitHub import, local history', yes(), yes()],
   ],
   className: 'plans-table',
@@ -52,7 +52,7 @@ const FAQ_ITEMS = [
   },
   {
     q: 'What counts as my free review?',
-    a: `Any review you run on this site, or from your coding agent, with your API key. Copy-paste reviews in your chat app do not count. ${RESET_LINE}`,
+    a: `${COUNTED} ${NOT_COUNTED} ${RESET_LINE}`,
   },
   {
     q: 'Can I use my ChatGPT or Claude subscription instead of an API key?',
@@ -87,7 +87,8 @@ ${pageHero({
       <p class="plan__for">To try it on your next report. No card.</p>
       ${tickList([
         FREE_LINE.replace(/\.$/, ''),
-        'Unlimited copy-paste reviews in ChatGPT or Claude (3 review types)',
+        CHAT_TICK,
+        AGENT_TICK,
         'Free tools and GitHub import',
       ])}
       <div class="plan__cta">${button({ label: 'Run today’s free review', href: workbenchLink(), variant: 'secondary', size: 'lg', block: true })}</div>
@@ -100,7 +101,7 @@ ${pageHero({
       <p class="plan__for">For contest weeks: review every finding, not one a day.</p>
       ${tickList([
         'Unlimited reviews',
-        'Gauntlet: 8 checks on one finding, then a verdict',
+        'Gauntlet: eight stages on one finding, then a verdict',
         'Panel review: compare 2 to 4 models',
         '4 reviews running at once',
         'Everything in Free',
@@ -134,7 +135,7 @@ ${pageHero({
 
 export default {
   path: PATH,
-  title: 'Pricing: Free, or Operator at US$10 per week | Bounty Operator',
+  title: 'Pricing: Free, or Operator at US$10 a week | Bounty Operator',
   description: `Free gives you ${FREE_LINE.replace(/\.$/, '')}. Operator is US$10 per week for unlimited reviews, the Gauntlet, Panel review and 4 reviews at once.`,
   label: 'Pricing',
   bodyClass: 'pricing-page',

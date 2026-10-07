@@ -136,7 +136,7 @@ const body = docPage({
 
 export default {
   path: PATH,
-  title: 'Open-source licences and third-party notices | Bounty Operator',
+  title: 'Licences and third-party notices | Bounty Operator',
   label: 'Licences',
   description: mcpHasPackages
     ? 'The MIT licence Bounty Operator is released under, and the open-source packages its Worker and MCP server depend on, grouped by licence.'

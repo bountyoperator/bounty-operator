@@ -181,7 +181,7 @@ ${relatedTools(PATH)}`;
 
 export default {
   path: PATH,
-  title: 'Which bug classes get accepted: acceptance rates by vulnerability class | Bounty Operator',
+  title: 'Acceptance rates by vulnerability class | Bounty Operator',
   description: `Acceptance rates for ${ROWS.length} smart-contract bug classes from ${number(DATASET.total_findings)} judged audit-contest findings, with the sample size on every row. Sortable.`,
   nav: 'tools',
   label: 'Acceptance rates',

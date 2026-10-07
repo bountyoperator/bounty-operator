@@ -28,7 +28,7 @@ const RELATED = {
 // A core profile runs three ways: hosted, as an exported prompt, or prepared over MCP.
 const MODEL_FAQ = {
   q: 'Which model runs the review?',
-  a: 'The one you choose, on your own key: OpenRouter, Anthropic, OpenAI, Google Gemini, xAI, DeepSeek, Mistral or Groq. Or copy the prompt into ChatGPT or Claude and paste the answer back. From a coding agent, `prepare_review` hands the same request to the agent’s own model over MCP.',
+  a: 'The one you choose, on your own key: OpenRouter, Anthropic, OpenAI, Google Gemini, xAI, DeepSeek, Mistral or Groq. That is the review of the day on Free. Or copy the prompt into ChatGPT or Claude and paste the answer back. From a coding agent, `prepare_review` hands the same request to the agent’s own model over MCP. Those two routes need no account and are not counted.',
 };
 
 // A hosted profile runs through bountyoperator.com on the user's key, in the
@@ -128,6 +128,7 @@ const solidity = profileLanding({
           code: { code: DEPOSIT_SOURCE, name: VAULT, start: 44, highlight: [46], copy: true },
           rows: ['impact', 'observed', 'counter', 'gap', 'next'],
           id: 'solidity-f-1',
+          level: 0,
         })}
       </div>`,
   },
@@ -243,6 +244,7 @@ const claimChips = {
 
 const claimsCard = ledgerCard({
   id: 'claims',
+  level: 0,
   tag: 'Claims',
   title: 'Five claims in the draft, checked against `RewardPool.sol`',
   bar: { name: 'input-1/draft-report.md', tag: '5 claims' },
@@ -321,7 +323,7 @@ const challengeHead = {
 
 const challenge = profileLanding({
   path: '/challenge-report',
-  title: 'Check a bug bounty report before you submit | Bounty Operator',
+  title: 'Check a bug bounty report draft | Bounty Operator',
   description:
     'Every claim in your draft marked confirmed, overstated, contradicted or unverifiable against the code, with the line that decides it. Runs on your own model.',
   profileId: 'report',
@@ -417,6 +419,7 @@ const challenge = profileLanding({
 
 const reasonsCard = ledgerCard({
   id: 'reasons',
+  level: 0,
   tag: 'Rejection reasons',
   title: 'The three a triager reaches first on this draft',
   bar: { name: 'input-1/draft-report.md', tag: 'Ranked' },
@@ -600,7 +603,7 @@ const generalHead = {
 
 const general = profileLanding({
   path: '/code-security-review',
-  title: 'AI code security review that cites file and line | Bounty Operator',
+  title: 'AI code security review by file and line | Bounty Operator',
   description:
     'Run an AI code security review on your own model: entry points, authorization, injection and failure paths, each finding with file, line and a fix.',
   profileId: 'general',
@@ -617,6 +620,7 @@ const general = profileLanding({
           code: { code: ROUTES_SOURCE, name: ROUTES, start: 41, highlight: [42], dim: [43, 44, 45, 46, 47, 49, 50], copy: true },
           rows: ['impact', 'observed', 'counter', 'gap', 'fix', 'next'],
           id: 'general-f-1',
+          level: 0,
         })}
       </div>`,
   },
@@ -712,6 +716,7 @@ const overlapChips = {
 
 const overlapCard = ledgerCard({
   id: 'overlap',
+  level: 0,
   tag: 'Overlap',
   title: 'Three prior items, classed against the finding in `Pair.sol`',
   bar: { name: 'input-1/finding.md', tag: '3 prior items' },

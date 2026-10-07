@@ -274,7 +274,7 @@ ${ctaBand({
 
 <section class="section section--tight wrap">
   ${relatedLinks([
-    { label: 'Gauntlet', href: '/gauntlet', text: 'One finding, 8 checks, one verdict.' },
+    { label: 'Gauntlet', href: '/gauntlet', text: 'One finding, eight stages, one verdict.' },
     { label: 'Solidity review', href: '/solidity-review', text: 'The single-model review a panel fans out.' },
     { label: 'Pricing', href: '/pricing', text: 'Free and Operator, side by side.' },
   ])}
@@ -282,7 +282,7 @@ ${ctaBand({
 
 export default {
   path: PATH,
-  title: 'Panel review: multi-model AI security review | Bounty Operator',
+  title: 'Panel review: multi-model AI review | Bounty Operator',
   description:
     'Run 2 to 4 models on the same code with your own key. A final cross-check keeps what the cited lines prove and shows how many models agreed.',
   label: 'Panel review',

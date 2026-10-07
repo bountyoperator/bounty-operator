@@ -257,7 +257,7 @@ const body = docPage({
 
 export default {
   path: PATH,
-  title: 'Security: data flow, storage, headers and disclosure | Bounty Operator',
+  title: 'Security: data flow, storage, disclosure | Bounty Operator',
   label: 'Security',
   description:
     'The data flow from browser to Worker to your provider, what is stored, the headers and CSP in force, and how to report a vulnerability.',

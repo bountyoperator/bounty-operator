@@ -13,6 +13,13 @@ const FOUNDRY = {
   points: ['The final assertion reads the object the impact names', 'One file, one command, pasted output', 'Passes on deployed code, fails on the patched build'],
 };
 
+/**
+ * "Open template", with the template's name for assistive technology. The
+ * accessible name starts with the visible label (WCAG 2.5.3), so a voice
+ * command that says what is on screen still reaches the button.
+ */
+const openLabel = (name) => html`Open template<span class="visually-hidden">: ${name}</span>`;
+
 function platformCard(platform) {
   return html`<article class="tpl-card">
     <header class="tpl-card__head">
@@ -25,7 +32,7 @@ function platformCard(platform) {
       ${platform.cardClosed.map((reason) => html`<li>${icon('x')}<span>${reason}</span></li>`)}
     </ul>
     <div class="tpl-card__foot">
-      ${button({ label: 'Open template', href: platform.path, iconEnd: 'arrow-right', block: true, attrs: { 'aria-label': `Open the ${platform.name} template` } })}
+      ${button({ label: openLabel(platform.name), href: platform.path, iconEnd: 'arrow-right', block: true })}
     </div>
   </article>`;
 }
@@ -40,7 +47,7 @@ const foundryCard = html`<article class="tpl-card tpl-card--wide">
     ${FOUNDRY.points.map((point) => html`<li>${icon('check')}<span>${point}</span></li>`)}
   </ul>
   <div class="tpl-card__foot">
-    ${button({ label: 'Open template', href: FOUNDRY.path, iconEnd: 'arrow-right', block: true, attrs: { 'aria-label': 'Open the Foundry PoC template' } })}
+    ${button({ label: openLabel(FOUNDRY.name), href: FOUNDRY.path, iconEnd: 'arrow-right', block: true })}
   </div>
 </article>`;
 

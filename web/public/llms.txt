@@ -1,6 +1,6 @@
 # Bounty Operator
 
-> Pre-submission review for bug bounty reports and smart-contract findings. The AI argues against the finding. The hunter writes the report. Reviews run on the user's own model key. Free: 1 review a day. Operator: US$10 per week for unlimited reviews.
+> Pre-submission review for bug bounty reports and smart-contract findings. The AI argues against the finding. The hunter writes the report. Reviews run on the user's own model key. Free: 1 review a day. Operator: US$10 per week for unlimited reviews. Only hosted reviews count: on the site or through `run_review`.
 
 Built by Tradi3. Platform-neutral: Immunefi, Cantina, Sherlock, HackerOne. Every URL below is canonical and extensionless. Source code: https://github.com/bountyoperator/bounty-operator (MIT). The three core profiles, the free tools, the CLI and the MCP server are in that repository. The gauntlet stages and the panel cross-examination run on the hosted service.
 
@@ -11,7 +11,7 @@ A hosted review sends the user's files and provider key through bountyoperator.c
 - [Benchmark](https://bountyoperator.com/benchmark): Paydirt, the model benchmark: which model finds the planted bug, leaves the fixed twin alone and catches an overclaimed report, with cost per run.
 - [Benchmark method](https://bountyoperator.com/benchmark/method): How Paydirt is built and scored, and how to check every published number.
 - [Workbench](https://bountyoperator.com/#workspace): Select files, pick a review profile and run it on your own model key. The three core profiles also export as a prompt.
-- [Pricing](https://bountyoperator.com/pricing): Free gives you 1 review a day, any review type (reset at 00:00 UTC). Operator is US$10 per week for unlimited reviews, the Gauntlet, Panel review and 4 reviews at once.
+- [Pricing](https://bountyoperator.com/pricing): Free gives you 1 review a day, any review type (reset at 00:00 UTC). Operator is US$10 per week for unlimited reviews, the Gauntlet, Panel review and 4 reviews at once. The review of the day is a hosted review, on the site or through `run_review`. Copy-paste reviews in a chat app, and core reviews the agent's own model writes through `prepare_review` or the skills, need no account and are not counted.
 - [Method](https://bountyoperator.com/method): Why bug bounty reports get closed. Twelve checks, the question each one asks, why reports die on it and the verdict it leads to.
 - [Gauntlet](https://bountyoperator.com/gauntlet): One run through eight stages (scope, provenance, prior art, proof, severity, triager, report, verdict) that ends in one verdict.
 - [Panel review](https://bountyoperator.com/panel-review): Two to four models review in parallel, then a cross-examination pass keeps what the cited lines prove.
@@ -71,6 +71,7 @@ A hosted review sends the user's files and provider key through bountyoperator.c
 - The `gauntlet` prompt runs the eight stages in order: seven hosted through `run_review`, and the report stage through `prepare_review` on the agent's own model. It needs an account token. Seven hosted reviews are more than the free review of the day, so a full run takes Operator.
 - A failed tool call returns `isError` with `{ error, code }`. Codes: `hosted_profile`, `privacy_block`, `privacy_warn`, `daily_used`, `operator_only`, `review_running`, `provider`, `output_withheld`. `operator_only`: `run_review` was called with `verdict` or `panel` on an account without Operator; nothing was sent and the review of the day is not used. `output_withheld`: the model repeated its instructions instead of reviewing, so the answer was stopped and the call used one review; run it again or choose a stronger model.
 - Limits per call: 50 files, 120 KB per file, 240 KB and 20,000 lines in total.
+- A hosted review runs for up to 15 minutes. claude.ai and Claude Desktop stop any tool call after 240 seconds, so run hosted reviews from Claude Code (server entry `"timeout": 1200000`), Codex (`tool_timeout_sec = 1200`) or the website. `prepare_review` and `build_packet` for the core profiles work in every client.
 - Local MCP server: `npx -y https://bountyoperator.com/dl/bounty-operator-mcp.tgz`. It has six tools: it adds `run_gauntlet_plan` (no account) and reads files by path. SHA-256 of the package: https://bountyoperator.com/dl/SHA256SUMS.txt
 - Skills and Claude Code plugin: `claude plugin marketplace add bountyoperator/bounty-operator` then `claude plugin install bounty-operator@bounty-operator`; any agent: `npx skills add bountyoperator/bounty-operator`. Five skills: challenge-report, solidity-review and code-security-review run the core methods on the agent's own model; gauntlet runs the hosted stages over MCP; hunt-with-gate is manual only and never submits.
 - Health: https://bountyoperator.com/api/health returns `status`, `version`, `reviews` and `profiles` (`hosted` on this site).

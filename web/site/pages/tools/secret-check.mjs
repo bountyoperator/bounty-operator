@@ -127,7 +127,7 @@ ${relatedTools(PATH)}`;
 
 export default {
   path: PATH,
-  title: 'Check a PoC or gist for secrets before you publish | Bounty Operator',
+  title: 'Scan a PoC or gist for secrets | Bounty Operator',
   description: 'Drop a PoC folder or paste a gist and get every private key, API token, seed phrase and private report link as file:line. Runs in your browser.',
   nav: 'tools',
   label: 'Secret check',
