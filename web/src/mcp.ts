@@ -539,7 +539,7 @@ const CONTEXT_STEP =
   'a context object holding only what I have told you: target, scope, version, proof (none, local or deployment), prior (unchecked, searched, overlap or distinct) and any programme rules';
 // Immunefi Studio's own MCP server, when the client has it. The same sentences are in mcp/src/prompts.mjs.
 const IMMUNEFI_STEP =
-  "If the report is for an Immunefi programme and Immunefi Studio's MCP server is connected, read the programme with its list_programs tool and, for a smart contract, the contract's get_proxy_history and get_target_state, and pass what they return as files to every stage. Without that server, go on without them.";
+  "If the report is for an Immunefi programme and Immunefi Studio's MCP server is connected, find the programme with its list_programs tool and, for a smart contract, the contract's get_proxy_history and get_target_state, and pass what they return as files to every stage. Without that server, go on without them.";
 const IMMUNEFI_RULES_STEP =
   "If the report is for an Immunefi programme and Immunefi Studio's MCP server is connected, find the programme with its list_programs tool and pass what it returns about the programme as one more file.";
 

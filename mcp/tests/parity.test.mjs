@@ -222,7 +222,7 @@ test('both servers tell the agent to read an Immunefi programme from Immunefi St
   for (const name of ['gauntlet', 'challenge-report']) {
     const { here, there } = await both('prompts/get', { name, arguments: { platform: 'Immunefi' } });
     for (const text of [here.messages[0].content.text, there.messages[0].content.text]) {
-      assert.match(text, /If the report is for an Immunefi programme and Immunefi Studio's MCP server is connected, read the programme with its list_programs tool/, name);
+      assert.match(text, /If the report is for an Immunefi programme and Immunefi Studio's MCP server is connected, find the programme with its list_programs tool/, name);
     }
   }
   const { here, there } = await both('prompts/get', { name: 'gauntlet', arguments: {} });
