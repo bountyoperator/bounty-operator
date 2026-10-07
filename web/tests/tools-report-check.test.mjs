@@ -508,5 +508,12 @@ describe('report check: platform rules of 2026', () => {
     assert.equal(left('# Bug\n\nSee the [link](https://example.com/a) and the [address](https://etherscan.io/address/0x1).\n').status, 'pass');
     assert.equal(left('# Bug\n\n```\n// TODO: remove\n```\n').status, 'pass', 'code blocks are the proof, not prose');
     assert.equal(left('# Bug\n\nPlease let me know if you need anything else.\n').status, 'pass', 'courtesy to a triager is not an assistant leftover');
+
+    // A {placeholder} left from one of this site's templates.
+    assert.equal(left('# Bug\n\n- Not claimed: {what this report does not say, for example no loss beyond the funds held}\n').status, 'flagged');
+    assert.equal(left('# Bug\n\n- {Code at the pinned commit}\n').status, 'flagged');
+    assert.equal(left('# Bug\n\nCall it with {value: msg.value} from any account.\n').status, 'pass', 'a call option is code');
+    assert.equal(left('# Bug\n\nThe event is emitted as {amount: 100, to: alice} in the log.\n').status, 'pass');
+    assert.equal(left('# Bug\n\nThe payload {{7*7}} renders as 49.\n').status, 'pass', 'a template-injection payload is evidence');
   });
 });

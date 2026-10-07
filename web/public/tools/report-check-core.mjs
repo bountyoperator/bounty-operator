@@ -713,6 +713,10 @@ function checkAiUse(lines) {
 
 // Placeholders, outside code. "[link](url)" is a Markdown link, not a placeholder.
 const PLACEHOLDER = /\[(?:insert|add|your|todo|tbd|placeholder|describe|fill(?: in)?|enter|paste|link|name|address|contract|amount|date|screenshot|url)\b[^\]\n]{0,60}\](?!\()|<(?:insert|your|todo|placeholder|fill(?: in)?|enter|paste)\b[^>\n]{0,60}>|\bTBD\b|\b(?:TODO|FIXME)\s*:|\blorem ipsum\b/i;
+// A {placeholder} left from a template: several words in braces, as the
+// templates on this site write them. "{value: msg.value}" is code, not one.
+const BRACE_PLACEHOLDER = /\{[A-Za-z][^{}\n]{0,160}\}/g;
+const isBracePlaceholder = (match) => (match.match(/\s/g) ?? []).length >= 2 && !/[;=()]|:\s*\S+\s*$/.test(match.slice(1, -1));
 // Sentences a chat assistant writes to the person it is helping, never to a triager.
 const ASSISTANT = /\bas an AI\b|\bas a (?:large )?language model\b|\bI hope this helps\b|\b(?:certainly|sure|absolutely)[!,.]\s+here(?:['’]s| is)\b|\bhere(?:['’]s| is) (?:the|a|your) (?:revised|updated|rewritten|improved|final|complete|polished) (?:report|draft|version|write-?up)\b|\bI (?:cannot|can['’]t|am unable to) (?:browse|access (?:the internet|external)|verify (?:this|the))\b|\bmy (?:knowledge|training) (?:cutoff|data)\b/i;
 
@@ -722,7 +726,7 @@ function checkLeftovers(lines) {
     if (line.code) continue;
     // Inline code quotes the target's own text, such as a TODO in its source.
     const prose = line.text.replace(/`[^`\n]*`/g, ' ');
-    if (PLACEHOLDER.test(prose)) hits.push(quoteOf(line, 'placeholder'));
+    if (PLACEHOLDER.test(prose) || [...prose.matchAll(BRACE_PLACEHOLDER)].some((match) => isBracePlaceholder(match[0]))) hits.push(quoteOf(line, 'placeholder'));
     else if (ASSISTANT.test(prose)) hits.push(quoteOf(line, 'written by an assistant'));
   }
   if (hits.length) return result('flagged', `${plural(hits.length, 'line holds', 'lines hold')} a placeholder or an assistant’s sentence.`, hits);
