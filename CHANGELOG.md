@@ -1,5 +1,56 @@
 # Changelog
 
+## 0.7.8 — 2026-10-07
+
+MCP and agents
+
+- The Claude Code plugin's server entry sets a 20-minute tool-call timeout.
+  Claude Code ends a call at that time even while progress arrives, and
+  never aborts it for idleness sooner, so a hosted review can run its full
+  15 minutes.
+- /mcp gives the Claude Code entries as `.mcp.json` with the same timeout,
+  since `claude mcp add` has no timeout option. Codex sets
+  `tool_timeout_sec = 1200` on both routes, and the account panel's Codex
+  note names the two `config.toml` lines `codex mcp add` cannot set.
+- /mcp says claude.ai and Claude Desktop end any tool call at 240 seconds,
+  so hosted reviews run from Claude Code, Codex or the website.
+  `prepare_review` and `build_packet` work in every client.
+
+Which reviews count
+
+- Pricing, the home page, the terms, the guide, /mcp and llms.txt say the
+  same thing: only a review that runs on your key through the website or
+  `run_review` counts. Copy-paste reviews, and core reviews your coding
+  agent's own model writes with `prepare_review` or the skills, need no
+  account and are not counted. /pricing used to say every review from a
+  coding agent counted.
+
+Benchmark
+
+- Each lift row gives, for both arms on its own pairs, how many answers
+  failed and how many were cut short at the output limit, and marks an arm
+  where most were. Claude Sonnet 5.5's three profile arms were: 12 of 12,
+  17 of 20 and 3 of 4 answers cut short, so those lifts measure where the
+  limit fell, not what the profile changed.
+- The notes say the draft-report profile changed in 0.7.5, after these
+  runs. The Solidity and code security profiles are sent today exactly as
+  measured. The published results are unchanged.
+
+Site and privacy
+
+- /privacy lists every key the site's scripts keep in your browser, where
+  it is kept and what it holds, checked against the scripts by a test. It
+  also says the Worker keeps no invocation logs and no log line holds an IP
+  address.
+- On a phone, the benchmark leaderboard's header row is a Sort by control,
+  and /benchmark no longer widens a 320-pixel screen.
+- The home page loads one stylesheet fewer.
+- Example cards beside a page's heading have a paragraph title, template
+  buttons start their accessible name with "Open template", and template
+  code blocks are labelled by section.
+- The Gauntlet is "eight stages" everywhere, page titles fit in 60
+  characters, and FAQ structured data has no space before punctuation.
+
 ## 0.7.7 — 2026-10-07
 
 Reviews

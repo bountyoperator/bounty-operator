@@ -4,7 +4,7 @@ description: "Security review of Solidity contracts. Maps who can call what, com
 license: MIT
 metadata:
   author: "Tradi3"
-  version: "0.7.7"
+  version: "0.7.8"
   homepage: "https://bountyoperator.com"
   profile: "solidity"
   profile-sha256: "b2c94f8c908ccfff8682c10a710c4c6a0af85576da809ed72b090931143f44a3"
