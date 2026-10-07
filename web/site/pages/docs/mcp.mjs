@@ -455,7 +455,7 @@ const FAQ = [
   },
   {
     q: 'How much output can a hosted model use?',
-    a: 'Most calls have a 16,000-token output allowance. On OpenRouter, Gemini 3.8 Flash, Qwen3.8 27B, Qwen3.8 Max 0902, HY4 Preview and GLM 5.3 have 64,000 tokens so reasoning has room to finish before the final answer. Their reasoning defaults are preserved. Your provider bills actual usage, including reasoning; the larger allowance can cost more. The direct Gemini endpoint uses its provider allowance.',
+    a: 'Reasoning and the answer share one output allowance. A streamed review (the website, and run_review from a client that reads a stream) gives the listed models that take it 64,000 tokens: Claude Opus 5.5, Sonnet 5.5 and Fable 5.1, GPT-6.1 Sol, Astra and Luna, Grok 4.7, and the models in the OpenRouter list. On OpenRouter, Gemini 3.8 Flash, Qwen3.8 27B, Qwen3.8 Max 0902, HY4 Preview and GLM 5.3 get 64,000 on every call. Everything else, including a model id you type and a call read as one answer, has 16,000. Reasoning defaults are preserved. Your provider bills the tokens used, so the larger allowance costs more only when the model needs it. The direct Gemini endpoint uses its provider allowance.',
   },
   {
     q: 'How do I check the service before a long run?',

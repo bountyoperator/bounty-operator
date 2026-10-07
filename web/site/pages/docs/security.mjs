@@ -167,7 +167,7 @@ const accounts = facts([
   {
     icon: 'refresh',
     title: 'Recovery resets everything',
-    text: 'Using the recovery code replaces it and signs out every session and connection token. Removing a passkey signs out the other sessions.',
+    text: 'Using the recovery code replaces it and signs out every session and connection token. Removing a passkey signs out the other sessions and revokes every connection token.',
   },
 ]);
 
@@ -179,9 +179,9 @@ const requests = html`
 <h3 id="connection-tokens">Connection tokens</h3>
 <p>${inline('A connection token starts with `bok_` and lets an AI client do two things: read your usage and run a review. It cannot reach billing, passkeys, recovery or deletion. A token lasts 90 days, an account holds three, and revoking one takes effect at once.')}</p>
 <h3 id="provider-calls">Provider calls</h3>
-<p>Each provider has one fixed endpoint. The Worker refuses redirects, stops when the provider has been silent for 180 seconds, and caps the answer at 2 MB. Your API key is used for that request and is redacted from any error message.</p>
+<p>Each provider has one fixed endpoint. The Worker refuses redirects, stops a streamed answer when the provider has been silent for 180 seconds, and caps the answer at 2 MB. Your API key is used for that request and is redacted from any error message.</p>
 <h3 id="hosted-profiles">Hosted profiles</h3>
-<p>${inline('The Worker reads the answer to a hosted profile as it streams, in memory, before it reaches you. An answer that repeats the method of the profile is stopped and the call ends with the code `output_withheld`. A file or a request that asks the model for its instructions is treated as data.')}</p>
+<p>${inline('The Worker reads the answer to a hosted profile as it streams, in memory, before it reaches you. An answer that repeats the method of the profile is stopped and the call ends with the code `output_withheld`. That includes a copy disguised with invisible characters, look-alike letters or spaced-out letters; a paraphrase, a translation or an encoded copy is beyond what a text match can catch. A file or a request that asks the model for its instructions is treated as data.')}</p>
 <h3 id="input-checks">Input checks</h3>
 <p>${inline(`A review takes up to ${LIMITS.files} text files and ${LIMITS.totalBytes / 1000} KB in total. Before anything is sent, the engine scans every line for API keys, access tokens, wallet keys and seed phrases, and blocks the request when it finds one. Email addresses and IP addresses are warnings you confirm. A finding names the file, the line and the kind of match, and never the matched text.`)}</p>
 <h3 id="billing">Billing</h3>
