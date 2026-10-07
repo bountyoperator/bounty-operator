@@ -199,9 +199,9 @@ A failed call returns `isError` with one JSON object: `error`, a sentence the ag
 The tarball on the site is listed with its SHA-256 at `https://bountyoperator.com/dl/SHA256SUMS.txt`.
 
 ```bash
-curl -sO https://bountyoperator.com/dl/bounty-operator-mcp-0.7.9.tgz
+curl -sO https://bountyoperator.com/dl/bounty-operator-mcp-0.7.10.tgz
 curl -s https://bountyoperator.com/dl/SHA256SUMS.txt | sha256sum -c --ignore-missing
-npx -y file:$PWD/bounty-operator-mcp-0.7.9.tgz --version
+npx -y file:$PWD/bounty-operator-mcp-0.7.10.tgz --version
 ```
 
 Start a downloaded tarball with the `file:` prefix and its absolute path. npm reads a bare path as a command to run.

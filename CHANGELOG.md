@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.7.10 — 2026-10-07
+
+Site
+
+- New page, /invalid-report-costs: what a report closed as invalid, N/A or
+  spam costs on HackerOne, Bugcrowd, Intigriti, YesWeHack, Immunefi, Cantina
+  and Sherlock's Audit Engine, from each platform's own pages, with every
+  source numbered and dated.
+
+Report check
+
+- An unfilled `{placeholder}` left from a template counts as a leftover. A
+  call option such as `{value: msg.value}`, an event dump and a `{{7*7}}`
+  payload do not.
+
 ## 0.7.9 — 2026-10-07
 
 Report check
