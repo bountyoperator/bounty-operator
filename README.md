@@ -156,7 +156,7 @@ the same check on your own machine.
 
 | Tool | What it does | CLI |
 | --- | --- | --- |
-| [Report check](https://bountyoperator.com/tools/report-check) | Fourteen checks on a pasted draft: pinned commit, quoted impact row, inline proof, trusted roles, leftover secrets. | |
+| [Report check](https://bountyoperator.com/tools/report-check) | Seventeen checks on a pasted draft: pinned commit, quoted impact row, inline proof, trusted roles, testing on a live network, AI-use disclosure, placeholders and leftover secrets. | |
 | [Packet verifier](https://bountyoperator.com/tools/verify) | Recomputes the SHA-256 manifest of a review packet against your files. | |
 | [Secret check](https://bountyoperator.com/tools/secret-check) | Scans a PoC or gist for keys, wallet keys and private report links before you publish it. | `bounty-kit sanitize` |
 | [Acceptance rates](https://bountyoperator.com/tools/acceptance-rates) | Accepted and judged counts by bug class across 1,032 findings from 10 public Sherlock contests. | `bounty-kit pattern-stats` |

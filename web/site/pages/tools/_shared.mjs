@@ -5,6 +5,7 @@
 
 import { attrs, breadcrumbs, button, cx, html, icon } from '../../components.mjs';
 import { breadcrumbsLd } from '../../layout.mjs';
+import { CHECKS as REPORT_CHECKS } from '../../../public/tools/report-check-core.mjs';
 
 export const TOOL_STYLES = ['/css/tools.css'];
 export const LASTMOD = '2026-10-03';
@@ -26,7 +27,7 @@ export const TOOLS = [
     heading: 'Bug bounty report check',
     outcome: 'Check your draft for missing evidence, scope details, common report mistakes and broken file:line citations.',
     input: 'draft + cited files',
-    output: '14 checks + citations',
+    output: `${REPORT_CHECKS.length} checks + citations`,
     icon: 'search',
   },
   {

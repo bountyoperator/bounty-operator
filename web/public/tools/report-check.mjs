@@ -1,4 +1,4 @@
-// /tools/report-check: runs the fourteen checks on the pasted draft and renders
+// /tools/report-check: runs the seventeen checks on the pasted draft and renders
 // the result. The draft never leaves this tab; the workbench handoff writes it
 // to session storage and opens /#workspace. The first check of a draft is
 // counted by name (ping.mjs): the request carries nothing of the draft.

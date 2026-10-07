@@ -1,4 +1,4 @@
-// Report check: fourteen text checks on a draft bug bounty report.
+// Report check: seventeen text checks on a draft bug bounty report.
 //
 // Pure functions. No DOM, no network, no model. Every finding states what the
 // text contains ("No commit hash found"); none of them says whether the bug is
@@ -135,6 +135,13 @@ export const CHECKS = Object.freeze([
     fix: 'Reach each state through public calls from live state, or name the mocked step and its route.',
   },
   {
+    id: 'live-chain',
+    label: 'Transactions sent to a live network',
+    source: 'Platform rules',
+    test: 'A cast send or forge script --broadcast aimed at a remote node, a Hardhat run on a named network, or a link to a transaction the report says you sent.',
+    fix: 'Reproduce on a local fork with anvil or forge test --fork-url and send nothing to a live network, since Immunefi bans testing on mainnet or a public testnet.',
+  },
+  {
     id: 'prior-art',
     label: 'Prior-art reference stated',
     source: 'Prior-art sweep',
@@ -149,11 +156,25 @@ export const CHECKS = Object.freeze([
     fix: 'Add two or three lines that say what the proof does not show and what you are not claiming.',
   },
   {
+    id: 'ai-use',
+    label: 'AI use disclosed',
+    source: 'Platform rules',
+    test: 'A line that says which AI tools helped find or write up the finding and what they did, or that none did.',
+    fix: 'Add one line that names the AI tools you used and what they did, or says you used none, since Intigriti requires it and GitHub’s report form asks.',
+  },
+  {
     id: 'phrases',
     label: 'Self-negating phrases',
     source: 'Triager read',
     test: `Sentences that contain: ${SELF_NEGATING_PHRASES.join(', ')}.`,
     fix: 'Prove the condition each sentence concedes, or cut the claim that depends on it.',
+  },
+  {
+    id: 'leftovers',
+    label: 'Placeholders and assistant leftovers',
+    source: 'Report hygiene',
+    test: 'Placeholders such as [insert …], <your …>, TBD or TODO:, and sentences an assistant wrote to you, such as “As an AI” or “I hope this helps”.',
+    fix: 'Fill in or delete every placeholder and cut every sentence the assistant wrote to you.',
   },
   {
     id: 'secrets',
@@ -585,6 +606,33 @@ function checkMocks(lines) {
   return result('pass', 'No prank of a role-named address, mock or forced state write found.');
 }
 
+// A command that sends a transaction. Where it goes is decided on the same line.
+const SEND_COMMAND = /\bcast\s+(?:send|publish)\b|\bforge\s+script\b[^\n]*--broadcast\b|\beth_sendRawTransaction\b/;
+// A node that is not this machine: a URL, a variable or an alias that names a public chain.
+const REMOTE_NODE = /--(?:rpc-url|fork-url|rpc)(?:\s+|=)["']?(?:https?:\/\/(?!(?:localhost|127\.0\.0\.1|0\.0\.0\.0)[:/"'\s]|(?:localhost|127\.0\.0\.1|0\.0\.0\.0)$)|\$\{?\w*(?:MAINNET|SEPOLIA|HOLESKY|HOODI|GOERLI|TESTNET)\w*|(?:mainnet|sepolia|holesky|hoodi|goerli)\b)|\bhttps?:\/\/[\w.-]*(?:infura\.io|alchemy\.com|alchemyapi\.io|quiknode\.pro|ankr\.com|llamarpc\.com|publicnode\.com|drpc\.org|chainstack\.com|blastapi\.io)\b/i;
+// `hardhat run --network <name>` sends to that network unless it is Hardhat's own or a local one.
+const HARDHAT_NETWORK = /\bhardhat\s+run\b[^\n]*--network[\s=]+(?!(?:hardhat|localhost|local\w*|anvil|fork\w*|dev\w*)\b)\w/i;
+const EXPLORER_TX = /https?:\/\/(?:[\w-]+\.)*(?:[\w-]*scan\.(?:io|org|com|build|xyz|network)|blockscout\.com|explorer\.[\w-]+\.[a-z]{2,})\/(?:#\/)?(?:tx|txn|transaction)s?\/\w+/i;
+const SENT_BY_AUTHOR = /\b(?:I|we)\b[^.\n]{0,60}\b(?:sent|broadcast|executed|submitted|ran|deployed|called|triggered)\b|\b(?:my|our) (?:test |poc |exploit )?transactions?\b/i;
+
+function checkLiveChain(lines) {
+  const hits = [];
+  for (const line of lines) {
+    if (line.fence) continue;
+    if (SEND_COMMAND.test(line.text) && REMOTE_NODE.test(line.text)) {
+      hits.push(quoteOf(line, 'sends a transaction to a remote node'));
+    } else if (HARDHAT_NETWORK.test(line.text)) {
+      hits.push(quoteOf(line, 'runs a script on a named network'));
+    } else if (!line.code && EXPLORER_TX.test(line.text) && SENT_BY_AUTHOR.test(sentenceAt(line.text, line.text.search(EXPLORER_TX)))) {
+      hits.push(quoteOf(line, 'links a transaction the report says you sent'));
+    }
+  }
+  if (hits.length) {
+    return result('flagged', `${plural(hits.length, 'line sends', 'lines send')} or links a transaction on a live network.`, hits);
+  }
+  return result('pass', 'No transaction sent to a live network found.');
+}
+
 // ---------------------------------------------------------------------------
 // Prior art, limits, phrases
 // ---------------------------------------------------------------------------
@@ -643,6 +691,45 @@ function checkPhrases(lines) {
 }
 
 // ---------------------------------------------------------------------------
+// AI use and leftovers
+// ---------------------------------------------------------------------------
+
+// "AI use: none", "## AI disclosure", "Use of AI: Claude drafted the steps".
+const AI_LABEL = /^[\s>*_#-]*(?:AI(?:[- ](?:use|usage|assistance|assisted|disclosure|tools?))|use of AI|LLM (?:use|usage))\b/i;
+const AI_NAME = /\b(?:AI|LLMs?|ChatGPT|GPT-\d[\w.]*|Claude|Gemini|Copilot|Codex|Grok|DeepSeek|Llama|Mistral|Qwen|Kimi)\b|\blanguage models?\b/;
+const AI_DEED = /\b(?:help(?:ed|s|ing)?|assist(?:ed|s|ing|ance)?|draft(?:ed|s|ing)?|writ(?:e|es|ing|ten)|wrote|generat(?:e|ed|es|ing)|suggest(?:ed|s|ing)?|f(?:ou|i)nd|review(?:ed|s|ing)?|summari[sz](?:e|ed|es|ing)|translat(?:e|ed|es|ing)|format(?:ted|s|ting)?|polish(?:ed|es|ing)?|proofread(?:ing)?)\b|\bused\b[^.\n]{0,40}\b(?:to|for)\b/i;
+const NO_AI = /\b(?:no|without(?: any)?|did not use(?: any)?|didn['’]t use(?: any)?)\s+(?:AI|LLMs?|language models?)\b|\bAI\b[^.\n]{0,40}\b(?:(?:was|were) not used|not used|none)\b/i;
+
+function checkAiUse(lines) {
+  for (const line of lines) {
+    if (line.code || !line.text.trim()) continue;
+    if (AI_LABEL.test(line.text) || NO_AI.test(line.text)) return result('pass', 'AI use is stated.', [quoteOf(line)]);
+    for (const sentence of line.text.split(/[.!?](?:\s+|$)/)) {
+      if (AI_NAME.test(sentence) && AI_DEED.test(sentence)) return result('pass', 'AI use is stated.', [quoteOf(line)]);
+    }
+  }
+  return result('missing', 'No line says whether AI tools were used.');
+}
+
+// Placeholders, outside code. "[link](url)" is a Markdown link, not a placeholder.
+const PLACEHOLDER = /\[(?:insert|add|your|todo|tbd|placeholder|describe|fill(?: in)?|enter|paste|link|name|address|contract|amount|date|screenshot|url)\b[^\]\n]{0,60}\](?!\()|<(?:insert|your|todo|placeholder|fill(?: in)?|enter|paste)\b[^>\n]{0,60}>|\bTBD\b|\b(?:TODO|FIXME)\s*:|\blorem ipsum\b/i;
+// Sentences a chat assistant writes to the person it is helping, never to a triager.
+const ASSISTANT = /\bas an AI\b|\bas a (?:large )?language model\b|\bI hope this helps\b|\b(?:certainly|sure|absolutely)[!,.]\s+here(?:['’]s| is)\b|\bhere(?:['’]s| is) (?:the|a|your) (?:revised|updated|rewritten|improved|final|complete|polished) (?:report|draft|version|write-?up)\b|\bI (?:cannot|can['’]t|am unable to) (?:browse|access (?:the internet|external)|verify (?:this|the))\b|\bmy (?:knowledge|training) (?:cutoff|data)\b/i;
+
+function checkLeftovers(lines) {
+  const hits = [];
+  for (const line of lines) {
+    if (line.code) continue;
+    // Inline code quotes the target's own text, such as a TODO in its source.
+    const prose = line.text.replace(/`[^`\n]*`/g, ' ');
+    if (PLACEHOLDER.test(prose)) hits.push(quoteOf(line, 'placeholder'));
+    else if (ASSISTANT.test(prose)) hits.push(quoteOf(line, 'written by an assistant'));
+  }
+  if (hits.length) return result('flagged', `${plural(hits.length, 'line holds', 'lines hold')} a placeholder or an assistant’s sentence.`, hits);
+  return result('pass', 'No placeholder or assistant’s sentence found.');
+}
+
+// ---------------------------------------------------------------------------
 // Hygiene
 // ---------------------------------------------------------------------------
 
@@ -682,9 +769,12 @@ const RUNNERS = {
   proof: checkProof,
   assertion: checkAssertion,
   mocks: checkMocks,
+  'live-chain': checkLiveChain,
   'prior-art': checkPriorArt,
   limits: checkLimits,
+  'ai-use': checkAiUse,
   phrases: checkPhrases,
+  leftovers: checkLeftovers,
   secrets: (lines, text) => checkSecrets(text),
   paths: checkPaths,
 };
@@ -694,7 +784,7 @@ const RUNNERS = {
 // ---------------------------------------------------------------------------
 
 /**
- * Runs the fourteen checks on a draft report.
+ * Runs the seventeen checks on a draft report.
  *
  * @param {string} text
  * @returns {ReportCheck}
@@ -719,7 +809,7 @@ export function checkReport(text) {
   };
 }
 
-/** "9 of 14 checks pass" */
+/** "9 of 17 checks pass" */
 export function scoreLine(report) {
   return `${report.passed} of ${report.total} checks pass`;
 }

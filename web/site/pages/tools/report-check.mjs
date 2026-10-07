@@ -1,8 +1,9 @@
-// /tools/report-check: paste a draft report, get fourteen text checks, and
-// check every file:line citation against the files the draft cites.
+// /tools/report-check: paste a draft report, get the text checks, and check
+// every file:line citation against the files the draft cites.
 //
-// The check table and the phrase list are rendered from the same definitions
-// the browser module runs, so the page can never describe a check it does not do.
+// The check table, the phrase list and every count on the page come from the
+// same definitions the browser module runs, so the page can never describe a
+// check it does not do.
 
 import { button, chip, faq, field, html, icon, stackTable, textarea } from '../../components.mjs';
 import { faqPageLd } from '../../layout.mjs';
@@ -10,15 +11,20 @@ import { CHECKS, PHRASE_NOTES } from '../../../public/tools/report-check-core.mj
 import { COUNTER_LINE, TOOL_STYLES, dropZone, nextAction, relatedTools, toolCrumbsLd, toolHead, toolPanel } from './_shared.mjs';
 
 const PATH = '/tools/report-check';
+const COUNT = CHECKS.length;
+const NUMBER_WORDS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen', 'twenty'];
+/** "seventeen": the number of checks in words. */
+const COUNT_WORD = NUMBER_WORDS[COUNT] ?? String(COUNT);
+const COUNT_TITLE = COUNT_WORD.charAt(0).toUpperCase() + COUNT_WORD.slice(1);
 
 const QUESTIONS = [
   {
     q: 'Where does my draft go?',
-    a: `Nowhere. The fourteen checks and the citation check are JavaScript that runs in this tab, and the page sends no request with your text or your files. ${COUNTER_LINE} Pressing “Run the full challenge on your model” moves the draft and its files to the workbench through this browser’s session storage. A model sees them only when you start a review there.`,
+    a: `Nowhere. The ${COUNT_WORD} checks and the citation check are JavaScript that runs in this tab, and the page sends no request with your text or your files. ${COUNTER_LINE} Pressing “Run the full challenge on your model” moves the draft and its files to the workbench through this browser’s session storage. A model sees them only when you start a review there.`,
   },
   {
-    q: 'What does 14 of 14 tell me?',
-    a: 'That the draft contains the text these checks look for: a commit, a quoted impact row, one severity, an inline proof with its output, and a prior-art reference or search result. The check does not verify comparison quality or duplicate status. The workbench challenge reviews the claims against the evidence you supply.',
+    q: `What does ${COUNT} of ${COUNT} tell me?`,
+    a: 'That the draft contains the text these checks look for: a commit, a quoted impact row, one severity, an inline proof with its output, a prior-art reference or search result, and a line on AI use. The check does not verify comparison quality or duplicate status. The workbench challenge reviews the claims against the evidence you supply.',
   },
   {
     q: 'How does the citation check work?',
@@ -34,14 +40,14 @@ const QUESTIONS = [
   },
 ];
 
-// Before a draft is pasted the list shows the fourteen checks, not yet run.
+// Before a draft is pasted the list shows every check, not yet run.
 const pendingRows = CHECKS.map((check) => html`<li class="check" data-status="pending"><div class="check__head">${chip('Not run', { dashed: true })}<h3 class="check__label">${check.label}</h3></div></li>`);
 
 const panel = toolPanel({
   id: 'report-check',
   name: 'report-check',
   className: 'report-check',
-  tag: 'Local · 14 checks + citations',
+  tag: `Local · ${COUNT} checks + citations`,
   body: html`
 <div class="tool-split">
 <div class="tool-split__in">
@@ -115,14 +121,14 @@ const body = html`
 <section class="section section--tight wrap">
 ${toolHead({
   path: PATH,
-  lede: 'Paste a draft and attach the files it cites. Fourteen checks answer at once: what is on the page, what is missing, which sentence a triager will quote back at you, and which citation points at nothing.',
+  lede: `Paste a draft and attach the files it cites. ${COUNT_TITLE} checks answer at once: what is on the page, what is missing, which sentence a triager will quote back at you, and which citation points at nothing.`,
 })}
 ${panel}
 </section>
 
 <section class="section section--tight wrap" aria-labelledby="checks-heading">
 <div class="tool-copy">
-<h2 id="checks-heading">The fourteen checks</h2>
+<h2 id="checks-heading">The ${COUNT_WORD} checks</h2>
 <p class="lede">Each result is one of three states. <strong>Pass</strong>: the expected text is on the page, with the line that carries it. <strong>Missing</strong>: no matching evidence is stated, or the draft says the check was not done. <strong>Flagged</strong>: a line was found that a triager closes on, quoted so you can fix it.</p>
 </div>
 ${checkTable}
@@ -167,14 +173,14 @@ ${relatedTools(PATH)}`;
 
 export default {
   path: PATH,
-  title: 'Bug bounty report check: 14 checks | Bounty Operator',
-  description: 'Paste a draft bug bounty report: 14 instant checks (pinned commit, impact row, inline proof, trusted roles, secrets) and a file:line citation check. In-browser.',
+  title: `Bug bounty report check: ${COUNT} checks | Bounty Operator`,
+  description: `Paste a draft bug bounty report: ${COUNT} instant checks (pinned commit, impact row, inline proof, live-network testing, AI disclosure) and citation checks.`,
   nav: 'tools',
   label: 'Report check',
   order: 1,
   styles: TOOL_STYLES,
   scripts: ['/tools/report-check.mjs'],
   jsonld: [toolCrumbsLd(PATH), faqPageLd(QUESTIONS)],
-  lastmod: '2026-10-04',
+  lastmod: '2026-10-07',
   body,
 };

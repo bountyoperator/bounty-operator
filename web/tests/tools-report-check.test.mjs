@@ -15,7 +15,7 @@ import {
 
 const COMMIT = '3f9c2a71d0b84e6fa1c5d2e9b7a6c4f8e1d0b3a2';
 
-// A draft that carries everything the fourteen checks look for.
+// A draft that carries everything the seventeen checks look for.
 const STRONG = `# Missing checkpoint in \`stake()\` lets a new staker drain accrued rewards
 
 Severity: High
@@ -56,15 +56,18 @@ The 2025 audit report lists a rounding issue in earned(). This finding differs f
 
 ## Limits
 This report does not claim loss of staked principal. The proof was not tested against the upgraded proxy.
+
+## AI use
+No AI tool was used to find or write up this finding.
 `;
 
 const byId = (report) => Object.fromEntries(report.checks.map((check) => [check.id, check]));
 const statuses = (report) => Object.fromEntries(report.checks.map((check) => [check.id, check.status]));
 
 describe('report check', () => {
-  test('defines fourteen checks, each with a label, a test line and a one-sentence fix', () => {
-    assert.equal(CHECKS.length, 14);
-    assert.equal(new Set(CHECKS.map((check) => check.id)).size, 14);
+  test('defines seventeen checks, each with a label, a test line and a one-sentence fix', () => {
+    assert.equal(CHECKS.length, 17);
+    assert.equal(new Set(CHECKS.map((check) => check.id)).size, 17);
     for (const check of CHECKS) {
       assert.ok(check.label && check.test && check.source, check.id);
       assert.match(check.fix, /^[A-Z][^.]*\.$/, `${check.id} fix is one sentence`);
@@ -78,14 +81,14 @@ describe('report check', () => {
     const report = checkReport(STRONG);
     const open = report.checks.filter((check) => check.status !== 'pass').map((check) => `${check.id}: ${check.finding}`);
     assert.deepEqual(open, []);
-    assert.equal(scoreLine(report), '14 of 14 checks pass');
+    assert.equal(scoreLine(report), '17 of 17 checks pass');
     assert.equal(report.passed + report.missing + report.flagged, report.total);
   });
 
   test('an empty draft passes nothing and says so', () => {
     const report = checkReport('  \n');
     assert.equal(report.empty, true);
-    assert.equal(scoreLine(report), '0 of 14 checks pass');
+    assert.equal(scoreLine(report), '0 of 17 checks pass');
     assert.ok(report.checks.every((check) => check.status === 'missing' && check.finding === 'No draft supplied.'));
   });
 
@@ -326,7 +329,7 @@ describe('report check', () => {
     for (const draft of drafts) {
       const started = Date.now();
       const report = checkReport(draft);
-      assert.equal(report.total, 14);
+      assert.equal(report.total, CHECKS.length);
       assert.ok(Date.now() - started < 2000, `checked in ${Date.now() - started} ms`);
     }
     // The local-path check still reads the whole line.
@@ -373,15 +376,18 @@ describe('report check', () => {
       proof: 'flagged',
       assertion: 'missing',
       mocks: 'pass',
+      'live-chain': 'pass',
       'prior-art': 'missing',
       limits: 'missing',
+      'ai-use': 'missing',
       phrases: 'flagged',
+      leftovers: 'pass',
       secrets: 'pass',
       paths: 'pass',
     });
-    assert.equal(scoreLine(report), '3 of 14 checks pass');
+    assert.equal(scoreLine(report), '5 of 17 checks pass');
     assert.equal(report.flagged, 6);
-    assert.equal(report.missing, 5);
+    assert.equal(report.missing, 6);
   });
 
   test('checklistMarkdown ticks passing checks and lists finding, quotes and fix for the rest', () => {
@@ -395,7 +401,7 @@ describe('report check', () => {
     assert.ok(lines.includes('  - L3: `Severity: Medium or High`'));
     assert.ok(lines.includes('  - Fix: State one severity, at the row the body argues, and remove every other level.'));
     assert.ok(lines.includes('- [ ] Pinned revision (missing): No commit hash found.'));
-    assert.equal(lines.filter((line) => /^- \[[ x]\] /.test(line)).length, 14);
+    assert.equal(lines.filter((line) => /^- \[[ x]\] /.test(line)).length, CHECKS.length);
     // A backtick in a quoted line cannot break out of its code span.
     assert.match(checklistMarkdown(checkReport('# `a` in `b()` is 3 words\n')), /L1: `# 'a' in 'b\(\)' is 3 words`/);
     assert.ok(markdown.endsWith('https://bountyoperator.com/tools/report-check\n'));
@@ -442,5 +448,65 @@ describe('report check', () => {
     const started = Date.now();
     checkReport(hostile);
     assert.ok(Date.now() - started < 2000);
+  });
+});
+
+describe('report check: platform rules of 2026', () => {
+  const check = (text, id) => byId(checkReport(text))[id];
+
+  test('live network: a cast send or a broadcast to a remote node is flagged, a local fork is not', () => {
+    const live = (text) => check(text, 'live-chain');
+    assert.equal(live(STRONG).status, 'pass');
+    assert.equal(live('```\nforge test --fork-url $MAINNET_RPC_URL -vvv\n```\n').status, 'pass', 'a forked test sends nothing');
+    assert.equal(live('```\nanvil --fork-url $MAINNET_RPC_URL\ncast send $VAULT "deposit()" --rpc-url http://127.0.0.1:8545 --private-key $PK\n```\n').status, 'pass');
+    assert.equal(live('```\ncast send $VAULT "deposit()" --private-key $PK\n```\n').status, 'pass', 'no node named: cast defaults to a local one');
+    assert.equal(live('```\nnpx hardhat run scripts/attack.ts --network localhost\n```\n').status, 'pass');
+
+    const sent = live('```\ncast send 0xVault "drain()" --rpc-url https://eth-mainnet.g.alchemy.com/v2/demo --private-key $PK\n```\n');
+    assert.equal(sent.status, 'flagged');
+    assert.equal(sent.finding, '1 line sends or links a transaction on a live network.');
+    assert.equal(sent.evidence[0].note, 'sends a transaction to a remote node');
+    assert.equal(live('```\nforge script script/Attack.s.sol --rpc-url $SEPOLIA_RPC_URL --broadcast\n```\n').status, 'flagged');
+    assert.equal(live('```\nforge script script/Attack.s.sol --rpc-url mainnet --broadcast\n```\n').status, 'flagged');
+    assert.equal(live('```\nnpx hardhat run scripts/attack.ts --network sepolia\n```\n').evidence[0].note, 'runs a script on a named network');
+    const linked = live('I sent the exploit on mainnet: https://etherscan.io/tx/0xabc123\n');
+    assert.equal(linked.status, 'flagged');
+    assert.equal(linked.evidence[0].note, 'links a transaction the report says you sent');
+    assert.equal(live('The owner set the fee in https://etherscan.io/tx/0xabc123 last week.\n').status, 'pass', 'a transaction someone else sent is evidence');
+  });
+
+  test('AI use: a stated use or a stated non-use passes, silence is missing', () => {
+    const ai = (text) => check(text, 'ai-use');
+    assert.equal(ai(STRONG).status, 'pass');
+    assert.equal(ai('# Bug\n\nThe contract is broken.\n').finding, 'No line says whether AI tools were used.');
+    for (const line of [
+      'AI use: none.',
+      '## AI disclosure',
+      'Use of AI: Claude drafted the impact section.',
+      'I used ChatGPT to translate the steps; I reproduced the bug myself.',
+      'No AI was used to find this.',
+      'GPT-6 helped format the report.',
+    ]) {
+      assert.equal(ai(`# Bug\n\n${line}\n`).status, 'pass', line);
+    }
+    assert.equal(ai('# Bug\n\nThe AI oracle returns a stale price.\n').status, 'missing', 'naming AI is not a disclosure');
+    assert.equal(ai('# Bug\n\n```\n// AI use: none\n```\n').status, 'missing', 'a code comment is not a statement');
+  });
+
+  test('leftovers: placeholders and an assistant writing to you are flagged, quoted code and Markdown links are not', () => {
+    const left = (text) => check(text, 'leftovers');
+    assert.equal(left(STRONG).status, 'pass');
+    const placeholder = left('# Bug\n\nImpact: TBD\nSee [insert screenshot here].\nRPC: <your RPC URL>\n');
+    assert.equal(placeholder.status, 'flagged');
+    assert.equal(placeholder.finding, '3 lines hold a placeholder or an assistant’s sentence.');
+    assert.deepEqual(placeholder.evidence.map((entry) => entry.note), ['placeholder', 'placeholder', 'placeholder']);
+    assert.equal(left('# Bug\n\nCertainly! Here is the revised report.\n').evidence[0].note, 'written by an assistant');
+    assert.equal(left('# Bug\n\nI hope this helps.\n').status, 'flagged');
+    assert.equal(left('# Bug\n\nAs an AI language model, I cannot run the test.\n').status, 'flagged');
+
+    assert.equal(left('# Bug\n\nThe code says `// TODO: check slippage` at line 42.\n').status, 'pass', 'a TODO quoted from the target');
+    assert.equal(left('# Bug\n\nSee the [link](https://example.com/a) and the [address](https://etherscan.io/address/0x1).\n').status, 'pass');
+    assert.equal(left('# Bug\n\n```\n// TODO: remove\n```\n').status, 'pass', 'code blocks are the proof, not prose');
+    assert.equal(left('# Bug\n\nPlease let me know if you need anything else.\n').status, 'pass', 'courtesy to a triager is not an assistant leftover');
   });
 });

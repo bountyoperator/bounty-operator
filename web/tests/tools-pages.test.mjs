@@ -113,7 +113,7 @@ describe('tool pages', () => {
       assert.ok(text.includes(check.label), check.label);
       assert.ok(text.includes(check.fix), check.id);
     }
-    assert.match(text, /of 14 checks pass/);
+    assert.match(text, /of 17 checks pass/);
     const markup = render(reportCheck);
     assert.equal([...markup.matchAll(/<li class="check" data-status="pending">/g)].length, CHECKS.length);
     assert.match(markup, /id="check-handoff"[^>]*|href="\/\?profile=report#workspace" id="check-handoff"/);
