@@ -49,6 +49,8 @@ export interface ReviewResult {
 }
 
 export const REVIEW_BODY_BYTES = 1500000;
+// Hosted reviews per account per 10 minutes, on every route that starts one.
+export const REVIEWS_PER_10_MIN = 60;
 
 // The whole call must end inside the lease, or the slot is handed out twice.
 const SINGLE_ANSWER_LIMIT_MS = (LEASE_SECONDS - 30) * 1000;
@@ -61,9 +63,14 @@ const KEEP_ALIVE_MS = 5000;
 // The same length decides whether an answer the provider cut short counts.
 const COUNTED_AFTER_CHARS = 2000;
 
-/** A refusal is not a review, and neither is an answer that broke off before it said anything. */
+/**
+ * A short refusal is not a review, and neither is an answer that broke off
+ * before it said anything. A review that was written out and then flagged by
+ * an output filter at its end did reach the caller, so it counts like any
+ * other answer of that length.
+ */
 function counts(answer: { refused: boolean; truncated: boolean }, chars: number): boolean {
-  if (answer.refused) return false;
+  if (answer.refused && chars < COUNTED_AFTER_CHARS) return false;
   return !answer.truncated || chars >= COUNTED_AFTER_CHARS;
 }
 
@@ -260,7 +267,9 @@ async function reserve(env: Env, ctx: ExecutionContext, accountId: string, profi
  * Returns a function that ends the reservation exactly once. The database
  * write runs after the response, so a failed write cannot cost the user a
  * review the provider has already written. A review that does not count also
- * adds one to `review_fail:<reason>`, so failures can be told apart later.
+ * adds one to `review_fail:<reason>`, so failures can be told apart later. A
+ * withheld answer (it repeated the method) uses the review but is counted as
+ * `review_withheld:<profile>`, not as a completed review.
  */
 function createSettler(env: Env, ctx: ExecutionContext, accountId: string, reviewId: string, profileId: string) {
   let settled = false;
@@ -272,7 +281,7 @@ function createSettler(env: Env, ctx: ExecutionContext, accountId: string, revie
         console.error('Review bookkeeping failed', { name: error instanceof Error ? error.name : 'unknown' });
       }),
     );
-    if (counted) count(env, ctx, `review_ok:${profileId}`);
+    if (counted) count(env, ctx, reason === 'withheld' ? `review_withheld:${profileId}` : `review_ok:${profileId}`);
     else count(env, ctx, 'review_fail', `review_fail:${reason}`);
   };
 }
@@ -360,7 +369,7 @@ export async function runHostedReview({ env, ctx, request }: Call, accountId: st
       scanner.push(text);
       scanner.finish();
       if (scanner.leaked) {
-        settle(true);
+        settle(true, 'withheld');
         throw withheld();
       }
     }
@@ -410,7 +419,7 @@ export async function collectHostedReview(
   const scanner = outputScanner(input.profileId);
   const stopIfLeaked = (): void => {
     if (!scanner?.leaked) return;
-    settle(true);
+    settle(true, 'withheld');
     throw withheld();
   };
 
@@ -539,7 +548,7 @@ export async function streamHostedReview({ env, ctx, request }: Call, accountId:
   const scanner = outputScanner(input.profileId);
   const checked = (released: string): string => {
     if (scanner?.leaked) {
-      settle(true);
+      settle(true, 'withheld');
       throw withheld();
     }
     return released;
@@ -573,7 +582,9 @@ export async function streamHostedReview({ env, ctx, request }: Call, accountId:
       await writer.close();
     } catch (error) {
       abort.abort();
-      settle(clientGone && delivered >= COUNTED_AFTER_CHARS, failureReason(error, clientGone));
+      // Text the reader already holds is a review once it passes COUNTED_AFTER_CHARS,
+      // whether the reader left or the provider failed after writing it.
+      settle(delivered >= COUNTED_AFTER_CHARS, failureReason(error, clientGone));
       if (!finished && !clientGone) {
         await send(sseEvent('error', errorBody(reviewFailure(error)))).catch(() => {});
       }

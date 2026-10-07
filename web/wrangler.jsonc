@@ -19,8 +19,10 @@
   // enable_request_signal: request.signal aborts when the client disconnects,
   // which stops the provider call and releases the review lease.
   "compatibility_flags": ["nodejs_compat", "enable_request_signal"],
-  // The privacy scan of a full 240 KB input is the only CPU-heavy step.
-  "limits": { "cpu_ms": 300 },
+  // A streamed review costs CPU for every token it relays: about a second for
+  // a 64,000-token answer, more than the privacy scan of a full 240 KB input.
+  // CPU is billed by use, so this cap only stops a runaway invocation.
+  "limits": { "cpu_ms": 30000 },
   "workers_dev": false,
   "preview_urls": false,
   "assets": {
@@ -49,7 +51,10 @@
     // Keeps ?ref= codes and Checkout session ids out of the logs.
     "redact_query_string": true,
     "issues": { "enabled": true },
-    "logs": { "enabled": true, "head_sampling_rate": 1, "invocation_logs": true }
+    // No invocation logs: they would keep every request's IP address, user agent
+    // and location for seven days, which the privacy page says is never stored.
+    // The Worker's own console lines hold none of that.
+    "logs": { "enabled": true, "head_sampling_rate": 1, "invocation_logs": false }
   },
   // Daily purge of expired rows, and a sweep of stale review leases every 15 minutes.
   "triggers": { "crons": ["17 3 * * *", "*/15 * * * *"] },

@@ -392,7 +392,27 @@ test('a key the provider rejects fails a streamed review before any event, as a 
   assert.deepEqual(reviews(env), [{ status: 'failed', profile: 'solidity', channel: 'web' }]);
 });
 
-test('a provider error in the middle of a stream becomes an error event and frees the allowance', async (t) => {
+test('a provider error before any text becomes an error event and frees the allowance', async (t) => {
+  let provider;
+  const { env, ctx, call } = setup(t, (init) => {
+    provider = providerStream(init);
+    return provider.response;
+  });
+
+  const response = await streamHostedReview(call, ACCOUNT, parseReviewRequest(body()), 'web');
+  provider.push(`data: ${JSON.stringify({ error: { message: 'Upstream overloaded' } })}\n\n`);
+
+  const events = parseEvents(await response.text());
+  assert.deepEqual(events.map((item) => item.event), ['error']);
+  assert.equal(events[0].data.code, 'provider');
+  assert.match(events[0].data.error, /^Provider returned an error: Upstream overloaded/);
+
+  await ctx.settled();
+  assert.deepEqual(reviews(env), [{ status: 'failed', profile: 'solidity', channel: 'web' }]);
+  assert.deepEqual(funnelCounts(env.DB), { review_fail: 1, 'review_fail:provider_response': 1 });
+});
+
+test('a provider error after text ends the review as cut short: the text is kept and a short one is not counted', async (t) => {
   let provider;
   const { env, ctx, call } = setup(t, (init) => {
     provider = providerStream(init);
@@ -404,13 +424,13 @@ test('a provider error in the middle of a stream becomes an error event and free
   provider.push(`data: ${JSON.stringify({ error: { message: 'Upstream overloaded' } })}\n\n`);
 
   const events = parseEvents(await response.text());
-  assert.deepEqual(events.map((item) => item.event), ['delta', 'error']);
-  assert.equal(events[1].data.code, 'provider');
-  assert.match(events[1].data.error, /^Provider returned an error: Upstream overloaded/);
+  assert.deepEqual(events.map((item) => item.event), ['delta', 'done']);
+  assert.equal(events[1].data.truncated, true);
+  assert.equal(events[1].data.review, '# Review\n');
 
   await ctx.settled();
   assert.deepEqual(reviews(env), [{ status: 'failed', profile: 'solidity', channel: 'web' }]);
-  assert.deepEqual(funnelCounts(env.DB), { review_fail: 1, 'review_fail:provider_response': 1 });
+  assert.deepEqual(funnelCounts(env.DB), { review_fail: 1, 'review_fail:cut_short': 1 });
 });
 
 test('a client that disconnects early stops the provider call and releases the lease', async (t) => {

@@ -124,6 +124,7 @@ function report(rows, options, range) {
   const referrers = withPrefix(sums, 'ref:');
   const reviewsByProfile = withPrefix(sums, 'review_ok:');
   const failuresByReason = withPrefix(sums, 'review_fail:');
+  const withheldByProfile = withPrefix(sums, 'review_withheld:');
   const pageviews = sum(pages);
   const reviews = sum(reviewsByProfile);
 
@@ -156,12 +157,14 @@ function report(rows, options, range) {
   printTable('Completed reviews by profile', reviewsByProfile, (_name, n) => percent(n, reviews));
   // Counted since 0.7.5: provider_<kind>, cut_short, refused, single_answer_limit, client_gone, other.
   printTable('Failed reviews by reason', failuresByReason, (_name, n) => percent(n, sum(failuresByReason)));
+  // Counted since 0.7.7: answers stopped because they repeated the method. They use the review.
+  printTable(`Withheld answers: ${sum(withheldByProfile)}`, withheldByProfile);
 
   // Counted since 0.7.6: one mcp_session per initialize, one mcp_call:<tool> per tools/call.
   const mcpCalls = withPrefix(sums, 'mcp_call:');
   printTable(`MCP: ${count('mcp_session')} sessions, ${sum(mcpCalls)} tool calls, ${count('mcp_limited')} limited`, mcpCalls, (_name, n) => percent(n, sum(mcpCalls)));
 
-  const known = (event) => /^(pv|ref|review_ok|review_fail|mcp_call):/.test(event)
+  const known = (event) => /^(pv|ref|review_ok|review_fail|review_withheld|mcp_call):/.test(event)
     || ['register', 'login', 'review_fail', 'quota_hit', 'checkout_created', 'sub_active', 'mcp_session', 'mcp_limited'].includes(event);
   const clientEvents = [...sums].filter(([event]) => !known(event)).sort((a, b) => b[1] - a[1]);
   printTable('Client events', clientEvents);

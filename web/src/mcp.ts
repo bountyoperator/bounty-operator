@@ -1,8 +1,9 @@
-// The remote MCP endpoint: JSON-RPC 2.0 over one POST per message and no
-// session. Every reply is one JSON body, except run_review: a client that
-// accepts text/event-stream gets progress notifications while the review runs,
-// then the result, on one stream. Written by hand; the protocol surface used
-// here is small enough to read in one sitting.
+// The remote MCP endpoint: JSON-RPC 2.0 over one POST per message (or per
+// batch, from clients of 2025-03-26 and earlier) and no session. Every reply
+// is one JSON body, except run_review: a client that accepts
+// text/event-stream gets progress notifications while the review runs, then
+// the result, on one stream. Written by hand; the protocol surface used here
+// is small enough to read in one sitting.
 
 import { CONTEXT_FIELDS, evidenceNotes, reviewPacket } from '../public/evidence.mjs';
 import { checkRefs, defang, parseReview } from '../public/parse.mjs';
@@ -18,7 +19,7 @@ import { count } from './funnel.ts';
 import { ApiError, errorBody, json } from './http.ts';
 import { usage } from './quota.mjs';
 import { clientKey, rateLimit } from './rate.ts';
-import { REVIEW_BODY_BYTES, collectHostedReview, parseReviewInputs, parseReviewRequest, prepareOpen, resolveProfileId, runHostedReview } from './review.ts';
+import { REVIEWS_PER_10_MIN, REVIEW_BODY_BYTES, collectHostedReview, parseReviewInputs, parseReviewRequest, prepareOpen, resolveProfileId, runHostedReview } from './review.ts';
 import type { Prepared, ReviewResult } from './review.ts';
 
 export const MCP_PROTOCOL_VERSIONS = ['2025-11-25', '2025-06-18', '2025-03-26', '2024-11-05'] as const;
@@ -713,7 +714,8 @@ function isRpcId(value: unknown): value is string | number {
 
 /** Answers one JSON-RPC message. Never throws: an unexpected failure becomes an internal-error reply. */
 export async function handleMcpMessage(message: unknown, host: McpHost): Promise<McpReply> {
-  if (Array.isArray(message)) return rpcError(null, INVALID_REQUEST, 'Send one message per request. Batches are not supported.', 400);
+  // The endpoint unpacks a batch (see batchReply); one message never holds another batch.
+  if (Array.isArray(message)) return rpcError(null, INVALID_REQUEST, 'A batch may not contain another batch.', 400);
   if (!message || typeof message !== 'object') return rpcError(null, INVALID_REQUEST, 'Invalid request.', 400);
 
   const { jsonrpc, id, method, params } = message as Json;
@@ -767,15 +769,21 @@ export async function handleMcpMessage(message: unknown, host: McpHost): Promise
  * the client hears from the server every few seconds. A JSON-only caller keeps
  * the single-answer limit, which ends inside the timeouts such clients use.
  */
-function hostFor(call: Call, onProgress?: (chars: number) => void): McpHost {
+function hostFor(call: Call, onProgress?: (chars: number) => void, knownAccount?: string): McpHost {
   const { env, request } = call;
+  // A streamed call has already checked its token, and each check counts
+  // against the token's own limit, so it is not checked a second time.
+  const account = (): Promise<string> => (knownAccount ? Promise.resolve(knownAccount) : bearerAccount(call));
   return {
     async account() {
-      return clientStatus(env, await bearerAccount(call));
+      return clientStatus(env, await account());
     },
 
     async runReview(args) {
-      const accountId = await bearerAccount(call);
+      const accountId = await account();
+      // The same per-account limit as /api/review and /api/client/review, so
+      // several tokens on one account do not multiply its review budget.
+      await rateLimit(env.DB, `review:${accountId}`, REVIEWS_PER_10_MIN, 600);
       const apiKey = request.headers.get('x-provider-key');
       if (!apiKey) {
         throw new ApiError('Send your provider API key in the X-Provider-Key header. It is never a tool argument.', 400, 'bad_key');
@@ -824,17 +832,22 @@ function progressTokenOf(message: Json): string | number | undefined {
  * line otherwise, then the one JSON-RPC response.
  */
 async function streamedReply(call: Call, message: Json, progressIntervalMs: number): Promise<Response> {
-  // A missing or revoked token is still answered with HTTP 401, so the client asks for one.
+  const id = isRpcId(message.id) ? message.id : null;
+  let accountId: string;
   try {
-    await bearerAccount(call);
+    accountId = await bearerAccount(call);
   } catch (error) {
-    if (error instanceof ApiError && error.status === 401) {
-      const reply = rpcError(isRpcId(message.id) ? message.id : null, UNAUTHORIZED, error.message, 401, {
-        'WWW-Authenticate': `Bearer realm="${SERVER_NAME}"`,
-      });
+    if (!(error instanceof ApiError)) throw error;
+    // A missing or revoked token is still answered with HTTP 401, so the client asks for one.
+    if (error.status === 401) {
+      const reply = rpcError(id, UNAUTHORIZED, error.message, 401, { 'WWW-Authenticate': `Bearer realm="${SERVER_NAME}"` });
       return json(reply.body, reply.status, { headers: reply.headers });
     }
-    throw error;
+    // Anything else, such as the token's own rate limit, is a tool error the
+    // agent can read, as it is on the JSON path, not a bare HTTP error.
+    const reply = rpcResult(id, toolFailure(error));
+    const retryAfter = error.extra.retryAfter;
+    return json(reply.body, reply.status, typeof retryAfter === 'number' ? { headers: { 'Retry-After': String(retryAfter) } } : {});
   }
 
   const { readable, writable } = new TransformStream<Uint8Array, Uint8Array>();
@@ -865,7 +878,7 @@ async function streamedReply(call: Call, message: Json, progressIntervalMs: numb
       void write(': review started\n\n');
       const reply = await handleMcpMessage(message, hostFor(call, (chars) => {
         written = chars;
-      }));
+      }, accountId));
       clearInterval(timer);
       if (reply.body !== null) await write(`event: message\ndata: ${JSON.stringify(reply.body)}\n\n`);
     } finally {
@@ -909,6 +922,70 @@ function countMessage(call: Call, message: unknown): void {
   }
 }
 
+/**
+ * Counts a tool call against the address's allowance. Returns the reply to
+ * send in its place when the allowance is used up, or null.
+ */
+async function meterToolCall(call: Call, message: unknown): Promise<McpReply | null> {
+  if (!isToolCall(message)) return null;
+  try {
+    await rateLimit(call.env.DB, `mcp:${await clientKey(call.env, call.request)}`, MCP_TOOL_CALLS_PER_10_MIN, 600);
+    return null;
+  } catch (error) {
+    if (!(error instanceof ApiError) || error.code !== 'rate_limited') throw error;
+    count(call.env, call.ctx, 'mcp_limited');
+    const retryAfter = typeof error.extra.retryAfter === 'number' ? error.extra.retryAfter : 60;
+    // A tool error the model can read and wait out, not a transport failure that drops the server.
+    return { ...rpcResult(message.id, toolFailure(error)), headers: { 'Retry-After': String(retryAfter) } };
+  }
+}
+
+function idOf(message: unknown): RpcId {
+  const id = message && typeof message === 'object' && !Array.isArray(message) ? (message as Json).id : undefined;
+  return isRpcId(id) ? id : null;
+}
+
+/**
+ * Clients of 2025-06-18 and later send the negotiated version in a header on
+ * every request after initialize. A version this server never offers is
+ * refused with 400, as the specification requires. Returns that version, or
+ * null when the request is fine.
+ */
+function unsupportedVersion(request: Request, message: unknown): string | null {
+  const version = request.headers.get('mcp-protocol-version');
+  if (version === null || (MCP_PROTOCOL_VERSIONS as readonly string[]).includes(version)) return null;
+  const opensSession = Boolean(message) && typeof message === 'object' && !Array.isArray(message) && (message as Json).method === 'initialize';
+  return opensSession ? null : version;
+}
+
+// The most messages one batch may hold.
+const MAX_BATCH = 16;
+
+/**
+ * A JSON-RPC batch, which clients of 2025-03-26 and earlier may send. The
+ * messages are answered in order, none as a stream, and the replies come back
+ * as one array, or as 202 when every message was a notification. A 401 inside
+ * the batch makes the whole answer a 401, so the client asks for its token.
+ */
+async function batchReply(call: Call, messages: unknown[]): Promise<Response> {
+  if (messages.length === 0 || messages.length > MAX_BATCH) {
+    const reply = rpcError(null, INVALID_REQUEST, `A batch holds 1 to ${MAX_BATCH} messages.`, 400);
+    return json(reply.body, reply.status);
+  }
+  const bodies: Json[] = [];
+  const headers: Record<string, string> = {};
+  let status = 200;
+  for (const message of messages) {
+    countMessage(call, message);
+    const reply = (await meterToolCall(call, message)) ?? (await handleMcpMessage(message, hostFor(call)));
+    if (reply.body !== null) bodies.push(reply.body);
+    if (reply.status === 401) status = 401;
+    Object.assign(headers, reply.headers);
+  }
+  if (bodies.length === 0) return new Response(null, { status: 202 });
+  return json(bodies, status, { headers });
+}
+
 /** POST /api/mcp. `progressIntervalMs` is only changed by tests. */
 export async function mcpEndpoint(call: Call, { progressIntervalMs = PROGRESS_INTERVAL_MS } = {}): Promise<Response> {
   const { env, request } = call;
@@ -923,19 +1000,17 @@ export async function mcpEndpoint(call: Call, { progressIntervalMs = PROGRESS_IN
     return json(reply.body, reply.status);
   }
 
-  countMessage(call, message);
-  if (isToolCall(message)) {
-    try {
-      await rateLimit(env.DB, `mcp:${await clientKey(env, request)}`, MCP_TOOL_CALLS_PER_10_MIN, 600);
-    } catch (error) {
-      if (!(error instanceof ApiError) || error.code !== 'rate_limited') throw error;
-      count(env, call.ctx, 'mcp_limited');
-      // A tool error the model can read and wait out, not a transport failure that drops the server.
-      const reply = rpcResult(message.id, toolFailure(error));
-      const retryAfter = typeof error.extra.retryAfter === 'number' ? error.extra.retryAfter : 60;
-      return json(reply.body, reply.status, { headers: { 'Retry-After': String(retryAfter) } });
-    }
+  const version = unsupportedVersion(request, message);
+  if (version !== null) {
+    const supported = MCP_PROTOCOL_VERSIONS.join(', ');
+    const reply = rpcError(idOf(message), INVALID_REQUEST, `Unsupported MCP-Protocol-Version "${version.slice(0, 40)}". This server speaks ${supported}.`, 400);
+    return json(reply.body, reply.status);
   }
+  if (Array.isArray(message)) return batchReply(call, message);
+
+  countMessage(call, message);
+  const limited = await meterToolCall(call, message);
+  if (limited) return json(limited.body, limited.status, { headers: limited.headers });
 
   if (streamsReply(message, request)) return streamedReply(call, message, progressIntervalMs);
 

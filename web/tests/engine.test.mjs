@@ -1613,8 +1613,14 @@ describe('providers', () => {
     const cut = await stream(dataLines({ choices: [{ delta: { content: 'half' } }] }, { choices: [{ delta: {}, finish_reason: 'error' }] }, '[DONE]'));
     assert.deepEqual(cut.at(-1), { type: 'done', truncated: true, refused: false, model: 'm', usage: { input: null, output: null } });
 
+    // A failure after text cuts the answer short instead of discarding text the key paid for.
+    const late = await stream(dataLines({ choices: [{ delta: { content: 'half' } }] }, { choices: [{ delta: {}, finish_reason: 'error', error: { message: 'Upstream died' } }] }));
+    assert.deepEqual(late.map((event) => event.type), ['delta', 'done']);
+    assert.equal(late.at(-1).truncated, true);
+
+    // Before any text it is still the provider's error.
     await assert.rejects(
-      stream(dataLines({ choices: [{ delta: { content: 'half' } }] }, { choices: [{ delta: {}, finish_reason: 'error', error: { message: 'Upstream died' } }] })),
+      stream(dataLines({ choices: [{ delta: {}, finish_reason: 'error', error: { message: 'Upstream died' } }] })),
       /^ProviderError: Provider returned an error: Upstream died$/,
     );
   });
@@ -1632,7 +1638,7 @@ describe('providers', () => {
     assert.equal((await run({ detail: [42, null] })).message, 'Provider rejected the request (HTTP 422).');
   });
 
-  test('network failures and the 180 second limit are named', async (t) => {
+  test('network failures and the time limits are named', async (t) => {
     const offline = await withFetch(() => { throw new TypeError('fetch failed'); }, () => providerReview({ provider: 'xai', model: 'm', apiKey: API_KEY, prepared: PREPARED })
       .then(() => null, (reason) => reason));
     assert.match(offline.message, /^Provider could not be reached/);
@@ -1642,13 +1648,31 @@ describe('providers', () => {
     const hang = (url, init) => new Promise((resolve, reject) => {
       init.signal.addEventListener('abort', () => reject(init.signal.reason));
     });
-    const pending = withFetch(hang, () => providerReview({ provider: 'xai', model: 'm', apiKey: API_KEY, prepared: PREPARED })
+
+    // A stream that stays silent for 180 seconds has stalled.
+    const streamed = withFetch(hang, () => providerStream({ provider: 'xai', model: 'm', apiKey: API_KEY, prepared: PREPARED })
       .then(() => null, (reason) => reason));
     await Promise.resolve();
     t.mock.timers.tick(179999);
     t.mock.timers.tick(1);
+    const stalled = await streamed;
+    assert.match(stalled.message, /^Provider did not answer within 180 seconds/);
+    assert.equal(stalled.kind, 'timeout');
+
+    // A call without a stream sends nothing until its answer is written, so
+    // silence is not a stall: only the overall limit, or the caller's own
+    // signal, ends it.
+    let settled = false;
+    const pending = withFetch(hang, () => providerReview({ provider: 'xai', model: 'm', apiKey: API_KEY, prepared: PREPARED })
+      .then(() => null, (reason) => reason)
+      .finally(() => { settled = true; }));
+    await Promise.resolve();
+    t.mock.timers.tick(180000);
+    await new Promise((resolve) => setImmediate(resolve));
+    assert.equal(settled, false, 'still waiting after 180 seconds');
+    t.mock.timers.tick(720000);
     const timedOut = await pending;
-    assert.match(timedOut.message, /^Provider did not answer within 180 seconds/);
+    assert.match(timedOut.message, /^Provider did not answer within 15 minutes/);
     assert.equal(timedOut.kind, 'timeout');
   });
 
@@ -1768,19 +1792,37 @@ describe('providers', () => {
     assert.equal(noFinalBlankLine.truncated, false);
   });
 
-  test('a mid-stream error chunk throws after the text that already arrived', async () => {
+  test('a mid-stream error chunk after text ends the answer as cut short and keeps the text', async () => {
+    // OpenRouter's documented shape: a top-level error and finish_reason "error".
     const stream = dataLines(
       { choices: [{ delta: { content: 'so far' } }] },
       { error: { code: 502, message: `Upstream failed for ${API_KEY}` }, choices: [{ delta: { content: '' }, finish_reason: 'error' }] },
     );
     await withFetch(() => sse(stream), async () => {
-      const received = [];
-      const iterate = async () => {
-        for await (const event of await providerStream({ provider: 'openrouter', model: 'm', apiKey: API_KEY, prepared: PREPARED })) received.push(event);
-      };
-      await assert.rejects(iterate(), (error) => error instanceof ProviderError
+      const received = await collect(await providerStream({ provider: 'openrouter', model: 'm', apiKey: API_KEY, prepared: PREPARED }));
+      assert.deepEqual(received, [
+        { type: 'delta', text: 'so far' },
+        { type: 'done', truncated: true, refused: false, model: 'm', usage: { input: null, output: null } },
+      ]);
+    });
+
+    // The same chunk before any text is the provider's error, with the key redacted.
+    await withFetch(() => sse(dataLines({ error: { code: 502, message: `Upstream failed for ${API_KEY}` } })), async () => {
+      await assert.rejects(collect(await providerStream({ provider: 'openrouter', model: 'm', apiKey: API_KEY, prepared: PREPARED })), (error) => error instanceof ProviderError
         && /^Provider returned an error: Upstream failed for \[key\]$/.test(error.message));
-      assert.deepEqual(received, [{ type: 'delta', text: 'so far' }]);
+    });
+  });
+
+  test('an Anthropic error event after text ends the answer as cut short', async () => {
+    const events = [
+      'event: message_start\ndata: {"type":"message_start","message":{"model":"claude-x","usage":{"input_tokens":3}}}\n\n',
+      'event: content_block_delta\ndata: {"type":"content_block_delta","delta":{"type":"text_delta","text":"# Review"}}\n\n',
+      'event: error\ndata: {"type":"error","error":{"type":"overloaded_error","message":"Overloaded"}}\n\n',
+    ].join('');
+    await withFetch(() => sse(events), async () => {
+      const received = await collect(await providerStream({ provider: 'anthropic', model: 'claude-x', apiKey: API_KEY, prepared: PREPARED }));
+      assert.deepEqual(received.map((event) => event.type), ['delta', 'done']);
+      assert.equal(received.at(-1).truncated, true);
     });
   });
 
@@ -1875,10 +1917,13 @@ describe('providers', () => {
     ])).at(-1);
     assert.equal(fallback.model, 'claude-opus-4-8');
 
+    // An error before any text is the provider's error; after text it cuts the answer short.
     await assert.rejects(
-      run([start, text, { type: 'error', error: { type: 'overloaded_error', message: 'Overloaded' } }]),
+      run([start, { type: 'error', error: { type: 'overloaded_error', message: 'Overloaded' } }]),
       /^ProviderError: Provider returned an error: Overloaded/,
     );
+    const late = await run([start, text, { type: 'error', error: { type: 'overloaded_error', message: 'Overloaded' } }]);
+    assert.deepEqual([late.at(0).text, late.at(-1).truncated], ['partial', true]);
     assert.equal((await run([start, text])).at(-1).truncated, true);
 
     const full = (await run([start, text, { type: 'message_delta', delta: { stop_reason: 'model_context_window_exceeded' }, usage: { output_tokens: 9 } }, { type: 'message_stop' }])).at(-1);

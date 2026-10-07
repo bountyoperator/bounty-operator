@@ -84,7 +84,8 @@ test('the public template names no account, no route and no live database', () =
 test('the template still runs the whole Worker: assets, crons, limits, flags and bindings', () => {
   assert.equal(template.main, 'src/worker.ts');
   assert.deepEqual(template.compatibility_flags, ['nodejs_compat', 'enable_request_signal']);
-  assert.deepEqual(template.limits, { cpu_ms: 300 });
+  assert.deepEqual(template.limits, { cpu_ms: 30000 });
+  assert.equal(template.observability.logs.invocation_logs, false, 'no per-request logs of addresses and user agents');
   assert.deepEqual(template.assets, {
     directory: './public',
     binding: 'ASSETS',

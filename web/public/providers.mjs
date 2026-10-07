@@ -374,24 +374,30 @@ function startTimer(callback, delay) {
 
 /**
  * One abort signal for a call: it fires when the caller aborts, when the
- * provider is silent for TIMEOUT_MS, or when the whole call outlasts
+ * provider is silent for `idleMs`, or when the whole call outlasts
  * CALL_LIMIT_MS. `touch()` restarts the silence clock, which turns that limit
  * into an idle limit while a stream is delivering. The overall limit is never
  * restarted, so keep-alive comments cannot hold a stream open for ever.
+ *
+ * A call without a stream sends nothing until the whole answer is written, so
+ * silence says nothing there: it gets the overall limit, and the caller's own
+ * signal (the Worker's single-answer limit) ends it sooner.
  */
-function createDeadline(callerSignal) {
+function createDeadline(callerSignal, idleMs = TIMEOUT_MS) {
   const controller = new AbortController();
   let expired = '';
   let idleTimer = null;
 
   const expire = (limit) => {
+    // The first limit to fire is the cause; a second one in the same instant does not rename it.
+    if (expired) return;
     expired = limit;
     controller.abort(new DOMException('The provider timed out.', 'TimeoutError'));
   };
   const forward = () => controller.abort(callerSignal.reason);
   const arm = () => {
     clearTimeout(idleTimer);
-    idleTimer = startTimer(() => expire('idle'), TIMEOUT_MS);
+    idleTimer = startTimer(() => expire('idle'), idleMs);
   };
 
   if (callerSignal) {
@@ -404,6 +410,7 @@ function createDeadline(callerSignal) {
   return {
     signal: controller.signal,
     touch: arm,
+    idleMs,
     expired: () => expired,
     callerAborted: () => Boolean(callerSignal && callerSignal.aborted),
     clear() {
@@ -414,11 +421,15 @@ function createDeadline(callerSignal) {
   };
 }
 
+function duration(ms) {
+  return ms > 300000 ? `${ms / 60000} minutes` : `${ms / 1000} seconds`;
+}
+
 function transportFailure(error, deadline) {
   if (error instanceof ProviderError) return error;
   if (deadline.callerAborted()) return error;
   if (deadline.expired() === 'idle') {
-    return new ProviderError(`Provider did not answer within ${TIMEOUT_MS / 1000} seconds. Run the review again or pick a faster model.`, { kind: 'timeout' });
+    return new ProviderError(`Provider did not answer within ${duration(deadline.idleMs)}. Run the review again or pick a faster model.`, { kind: 'timeout' });
   }
   if (deadline.expired() === 'total') {
     return new ProviderError(`Provider was still writing after ${CALL_LIMIT_MS / 60000} minutes. Run the review again or pick a faster model.`, { kind: 'timeout' });
@@ -536,7 +547,7 @@ const OPTIONAL_FIELDS = Object.freeze([
 
 async function send(providerId, request, { stream }) {
   const selected = provider(providerId);
-  const deadline = createDeadline(request.signal);
+  const deadline = createDeadline(request.signal, stream ? TIMEOUT_MS : CALL_LIMIT_MS);
 
   const attempt = async (options) => {
     const { url, init } = buildRequest(providerId, request, options);
@@ -766,6 +777,16 @@ function parseEventData(data) {
 
 async function* chatStream(events, request) {
   const state = { truncated: false, refused: false, finished: false, model: request.model, usage: chatUsage(null) };
+  // Once text has been delivered, an upstream failure cuts the answer short
+  // instead of discarding it: the caller's key has paid for that text.
+  // OpenRouter sends such a failure as a chunk with a top-level `error` and
+  // `finish_reason: "error"`.
+  let wrote = false;
+  const failed = (payload) => {
+    if (!wrote) throw inBandError(payload, request.apiKey);
+    state.truncated = true;
+    state.finished = true;
+  };
 
   for await (const { data } of events) {
     if (data === '[DONE]') {
@@ -774,7 +795,10 @@ async function* chatStream(events, request) {
     }
     const chunk = parseEventData(data);
     if (!chunk) continue;
-    if (chunk.error) throw inBandError(chunk, request.apiKey);
+    if (chunk.error) {
+      failed(chunk);
+      break;
+    }
 
     if (typeof chunk.model === 'string') state.model = chunk.model;
     const usage = chunk.usage || chunk.x_groq?.usage;
@@ -782,9 +806,15 @@ async function* chatStream(events, request) {
 
     const choice = chunk.choices?.[0];
     if (!choice) continue;
-    if (choice.error) throw inBandError(choice, request.apiKey);
+    if (choice.error) {
+      failed(choice);
+      break;
+    }
     const text = textOf(choice.delta?.content);
-    if (text) yield { type: 'delta', text };
+    if (text) {
+      wrote = true;
+      yield { type: 'delta', text };
+    }
     if (typeof choice.delta?.refusal === 'string' && choice.delta.refusal) {
       state.refused = true;
       yield { type: 'delta', text: choice.delta.refusal };
@@ -804,12 +834,19 @@ async function* chatStream(events, request) {
 async function* messagesStream(events, request) {
   const state = { truncated: false, refused: false, finished: false, model: request.model, usage: messagesUsage(null) };
   let input = null;
+  // As in chatStream: an error after delivered text cuts the answer short.
+  let wrote = false;
 
   for await (const { data } of events) {
     const event = parseEventData(data);
     if (!event) continue;
 
-    if (event.type === 'error') throw inBandError(event, request.apiKey);
+    if (event.type === 'error') {
+      if (!wrote) throw inBandError(event, request.apiKey);
+      state.truncated = true;
+      state.finished = true;
+      break;
+    }
     if (event.type === 'message_start') {
       if (typeof event.message?.model === 'string') state.model = event.message.model;
       state.usage = messagesUsage(event.message?.usage);
@@ -819,7 +856,10 @@ async function* messagesStream(events, request) {
       const block = event.content_block;
       if (block?.type === 'fallback' && typeof block.to?.model === 'string') state.model = block.to.model;
     } else if (event.type === 'content_block_delta') {
-      if (event.delta?.type === 'text_delta' && event.delta.text) yield { type: 'delta', text: event.delta.text };
+      if (event.delta?.type === 'text_delta' && event.delta.text) {
+        wrote = true;
+        yield { type: 'delta', text: event.delta.text };
+      }
     } else if (event.type === 'message_delta') {
       if (MESSAGES_CUT_OFF.includes(event.delta?.stop_reason)) state.truncated = true;
       if (event.delta?.stop_reason === 'refusal') state.refused = true;
@@ -884,7 +924,9 @@ async function* streamEvents(providerId, response, deadline, request) {
  * rate-limit errors reject here, before any event. The iterable then yields
  * `{ type: 'delta', text }` and ends with one
  * `{ type: 'done', truncated, refused, model, usage }`. An error the provider
- * sends mid-stream is thrown from the iterator.
+ * sends mid-stream is thrown from the iterator when no text has arrived yet;
+ * after text it ends the stream as truncated, so the text already paid for
+ * is kept.
  *
  * @param {ProviderRequest} request
  * @returns {Promise<AsyncGenerator<StreamDelta | StreamDone, void, void>>}

@@ -125,11 +125,11 @@ test('messages that are not JSON-RPC 2.0 requests are refused with -32600', asyn
   }
 });
 
-test('a batch is refused: one message per request', async () => {
+test('one message never holds a batch: the endpoint unpacks batches before the handler', async () => {
   const reply = await handleMcpMessage([request('ping'), request('ping')], signedOut);
   assert.equal(reply.status, 400);
   assert.equal(reply.body.error.code, -32600);
-  assert.match(reply.body.error.message, /Batches/);
+  assert.match(reply.body.error.message, /batch may not contain another batch/);
 });
 
 test('an unknown method is -32601 and bad params are -32602', async () => {
@@ -770,4 +770,76 @@ test('a streamed run_review error is one tool error event the agent can read', a
   const [reply] = sseMessages(answer.text);
   assert.equal(reply.result.isError, true);
   assert.equal(JSON.parse(reply.result.content[0].text).code, 'bad_key');
+});
+
+test('a streamed run_review checks its token once', async (t) => {
+  const env = createEnv();
+  await withToken(env);
+  stubProvider(t);
+  const message = request('tools/call', { name: 'run_review', arguments: { files: FILES, provider: 'openai', profile: 'solidity', mode: 'bounty' } });
+  const answer = await endpointText(env, message, { Authorization: `Bearer ${TOKEN}`, 'X-Provider-Key': 'sk-test-key-0123456789' });
+  assert.equal(sseMessages(answer.text).at(-1).result.isError, false);
+  const hits = env.DB.sqlite.prepare("SELECT hits FROM rate_limits WHERE id LIKE 'client:%'").get().hits;
+  assert.equal(hits, 1, 'one streamed review is one hit against the token limit');
+});
+
+test('a streamed run_review over the token limit is a JSON-RPC tool error, not a bare HTTP 429', async (t) => {
+  const env = createEnv();
+  await withToken(env);
+  const providerCalls = stubProvider(t);
+  const account = request('tools/call', { name: 'account', arguments: {} });
+  for (let index = 0; index < 60; index += 1) await endpoint(env, account, { Authorization: `Bearer ${TOKEN}` });
+
+  const message = request('tools/call', { name: 'run_review', arguments: { files: FILES, provider: 'openai', profile: 'solidity' } });
+  const answer = await endpointText(env, message, { Authorization: `Bearer ${TOKEN}`, 'X-Provider-Key': 'sk-test-key-0123456789' });
+  assert.equal(answer.status, 200);
+  assert.match(answer.type, /^application\/json/);
+  const reply = JSON.parse(answer.text);
+  assert.equal(reply.jsonrpc, '2.0');
+  assert.equal(reply.id, message.id);
+  assert.equal(reply.result.isError, true);
+  assert.equal(JSON.parse(reply.result.content[0].text).code, 'rate_limited');
+  assert.equal(providerCalls.length, 0);
+});
+
+test('run_review over MCP shares the per-account review limit of the other routes', async (t) => {
+  const env = createEnv();
+  await withToken(env);
+  stubProvider(t);
+  env.DB.sqlite.prepare('INSERT INTO rate_limits (id, hits, expires) VALUES (?, ?, ?)').run('review:account-1', 60, Math.floor(Date.now() / 1000) + 600);
+  const call = request('tools/call', { name: 'run_review', arguments: { files: FILES, provider: 'openai', profile: 'solidity' } });
+  const result = (await (await endpoint(env, call, { Authorization: `Bearer ${TOKEN}`, Accept: 'application/json', 'X-Provider-Key': 'sk-test-key-0123456789' })).json()).result;
+  assert.equal(result.isError, true);
+  assert.equal(JSON.parse(result.content[0].text).code, 'rate_limited');
+});
+
+test('a batch from an older client is answered in order, notifications included', async () => {
+  const env = createEnv();
+  const batch = [
+    request('initialize', { protocolVersion: '2025-03-26' }),
+    { jsonrpc: '2.0', method: 'notifications/initialized' },
+    request('tools/list'),
+  ];
+  const response = await endpoint(env, batch);
+  assert.equal(response.status, 200);
+  const replies = await response.json();
+  assert.equal(replies.length, 2, 'the notification gets no reply');
+  assert.deepEqual(replies.map((reply) => reply.id), [batch[0].id, batch[2].id]);
+  assert.equal(replies[0].result.protocolVersion, '2025-03-26');
+  assert.equal(replies[1].result.tools.length, 5);
+  assert.equal(funnelCounts(env.DB).mcp_session, 1);
+
+  const onlyNotifications = await endpoint(env, [{ jsonrpc: '2.0', method: 'notifications/initialized' }]);
+  assert.equal(onlyNotifications.status, 202);
+  assert.equal((await endpoint(env, [])).status, 400);
+  assert.equal((await endpoint(env, Array.from({ length: 17 }, () => request('ping')))).status, 400);
+});
+
+test('an MCP-Protocol-Version the server never offers is refused, a supported one is served', async () => {
+  const env = createEnv();
+  const refused = await endpoint(env, request('tools/list'), { 'MCP-Protocol-Version': '1999-01-01' });
+  assert.equal(refused.status, 400);
+  assert.match((await refused.json()).error.message, /Unsupported MCP-Protocol-Version "1999-01-01"/);
+  assert.equal((await endpoint(env, request('tools/list'), { 'MCP-Protocol-Version': '2025-11-25' })).status, 200);
+  assert.equal((await endpoint(env, request('initialize', { protocolVersion: '2026-01-01' }), { 'MCP-Protocol-Version': '2026-01-01' })).status, 200, 'initialize negotiates instead');
 });

@@ -241,7 +241,7 @@ test('the error codes the documents list are codes the service raises', async ()
 
   // What the documents say about output_withheld is what the Worker does: the answer is stopped and the review counts.
   const review = await read('web', 'src', 'review.ts');
-  assert.match(review, /if \(scanner\.leaked\) \{\s+settle\(true\);\s+throw withheld\(\);/);
+  assert.match(review, /if \(scanner\.leaked\) \{\s+settle\(true, 'withheld'\);\s+throw withheld\(\);/);
   // One sentence for the code, wherever it is rendered: the Worker's message, the /mcp table, the package README and llms.txt.
   const sentence = 'The model repeated its instructions instead of reviewing, so the answer was stopped and the call used one review. Run it again or choose a stronger model.';
   assert.ok(review.includes(`'${sentence}'`), 'web/src/review.ts');

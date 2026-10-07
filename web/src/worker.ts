@@ -33,11 +33,10 @@ import { ApiError, aliasRedirect, canonicalRedirect, errorResponse, finalize, in
 import { mcpEndpoint } from './mcp.ts';
 import { reapStaleLeases, usage } from './quota.mjs';
 import { clientKey, edgeLimit, rateLimit } from './rate.ts';
-import { REVIEW_BODY_BYTES, parseReviewRequest, runHostedReview, streamHostedReview } from './review.ts';
+import { REVIEWS_PER_10_MIN, REVIEW_BODY_BYTES, parseReviewRequest, runHostedReview, streamHostedReview } from './review.ts';
 import { serveAsset } from './static.ts';
 
 const AUTH_REQUESTS_PER_HOUR = 90;
-const REVIEWS_PER_10_MIN = 60;
 const BILLING_REQUESTS_PER_10_MIN = 6;
 const RECONCILES_PER_10_MIN = 12;
 const EVENTS_PER_10_MIN = 60;
