@@ -1,9 +1,9 @@
 // /compare: Bounty Operator next to three other ways of checking a finding
-// before it is filed, and four tools that cover part of the same ground. Two
+// before it is filed, and seven tools that cover part of the same ground. Two
 // factual tables. Every fact about another product carries a numbered source
 // with the date it was published or checked. No scores, no benchmarks. Audit
-// skills are referred to as a kind; the four tools are rows named by what
-// they do, and their repositories appear in the source list only.
+// skills are referred to as a kind; the tools are rows named by what they
+// do, and their repositories appear in the source list only.
 
 import { button, html, inline, link, sectionHeading, stackTable, table } from '../../components.mjs';
 import { breadcrumbsLd } from '../../layout.mjs';
@@ -11,8 +11,10 @@ import { LASTMOD, STYLES, ctaBand, pageHero, points, relatedLinks, workbenchLink
 
 const PATH = '/compare';
 const CHECKED = 'checked 2 October 2026';
-// The four tool rows were read on this date.
+// The first four tool rows were read on this date.
 const CHECKED_TOOLS = 'checked 3 October 2026';
+// The Intigriti pre-check and the last three tool rows were read on this date.
+const CHECKED_NEW = 'checked 7 October 2026';
 
 const SOURCES = [
   { n: 1, label: 'Immunefi, “Immunefi Studio”', href: 'https://immunefi.com/studio/', date: CHECKED },
@@ -32,6 +34,15 @@ const SOURCES = [
   { n: 10, label: 'BountyForge, hosted version', href: 'https://bountyforge.xyz/', date: `price ${CHECKED_TOOLS}` },
   { n: 11, label: 'GitHub, “J4X-Security/K.I.T”, README', href: 'https://github.com/J4X-Security/K.I.T', date: CHECKED_TOOLS },
   { n: 12, label: 'GitHub, “heavyw8t/The-Judge”, README', href: 'https://github.com/heavyw8t/The-Judge', date: CHECKED_TOOLS },
+  { n: 13, label: 'Intigriti, “Platform changelog”: Submission Draft Agent', href: 'https://www.intigriti.com/changelog', date: `dated 15 July 2026, ${CHECKED_NEW}` },
+  { n: 14, label: 'GitHub, “mdpsec/should-i-submit”, README', href: 'https://github.com/mdpsec/should-i-submit', date: CHECKED_NEW },
+  { n: 15, label: 'GitHub, “yeswehack/claude-kit”, README', href: 'https://github.com/yeswehack/claude-kit', date: CHECKED_NEW },
+  {
+    n: 16,
+    label: 'TestMachine, “Validating Azimuth against real Sherlock judge verdicts”',
+    href: 'https://www.testmachine.ai/blog/automated-vulnerability-triage-sherlock-benchmark',
+    date: `dated 7 August 2026, ${CHECKED_NEW}`,
+  },
 ];
 
 const NBSP = ' ';
@@ -60,7 +71,7 @@ const ROWS = [
     cell('Arguing against one finding or one draft report before it is filed.'),
     cell('Whatever you ask. The conversation is the workflow.'),
     cell('Running a packaged procedure inside a coding agent. A skill is a folder with a `SKILL.md` of instructions the agent loads when a task matches.', 5),
-    cells(cell('Feedback on a draft inside one platform.'), cell('Immunefi: Studio Review.', 1), cell('HackerOne: Report Assistant.', 4)),
+    cells(cell('Feedback on a draft inside one platform.'), cell('Immunefi: Studio Review.', 1), cell('HackerOne: Report Assistant.', 4), cell('Intigriti: Submission Draft Agent.', 13)),
   ],
   [
     'Inputs pinned and hashed',
@@ -77,6 +88,7 @@ const ROWS = [
     cells(
       cell('Immunefi: PoC clarity, impact framing, completeness and duplicate risk', 2, ', run by the triaging agent its triage team uses.', 3),
       cell('HackerOne: steps to reproduce, expected and actual behaviour, impact, asset scope, severity, supporting material and custom fields.', 4),
+      cell('Intigriti: scope, completeness and clarity, with help on the CVSS severity.', 13),
     ),
   ],
   [
@@ -105,14 +117,14 @@ const ROWS = [
     cell('Any. You paste the programme’s rules: Immunefi, Cantina, Sherlock, HackerOne.'),
     cell('Any.'),
     cell('Any.'),
-    cells(cell('Its own.'), cell('Studio Review: Immunefi.', 1), cell('Report Assistant: the HackerOne report form.', 4)),
+    cells(cell('Its own.'), cell('Studio Review: Immunefi.', 1), cell('Report Assistant: the HackerOne report form.', 4), cell('Submission Draft Agent: Intigriti, while you draft.', 13)),
   ],
   [
     'Access and cost shape',
     cell('Open to anyone. Free: 1 review a day. Operator: US$10 per week, unlimited. Your provider bills model usage to your key.'),
     cell('Your chat subscription.'),
     cells(cell('A folder you install.', 5), cell('Model usage is billed by the plan your coding agent runs on.')),
-    cells(cell('Studio Review is in invite-only beta.', 2), cell('Report Assistant is optional in the report form.', 4), cell('Neither page cited states a price.')),
+    cells(cell('Studio Review is in invite-only beta.', 2), cell('Report Assistant is optional in the report form.', 4), cell('None of the pages cited states a price.')),
   ],
   [
     'Where your draft goes',
@@ -139,7 +151,7 @@ const compareTable = table({
   className: 'compare',
 });
 
-// Four tools that cover part of the same ground. Each row is named by what
+// Seven tools that cover part of the same ground. Each row is named by what
 // the tool does. "Same ground as" names the gauntlet stages that ask the same
 // kind of question; it is a map, not a score.
 const TOOL_ROWS = [
@@ -183,6 +195,36 @@ const TOOL_ROWS = [
     cell('Free.', 12),
     'Provenance, triager',
   ],
+  [
+    'A local go or no-go check on one finished report',
+    cell(
+      'Takes the report you are about to submit and the programme brief copied from the platform, and runs the safe checks it can, read-only unless you approve a step. It answers YES, NO, NOT YET (one named proof or repair is missing) or CANNOT DECIDE SAFELY, and saves each review as a local Markdown file.',
+      14,
+    ),
+    cell('A prompt pack that Codex CLI or Claude Code reads.', 14),
+    cell('Free. MIT licence.', 14),
+    'Scope, proof, verdict',
+  ],
+  [
+    'A platform’s report-writing plugin',
+    cell(
+      'A bounty platform’s own plugin. Rules loaded into every session keep unverified claims out of the report. A write skill shapes your notes into the report sections, a triage skill returns READY, NEEDS FIXES or DO NOT SUBMIT with fixes checked against the programme scope, and a third skill gives the minimum proof and common closure patterns for 14 bug classes.',
+      15,
+    ),
+    cell('A Claude Code plugin.', 15),
+    cell('Free. GPL-3.0 licence.', 15),
+    'Scope, proof, report, verdict',
+  ],
+  [
+    'A bountiability check with exploit simulation',
+    cell(
+      'Makes a bountiable-or-not call on each smart-contract finding, from its own scan or another tool. For the findings that pass, it can fork the relevant chain state and try to execute the exploit.',
+      16,
+    ),
+    cell('A hosted app.', 16),
+    cell('The page cited states no price.', 16),
+    'Severity, proof',
+  ],
 ];
 
 const toolTable = stackTable({
@@ -203,7 +245,7 @@ ${pageHero({
   trail: [{ label: 'Bounty Operator', href: '/' }, { label: 'Compare' }],
   eyebrow: 'Compare',
   title: 'Bounty Operator vs a chat app, a local audit skill and platform pre-checks',
-  lede: 'Four ways to check a finding before you file it, and four tools that cover part of the same ground. The tables say what each one gives you: pinned inputs and hashes, method, counterargument, verdict, cost shape and privacy. Facts about other products are numbered, linked and dated.',
+  lede: 'Four ways to check a finding before you file it, and seven tools that cover part of the same ground. The tables say what each one gives you: pinned inputs and hashes, method, counterargument, verdict, cost shape and privacy. Facts about other products are numbered, linked and dated.',
   actions: html`${button({ label: 'Start a free review', href: workbenchLink(), variant: 'primary', size: 'lg', iconEnd: 'arrow-right' })}${button({ label: 'Read the method', href: '/method', size: 'lg' })}`,
 })}
 
@@ -216,12 +258,12 @@ ${pageHero({
 
 <section class="section wrap" aria-labelledby="tools">
   ${sectionHeading({
-    title: 'Four tools on the same ground',
+    title: 'Seven tools on the same ground',
     id: 'tools',
-    lede: 'Each of these checks a finding before it is filed, as one step of a larger job: hunting, filtering or deduplicating. The last column names the gauntlet stages that ask the same kind of question.',
+    lede: 'Each of these checks a finding before it is filed, on its own or as one step of a larger job: hunting, filtering, deduplicating or writing. The last column names the gauntlet stages that ask the same kind of question.',
   })}
   ${toolTable}
-  <p class="fine compare__note">Three of the four find the bug or filter a batch of findings. Bounty Operator starts from one finding you already hold and argues against the report: scope, design intent, duplicates, proof, severity and what the platform stored.</p>
+  <p class="fine compare__note">Two of them hunt for bugs, two filter a batch of findings, one builds a register of known issues, and two check one report you already hold. Bounty Operator starts from one finding you already hold and argues against the report: scope, design intent, duplicates, proof, severity and what the platform stored. It works with any platform’s programme, on your own model and key.</p>
 </section>
 
 <section class="section wrap" aria-labelledby="sources">
@@ -272,7 +314,7 @@ export default {
   path: PATH,
   title: 'Bounty Operator vs chat apps, audit skills and pre-checks',
   description:
-    'Sourced tables: what Bounty Operator, a chat app, audit skills, platform pre-checks and four overlapping tools each give you before you file a finding.',
+    'Sourced tables: what Bounty Operator, a chat app, audit skills, platform pre-checks and seven overlapping tools each give you before you file a finding.',
   label: 'Compare',
   styles: STYLES,
   jsonld: [breadcrumbsLd([{ name: 'Compare', path: PATH }])],

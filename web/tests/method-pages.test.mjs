@@ -197,20 +197,20 @@ test('/compare cites a dated source for every fact about another product and sco
 
   const cited = new Set([...markup.matchAll(/href="#source-(\d+)"/g)].map((match) => Number(match[1])));
   const listed = [...markup.matchAll(/id="source-(\d+)"/g)].map((match) => Number(match[1]));
-  assert.deepEqual(listed, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+  assert.deepEqual(listed, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]);
   assert.deepEqual([...cited].sort((a, b) => a - b), listed, 'every source is cited and every citation has a source');
   const sources = markup.slice(markup.indexOf('<ol class="sources">'), markup.indexOf('</ol>', markup.indexOf('<ol class="sources">')));
-  assert.equal(count(sources, 'checked 2 October 2026') + count(sources, 'checked 3 October 2026'), listed.length, 'every source carries its check date');
+  assert.equal(count(sources, 'checked 2 October 2026') + count(sources, 'checked 3 October 2026') + count(sources, 'checked 7 October 2026'), listed.length, 'every source carries its check date');
 
-  // The four overlapping tools are rows named by what they do. Their names stay in the source list.
+  // The seven overlapping tools are rows named by what they do. Their names and authors stay in the source list.
   const start = markup.indexOf('compare-tools');
   const tools = markup.slice(start, markup.indexOf('</table>', start));
-  assert.equal(count(tools, '<tr>') - 1, 4);
-  for (const row of ['A free hunting kit with a go/no-go gate', 'A hosted bounty tool with a lifetime price', 'A known-issue register', 'A false-positive filter']) {
+  assert.equal(count(tools, '<tr>') - 1, 7);
+  for (const row of ['A free hunting kit with a go/no-go gate', 'A hosted bounty tool with a lifetime price', 'A known-issue register', 'A false-positive filter', 'A local go or no-go check on one finished report', 'A platform’s report-writing plugin', 'A bountiability check with exploit simulation']) {
     assert.ok(tools.includes(row), row);
   }
-  assert.doesNotMatch(tools, /Agentic|BountyForge|bountyforge|K\.I\.T|The-Judge|awarexone|Gabson|J4X|heavyw8t/);
-  for (const number of [8, 9, 10, 11, 12]) assert.ok(tools.includes(`href="#source-${number}"`), `source ${number}`);
+  assert.doesNotMatch(tools, /Agentic|BountyForge|bountyforge|K\.I\.T|The-Judge|awarexone|Gabson|J4X|heavyw8t|should-i-submit|mdpsec|YesWeHack|yeswehack|claude-kit|Azimuth|TestMachine|testmachine/);
+  for (const number of [8, 9, 10, 11, 12, 14, 15, 16]) assert.ok(tools.includes(`href="#source-${number}"`), `source ${number}`);
 
   assert.equal(found(body, /\b(?:better|best|worse|faster|slower|superior|inferior|beats|outperforms?|more accurate|accuracy)\b/i), null, 'no comparative claim');
   assert.equal(found(body, /\b\d+(?:\.\d+)? ?\/ ?(?:5|10|100)\b|\bout of (?:five|ten|5|10)\b|[★☆]/), null, 'no rating');
