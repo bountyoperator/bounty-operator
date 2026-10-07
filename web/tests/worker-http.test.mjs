@@ -10,6 +10,7 @@ import {
   HTML_CACHE,
   SECURITY_HEADERS,
   cachePolicy,
+  aliasRedirect,
   canonicalRedirect,
   errorResponse,
   finalize,
@@ -41,6 +42,15 @@ test('a POST is never redirected, so the Stripe webhook works on a legacy host',
   for (const method of ['POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS']) {
     assert.equal(canonicalRedirect(method, new URL('https://alias.example/api/stripe/webhook'), SITE), null, method);
   }
+});
+
+test('the top-level security.txt and favicon.png move to the files that exist', () => {
+  assert.equal(aliasRedirect('GET', new URL(`${SITE}/security.txt`)), `${SITE}/.well-known/security.txt`);
+  assert.equal(aliasRedirect('HEAD', new URL(`${SITE}/favicon.png`)), `${SITE}/icon-192.png`);
+  assert.equal(aliasRedirect('POST', new URL(`${SITE}/security.txt`)), null);
+  assert.equal(aliasRedirect('GET', new URL(`${SITE}/.well-known/security.txt`)), null);
+  assert.equal(aliasRedirect('GET', new URL(`${SITE}/security.txt.bak`)), null);
+  assert.equal(aliasRedirect('GET', new URL(`${SITE}/constructor`)), null, 'no inherited keys');
 });
 
 test('a hostile path cannot turn the redirect into an open redirect', () => {

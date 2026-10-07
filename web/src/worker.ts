@@ -29,7 +29,7 @@ import { VERSION, seconds } from './env.ts';
 import type { Call, Env } from './env.ts';
 import { CLIENT_EVENTS, count } from './funnel.ts';
 import { METHOD_SOURCE, missingMethods } from './hosted.ts';
-import { ApiError, canonicalRedirect, errorResponse, finalize, internalError, json, readJson, redirectResponse } from './http.ts';
+import { ApiError, aliasRedirect, canonicalRedirect, errorResponse, finalize, internalError, json, readJson, redirectResponse } from './http.ts';
 import { mcpEndpoint } from './mcp.ts';
 import { reapStaleLeases, usage } from './quota.mjs';
 import { clientKey, edgeLimit, rateLimit } from './rate.ts';
@@ -305,7 +305,7 @@ export default {
     const url = new URL(request.url);
     const call: Call = { request, env, ctx, url };
 
-    const location = canonicalRedirect(request.method, url, env.SITE_ORIGIN);
+    const location = canonicalRedirect(request.method, url, env.SITE_ORIGIN) ?? aliasRedirect(request.method, url);
     if (location) return finalize(redirectResponse(location), 'redirect', url.pathname);
 
     if (url.pathname.startsWith('/api/')) return finalize(await handleApi(call), 'api', url.pathname);

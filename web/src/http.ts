@@ -91,6 +91,19 @@ export function canonicalRedirect(method: string, url: URL, siteOrigin: string):
   return `${siteOrigin}${url.pathname}${url.search}`;
 }
 
+// Addresses that tools and people try first, answered where the file lives.
+// RFC 9116 allows a redirect from the top-level security.txt.
+const ALIASES: Readonly<Record<string, string>> = Object.freeze({
+  '/security.txt': '/.well-known/security.txt',
+  '/favicon.png': '/icon-192.png',
+});
+
+/** The address a GET or HEAD for an alias moves to, or null. */
+export function aliasRedirect(method: string, url: URL): string | null {
+  if (method !== 'GET' && method !== 'HEAD') return null;
+  return Object.hasOwn(ALIASES, url.pathname) ? `${url.origin}${ALIASES[url.pathname]}` : null;
+}
+
 export function redirectResponse(location: string, status = 301): Response {
   return new Response(null, { status, headers: { Location: location } });
 }
