@@ -1,7 +1,7 @@
 {
   "name": "bounty-operator",
   "displayName": "Bounty Operator",
-  "version": "0.7.10",
+  "version": "0.7.11",
   "description": "Find the hole in your report before the triager does. Skills that argue against a security finding or a draft report before it is filed, on your own model, and the Bounty Operator MCP server for the hosted eight-stage gauntlet.",
   "author": {
     "name": "Tradi3",

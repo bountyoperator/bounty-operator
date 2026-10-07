@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.7.11 — 2026-10-07
+
+Immunefi Studio
+
+- Immunefi Studio runs its own MCP server. With it connected next to
+  Bounty Operator, the gauntlet and the report challenge read the Immunefi
+  programme from its `list_programs` tool and, for a smart contract with
+  Instascope access, `get_proxy_history` and `get_target_state`, and pass
+  them to the review as files. Both servers' prompts and the gauntlet and
+  challenge-report skills say so. Without it, nothing changes.
+- After the report, the gauntlet skill offers to keep the verdict and the
+  open counterarguments as a Studio case and tasks, and writes to Studio
+  only when you say yes.
+- /mcp shows the setup for Claude Code, Codex and Cursor. The Studio token
+  goes from your agent to Immunefi; Bounty Operator never receives it.
+
 ## 0.7.10 — 2026-10-07
 
 Site

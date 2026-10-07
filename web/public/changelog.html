@@ -49,20 +49,23 @@
 <header class="docs-head">
 <nav class="breadcrumbs" aria-label="Breadcrumb"><ol><li><a href="/">Bounty Operator</a></li><li aria-current="page">Changelog</li></ol></nav>
 <h1>Bounty Operator changelog</h1>
-<p class="lede">Every release, newest first, with its date. The current version is 0.7.10.</p>
-<p class="meta docs-head__meta">16 releases · latest <time datetime="2026-10-07">7 October 2026</time></p>
+<p class="lede">Every release, newest first, with its date. The current version is 0.7.11.</p>
+<p class="meta docs-head__meta">17 releases · latest <time datetime="2026-10-07">7 October 2026</time></p>
 
 </header>
 
 <div class="docs-body">
 <nav class="docs-toc" aria-label="On this page">
 <p class="meta">On this page</p>
-<ul><li><a href="#v0-7-10">0.7.10</a></li><li><a href="#v0-7-9">0.7.9</a></li><li><a href="#v0-7-8">0.7.8</a></li><li><a href="#v0-7-7">0.7.7</a></li><li><a href="#v0-7-6">0.7.6</a></li><li><a href="#v0-7-5">0.7.5</a></li><li><a href="#v0-7-4">0.7.4</a></li><li><a href="#v0-7-3">0.7.3</a></li><li><a href="#v0-7-2">0.7.2</a></li><li><a href="#v0-7-1">0.7.1</a></li><li><a href="#v0-7-0">0.7.0</a></li><li><a href="#v0-6-0">0.6.0</a></li><li><a href="#v0-5-0">0.5.0</a></li><li><a href="#v0-3-0">0.3.0</a></li><li><a href="#v0-2-0">0.2.0</a></li><li><a href="#v0-1-0">0.1.0</a></li></ul>
+<ul><li><a href="#v0-7-11">0.7.11</a></li><li><a href="#v0-7-10">0.7.10</a></li><li><a href="#v0-7-9">0.7.9</a></li><li><a href="#v0-7-8">0.7.8</a></li><li><a href="#v0-7-7">0.7.7</a></li><li><a href="#v0-7-6">0.7.6</a></li><li><a href="#v0-7-5">0.7.5</a></li><li><a href="#v0-7-4">0.7.4</a></li><li><a href="#v0-7-3">0.7.3</a></li><li><a href="#v0-7-2">0.7.2</a></li><li><a href="#v0-7-1">0.7.1</a></li><li><a href="#v0-7-0">0.7.0</a></li><li><a href="#v0-6-0">0.6.0</a></li><li><a href="#v0-5-0">0.5.0</a></li><li><a href="#v0-3-0">0.3.0</a></li><li><a href="#v0-2-0">0.2.0</a></li><li><a href="#v0-1-0">0.1.0</a></li></ul>
 </nav>
 <div class="docs-content">
 
-<section class="docs-section" aria-labelledby="v0-7-10">
-<h2 class="docs-section__title" id="v0-7-10">0.7.10<span class="release__date"><time datetime="2026-10-07">7 October 2026</time></span><span class="release__latest"><span class="chip" data-tone="observed">Latest</span></span></h2>
+<section class="docs-section" aria-labelledby="v0-7-11">
+<h2 class="docs-section__title" id="v0-7-11">0.7.11<span class="release__date"><time datetime="2026-10-07">7 October 2026</time></span><span class="release__latest"><span class="chip" data-tone="observed">Latest</span></span></h2>
+<div class="prose"><h3 class="release__group">Immunefi Studio</h3><ul><li>Immunefi Studio runs its own MCP server. With it connected next to Bounty Operator, the gauntlet and the report challenge read the Immunefi programme from its <code>list_programs</code> tool and, for a smart contract with Instascope access, <code>get_proxy_history</code> and <code>get_target_state</code>, and pass them to the review as files. Both servers&#39; prompts and the gauntlet and challenge-report skills say so. Without it, nothing changes.</li><li>After the report, the gauntlet skill offers to keep the verdict and the open counterarguments as a Studio case and tasks, and writes to Studio only when you say yes.</li><li>/mcp shows the setup for Claude Code, Codex and Cursor. The Studio token goes from your agent to Immunefi; Bounty Operator never receives it.</li></ul></div>
+</section><section class="docs-section" aria-labelledby="v0-7-10">
+<h2 class="docs-section__title" id="v0-7-10">0.7.10<span class="release__date"><time datetime="2026-10-07">7 October 2026</time></span></h2>
 <div class="prose"><h3 class="release__group">Site</h3><ul><li>New page, /invalid-report-costs: what a report closed as invalid, N/A or spam costs on HackerOne, Bugcrowd, Intigriti, YesWeHack, Immunefi, Cantina and Sherlock&#39;s Audit Engine, from each platform&#39;s own pages, with every source numbered and dated.</li></ul><h3 class="release__group">Report check</h3><ul><li>An unfilled <code>{placeholder}</code> left from a template counts as a leftover. A call option such as <code>{value: msg.value}</code>, an event dump and a <code>{{7*7}}</code> payload do not.</li></ul></div>
 </section><section class="docs-section" aria-labelledby="v0-7-9">
 <h2 class="docs-section__title" id="v0-7-9">0.7.9<span class="release__date"><time datetime="2026-10-07">7 October 2026</time></span></h2>
