@@ -152,7 +152,7 @@ ${phraseList}
 <li>${icon('check')}<span>The impact row quoted verbatim.</span></li>
 <li>${icon('check')}<span>Limits and non-claims stated by the author, and the nearest known issue compared by root cause and whether the same fix applies.</span></li>
 </ul>
-<p>The list comes from 105 real case files across five platforms, the paid ones and the closed ones. For a blank page, start from a <a class="link" href="/templates">report template</a> or the <a class="link" href="/guide">report guide</a>.</p>
+<p>The list comes from 105 real case files across five platforms, the paid ones and the closed ones. For a blank page, start from a <a class="link" href="/templates">report template</a> or the <a class="link" href="/guide">report guide</a>. What a closed report costs on each platform is on <a class="link" href="/invalid-report-costs">invalid report costs</a>.</p>
 </div>
 </div>
 </section>

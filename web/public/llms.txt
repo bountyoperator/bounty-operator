@@ -31,6 +31,7 @@ A hosted review sends the user's files and provider key through bountyoperator.c
 ## Free tools
 
 - [All tools](https://bountyoperator.com/tools): Free tools that run in the browser. Your content never leaves it.
+- [Invalid report costs](https://bountyoperator.com/invalid-report-costs): What a report closed as invalid, N/A or spam costs on HackerOne, Bugcrowd, Intigriti, YesWeHack, Immunefi, Cantina and Sherlock, from each platform's own rules, with dated sources.
 - [Report check](https://bountyoperator.com/tools/report-check): Instant checks on a pasted draft report, in the browser, including the 2026 platform rules: no transaction sent to a live network, AI use disclosed, no placeholders or assistant leftovers.
 - [Packet verifier](https://bountyoperator.com/tools/verify): Recompute the SHA-256 of every file in a review packet.
 - [Secret check](https://bountyoperator.com/tools/secret-check): Find keys, tokens and seed phrases in a PoC or gist before publishing it.

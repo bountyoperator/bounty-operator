@@ -307,6 +307,7 @@ ${ctaBand({
     { label: 'The twelve checks', href: '/method', text: 'The question each check asks, and why reports die on it.' },
     { label: 'Your model, your key', href: '/your-model-your-key', text: 'Where your code goes and what is stored.' },
     { label: 'Gauntlet', href: '/gauntlet', text: 'One run, eight stages, one verdict.' },
+    { label: 'Invalid report costs', href: '/invalid-report-costs', text: 'What a closed report costs on each platform, from its rules.' },
   ])}
 </section>`;
 

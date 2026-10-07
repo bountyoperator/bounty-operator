@@ -247,3 +247,35 @@ test('the method data and the pages hold no eight-word run of the hosted method'
   }
   assert.deepEqual(hits.slice(0, 10), []);
 });
+
+test('/invalid-report-costs cites a dated source for every platform rule and ranks nothing', () => {
+  const markup = pages.get('invalid-report-costs.html');
+  const body = text('invalid-report-costs.html');
+
+  const cited = new Set([...markup.matchAll(/href="#source-(\d+)"/g)].map((match) => Number(match[1])));
+  const listed = [...markup.matchAll(/id="source-(\d+)"/g)].map((match) => Number(match[1]));
+  assert.deepEqual(listed, Array.from({ length: listed.length }, (_, index) => index + 1));
+  assert.ok(listed.length >= 10);
+  assert.deepEqual([...cited].sort((a, b) => a - b), listed, 'every source is cited and every citation has a source');
+  const sources = markup.slice(markup.indexOf('<ol class="sources">'), markup.indexOf('</ol>', markup.indexOf('<ol class="sources">')));
+  assert.equal(count(sources, 'checked 7 October 2026'), listed.length, 'every source carries its check date');
+
+  // One row per platform, each with at least one source in its row.
+  const start = markup.indexOf('compare-tools');
+  const table = markup.slice(start, markup.indexOf('</table>', start));
+  const rows = table.split('<tr>').slice(2);
+  assert.deepEqual(rows.map((row) => row.replace(/<[^>]+>/g, ' ').trim().split(/\s+/)[0]), ['HackerOne', 'Bugcrowd', 'Intigriti', 'YesWeHack', 'Immunefi', 'Cantina', 'Sherlock']);
+  for (const row of rows.slice(0, 6)) assert.match(row, /href="#source-\d+"/);
+
+  // The figures as the platforms state them.
+  for (const figure of ['−5 reputation', 'Spam: −10 reputation', 'at most 5 open submissions', '30-day suspension', '1 below 20%', 'three times the price in all', 'four times in all', 'immediate and permanent ban', 'the deposit is slashed', 'at least 20% and you have 2 valid findings']) {
+    assert.ok(body.includes(figure), figure);
+  }
+
+  assert.equal(found(body, /\b(?:better|best|worse|worst|harsher|strictest|safest|fairest|beats|outperforms?)\b/i), null, 'no ranking of platforms');
+  assert.equal(found(body, /\b\d+(?:\.\d+)? ?\/ ?(?:5|10|100)\b|\bout of (?:five|ten|5|10)\b|[★☆]/), null, 'no rating');
+  assertNoBannedNames(body, '/invalid-report-costs', { page: '/invalid-report-costs' });
+
+  // Reachable: the report check, /compare and llms.txt link to it.
+  for (const file of ['tools/report-check.html', 'compare.html']) assert.match(pages.get(file), /href="\/invalid-report-costs"/, file);
+});
