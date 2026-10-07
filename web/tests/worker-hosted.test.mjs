@@ -306,6 +306,15 @@ test('a disguised copy reads as the same words: invisible marks, look-alike lett
   assert.deepEqual(words('café naïve résumé'), ['café', 'naïve', 'résumé']);
 });
 
+test('words reads a whole text even right after a scanner stopped mid-text', () => {
+  const text = 'one two three four five six seven eight nine ten';
+  const scanner = createScanner(fingerprint([text]));
+  // A piece that ends inside a word leaves the scan, and the shared pattern, mid-text.
+  scanner.push('alpha bravo charlie delt');
+  assert.deepEqual(words(text), text.split(' '));
+  assert.equal(fingerprint([text]).size, 3);
+});
+
 test('the scanner stops a disguised copy of the method as it streams', () => {
   const method = 'Reread every path that looked clean from its last line back to its first and name the guard that holds it';
   const prints = fingerprint([method]);

@@ -118,7 +118,8 @@ function spelled(letters) {
 export function words(text) {
   const out = [];
   let letters = [];
-  for (const match of String(text).matchAll(WORD)) {
+  // A fresh pattern: matchAll would start at the lastIndex a scanner left on WORD.
+  for (const match of String(text).matchAll(new RegExp(WORD))) {
     const word = canonical(match[0]);
     if (!word) continue;
     if (word.length === 1 && /\p{L}/u.test(word)) {
