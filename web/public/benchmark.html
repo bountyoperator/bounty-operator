@@ -7,26 +7,27 @@
 <meta name="description" content="22 AI models on 18 held twin pairs: who finds the planted bug, leaves the fixed code alone and catches an overclaimed report, and at what cost.">
 <link rel="canonical" href="https://bountyoperator.com/benchmark">
 <meta name="color-scheme" content="dark light">
-<meta name="theme-color" content="#0a1220" media="(prefers-color-scheme: dark)">
-<meta name="theme-color" content="#f5f7fb" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#17132e" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#fbfbf8" media="(prefers-color-scheme: light)">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Bounty Operator">
 <meta property="og:title" content="Paydirt 2026-10: which model finds the real bug">
 <meta property="og:description" content="22 AI models on 18 held twin pairs: who finds the planted bug, leaves the fixed code alone and catches an overclaimed report, and at what cost.">
 <meta property="og:url" content="https://bountyoperator.com/benchmark">
-<meta property="og:image" content="https://bountyoperator.com/social-v3.png">
+<meta property="og:image" content="https://bountyoperator.com/social-v4.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Bounty Operator. Find the hole in your report before the triager does.">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Paydirt 2026-10: which model finds the real bug">
 <meta name="twitter:description" content="22 AI models on 18 held twin pairs: who finds the planted bug, leaves the fixed code alone and catches an overclaimed report, and at what cost.">
-<meta name="twitter:image" content="https://bountyoperator.com/social-v3.png">
+<meta name="twitter:image" content="https://bountyoperator.com/social-v4.png">
 <meta name="twitter:image:alt" content="Bounty Operator. Find the hole in your report before the triager does.">
 <link rel="icon" href="/favicon.ico" sizes="48x48">
 <link rel="icon" href="/icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="manifest" href="/site.webmanifest">
+<link rel="preload" href="/fonts/archivo-latin-wdth.woff2" as="font" type="font/woff2" crossorigin>
 <script src="/theme.js"></script>
 <link rel="stylesheet" href="/css/base.css">
 <link rel="stylesheet" href="/css/landing.css">
@@ -37,10 +38,18 @@
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Why 18 pairs and one run per input?","acceptedAnswer":{"@type":"Answer","text":"Each pair is an original case with an executable proof for every planted bug and every decoy, and the scored pairs are held, so the set grows slowly. With 18 pairs the 95% interval is wide; it is published so that a two-pair difference is not read as a ranking. Every model answers every input once. The release’s credit covered one repeat for many models rather than three for a handful, so the score carries the noise of one run per input: the interval covers which pairs were drawn, not how a model varies between runs."}},{"@type":"Question","name":"Why is a model missing from the table?","acceptedAnswer":{"@type":"Answer","text":"Models run in tiers, the cheapest first inside a tier, until the release’s credit is used. A model the credit did not reach, or whose host returned no answer, is listed under Not run with the reason. A model whose runs had not finished at publication is listed there too, with how many of its inputs were completed. None of them is given a low score."}},{"@type":"Question","name":"Is the benchmark tuned to Bounty Operator?","acceptedAnswer":{"@type":"Answer","text":"Bounty Operator is not a row. The ranked score comes from the raw arm, which sends no product text: the same system prompt, task and answer sheet to every model. The profile arms, which add a Bounty Operator core profile, are published separately, negative lifts included. Each pair started as a draft by a model of one of nine vendors. Sessions of Claude Opus 5.5, a ranked model, directed by the benchmark’s owner, then checked, repaired and proved every pair and wrote two of the hard pairs. Those two count as Anthropic-drafted, and the results file gives every model’s score without the pairs its own vendor drafted. Two ranked models, DeepSeek V4.1 Flash and GLM 5.3 Flash, ran the pilot on the find pairs of that time, and while nine pairs were written, drafts were sent to a few ranked models to see whether they could be decided both ways; the method names the models and the pairs whose design changed after such a check."}},{"@type":"Question","name":"What does held mean?","acceptedAnswer":{"@type":"Answer","text":"A held case’s files are not published. Before the first scored run each held case got a salted SHA-256 commitment (36 in this release); when a held case moves to the public set, its salt is published with it so the commitment can be checked. Held does not mean unseen by the model providers: a held case is sent to the providers that serve each model, as every prompt is."}},{"@type":"Question","name":"When does it update?","acceptedAnswer":{"@type":"Answer","text":"With each release. A release spends a fixed amount of credit in run order: tier 1 first, the cheapest model first inside a tier. Held pairs move to the public set over time and new held pairs replace them. A change to the harness, the routing policy, the task text or a set changes every hash, and no earlier run counts after it."}}]}</script>
 </head>
 <body class="benchmark-page">
+<!--
+THESIS: The verdict is a stamp on your draft. The site is the inspection a finding passes before a triager sees it, not the category's dark code-card hero.
+OWN-WORLD: Inspection paperwork. Canary and white stock, black print, violet stamp ink, carbon indigo for code and the night shift. Ruled fields, square corners, part rules, ledger tables. Archivo condensed caps for labels and stamps; mono only for code and typed entries.
+STORY: A hunter sees a Critical stamped down to Medium with the line that decides it, trusts that the review argues against them, and starts a review or opens the example.
+FIRST VIEWPORT: Full-bleed canary field. Left: condensed black headline, lede, black Review my report, ruled View example. Right: the paper slip, tilted, Critical struck, Medium and the violet verdict stamped on it. Proof line on the field's foot.
+FORM: Rubber-stamp verdicts and inspection forms, 6 of 7, seed b5682f59.
+FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md
+-->
 <a class="skip-link" href="#main">Skip to content</a>
 <header class="site-header">
 <div class="wrap site-header__inner">
-<a class="brand" href="/"><svg class="brand__mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect class="brand__tile" width="64" height="64" rx="14"/><path class="brand__glyph" d="M12.5 15h6.5v31.5h-6.5z"/><path class="brand__glyph" fill-rule="evenodd" d="M25.5 25a10.75 10.75 0 1 0 0 21.5a10.75 10.75 0 0 0 0-21.5zm0 6.25a4.5 4.5 0 1 1 0 9a4.5 4.5 0 0 1 0-9z"/><path class="brand__slash" d="M45.5 13h6.25l-8.6 37.5h-6.25z"/></svg><span class="brand__name">Bounty Operator</span></a>
+<a class="brand" href="/"><svg class="brand__mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect class="brand__tile" width="64" height="64" rx="9"/><path class="brand__glyph" d="M12.5 15h6.5v31.5h-6.5z"/><path class="brand__glyph" fill-rule="evenodd" d="M25.5 25a10.75 10.75 0 1 0 0 21.5a10.75 10.75 0 0 0 0-21.5zm0 6.25a4.5 4.5 0 1 1 0 9a4.5 4.5 0 0 1 0-9z"/><path class="brand__slash" d="M45.5 13h6.25l-8.6 37.5h-6.25z"/></svg><span class="brand__name">Bounty Operator</span></a>
 <nav class="site-nav" aria-label="Main"><ul><li><a href="/#workspace">Review</a></li><li><a href="/benchmark" aria-current="page">Benchmark</a></li><li><a href="/tools">Tools</a></li><li><a href="/guide">Guide</a></li><li><a href="/pricing">Pricing</a></li></ul></nav>
 <div class="site-header__actions">
 <button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch colour theme"><span class="icon theme-toggle__icon" aria-hidden="true"></span></button>
@@ -51,12 +60,12 @@
 <main id="main" tabindex="-1">
 
 
-<section class="lp-hero wrap">
-  <nav class="breadcrumbs" aria-label="Breadcrumb"><ol><li><a href="/">Bounty Operator</a></li><li aria-current="page">Benchmark</li></ol></nav>
+<section class="lp-hero wrap page-field">
+  
   <div class="lp-hero__grid">
     <div class="lp-hero__text">
-      <p class="eyebrow">Paydirt · release 2026-10</p>
       <h1>AI model benchmark</h1>
+      <p class="lp-hero__meta"><span class="meta">Paydirt · release 2026-10</span></p>
       <p class="lede">Compare 22 models on 18 paired tests, then see what changes with Bounty Operator.</p>
       <div class="cluster lp-hero__actions"><a class="btn btn--primary" href="#comparison"><span class="btn__label">Compare with and without</span><span class="icon icon--arrow-right" aria-hidden="true"></span></a><a class="btn btn--secondary" href="#board"><span class="btn__label">See the model leaderboard</span></a><a class="btn btn--secondary" href="/benchmark/method"><span class="btn__label">Read the method</span></a></div>
       
@@ -397,11 +406,12 @@
   </div>
 </section>
 </main>
-<footer class="site-footer">
+<footer class="site-footer theme-dark">
 <div class="wrap site-footer__grid">
 <div class="site-footer__brand">
-<a class="brand" href="/"><svg class="brand__mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect class="brand__tile" width="64" height="64" rx="14"/><path class="brand__glyph" d="M12.5 15h6.5v31.5h-6.5z"/><path class="brand__glyph" fill-rule="evenodd" d="M25.5 25a10.75 10.75 0 1 0 0 21.5a10.75 10.75 0 0 0 0-21.5zm0 6.25a4.5 4.5 0 1 1 0 9a4.5 4.5 0 0 1 0-9z"/><path class="brand__slash" d="M45.5 13h6.25l-8.6 37.5h-6.25z"/></svg><span class="brand__name">Bounty Operator</span></a>
+<a class="brand" href="/"><svg class="brand__mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect class="brand__tile" width="64" height="64" rx="9"/><path class="brand__glyph" d="M12.5 15h6.5v31.5h-6.5z"/><path class="brand__glyph" fill-rule="evenodd" d="M25.5 25a10.75 10.75 0 1 0 0 21.5a10.75 10.75 0 0 0 0-21.5zm0 6.25a4.5 4.5 0 1 1 0 9a4.5 4.5 0 0 1 0-9z"/><path class="brand__slash" d="M45.5 13h6.25l-8.6 37.5h-6.25z"/></svg><span class="brand__name">Bounty Operator</span></a>
 <p class="site-footer__promise">Find the hole in your report before the triager does.</p>
+<p class="site-footer__cta"><a class="btn btn--primary" href="/?profile=report#workspace"><span class="btn__label">Review my report</span><span class="icon icon--arrow-right" aria-hidden="true"></span></a></p>
 </div>
 <nav class="site-footer__col" aria-label="Product"><h2 class="site-footer__title">Product</h2><ul><li><a href="/#workspace">Review a report</a></li><li><a href="/benchmark">Benchmark</a></li><li><a href="/tools">Free tools</a></li><li><a href="/pricing">Pricing</a></li><li><a href="/#account">Account</a></li></ul></nav>
 <nav class="site-footer__col" aria-label="Resources"><h2 class="site-footer__title">Resources</h2><ul><li><a href="/guide">Report guide</a></li><li><a href="/mcp">MCP setup</a></li><li><a href="/method">Review method</a></li><li><a href="/templates">Report templates</a></li><li><a href="/changelog">Changelog</a></li><li><a href="https://github.com/bountyoperator/bounty-operator" target="_blank" rel="noopener noreferrer">Source<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></li></ul></nav>

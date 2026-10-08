@@ -27,17 +27,35 @@
    1. Page hero
    ========================================================================== */
 
+/* The head is printed on the field (.page-field in base.css). */
 .lp-hero {
-  padding-block: var(--sp-24) var(--sp-48);
+  margin-bottom: var(--sp-48);
+  padding-block: var(--sp-48);
 }
 
 .pricing-page .lp-hero,
 .benchmark-page .lp-hero {
-  padding-bottom: var(--sp-16);
+  margin-bottom: var(--sp-24);
 }
 
 .lp-hero .breadcrumbs {
   margin-bottom: var(--sp-32);
+}
+
+.lp-hero h1 {
+  max-width: 22ch;
+  font-size: clamp(2.25rem, 1.2rem + 3.6vw, 4rem);
+  font-stretch: 76%;
+  font-weight: 860;
+  line-height: 0.98;
+}
+
+/* Under the title: the Operator stamp, or the page's file line. */
+.lp-hero__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-8) var(--sp-12);
 }
 
 .lp-hero__grid {
@@ -76,7 +94,12 @@
 
 @media (min-width: 64em) {
   .lp-hero {
-    padding-block: var(--sp-32) var(--sp-72);
+    padding-block: var(--sp-72);
+  }
+
+  .pricing-page .lp-hero,
+  .benchmark-page .lp-hero {
+    padding-bottom: var(--sp-48);
   }
 
   .lp-hero--split .lp-hero__grid {
@@ -230,8 +253,12 @@
   display: block;
   margin-bottom: var(--sp-8);
   color: var(--accent);
-  font: 600 var(--fs-12) / 1.4 var(--font-mono);
-  letter-spacing: 0.06em;
+  font-family: var(--font-display);
+  font-size: var(--fs-12);
+  font-stretch: 85%;
+  font-weight: 720;
+  line-height: 1.4;
+  letter-spacing: 0.07em;
 }
 
 .points__title {
@@ -292,8 +319,12 @@
 .needs__opt {
   margin-left: var(--sp-8);
   color: var(--muted);
-  font: 600 var(--fs-12) / 1.4 var(--font-mono);
-  letter-spacing: 0.06em;
+  font-family: var(--font-display);
+  font-size: var(--fs-12);
+  font-stretch: 85%;
+  font-weight: 720;
+  line-height: 1.4;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
 }
 
@@ -426,7 +457,11 @@
   border-radius: var(--r-chip);
   background: var(--surface-2);
   color: var(--accent);
-  font: 600 var(--fs-12) / 1 var(--font-mono);
+  font-family: var(--font-display);
+  font-size: var(--fs-12);
+  font-stretch: 85%;
+  font-weight: 720;
+  line-height: 1;
   text-decoration: none;
   transition: border-color var(--t-fast);
 }
@@ -491,8 +526,12 @@
     border-bottom: 1px solid var(--line);
     background: var(--surface-2);
     color: var(--muted);
-    font: 600 var(--fs-12) / 1.5 var(--font-mono);
-    letter-spacing: 0.06em;
+    font-family: var(--font-display);
+    font-size: var(--fs-12);
+    font-stretch: 85%;
+    font-weight: 720;
+    line-height: 1.5;
+    letter-spacing: 0.07em;
     text-transform: uppercase;
   }
 
@@ -538,7 +577,11 @@
 .toc__n {
   flex: none;
   color: var(--accent);
-  font: 600 var(--fs-12) / 1 var(--font-mono);
+  font-family: var(--font-display);
+  font-size: var(--fs-12);
+  font-stretch: 85%;
+  font-weight: 720;
+  line-height: 1;
 }
 
 @media (min-width: 64em) {
@@ -736,10 +779,14 @@
   width: 2.25rem;
   height: 2.25rem;
   border: 1px solid var(--accent);
-  border-radius: 50%;
+  border-radius: var(--r-chip);
   background: var(--surface);
   color: var(--text);
-  font: 600 var(--fs-14) / 1 var(--font-mono);
+  font-family: var(--font-display);
+  font-size: var(--fs-14);
+  font-stretch: 85%;
+  font-weight: 720;
+  line-height: 1;
 }
 
 .stage__body {
@@ -896,9 +943,13 @@
   width: 1.375rem;
   height: 1.375rem;
   border: 1px solid var(--line-control);
-  border-radius: 50%;
+  border-radius: var(--r-chip);
   color: var(--muted);
-  font: 600 var(--fs-12) / 1 var(--font-mono);
+  font-family: var(--font-display);
+  font-size: var(--fs-12);
+  font-stretch: 85%;
+  font-weight: 720;
+  line-height: 1;
 }
 
 /* ==========================================================================
@@ -929,8 +980,12 @@
 
 .panel-seats__n {
   color: var(--muted);
-  font: 600 var(--fs-12) / 1.4 var(--font-mono);
-  letter-spacing: 0.06em;
+  font-family: var(--font-display);
+  font-size: var(--fs-12);
+  font-stretch: 85%;
+  font-weight: 720;
+  line-height: 1.4;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
 }
 
@@ -944,7 +999,11 @@
 
 .tally__n {
   margin-right: var(--sp-4);
-  font: 600 var(--fs-13) / 1 var(--font-mono);
+  font-family: var(--font-display);
+  font-size: var(--fs-13);
+  font-stretch: 85%;
+  font-weight: 720;
+  line-height: 1;
   font-variant-numeric: tabular-nums;
 }
 
@@ -1179,8 +1238,12 @@
 
 .compare tbody th {
   color: var(--muted);
-  font: 600 var(--fs-12) / 1.5 var(--font-mono);
-  letter-spacing: 0.06em;
+  font-family: var(--font-display);
+  font-size: var(--fs-12);
+  font-stretch: 85%;
+  font-weight: 720;
+  line-height: 1.5;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
 }
 
@@ -1236,7 +1299,11 @@
 
 .src {
   color: var(--accent);
-  font: 600 var(--fs-12) / 1 var(--font-mono);
+  font-family: var(--font-display);
+  font-size: var(--fs-12);
+  font-stretch: 85%;
+  font-weight: 720;
+  line-height: 1;
   text-decoration: none;
   white-space: nowrap;
 }
@@ -1273,7 +1340,11 @@
 
 .sources__n {
   color: var(--accent);
-  font: 600 var(--fs-12) / 1.9 var(--font-mono);
+  font-family: var(--font-display);
+  font-size: var(--fs-12);
+  font-stretch: 85%;
+  font-weight: 720;
+  line-height: 1.9;
 }
 
 .sources__date {
@@ -1297,15 +1368,19 @@
   flex-direction: column;
   gap: var(--sp-16);
   padding: var(--sp-24);
-  border: 1px solid var(--line);
-  border-radius: var(--r-hero);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-card);
   background: var(--surface);
   box-shadow: var(--shadow-card);
 }
 
+/* The Operator plan is printed on canary stock (.on-stock). */
 .plan--accent {
-  border-color: var(--accent);
-  box-shadow: var(--shadow);
+  border-color: var(--rule);
+}
+
+.plan.on-stock {
+  background: var(--stock);
 }
 
 .plan__head {

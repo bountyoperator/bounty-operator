@@ -15,7 +15,7 @@
   var STORAGE_KEY = 'bo-theme';
   var COPIED_MS = 2000;
   // Keep in step with --bg in /css/base.css.
-  var PAGE_COLOR = { light: '#f5f7fb', dark: '#0a1220' };
+  var PAGE_COLOR = { light: '#fbfbf8', dark: '#17132e' };
   var root = document.documentElement;
   // Scripts run on this page. CSS reads [data-js] to lay out, from the first
   // paint, what a script will arrange later (the /mcp client tabs), so the page

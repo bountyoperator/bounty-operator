@@ -1,5 +1,31 @@
 # Changelog
 
+## 0.8.0 — 2026-10-08
+
+Site
+
+- A new design on every page. A review comes back the way an inspector's
+  stamp comes back on a form: pages print in black on white and canary
+  stock, verdicts and severities are stamped in ink, and code sits on
+  carbon. The dark theme is carbon indigo with canary for the action.
+- The home page opens on the example draft as a report slip: the severity
+  the draft claims is struck through, the severity the code supports is
+  stamped beside it, the line that decides it is printed with its number,
+  and the verdict is stamped and dated at the foot. On a phone the verdict
+  is in the first screen.
+- Every verdict and severity stamp is its own pressed impression, the same
+  on the home page, in a review's result and on the social card. The words
+  stay in the page for search and screen readers.
+- The home page lists the five verdicts a review can return, with what each
+  one means.
+- Every page head is printed on the field, and every page ends with the
+  promise and a Review my report button. The free tools open on a form head
+  with their number and name.
+- Headings, labels and stamps are set in Archivo, served from this site
+  under the SIL Open Font License. /licenses carries the licence. Running
+  text still uses the fonts on your device, and no font service is called.
+- New icons and a new social card.
+
 ## 0.7.12 — 2026-10-08
 
 Site

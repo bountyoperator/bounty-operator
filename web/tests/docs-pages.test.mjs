@@ -238,7 +238,9 @@ test('the changelog page lists every release in CHANGELOG.md', async () => {
   for (const version of versions) {
     assert.ok(markup.includes(`id="v${version.replace(/[^0-9a-z]+/gi, '-')}"`), version);
   }
-  assert.doesNotMatch(markup, /<!--/);
+  // A maintainer note in CHANGELOG.md never reaches the page. (The layout's design
+  // contract comment sits before <main> on every page.)
+  assert.doesNotMatch(markup.slice(markup.indexOf('<main')), /<!--/);
 });
 
 test('security.txt has the required fields and has not expired', async () => {

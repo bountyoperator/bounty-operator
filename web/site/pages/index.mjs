@@ -1,6 +1,7 @@
 // "/": the home page.
 //
-// Sections: introduction, three steps, workbench, benchmark, resources, pricing and FAQ.
+// Sections: the hero on the field with the report slip, three steps, the five
+// verdicts, the workbench, benchmark, resources, pricing and FAQ.
 //
 // Hooks other streams rely on:
 //   [data-demo]      the hero's "View example" control; it also carries
@@ -25,12 +26,13 @@ import {
   isHtml,
   raw,
   sectionHeading,
+  verdictChip,
 } from '../components.mjs';
 import { SITE, faqPageLd, organizationLd, softwareApplicationLd } from '../layout.mjs';
 import { PROFILES } from '../../public/profiles.mjs';
 import { PROVIDERS } from '../../public/providers.mjs';
-import { exampleShot } from '../social/example.mjs';
-import { LEADERBOARDS } from './method/_shared.mjs';
+import { reportSlip } from '../social/example.mjs';
+import { LEADERBOARDS, VERDICTS } from './method/_shared.mjs';
 import { BENCH_TEASER } from './benchmark/_teaser.mjs';
 import { AGENT_TICK, CHAT_TICK, RENEWAL, WHY_PAY } from '../plans.mjs';
 
@@ -103,22 +105,25 @@ const PROVIDER_SENTENCE = `${PROVIDER_NAMES.slice(0, -1).join(', ')} or ${PROVID
 // ---------------------------------------------------------------------------
 
 const hero = html`
-<div class="home-top wrap">
-  <section class="home-hero" aria-labelledby="hero-title">
-    <p class="eyebrow">AI review for bug bounty reports</p>
-    <h1 class="display home-hero__title" id="hero-title">Check your report before you submit.</h1>
-    <p class="lede home-hero__lede">Add your draft and supporting files. Get a review of the claims, the evidence and what to fix.</p>
-    <div class="home-hero__actions">
-      ${button({ label: 'Review my report', href: '/?profile=report#workspace', variant: 'primary', size: 'lg', iconEnd: 'arrow-right' })}
-      ${button({ label: 'View example', href: '#workspace', size: 'lg', attrs: { 'data-demo': true, 'data-example': '' } })}
+<div class="home-top page-field">
+  <section class="wrap home-hero" aria-labelledby="hero-title">
+    <div class="home-hero__text">
+      <h1 class="display home-hero__title" id="hero-title">Check your report before you submit.</h1>
+      <p class="lede home-hero__lede">Add your bug bounty draft and the files it cites. The review argues against the finding, checks every claim against the code and stamps one verdict, with the line that decides it.</p>
+      <div class="home-hero__actions">
+        ${button({ label: 'Review my report', href: '/?profile=report#workspace', variant: 'primary', size: 'lg', iconEnd: 'arrow-right' })}
+        ${button({ label: 'View example', href: '#workspace', variant: 'secondary', size: 'lg', attrs: { 'data-demo': true, 'data-example': '' } })}
+      </div>
+      <p class="home-hero__note">The example needs no account or API key.</p>
+      <p class="home-hero__links">${BENCH_TEASER && html`<a class="link" href="/benchmark#comparison">See the model benchmark</a>`}<a class="link" href="/mcp">Use in your coding agent</a></p>
     </div>
-    <p class="home-hero__note">The example needs no account or API key.</p>
-    <p class="home-hero__links">${BENCH_TEASER && html`<a class="link" href="/benchmark#comparison">See the model benchmark</a>`}<a class="link" href="/mcp">Use in your coding agent</a></p>
+    <div class="home-hero__shot">
+      ${reportSlip()}
+    </div>
   </section>
-  <div class="home-top__shot">
-    ${exampleShot({ id: 'hero', compact: true, caption: 'Saved example. Tessera Staking is an invented protocol.' })}
+  <div class="wrap">
+    <p class="home-proof fine">Built by Tradi3. <a class="link" href="${LEADERBOARDS.ens}" target="_blank" rel="noopener noreferrer">17 valid Criticals in Immunefi’s ENS competition, the most of 186 researchers</a> · <a class="link" href="${LEADERBOARDS.firelight}" target="_blank" rel="noopener noreferrer">2nd of 135 in Firelight</a> · <a class="link" href="${LEADERBOARDS.quantus}" target="_blank" rel="noopener noreferrer">8th of 65 in Quantus</a>.</p>
   </div>
-  <p class="home-proof fine">Built by Tradi3. <a class="link" href="${LEADERBOARDS.ens}" target="_blank" rel="noopener noreferrer">17 valid Criticals in Immunefi’s ENS competition, the most of 186 researchers</a> · <a class="link" href="${LEADERBOARDS.firelight}" target="_blank" rel="noopener noreferrer">2nd of 135 in Firelight</a> · <a class="link" href="${LEADERBOARDS.quantus}" target="_blank" rel="noopener noreferrer">8th of 65 in Quantus</a>.</p>
 </div>`;
 
 const STEPS = [
@@ -130,9 +135,18 @@ const STEPS = [
 const howItWorks = html`
 <section class="section section--tight wrap" aria-labelledby="how">
   <h2 class="visually-hidden" id="how">How it works</h2>
-  <ol class="home-steps">${STEPS.map((step) => html`
-    <li class="home-steps__item"><h3 class="home-steps__title">${step.title}</h3><p class="home-steps__text">${step.text}</p></li>`
+  <ol class="home-steps">${STEPS.map((step, index) => html`
+    <li class="home-steps__item"><span class="home-steps__n" aria-hidden="true">${index + 1}</span><h3 class="home-steps__title">${step.title}</h3><p class="home-steps__text">${step.text}</p></li>`
   )}</ol>
+</section>`;
+
+// The five verdicts a review can stamp, with what each one means.
+const verdicts = html`
+<section class="section section--tight wrap" aria-labelledby="verdicts-title">
+  ${sectionHeading({ title: 'Every review ends in one of five verdicts.', id: 'verdicts-title', lede: 'One decision, with the file and line behind it. The draft stays yours to rewrite.' })}
+  <ul class="home-verdicts">${VERDICTS.map((verdict) => html`
+    <li class="home-verdicts__item">${verdictChip(verdict.id, { size: 'lg' })}<p class="home-verdicts__text">${verdict.meaning}</p></li>`
+  )}</ul>
 </section>`;
 
 const resources = html`
@@ -148,7 +162,7 @@ const resources = html`
 const ticks = (items) => html`<ul class="home-ticks">${items.map((item) => html`<li>${icon('check')}<span>${item}</span></li>`)}</ul>`;
 
 const pricing = html`
-<section class="section home-band" id="pricing" aria-labelledby="pricing-title">
+<section class="section" id="pricing" aria-labelledby="pricing-title">
   <div class="wrap">
     ${sectionHeading({ title: 'Free for 1 review a day. US$10 a week for unlimited.', id: 'pricing-title', lede: 'Your model provider bills model usage to your own key.' })}
     <div class="home-plans__note" data-checkout-note></div>
@@ -160,7 +174,7 @@ const pricing = html`
         ${ticks([`1 review a day, any of the ${PROFILE_TOTAL} review types`, CHAT_TICK, AGENT_TICK])}
         <div class="home-plan__cta">${button({ label: 'Start a free review', href: '#workspace', size: 'lg', block: true })}</div>
       </article>
-      <article class="home-plan home-plan--operator" aria-labelledby="plan-operator">
+      <article class="home-plan home-plan--operator on-stock" aria-labelledby="plan-operator">
         <h3 class="home-plan__name" id="plan-operator">Operator</h3>
         <p class="home-plan__price"><span class="home-plan__amount">US$10</span><span class="home-plan__per">per week</span></p>
         <p class="home-plan__for">Everything in Free, plus:</p>
@@ -207,6 +221,7 @@ const questions = html`
   </div>
 </section>`;
 
+
 // ---------------------------------------------------------------------------
 // Page
 // ---------------------------------------------------------------------------
@@ -214,6 +229,7 @@ const questions = html`
 const body = html`
 ${hero}
 ${howItWorks}
+${verdicts}
 ${workbenchSection()}
 ${BENCH_TEASER}
 ${resources}

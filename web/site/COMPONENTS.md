@@ -4,7 +4,7 @@ The design system for bountyoperator.com. Every page is generated from a module 
 
 See every component rendered: `node scripts/build-site.mjs --dev`, serve `web/public`, open `/_kit`.
 
-Direction: **Evidence ledger**. Dark first, navy ink. Blue marks what was observed in the supplied files. Amber marks what is still unproven. Metadata (labels, chips, hashes, references) is 12px mono, uppercase.
+Direction: **Inspection office** (DESIGN.md at the repository root records the whole system). A finding goes through inspection before it goes to a triager, and the verdict comes back as a stamp. Forms print in black on white and canary stock, verdicts and severities are stamped in ink, code sits on carbon. Violet marks what was observed in the supplied files; ochre marks what is still unproven. Printed labels are Archivo condensed caps; mono is for code, paths and hashes only. Dark is the night shift: carbon indigo, pale print, canary for what you act on.
 
 ## Contents
 
@@ -77,7 +77,7 @@ export default {
 | `description` | yes | 50 to 160 characters. |
 | `body` | yes | The result of `html\`…\``. Rendered inside `<main id="main">`. |
 | `nav` | no | Which header item is current: `workbench`, `method`, `tools`, `benchmark`, `guide`, `mcp`, `pricing`. |
-| `og` | no | `{ image, title, description, type, width, height, alt }`. `image` defaults to `/social-v3.png` (1200 × 630). |
+| `og` | no | `{ image, title, description, type, width, height, alt }`. `image` defaults to `/social-v4.png` (1200 × 630). |
 | `styles` | no | Root-relative stylesheets, loaded after `/css/base.css`. |
 | `scripts` | no | Root-relative module scripts. Their static imports are followed and emitted as `modulepreload` links. |
 | `preload` | no | Extra `modulepreload` hrefs, or `false` to turn the automatic ones off. |
@@ -141,26 +141,28 @@ raw('<b>fixed markup</b>')                    // trusted markup only
 
 ## Tokens
 
-Defined in `base.css` section 1. Light is the default block. Dark applies through `prefers-color-scheme` and through `data-theme="dark"` on `<html>`; `.theme-dark` forces dark on one element (the hero finding card).
+Defined in `base.css` section 1. Light is the default block. Dark applies through `prefers-color-scheme` and through `data-theme="dark"` on `<html>`; `.theme-dark` forces dark on one element (the site footer), `.theme-light` forces light (the report slip in the home hero). `.page-field` prints a page head on the field, full width, and `.on-stock` prints anything on canary in either theme (the Operator plan, the tools call-out).
 
 | Group | Tokens |
 |---|---|
-| Surfaces | `--bg` page · `--surface` cards, inputs · `--surface-2` bars, wells · `--surface-3` selected segment, current step |
-| Lines | `--line` hairlines · `--line-strong` emphasis · `--line-control` control borders (3:1 on every surface) |
+| Paper | `--bg` page · `--surface` cards, inputs · `--surface-2` bars, office-use boxes · `--surface-3` selected segment |
+| Field and stock | `--field` page-head ground (canary by day, lifted carbon at night) · `--on-field` · `--on-field-muted` · `--field-rule` · `--stock` canary · `--on-stock` · `--on-stock-muted` |
+| Lines | `--rule` printed rules and frames · `--line` hairlines · `--line-strong` emphasis · `--line-control` control borders (3:1 on every surface) · `--rule-w` part rule width |
 | Ink | `--text` · `--muted` · `--placeholder` |
-| Blue, observed | `--accent` text and marks · `--accent-hover` · `--accent-solid` primary button fill · `--accent-solid-hover` · `--on-accent` · `--focus` |
-| Amber, unproven | `--gap` · `--gap-bg` |
+| Violet, observed | `--accent` stamp ink: links, marks, observed · `--accent-hover` · `--accent-solid` primary button fill (black by day, canary at night) · `--accent-solid-hover` · `--on-accent` · `--focus` |
+| Ochre, unproven | `--gap` · `--gap-bg` |
 | Severity | `--sev-crit` · `--sev-high` · `--sev-med` · `--sev-low` · `--sev-info` · `--sev-none` |
 | State | `--ok` · `--danger` |
 | Chips | `--chip-fill` · `--chip-line` (tint percentages) |
-| Code | `--code-bg` · `--code-text` · `--code-muted` · `--code-line` · `--code-hl` · `--code-flag` |
+| Code | `--code-bg` · `--code-text` · `--code-muted` · `--code-line` · `--code-hl` · `--code-flag` · `--code-ok` (copied) |
 | Brand mark | `--brand-tile` · `--brand-ring` · `--brand-glyph` · `--brand-slash` |
-| Depth | `--shadow-card` · `--shadow` · `--shadow-pop` · `--backdrop` |
-| Type | `--font-sans` · `--font-mono` · `--fs-12` `--fs-13` `--fs-14` `--fs-16` `--fs-18` `--fs-22` `--fs-28` `--fs-40` `--fs-64` |
+| Depth | `--shadow-card` (none: paper lies flat) · `--shadow` · `--shadow-pop` · `--shadow-slip` a loose sheet · `--backdrop` |
+| Stamps | `--stamp` the impression a stamp shows its ink through (set per verdict and severity) · `--stamp-tilt` · `--copy` the pink carbon copy |
+| Type | `--font-display` Archivo · `--font-sans` system · `--font-mono` · `--fs-12` `--fs-13` `--fs-14` `--fs-16` `--fs-18` `--fs-22` `--fs-28` `--fs-40` `--fs-64` `--fs-88` |
 | Space | `--sp-4` `--sp-8` `--sp-12` `--sp-16` `--sp-24` `--sp-32` `--sp-48` `--sp-72` `--sp-112` |
-| Radius | `--r-chip` 4px · `--r-ctl` 8px · `--r-card` 12px · `--r-hero` 16px |
+| Radius | `--r-chip` 2px · `--r-ctl` 2px · `--r-card` 2px · `--r-hero` 3px. A stamp's corners are in em (0.28em, 0.2em), so they scale with its impression. |
 | Layout | `--wrap` 75rem · `--gutter` · `--tap` 44px |
-| Motion | `--ease` · `--t-fast` 120ms · `--t-panel` 180ms · `--t-dialog` 160ms · `--stagger` 40ms |
+| Motion | `--ease` · `--ease-out` · `--t-fast` 120ms · `--t-panel` 180ms · `--t-dialog` 160ms · `--t-stamp` 420ms · `--stagger` 40ms |
 
 Changing a dark value means changing it in both dark blocks. `web/tests/site-build.test.mjs` fails when they differ.
 
@@ -190,12 +192,13 @@ Plain `h1` to `h6` are styled. `.h1` to `.h4` give any element that look.
 
 | Class | Use |
 |---|---|
-| `.display` | Hero headline. 36px on a phone, 64px on a desktop. |
+| `.display` | Hero headline. Archivo condensed black, 44px on a phone, 88px on a desktop. |
 | `.lede` | Intro paragraph, 18px, muted. |
-| `.meta` | Mono, uppercase, 12px, muted: labels and counters. |
-| `.eyebrow` | Same voice in blue. Optional; a heading does not need one. |
+| `.meta` | Archivo condensed caps, 12px, muted: printed labels and counters. |
+
+Headings print in Archivo, semi-condensed and heavy. Nothing sits above a heading: no eyebrow, no kicker. A section opens with a part rule (`.section-head`).
 | `.muted` `.small` `.fine` | Secondary ink · 14px · 13px muted. |
-| `.mono` `.num` `.nowrap` | Mono family · tabular figures · no wrapping. |
+| `.mono` `.num` `.nowrap` | Mono family, for code, paths, hashes and typed entries · tabular figures · no wrapping. |
 | `.prose` | Wrapper for long-form pages. Plain `h2`, `p`, `ul`, `ol`, `blockquote`, `a`, `code`, `kbd`, `table`, `hr`, `img` inside it are styled. |
 
 Inline `<code>` is styled everywhere. The mono stack puts Cascadia Mono before Cascadia Code so `!=` and `<=` are never drawn as ligatures.
@@ -256,7 +259,7 @@ segmented({ name: 'mode', label: 'Mode', value: 'bounty', options: [{ value: 'bo
 
 ### Chips
 
-Square stamps. Base class `.chip`; the variant sets the colour.
+Stamps, not pills: an ink outline, ink letters in Archivo condensed caps. Base class `.chip`; the variant sets the ink. `.verdict--lg` is the rubber stamp (a double rule, a tilt with `--stamp-tilt`) and `severityChip(id, label, { stamp: true })` adds `.sev--stamp`, a severity stamped by hand. Both show a pressed impression: `scripts/build-stamps.mjs` renders the live box crisp (`.stamp--proof`), presses it once with its own seed and writes `web/public/stamps/verdict-<id>.webp` and `sev-<id>.webp`; the box shows the chip colour through that file as a mask, so day and night share one asset, and keeps its words in the markup. Their geometry is in em, so one impression fits every size. Re-run the script when a label, the geometry or the font changes; `web/tests/home-page.test.mjs` checks every verdict and severity has its file and that the labels match the app's.
 
 | Helper | Markup | Values |
 |---|---|---|
@@ -307,8 +310,8 @@ codeBlock({ code: 'forge test -vvv', numbers: false, copy: true })
 |---|---|
 | `name` | File name in the bar. Without it there is no bar and the copy button sits in the corner. |
 | `start` | Number of the first line. |
-| `highlight` | Lines marked blue (observed). Numbers or `[from, to]` pairs. |
-| `flag` | Lines marked amber (unproven). |
+| `highlight` | Lines marked violet (observed). Numbers or `[from, to]` pairs. |
+| `flag` | Lines marked ochre (unproven). |
 | `dim`, `dimOthers` | Recede context lines. |
 | `numbers: false` | No line numbers. |
 | `wrap: true` | Wrap instead of scrolling, for prompts. |
@@ -409,17 +412,21 @@ sectionHeading({ title: 'Free tools', lede: 'Run them without an account.', id: 
 breadcrumbs([{ label: 'Tools', href: '/tools' }, { label: 'Report check' }])
 ```
 
-`header.section-head` > `.section-head__text` + `.section-head__aside`. `nav.breadcrumbs` > `ol` > `li`.
+`header.section-head` > `.section-head__text` + `.section-head__aside`, under a part rule. `nav.breadcrumbs` > `ol` > `li`. A trail of two (home and this page) prints nothing: the mark in the header is the way home, and a lone label above a heading reads as a kicker. Every trail stays in the page's BreadcrumbList JSON-LD.
+
+### Page head on the field
+
+Every page opens on the field: `pageHero()` (method and landing pages), `docHead()`, `toolHead()` and the template heads carry `.page-field`, which prints a full-width band in `--field` behind the head and switches its ink to `--on-field`. A `.section` whose first child is a page field gives up its top padding, so the band starts under the header rule. `pageHero({ stamp, meta })` prints an Operator stamp or a file line under the title; there is no eyebrow.
 
 ### Site header and footer
 
-Emitted by the layout. Classes: `.site-header`, `.site-header__inner`, `.brand` (`.brand__mark`, `.brand__name`), `.site-nav`, `.site-header__actions`, `.theme-toggle`, `.site-footer`, `.site-footer__grid`, `.site-footer__col`, `.site-footer__base`. Under 928px the nav becomes a second row that scrolls sideways; no link is hidden.
+Emitted by the layout. Classes: `.site-header`, `.site-header__inner`, `.brand` (`.brand__mark`, `.brand__name`), `.site-nav`, `.site-header__actions`, `.theme-toggle`, `.site-footer`, `.site-footer__grid`, `.site-footer__col`, `.site-footer__base`, `.site-footer__cta`. The current page's nav link is marked with canary. The footer is the carbon back sheet in both themes (`.theme-dark`) and closes every page with the promise and the Review my report action. Under 928px the nav becomes a second row that scrolls sideways; no link is hidden.
 
 `brandMark()` returns the "b/" mark as inline SVG paths.
 
 ## The finding card
 
-The signature component. It appears in the hero, the results view, the examples and the social card.
+The signature component of the results view. It appears there, in the examples, the 404 page and the kit. The home hero and the social card show the report slip instead (`reportSlip()` in `web/site/social/example.mjs`): the example draft's own header lines with the claimed severity struck, the supported one stamped and the verdict stamped in the box the form keeps for it.
 
 ```js
 findingCard(finding, {
@@ -448,7 +455,7 @@ findingCard(finding, {
 | `rows` | Rows to render, in order. Default: every row that has content. |
 | `reveal` | Entrance animation: rows rise 40ms apart while the spine draws down. |
 | `refHref` | `(ref) => url` to make the reference chips links. |
-| `id`, `className` | `finding--raised` adds the shadow, `finding--glow` the hero glow, `theme-dark` forces dark. |
+| `id`, `className` | `finding--raised` adds the shadow, `finding--glow` lifts it like a loose sheet, `theme-dark` forces dark. |
 
 Markup:
 
@@ -466,21 +473,21 @@ Markup:
 </article>
 ```
 
-Rows (`data-rail`), in order, and what the spine says:
+Rows (`data-rail`), in order, and what the label's ink says (the margin rule is one neutral 1px line, dashed for an evidence gap):
 
-| `data-rail` | Label | Spine | Body |
+| `data-rail` | Label | Ink | Body |
 |---|---|---|---|
 | `impact` | Impact | grey | `<p>` |
-| `observed` | Observed | blue | `ol.steps` and the code excerpt |
-| `counter` | Counterargument | amber when `data-status="open"`, blue when `resolved` | `p.rail__quote` then `p.rail__answer` (status chip + text) |
-| `gap` | Evidence gap | amber, dashed; grey when `data-status="none"` | `ul.gaps` |
+| `observed` | Observed | violet | `ol.steps` and the code excerpt |
+| `counter` | Counterargument | ochre when `data-status="open"`, violet when `resolved` | `p.rail__quote` then `p.rail__answer` (status chip + text) |
+| `gap` | Evidence gap | ochre, dashed; grey when `data-status="none"` | `ul.gaps` |
 | `fix` | Fix | grey | `<p>` |
 | `test` | Test | grey | a code block |
 | `next` | Next | grey | `p.rail__next` (arrow icon + text) |
 
 `rail(kind, body, { label, status })` builds one row for a custom card, as the 404 page does. A list of cards goes in `.findings`.
 
-Under 704px the label moves above its content and the spine moves to the card's inner margin.
+Under 704px the label moves above its content and the margin rule moves to the card's inner margin.
 
 ## Behaviour wired by theme.js
 
@@ -500,6 +507,7 @@ Page scripts do not need to wire any of these.
 | `.panel-enter` | A step panel or result block fades in and rises 6px over 180ms. |
 | `.stagger` | Children enter one after another, 40ms apart (first eight). |
 | `.finding--reveal` | The finding card's rows rise while its spine draws down. |
+| `.stamp-land` | The one authored moment: a stamp lands large and light, then presses flat at its tilt in 420ms. A verdict in a result that enters with `.panel-enter` lands the same way, and the home slip runs strike, Medium, verdict in sequence. |
 
 Colour and border transitions run 120ms. Dialogs fade and scale from 98% over 160ms. Everything is off under `prefers-reduced-motion: reduce`: the running bar becomes a solid line and skeletons go flat.
 

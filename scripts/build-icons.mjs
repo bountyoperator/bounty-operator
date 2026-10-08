@@ -21,10 +21,12 @@ import { SITE } from '../web/site/layout.mjs';
 
 const PUBLIC_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'web', 'public');
 
-const TILE = '#142c4a';
-const TILE_RING = '#2a4468';
-const GLYPH = '#ffffff';
-const SLASH = '#6ea0ff';
+// The mark as the night-shift header prints it: a canary stamp, ink glyph,
+// violet slash. Canary reads on light and dark tab bars alike.
+const TILE = '#f7d84a';
+const TILE_RING = '#16161b';
+const GLYPH = '#16161b';
+const SLASH = '#4b2593';
 
 function markPaths() {
   return [
@@ -34,7 +36,7 @@ function markPaths() {
   ].join('');
 }
 
-/** The browser-tab icon: a rounded navy tile. The ring keeps the edge visible on dark tab bars. */
+/** The browser-tab icon: a canary tile with an ink ring, so the edge holds on light tab bars. */
 function tileSvg() {
   const radius = BRAND_MARK.tileRadius;
   return [

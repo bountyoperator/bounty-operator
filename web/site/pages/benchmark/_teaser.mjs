@@ -20,8 +20,8 @@ export function teaser(published) {
   return html`<section class="wrap bench-teaser" aria-labelledby="bench-teaser-title">
 <div class="bench-teaser__inner">
   <div class="bench-teaser__head">
-    <p class="eyebrow">Benchmark · release ${view.release}</p>
     <h2 class="bench-teaser__title" id="bench-teaser-title">Paydirt: ${view.rows.length} models on ${view.pairs} held pairs</h2>
+    <p class="meta">Benchmark release ${view.release}</p>
   </div>
   <div class="bench-teaser__table">
   <div class="bench-teaser__row bench-teaser__labels" aria-hidden="true"><span></span><span class="meta">Model</span><span class="meta">Score</span><span class="meta">Cost / run</span></div>

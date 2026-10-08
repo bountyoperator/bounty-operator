@@ -119,7 +119,10 @@ status, profile, channel) and Stripe references.
   text are untrusted; build DOM with `createElement` and `textContent`.
 - URLs are extensionless: `/guide`, `/mcp`, `/tools/report-check`. Never link to
   an `.html` file.
-- System font stacks only.
+- One webfont, self-hosted: Archivo (`web/public/fonts/`, SIL Open Font
+  License) for headings, labels and stamps. Running text and code use system
+  font stacks. No font service, no other font file. The design system is in
+  `DESIGN.md` and `web/site/COMPONENTS.md`.
 - Edit pages in `web/site/pages/`, then regenerate. The HTML in `web/public/` is
   build output that is committed.
 

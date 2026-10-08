@@ -19,19 +19,29 @@
    ========================================================================== */
 
 .tpl-page {
-  padding-block: var(--sp-32) var(--sp-72);
+  padding-bottom: var(--sp-72);
 }
 
+/* The head is printed on the field (.page-field in base.css) and opens the page. */
 .tpl-hero {
   display: grid;
   gap: var(--sp-16);
-  padding-bottom: var(--sp-32);
-  border-bottom: 1px solid var(--line);
+  padding-block: var(--sp-32) var(--sp-48);
+}
+
+@media (min-width: 48em) {
+  .tpl-hero {
+    padding-top: var(--sp-48);
+  }
 }
 
 .tpl-hero > h1 {
   max-width: 20ch;
   margin-top: var(--sp-8);
+  font-size: clamp(2.25rem, 1.3rem + 3.2vw, 3.75rem);
+  font-stretch: 76%;
+  font-weight: 860;
+  line-height: 0.98;
 }
 
 .tpl-hero > .lede {
@@ -194,7 +204,7 @@
 
 .tpl__tag {
   margin-left: auto;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
 }
 
@@ -215,8 +225,12 @@
 
 .tpl__n {
   color: var(--muted);
-  font: 600 var(--fs-12) / 1.5 var(--font-mono);
-  letter-spacing: 0.06em;
+  font-family: var(--font-display);
+  font-size: var(--fs-12);
+  font-stretch: 85%;
+  font-weight: 720;
+  line-height: 1.5;
+  letter-spacing: 0.07em;
 }
 
 .tpl__content {
@@ -238,11 +252,11 @@
 
   .tpl__content {
     padding: 1.25rem;
-    border-left: 2px solid var(--accent);
+    border-left: 1px solid var(--rule);
   }
 
   .tpl__section[data-origin="added"] > .tpl__content {
-    border-left: 2px dashed var(--line-strong);
+    border-left: 1px dashed var(--rule);
   }
 }
 
@@ -342,7 +356,11 @@
   top: 1.0625rem;
   left: 0;
   color: var(--danger);
-  font: 600 var(--fs-12) / 1.9 var(--font-mono);
+  font-family: var(--font-display);
+  font-size: var(--fs-12);
+  font-stretch: 85%;
+  font-weight: 720;
+  line-height: 1.9;
 }
 
 .closed__title {
@@ -362,7 +380,7 @@
   max-width: 68ch;
   margin-top: var(--sp-12);
   padding-left: var(--sp-12);
-  border-left: 2px solid var(--line-strong);
+  border-left: 1px solid var(--rule);
   font-size: var(--fs-14);
 }
 
@@ -513,8 +531,12 @@
 
 .tpl-card__meta {
   color: var(--muted);
-  font: 600 var(--fs-12) / 1.5 var(--font-mono);
-  letter-spacing: 0.06em;
+  font-family: var(--font-display);
+  font-size: var(--fs-12);
+  font-stretch: 85%;
+  font-weight: 720;
+  line-height: 1.5;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
 }
 
@@ -644,7 +666,11 @@
   content: counter(part, decimal-leading-zero);
   grid-row: 1 / span 2;
   color: var(--muted);
-  font: 600 var(--fs-12) / 2 var(--font-mono);
+  font-family: var(--font-display);
+  font-size: var(--fs-12);
+  font-stretch: 85%;
+  font-weight: 720;
+  line-height: 2;
 }
 
 .tpl-parts__name {
@@ -681,8 +707,8 @@
 .tpl-record {
   max-width: 68ch;
   margin-top: var(--sp-24);
-  padding-left: var(--sp-16);
-  border-left: 2px solid var(--accent);
+  padding-top: var(--sp-12);
+  border-top: 1px solid var(--rule);
   font-size: var(--fs-14);
   line-height: 1.6;
 }
@@ -744,7 +770,11 @@
   top: 1.0625rem;
   left: 0;
   color: var(--accent);
-  font: 600 var(--fs-12) / 1.9 var(--font-mono);
+  font-family: var(--font-display);
+  font-size: var(--fs-12);
+  font-stretch: 85%;
+  font-weight: 720;
+  line-height: 1.9;
 }
 
 .tpl-anatomy__title {

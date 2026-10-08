@@ -7,26 +7,27 @@
 <meta name="description" content="Where your code goes, who holds the API key and what is stored. Eight providers on your own key, prompt export for chat subscriptions, MCP for agents.">
 <link rel="canonical" href="https://bountyoperator.com/your-model-your-key">
 <meta name="color-scheme" content="dark light">
-<meta name="theme-color" content="#0a1220" media="(prefers-color-scheme: dark)">
-<meta name="theme-color" content="#f5f7fb" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#17132e" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#fbfbf8" media="(prefers-color-scheme: light)">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Bounty Operator">
 <meta property="og:title" content="Your model, your key: where your code goes | Bounty Operator">
 <meta property="og:description" content="Where your code goes, who holds the API key and what is stored. Eight providers on your own key, prompt export for chat subscriptions, MCP for agents.">
 <meta property="og:url" content="https://bountyoperator.com/your-model-your-key">
-<meta property="og:image" content="https://bountyoperator.com/social-v3.png">
+<meta property="og:image" content="https://bountyoperator.com/social-v4.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Bounty Operator. Find the hole in your report before the triager does.">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Your model, your key: where your code goes | Bounty Operator">
 <meta name="twitter:description" content="Where your code goes, who holds the API key and what is stored. Eight providers on your own key, prompt export for chat subscriptions, MCP for agents.">
-<meta name="twitter:image" content="https://bountyoperator.com/social-v3.png">
+<meta name="twitter:image" content="https://bountyoperator.com/social-v4.png">
 <meta name="twitter:image:alt" content="Bounty Operator. Find the hole in your report before the triager does.">
 <link rel="icon" href="/favicon.ico" sizes="48x48">
 <link rel="icon" href="/icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="manifest" href="/site.webmanifest">
+<link rel="preload" href="/fonts/archivo-latin-wdth.woff2" as="font" type="font/woff2" crossorigin>
 <script src="/theme.js"></script>
 <link rel="stylesheet" href="/css/base.css">
 <link rel="stylesheet" href="/css/landing.css">
@@ -34,10 +35,18 @@
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Can I use my ChatGPT or Claude subscription?","acceptedAnswer":{"@type":"Answer","text":"Yes, for 3 review types: Code security review, Solidity review and Challenge a draft report. Copy the prompt into your chat, then paste the answer back. You get the same findings and download as with an API key. The other review types need an API key, which providers bill separately from a chat subscription."}},{"@type":"Question","name":"Does Bounty Operator see my API key?","acceptedAnswer":{"@type":"Answer","text":"The key passes through our server in memory for the one request it belongs to and goes to your provider’s endpoint. It is not written to the database or to logs."}},{"@type":"Question","name":"What does your server add to my request?","acceptedAnswer":{"@type":"Answer","text":"The review instructions: the output format every review shares, and the method of the profile you picked. The three core profiles carry their method in the open, so their preview is the whole prompt. Every other profile is hosted: the preview shows the request that leaves your tab, with your focus, your context and the files, and the server adds the method before it goes to your provider."}},{"@type":"Question","name":"Who bills the model usage, and what does the US$10 pay for?","acceptedAnswer":{"@type":"Answer","text":"Your provider charges for the model. The US$10 pays for Bounty Operator: no daily limit, the Gauntlet, Panel review and 4 reviews running at once. Model usage is not included."}},{"@type":"Question","name":"What does the provider keep?","acceptedAnswer":{"@type":"Answer","text":"The provider processes the request under its own terms and retention settings. Read them for the key you use, and run a review only on material you are allowed to share with that provider."}},{"@type":"Question","name":"Which key does Panel review use?","acceptedAnswer":{"@type":"Answer","text":"One OpenRouter key covers a whole panel: it reaches models from several labs, so two to four different models review the same files. A panel model on another provider takes that provider’s own key."}}]}</script>
 </head>
 <body>
+<!--
+THESIS: The verdict is a stamp on your draft. The site is the inspection a finding passes before a triager sees it, not the category's dark code-card hero.
+OWN-WORLD: Inspection paperwork. Canary and white stock, black print, violet stamp ink, carbon indigo for code and the night shift. Ruled fields, square corners, part rules, ledger tables. Archivo condensed caps for labels and stamps; mono only for code and typed entries.
+STORY: A hunter sees a Critical stamped down to Medium with the line that decides it, trusts that the review argues against them, and starts a review or opens the example.
+FIRST VIEWPORT: Full-bleed canary field. Left: condensed black headline, lede, black Review my report, ruled View example. Right: the paper slip, tilted, Critical struck, Medium and the violet verdict stamped on it. Proof line on the field's foot.
+FORM: Rubber-stamp verdicts and inspection forms, 6 of 7, seed b5682f59.
+FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md
+-->
 <a class="skip-link" href="#main">Skip to content</a>
 <header class="site-header">
 <div class="wrap site-header__inner">
-<a class="brand" href="/"><svg class="brand__mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect class="brand__tile" width="64" height="64" rx="14"/><path class="brand__glyph" d="M12.5 15h6.5v31.5h-6.5z"/><path class="brand__glyph" fill-rule="evenodd" d="M25.5 25a10.75 10.75 0 1 0 0 21.5a10.75 10.75 0 0 0 0-21.5zm0 6.25a4.5 4.5 0 1 1 0 9a4.5 4.5 0 0 1 0-9z"/><path class="brand__slash" d="M45.5 13h6.25l-8.6 37.5h-6.25z"/></svg><span class="brand__name">Bounty Operator</span></a>
+<a class="brand" href="/"><svg class="brand__mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect class="brand__tile" width="64" height="64" rx="9"/><path class="brand__glyph" d="M12.5 15h6.5v31.5h-6.5z"/><path class="brand__glyph" fill-rule="evenodd" d="M25.5 25a10.75 10.75 0 1 0 0 21.5a10.75 10.75 0 0 0 0-21.5zm0 6.25a4.5 4.5 0 1 1 0 9a4.5 4.5 0 0 1 0-9z"/><path class="brand__slash" d="M45.5 13h6.25l-8.6 37.5h-6.25z"/></svg><span class="brand__name">Bounty Operator</span></a>
 <nav class="site-nav" aria-label="Main"><ul><li><a href="/#workspace">Review</a></li><li><a href="/benchmark">Benchmark</a></li><li><a href="/tools">Tools</a></li><li><a href="/guide">Guide</a></li><li><a href="/pricing">Pricing</a></li></ul></nav>
 <div class="site-header__actions">
 <button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch colour theme"><span class="icon theme-toggle__icon" aria-hidden="true"></span></button>
@@ -48,12 +57,12 @@
 <main id="main" tabindex="-1">
 
 
-<section class="lp-hero wrap lp-hero--split">
-  <nav class="breadcrumbs" aria-label="Breadcrumb"><ol><li><a href="/">Bounty Operator</a></li><li aria-current="page">Your model, your key</li></ol></nav>
+<section class="lp-hero wrap page-field lp-hero--split">
+  
   <div class="lp-hero__grid">
     <div class="lp-hero__text">
-      <p class="eyebrow">Bring your own model</p>
       <h1>Your model, your key: where your code goes</h1>
+      
       <p class="lede">A review runs on the model you choose, under your own API key: OpenRouter, Anthropic, OpenAI, Google Gemini, xAI, DeepSeek, Mistral or Groq. Your files and your key pass through our server in memory. It adds the review method and sends the request to that provider. Bounty Operator stores no code, no prompts, no keys and no results.</p>
       <div class="cluster lp-hero__actions"><a class="btn btn--primary btn--lg" href="/#workspace"><span class="btn__label">Start a review</span><span class="icon icon--arrow-right" aria-hidden="true"></span></a><a class="btn btn--secondary btn--lg" href="#providers"><span class="btn__label">See the providers</span></a></div>
       <p class="fine lp-hero__note">No API key? Code security, Solidity and draft-report reviews also work in ChatGPT or Claude, with no daily limit.</p>
@@ -171,11 +180,12 @@
 </nav>
 </section>
 </main>
-<footer class="site-footer">
+<footer class="site-footer theme-dark">
 <div class="wrap site-footer__grid">
 <div class="site-footer__brand">
-<a class="brand" href="/"><svg class="brand__mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect class="brand__tile" width="64" height="64" rx="14"/><path class="brand__glyph" d="M12.5 15h6.5v31.5h-6.5z"/><path class="brand__glyph" fill-rule="evenodd" d="M25.5 25a10.75 10.75 0 1 0 0 21.5a10.75 10.75 0 0 0 0-21.5zm0 6.25a4.5 4.5 0 1 1 0 9a4.5 4.5 0 0 1 0-9z"/><path class="brand__slash" d="M45.5 13h6.25l-8.6 37.5h-6.25z"/></svg><span class="brand__name">Bounty Operator</span></a>
+<a class="brand" href="/"><svg class="brand__mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect class="brand__tile" width="64" height="64" rx="9"/><path class="brand__glyph" d="M12.5 15h6.5v31.5h-6.5z"/><path class="brand__glyph" fill-rule="evenodd" d="M25.5 25a10.75 10.75 0 1 0 0 21.5a10.75 10.75 0 0 0 0-21.5zm0 6.25a4.5 4.5 0 1 1 0 9a4.5 4.5 0 0 1 0-9z"/><path class="brand__slash" d="M45.5 13h6.25l-8.6 37.5h-6.25z"/></svg><span class="brand__name">Bounty Operator</span></a>
 <p class="site-footer__promise">Find the hole in your report before the triager does.</p>
+<p class="site-footer__cta"><a class="btn btn--primary" href="/?profile=report#workspace"><span class="btn__label">Review my report</span><span class="icon icon--arrow-right" aria-hidden="true"></span></a></p>
 </div>
 <nav class="site-footer__col" aria-label="Product"><h2 class="site-footer__title">Product</h2><ul><li><a href="/#workspace">Review a report</a></li><li><a href="/benchmark">Benchmark</a></li><li><a href="/tools">Free tools</a></li><li><a href="/pricing">Pricing</a></li><li><a href="/#account">Account</a></li></ul></nav>
 <nav class="site-footer__col" aria-label="Resources"><h2 class="site-footer__title">Resources</h2><ul><li><a href="/guide">Report guide</a></li><li><a href="/mcp">MCP setup</a></li><li><a href="/method">Review method</a></li><li><a href="/templates">Report templates</a></li><li><a href="/changelog">Changelog</a></li><li><a href="https://github.com/bountyoperator/bounty-operator" target="_blank" rel="noopener noreferrer">Source<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></li></ul></nav>

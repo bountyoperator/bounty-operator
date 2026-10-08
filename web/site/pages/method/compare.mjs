@@ -243,7 +243,6 @@ const sourceList = html`
 const body = html`
 ${pageHero({
   trail: [{ label: 'Bounty Operator', href: '/' }, { label: 'Compare' }],
-  eyebrow: 'Compare',
   title: 'Bounty Operator vs a chat app, a local audit skill and platform pre-checks',
   lede: 'Four ways to check a finding before you file it, and seven tools that cover part of the same ground. The tables say what each one gives you: pinned inputs and hashes, method, counterargument, verdict, cost shape and privacy. Facts about other products are numbered, linked and dated.',
   actions: html`${button({ label: 'Start a free review', href: workbenchLink(), variant: 'primary', size: 'lg', iconEnd: 'arrow-right' })}${button({ label: 'Read the method', href: '/method', size: 'lg' })}`,

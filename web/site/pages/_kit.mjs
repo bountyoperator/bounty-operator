@@ -193,7 +193,7 @@ function swatch(token, note) {
 const findingSection = kitSection(
   'finding',
   'Finding card',
-  'One file, two findings. The spine is blue where a row is backed by the supplied source and amber where something is still unproven.',
+  'One file, two findings. The spine is violet where a row is backed by the supplied source and ochre where something is still unproven.',
   html`
   <div class="stack stack--24">
     ${dossier({
@@ -212,7 +212,7 @@ const findingSection = kitSection(
       ${findingCard(unratedFinding)}
     </div>
     ${demo(
-      'Always dark, with the hero glow: .theme-dark .finding--glow',
+      'Always dark, lifted like a loose sheet: .theme-dark .finding--glow',
       findingCard(unratedFinding, { id: 'hero-f-3', rows: ['impact', 'counter', 'next'], className: 'theme-dark finding--glow' }),
     )}
   </div>`,
@@ -500,7 +500,7 @@ const tablesSection = kitSection(
 const codeSection = kitSection(
   'code',
   'Code',
-  'Navy in both themes. Line numbers are not selectable and stay put while a long line scrolls.',
+  'Carbon in both themes. Line numbers are not selectable and stay put while a long line scrolls.',
   html`
   <div class="stack stack--24">
     ${codeBlock({ code: 'forge test --match-test test_freshStakerEarnsNothingAtStake -vvv', numbers: false, copy: true, label: 'Test command' })}
@@ -618,18 +618,19 @@ const cardsSection = kitSection(
 const tokensSection = kitSection(
   'tokens',
   'Tokens',
-  'Every colour on the site is one of these. Blue is observed. Amber is unproven.',
+  'Every colour on the site is one of these. Canary is the stock a page head is printed on. Violet is stamp ink: observed, links, focus. Ochre is unproven.',
   html`
   <div class="stack stack--24">
     ${demo(
-      'Surfaces and lines',
+      'Paper, stock and rules',
       html`<ul class="swatches">
-        ${swatch('bg', 'Page')}${swatch('surface', 'Cards, inputs')}${swatch('surface-2', 'Bars, wells')}
+        ${swatch('bg', 'Page')}${swatch('surface', 'Cards, inputs')}${swatch('surface-2', 'Bars, office-use boxes')}
+        ${swatch('field', 'Page head field')}${swatch('stock', 'Canary stock')}${swatch('rule', 'Printed rules')}
         ${swatch('line', 'Hairlines')}${swatch('line-strong', 'Emphasis')}${swatch('line-control', 'Control borders')}
       </ul>`,
     )}
     ${demo(
-      'Ink, blue and amber',
+      'Ink, violet and ochre',
       html`<ul class="swatches">
         ${swatch('text', 'Body ink')}${swatch('muted', 'Secondary ink')}${swatch('accent', 'Observed, links')}
         ${swatch('accent-solid', 'Primary button')}${swatch('gap', 'Unproven')}${swatch('gap-bg', 'Unproven fill')}
@@ -652,12 +653,12 @@ const tokensSection = kitSection(
 const typeSection = kitSection(
   'type',
   'Type',
-  'System fonts. 12px is the floor. Display runs at 650 weight with tight tracking; metadata is mono, uppercase.',
+  'Archivo, self-hosted and variable: condensed and heavy for the display and stamps, semi-condensed for headings and printed labels. Running text uses the system face. Mono is for code, paths and hashes only. 12px is the floor.',
   html`
   <div class="specimen">
-    <div class="specimen__row"><span class="meta">Display 64</span><p class="display">Find the hole first.</p></div>
-    <div class="specimen__row"><span class="meta">H1 40</span><p class="h1">Challenge a draft report</p></div>
-    <div class="specimen__row"><span class="meta">H2 28</span><p class="h2">What a triager checks first</p></div>
+    <div class="specimen__row"><span class="meta">Display 88</span><p class="display">Find the hole first.</p></div>
+    <div class="specimen__row"><span class="meta">H1 52</span><p class="h1">Challenge a draft report</p></div>
+    <div class="specimen__row"><span class="meta">H2 38</span><p class="h2">What a triager checks first</p></div>
     <div class="specimen__row"><span class="meta">H3 22</span><p class="h3">A first stake is credited with the whole reward history</p></div>
     <div class="specimen__row"><span class="meta">H4 18</span><p class="h4">Counterargument, resolved</p></div>
     <div class="specimen__row"><span class="meta">Lede 18</span><p class="lede">The AI argues against the finding. The hunter writes the report.</p></div>

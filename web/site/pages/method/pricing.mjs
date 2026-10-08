@@ -94,7 +94,7 @@ ${pageHero({
       ])}
       <div class="plan__cta">${button({ label: 'Run today’s free review', href: workbenchLink(), variant: 'secondary', size: 'lg', block: true })}</div>
     </article>
-    <article class="plan plan--accent" aria-labelledby="plan-operator">
+    <article class="plan plan--accent on-stock" aria-labelledby="plan-operator">
       <div class="plan__head">
         <h3 class="plan__name" id="plan-operator">Operator</h3>
       </div>

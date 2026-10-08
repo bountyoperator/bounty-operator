@@ -89,7 +89,7 @@ export function localLine() {
 /** Breadcrumbs, the one h1, the lede and the local line. */
 export function toolHead({ path, lede }) {
   const entry = tool(path);
-  return html`<header class="tool-head">
+  return html`<header class="tool-head page-field">
 ${breadcrumbs([HOME_CRUMB, { label: 'Tools', href: '/tools' }, { label: entry.name }])}
 <h1>${entry.heading}</h1>
 <p class="lede">${lede}</p>
@@ -98,12 +98,16 @@ ${localLine()}
 }
 
 /**
- * The frame around the interactive part: a window bar, then the body.
- * `name` is the file-like label in the bar, `tag` the text at its right edge.
+ * The frame around the interactive part: the form's head, then the body.
+ * The head prints the tool's form number (its place in TOOLS) and name;
+ * `tag` is the text at its right edge. `name` names a tool that is not in TOOLS.
  */
 export function toolPanel({ id, name, tag = 'Local', body, className }) {
+  const index = TOOLS.findIndex((entry) => entry.path === `/tools/${id}`);
+  const title = index >= 0 ? TOOLS[index].name : name;
+  const form = index >= 0 ? `Form ${String(index + 1).padStart(2, '0')}` : null;
   return html`<div${attrs({ class: cx('tool-panel', className), id })}>
-<div class="tool-panel__bar">${icon('terminal')}<span class="tool-panel__name">${name}</span><span class="tool-panel__tag">${tag}</span></div>
+<div class="tool-panel__bar">${form && html`<span class="tool-panel__form">${form}</span>`}<span class="tool-panel__name">${title}</span><span class="tool-panel__tag">${tag}</span></div>
 <div class="tool-panel__body">${body}</div>
 </div>`;
 }
@@ -142,7 +146,7 @@ export function relatedTools(path) {
 /** The closing action: one sentence, one primary button, one quiet link. */
 export function nextAction({ title, text, primary, secondary }) {
   return html`<section class="section section--tight wrap" aria-labelledby="next-action">
-<div class="tool-next">
+<div class="tool-next on-stock">
 <div class="tool-next__text">
 <h2 class="h3" id="next-action">${title}</h2>
 <p>${text}</p>

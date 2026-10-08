@@ -1,160 +1,103 @@
 @charset "UTF-8";
 
 /*
-  Bounty Operator: home page
+  Bounty Operator: the home page (web/site/pages/index.mjs)
 
-  Loaded after base.css. Every colour, size and radius is a token from there.
-  The page module is web/site/pages/index.mjs; the rendered example in the hero
-  (and on the social card) is web/site/social/example.mjs.
+  Loaded after base.css, and by the social card (web/site/social). Every value
+  comes from the base tokens.
 
-   1. Hero
-   2. The rendered example
-   3. Proof strip
-   4. How it works
-   5. Bands and the workbench slot
-   6. The gauntlet
-   7. What you get
-   8. Your model
-   9. Free tools
-  10. Pricing
-  11. Questions
+  1. The hero on the field, and the report slip
+  2. Three steps
+  3. The five verdicts
+  4. The workbench fallback
+  5. The benchmark strip
+  6. Resources
+  7. Pricing
+  8. Questions
 */
 
 /* ==========================================================================
-   1. Hero
+   1. The hero on the field, and the report slip
    ========================================================================== */
 
-/* One column on a phone: the pitch, the rendered example, the proof strip.
-   From 64em the example takes the right column and the proof strip sits under
-   the pitch, so all three share the first screen. */
 .home-top {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: var(--sp-24);
-  padding-block: var(--sp-24) var(--sp-48);
+  padding-top: clamp(var(--sp-24), 2.8vw, var(--sp-48));
 }
 
-.home-hero > * + * {
-  margin-top: var(--sp-16);
+/* On a phone the page reads headline, lede, action, then the stamped slip,
+   so the verdict lands in the first screen; the note and the links follow
+   the slip. The text block steps aside (display: contents) and its parts
+   take their places. */
+.home-hero {
+  display: flex;
+  flex-direction: column;
+}
+
+.home-hero__text {
+  display: contents;
 }
 
 .home-hero__title {
-  margin-top: var(--sp-12);
-}
-
-.home-hero__lede {
-  font-size: var(--fs-16);
+  order: 1;
+  max-width: 11ch;
 }
 
 .home-hero__actions {
+  order: 3;
   display: flex;
   flex-wrap: wrap;
   gap: var(--sp-12);
   margin-top: var(--sp-24);
 }
 
-.home-hero__actions .btn {
-  flex: 1 1 auto;
+.home-hero__shot {
+  order: 4;
+  min-width: 0;
+  margin-top: var(--sp-32);
 }
 
-/* Both actions share one row on a phone. */
-@media (max-width: 29.99em) {
-  .home-hero__actions .btn {
-    padding-inline: var(--sp-12);
-    font-size: var(--fs-14);
-  }
+.home-hero__lede {
+  order: 2;
+  max-width: 36rem;
+  margin-top: var(--sp-16);
 }
 
 .home-hero__note {
+  order: 5;
   margin-top: var(--sp-12);
   color: var(--muted);
   font-size: var(--fs-13);
-  line-height: 1.5;
 }
 
 .home-hero__links {
+  order: 6;
   display: flex;
   flex-wrap: wrap;
   gap: var(--sp-8) var(--sp-24);
+  margin-top: var(--sp-8);
+  font-family: var(--font-display);
   font-size: var(--fs-14);
+  font-stretch: 90%;
+  font-weight: 700;
 }
 
-.home-hero__links a {
+.home-hero__links .link {
   display: inline-flex;
   align-items: center;
-  min-height: 2rem;
+  min-height: var(--tap);
 }
 
-.home-resources {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
-  gap: var(--sp-24);
-}
-
-.home-resources li {
-  display: grid;
-  align-content: start;
-  gap: var(--sp-8);
-  padding-top: var(--sp-16);
-  border-top: 1px solid var(--line);
-}
-
-.home-resources a {
-  min-height: 2rem;
-  font-weight: 650;
-}
-
-.home-resources span {
-  color: var(--muted);
-  font-size: var(--fs-14);
-}
-
-.home-hero__price {
-  margin-top: var(--sp-12);
-  padding-top: var(--sp-12);
-  border-top: 1px solid var(--line);
-  font-size: var(--fs-14);
-  font-weight: 600;
-  line-height: 1.5;
-  text-wrap: pretty;
-}
-
-@media (min-width: 40em) {
-  .home-hero__lede {
-    font-size: var(--fs-18);
-  }
-
-  .home-hero__actions .btn {
-    flex: none;
-  }
-}
-
-@media (min-width: 64em) {
-  .home-top {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1.06fr);
-    grid-template-rows: auto 1fr;
-    grid-template-areas:
-      "pitch shot"
-      "proof shot";
-    align-items: start;
-    gap: var(--sp-32) var(--sp-48);
-    padding-block: var(--sp-32) var(--sp-24);
-  }
-
+/* From a tablet's width the text and the slip stand side by side. */
+@media (min-width: 60em) {
   .home-hero {
-    grid-area: pitch;
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+    gap: var(--sp-72);
+    align-items: center;
   }
 
-  .home-top__shot {
-    grid-area: shot;
-  }
-
-  .home-proof {
-    grid-area: proof;
-  }
-
-  .home-hero__title {
-    margin-top: var(--sp-16);
+  .home-hero__text {
+    display: block;
   }
 
   .home-hero__lede {
@@ -165,761 +108,563 @@
     margin-top: var(--sp-32);
   }
 
-  .home-hero__price {
-    margin-top: var(--sp-16);
-    padding-top: var(--sp-16);
+  .home-hero__shot {
+    margin-top: 0;
   }
 }
 
-/* ==========================================================================
-   2. The rendered example
-   ========================================================================== */
-
-/* A verdict banner over one finding card. Dark in both themes (.theme-dark on
-   the element), never rotated. The same markup is drawn on the social card. */
-.home-shot {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: var(--sp-12);
-  padding: var(--sp-12);
-  border: 1px solid var(--line);
-  border-radius: var(--r-hero);
-  background: var(--bg);
-  box-shadow: 0 40px 80px -40px color-mix(in srgb, var(--accent-solid) 40%, transparent);
-}
-
-.home-shot__banner {
-  overflow: hidden;
-  border: 1px solid var(--line);
-  border-radius: var(--r-card);
-  background: var(--surface);
-  box-shadow: var(--shadow-card);
-}
-
-/* The frame is stamped as an example on its top edge. It is also the
-   container its contents size against. */
-.home-shot {
-  position: relative;
-  container: home-shot / inline-size;
-}
-
-.home-shot__stamp {
-  position: absolute;
-  top: calc(-0.75rem - 1px);
-  right: var(--sp-24);
-  display: flex;
-}
-
-.home-shot__stamp .chip {
-  background: var(--bg);
-}
-
-/* The cut: what the draft claims, struck, and what the code supports. */
-.home-cut {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--sp-8) 0.625rem;
-  padding: var(--sp-12) var(--sp-16);
-  border-bottom: 1px solid var(--line);
-  background: var(--surface-2);
-}
-
-.home-cut__side {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--sp-8);
-}
-
-.home-cut .meta {
-  color: var(--text);
-}
-
-.home-cut .chip {
-  min-height: 1.75rem;
-  padding-inline: 0.625rem;
-  font-size: var(--fs-13);
-  font-weight: 700;
-}
-
-.home-cut__claimed {
-  text-decoration: none;
-}
-
-.home-cut__claimed .chip {
-  text-decoration: line-through;
-  text-decoration-thickness: 2px;
-}
-
-.home-cut__arrow {
+/* The proof line sits on the foot of the field, under a printed rule. */
+.home-proof {
+  margin-top: var(--sp-32);
+  padding-block: var(--sp-16) var(--sp-24);
+  border-top: 1px solid var(--rule);
   color: var(--muted);
-}
-
-/* " claims" and " supports" show once the frame is wide enough for one line.
-   The frame, not the viewport, decides: it is narrow beside the pitch at 64em. */
-.home-cut__more {
-  display: none;
-}
-
-@container home-shot (min-width: 30em) {
-  .home-cut {
-    gap: var(--sp-8) var(--sp-12);
-  }
-
-  .home-cut__more {
-    display: inline;
-  }
-
-  .home-cut .chip {
-    min-height: 2rem;
-    padding-inline: var(--sp-12);
-    font-size: var(--fs-14);
-  }
-}
-
-/* Inside the banner the dossier is one column and has no frame of its own. */
-.home-shot__banner .dossier {
-  grid-template-columns: minmax(0, 1fr);
-  align-items: start;
-  gap: var(--sp-12);
-  padding: var(--sp-16);
-  border: 0;
-  border-radius: 0;
-  background: none;
-  box-shadow: none;
-}
-
-.home-shot__banner .dossier__headline {
-  font-size: var(--fs-16);
-}
-
-/* The card is never wide enough here for the label margin, so it always uses
-   the stacked layout base.css gives it on a phone: label above its content,
-   spine on the card's inner margin. */
-.home-shot .finding {
-  --spine-x: var(--sp-16);
-}
-
-.home-shot .finding__bar {
-  padding-left: var(--sp-16);
-}
-
-.home-shot .finding__head {
-  padding: var(--sp-16);
-}
-
-.home-shot .finding__title {
-  font-size: var(--fs-18);
-}
-
-.home-shot .rail {
-  grid-template-columns: minmax(0, 1fr);
-}
-
-.home-shot .rail__label {
-  padding: var(--sp-12) var(--sp-16) 0 var(--sp-32);
-}
-
-.home-shot .rail__body {
-  padding: var(--sp-4) var(--sp-16) var(--sp-12) var(--sp-32);
-}
-
-.home-shot .rail__answer {
-  grid-template-columns: minmax(0, 1fr);
-  gap: var(--sp-8);
-  justify-items: start;
-}
-
-/* Beside the pitch on a short screen the card ends on the counterargument, so
-   the whole of it fits the first screen. Taller screens and the one-column
-   layout show the next action too. */
-@media (min-width: 64em) and (max-height: 61.99em) {
-  .home-top .rail[data-rail="next"] {
-    display: none;
-  }
-}
-
-.home-shot__caption {
-  padding-inline: var(--sp-4);
-  color: var(--muted);
-  font-size: var(--fs-12);
-  line-height: 1.5;
-}
-
-.home-shot__source {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--sp-8);
-  padding: var(--sp-12) var(--sp-4);
-}
-
-.home-shot__source .ref {
-  min-width: 0;
-  max-width: 100%;
-}
-
-/* ==========================================================================
-   3. Proof strip
-   ========================================================================== */
-
-.home-proof__list {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, auto));
-  justify-content: start;
-  gap: var(--sp-16) var(--sp-32);
-}
-
-.home-proof__item {
-  display: grid;
-  gap: 0.125rem;
-  align-content: start;
-}
-
-.home-proof__item--wide {
-  grid-column: 1 / -1;
-}
-
-.home-proof__value {
-  font-size: var(--fs-18);
-  font-weight: 650;
-  line-height: 1.35;
-  letter-spacing: -0.01em;
-  font-variant-numeric: tabular-nums;
-}
-
-.home-proof__link {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  justify-self: start;
-  text-decoration: underline;
-  text-decoration-color: var(--line-strong);
-  transition:
-    color var(--t-fast),
-    text-decoration-color var(--t-fast);
-}
-
-.home-proof__link:hover {
-  color: var(--accent);
-  text-decoration-color: currentColor;
-}
-
-.home-proof__link .icon {
-  width: 0.875em;
-  height: 0.875em;
-  color: var(--muted);
-}
-
-@media (pointer: coarse) {
-  .home-proof__link {
-    min-height: var(--tap);
-  }
-}
-
-@media (max-width: 23.99em) {
-  .home-proof__list {
-    gap: var(--sp-12) var(--sp-16);
-  }
-
-  .home-proof__value {
-    font-size: var(--fs-16);
-  }
-}
-
-/* ==========================================================================
-   4. How it works
-   ========================================================================== */
-
-/* Three numbered points in the ledger voice: a hairline, a mono index, a
-   title, a line. */
-.home-steps {
-  counter-reset: home-step;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: var(--sp-24);
-}
-
-.home-steps__item {
-  counter-increment: home-step;
-  padding-top: var(--sp-16);
-  border-top: 1px solid var(--line-strong);
-}
-
-.home-steps__item::before {
-  content: counter(home-step, decimal-leading-zero);
-  display: block;
-  margin-bottom: var(--sp-12);
-  color: var(--accent);
-  font: 600 var(--fs-12) / 1.4 var(--font-mono);
-  letter-spacing: 0.06em;
-}
-
-.home-steps__title {
-  font-size: var(--fs-18);
-  line-height: 1.35;
-  letter-spacing: -0.01em;
-}
-
-.home-steps__text {
-  max-width: 44ch;
-  margin-top: var(--sp-8);
-  color: var(--muted);
+  font-size: var(--fs-14);
   line-height: 1.6;
   text-wrap: pretty;
 }
 
-@media (min-width: 48em) {
-  .home-steps {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: var(--sp-32);
-  }
+/* The slip: the draft's header as typed, marked by the review. Paper in both
+   themes (the slip carries .theme-light), lying slightly askew on the field
+   over its pink carbon copy. */
+.home-shot {
+  display: grid;
+  margin: 0;
+  background: transparent;
 }
 
-/* ==========================================================================
-   5. Bands and the workbench slot
-   ========================================================================== */
+/* The second sheet of the set, the pink copy, showing under the white one. */
+.home-shot::before {
+  content: "";
+  grid-area: 1 / 1;
+  border: 1px solid var(--rule);
+  border-radius: var(--r-card);
+  background: var(--copy);
+  transform: translate(0.75rem, 0.875rem) rotate(1.75deg);
+}
 
-/* A full-width band sets the gauntlet and the pricing apart from the page. */
-.home-band {
-  border-block: 1px solid var(--line);
+.slip {
+  position: relative;
+  grid-area: 1 / 1;
+  padding: var(--sp-16) 1.25rem 1.25rem;
+  border: 1px solid var(--rule);
+  border-radius: var(--r-card);
   background: var(--surface);
+  box-shadow: var(--shadow-slip);
+  color: var(--text);
+  transform: rotate(-1.25deg);
 }
 
-.home-band__actions {
-  margin-top: var(--sp-32);
-}
-
-/* A link that stands on its own line is a full touch target. */
-@media (pointer: coarse) {
-  .home-more {
-    display: inline-flex;
-    align-items: center;
-    min-height: var(--tap);
-  }
-}
-
-/* The workbench is a fragment owned by the app. Until it is written the slot
-   keeps the #workspace anchor and takes no room. */
-.home-workbench:empty {
-  height: 0;
-}
-
-/* ==========================================================================
-   6. The gauntlet
-   ========================================================================== */
-
-/* Eight stages on one spine, in three groups: the gates that end a report, the
-   work, the decision. A column on small screens, one row from 70em. */
-.home-pipe {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: var(--sp-24);
-}
-
-.home-pipe__group {
-  --pipe: var(--accent);
-}
-
-.home-pipe__group[data-kind="gate"] {
-  --pipe: var(--gap);
-}
-
-.home-pipe__label {
+.slip__head {
   display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: var(--sp-4) var(--sp-12);
-  margin-bottom: var(--sp-12);
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-12);
+  padding-bottom: var(--sp-12);
+  border-bottom: var(--rule-w) solid var(--rule);
 }
 
-.home-pipe__label .meta {
-  color: var(--pipe);
+.slip__form {
+  font-family: var(--font-display);
+  font-size: var(--fs-14);
+  font-stretch: 72%;
+  font-weight: 860;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
 }
 
-.home-pipe__note {
-  color: var(--muted);
-  font-size: var(--fs-13);
-  line-height: 1.5;
-}
-
-.home-pipe__stages {
+.slip__fields {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   margin: 0;
 }
 
-.home-pipe__stage {
-  position: relative;
-  padding: 0 0 var(--sp-16) 2.75rem;
+.slip__field {
+  min-width: 0;
+  padding: 0.625rem 0 0.75rem;
+  border-bottom: 1px solid var(--line);
 }
 
-/* The spine. */
-.home-pipe__stage::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: calc(0.875rem - 1px);
-  width: 2px;
-  background: var(--pipe);
+.slip__field--wide {
+  grid-column: 1 / -1;
 }
 
-.home-pipe__stage:last-child {
-  padding-bottom: 0;
+/* The second of two half fields sits behind a printed column rule. */
+.slip__field:not(.slip__field--wide) + .slip__field:not(.slip__field--wide) {
+  padding-left: var(--sp-16);
+  border-left: 1px solid var(--line);
 }
 
-/* The run ends at the verdict: no spine beyond its marker. */
-.home-pipe__group[data-kind="verdict"] .home-pipe__stage::before {
-  display: none;
-}
-
-.home-pipe__n {
-  position: absolute;
-  top: 0;
-  left: 0;
-  display: grid;
-  place-items: center;
-  width: 1.75rem;
-  height: 1.75rem;
-  border: 2px solid var(--pipe);
-  border-radius: 50%;
-  background: var(--surface);
-  color: var(--text);
-  font: 600 var(--fs-12) / 1 var(--font-mono);
-}
-
-.home-pipe__group[data-kind="verdict"] .home-pipe__n {
-  border-color: var(--accent-solid);
-  background: var(--accent-solid);
-  color: var(--on-accent);
-}
-
-.home-pipe__name {
-  font-size: var(--fs-16);
-  line-height: 1.75rem;
-  letter-spacing: -0.01em;
-}
-
-.home-pipe__text {
-  max-width: 52ch;
+.slip__field dt {
   color: var(--muted);
-  font-size: var(--fs-14);
-  line-height: 1.5;
-  text-wrap: pretty;
+  font-family: var(--font-display);
+  font-size: var(--fs-12);
+  font-stretch: 85%;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
 }
 
-@media (min-width: 70em) {
-  .home-pipe {
-    grid-template-columns: repeat(8, minmax(0, 1fr));
-    gap: 0;
-  }
-
-  .home-pipe__group[data-count="3"] {
-    grid-column: span 3;
-  }
-
-  .home-pipe__group[data-count="4"] {
-    grid-column: span 4;
-  }
-
-  .home-pipe__label {
-    min-height: 2.75rem;
-    align-content: start;
-    padding-right: var(--sp-16);
-  }
-
-  .home-pipe__stages {
-    grid-auto-flow: column;
-    grid-auto-columns: minmax(0, 1fr);
-    grid-template-columns: none;
-  }
-
-  .home-pipe__stage {
-    padding: 2.5rem var(--sp-16) 0 0;
-  }
-
-  .home-pipe__stage:last-child {
-    padding-bottom: 0;
-  }
-
-  .home-pipe__stage::before {
-    top: calc(0.875rem - 1px);
-    right: 0;
-    bottom: auto;
-    left: 0;
-    width: auto;
-    height: 2px;
-  }
-
-  /* The last segment of the spine runs into the verdict marker and stops. */
-  .home-pipe__group[data-kind="verdict"] .home-pipe__stage::before {
-    display: block;
-    right: auto;
-    width: 0.875rem;
-  }
-
-  .home-pipe__text {
-    font-size: var(--fs-13);
-  }
+.slip__field dd {
+  margin: var(--sp-4) 0 0;
 }
 
-/* The five verdicts the run can end on. */
-.home-verdicts__title {
-  margin-top: var(--sp-32);
-  padding-top: var(--sp-24);
-  border-top: 1px solid var(--line);
-}
-
-.home-verdicts {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: var(--sp-16);
-  margin-top: var(--sp-16);
-}
-
-.home-verdicts__row {
-  display: grid;
-  gap: var(--sp-8);
-  justify-items: start;
-  align-content: start;
-}
-
-.home-verdicts dd {
-  color: var(--muted);
+/* Typed entries: what the hunter wrote. */
+.slip__title {
+  font-family: var(--font-mono);
   font-size: var(--fs-13);
   line-height: 1.5;
   text-wrap: pretty;
 }
 
-@media (min-width: 40em) {
-  .home-verdicts {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--sp-24);
-  }
-}
-
-@media (min-width: 70em) {
-  .home-verdicts {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-  }
-}
-
-/* ==========================================================================
-   7. What you get
-   ========================================================================== */
-
-.home-gets {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: var(--sp-16);
-}
-
-.home-get {
-  padding: 1.25rem;
-  border: 1px solid var(--line);
-  border-radius: var(--r-card);
-  background: var(--surface);
-  box-shadow: var(--shadow-card);
-}
-
-/* A specimen of the thing the card describes, set like a line of the ledger. */
-.home-get__specimen {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--sp-8);
-  min-height: 2.5rem;
-  margin-bottom: var(--sp-16);
-  padding-bottom: var(--sp-12);
-  border-bottom: 1px dashed var(--line-strong);
-}
-
-.home-get__specimen .ref,
-.home-get__specimen .hash {
-  min-width: 0;
-}
-
-.home-get__title {
-  font-size: var(--fs-18);
-  line-height: 1.35;
-  letter-spacing: -0.01em;
-}
-
-.home-get__text {
-  max-width: 52ch;
-  margin-top: var(--sp-8);
-  color: var(--muted);
-  line-height: 1.6;
-  text-wrap: pretty;
-}
-
-@media (min-width: 48em) {
-  .home-gets {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--sp-24);
-  }
-
-  .home-get {
-    padding: var(--sp-24);
-  }
-}
-
-/* ==========================================================================
-   8. Your model
-   ========================================================================== */
-
-.home-providers {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-8);
-}
-
-.home-providers .chip {
-  min-height: 1.75rem;
-  color: var(--text);
-}
-
-.home-paths {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: var(--sp-16);
-  margin-top: var(--sp-24);
-}
-
-.home-path {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-12);
-  min-width: 0;
-  padding: 1.25rem;
-  border: 1px solid var(--line);
-  border-radius: var(--r-card);
-  background: var(--surface);
-  box-shadow: var(--shadow-card);
-}
-
-.home-path__title {
-  display: flex;
-  align-items: center;
-  gap: 0.625rem;
-  font-size: var(--fs-18);
-  line-height: 1.35;
-  letter-spacing: -0.01em;
-}
-
-.home-path__title .icon {
-  color: var(--accent);
-}
-
-.home-path__text {
-  color: var(--muted);
-  line-height: 1.6;
-  text-wrap: pretty;
-}
-
-/* The action sits on the card's last line, whatever the text length. */
-.home-path__action {
-  margin-top: auto;
-  font-size: var(--fs-14);
-}
-
-@media (min-width: 60em) {
-  .home-paths {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.3fr);
-    gap: var(--sp-24);
-  }
-
-  .home-path {
-    padding: var(--sp-24);
-  }
-}
-
-/* ==========================================================================
-   9. Free tools
-   ========================================================================== */
-
-.home-tools {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: var(--sp-12);
-}
-
-/* The whole card is the link. */
-.home-tool {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-8);
-  height: 100%;
-  padding: var(--sp-16) 2.75rem var(--sp-16) var(--sp-16);
-  border: 1px solid var(--line);
-  border-radius: var(--r-card);
-  background: var(--surface);
-  box-shadow: var(--shadow-card);
-  text-decoration: none;
-  transition:
-    border-color var(--t-fast),
-    background-color var(--t-fast);
-}
-
-.home-tool:hover {
-  border-color: var(--accent);
-}
-
-.home-tool__name {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-8);
-  font-weight: 650;
-  line-height: 1.4;
-  letter-spacing: -0.01em;
-}
-
-.home-tool__name .icon {
-  color: var(--accent);
-}
-
-.home-tool__text {
-  color: var(--muted);
+.slip__headline {
+  max-width: 46ch;
   font-size: var(--fs-14);
   line-height: 1.55;
   text-wrap: pretty;
 }
 
-.home-tool__go {
+/* Critical, struck through with a pen: one stroke in violet ink, drawn once
+   (/stamps/strike.svg, a mask, so it takes the ink colour). */
+.slip__claimed {
+  position: relative;
+  display: inline-block;
+  text-decoration: none;
+}
+
+.slip__claimed::after {
+  content: "";
   position: absolute;
-  top: var(--sp-16);
-  right: var(--sp-16);
+  top: 50%;
+  right: -0.5rem;
+  left: -0.5rem;
+  height: 1rem;
+  background: var(--accent);
+  transform: translateY(-50%) rotate(-3deg);
+  -webkit-mask: url("../stamps/strike.svg") center / 100% 100% no-repeat;
+  mask: url("../stamps/strike.svg") center / 100% 100% no-repeat;
+}
+
+/* Medium, stamped beside it: its impression is /stamps/sev-medium.webp. */
+.slip__supported .sev--stamp {
+  font-size: var(--fs-14);
+}
+
+/* The source field prints the line that decides it, under its reference. */
+.slip__field--source dd {
+  display: grid;
+  justify-items: start;
+  gap: var(--sp-8);
+}
+
+.slip__code {
+  width: 100%;
+}
+
+.slip__code .code__pre {
+  padding-block: 0.375rem;
+  font-size: var(--fs-12);
+  line-height: 1.5;
+}
+
+/* The verdict box: the shaded box a form keeps for the inspector, stamped
+   and dated. */
+.slip__field--verdict {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--sp-16);
+  margin: var(--sp-8) -1.25rem -1.25rem;
+  padding: var(--sp-16) 1.25rem 1.125rem;
+  border-top: 1px solid var(--rule);
+  border-bottom: 0;
+  background: var(--surface-2);
+}
+
+.slip__field--verdict dd {
+  margin: 0;
+}
+
+.slip__stamp {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-8) var(--sp-16);
+}
+
+.slip__stamp .verdict--lg {
+  --stamp-tilt: -4deg;
+  font-size: 1.5rem;
+  mix-blend-mode: multiply;
+}
+
+/* The dater: when the stored review was written, and by which model. */
+.slip__dater {
   color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: var(--fs-12);
   line-height: 1.4;
-  transition:
-    color var(--t-fast),
-    transform var(--t-fast) var(--ease);
 }
 
-.home-tool:hover .home-tool__go {
-  color: var(--accent);
-  transform: translateX(2px);
+.home-shot__stamp {
+  margin: 0;
 }
 
-@media (min-width: 40em) {
-  .home-tools {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--sp-16);
+.home-shot__caption {
+  margin-top: var(--sp-24);
+  color: var(--muted);
+  font-size: var(--fs-13);
+}
+
+/* On a phone the slip leads with what decides it: the claim, the stamps and
+   the verdict, then the review and the line. The typed title is the draft's
+   own and stays in the markup. */
+@media (max-width: 39.99em) {
+  .home-hero__actions .btn--lg {
+    padding-inline: var(--sp-16);
+    font-size: var(--fs-16);
+  }
+
+  .slip {
+    padding-inline: var(--sp-16);
+    transform: rotate(-0.75deg);
+  }
+
+  .home-shot::before {
+    transform: translate(0.5rem, 0.625rem) rotate(1.25deg);
+  }
+
+  .slip__field--title {
+    display: none;
+  }
+
+  .slip__field--review {
+    order: 4;
+  }
+
+  .slip__field--source {
+    order: 5;
+    border-bottom: 0;
+  }
+
+  .slip__field--verdict {
+    order: 3;
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: start;
+    gap: var(--sp-8);
+    margin: 0 calc(-1 * var(--sp-16));
+    padding-inline: var(--sp-16);
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .slip__stamp {
+    justify-content: flex-start;
+  }
+
+  .slip__stamp .verdict--lg {
+    font-size: 1.25rem;
   }
 }
 
-@media (min-width: 64em) {
-  .home-tools {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+/* The one authored moment: the pen strike, then Medium, then the verdict. */
+@keyframes slip-strike {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .home-shot:not(.home-shot--still) .slip__claimed::after {
+    animation: slip-strike 260ms var(--ease-out) 380ms both;
+  }
+
+  .home-shot:not(.home-shot--still) .slip__supported .sev--stamp {
+    animation: stamp-land var(--t-stamp) var(--ease-out) 660ms both;
+  }
+
+  .home-shot:not(.home-shot--still) .slip__stamp .verdict--lg {
+    animation: stamp-land 480ms var(--ease-out) 1000ms both;
   }
 }
 
 /* ==========================================================================
-   10. Pricing
+   2. Three steps
    ========================================================================== */
 
+.home-steps {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  border-top: var(--rule-w) solid var(--rule);
+}
+
+.home-steps__item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-content: start;
+  column-gap: var(--sp-16);
+  padding-block: var(--sp-16) var(--sp-24);
+}
+
+.home-steps__item + .home-steps__item {
+  border-top: 1px solid var(--line);
+}
+
+.home-steps__n {
+  grid-row: span 2;
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: 3.25rem;
+  font-stretch: 66%;
+  font-weight: 880;
+  line-height: 0.82;
+  font-variant-numeric: tabular-nums;
+}
+
+.home-steps__title {
+  font-size: var(--fs-22);
+}
+
+.home-steps__text {
+  margin-top: var(--sp-4);
+  color: var(--muted);
+  font-size: var(--fs-14);
+  line-height: 1.55;
+}
+
+@media (min-width: 48em) {
+  .home-steps {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .home-steps__item {
+    padding-right: var(--sp-24);
+  }
+
+  .home-steps__item + .home-steps__item {
+    padding-left: var(--sp-24);
+    border-top: 0;
+    border-left: 1px solid var(--line);
+  }
+}
+
+/* ==========================================================================
+   3. The five verdicts
+   ========================================================================== */
+
+/* A rack of stamps. The 1px gaps show the ruled ground as the cell lines. */
+.home-verdicts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 13.5rem), 1fr));
+  gap: 1px;
+  border: 1px solid var(--rule);
+  background: var(--line);
+}
+
+.home-verdicts__item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-16);
+  padding: var(--sp-24) 1.25rem;
+  background: var(--surface);
+}
+
+/* Sized so the longest stamp, Rewrite, then submit, keeps inside its cell. */
+.home-verdicts .verdict--lg {
+  font-size: var(--fs-14);
+}
+
+.home-verdicts__text {
+  color: var(--muted);
+  font-size: var(--fs-14);
+  line-height: 1.55;
+}
+
+/* ==========================================================================
+   4. The workbench fallback
+   ========================================================================== */
+
+.home-workbench:empty {
+  display: none;
+}
+
+/* ==========================================================================
+   5. The benchmark strip
+   ========================================================================== */
+
+/* A results ledger: the head and the link on the left, the top places on the right. */
+.bench-teaser {
+  padding-block: var(--sp-48);
+}
+
+.bench-teaser__inner {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-24);
+  padding-top: var(--sp-16);
+  border-top: var(--rule-w) solid var(--rule);
+}
+
+.bench-teaser__head > * + * {
+  margin-top: var(--sp-8);
+}
+
+.bench-teaser__title {
+  max-width: 20ch;
+}
+
+.bench-teaser__table {
+  border: 1px solid var(--rule);
+  border-radius: var(--r-card);
+  background: var(--surface);
+}
+
+.bench-teaser__table > .fine {
+  padding: var(--sp-8) var(--sp-16);
+  border-top: 1px solid var(--line);
+}
+
+.bench-teaser__row {
+  display: grid;
+  grid-template-columns: 2.25rem minmax(0, 1fr) 4.5rem 5.5rem;
+  gap: var(--sp-12);
+  align-items: baseline;
+  padding: var(--sp-12) var(--sp-16);
+}
+
+.bench-teaser__list > .bench-teaser__row + .bench-teaser__row {
+  border-top: 1px solid var(--line);
+}
+
+.bench-teaser__labels {
+  padding-block: var(--sp-8);
+  border-bottom: var(--rule-w) solid var(--rule);
+  background: var(--surface-2);
+}
+
+.bench-teaser__labels > :nth-child(n + 3) {
+  text-align: right;
+}
+
+.bench-teaser__rank {
+  font-family: var(--font-display);
+  font-size: var(--fs-22);
+  font-stretch: 70%;
+  font-weight: 860;
+  line-height: 1;
+}
+
+.bench-teaser__name {
+  min-width: 0;
+  overflow: hidden;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bench-teaser__score {
+  font-family: var(--font-display);
+  font-size: var(--fs-22);
+  font-stretch: 75%;
+  font-weight: 820;
+  line-height: 1;
+  text-align: right;
+}
+
+.bench-teaser__cost {
+  color: var(--muted);
+  font-size: var(--fs-14);
+  text-align: right;
+}
+
+.bench-teaser__go {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-8);
+  min-height: var(--tap);
+  font-family: var(--font-display);
+  font-stretch: 90%;
+  font-weight: 760;
+}
+
+@media (min-width: 60em) {
+  .bench-teaser {
+    padding-block: var(--sp-72);
+  }
+
+  .bench-teaser__inner {
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+    grid-template-rows: auto 1fr;
+    column-gap: var(--sp-72);
+  }
+
+  .bench-teaser__head {
+    grid-column: 1;
+  }
+
+  .bench-teaser__table {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+  }
+
+  .bench-teaser__go {
+    grid-column: 1;
+    align-self: end;
+  }
+}
+
+@media (max-width: 29.99em) {
+  .bench-teaser__row {
+    grid-template-columns: 1.75rem minmax(0, 1fr) 3.75rem;
+  }
+
+  .bench-teaser__cost {
+    display: none;
+  }
+}
+
+/* ==========================================================================
+   6. Resources
+   ========================================================================== */
+
+.home-resources {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+  gap: var(--sp-24) var(--sp-32);
+}
+
+.home-resources li {
+  display: grid;
+  align-content: start;
+  gap: var(--sp-4);
+}
+
+.home-resources a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap);
+  justify-self: start;
+  font-family: var(--font-display);
+  font-size: var(--fs-18);
+  font-stretch: 88%;
+  font-weight: 780;
+}
+
+.home-resources span {
+  color: var(--muted);
+  font-size: var(--fs-14);
+}
+
+/* ==========================================================================
+   7. Pricing
+   ========================================================================== */
+
+/* The fee schedule: two plans side by side. Operator is printed on canary. */
 .home-plans {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -935,81 +680,78 @@
   display: flex;
   flex-direction: column;
   padding: var(--sp-24);
-  border: 1px solid var(--line-strong);
-  border-radius: var(--r-hero);
-  background: var(--bg);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-card);
+  background: var(--surface);
 }
 
-/* Operator: the observed colour on the frame and a tint behind it. */
-.home-plan--operator {
-  border-color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 7%, var(--bg));
-  box-shadow: var(--shadow);
-}
-
-.home-plan__head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--sp-12);
+.home-plan.on-stock {
+  background: var(--stock);
 }
 
 .home-plan__name {
+  padding-bottom: var(--sp-12);
+  border-bottom: var(--rule-w) solid var(--rule);
   font-size: var(--fs-22);
-  line-height: 1.25;
+  font-stretch: 80%;
+  font-weight: 860;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
-/* The amount and its cadence share one baseline. */
 .home-plan__price {
   display: flex;
-  flex-wrap: wrap;
   align-items: baseline;
-  gap: 0 var(--sp-8);
+  gap: var(--sp-8);
   margin-top: var(--sp-16);
 }
 
 .home-plan__amount {
-  font-size: var(--fs-40);
-  font-weight: 650;
-  line-height: 1.1;
-  letter-spacing: -0.03em;
+  font-family: var(--font-display);
+  font-size: var(--fs-64);
+  font-stretch: 68%;
+  font-weight: 880;
+  line-height: 0.9;
   font-variant-numeric: tabular-nums;
 }
 
 .home-plan__per {
   color: var(--muted);
+  font-family: var(--font-display);
   font-size: var(--fs-16);
+  font-stretch: 85%;
+  font-weight: 700;
 }
 
 .home-plan__for {
   margin-top: var(--sp-8);
-  padding-bottom: var(--sp-16);
-  border-bottom: 1px solid var(--line);
   color: var(--muted);
+  font-size: var(--fs-14);
 }
 
 .home-ticks {
   display: grid;
-  gap: 0.625rem;
-  margin-block: var(--sp-16) var(--sp-24);
+  margin-top: var(--sp-16);
   font-size: var(--fs-14);
   line-height: 1.5;
 }
 
-.home-ticks > li {
+.home-ticks li {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   gap: var(--sp-12);
-  align-items: start;
+  padding-block: var(--sp-8);
+  border-top: 1px solid var(--line);
 }
 
 .home-ticks .icon {
   margin-top: 0.2em;
-  color: var(--accent);
+  color: var(--text);
 }
 
 .home-plan__cta {
   margin-top: auto;
+  padding-top: var(--sp-24);
 }
 
 .home-plans__terms {
@@ -1021,6 +763,7 @@
   .home-plans {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: var(--sp-24);
+    max-width: 62rem;
   }
 
   .home-plan {
@@ -1029,100 +772,18 @@
 }
 
 /* ==========================================================================
-   11. Questions
+   8. Questions
    ========================================================================== */
 
 @media (min-width: 60em) {
   .home-faq {
     display: grid;
-    grid-template-columns: 18rem minmax(0, 1fr);
-    gap: var(--sp-48);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+    gap: 0 var(--sp-72);
     align-items: start;
   }
 
-  .home-faq .section-head {
+  .home-faq > .section-head {
     margin-bottom: 0;
-  }
-}
-
-/* ==========================================================================
-   Benchmark strip (pages/benchmark/_teaser.mjs). Kept here, not in
-   benchmark.css, so the home page loads one stylesheet fewer.
-   ========================================================================== */
-
-.bench-teaser {
-  margin-top: var(--sp-24);
-}
-
-.bench-teaser__inner {
-  display: grid;
-  gap: var(--sp-16);
-  padding: var(--sp-16) var(--sp-24);
-  border: 1px solid var(--line);
-  border-radius: var(--r-card);
-  background: var(--surface);
-}
-
-.bench-teaser__title {
-  margin-top: var(--sp-4);
-  font-size: var(--fs-18);
-  line-height: 1.35;
-}
-
-.bench-teaser__table,
-.bench-teaser__list {
-  display: grid;
-  gap: var(--sp-4);
-}
-
-.bench-teaser__labels .meta:last-child {
-  text-align: right;
-}
-
-.bench-teaser__row {
-  display: grid;
-  grid-template-columns: 1.5rem minmax(0, 1fr) auto auto;
-  gap: var(--sp-12);
-  align-items: baseline;
-  font-size: var(--fs-14);
-}
-
-.bench-teaser__rank {
-  color: var(--muted);
-  font-family: var(--font-mono);
-}
-
-.bench-teaser__name {
-  font-weight: 600;
-  overflow-wrap: anywhere;
-}
-
-.bench-teaser__score {
-  font-weight: 650;
-}
-
-.bench-teaser__cost {
-  min-width: 4.5rem;
-  color: var(--muted);
-  text-align: right;
-}
-
-.bench-teaser__go {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--sp-4);
-  justify-self: start;
-  min-height: var(--tap);
-}
-
-@media (min-width: 64em) {
-  .bench-teaser__inner {
-    grid-template-columns: minmax(0, 15rem) minmax(0, 1fr) auto;
-    align-items: center;
-    gap: var(--sp-32);
-  }
-
-  .bench-teaser__go {
-    justify-self: end;
   }
 }

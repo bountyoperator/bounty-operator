@@ -7,26 +7,27 @@
 <meta name="description" content="Paste a draft bug bounty report: 17 instant checks (pinned commit, impact row, inline proof, live-network testing, AI disclosure) and citation checks.">
 <link rel="canonical" href="https://bountyoperator.com/tools/report-check">
 <meta name="color-scheme" content="dark light">
-<meta name="theme-color" content="#0a1220" media="(prefers-color-scheme: dark)">
-<meta name="theme-color" content="#f5f7fb" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#17132e" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#fbfbf8" media="(prefers-color-scheme: light)">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Bounty Operator">
 <meta property="og:title" content="Bug bounty report check: 17 checks | Bounty Operator">
 <meta property="og:description" content="Paste a draft bug bounty report: 17 instant checks (pinned commit, impact row, inline proof, live-network testing, AI disclosure) and citation checks.">
 <meta property="og:url" content="https://bountyoperator.com/tools/report-check">
-<meta property="og:image" content="https://bountyoperator.com/social-v3.png">
+<meta property="og:image" content="https://bountyoperator.com/social-v4.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Bounty Operator. Find the hole in your report before the triager does.">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Bug bounty report check: 17 checks | Bounty Operator">
 <meta name="twitter:description" content="Paste a draft bug bounty report: 17 instant checks (pinned commit, impact row, inline proof, live-network testing, AI disclosure) and citation checks.">
-<meta name="twitter:image" content="https://bountyoperator.com/social-v3.png">
+<meta name="twitter:image" content="https://bountyoperator.com/social-v4.png">
 <meta name="twitter:image:alt" content="Bounty Operator. Find the hole in your report before the triager does.">
 <link rel="icon" href="/favicon.ico" sizes="48x48">
 <link rel="icon" href="/icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="manifest" href="/site.webmanifest">
+<link rel="preload" href="/fonts/archivo-latin-wdth.woff2" as="font" type="font/woff2" crossorigin>
 <script src="/theme.js"></script>
 <link rel="stylesheet" href="/css/base.css">
 <link rel="stylesheet" href="/css/tools.css">
@@ -44,10 +45,18 @@
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Where does my draft go?","acceptedAnswer":{"@type":"Answer","text":"Nowhere. The seventeen checks and the citation check are JavaScript that runs in this tab, and the page sends no request with your text or your files. After the page has loaded it makes one request: a counter that says the tool was used, with nothing of yours in it. Pressing “Run the full challenge on your model” moves the draft and its files to the workbench through this browser’s session storage. A model sees them only when you start a review there."}},{"@type":"Question","name":"What does 17 of 17 tell me?","acceptedAnswer":{"@type":"Answer","text":"That the draft contains the text these checks look for: a commit, a quoted impact row, one severity, an inline proof with its output, a prior-art reference or search result, and a line on AI use. The check does not verify comparison quality or duplicate status. The workbench challenge reviews the claims against the evidence you supply."}},{"@type":"Question","name":"How does the citation check work?","acceptedAnswer":{"@type":"Answer","text":"Attach the files your draft cites. Every citation such as src/Vault.sol:42-48, Vault.sol#L42 or input-1/src/Vault.sol:42 is matched to an attached file, and the cited lines open in place. A citation to a file you did not attach, a line past the end of the file, or a short name that matches two files is listed so you can fix it before a triager finds it. Links to websites are counted, never opened."}},{"@type":"Question","name":"What is the evidence packet?","acceptedAnswer":{"@type":"Answer","text":"One JSON file with the draft, the attached files and a SHA-256 checksum of each. Open it here later to carry on with the same files; a file that changed since it was saved is refused. It holds your full draft and files, so keep it private."}},{"@type":"Question","name":"Which report formats does it read?","acceptedAnswer":{"@type":"Answer","text":"Markdown and plain text. Immunefi, Cantina, Sherlock and HackerOne reports all carry these parts, under different headings. The checks look for the content, so the heading names do not matter."}}]}</script>
 </head>
 <body>
+<!--
+THESIS: The verdict is a stamp on your draft. The site is the inspection a finding passes before a triager sees it, not the category's dark code-card hero.
+OWN-WORLD: Inspection paperwork. Canary and white stock, black print, violet stamp ink, carbon indigo for code and the night shift. Ruled fields, square corners, part rules, ledger tables. Archivo condensed caps for labels and stamps; mono only for code and typed entries.
+STORY: A hunter sees a Critical stamped down to Medium with the line that decides it, trusts that the review argues against them, and starts a review or opens the example.
+FIRST VIEWPORT: Full-bleed canary field. Left: condensed black headline, lede, black Review my report, ruled View example. Right: the paper slip, tilted, Critical struck, Medium and the violet verdict stamped on it. Proof line on the field's foot.
+FORM: Rubber-stamp verdicts and inspection forms, 6 of 7, seed b5682f59.
+FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md
+-->
 <a class="skip-link" href="#main">Skip to content</a>
 <header class="site-header">
 <div class="wrap site-header__inner">
-<a class="brand" href="/"><svg class="brand__mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect class="brand__tile" width="64" height="64" rx="14"/><path class="brand__glyph" d="M12.5 15h6.5v31.5h-6.5z"/><path class="brand__glyph" fill-rule="evenodd" d="M25.5 25a10.75 10.75 0 1 0 0 21.5a10.75 10.75 0 0 0 0-21.5zm0 6.25a4.5 4.5 0 1 1 0 9a4.5 4.5 0 0 1 0-9z"/><path class="brand__slash" d="M45.5 13h6.25l-8.6 37.5h-6.25z"/></svg><span class="brand__name">Bounty Operator</span></a>
+<a class="brand" href="/"><svg class="brand__mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect class="brand__tile" width="64" height="64" rx="9"/><path class="brand__glyph" d="M12.5 15h6.5v31.5h-6.5z"/><path class="brand__glyph" fill-rule="evenodd" d="M25.5 25a10.75 10.75 0 1 0 0 21.5a10.75 10.75 0 0 0 0-21.5zm0 6.25a4.5 4.5 0 1 1 0 9a4.5 4.5 0 0 1 0-9z"/><path class="brand__slash" d="M45.5 13h6.25l-8.6 37.5h-6.25z"/></svg><span class="brand__name">Bounty Operator</span></a>
 <nav class="site-nav" aria-label="Main"><ul><li><a href="/#workspace">Review</a></li><li><a href="/benchmark">Benchmark</a></li><li><a href="/tools" aria-current="page">Tools</a></li><li><a href="/guide">Guide</a></li><li><a href="/pricing">Pricing</a></li></ul></nav>
 <div class="site-header__actions">
 <button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch colour theme"><span class="icon theme-toggle__icon" aria-hidden="true"></span></button>
@@ -58,14 +67,14 @@
 <main id="main" tabindex="-1">
 
 <section class="section section--tight wrap">
-<header class="tool-head">
+<header class="tool-head page-field">
 <nav class="breadcrumbs" aria-label="Breadcrumb"><ol><li><a href="/">Bounty Operator</a></li><li><a href="/tools">Tools</a></li><li aria-current="page">Report check</li></ol></nav>
 <h1>Bug bounty report check</h1>
 <p class="lede">Paste a draft and attach the files it cites. Seventeen checks answer at once: what is on the page, what is missing, which sentence a triager will quote back at you, and which citation points at nothing.</p>
 <p class="tool-local"><span class="icon icon--lock" aria-hidden="true"></span><span>Your content never leaves the browser.</span></p>
 </header>
 <div class="tool-panel report-check" id="report-check">
-<div class="tool-panel__bar"><span class="icon icon--terminal" aria-hidden="true"></span><span class="tool-panel__name">report-check</span><span class="tool-panel__tag">Local · 17 checks + citations</span></div>
+<div class="tool-panel__bar"><span class="tool-panel__form">Form 01</span><span class="tool-panel__name">Report check</span><span class="tool-panel__tag">Local · 17 checks + citations</span></div>
 <div class="tool-panel__body">
 <div class="tool-split">
 <div class="tool-split__in">
@@ -163,7 +172,7 @@ Severity: High
 </section>
 
 <section class="section section--tight wrap" aria-labelledby="next-action">
-<div class="tool-next">
+<div class="tool-next on-stock">
 <div class="tool-next__text">
 <h2 class="h3" id="next-action">The text is in order. Now test the claim.</h2>
 <p>In the workbench your own model splits the draft into claims and marks each one confirmed, overstated, contradicted or unverifiable, with the line that decides it. The files you attached here go with the draft.</p>
@@ -180,11 +189,12 @@ Severity: High
 <ul class="tool-related"><li><a class="tool-related__link" href="/tools/verify"><span class="tool-related__name">Packet verifier<span class="icon icon--arrow-right" aria-hidden="true"></span></span><span class="tool-related__text">Check that the source files match the hashes in a saved review.</span></a></li><li><a class="tool-related__link" href="/tools/secret-check"><span class="tool-related__name">Secret check<span class="icon icon--arrow-right" aria-hidden="true"></span></span><span class="tool-related__text">Flag common keys, tokens, seed phrases and private report links in your files.</span></a></li><li><a class="tool-related__link" href="/tools/acceptance-rates"><span class="tool-related__name">Acceptance rates<span class="icon icon--arrow-right" aria-hidden="true"></span></span><span class="tool-related__text">Compare acceptance rates for twelve bug classes, with sample sizes.</span></a></li><li><a class="tool-related__link" href="/tools/slither-focus"><span class="tool-related__name">Slither triage queue<span class="icon icon--arrow-right" aria-hidden="true"></span></span><span class="tool-related__text">Turn Slither JSON into a ranked list for manual review.</span></a></li></ul>
 </section>
 </main>
-<footer class="site-footer">
+<footer class="site-footer theme-dark">
 <div class="wrap site-footer__grid">
 <div class="site-footer__brand">
-<a class="brand" href="/"><svg class="brand__mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect class="brand__tile" width="64" height="64" rx="14"/><path class="brand__glyph" d="M12.5 15h6.5v31.5h-6.5z"/><path class="brand__glyph" fill-rule="evenodd" d="M25.5 25a10.75 10.75 0 1 0 0 21.5a10.75 10.75 0 0 0 0-21.5zm0 6.25a4.5 4.5 0 1 1 0 9a4.5 4.5 0 0 1 0-9z"/><path class="brand__slash" d="M45.5 13h6.25l-8.6 37.5h-6.25z"/></svg><span class="brand__name">Bounty Operator</span></a>
+<a class="brand" href="/"><svg class="brand__mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect class="brand__tile" width="64" height="64" rx="9"/><path class="brand__glyph" d="M12.5 15h6.5v31.5h-6.5z"/><path class="brand__glyph" fill-rule="evenodd" d="M25.5 25a10.75 10.75 0 1 0 0 21.5a10.75 10.75 0 0 0 0-21.5zm0 6.25a4.5 4.5 0 1 1 0 9a4.5 4.5 0 0 1 0-9z"/><path class="brand__slash" d="M45.5 13h6.25l-8.6 37.5h-6.25z"/></svg><span class="brand__name">Bounty Operator</span></a>
 <p class="site-footer__promise">Find the hole in your report before the triager does.</p>
+<p class="site-footer__cta"><a class="btn btn--primary" href="/?profile=report#workspace"><span class="btn__label">Review my report</span><span class="icon icon--arrow-right" aria-hidden="true"></span></a></p>
 </div>
 <nav class="site-footer__col" aria-label="Product"><h2 class="site-footer__title">Product</h2><ul><li><a href="/#workspace">Review a report</a></li><li><a href="/benchmark">Benchmark</a></li><li><a href="/tools">Free tools</a></li><li><a href="/pricing">Pricing</a></li><li><a href="/#account">Account</a></li></ul></nav>
 <nav class="site-footer__col" aria-label="Resources"><h2 class="site-footer__title">Resources</h2><ul><li><a href="/guide">Report guide</a></li><li><a href="/mcp">MCP setup</a></li><li><a href="/method">Review method</a></li><li><a href="/templates">Report templates</a></li><li><a href="/changelog">Changelog</a></li><li><a href="https://github.com/bountyoperator/bounty-operator" target="_blank" rel="noopener noreferrer">Source<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></li></ul></nav>

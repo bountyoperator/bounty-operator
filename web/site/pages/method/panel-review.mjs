@@ -188,7 +188,7 @@ const FAQ_ITEMS = [
 const body = html`
 ${pageHero({
   trail: [{ label: 'Bounty Operator', href: '/' }, { label: 'Method', href: '/method' }, { label: 'Panel review' }],
-  eyebrow: html`${statusChip('operator')}`,
+  stamp: statusChip('operator'),
   title: 'Run 2 to 4 models on the same code, then cross-check their findings',
   lede: 'Each model reviews the same files on your own key. A final pass checks every finding against the lines it cites, keeps what the code proves and shows how many models reported it.',
   actions: operatorActions({ secondary: button({ label: 'How it runs', href: '#how', size: 'lg' }) }),

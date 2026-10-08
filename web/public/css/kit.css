@@ -137,6 +137,18 @@
   --swatch: var(--surface-2);
 }
 
+.swatch[data-token="field"] {
+  --swatch: var(--field);
+}
+
+.swatch[data-token="stock"] {
+  --swatch: var(--stock);
+}
+
+.swatch[data-token="rule"] {
+  --swatch: var(--rule);
+}
+
 .swatch[data-token="line"] {
   --swatch: var(--line);
 }

@@ -7,26 +7,27 @@
 <meta name="description" content="One run takes your draft through eight stages and returns one verdict, the main blocker and the quickest fix. Full example included.">
 <link rel="canonical" href="https://bountyoperator.com/gauntlet">
 <meta name="color-scheme" content="dark light">
-<meta name="theme-color" content="#0a1220" media="(prefers-color-scheme: dark)">
-<meta name="theme-color" content="#f5f7fb" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#17132e" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#fbfbf8" media="(prefers-color-scheme: light)">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Bounty Operator">
 <meta property="og:title" content="Gauntlet: eight-stage report check | Bounty Operator">
 <meta property="og:description" content="One run takes your draft through eight stages and returns one verdict, the main blocker and the quickest fix. Full example included.">
 <meta property="og:url" content="https://bountyoperator.com/gauntlet">
-<meta property="og:image" content="https://bountyoperator.com/social-v3.png">
+<meta property="og:image" content="https://bountyoperator.com/social-v4.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Bounty Operator. Find the hole in your report before the triager does.">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Gauntlet: eight-stage report check | Bounty Operator">
 <meta name="twitter:description" content="One run takes your draft through eight stages and returns one verdict, the main blocker and the quickest fix. Full example included.">
-<meta name="twitter:image" content="https://bountyoperator.com/social-v3.png">
+<meta name="twitter:image" content="https://bountyoperator.com/social-v4.png">
 <meta name="twitter:image:alt" content="Bounty Operator. Find the hole in your report before the triager does.">
 <link rel="icon" href="/favicon.ico" sizes="48x48">
 <link rel="icon" href="/icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="manifest" href="/site.webmanifest">
+<link rel="preload" href="/fonts/archivo-latin-wdth.woff2" as="font" type="font/woff2" crossorigin>
 <script src="/theme.js"></script>
 <link rel="stylesheet" href="/css/base.css">
 <link rel="stylesheet" href="/css/landing.css">
@@ -34,10 +35,18 @@
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"What does a gauntlet run cost?","acceptedAnswer":{"@type":"Answer","text":"The Gauntlet is part of Operator at US$10 per week. A run is eight reviews on your own model, so your provider bills eight model calls to your key."}},{"@type":"Question","name":"Which model runs the stages?","acceptedAnswer":{"@type":"Answer","text":"The one you choose, on your own API key: OpenRouter, Anthropic, OpenAI, Google Gemini, xAI, DeepSeek, Mistral or Groq. Your files and key pass through our server, which adds the method of each stage. No file, key or review is stored."}},{"@type":"Question","name":"Can I run the stages on a chat subscription or from a coding agent?","acceptedAnswer":{"@type":"Answer","text":"The stages need an API key. The report stage is the Challenge a draft report review, which also works on its own in ChatGPT or Claude. From a coding agent, the gauntlet prompt of the MCP server runs the same order: seven hosted reviews through run_review with a connection token, and the report stage on your agent’s own model."}},{"@type":"Question","name":"What happens when an early stage ends the report?","acceptedAnswer":{"@type":"Answer","text":"The run stops there. If scope, design intent or prior art says drop or likely duplicate, the run stops before you spend time on a PoC, and the result opens on that verdict. One button runs the remaining stages anyway."}},{"@type":"Question","name":"Does the gauntlet run code or touch the target?","acceptedAnswer":{"@type":"Answer","text":"It reads the files you supply. The proof stage reads your test and its output and tells you the one run that is missing. You run it locally."}},{"@type":"Question","name":"What does the free plan show?","acceptedAnswer":{"@type":"Answer","text":"The example on this page, and 1 review a day of any review type. Every gauntlet stage except the final verdict is also a review type you can run on its own."}}]}</script>
 </head>
 <body>
+<!--
+THESIS: The verdict is a stamp on your draft. The site is the inspection a finding passes before a triager sees it, not the category's dark code-card hero.
+OWN-WORLD: Inspection paperwork. Canary and white stock, black print, violet stamp ink, carbon indigo for code and the night shift. Ruled fields, square corners, part rules, ledger tables. Archivo condensed caps for labels and stamps; mono only for code and typed entries.
+STORY: A hunter sees a Critical stamped down to Medium with the line that decides it, trusts that the review argues against them, and starts a review or opens the example.
+FIRST VIEWPORT: Full-bleed canary field. Left: condensed black headline, lede, black Review my report, ruled View example. Right: the paper slip, tilted, Critical struck, Medium and the violet verdict stamped on it. Proof line on the field's foot.
+FORM: Rubber-stamp verdicts and inspection forms, 6 of 7, seed b5682f59.
+FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md
+-->
 <a class="skip-link" href="#main">Skip to content</a>
 <header class="site-header">
 <div class="wrap site-header__inner">
-<a class="brand" href="/"><svg class="brand__mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect class="brand__tile" width="64" height="64" rx="14"/><path class="brand__glyph" d="M12.5 15h6.5v31.5h-6.5z"/><path class="brand__glyph" fill-rule="evenodd" d="M25.5 25a10.75 10.75 0 1 0 0 21.5a10.75 10.75 0 0 0 0-21.5zm0 6.25a4.5 4.5 0 1 1 0 9a4.5 4.5 0 0 1 0-9z"/><path class="brand__slash" d="M45.5 13h6.25l-8.6 37.5h-6.25z"/></svg><span class="brand__name">Bounty Operator</span></a>
+<a class="brand" href="/"><svg class="brand__mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect class="brand__tile" width="64" height="64" rx="9"/><path class="brand__glyph" d="M12.5 15h6.5v31.5h-6.5z"/><path class="brand__glyph" fill-rule="evenodd" d="M25.5 25a10.75 10.75 0 1 0 0 21.5a10.75 10.75 0 0 0 0-21.5zm0 6.25a4.5 4.5 0 1 1 0 9a4.5 4.5 0 0 1 0-9z"/><path class="brand__slash" d="M45.5 13h6.25l-8.6 37.5h-6.25z"/></svg><span class="brand__name">Bounty Operator</span></a>
 <nav class="site-nav" aria-label="Main"><ul><li><a href="/#workspace">Review</a></li><li><a href="/benchmark">Benchmark</a></li><li><a href="/tools">Tools</a></li><li><a href="/guide">Guide</a></li><li><a href="/pricing">Pricing</a></li></ul></nav>
 <div class="site-header__actions">
 <button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch colour theme"><span class="icon theme-toggle__icon" aria-hidden="true"></span></button>
@@ -48,12 +57,12 @@
 <main id="main" tabindex="-1">
 
 
-<section class="lp-hero wrap lp-hero--split">
+<section class="lp-hero wrap page-field lp-hero--split">
   <nav class="breadcrumbs" aria-label="Breadcrumb"><ol><li><a href="/">Bounty Operator</a></li><li><a href="/method">Method</a></li><li aria-current="page">Gauntlet</li></ol></nav>
   <div class="lp-hero__grid">
     <div class="lp-hero__text lp-hero__text--sticky">
-      <p class="eyebrow"><span class="chip status" data-status="operator">Operator</span></p>
       <h1>Run one finding through eight stages and get a verdict</h1>
+      <p class="lp-hero__meta"><span class="chip status" data-status="operator">Operator</span></p>
       <p class="lede">Give it your draft, your code and the program rules. You get one verdict (submit, rewrite then submit, prove first, hold as duplicate, or drop), the main thing blocking it, and the quickest fix.</p>
       <div class="cluster lp-hero__actions"><a class="btn btn--primary btn--lg" href="/pricing"><span class="btn__label">Get Operator</span><span class="icon icon--arrow-right" aria-hidden="true"></span></a><a class="btn btn--secondary btn--lg" href="#stages"><span class="btn__label">See the eight stages</span></a></div>
       <p class="fine lp-hero__note">US$10 per week. Runs on your own model and key.</p>
@@ -201,11 +210,12 @@
 </nav>
 </section>
 </main>
-<footer class="site-footer">
+<footer class="site-footer theme-dark">
 <div class="wrap site-footer__grid">
 <div class="site-footer__brand">
-<a class="brand" href="/"><svg class="brand__mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect class="brand__tile" width="64" height="64" rx="14"/><path class="brand__glyph" d="M12.5 15h6.5v31.5h-6.5z"/><path class="brand__glyph" fill-rule="evenodd" d="M25.5 25a10.75 10.75 0 1 0 0 21.5a10.75 10.75 0 0 0 0-21.5zm0 6.25a4.5 4.5 0 1 1 0 9a4.5 4.5 0 0 1 0-9z"/><path class="brand__slash" d="M45.5 13h6.25l-8.6 37.5h-6.25z"/></svg><span class="brand__name">Bounty Operator</span></a>
+<a class="brand" href="/"><svg class="brand__mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect class="brand__tile" width="64" height="64" rx="9"/><path class="brand__glyph" d="M12.5 15h6.5v31.5h-6.5z"/><path class="brand__glyph" fill-rule="evenodd" d="M25.5 25a10.75 10.75 0 1 0 0 21.5a10.75 10.75 0 0 0 0-21.5zm0 6.25a4.5 4.5 0 1 1 0 9a4.5 4.5 0 0 1 0-9z"/><path class="brand__slash" d="M45.5 13h6.25l-8.6 37.5h-6.25z"/></svg><span class="brand__name">Bounty Operator</span></a>
 <p class="site-footer__promise">Find the hole in your report before the triager does.</p>
+<p class="site-footer__cta"><a class="btn btn--primary" href="/?profile=report#workspace"><span class="btn__label">Review my report</span><span class="icon icon--arrow-right" aria-hidden="true"></span></a></p>
 </div>
 <nav class="site-footer__col" aria-label="Product"><h2 class="site-footer__title">Product</h2><ul><li><a href="/#workspace">Review a report</a></li><li><a href="/benchmark">Benchmark</a></li><li><a href="/tools">Free tools</a></li><li><a href="/pricing">Pricing</a></li><li><a href="/#account">Account</a></li></ul></nav>
 <nav class="site-footer__col" aria-label="Resources"><h2 class="site-footer__title">Resources</h2><ul><li><a href="/guide">Report guide</a></li><li><a href="/mcp">MCP setup</a></li><li><a href="/method">Review method</a></li><li><a href="/templates">Report templates</a></li><li><a href="/changelog">Changelog</a></li><li><a href="https://github.com/bountyoperator/bounty-operator" target="_blank" rel="noopener noreferrer">Source<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></li></ul></nav>

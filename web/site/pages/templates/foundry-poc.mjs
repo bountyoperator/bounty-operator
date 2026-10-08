@@ -151,7 +151,7 @@ const SOURCES = [
 
 const body = html`
 <div class="wrap tpl-page">
-  <header class="tpl-hero">
+  <header class="tpl-hero page-field">
     ${crumbs([{ label: 'Foundry PoC' }])}
     <h1>Foundry PoC template</h1>
     <p class="lede">A fork-test scaffold for a bug bounty proof of concept: pinned block, named actors, concrete values, a control run, and a final assertion that reads the object the impact names. One file, one command, pasted output.</p>

@@ -117,7 +117,6 @@ const FAQ_ITEMS = [
 const body = html`
 ${pageHero({
   trail: [{ label: 'Bounty Operator', href: '/' }, { label: 'Your model, your key' }],
-  eyebrow: 'Bring your own model',
   title: 'Your model, your key: where your code goes',
   lede: `A review runs on the model you choose, under your own API key: ${PROVIDER_SENTENCE}. Your files and your key pass through our server in memory. It adds the review method and sends the request to that provider. Bounty Operator stores no code, no prompts, no keys and no results.`,
   actions: html`${button({ label: 'Start a review', href: workbenchLink(), variant: 'primary', size: 'lg', iconEnd: 'arrow-right' })}${button({ label: 'See the providers', href: '#providers', size: 'lg' })}`,

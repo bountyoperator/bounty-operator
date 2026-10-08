@@ -3,9 +3,13 @@
 /*
   Bounty Operator: base stylesheet
 
-  "Evidence ledger". Dark first, navy ink. Blue marks what was observed in the
-  supplied files. Amber marks what is still unproven. Every colour, size and
-  radius used anywhere on the site comes from the tokens in section 1.
+  "Inspection office". A finding goes through inspection before it goes to a
+  triager, and the verdict comes back as a stamp. Forms print in black on
+  white and canary stock, verdicts and severities are stamped in ink, code
+  sits on carbon. Corners are square, fields are ruled, every printed label is
+  set in condensed caps. Dark is the night shift: carbon indigo, pale print,
+  canary for what you act on. Every colour, size and radius used anywhere on
+  the site comes from the tokens in section 1.
 
   Reference with examples: web/site/COMPONENTS.md
 
@@ -27,23 +31,40 @@
   16. Dialog
   17. Progress and skeleton
   18. Site header and footer
-  19. Section heading, breadcrumbs, prose
+  19. Section heading, breadcrumbs, prose, page head
   20. Motion
   21. Print
 */
+
+/* Archivo (Omnibus-Type, SIL Open Font License 1.1, /fonts/ARCHIVO-OFL.txt).
+   One variable file: weight 100 to 900, width 62% to 125%. Condensed heavy
+   cuts are the stamp lettering; semi-condensed cuts print headings and labels.
+   The URL is relative so the social card renders from disk too. */
+@font-face {
+  font-family: "Archivo";
+  font-style: normal;
+  font-weight: 100 900;
+  font-stretch: 62% 125%;
+  font-display: swap;
+  src: url("../fonts/archivo-latin-wdth.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
 
 /* ==========================================================================
    1. Tokens
    ========================================================================== */
 
 :root {
-  /* Type. System stacks only: no webfonts are loaded. */
+  /* Type. Archivo prints headings, labels, buttons and stamps. Running text
+     uses the system face, so it renders before the font arrives. */
+  --font-display: "Archivo", "Arial Narrow", system-ui, sans-serif;
   --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
   /* Cascadia Mono before Cascadia Code: Code turns != into a single glyph, and
-     source under review has to read character for character. */
+     source under review has to read character for character. Mono is for code,
+     paths, hashes and typed entries, never for labels. */
   --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", "Cascadia Code", Menlo, Consolas, monospace;
 
-  /* Scale: 12 / 13 / 14 / 16 / 18 / 22 / 28 / 40 / 64 px. Nothing renders below 12px. */
+  /* Scale: 12 / 13 / 14 / 16 / 18 / 22 / 28 / 40 / 64 / 88 px. Nothing renders below 12px. */
   --fs-12: 0.75rem;
   --fs-13: 0.8125rem;
   --fs-14: 0.875rem;
@@ -53,6 +74,7 @@
   --fs-28: 1.75rem;
   --fs-40: 2.5rem;
   --fs-64: 4rem;
+  --fs-88: 5.5rem;
 
   /* Spacing: 4 / 8 / 12 / 16 / 24 / 32 / 48 / 72 / 112 px. */
   --sp-4: 0.25rem;
@@ -65,11 +87,14 @@
   --sp-72: 4.5rem;
   --sp-112: 7rem;
 
-  /* Radii */
-  --r-chip: 4px;
-  --r-ctl: 8px;
-  --r-card: 12px;
-  --r-hero: 16px;
+  /* Radii. Forms are square; a rubber stamp is the only soft corner. */
+  --r-chip: 2px;
+  --r-ctl: 2px;
+  --r-card: 2px;
+  --r-hero: 3px;
+
+  /* Rules. A hairline divides; a part rule opens a section. */
+  --rule-w: 2px;
 
   /* Layout */
   --wrap: 75rem;
@@ -78,9 +103,11 @@
 
   /* Motion */
   --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --t-fast: 120ms;
   --t-panel: 180ms;
   --t-dialog: 160ms;
+  --t-stamp: 420ms;
   --stagger: 40ms;
 
   /* Icons. One 24px grid, 1.75 stroke, round caps. Used as CSS masks so they
@@ -122,201 +149,246 @@
   --icon-sort-up: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7 14l5-5 5 5'/%3E%3C/svg%3E");
   --icon-sort-down: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7 10l5 5 5-5'/%3E%3C/svg%3E");
   --icon-check-white: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E");
+  --icon-check-ink: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2316161b' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E");
 }
 
-/* Light theme */
-:root {
+/* Light theme: the day office. .theme-light forces it on one element (the
+   report slip in the home hero is paper in both themes). */
+:root,
+.theme-light {
   color-scheme: light;
 
-  /* Surfaces and lines */
-  --bg: #f5f7fb;
+  /* Paper and rules */
+  --bg: #fbfbf8; /* bond paper */
   --surface: #ffffff;
-  --surface-2: #eaf0f8;
+  --surface-2: #f1f0ea; /* the shaded box a form keeps for office use */
   --surface-3: #ffffff; /* selected segment, current step */
-  --line: #d5deea;
-  --line-strong: #b3c3d6;
-  --line-control: #6f849f; /* 3:1 on every surface: form controls, secondary buttons */
+  --line: #dcdbd3; /* hairline */
+  --line-strong: #a9a8a0;
+  --line-control: #77777f; /* 3:1 on every surface: form controls, secondary buttons */
+  --rule: #16161b; /* printed rule: frames and part rules */
+
+  /* The field: the stock a page head is printed on. Canary by day. */
+  --field: #f9dc3f;
+  --on-field: #16161b;
+  --on-field-muted: #5b4a00;
+  --field-rule: #16161b;
+  --stock: #f9dc3f; /* canary, wherever it appears: current step, highlighted plan */
+  --on-stock: #16161b;
+  --on-stock-muted: #5b4a00;
+  --copy: #f2c4d0; /* the pink carbon copy under the slip */
 
   /* Ink */
-  --text: #142c4a;
-  --muted: #50647b;
-  --placeholder: #62758c;
+  --text: #16161b;
+  --muted: #55555f;
+  --placeholder: #66666f;
 
-  /* Blue: observed */
-  --accent: #195cda;
-  --accent-hover: #1044a8;
-  --accent-solid: #195cda;
-  --accent-solid-hover: #1044a8;
+  /* Violet: stamp ink. Links, focus and what the review observed. */
+  --accent: #4b2593;
+  --accent-hover: #32176a;
+  /* The action you take prints solid: black by day, canary at night. */
+  --accent-solid: #16161b;
+  --accent-solid-hover: #4b2593;
   --on-accent: #ffffff;
-  --focus: #195cda;
+  --focus: #4b2593;
 
-  /* Amber: unproven */
-  --gap: #855600;
-  --gap-bg: #fff6df;
+  /* Ochre: unproven */
+  --gap: #855a00;
+  --gap-bg: #fdf3c9;
 
-  /* Severity and state */
-  --sev-crit: #b4232f;
-  --sev-high: #a03a08;
-  --sev-med: #855600;
-  --sev-low: #126c56;
-  --sev-info: #1552c4;
-  --sev-none: #4a5d73;
-  --ok: #126c56;
-  --danger: #b4232f;
+  /* Severity and state, as stamp inks */
+  --sev-crit: #b0172f;
+  --sev-high: #ad4508;
+  --sev-med: #855a00;
+  --sev-low: #1b6b3a;
+  --sev-info: #2347ad;
+  --sev-none: #5a5a64;
+  --ok: #1b6b3a;
+  --danger: #b0172f;
 
-  /* Chips: severity colour as text, tinted fill, tinted border */
-  --chip-fill: 12%;
-  --chip-line: 35%;
+  /* Chips print like stamps: ink outline and ink letters, a trace of fill */
+  --chip-fill: 6%;
+  --chip-line: 100%;
 
-  /* Code is navy ink in both themes */
-  --code-bg: #142c4a;
-  --code-text: #e6edf7;
-  --code-muted: #8fa6c4;
-  --code-line: #2a4468;
-  --code-hl: #6ea0ff;
-  --code-flag: #f2b84b;
+  /* Code prints on carbon in both themes */
+  --code-bg: #18142f;
+  --code-text: #eceaf6;
+  --code-muted: #9590bd;
+  --code-line: #2e2852;
+  --code-hl: #a88bff;
+  --code-flag: #f2c552;
+  --code-ok: #73d39d;
 
-  /* Brand mark */
-  --brand-tile: #142c4a;
-  --brand-ring: #142c4a;
+  /* Brand mark: a black stamp with a canary slash */
+  --brand-tile: #16161b;
+  --brand-ring: #16161b;
   --brand-glyph: #ffffff;
-  --brand-slash: #6ea0ff;
+  --brand-slash: #f9dc3f;
 
-  /* Depth */
-  --shadow-card: 0 1px 2px #0b1a2e0a;
-  --shadow: 0 1px 2px #0b1a2e0f, 0 12px 32px -12px #0b1a2e29;
-  --shadow-pop: 0 2px 6px #0b1a2e14, 0 24px 64px -16px #0b1a2e52;
-  --backdrop: #0b1a2e80;
+  /* Depth. Paper lies flat; only a loose sheet or a dialog lifts. */
+  --shadow-card: none;
+  --shadow: 0 1px 1px #16161b14, 0 10px 24px -14px #16161b47;
+  --shadow-pop: 0 2px 4px #16161b1f, 0 28px 60px -20px #16161b66;
+  --shadow-slip: 0 1px 2px #16161b1f, 0 18px 36px -16px #16161b70;
+  --backdrop: #16161b8c;
 
   /* Theme-dependent images */
   --theme-icon: var(--icon-moon);
-  --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2350647b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  --check-image: var(--icon-check-white);
+  --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2355555f' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
 }
 
-/* Dark theme: the system preference, unless the visitor chose light. */
+/* Dark theme: the night shift. The system preference, unless the visitor chose light. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     color-scheme: dark;
 
-    --bg: #0a1220;
-    --surface: #101b2e;
-    --surface-2: #16243b;
-    --surface-3: #263a5a;
-    --line: #22334d;
-    --line-strong: #33486a;
-    --line-control: #5d78a3;
+    --bg: #17132e;
+    --surface: #1e1939;
+    --surface-2: #262046;
+    --surface-3: #312a5a;
+    --line: #3a3363;
+    --line-strong: #544b85;
+    --line-control: #7e76b6;
+    --rule: #d9d6ee;
 
-    --text: #e6edf7;
-    --muted: #93a4bd;
-    --placeholder: #8698b2;
+    --field: #221c45;
+    --on-field: #efeef7;
+    --on-field-muted: #bcb7da;
+    --field-rule: #f7d84a;
+    --stock: #f7d84a;
+    --on-stock: #16161b;
+  --on-stock-muted: #5b4a00;
+  --copy: #c8a1af;
 
-    --accent: #5b93ff;
-    --accent-hover: #8ab2ff;
-    --accent-solid: #2a6cf0;
-    --accent-solid-hover: #1f5cd8;
-    --on-accent: #ffffff;
-    --focus: #7fa6ff;
+    --text: #efeef7;
+    --muted: #aaa5c9;
+    --placeholder: #9a95bd;
 
-    --gap: #f2b84b;
-    --gap-bg: #f2b84b1f;
+    --accent: #c9b3ff;
+    --accent-hover: #e2d6ff;
+    --accent-solid: #f7d84a;
+    --accent-solid-hover: #ffe874;
+    --on-accent: #16161b;
+    --focus: #f7d84a;
 
-    --sev-crit: #ff6b78;
-    --sev-high: #ff8a4c;
-    --sev-med: #f2b84b;
-    --sev-low: #5cc8a1;
-    --sev-info: #7fa6ff;
-    --sev-none: #93a4bd;
-    --ok: #5cc8a1;
-    --danger: #ff6b78;
+    --gap: #f2c552;
+    --gap-bg: #f2c5521f;
 
-    --chip-fill: 14%;
-    --chip-line: 35%;
+    --sev-crit: #ff8394;
+    --sev-high: #ffa067;
+    --sev-med: #f2c552;
+    --sev-low: #73d39d;
+    --sev-info: #9db6ff;
+    --sev-none: #a9a5c4;
+    --ok: #73d39d;
+    --danger: #ff8394;
 
-    --code-bg: #0c1525;
-    --code-text: #e6edf7;
-    --code-muted: #8194b0;
-    --code-line: #1f2f48;
-    --code-hl: #5b93ff;
-    --code-flag: #f2b84b;
+    --chip-fill: 10%;
+    --chip-line: 100%;
 
-    --brand-tile: #16243b;
-    --brand-ring: #33486a;
-    --brand-glyph: #ffffff;
-    --brand-slash: #5b93ff;
+    --code-bg: #110e24;
+    --code-text: #eceaf6;
+    --code-muted: #8f8ab8;
+    --code-line: #2a2449;
+    --code-hl: #a88bff;
+    --code-flag: #f2c552;
+  --code-ok: #73d39d;
 
-    --shadow-card: inset 0 1px 0 #ffffff0a;
-    --shadow: inset 0 1px 0 #ffffff0a, 0 12px 32px -12px #00000066;
-    --shadow-pop: inset 0 1px 0 #ffffff0f, 0 24px 64px -16px #000000b3;
-    --backdrop: #050a14b8;
+    --brand-tile: #f7d84a;
+    --brand-ring: #f7d84a;
+    --brand-glyph: #16161b;
+    --brand-slash: #4b2593;
+
+    --shadow-card: none;
+    --shadow: 0 1px 1px #0000004d, 0 12px 28px -14px #000000a6;
+    --shadow-pop: 0 2px 6px #00000059, 0 28px 64px -20px #000000cc;
+    --shadow-slip: 0 1px 2px #00000066, 0 22px 44px -16px #000000b3;
+    --backdrop: #0a0818c7;
 
     --theme-icon: var(--icon-sun);
-    --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2393a4bd' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    --check-image: var(--icon-check-ink);
+    --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23aaa5c9' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
   }
 }
 
 /* Dark theme: chosen with the header toggle, or forced on one element with
-   .theme-dark (the hero finding card is dark in both themes). Keep this block
+   .theme-dark (the site footer is carbon in both themes). Keep this block
    identical to the one above; web/tests/site-build.test.mjs compares them. */
 :root[data-theme="dark"],
 .theme-dark {
   color-scheme: dark;
 
-  --bg: #0a1220;
-  --surface: #101b2e;
-  --surface-2: #16243b;
-  --surface-3: #263a5a;
-  --line: #22334d;
-  --line-strong: #33486a;
-  --line-control: #5d78a3;
+  --bg: #17132e;
+  --surface: #1e1939;
+  --surface-2: #262046;
+  --surface-3: #312a5a;
+  --line: #3a3363;
+  --line-strong: #544b85;
+  --line-control: #7e76b6;
+  --rule: #d9d6ee;
 
-  --text: #e6edf7;
-  --muted: #93a4bd;
-  --placeholder: #8698b2;
+  --field: #221c45;
+  --on-field: #efeef7;
+  --on-field-muted: #bcb7da;
+  --field-rule: #f7d84a;
+  --stock: #f7d84a;
+  --on-stock: #16161b;
+  --on-stock-muted: #5b4a00;
+  --copy: #c8a1af;
 
-  --accent: #5b93ff;
-  --accent-hover: #8ab2ff;
-  --accent-solid: #2a6cf0;
-  --accent-solid-hover: #1f5cd8;
-  --on-accent: #ffffff;
-  --focus: #7fa6ff;
+  --text: #efeef7;
+  --muted: #aaa5c9;
+  --placeholder: #9a95bd;
 
-  --gap: #f2b84b;
-  --gap-bg: #f2b84b1f;
+  --accent: #c9b3ff;
+  --accent-hover: #e2d6ff;
+  --accent-solid: #f7d84a;
+  --accent-solid-hover: #ffe874;
+  --on-accent: #16161b;
+  --focus: #f7d84a;
 
-  --sev-crit: #ff6b78;
-  --sev-high: #ff8a4c;
-  --sev-med: #f2b84b;
-  --sev-low: #5cc8a1;
-  --sev-info: #7fa6ff;
-  --sev-none: #93a4bd;
-  --ok: #5cc8a1;
-  --danger: #ff6b78;
+  --gap: #f2c552;
+  --gap-bg: #f2c5521f;
 
-  --chip-fill: 14%;
-  --chip-line: 35%;
+  --sev-crit: #ff8394;
+  --sev-high: #ffa067;
+  --sev-med: #f2c552;
+  --sev-low: #73d39d;
+  --sev-info: #9db6ff;
+  --sev-none: #a9a5c4;
+  --ok: #73d39d;
+  --danger: #ff8394;
 
-  --code-bg: #0c1525;
-  --code-text: #e6edf7;
-  --code-muted: #8194b0;
-  --code-line: #1f2f48;
-  --code-hl: #5b93ff;
-  --code-flag: #f2b84b;
+  --chip-fill: 10%;
+  --chip-line: 100%;
 
-  --brand-tile: #16243b;
-  --brand-ring: #33486a;
-  --brand-glyph: #ffffff;
-  --brand-slash: #5b93ff;
+  --code-bg: #110e24;
+  --code-text: #eceaf6;
+  --code-muted: #8f8ab8;
+  --code-line: #2a2449;
+  --code-hl: #a88bff;
+  --code-flag: #f2c552;
+  --code-ok: #73d39d;
 
-  --shadow-card: inset 0 1px 0 #ffffff0a;
-  --shadow: inset 0 1px 0 #ffffff0a, 0 12px 32px -12px #00000066;
-  --shadow-pop: inset 0 1px 0 #ffffff0f, 0 24px 64px -16px #000000b3;
-  --backdrop: #050a14b8;
+  --brand-tile: #f7d84a;
+  --brand-ring: #f7d84a;
+  --brand-glyph: #16161b;
+  --brand-slash: #4b2593;
+
+  --shadow-card: none;
+  --shadow: 0 1px 1px #0000004d, 0 12px 28px -14px #000000a6;
+  --shadow-pop: 0 2px 6px #00000059, 0 28px 64px -20px #000000cc;
+  --shadow-slip: 0 1px 2px #00000066, 0 22px 44px -16px #000000b3;
+  --backdrop: #0a0818c7;
 
   --theme-icon: var(--icon-sun);
-  --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2393a4bd' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  --check-image: var(--icon-check-ink);
+  --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23aaa5c9' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
 }
 
-.theme-dark {
+.theme-dark,
+.theme-light {
   background: var(--surface);
   color: var(--text);
 }
@@ -422,14 +494,16 @@ main:focus {
 }
 
 ::selection {
-  background: color-mix(in srgb, var(--accent) 32%, transparent);
+  background: var(--stock);
+  color: var(--on-stock);
 }
 
 /* ==========================================================================
    3. Typography
    ========================================================================== */
 
-/* .h1 to .h4 give any element the look of that heading level. */
+/* .h1 to .h4 give any element the look of that heading level. Headings print
+   in Archivo, semi-condensed and heavy, like the title lines of a form. */
 h1,
 h2,
 h3,
@@ -440,36 +514,39 @@ h6,
 .h2,
 .h3,
 .h4 {
-  font-weight: 650;
+  font-family: var(--font-display);
+  font-stretch: 88%;
+  font-weight: 760;
   text-wrap: balance;
 }
 
 h1,
 .h1 {
-  font-size: clamp(1.875rem, 1.25rem + 2.6vw, var(--fs-40));
-  line-height: 1.1;
-  letter-spacing: -0.03em;
+  font-size: clamp(2rem, 1.3rem + 2.8vw, 3.25rem);
+  font-weight: 820;
+  line-height: 1.02;
+  letter-spacing: -0.012em;
 }
 
 h2,
 .h2 {
-  font-size: clamp(1.5rem, 1.2rem + 1.2vw, var(--fs-28));
-  line-height: 1.2;
-  letter-spacing: -0.02em;
+  font-size: clamp(1.625rem, 1.25rem + 1.5vw, 2.375rem);
+  font-weight: 800;
+  line-height: 1.06;
+  letter-spacing: -0.01em;
 }
 
 h3,
 .h3 {
   font-size: var(--fs-22);
-  line-height: 1.25;
-  letter-spacing: -0.015em;
+  line-height: 1.18;
+  letter-spacing: -0.005em;
 }
 
 h4,
 .h4 {
   font-size: var(--fs-18);
-  line-height: 1.35;
-  letter-spacing: -0.01em;
+  line-height: 1.3;
 }
 
 h5 {
@@ -482,12 +559,15 @@ h6 {
   line-height: 1.4;
 }
 
-/* Hero headline: 36px on a phone, 64px on a desktop. */
+/* Hero headline: condensed black, 44px on a phone, 88px on a desktop. */
 .display {
-  font-size: clamp(2.25rem, 1rem + 5.2vw, var(--fs-64));
-  font-weight: 650;
-  line-height: 1.05;
-  letter-spacing: -0.035em;
+  font-family: var(--font-display);
+  font-size: clamp(2.75rem, 1.1rem + 6.4vw, var(--fs-88));
+  font-stretch: 72%;
+  font-weight: 860;
+  line-height: 0.93;
+  letter-spacing: -0.004em;
+  word-spacing: 0.05em;
   text-wrap: balance;
 }
 
@@ -495,24 +575,21 @@ h6 {
   max-width: 60ch;
   color: var(--muted);
   font-size: var(--fs-18);
-  line-height: 1.6;
+  line-height: 1.55;
   text-wrap: pretty;
 }
 
-/* Metadata voice: eyebrows, labels, hashes, step numbers. */
-.meta,
-.eyebrow {
-  font: 600 var(--fs-12) / 1.4 var(--font-mono);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
+/* Printed captions: labels, column heads, step numbers. Condensed caps, never
+   mono. Nothing of this kind sits above a heading. */
 .meta {
+  font-family: var(--font-display);
+  font-size: var(--fs-12);
+  font-stretch: 85%;
+  font-weight: 680;
+  line-height: 1.4;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
   color: var(--muted);
-}
-
-.eyebrow {
-  color: var(--accent);
 }
 
 .muted {
@@ -554,7 +631,7 @@ pre {
 :not(pre) > code {
   padding: 0.1em 0.35em;
   border-radius: var(--r-chip);
-  background: color-mix(in srgb, var(--text) 9%, transparent);
+  background: color-mix(in srgb, var(--text) 8%, transparent);
   font-size: 0.875em;
   overflow-wrap: anywhere;
 }
@@ -888,6 +965,8 @@ pre {
    6. Buttons and links
    ========================================================================== */
 
+/* Buttons print like the boxes at the foot of a form: square, ruled, set in
+   Archivo. The primary action is solid ink: black by day, canary at night. */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -895,11 +974,14 @@ pre {
   gap: var(--sp-8);
   min-height: var(--tap);
   padding: 0 1.125rem;
-  border: 1px solid transparent;
+  border: 1.5px solid transparent;
   border-radius: var(--r-ctl);
-  font-size: var(--fs-14);
-  font-weight: 600;
+  font-family: var(--font-display);
+  font-size: 0.9375rem;
+  font-stretch: 90%;
+  font-weight: 700;
   line-height: 1.2;
+  letter-spacing: 0.01em;
   text-decoration: none;
   white-space: nowrap;
   cursor: pointer;
@@ -920,23 +1002,27 @@ pre {
 }
 
 .btn--primary {
+  border-color: var(--accent-solid);
   background: var(--accent-solid);
   color: var(--on-accent);
 }
 
 .btn--primary:hover {
+  border-color: var(--accent-solid-hover);
   background: var(--accent-solid-hover);
 }
 
+/* The secondary box fills with ink under the pointer. */
 .btn--secondary {
-  border-color: var(--line-control);
-  background: var(--surface);
+  border-color: var(--rule);
+  background: transparent;
   color: var(--text);
 }
 
 .btn--secondary:hover {
   border-color: var(--text);
-  background: var(--surface-2);
+  background: var(--text);
+  color: var(--bg);
 }
 
 .btn--quiet {
@@ -953,19 +1039,20 @@ pre {
 }
 
 .btn--danger:hover {
-  background: color-mix(in srgb, var(--danger) 12%, transparent);
+  background: var(--danger);
+  color: var(--bg);
 }
 
 .btn--sm {
   min-height: 2.25rem;
   padding-inline: var(--sp-12);
-  font-size: var(--fs-13);
+  font-size: var(--fs-14);
 }
 
 .btn--lg {
   min-height: 3.25rem;
   padding-inline: var(--sp-24);
-  font-size: var(--fs-16);
+  font-size: 1.0625rem;
 }
 
 .btn--block {
@@ -1020,7 +1107,9 @@ pre {
 .link {
   color: var(--accent);
   text-decoration: underline;
-  text-decoration-color: color-mix(in srgb, var(--accent) 45%, transparent);
+  text-decoration-color: color-mix(in srgb, var(--accent) 50%, transparent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
   transition:
     color var(--t-fast),
     text-decoration-color var(--t-fast);
@@ -1029,6 +1118,7 @@ pre {
 .link:hover {
   color: var(--accent-hover);
   text-decoration-color: currentColor;
+  text-decoration-thickness: 2px;
 }
 
 .link--external .icon {
@@ -1047,19 +1137,24 @@ pre {
   gap: var(--sp-8);
 }
 
+/* A field caption, printed above its box. */
 .label {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
   gap: var(--sp-12);
+  font-family: var(--font-display);
   font-size: var(--fs-14);
-  font-weight: 600;
+  font-stretch: 90%;
+  font-weight: 700;
   line-height: 1.4;
 }
 
 .label__hint {
   color: var(--muted);
+  font-family: var(--font-sans);
   font-size: var(--fs-13);
+  font-stretch: normal;
   font-weight: 400;
 }
 
@@ -1097,13 +1192,13 @@ pre {
 .input:hover,
 .select:hover,
 .textarea:hover {
-  border-color: var(--text);
+  border-color: var(--rule);
 }
 
 .input:focus-visible,
 .select:focus-visible,
 .textarea:focus-visible {
-  border-color: var(--focus);
+  border-color: var(--rule);
   outline-offset: 1px;
 }
 
@@ -1146,7 +1241,7 @@ pre {
   appearance: none;
 }
 
-/* Checkbox row. The whole row is the touch target. */
+/* Checkbox row. The whole row is the touch target; the box is a form's tick box. */
 .check {
   display: flex;
   align-items: flex-start;
@@ -1163,7 +1258,7 @@ pre {
   width: 1.25rem;
   height: 1.25rem;
   margin: 0.0625rem 0 0;
-  border: 1px solid var(--line-control);
+  border: 1.5px solid var(--line-control);
   border-radius: var(--r-chip);
   background: var(--surface) center / 0.875rem no-repeat;
   appearance: none;
@@ -1173,10 +1268,14 @@ pre {
     border-color var(--t-fast);
 }
 
+.check__box:hover {
+  border-color: var(--rule);
+}
+
 .check__box:checked {
   border-color: var(--accent-solid);
   background-color: var(--accent-solid);
-  background-image: var(--icon-check-white);
+  background-image: var(--check-image);
 }
 
 .check__box[aria-invalid="true"] {
@@ -1206,20 +1305,24 @@ pre {
    8. Chips: severity, verdict, status, ref, hash
    ========================================================================== */
 
-/* Square stamps, not pills. --chip sets the colour of text, fill and border. */
+/* Stamps, not pills. Ink outline, ink letters, condensed caps. --chip sets the ink. */
 .chip {
   --chip: var(--sev-none);
   display: inline-flex;
   align-items: center;
   gap: 0.375rem;
   min-height: 1.5rem;
-  padding: 0 var(--sp-8);
-  border: 1px solid color-mix(in srgb, var(--chip) var(--chip-line), transparent);
+  padding: 0 0.4375rem;
+  border: 1.5px solid color-mix(in srgb, var(--chip) var(--chip-line), transparent);
   border-radius: var(--r-chip);
   background: color-mix(in srgb, var(--chip) var(--chip-fill), transparent);
   color: var(--chip);
-  font: 600 var(--fs-12) / 1 var(--font-mono);
-  letter-spacing: 0.06em;
+  font-family: var(--font-display);
+  font-size: var(--fs-12);
+  font-stretch: 78%;
+  font-weight: 780;
+  line-height: 1;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   white-space: nowrap;
   vertical-align: middle;
@@ -1227,12 +1330,11 @@ pre {
 
 .chip--dashed {
   border-style: dashed;
-  border-color: color-mix(in srgb, var(--chip) 60%, transparent);
   background: transparent;
 }
 
 .chip[data-tone="observed"] {
-  --chip: var(--sev-info);
+  --chip: var(--accent);
 }
 
 .chip[data-tone="unproven"] {
@@ -1272,29 +1374,51 @@ pre {
 .sev[data-sev="unrated"] {
   --chip: var(--sev-none);
   border-style: dashed;
-  border-color: color-mix(in srgb, var(--chip) 60%, transparent);
   background: transparent;
 }
 
-/* Verdict: the decision. A square marker leads the label. */
+/* Verdict: the decision, stamped. */
 .verdict {
-  padding-inline: 0.625rem;
-  font-weight: 700;
+  padding-inline: 0.5rem;
+  font-weight: 830;
 }
 
-.verdict::before {
-  content: "";
-  width: 0.4375rem;
-  height: 0.4375rem;
-  border-radius: 1px;
-  background: currentColor;
-}
-
+/* The large verdict is a rubber stamp: a double rule, condensed black caps,
+   a slight tilt. Its geometry is in em, so one inked impression fits it at
+   every size: scripts/build-stamps.mjs renders this box crisp (.stamp--proof),
+   presses it once and writes /stamps/verdict-<id>.webp, and the live box
+   shows its ink colour through that impression (the rules after the verdict
+   colours below). The words stay in the markup for search, selection and
+   screen readers. */
 .verdict--lg {
-  min-height: 2.25rem;
-  padding-inline: 0.875rem;
-  gap: var(--sp-8);
+  --stamp-tilt: -2deg;
+  min-height: 2.6em;
+  padding: 0.2em 0.9em;
+  gap: 0.45em;
+  border-width: 0.15em;
+  border-radius: 0.28em;
+  outline: 0.06em solid var(--chip);
+  outline-offset: -0.36em;
+  font-size: var(--fs-18);
+  font-stretch: 68%;
+  font-weight: 860;
+  letter-spacing: 0.1em;
+  transform: rotate(var(--stamp-tilt));
+}
+
+/* A severity stamped by hand (the slip's Medium). Same treatment:
+   /stamps/sev-<severity>.webp. */
+.sev--stamp {
+  --stamp-tilt: -3deg;
+  min-height: 2.1em;
+  padding: 0 0.7em;
+  border-width: 0.14em;
+  border-radius: 0.2em;
   font-size: var(--fs-14);
+  font-stretch: 72%;
+  font-weight: 860;
+  letter-spacing: 0.08em;
+  transform: rotate(var(--stamp-tilt));
 }
 
 .verdict[data-verdict="submit"],
@@ -1303,7 +1427,7 @@ pre {
 }
 
 .verdict[data-verdict="rewrite-then-submit"] {
-  --chip: var(--sev-info);
+  --chip: var(--accent);
 }
 
 .verdict[data-verdict="prove-first"] {
@@ -1313,7 +1437,6 @@ pre {
 .verdict[data-verdict="hold-duplicate"] {
   --chip: var(--sev-none);
   border-style: dashed;
-  border-color: color-mix(in srgb, var(--chip) 60%, transparent);
   background: transparent;
 }
 
@@ -1323,6 +1446,67 @@ pre {
 
 .verdict[data-verdict="fix-before-deploy"] {
   --chip: var(--sev-high);
+}
+
+/* The inked impressions. The box keeps its size and its words; the ink is
+   the chip colour seen through the impression, so night and day share one
+   asset. A verdict or severity without an impression stays a crisp chip. */
+.chip.verdict--lg:is([data-verdict="submit"], [data-verdict="rewrite-then-submit"], [data-verdict="prove-first"], [data-verdict="hold-duplicate"], [data-verdict="drop"], [data-verdict="fix-before-deploy"], [data-verdict="no-blocking-issues"]):not(.stamp--proof),
+.chip.sev--stamp:is([data-sev="critical"], [data-sev="high"], [data-sev="medium"], [data-sev="low"], [data-sev="info"]):not(.stamp--proof) {
+  border-color: transparent;
+  outline-color: transparent;
+  background: var(--chip);
+  color: transparent;
+  -webkit-mask: var(--stamp) center / 100% 100% no-repeat;
+  mask: var(--stamp) center / 100% 100% no-repeat;
+}
+
+.verdict--lg[data-verdict="submit"] {
+  --stamp: url("../stamps/verdict-submit.webp");
+}
+
+.verdict--lg[data-verdict="rewrite-then-submit"] {
+  --stamp: url("../stamps/verdict-rewrite-then-submit.webp");
+}
+
+.verdict--lg[data-verdict="prove-first"] {
+  --stamp: url("../stamps/verdict-prove-first.webp");
+}
+
+.verdict--lg[data-verdict="hold-duplicate"] {
+  --stamp: url("../stamps/verdict-hold-duplicate.webp");
+}
+
+.verdict--lg[data-verdict="drop"] {
+  --stamp: url("../stamps/verdict-drop.webp");
+}
+
+.verdict--lg[data-verdict="fix-before-deploy"] {
+  --stamp: url("../stamps/verdict-fix-before-deploy.webp");
+}
+
+.verdict--lg[data-verdict="no-blocking-issues"] {
+  --stamp: url("../stamps/verdict-no-blocking-issues.webp");
+}
+
+.sev--stamp[data-sev="critical"] {
+  --stamp: url("../stamps/sev-critical.webp");
+}
+
+.sev--stamp[data-sev="high"] {
+  --stamp: url("../stamps/sev-high.webp");
+}
+
+.sev--stamp[data-sev="medium"] {
+  --stamp: url("../stamps/sev-medium.webp");
+}
+
+.sev--stamp[data-sev="low"] {
+  --stamp: url("../stamps/sev-low.webp");
+}
+
+.sev--stamp[data-sev="info"] {
+  --stamp: url("../stamps/sev-info.webp");
 }
 
 /* Status: a round dot leads the label. */
@@ -1338,7 +1522,7 @@ pre {
 .status[data-status="resolved"],
 .status[data-status="running"],
 .status[data-status="operator"] {
-  --chip: var(--sev-info);
+  --chip: var(--accent);
 }
 
 .status[data-status="needs-test"],
@@ -1358,7 +1542,6 @@ pre {
 .status[data-status="unsupplied"],
 .status[data-status="example"] {
   border-style: dashed;
-  border-color: color-mix(in srgb, var(--chip) 60%, transparent);
   background: transparent;
 }
 
@@ -1366,16 +1549,16 @@ pre {
   animation: pulse 1.2s ease-in-out infinite;
 }
 
-/* File reference: input-1/TidalStaking.sol:60-69 */
+/* File reference: input-1/TidalStaking.sol:60-69, typed into its box. */
 /* Stays on one line. When space runs out the file part shortens with an
    ellipsis and the line numbers stay whole. */
 .ref {
   display: inline-flex;
   max-width: 100%;
   padding: 0.1875rem var(--sp-8);
-  border: 1px solid var(--line);
+  border: 1px solid var(--line-strong);
   border-radius: var(--r-chip);
-  background: var(--surface-2);
+  background: var(--surface);
   color: var(--text);
   font: 500 var(--fs-12) / 1.4 var(--font-mono);
   text-decoration: none;
@@ -1393,7 +1576,7 @@ pre {
 .ref__lines {
   flex: none;
   color: var(--accent);
-  font-weight: 600;
+  font-weight: 650;
 }
 
 a.ref:hover,
@@ -1413,7 +1596,7 @@ button.ref:hover {
   display: inline-block;
   max-width: 100%;
   padding: 0.1875rem var(--sp-8);
-  border: 1px solid var(--line);
+  border: 1px solid var(--line-strong);
   border-radius: var(--r-chip);
   color: var(--text);
   font: 500 var(--fs-12) / 1.4 var(--font-mono);
@@ -1423,7 +1606,10 @@ button.ref:hover {
 .hash__algo {
   margin-right: var(--sp-8);
   color: var(--muted);
-  letter-spacing: 0.06em;
+  font-family: var(--font-display);
+  font-stretch: 85%;
+  font-weight: 680;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
 }
 
@@ -1431,10 +1617,11 @@ button.ref:hover {
    9. Cards, key/value lists, dossier
    ========================================================================== */
 
+/* A card is a ruled box on the form: an ink frame, hairlines inside. */
 .card {
   display: flex;
   flex-direction: column;
-  border: 1px solid var(--line);
+  border: 1px solid var(--rule);
   border-radius: var(--r-card);
   background: var(--surface);
   box-shadow: var(--shadow-card);
@@ -1445,12 +1632,14 @@ button.ref:hover {
 }
 
 .card--inset {
+  border-color: var(--line-strong);
   background: var(--surface-2);
   box-shadow: none;
 }
 
 .card--accent {
   border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
 }
 
 .card__head {
@@ -1464,9 +1653,8 @@ button.ref:hover {
 }
 
 .card__title {
-  font-size: var(--fs-16);
-  line-height: 1.4;
-  letter-spacing: -0.01em;
+  font-size: 1.0625rem;
+  line-height: 1.3;
 }
 
 .card__meta {
@@ -1507,8 +1695,12 @@ button.ref:hover {
 
 .kv dt {
   color: var(--muted);
-  font: 600 var(--fs-12) / 1.5 var(--font-mono);
-  letter-spacing: 0.06em;
+  font-family: var(--font-display);
+  font-size: var(--fs-12);
+  font-stretch: 85%;
+  font-weight: 680;
+  line-height: 1.5;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
 }
 
@@ -1516,13 +1708,15 @@ button.ref:hover {
   overflow-wrap: anywhere;
 }
 
-/* Dossier: the verdict, the headline and the counts above a list of findings. */
+/* Dossier: the inspection slip at the top of a result. The verdict stamp, the
+   headline and the counts, under a heavy head rule. */
 .dossier {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: var(--sp-16);
   padding: 1.25rem;
-  border: 1px solid var(--line);
+  border: 1px solid var(--rule);
+  border-top-width: 4px;
   border-radius: var(--r-card);
   background: var(--surface);
   box-shadow: var(--shadow-card);
@@ -1537,10 +1731,11 @@ button.ref:hover {
 
 .dossier__headline {
   max-width: 62ch;
-  font-size: var(--fs-18);
-  font-weight: 600;
-  line-height: 1.4;
-  letter-spacing: -0.01em;
+  font-family: var(--font-display);
+  font-size: 1.1875rem;
+  font-stretch: 92%;
+  font-weight: 680;
+  line-height: 1.35;
   text-wrap: pretty;
 }
 
@@ -1576,14 +1771,22 @@ button.ref:hover {
 
 .counts__n {
   color: var(--count, var(--text));
-  font: 600 var(--fs-22) / 1.1 var(--font-mono);
+  font-family: var(--font-display);
+  font-size: var(--fs-28);
+  font-stretch: 75%;
+  font-weight: 820;
+  line-height: 1;
   font-variant-numeric: tabular-nums;
 }
 
 .counts__label {
   color: var(--muted);
-  font: 600 var(--fs-12) / 1.4 var(--font-mono);
-  letter-spacing: 0.06em;
+  font-family: var(--font-display);
+  font-size: var(--fs-12);
+  font-stretch: 85%;
+  font-weight: 680;
+  line-height: 1.4;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
 }
 
@@ -1646,9 +1849,13 @@ button.ref:hover {
   min-height: 2rem;
   margin-left: auto;
   padding: 0 0.625rem;
-  border-radius: 6px;
+  border-radius: var(--r-ctl);
   color: var(--code-muted);
-  font: 600 var(--fs-12) / 1 var(--font-sans);
+  font-family: var(--font-display);
+  font-size: var(--fs-12);
+  font-stretch: 88%;
+  font-weight: 720;
+  line-height: 1;
   transition:
     background-color var(--t-fast),
     color var(--t-fast);
@@ -1677,7 +1884,7 @@ button.ref:hover {
 
 /* The app sets data-copied for two seconds after a successful copy. */
 .code__copy[data-copied] {
-  color: #5cc8a1;
+  color: var(--code-ok);
 }
 
 .code__copy[data-copied] .icon {
@@ -1745,7 +1952,7 @@ button.ref:hover {
   }
 }
 
-/* Blue line: observed. Amber line: unproven. */
+/* Violet line: observed. Ochre line: unproven. */
 .code__line.is-hl {
   background: color-mix(in srgb, var(--code-hl) 18%, var(--code-bg));
 }
@@ -1782,19 +1989,20 @@ button.ref:hover {
    ========================================================================== */
 
 /*
-  The signature component. A ledger page: labels in the left margin, a spine
-  between margin and content whose colour says how well each row is supported.
+  The signature component of the result: an inspection form. Printed labels
+  in the left margin, one neutral margin rule, the content to its right. The
+  ink of a row's label says how well the row is supported.
 
-    blue spine          observed in the supplied files, or an objection resolved
-    amber spine         unproven: an open objection
-    amber dashed spine  an evidence gap: something not supplied or not run
-    grey spine          neutral rows: impact, fix, test, next
+    violet label        observed in the supplied files, or an objection resolved
+    ochre label         unproven: an open objection
+    ochre, dashed rule  an evidence gap: something not supplied or not run
+    grey label          neutral rows: impact, fix, test, next
 */
 .finding {
   --rail-label: 9.75rem;
   --spine-x: var(--rail-label);
   overflow: clip;
-  border: 1px solid var(--line);
+  border: 1px solid var(--rule);
   border-radius: var(--r-card);
   background: var(--surface);
   box-shadow: var(--shadow-card);
@@ -1805,11 +2013,9 @@ button.ref:hover {
   box-shadow: var(--shadow);
 }
 
-/* The hero treatment: a blue glow under the card. */
+/* The hero treatment: the card lifts like a loose sheet. */
 .finding--glow {
-  box-shadow:
-    var(--shadow-card),
-    0 40px 80px -40px #2a6cf066;
+  box-shadow: var(--shadow-slip);
 }
 
 /* Window bar: file name, hash, tag. */
@@ -1826,6 +2032,17 @@ button.ref:hover {
   font: 500 var(--fs-12) / 1.4 var(--font-mono);
 }
 
+/* A bar that heads a form rather than a file (the 404): printed caps, no path. */
+.finding__form {
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: var(--fs-12);
+  font-stretch: 85%;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 .finding__file {
   min-width: 8ch;
   overflow: hidden;
@@ -1840,7 +2057,10 @@ button.ref:hover {
 
 .finding__tag {
   margin-left: auto;
-  letter-spacing: 0.06em;
+  font-family: var(--font-display);
+  font-stretch: 85%;
+  font-weight: 680;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
 }
 
@@ -1860,17 +2080,23 @@ button.ref:hover {
 .finding__id {
   margin-right: var(--sp-4);
   color: var(--muted);
-  font: 600 var(--fs-12) / 1 var(--font-mono);
+  font-family: var(--font-display);
+  font-size: var(--fs-13);
+  font-stretch: 80%;
+  font-weight: 800;
+  line-height: 1;
   letter-spacing: 0.06em;
 }
 
 /* A heading, or a paragraph when the card is an example (findingCard level 0). */
 .finding__title {
   max-width: 56ch;
+  font-family: var(--font-display);
   font-size: var(--fs-22);
-  font-weight: 650;
-  line-height: 1.25;
-  letter-spacing: -0.015em;
+  font-stretch: 88%;
+  font-weight: 780;
+  line-height: 1.2;
+  letter-spacing: -0.005em;
   text-wrap: balance;
 }
 
@@ -1904,15 +2130,16 @@ button.ref:hover {
   border-top: 1px solid var(--line);
 }
 
-/* The spine. It overlaps the row separator so it reads as one continuous line. */
+/* The margin rule between label and body: one neutral printed line that
+   overlaps the row separator. How a row stands is in the ink of its label. */
 .rail::before {
   content: "";
   position: absolute;
   top: -1px;
   bottom: 0;
   left: var(--spine-x);
-  width: 2px;
-  background: var(--rail-color);
+  width: 1px;
+  background: var(--line-strong);
 }
 
 .rail:first-child::before {
@@ -1922,8 +2149,12 @@ button.ref:hover {
 .rail__label {
   padding: var(--sp-16) var(--sp-16) var(--sp-16) var(--sp-24);
   color: var(--rail-ink);
-  font: 600 var(--fs-12) / 1.65 var(--font-mono);
-  letter-spacing: 0.06em;
+  font-family: var(--font-display);
+  font-size: var(--fs-12);
+  font-stretch: 85%;
+  font-weight: 720;
+  line-height: 1.65;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
 }
 
@@ -1948,8 +2179,9 @@ button.ref:hover {
   --rail-ink: var(--gap);
 }
 
+/* An evidence gap breaks the rule: dashed, like a field left blank. */
 .rail[data-rail="gap"]::before {
-  background: repeating-linear-gradient(to bottom, var(--rail-color) 0 4px, transparent 4px 8px);
+  background: repeating-linear-gradient(to bottom, var(--line-strong) 0 4px, transparent 4px 8px);
 }
 
 .rail[data-rail="gap"][data-status="none"] {
@@ -1979,7 +2211,11 @@ button.ref:hover {
   position: absolute;
   left: 0;
   color: var(--muted);
-  font: 600 var(--fs-12) / 1.9 var(--font-mono);
+  font-family: var(--font-display);
+  font-size: var(--fs-12);
+  font-stretch: 80%;
+  font-weight: 800;
+  line-height: 1.9;
 }
 
 /* Counterargument: the objection, then how it stands. */
@@ -2082,15 +2318,16 @@ button.ref:hover {
    12. Notices
    ========================================================================== */
 
+/* A notice is a tag pinned to the form: a ruled box in its ink, a trace of tint. */
 .notice {
   --tone: var(--sev-info);
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   gap: var(--sp-12);
   padding: var(--sp-12) var(--sp-16);
-  border: 1px solid color-mix(in srgb, var(--tone) 40%, transparent);
+  border: 1px solid color-mix(in srgb, var(--tone) 70%, transparent);
   border-radius: var(--r-ctl);
-  background: color-mix(in srgb, var(--tone) 10%, var(--surface));
+  background: color-mix(in srgb, var(--tone) 7%, var(--surface));
   color: var(--text);
   font-size: var(--fs-14);
   line-height: 1.55;
@@ -2110,7 +2347,9 @@ button.ref:hover {
 }
 
 .notice__title {
-  font-weight: 650;
+  font-family: var(--font-display);
+  font-stretch: 90%;
+  font-weight: 760;
 }
 
 .notice__body > * + * {
@@ -2133,11 +2372,12 @@ button.ref:hover {
    13. Tabs, stepper, segmented control
    ========================================================================== */
 
+/* Tabs are file-folder tabs: the open one joins the sheet under it. */
 .tabs {
   display: flex;
-  gap: var(--sp-16);
+  gap: var(--sp-4);
   overflow-x: auto;
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid var(--rule);
   scrollbar-width: none;
 }
 
@@ -2149,13 +2389,18 @@ button.ref:hover {
   min-width: var(--tap);
   min-height: var(--tap);
   margin-bottom: -1px;
-  border-bottom: 2px solid transparent;
+  padding: 0 var(--sp-12);
+  border: 1px solid transparent;
+  border-bottom: 0;
+  border-radius: var(--r-ctl) var(--r-ctl) 0 0;
   color: var(--muted);
-  font-size: var(--fs-14);
-  font-weight: 600;
+  font-family: var(--font-display);
+  font-size: 0.9375rem;
+  font-stretch: 90%;
+  font-weight: 700;
   white-space: nowrap;
   transition:
-    border-color var(--t-fast),
+    background-color var(--t-fast),
     color var(--t-fast);
 }
 
@@ -2164,7 +2409,8 @@ button.ref:hover {
 }
 
 .tabs__tab[aria-selected="true"] {
-  border-bottom-color: var(--accent);
+  border-color: var(--rule);
+  background: var(--surface);
   color: var(--text);
 }
 
@@ -2177,24 +2423,32 @@ button.ref:hover {
   border-radius: var(--r-chip);
   background: var(--surface-2);
   color: var(--muted);
-  font: 600 var(--fs-12) / 1.3 var(--font-mono);
+  font-family: var(--font-display);
+  font-size: var(--fs-12);
+  font-stretch: 85%;
+  font-weight: 760;
+  line-height: 1.3;
+  font-variant-numeric: tabular-nums;
 }
 
-/* Stepper: a segmented track. Done steps show a tick. */
+/* Stepper: the parts of the form in a ruled strip. The current part is canary. */
 .stepper ol {
   display: flex;
-  gap: var(--sp-4);
   margin: 0;
-  padding: var(--sp-4);
+  padding: 0;
   list-style: none;
-  border: 1px solid var(--line);
-  border-radius: var(--r-card);
-  background: var(--surface-2);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-ctl);
+  background: var(--surface);
 }
 
 .stepper li {
   flex: 1 1 0;
   min-width: 0;
+}
+
+.stepper li + li {
+  border-left: 1px solid var(--rule);
 }
 
 .stepper__step {
@@ -2205,10 +2459,11 @@ button.ref:hover {
   width: 100%;
   min-height: var(--tap);
   padding: 0 var(--sp-12);
-  border-radius: var(--r-ctl);
   color: var(--muted);
-  font-size: var(--fs-14);
-  font-weight: 600;
+  font-family: var(--font-display);
+  font-size: 0.9375rem;
+  font-stretch: 90%;
+  font-weight: 700;
   white-space: nowrap;
   transition:
     background-color var(--t-fast),
@@ -2216,13 +2471,13 @@ button.ref:hover {
 }
 
 .stepper__step:hover {
+  background: var(--surface-2);
   color: var(--text);
 }
 
 .stepper__step[data-state="current"] {
-  background: var(--surface-3);
-  box-shadow: 0 1px 2px #0b1a2e1f;
-  color: var(--text);
+  background: var(--stock);
+  color: var(--on-stock);
 }
 
 .stepper__marker {
@@ -2231,9 +2486,13 @@ button.ref:hover {
   place-items: center;
   width: 1.375rem;
   height: 1.375rem;
-  border: 1px solid var(--line-control);
-  border-radius: 50%;
-  font: 600 var(--fs-12) / 1 var(--font-mono);
+  border: 1.5px solid currentColor;
+  border-radius: var(--r-chip);
+  font-family: var(--font-display);
+  font-size: var(--fs-12);
+  font-stretch: 80%;
+  font-weight: 820;
+  line-height: 1;
 }
 
 .stepper__marker .icon {
@@ -2242,8 +2501,8 @@ button.ref:hover {
 }
 
 .stepper__step[data-state="current"] .stepper__marker {
-  border-color: var(--accent);
-  color: var(--text);
+  border-color: var(--on-stock);
+  color: var(--on-stock);
 }
 
 .stepper__step[data-state="done"] .stepper__marker {
@@ -2272,20 +2531,23 @@ button.ref:hover {
   }
 }
 
-/* Segmented control: a radio group for two to four exclusive choices. */
+/* Segmented control: a radio group for two to four exclusive choices, printed
+   as a row of option boxes. The chosen box is canary. */
 .segmented {
   display: inline-flex;
-  gap: var(--sp-4);
   max-width: 100%;
-  padding: var(--sp-4);
-  border: 1px solid var(--line);
-  border-radius: var(--r-card);
-  background: var(--surface-2);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-ctl);
+  background: var(--surface);
 }
 
 .segmented__option {
   position: relative;
   flex: 1 1 auto;
+}
+
+.segmented__option + .segmented__option {
+  border-left: 1px solid var(--rule);
 }
 
 .segmented__option input {
@@ -2302,22 +2564,26 @@ button.ref:hover {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 2.25rem;
+  min-height: 2.5rem;
   padding: 0 var(--sp-16);
-  border-radius: var(--r-ctl);
   color: var(--muted);
+  font-family: var(--font-display);
   font-size: var(--fs-14);
-  font-weight: 600;
+  font-stretch: 90%;
+  font-weight: 700;
   white-space: nowrap;
   transition:
     background-color var(--t-fast),
     color var(--t-fast);
 }
 
-.segmented__option input:checked + span {
-  background: var(--surface-3);
-  box-shadow: 0 1px 2px #0b1a2e1f;
+.segmented__option input:hover + span {
   color: var(--text);
+}
+
+.segmented__option input:checked + span {
+  background: var(--stock);
+  color: var(--on-stock);
 }
 
 .segmented__option input:focus-visible + span {
@@ -2340,7 +2606,7 @@ button.ref:hover {
 .table-wrap {
   position: relative;
   overflow-x: auto;
-  border: 1px solid var(--line);
+  border: 1px solid var(--rule);
   border-radius: var(--r-card);
   background: var(--surface);
 }
@@ -2359,7 +2625,9 @@ button.ref:hover {
 .table caption {
   padding: 0.875rem var(--sp-16);
   border-bottom: 1px solid var(--line);
-  font-weight: 650;
+  font-family: var(--font-display);
+  font-stretch: 90%;
+  font-weight: 760;
   text-align: left;
 }
 
@@ -2372,17 +2640,22 @@ button.ref:hover {
 }
 
 .table thead th {
+  border-bottom: var(--rule-w) solid var(--rule);
   background: var(--surface-2);
   color: var(--muted);
-  font: 600 var(--fs-12) / 1.5 var(--font-mono);
-  letter-spacing: 0.06em;
+  font-family: var(--font-display);
+  font-size: var(--fs-12);
+  font-stretch: 85%;
+  font-weight: 680;
+  line-height: 1.5;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
   white-space: nowrap;
   vertical-align: middle;
 }
 
 .table tbody th {
-  font-weight: 600;
+  font-weight: 650;
 }
 
 /* Text columns keep a readable width; on a narrow screen the table scrolls. */
@@ -2522,8 +2795,12 @@ button.ref:hover {
     display: block;
     margin-bottom: 0.125rem;
     color: var(--muted);
-    font: 600 var(--fs-12) / 1.5 var(--font-mono);
-    letter-spacing: 0.06em;
+    font-family: var(--font-display);
+    font-size: var(--fs-12);
+    font-stretch: 85%;
+    font-weight: 680;
+    line-height: 1.5;
+    letter-spacing: 0.07em;
     text-transform: uppercase;
   }
 
@@ -2589,8 +2866,12 @@ button.ref:hover {
     display: block;
     margin-bottom: 0.125rem;
     color: var(--muted);
-    font: 600 var(--fs-12) / 1.5 var(--font-mono);
-    letter-spacing: 0.06em;
+    font-family: var(--font-display);
+    font-size: var(--fs-12);
+    font-stretch: 85%;
+    font-weight: 680;
+    line-height: 1.5;
+    letter-spacing: 0.07em;
     text-transform: uppercase;
   }
 
@@ -2621,7 +2902,7 @@ button.ref:hover {
 
 /* Both are <details>. Nothing here styles a bare details or summary element. */
 .accordion {
-  border-top: 1px solid var(--line);
+  border-top: var(--rule-w) solid var(--rule);
 }
 
 .accordion__item {
@@ -2634,8 +2915,10 @@ button.ref:hover {
   align-items: center;
   gap: var(--sp-16);
   min-height: var(--tap);
-  font-weight: 600;
-  line-height: 1.4;
+  font-family: var(--font-display);
+  font-stretch: 90%;
+  font-weight: 720;
+  line-height: 1.35;
   list-style: none;
   cursor: pointer;
 }
@@ -2665,8 +2948,8 @@ button.ref:hover {
 }
 
 .accordion__summary {
-  padding-block: 0.875rem;
-  font-size: var(--fs-16);
+  padding-block: var(--sp-16);
+  font-size: 1.0625rem;
 }
 
 .accordion__summary:hover {
@@ -2690,7 +2973,7 @@ button.ref:hover {
 }
 
 .disclosure {
-  border: 1px solid var(--line);
+  border: 1px solid var(--line-control);
   border-radius: var(--r-ctl);
   background: var(--surface);
 }
@@ -2702,7 +2985,9 @@ button.ref:hover {
 
 .disclosure__hint {
   color: var(--muted);
+  font-family: var(--font-sans);
   font-size: var(--fs-13);
+  font-stretch: normal;
   font-weight: 400;
 }
 
@@ -2736,13 +3021,14 @@ button.ref:hover {
    16. Dialog
    ========================================================================== */
 
+/* A dialog is a loose sheet laid over the form. */
 .dialog {
   width: min(100% - 1.5rem, var(--dialog-w, 40rem));
   max-width: none;
   max-height: min(100dvh - 1.5rem, 56rem);
   padding: 0;
   overflow: auto;
-  border: 1px solid var(--line-strong);
+  border: 1px solid var(--rule);
   border-radius: var(--r-hero);
   background: var(--surface);
   box-shadow: var(--shadow-pop);
@@ -2776,14 +3062,14 @@ button.ref:hover {
   justify-content: space-between;
   gap: var(--sp-16);
   padding: var(--sp-8) var(--sp-8) var(--sp-8) var(--sp-24);
-  border-bottom: 1px solid var(--line);
+  border-bottom: var(--rule-w) solid var(--rule);
   background: var(--surface);
 }
 
 .dialog__title {
-  font-size: var(--fs-18);
-  line-height: 1.35;
-  letter-spacing: -0.01em;
+  font-size: 1.25rem;
+  font-weight: 800;
+  line-height: 1.3;
 }
 
 .dialog__close {
@@ -2849,7 +3135,6 @@ button.ref:hover {
   position: relative;
   height: 2px;
   overflow: hidden;
-  border-radius: 1px;
   background: var(--line);
 }
 
@@ -2869,7 +3154,7 @@ button.ref:hover {
   height: 0.375rem;
   overflow: hidden;
   border: 0;
-  border-radius: 3px;
+  border-radius: 0;
   background: var(--surface-2);
   appearance: none;
 }
@@ -2879,12 +3164,10 @@ button.ref:hover {
 }
 
 .meter::-webkit-progress-value {
-  border-radius: 3px;
   background: var(--accent);
 }
 
 .meter::-moz-progress-bar {
-  border-radius: 3px;
   background: var(--accent);
 }
 
@@ -2932,8 +3215,12 @@ button.ref:hover {
    18. Site header and footer
    ========================================================================== */
 
+/* The header is the top of the form: the name, the parts, a heavy rule. */
 .site-header {
-  border-bottom: 1px solid var(--line);
+  position: relative;
+  z-index: 2;
+  border-bottom: var(--rule-w) solid var(--rule);
+  background: var(--bg);
 }
 
 .site-header__inner {
@@ -2949,9 +3236,11 @@ button.ref:hover {
   gap: 0.625rem;
   min-height: var(--tap);
   color: var(--text);
-  font-size: var(--fs-16);
-  font-weight: 700;
-  letter-spacing: -0.02em;
+  font-family: var(--font-display);
+  font-size: 1.125rem;
+  font-stretch: 86%;
+  font-weight: 820;
+  letter-spacing: -0.005em;
   text-decoration: none;
   white-space: nowrap;
 }
@@ -2996,9 +3285,11 @@ button.ref:hover {
   min-height: var(--tap);
   padding: 0 var(--sp-12);
   border-radius: var(--r-ctl);
-  color: var(--muted);
-  font-size: var(--fs-14);
-  font-weight: 500;
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: 0.9375rem;
+  font-stretch: 90%;
+  font-weight: 650;
   text-decoration: none;
   white-space: nowrap;
   transition:
@@ -3007,14 +3298,14 @@ button.ref:hover {
 }
 
 .site-nav a:hover {
-  background: color-mix(in srgb, var(--text) 7%, transparent);
-  color: var(--text);
+  background: color-mix(in srgb, var(--text) 8%, transparent);
 }
 
-/* The current page: full ink and a blue underline. */
+/* The current page is marked with canary, the way a clerk highlights a line. */
 .site-nav a[aria-current="page"] {
-  background: linear-gradient(var(--accent), var(--accent)) center bottom 0.5rem / calc(100% - 1.5rem) 2px no-repeat;
-  color: var(--text);
+  background: var(--stock);
+  color: var(--on-stock);
+  font-weight: 760;
 }
 
 .site-header__actions {
@@ -3036,7 +3327,7 @@ button.ref:hover {
 }
 
 .theme-toggle:hover {
-  background: color-mix(in srgb, var(--text) 7%, transparent);
+  background: color-mix(in srgb, var(--text) 8%, transparent);
   color: var(--text);
 }
 
@@ -3052,7 +3343,7 @@ button.ref:hover {
 @media (max-width: 57.99em) {
   .site-header__inner {
     flex-wrap: wrap;
-    row-gap: var(--sp-8);
+    row-gap: 0;
     padding-top: var(--sp-8);
   }
 
@@ -3077,8 +3368,8 @@ button.ref:hover {
     gap: 0;
   }
 
-  .site-nav a[aria-current="page"] {
-    background-position: center bottom;
+  .site-nav a {
+    border-radius: 0;
   }
 }
 
@@ -3098,9 +3389,11 @@ button.ref:hover {
   }
 }
 
+/* The footer is the carbon back sheet in both themes: layout.mjs gives it .theme-dark. */
 .site-footer {
   margin-top: var(--sp-72);
-  border-top: 1px solid var(--line);
+  background: var(--bg);
+  color: var(--text);
   font-size: var(--fs-14);
 }
 
@@ -3115,19 +3408,32 @@ button.ref:hover {
   grid-column: 1 / -1;
 }
 
+/* The promise, set like the line printed across the foot of a form. */
 .site-footer__promise {
-  max-width: 26ch;
-  margin-top: var(--sp-8);
-  color: var(--muted);
-  line-height: 1.5;
+  max-width: 17ch;
+  margin-top: var(--sp-16);
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: clamp(1.625rem, 1.2rem + 1.6vw, 2.375rem);
+  font-stretch: 74%;
+  font-weight: 840;
+  line-height: 1.02;
   text-wrap: balance;
+}
+
+.site-footer__cta {
+  margin-top: var(--sp-24);
 }
 
 .site-footer__title {
   margin-bottom: var(--sp-8);
-  color: var(--muted);
-  font: 600 var(--fs-12) / 1.5 var(--font-mono);
-  letter-spacing: 0.06em;
+  color: var(--stock);
+  font-family: var(--font-display);
+  font-size: var(--fs-12);
+  font-stretch: 85%;
+  font-weight: 720;
+  line-height: 1.5;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
@@ -3147,7 +3453,8 @@ button.ref:hover {
 }
 
 .site-footer__col a:hover {
-  color: var(--accent);
+  color: var(--stock);
+  text-decoration: underline;
 }
 
 .site-footer__col .icon {
@@ -3162,8 +3469,7 @@ button.ref:hover {
   align-items: center;
   justify-content: space-between;
   gap: 0 var(--sp-24);
-  margin-bottom: var(--sp-24);
-  padding-top: var(--sp-8);
+  padding-block: var(--sp-8) var(--sp-16);
   border-top: 1px solid var(--line);
   color: var(--muted);
   font-size: var(--fs-13);
@@ -3180,7 +3486,7 @@ button.ref:hover {
 }
 
 .site-footer__base a:hover {
-  color: var(--accent);
+  color: var(--stock);
   text-decoration-color: currentColor;
 }
 
@@ -3193,7 +3499,7 @@ button.ref:hover {
 
 @media (min-width: 52em) {
   .site-footer__grid {
-    grid-template-columns: minmax(0, 1.5fr) repeat(3, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1.6fr) repeat(3, minmax(0, 1fr));
   }
 
   .site-footer__brand {
@@ -3202,9 +3508,11 @@ button.ref:hover {
 }
 
 /* ==========================================================================
-   19. Section heading, breadcrumbs, prose
+   19. Section heading, breadcrumbs, prose, page head
    ========================================================================== */
 
+/* A section opens with a part rule: a heavy line across the column, the
+   heading under it. */
 .section-head {
   display: flex;
   flex-wrap: wrap;
@@ -3212,6 +3520,8 @@ button.ref:hover {
   justify-content: space-between;
   gap: var(--sp-16) var(--sp-32);
   margin-bottom: var(--sp-32);
+  padding-top: var(--sp-16);
+  border-top: var(--rule-w) solid var(--rule);
 }
 
 .section-head__text {
@@ -3235,13 +3545,18 @@ button.ref:hover {
   padding: 0;
   list-style: none;
   color: var(--muted);
-  font-size: var(--fs-13);
+  font-family: var(--font-display);
+  font-size: var(--fs-12);
+  font-stretch: 85%;
+  font-weight: 680;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
 }
 
 .breadcrumbs li + li::before {
   content: "/";
   margin-inline: var(--sp-8);
-  color: var(--line-strong);
+  color: var(--muted);
 }
 
 .breadcrumbs a {
@@ -3249,12 +3564,66 @@ button.ref:hover {
 }
 
 .breadcrumbs a:hover {
-  color: var(--accent);
+  color: var(--text);
   text-decoration: underline;
 }
 
 .breadcrumbs [aria-current="page"] {
   color: var(--text);
+}
+
+/* The page head: printed on the field, canary by day and lifted carbon at
+   night. The band runs the full width of the window while its content keeps
+   to the wrap; border-image paints outside the box without adding scroll. */
+.page-field {
+  --text: var(--on-field);
+  --muted: var(--on-field-muted);
+  --rule: var(--field-rule);
+  --line-control: var(--on-field);
+  color: var(--text);
+  border-image: conic-gradient(var(--field) 0 0) fill 0 / / 0 100vmax;
+}
+
+/* A page head on the field opens the page: whatever holds it gives up its top
+   padding, so the field starts under the header rule. */
+.section:has(> .page-field:first-child) {
+  padding-top: 0;
+}
+
+/* Anything printed on canary stock, in either theme: ink, violet links, a
+   black primary box. The highlighted plan and the canary current step use it. */
+.on-stock {
+  --bg: var(--stock);
+  --text: var(--on-stock);
+  --muted: var(--on-stock-muted);
+  --rule: var(--on-stock);
+  --line: color-mix(in srgb, var(--on-stock) 22%, transparent);
+  --line-strong: color-mix(in srgb, var(--on-stock) 45%, transparent);
+  --line-control: var(--on-stock);
+  --accent: #4b2593;
+  --accent-hover: #32176a;
+  --accent-solid: #16161b;
+  --accent-solid-hover: #4b2593;
+  --on-accent: #ffffff;
+  --focus: #16161b;
+  --check-image: var(--icon-check-white);
+  background: var(--stock);
+  color: var(--text);
+}
+
+/* Inside the field the secondary box and links print in the field's own ink. */
+.page-field .btn--secondary {
+  border-color: var(--on-field);
+}
+
+.page-field .link {
+  color: var(--on-field);
+  text-decoration-color: color-mix(in srgb, var(--on-field) 55%, transparent);
+}
+
+.page-field .link:hover {
+  color: var(--on-field);
+  text-decoration-color: currentColor;
 }
 
 /* Long-form pages: guide, MCP setup, privacy, terms. Plain elements inside
@@ -3270,7 +3639,10 @@ button.ref:hover {
 }
 
 .prose > h2 {
-  margin-top: 2.5em;
+  margin-top: 2.25em;
+  padding-top: 0.5em;
+  border-top: var(--rule-w) solid var(--rule);
+  font-size: clamp(1.5rem, 1.25rem + 1vw, 2rem);
 }
 
 .prose > h3 {
@@ -3292,16 +3664,18 @@ button.ref:hover {
 .prose :is(p, li, dd, td) a {
   color: var(--accent);
   text-decoration: underline;
-  text-decoration-color: color-mix(in srgb, var(--accent) 45%, transparent);
+  text-decoration-color: color-mix(in srgb, var(--accent) 50%, transparent);
+  text-underline-offset: 0.18em;
 }
 
 .prose :is(p, li, dd, td) a:hover {
   color: var(--accent-hover);
   text-decoration-color: currentColor;
+  text-decoration-thickness: 2px;
 }
 
 .prose strong {
-  font-weight: 650;
+  font-weight: 700;
 }
 
 .prose :is(ul, ol):not([class]) {
@@ -3318,7 +3692,7 @@ button.ref:hover {
 
 .prose blockquote {
   padding-left: 1.25rem;
-  border-left: 2px solid var(--line-strong);
+  border-left: 1px solid var(--rule);
   color: var(--muted);
 }
 
@@ -3355,7 +3729,9 @@ button.ref:hover {
 }
 
 .prose table:not([class]) th {
-  font-weight: 650;
+  font-family: var(--font-display);
+  font-stretch: 90%;
+  font-weight: 720;
 }
 
 /* ==========================================================================
@@ -3365,13 +3741,32 @@ button.ref:hover {
 /*
   Colour and border changes run 120ms. Panels fade and rise 6px over 180ms.
   A dialog enters from 98% scale over 160ms. Lists of cards stagger by 40ms.
-  One authored moment: the finding card's spine draws itself row by row.
+  One authored moment: the stamp. A verdict lands the way a rubber stamp
+  does, large and light, then pressed flat at its tilt in 420ms. The finding
+  card's spine draws itself row by row under it.
 */
 
 @keyframes rise {
   from {
     opacity: 0;
     transform: translateY(6px);
+  }
+}
+
+@keyframes stamp-land {
+  0% {
+    opacity: 0;
+    transform: rotate(var(--stamp-tilt, 0deg)) scale(1.55);
+  }
+
+  55% {
+    opacity: 1;
+    transform: rotate(var(--stamp-tilt, 0deg)) scale(0.96);
+  }
+
+  100% {
+    opacity: 1;
+    transform: rotate(var(--stamp-tilt, 0deg)) scale(1);
   }
 }
 
@@ -3421,6 +3816,13 @@ button.ref:hover {
   /* A step panel or result block entering. */
   .panel-enter {
     animation: rise var(--t-panel) var(--ease) both;
+  }
+
+  /* The stamp: on the hero slip, and on a verdict as a result arrives. */
+  .stamp-land,
+  .panel-enter .dossier .verdict--lg {
+    animation: stamp-land var(--t-stamp) var(--ease-out) both;
+    animation-delay: var(--stamp-delay, 120ms);
   }
 
   /* Children enter one after another: cards in a list, rows in a table. */
@@ -3537,35 +3939,43 @@ button.ref:hover {
 @media print {
   /* Paper is light, whatever the screen theme. */
   :root,
-  .theme-dark {
+  .theme-dark,
+  .theme-light {
     color-scheme: light !important;
 
     --bg: #ffffff !important;
     --surface: #ffffff !important;
-    --surface-2: #f1f4f9 !important;
-    --line: #c5cfdc !important;
-    --line-strong: #9fb0c5 !important;
-    --line-control: #6f849f !important;
-    --text: #0b1a2e !important;
-    --muted: #44566c !important;
-    --accent: #1552c4 !important;
-    --gap: #7a4f00 !important;
-    --gap-bg: #fff6df !important;
-    --sev-crit: #a01c28 !important;
-    --sev-high: #963506 !important;
-    --sev-med: #7a4f00 !important;
-    --sev-low: #0f5d4a !important;
-    --sev-info: #1552c4 !important;
-    --sev-none: #44566c !important;
-    --ok: #0f5d4a !important;
-    --danger: #a01c28 !important;
-    --chip-fill: 10% !important;
-    --code-bg: #f6f8fb !important;
-    --code-text: #0b1a2e !important;
-    --code-muted: #5a6b80 !important;
-    --code-line: #c5cfdc !important;
-    --code-hl: #1552c4 !important;
-    --code-flag: #a86f00 !important;
+    --surface-2: #f1f0ea !important;
+    --line: #cfcec6 !important;
+    --line-strong: #9c9b93 !important;
+    --line-control: #6f6f77 !important;
+    --rule: #000000 !important;
+    --field: #ffffff !important;
+    --on-field: #000000 !important;
+    --on-field-muted: #44444c !important;
+    --field-rule: #000000 !important;
+    --stock: #ffffff !important;
+    --on-stock: #000000 !important;
+    --text: #000000 !important;
+    --muted: #44444c !important;
+    --accent: #3d1d7a !important;
+    --gap: #6e4a00 !important;
+    --gap-bg: #fdf3c9 !important;
+    --sev-crit: #9c1428 !important;
+    --sev-high: #933a06 !important;
+    --sev-med: #6e4a00 !important;
+    --sev-low: #155a30 !important;
+    --sev-info: #1d3c94 !important;
+    --sev-none: #44444c !important;
+    --ok: #155a30 !important;
+    --danger: #9c1428 !important;
+    --chip-fill: 0% !important;
+    --code-bg: #f6f6f2 !important;
+    --code-text: #000000 !important;
+    --code-muted: #5a5a62 !important;
+    --code-line: #cfcec6 !important;
+    --code-hl: #3d1d7a !important;
+    --code-flag: #8a5a00 !important;
     --shadow-card: none !important;
     --shadow: none !important;
     --shadow-pop: none !important;

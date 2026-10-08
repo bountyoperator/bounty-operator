@@ -3,7 +3,7 @@
 // scripts/build-site.mjs calls renderPage(page, site) for every page module
 // under web/site/pages. The page contract is documented in COMPONENTS.md.
 
-import { attrs, brandMark, cx, esc, html, icon, inline, raw, textOf } from './components.mjs';
+import { attrs, brandMark, button, cx, esc, html, icon, inline, raw, textOf } from './components.mjs';
 import { CHAT_LINE, FREE_LINE, OPERATOR_LINE } from './plans.mjs';
 
 export const SITE = {
@@ -12,15 +12,32 @@ export const SITE = {
   promise: 'Find the hole in your report before the triager does.',
   summary:
     'Pre-submission review for bug bounty reports and smart-contract findings. The AI argues against the finding. The hunter writes the report.',
-  defaultImage: '/social-v3.png',
+  defaultImage: '/social-v4.png',
   source: 'https://github.com/bountyoperator/bounty-operator',
   support: 'support@bountyoperator.com',
   security: 'security@bountyoperator.com',
   // The builder's public contest profile.
   builder: { name: 'Tradi3', url: 'https://audits.sherlock.xyz/watson/Tradi3' },
   // Keep in step with --bg in web/public/css/base.css and with web/public/theme.js.
-  themeColor: { dark: '#0a1220', light: '#f5f7fb' },
+  themeColor: { dark: '#17132e', light: '#fbfbf8' },
 };
+
+/** The one webfont: Archivo, self-hosted. Preloaded so headings do not reflow when it lands. */
+export const FONT_FILE = '/fonts/archivo-latin-wdth.woff2';
+
+/**
+ * The design contract (impeccable direction, seed b5682f59), emitted as the
+ * first child of every <body> so the built pages carry it. DESIGN.md records
+ * the system that was built from it.
+ */
+export const DESIGN_CONTRACT = `<!--
+THESIS: The verdict is a stamp on your draft. The site is the inspection a finding passes before a triager sees it, not the category's dark code-card hero.
+OWN-WORLD: Inspection paperwork. Canary and white stock, black print, violet stamp ink, carbon indigo for code and the night shift. Ruled fields, square corners, part rules, ledger tables. Archivo condensed caps for labels and stamps; mono only for code and typed entries.
+STORY: A hunter sees a Critical stamped down to Medium with the line that decides it, trusts that the review argues against them, and starts a review or opens the example.
+FIRST VIEWPORT: Full-bleed canary field. Left: condensed black headline, lede, black Review my report, ruled View example. Right: the paper slip, tilted, Critical struck, Medium and the violet verdict stamped on it. Proof line on the field's foot.
+FORM: Rubber-stamp verdicts and inspection forms, 6 of 7, seed b5682f59.
+FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md
+-->`;
 
 /**
  * Header navigation. `requires` hides an item until that page exists in the
@@ -204,7 +221,8 @@ function head(page, site) {
 <link rel="icon" href="/icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="manifest" href="/site.webmanifest">
-<script src="/theme.js"></script>${styles.map((href) => html`
+${site.has(FONT_FILE) && html`<link rel="preload" href="${FONT_FILE}" as="font" type="font/woff2" crossorigin>
+`}<script src="/theme.js"></script>${styles.map((href) => html`
 <link rel="stylesheet" href="${href}">`)}${preloads.map((href) => html`
 <link rel="modulepreload" href="${href}">`)}${scripts.map((src) => html`
 <script type="module" src="${src}"></script>`)}${(page.jsonld ?? []).map((data) => html`
@@ -253,11 +271,12 @@ function footerColumn(title, links) {
 
 function siteFooter(page, site) {
   const optional = (path, label) => (site.has(path) ? { href: path, label } : null);
-  return html`<footer class="site-footer">
+  return html`<footer class="site-footer theme-dark">
 <div class="wrap site-footer__grid">
 <div class="site-footer__brand">
 <a class="brand" href="/">${brandMark()}<span class="brand__name">${SITE.name}</span></a>
 <p class="site-footer__promise">${SITE.promise}</p>
+<p class="site-footer__cta">${button({ label: 'Review my report', href: '/?profile=report#workspace', variant: 'primary', iconEnd: 'arrow-right' })}</p>
 </div>
 ${footerColumn('Product', [
     { href: '/#workspace', label: 'Review a report' },
@@ -310,6 +329,7 @@ export function renderPage(page, site = EMPTY_SITE) {
 <html lang="en">
 ${head(page, site)}
 <body${attrs({ class: cx(page.bodyClass) || null })}>
+${raw(DESIGN_CONTRACT)}
 <a class="skip-link" href="${skip.href}">${skip.label}</a>
 ${siteHeader(page, site)}
 <main id="main" tabindex="-1">

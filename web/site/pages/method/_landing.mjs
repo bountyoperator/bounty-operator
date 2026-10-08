@@ -22,7 +22,7 @@ function needsList(items) {
  * One landing page for a review profile.
  *
  * profileId, profileName   the profile the call to action preselects
- * hero                     { eyebrow, title, lede, example, exampleLabel }
+ * hero                     { meta, title, lede, example, exampleLabel }
  * checks                   { title, lede, items: [{ title, text }], columns }
  *                          A core profile says what it checks. A hosted profile
  *                          says what it answers and outputs, and nothing of how.
@@ -40,7 +40,7 @@ export function profileLanding({ path, title, description, label, profileId, pro
   const body = html`
 ${pageHero({
   trail: [{ label: 'Bounty Operator', href: '/' }, { label: 'Method', href: '/method' }, { label: label ?? profileName }],
-  eyebrow: hero.eyebrow ?? profileName,
+  meta: hero.meta ?? profileName,
   title: hero.title,
   lede: hero.lede,
   actions: html`${open()}${button({ label: checksButton, href: '#checks', size: 'lg' })}`,

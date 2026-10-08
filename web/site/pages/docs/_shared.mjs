@@ -41,7 +41,7 @@ export function ext(label, href) {
  * and action row.
  */
 export function docHead({ crumbs, title, lede, meta, actions }) {
-  return html`<header class="docs-head">
+  return html`<header class="docs-head page-field">
 ${breadcrumbs(crumbs)}
 <h1>${title}</h1>
 ${lede && html`<p class="lede">${lede}</p>`}

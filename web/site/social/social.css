@@ -1,7 +1,7 @@
 @charset "UTF-8";
 
 /*
-  Bounty Operator: the social card (web/public/social-v3.png)
+  Bounty Operator: the social card (web/public/social-v4.png)
 
   Loaded after base.css and home.css by web/site/social/card.html, which is
   drawn at exactly 1200 x 630 and never served. Colours come from the base
@@ -13,20 +13,21 @@
   height: 630px;
   min-height: 0;
   overflow: hidden;
+  background: var(--field);
 }
 
+/* The card is one sheet of field stock: no band needed beyond its own edges. */
 .social-card {
   display: grid;
-  grid-template-columns: 456px minmax(0, 1fr);
-  grid-template-rows: minmax(0, 1fr) 72px;
-  column-gap: 44px;
+  grid-template-columns: 540px minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) 76px;
+  column-gap: 48px;
   width: 1200px;
   height: 630px;
-  padding: 48px 48px 0 60px;
+  padding: 44px 56px 0 60px;
   overflow: hidden;
-  background:
-    radial-gradient(60% 80% at 100% 0%, color-mix(in srgb, var(--accent-solid) 22%, transparent), transparent 70%),
-    var(--bg);
+  border-image: none;
+  background: var(--field);
 }
 
 .social-card__pitch {
@@ -38,46 +39,41 @@
   display: flex;
   align-items: center;
   gap: 14px;
-  font-size: 26px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-stretch: 86%;
+  font-weight: 820;
 }
 
 .social-card__brand .brand__mark {
-  width: 46px;
-  height: 46px;
-}
-
-.social-card__eyebrow {
-  max-width: 420px;
-  margin-top: 48px;
-  font-size: 15px;
-  line-height: 1.5;
+  width: 48px;
+  height: 48px;
 }
 
 .social-card__title {
-  margin-top: 18px;
-  font-size: 62px;
-  font-weight: 650;
-  line-height: 1.04;
-  letter-spacing: -0.035em;
+  margin-top: auto;
+  margin-bottom: 44px;
+  font-size: 84px;
+  font-stretch: 68%;
+  font-weight: 880;
+  line-height: 0.92;
+  letter-spacing: -0.004em;
+  word-spacing: 0.05em;
   text-wrap: balance;
 }
 
-/* The example is drawn larger than on the page and runs off the bottom edge,
-   behind the strip. The file bar and the reference chip are left out so the
-   cited lines stay in the picture. */
+/* The slip lying on the field. The card keeps what decides it: the claim,
+   the stamps, the line and the verdict. */
 .social-card__shot {
-  zoom: 1.1;
+  align-self: center;
+  margin-bottom: 18px;
 }
 
-.social-card__shot .home-shot__stamp {
-  right: auto;
-  left: var(--sp-24);
+.social-card__shot .slip {
+  transform: rotate(-2deg);
 }
 
-.social-card__shot .finding__bar,
-.social-card__shot .finding__refs {
+.social-card__shot :is(.slip__field--title, .slip__field--review) {
   display: none;
 }
 
@@ -87,21 +83,22 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 32px;
-  margin-inline: -60px -48px;
-  padding-inline: 60px 48px;
-  border-top: 1px solid var(--line-strong);
-  background: var(--surface);
-  font-size: 21px;
-  font-weight: 600;
-  letter-spacing: -0.01em;
+  gap: 24px;
+  margin-inline: -60px -56px;
+  padding-inline: 60px 56px;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-stretch: 86%;
+  font-weight: 760;
 }
 
 .social-card__proof,
 .social-card__price {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
   white-space: nowrap;
 }
 
@@ -109,11 +106,10 @@
 .social-card__price > span + span::before {
   content: "";
   display: inline-block;
-  width: 5px;
-  height: 5px;
-  margin-right: 14px;
-  border-radius: 1px;
-  background: var(--accent);
+  width: 6px;
+  height: 6px;
+  margin-right: 12px;
+  background: var(--stock);
   vertical-align: middle;
 }
 
@@ -122,5 +118,5 @@
 }
 
 .social-card__price > span:last-child {
-  color: var(--text);
+  color: var(--stock);
 }

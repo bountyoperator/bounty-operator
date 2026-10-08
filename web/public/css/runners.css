@@ -77,7 +77,11 @@
 
 .rn-pipe__n {
   color: var(--muted);
-  font: 600 var(--fs-12) / 1.5 var(--font-mono);
+  font-family: var(--font-display);
+  font-size: var(--fs-12);
+  font-stretch: 85%;
+  font-weight: 720;
+  line-height: 1.5;
 }
 
 .rn-pipe__name {
@@ -157,7 +161,11 @@ button.rn-pipe__stage:focus-visible {
 
 .rn-seat__n {
   color: var(--muted);
-  font: 600 var(--fs-12) / 1 var(--font-mono);
+  font-family: var(--font-display);
+  font-size: var(--fs-12);
+  font-stretch: 85%;
+  font-weight: 720;
+  line-height: 1;
   text-align: right;
 }
 
@@ -311,32 +319,36 @@ button.rn-pipe__stage:focus-visible {
   background: var(--surface);
 }
 
-/* The spine of the finding card: amber for what is missing, blue for what to do. */
+/* The margin rule of a fact: one neutral line. How the fact stands is in the
+   ink of its label: ochre for what blocks, violet for what to do. */
 .gd__fact::before {
   content: "";
   position: absolute;
   inset: var(--sp-16) auto var(--sp-16) 0.625rem;
-  width: 2px;
-  border-radius: 1px;
+  width: 1px;
   background: var(--line-strong);
 }
 
-.gd__fact[data-fact="blocker"]::before {
-  background: var(--gap);
+.gd__fact[data-fact="blocker"] .gd__label {
+  color: var(--gap);
 }
 
-.gd__fact[data-fact="action"]::before {
-  background: var(--accent);
+.gd__fact[data-fact="action"] .gd__label {
+  color: var(--accent);
 }
 
-.gd__fact[data-empty]::before {
-  background: var(--line-strong);
+.gd__fact[data-empty] .gd__label {
+  color: var(--muted);
 }
 
 .gd__label {
   color: var(--muted);
-  font: 600 var(--fs-12) / 1.5 var(--font-mono);
-  letter-spacing: 0.06em;
+  font-family: var(--font-display);
+  font-size: var(--fs-12);
+  font-stretch: 85%;
+  font-weight: 720;
+  line-height: 1.5;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
 }
 
@@ -393,7 +405,11 @@ button.rn-pipe__stage:focus-visible {
   flex: none;
   min-width: 1rem;
   color: var(--muted);
-  font: 600 var(--fs-12) / 1 var(--font-mono);
+  font-family: var(--font-display);
+  font-size: var(--fs-12);
+  font-stretch: 85%;
+  font-weight: 720;
+  line-height: 1;
 }
 
 .gd-stage__name {

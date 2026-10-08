@@ -1,12 +1,14 @@
 // /licenses — the product's own licence and the third-party notices that apply.
 //
 // Built from the files that decide the answer, read when the site is generated:
-//   LICENSE                 the product licence
-//   web/package-lock.json   packages bundled into the Worker
-//   mcp/package-lock.json   packages the MCP server depends on
+//   LICENSE                           the product licence
+//   web/public/fonts/ARCHIVO-OFL.txt  the licence of the one typeface the site serves
+//   web/package-lock.json             packages bundled into the Worker
+//   mcp/package-lock.json             packages the MCP server depends on
 //
-// The pages a browser loads contain no third-party code: no framework, no
-// font files, no icon set, no analytics. That is stated once, below.
+// The pages a browser loads contain no third-party code: no framework, no icon
+// set, no analytics. The one third-party file is the Archivo typeface, served
+// from this site. That is stated once, below.
 
 import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -82,7 +84,10 @@ const product = html`
 ${codeBlock({ code: unwrap(readText('LICENSE')), name: 'LICENSE', numbers: false, wrap: true, copy: true })}`;
 
 const browser = html`
-<p>Every script, stylesheet and icon this site sends to your browser was written for it. Nothing in the browser is bundled from a third party: no framework, no font files, no icon set and no analytics library. Text is set in the fonts already on your device.</p>`;
+<div class="prose">
+<p>Every script, stylesheet and icon this site sends to your browser was written for it. No framework, no icon set and no analytics library comes from a third party. The one third-party file is the typeface: Archivo by Omnibus-Type sets the headings, labels and stamps. It is served from this site, not from a font service, under the SIL Open Font License 1.1. Running text is set in the fonts already on your device.</p>
+</div>
+${codeBlock({ code: readText('web/public/fonts/ARCHIVO-OFL.txt'), name: 'fonts/ARCHIVO-OFL.txt', numbers: false, wrap: true, copy: true })}`;
 
 const workerSection =
   worker &&
@@ -116,7 +121,7 @@ const notices = html`
 
 const sections = [
   { id: 'bounty-operator', title: 'Bounty Operator: MIT', label: 'Bounty Operator', body: product, prose: false },
-  { id: 'browser', title: 'What your browser loads', label: 'In the browser', body: browser },
+  { id: 'browser', title: 'What your browser loads', label: 'In the browser', body: browser, prose: false },
   worker && { id: 'worker', title: 'Worker dependencies', label: 'Worker', body: workerSection, prose: false },
   mcp && { id: 'mcp-server', title: mcpHasPackages ? 'MCP server dependencies' : 'MCP server: no dependencies', label: 'MCP server', body: mcpSection, prose: false },
   { id: 'data', title: 'Data', body: data },
@@ -127,7 +132,7 @@ const body = docPage({
   head: {
     crumbs: [{ label: 'Bounty Operator', href: '/' }, { label: 'Licences' }],
     title: 'Open-source licences and third-party notices',
-    lede: `The open core of Bounty Operator is MIT-licensed. The pages your browser loads contain no third-party code. ${
+    lede: `The open core of Bounty Operator is MIT-licensed. The pages your browser loads contain no third-party code, and one typeface under the SIL Open Font License. ${
       mcpHasPackages ? 'The Worker and the MCP server use the open-source packages listed here.' : 'The Worker uses the open-source packages listed here. The MCP server has no dependencies.'
     }`,
   },

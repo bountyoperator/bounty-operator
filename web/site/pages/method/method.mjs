@@ -123,7 +123,6 @@ const heroAside = html`
 const body = html`
 ${pageHero({
   trail: [{ label: 'Bounty Operator', href: '/' }, { label: 'Method' }],
-  eyebrow: 'Why bug bounty reports get rejected',
   title: TITLE,
   lede: `${RECORD_CLAIM} Every check exists because real reports were closed for that reason. For each one: the question it asks, why reports die on it and the verdict it leads to.`,
   actions: html`${button({ label: 'Start a free review', href: workbenchLink(), variant: 'primary', size: 'lg', iconEnd: 'arrow-right' })}${button({ label: 'Go to the gauntlet', href: '#gauntlet', size: 'lg' })}`,

@@ -185,7 +185,7 @@ const FAQ_ITEMS = [
 const body = html`
 ${pageHero({
   trail: [{ label: 'Bounty Operator', href: '/' }, { label: 'Method', href: '/method' }, { label: 'Gauntlet' }],
-  eyebrow: html`${statusChip('operator')}`,
+  stamp: statusChip('operator'),
   title: 'Run one finding through eight stages and get a verdict',
   lede: 'Give it your draft, your code and the program rules. You get one verdict (submit, rewrite then submit, prove first, hold as duplicate, or drop), the main thing blocking it, and the quickest fix.',
   actions: operatorActions({ secondary: button({ label: 'See the eight stages', href: '#stages', size: 'lg' }) }),

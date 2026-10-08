@@ -546,7 +546,7 @@ export function benchmarkPages(published, drift = {}) {
   const body = html`
 ${pageHero({
   trail: [{ label: 'Bounty Operator', href: '/' }, { label: 'Benchmark' }],
-  eyebrow: `Paydirt · release ${view.release}`,
+  meta: `Paydirt · release ${view.release}`,
   title: 'AI model benchmark',
   lede: `Compare ${view.rows.length} models on ${view.pairs} paired tests, then see what changes with Bounty Operator.`,
   actions: html`${view.comparisons.length > 0 && button({ label: 'Compare with and without', href: '#comparison', variant: 'primary', iconEnd: 'arrow-right' })}${button({ label: 'See the model leaderboard', href: '#board', variant: view.comparisons.length > 0 ? 'secondary' : 'primary' })}${button({ label: 'Read the method', href: METHOD_PATH })}`,

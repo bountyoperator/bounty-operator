@@ -6,8 +6,9 @@
 // Staking is a protocol invented for the product. The review is the stored
 // answer of a model to the product's own prompt, parsed here with the parser
 // the results view uses, and the hash is the SHA-256 of the supplied file.
-// Both surfaces render it with the same helpers the results view uses
-// (dossier, findingCard), so the picture is the product.
+// Both surfaces render it as the report slip: the draft's own header lines,
+// marked the way the review marked them, with the chips the results view uses
+// (severity, verdict, reference), so the picture is the product.
 //
 // This module has no default export and lives outside web/site/pages, so the
 // generator builds no page from it.
@@ -17,7 +18,7 @@ import { createHash } from 'node:crypto';
 import { EXAMPLES } from '../../public/example.mjs';
 import { extractRefs, parseReview } from '../../public/parse.mjs';
 import { splitLines } from '../../public/review-core.mjs';
-import { cx, dossier, findingCard, html, icon, refChip, severityChip, statusChip } from '../components.mjs';
+import { codeBlock, cx, html, inline, refChip, severityChip, statusChip, verdictChip } from '../components.mjs';
 
 const SOURCE = EXAMPLES[0];
 const LABELS = SOURCE.files.map((file, index) => `input-${index + 1}/${file.name}`);
@@ -46,12 +47,14 @@ const cited = fileLines.slice(sourceStart - 1, sourceEnd);
 const indent = Math.min(...cited.filter((line) => line.trim()).map((line) => line.length - line.trimStart().length));
 const excerpt = cited.map((line) => line.slice(indent));
 
-/** The severity the draft claims, read from the draft's own Severity line. */
-function claimedSeverity() {
-  const draft = SOURCE.files.find((entry) => /draft/i.test(entry.name));
-  const stated = draft ? /^Severity:\s*(critical|high|medium|low)\b/im.exec(draft.content) : null;
-  if (!stated) throw new Error('social/example.mjs: the example draft states no severity');
-  return stated[1].toLowerCase();
+const DRAFT = SOURCE.files.find((entry) => /draft/i.test(entry.name));
+if (!DRAFT) throw new Error(`social/example.mjs: the bundled example "${SOURCE.id}" has no draft report`);
+
+/** One header line of the draft: its title (the first "# " line) or a "Name: value" line. */
+function draftLine(pattern, what) {
+  const found = pattern.exec(DRAFT.content);
+  if (!found) throw new Error(`social/example.mjs: the example draft states no ${what}`);
+  return found[1].trim();
 }
 
 export const EXAMPLE = {
@@ -61,7 +64,8 @@ export const EXAMPLE = {
   file: location.label,
   sha256: createHash('sha256').update(file.content, 'utf8').digest('hex'),
   lines: `${fileLines.length} lines`,
-  claimed: claimedSeverity(),
+  claimed: draftLine(/^Severity:\s*(critical|high|medium|low)\b/im, 'severity').toLowerCase(),
+  draftTitle: draftLine(/^#\s+(.+)$/m, 'title'),
   supported: finding.severity,
   verdict: parsed.verdict,
   headline: parsed.headline,
@@ -69,56 +73,55 @@ export const EXAMPLE = {
   sourceStart,
   sourceEnd,
   highlight: [...new Set([location.start, ...fixLines])],
+  // The line the fix names: the one that decides the finding.
+  deciding: fixLines[0] ?? location.start,
+  // When the stored review was written, as the slip's dater prints it.
+  reviewedOn: new Date(SOURCE.generatedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }),
   // The card cites the location its excerpt shows. The full result lists all of them.
   finding: { ...finding, locations: [location] },
   locations: finding.locations,
 };
 
-/** "Draft claims Critical -> Code supports Medium": the cut, in two chips. */
-export function severityCut({ claimed = EXAMPLE.claimed, supported = EXAMPLE.supported, className } = {}) {
-  // " claims" and " supports" drop out on a phone so the cut stays on one line.
-  const side = (lead, rest, chip) =>
-    html`<span class="home-cut__side"><span class="meta">${lead}<span class="home-cut__more"> ${rest}</span></span>${chip}</span>`;
-  return html`<p class="${cx('home-cut', className)}">${side('Draft', 'claims', html`<s class="home-cut__claimed">${severityChip(claimed)}</s>`)}${icon('arrow-right', { className: 'home-cut__arrow' })}${side('Code', 'supports', severityChip(supported))}</p>`;
-}
+if (!fixLines.length) throw new Error('social/example.mjs: the example fix names no line inside the cited range');
+
+/** The deciding line with the line above it and below it, as the slip prints them. */
+const SLIP_FROM = Math.max(EXAMPLE.sourceStart, EXAMPLE.deciding - 2);
+const SLIP_TO = Math.min(EXAMPLE.sourceEnd, EXAMPLE.deciding + 1);
+const SLIP_CODE = excerpt.slice(SLIP_FROM - EXAMPLE.sourceStart, SLIP_TO - EXAMPLE.sourceStart + 1).join('\n');
 
 /**
- * The rendered result: a verdict banner over one finding card, on an
- * always-dark surface.
+ * The report slip: the draft's header as the hunter wrote it, with the claimed
+ * severity struck in pen, the severity the code supports stamped beside it,
+ * the line that decides it printed under its reference, and the verdict
+ * stamped in the box the form keeps for it, dated. Paper in both themes.
  *
- *   rows       finding rows to show, in order
- *   steps      false leaves the numbered path out and keeps the code excerpt
- *   level      heading level of the finding title
- *   id         id prefix, so the card never collides with a live result
- *   caption    line under the card; false leaves it out
- *   reveal     add the entrance animation of the finding card
- *   compact    show the verdict and its source without the full finding card
+ *   caption    line under the slip; false leaves it out
+ *   still      no stamp animation (the social card is a still picture)
  */
-export function exampleShot({
-  rows = ['impact', 'observed', 'counter', 'next'],
-  steps = true,
-  level = 2,
-  id = 'example',
-  caption = `Example review, as the model wrote it. ${EXAMPLE.protocol} is an invented protocol.`,
-  reveal = false,
-  compact = false,
+export function reportSlip({
+  caption = `Saved example. ${EXAMPLE.protocol} is an invented protocol.`,
+  still = false,
   className,
 } = {}) {
-  const shown = steps ? EXAMPLE.finding : { ...EXAMPLE.finding, path: [] };
-  return html`<figure class="${cx('home-shot', 'theme-dark', className)}">
-<p class="home-shot__stamp">${statusChip('example')}</p>
-<div class="home-shot__banner">
-${severityCut()}
-${dossier({ verdict: EXAMPLE.verdict, headline: EXAMPLE.headline })}
+  const deciding = codeBlock({
+    code: SLIP_CODE,
+    start: SLIP_FROM,
+    highlight: [EXAMPLE.deciding],
+    label: `${location.label}, lines ${SLIP_FROM} to ${SLIP_TO}`,
+    className: 'slip__code',
+  });
+  return html`<figure class="${cx('home-shot', still && 'home-shot--still', className)}">
+<div class="slip theme-light">
+<div class="slip__head"><p class="slip__form">Draft report</p><p class="home-shot__stamp">${statusChip('example')}</p></div>
+<dl class="slip__fields">
+<div class="slip__field slip__field--wide slip__field--title"><dt>Title</dt><dd class="slip__title">${EXAMPLE.draftTitle}</dd></div>
+<div class="slip__field"><dt>Draft claims</dt><dd><s class="slip__claimed">${severityChip(EXAMPLE.claimed)}</s></dd></div>
+<div class="slip__field"><dt>Code supports</dt><dd class="slip__supported">${severityChip(EXAMPLE.supported, undefined, { stamp: true })}</dd></div>
+<div class="slip__field slip__field--wide slip__field--review"><dt>Review</dt><dd class="slip__headline">${inline(EXAMPLE.headline)}</dd></div>
+<div class="slip__field slip__field--wide slip__field--source"><dt>Source</dt><dd>${refChip(location)}${deciding}</dd></div>
+<div class="slip__field slip__field--wide slip__field--verdict"><dt>Verdict</dt><dd class="slip__stamp">${verdictChip(EXAMPLE.verdict, { size: 'lg' })}<span class="slip__dater">${EXAMPLE.reviewedOn} · ${EXAMPLE.model}</span></dd></div>
+</dl>
 </div>
-${compact ? html`<p class="home-shot__source"><span class="meta">Source</span>${refChip(location)}</p>` : findingCard(shown, {
-  level,
-  id: `${id}-finding`,
-  rows,
-  reveal,
-  bar: { name: EXAMPLE.file, hash: EXAMPLE.sha256, tag: EXAMPLE.lines },
-  code: { code: EXAMPLE.source, start: EXAMPLE.sourceStart, highlight: EXAMPLE.highlight, label: `Source: ${EXAMPLE.file}` },
-})}
 ${caption && html`<figcaption class="home-shot__caption">${caption}</figcaption>`}
 </figure>`;
 }

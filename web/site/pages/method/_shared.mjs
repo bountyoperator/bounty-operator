@@ -249,17 +249,18 @@ export const GAUNTLET_EXAMPLE = {
 // ---------------------------------------------------------------------------
 
 /**
- * The page head: breadcrumbs, optional eyebrow, the H1, the lede, actions and
+ * The page head, printed on the field: breadcrumbs, the H1 with an optional
+ * stamp (an Operator feature) or meta line under it, the lede, actions and
  * an optional aside. With an aside the hero is two columns from 64em.
  */
-export function pageHero({ trail, eyebrow, title, lede, actions, note, aside, after, stickyText = false } = {}) {
+export function pageHero({ trail, stamp, meta, title, lede, actions, note, aside, after, stickyText = false } = {}) {
   return html`
-<section class="${cx('lp-hero', 'wrap', aside && 'lp-hero--split')}">
+<section class="${cx('lp-hero', 'wrap', 'page-field', aside && 'lp-hero--split')}">
   ${breadcrumbs(trail)}
   <div class="lp-hero__grid">
     <div class="${cx('lp-hero__text', stickyText && 'lp-hero__text--sticky')}">
-      ${eyebrow && html`<p class="eyebrow">${eyebrow}</p>`}
       <h1>${title}</h1>
+      ${(stamp || meta) && html`<p class="lp-hero__meta">${stamp}${meta && html`<span class="meta">${meta}</span>`}</p>`}
       <p class="lede">${lede}</p>
       ${actions && html`<div class="cluster lp-hero__actions">${actions}</div>`}
       ${note && html`<p class="fine lp-hero__note">${note}</p>`}

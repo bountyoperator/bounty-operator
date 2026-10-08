@@ -7,26 +7,27 @@
 <meta name="description" content="Copy-paste install for the Bounty Operator MCP server in Claude Code, Codex and Cursor, with its tools, three prompts and token setup.">
 <link rel="canonical" href="https://bountyoperator.com/mcp">
 <meta name="color-scheme" content="dark light">
-<meta name="theme-color" content="#0a1220" media="(prefers-color-scheme: dark)">
-<meta name="theme-color" content="#f5f7fb" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#17132e" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#fbfbf8" media="(prefers-color-scheme: light)">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Bounty Operator">
 <meta property="og:title" content="MCP server for Claude Code, Codex, Cursor | Bounty Operator">
 <meta property="og:description" content="Copy-paste install for the Bounty Operator MCP server in Claude Code, Codex and Cursor, with its tools, three prompts and token setup.">
 <meta property="og:url" content="https://bountyoperator.com/mcp">
-<meta property="og:image" content="https://bountyoperator.com/social-v3.png">
+<meta property="og:image" content="https://bountyoperator.com/social-v4.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Bounty Operator. Find the hole in your report before the triager does.">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="MCP server for Claude Code, Codex, Cursor | Bounty Operator">
 <meta name="twitter:description" content="Copy-paste install for the Bounty Operator MCP server in Claude Code, Codex and Cursor, with its tools, three prompts and token setup.">
-<meta name="twitter:image" content="https://bountyoperator.com/social-v3.png">
+<meta name="twitter:image" content="https://bountyoperator.com/social-v4.png">
 <meta name="twitter:image:alt" content="Bounty Operator. Find the hole in your report before the triager does.">
 <link rel="icon" href="/favicon.ico" sizes="48x48">
 <link rel="icon" href="/icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="manifest" href="/site.webmanifest">
+<link rel="preload" href="/fonts/archivo-latin-wdth.woff2" as="font" type="font/woff2" crossorigin>
 <script src="/theme.js"></script>
 <link rel="stylesheet" href="/css/base.css">
 <link rel="stylesheet" href="/css/docs.css">
@@ -37,10 +38,18 @@
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Do I need an account to use the MCP server?","acceptedAnswer":{"@type":"Answer","text":"No. list_profiles, prepare_review and build_packet work with no account and no key, and so do the challenge-report and solidity-review prompts: your agent’s own model answers the prepared request of a core profile. An account token adds account, run_review for every profile, and the gauntlet prompt."}},{"@type":"Question","name":"Should I use the remote endpoint or the local server?","acceptedAnswer":{"@type":"Answer","text":"The remote endpoint needs nothing installed and works on any machine the client runs on. The local server needs Node 22 or later, keeps review preparation on your machine, reads files by path and adds run_gauntlet_plan. The other five tools are the same on both."}},{"@type":"Question","name":"What does a hosted review cost through MCP?","acceptedAnswer":{"@type":"Answer","text":"run_review shares one allowance with the website: one hosted review per UTC day on Free, any profile, and unlimited on Operator at US$10 per week. A gauntlet run over MCP uses seven hosted reviews, one for every stage but the report stage, so a full run takes Operator. Copy-paste reviews in a chat app do not count, and neither do code, Solidity and draft-report reviews your coding agent’s own model writes with prepare_review or the skills. Those need no account. Your model provider bills its own usage to your key."}},{"@type":"Question","name":"Which profiles can my agent’s own model run?","acceptedAnswer":{"@type":"Answer","text":"The three core profiles: Code security review, Solidity review and Challenge a draft report. prepare_review returns their method and the request. Every other profile is hosted: prepare_review refuses it with hosted_profile and run_review runs it on the service, on your provider key."}},{"@type":"Question","name":"How much output can a hosted model use?","acceptedAnswer":{"@type":"Answer","text":"Reasoning and the answer share one output allowance. A streamed review (the website, and run_review from a client that reads a stream) gives the listed models that take it 64,000 tokens: Claude Opus 5.5, Sonnet 5.5 and Fable 5.1, GPT-6.1 Sol, Astra and Luna, Grok 4.7, and the models in the OpenRouter list. On OpenRouter, Gemini 3.8 Flash, Qwen3.8 27B, Qwen3.8 Max 0902, HY4 Preview and GLM 5.3 get 64,000 on every call. Everything else, including a model id you type and a call read as one answer, has 16,000. Reasoning defaults are preserved. Your provider bills the tokens used, so the larger allowance costs more only when the model needs it. The direct Gemini endpoint uses its provider allowance."}},{"@type":"Question","name":"How do I check the service before a long run?","acceptedAnswer":{"@type":"Answer","text":"GET https://bountyoperator.com/api/health returns the version, reviews (whether hosted reviews are on) and profiles. profiles reads hosted when the service carries the full method of every hosted profile. A Worker built from the public repository reads community: it runs the hosted profiles on short stand-in instructions."}},{"@type":"Question","name":"Which clients work?","acceptedAnswer":{"@type":"Answer","text":"Any client that speaks MCP over Streamable HTTP or stdio. This page has the commands for Claude Code, Codex and Cursor."}}]}</script>
 </head>
 <body>
+<!--
+THESIS: The verdict is a stamp on your draft. The site is the inspection a finding passes before a triager sees it, not the category's dark code-card hero.
+OWN-WORLD: Inspection paperwork. Canary and white stock, black print, violet stamp ink, carbon indigo for code and the night shift. Ruled fields, square corners, part rules, ledger tables. Archivo condensed caps for labels and stamps; mono only for code and typed entries.
+STORY: A hunter sees a Critical stamped down to Medium with the line that decides it, trusts that the review argues against them, and starts a review or opens the example.
+FIRST VIEWPORT: Full-bleed canary field. Left: condensed black headline, lede, black Review my report, ruled View example. Right: the paper slip, tilted, Critical struck, Medium and the violet verdict stamped on it. Proof line on the field's foot.
+FORM: Rubber-stamp verdicts and inspection forms, 6 of 7, seed b5682f59.
+FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md
+-->
 <a class="skip-link" href="#main">Skip to content</a>
 <header class="site-header">
 <div class="wrap site-header__inner">
-<a class="brand" href="/"><svg class="brand__mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect class="brand__tile" width="64" height="64" rx="14"/><path class="brand__glyph" d="M12.5 15h6.5v31.5h-6.5z"/><path class="brand__glyph" fill-rule="evenodd" d="M25.5 25a10.75 10.75 0 1 0 0 21.5a10.75 10.75 0 0 0 0-21.5zm0 6.25a4.5 4.5 0 1 1 0 9a4.5 4.5 0 0 1 0-9z"/><path class="brand__slash" d="M45.5 13h6.25l-8.6 37.5h-6.25z"/></svg><span class="brand__name">Bounty Operator</span></a>
+<a class="brand" href="/"><svg class="brand__mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect class="brand__tile" width="64" height="64" rx="9"/><path class="brand__glyph" d="M12.5 15h6.5v31.5h-6.5z"/><path class="brand__glyph" fill-rule="evenodd" d="M25.5 25a10.75 10.75 0 1 0 0 21.5a10.75 10.75 0 0 0 0-21.5zm0 6.25a4.5 4.5 0 1 1 0 9a4.5 4.5 0 0 1 0-9z"/><path class="brand__slash" d="M45.5 13h6.25l-8.6 37.5h-6.25z"/></svg><span class="brand__name">Bounty Operator</span></a>
 <nav class="site-nav" aria-label="Main"><ul><li><a href="/#workspace">Review</a></li><li><a href="/benchmark">Benchmark</a></li><li><a href="/tools">Tools</a></li><li><a href="/guide">Guide</a></li><li><a href="/pricing">Pricing</a></li></ul></nav>
 <div class="site-header__actions">
 <button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch colour theme"><span class="icon theme-toggle__icon" aria-hidden="true"></span></button>
@@ -50,8 +59,8 @@
 </header>
 <main id="main" tabindex="-1">
 <article class="docs wrap">
-<header class="docs-head">
-<nav class="breadcrumbs" aria-label="Breadcrumb"><ol><li><a href="/">Bounty Operator</a></li><li aria-current="page">MCP server</li></ol></nav>
+<header class="docs-head page-field">
+
 <h1>Connect your coding agent</h1>
 <p class="lede">Choose your app and copy the setup command. Core reviews need no Bounty Operator account.</p>
 
@@ -430,11 +439,12 @@
 </aside>
 </article>
 </main>
-<footer class="site-footer">
+<footer class="site-footer theme-dark">
 <div class="wrap site-footer__grid">
 <div class="site-footer__brand">
-<a class="brand" href="/"><svg class="brand__mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect class="brand__tile" width="64" height="64" rx="14"/><path class="brand__glyph" d="M12.5 15h6.5v31.5h-6.5z"/><path class="brand__glyph" fill-rule="evenodd" d="M25.5 25a10.75 10.75 0 1 0 0 21.5a10.75 10.75 0 0 0 0-21.5zm0 6.25a4.5 4.5 0 1 1 0 9a4.5 4.5 0 0 1 0-9z"/><path class="brand__slash" d="M45.5 13h6.25l-8.6 37.5h-6.25z"/></svg><span class="brand__name">Bounty Operator</span></a>
+<a class="brand" href="/"><svg class="brand__mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect class="brand__tile" width="64" height="64" rx="9"/><path class="brand__glyph" d="M12.5 15h6.5v31.5h-6.5z"/><path class="brand__glyph" fill-rule="evenodd" d="M25.5 25a10.75 10.75 0 1 0 0 21.5a10.75 10.75 0 0 0 0-21.5zm0 6.25a4.5 4.5 0 1 1 0 9a4.5 4.5 0 0 1 0-9z"/><path class="brand__slash" d="M45.5 13h6.25l-8.6 37.5h-6.25z"/></svg><span class="brand__name">Bounty Operator</span></a>
 <p class="site-footer__promise">Find the hole in your report before the triager does.</p>
+<p class="site-footer__cta"><a class="btn btn--primary" href="/?profile=report#workspace"><span class="btn__label">Review my report</span><span class="icon icon--arrow-right" aria-hidden="true"></span></a></p>
 </div>
 <nav class="site-footer__col" aria-label="Product"><h2 class="site-footer__title">Product</h2><ul><li><a href="/#workspace">Review a report</a></li><li><a href="/benchmark">Benchmark</a></li><li><a href="/tools">Free tools</a></li><li><a href="/pricing">Pricing</a></li><li><a href="/#account">Account</a></li></ul></nav>
 <nav class="site-footer__col" aria-label="Resources"><h2 class="site-footer__title">Resources</h2><ul><li><a href="/guide">Report guide</a></li><li><a href="/mcp">MCP setup</a></li><li><a href="/method">Review method</a></li><li><a href="/templates">Report templates</a></li><li><a href="/changelog">Changelog</a></li><li><a href="https://github.com/bountyoperator/bounty-operator" target="_blank" rel="noopener noreferrer">Source<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></li></ul></nav>

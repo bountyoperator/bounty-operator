@@ -188,28 +188,74 @@ test('the hero shows the bundled example the workbench opens, as the parser read
   assert.match(lines[location.start - 1], /function stake\(/);
 });
 
-test('the hero shows the example on an always-dark surface, labelled as an example', () => {
+test('the hero shows the example as a paper slip on the field, labelled as an example', () => {
   const hero = main.slice(0, main.indexOf('id="how"'));
-  assert.match(hero, /<figure class="home-shot theme-dark"/);
+  assert.match(hero, /<div class="home-top page-field">/);
+  assert.match(hero, /<figure class="home-shot">\n<div class="slip theme-light">/);
   assert.match(hero, /data-status="example"/);
   assert.match(textOf(hero), /Saved example\. Tessera Staking is an invented protocol\./);
   assert.match(textOf(hero), /TesseraStaking\.sol/);
-  assert.match(hero, /class="chip sev" data-sev="critical"/);
-  assert.match(hero, /class="chip sev" data-sev="medium"/);
-  assert.match(hero, /data-verdict="rewrite-then-submit"/);
+  // The draft's own header lines, as the hunter wrote them.
+  const draft = EXAMPLES[0].files.find((file) => /draft/i.test(file.name)).content;
+  assert.equal(EXAMPLE.draftTitle, /^#\s+(.+)$/m.exec(draft)[1].trim());
+  assert.ok(textOf(hero).includes(EXAMPLE.draftTitle));
+  // The claimed severity is struck; the supported one and the verdict are stamped, and the verdict is dated.
+  assert.match(hero, /<s class="slip__claimed"><span class="chip sev" data-sev="critical">/);
+  assert.match(hero, /<dd class="slip__supported"><span class="chip sev sev--stamp" data-sev="medium">/);
+  assert.match(hero, /<dt>Verdict<\/dt><dd class="slip__stamp"><span class="chip verdict verdict--lg" data-verdict="rewrite-then-submit">Rewrite, then submit<\/span>/);
+  assert.match(textOf(hero), /2 Oct 2026 · anthropic\/claude-opus-5\.5/);
+  // The line that decides it, printed under its reference: the line the fix names, highlighted, with its number.
+  assert.equal(EXAMPLE.deciding, 89);
+  assert.match(EXAMPLE.finding.fix, /:89\)/);
+  const source = hero.slice(hero.indexOf('slip__field--source'), hero.indexOf('slip__field--verdict'));
+  assert.match(source, /<span class="code__line is-hl" data-n="89">\s*_updateGlobal\(\);/);
+  // No eyebrow and no breadcrumb above the headline.
+  assert.doesNotMatch(hero, /class="eyebrow"|class="breadcrumbs"/);
+});
+
+test('every verdict and severity the site stamps has its pressed impression', async () => {
+  const { VERDICT_STAMPS, SEVERITY_STAMPS } = await import('../../scripts/build-stamps.mjs');
+  const { VERDICT_LABELS } = await import('../public/app/dossier.mjs');
+  const css = await readFile(path.join(WEB_DIR, 'public', 'css', 'base.css'), 'utf8');
+  // The stamps say what the app prints, so the impression and the words in the markup agree.
+  assert.deepEqual(Object.fromEntries(VERDICT_STAMPS), { ...VERDICT_LABELS });
+  for (const [id] of VERDICT_STAMPS) {
+    const file = `verdict-${id}.webp`;
+    const bytes = await readFile(path.join(WEB_DIR, 'public', 'stamps', file));
+    assert.equal(bytes.toString('latin1', 8, 12), 'WEBP', file);
+    assert.ok(css.includes(`url("../stamps/${file}")`), `base.css uses ${file}`);
+  }
+  for (const [id] of SEVERITY_STAMPS) {
+    const file = `sev-${id}.webp`;
+    const bytes = await readFile(path.join(WEB_DIR, 'public', 'stamps', file));
+    assert.equal(bytes.toString('latin1', 8, 12), 'WEBP', file);
+    assert.ok(css.includes(`url("../stamps/${file}")`), `base.css uses ${file}`);
+  }
+  assert.match(await readFile(path.join(WEB_DIR, 'public', 'stamps', 'strike.svg'), 'utf8'), /^<svg xmlns="http:\/\/www\.w3\.org\/2000\/svg"/);
+  // No repeated noise tile stands in for ink.
+  assert.doesNotMatch(css, /feTurbulence|--ink-grain/);
+});
+
+test('the five verdicts are listed with what each one means', () => {
+  const section = main.slice(main.indexOf('id="verdicts-title"'), main.indexOf('id="workspace"'));
+  for (const verdict of ['submit', 'rewrite-then-submit', 'prove-first', 'hold-duplicate', 'drop']) {
+    assert.match(section, new RegExp(`data-verdict="${verdict}"`), verdict);
+  }
+  assert.match(textOf(section), /Every review ends in one of five verdicts\./);
 });
 
 test('the social card is a 1200 x 630 document drawn from the same example', async () => {
   assert.deepEqual(CARD, { width: 1200, height: 630 });
   const card = cardDocument();
-  assert.match(card, /<html lang="en" data-theme="dark">/);
+  assert.match(card, /<html lang="en" data-theme="light">/);
   assert.match(card, /Find the hole in your report before the triager does\./);
-  assert.match(card, /class="home-shot theme-dark"/);
-  assert.match(textOf(card), /Built by Tradi3\s+Most valid Criticals, ENS\s+2nd of 135, Firelight/);
+  assert.match(card, /class="home-shot home-shot--still"/);
+  // The builder's results read as the builder's: one phrase, not a list of product facts.
+  assert.match(textOf(card), /Built by Tradi3: most valid Criticals in ENS, 2nd of 135 in Firelight/);
   assert.match(textOf(card), /Operator: US\$10 a week/);
   assert.doesNotMatch(card, /\sstyle="/);
 
-  const png = await readFile(path.join(WEB_DIR, 'public', 'social-v3.png'));
+  const png = await readFile(path.join(WEB_DIR, 'public', 'social-v4.png'));
   assert.equal(png.readUInt32BE(16), CARD.width);
   assert.equal(png.readUInt32BE(20), CARD.height);
 });

@@ -225,8 +225,12 @@
 .lb__tier td {
   padding-block: var(--sp-8);
   background: var(--surface-2);
-  font: 600 var(--fs-12) / 1.4 var(--font-mono);
-  letter-spacing: 0.06em;
+  font-family: var(--font-display);
+  font-size: var(--fs-12);
+  font-stretch: 85%;
+  font-weight: 720;
+  line-height: 1.4;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
 }
 
@@ -327,8 +331,12 @@
   [data-js] .table-wrap > .table.lb thead tr::before {
     flex-basis: 100%;
     color: var(--muted);
-    font: 600 var(--fs-12) / 1.4 var(--font-mono);
-    letter-spacing: 0.06em;
+    font-family: var(--font-display);
+    font-size: var(--fs-12);
+    font-stretch: 85%;
+    font-weight: 720;
+    line-height: 1.4;
+    letter-spacing: 0.07em;
     text-transform: uppercase;
     content: "Sort by";
     content: "Sort by" / "";
@@ -453,8 +461,12 @@
     display: block;
     margin-bottom: 0.125rem;
     color: var(--muted);
-    font: 600 var(--fs-12) / 1.4 var(--font-mono);
-    letter-spacing: 0.06em;
+    font-family: var(--font-display);
+    font-size: var(--fs-12);
+    font-stretch: 85%;
+    font-weight: 720;
+    line-height: 1.4;
+    letter-spacing: 0.07em;
     text-transform: uppercase;
   }
 
@@ -563,7 +575,11 @@
   left: var(--sp-16);
   color: var(--accent);
   content: counter(finding, decimal-leading-zero);
-  font: 600 var(--fs-13) / 1.9 var(--font-mono);
+  font-family: var(--font-display);
+  font-size: var(--fs-13);
+  font-stretch: 85%;
+  font-weight: 720;
+  line-height: 1.9;
 }
 
 /* ==========================================================================
@@ -788,7 +804,11 @@
 .pg thead th {
   background: var(--surface-2);
   color: var(--muted);
-  font: 600 var(--fs-12) / 1.3 var(--font-mono);
+  font-family: var(--font-display);
+  font-size: var(--fs-12);
+  font-stretch: 85%;
+  font-weight: 720;
+  line-height: 1.3;
   letter-spacing: 0.04em;
 }
 

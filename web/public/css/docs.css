@@ -20,25 +20,25 @@
    1. Page frame
    ========================================================================== */
 
-.docs {
-  padding-top: var(--sp-32);
+/* The head is printed on the field (.page-field in base.css) and opens the page. */
+.docs-head {
+  display: grid;
+  gap: var(--sp-16);
+  padding-block: var(--sp-32) var(--sp-48);
 }
 
 @media (min-width: 48em) {
-  .docs {
+  .docs-head {
     padding-top: var(--sp-48);
   }
 }
 
-.docs-head {
-  display: grid;
-  gap: var(--sp-16);
-  padding-bottom: var(--sp-32);
-  border-bottom: 1px solid var(--line);
-}
-
 .docs-head h1 {
-  max-width: 46rem;
+  max-width: 24ch;
+  font-size: clamp(2.25rem, 1.3rem + 3.2vw, 3.75rem);
+  font-stretch: 76%;
+  font-weight: 860;
+  line-height: 0.98;
 }
 
 .docs-head .lede {
@@ -46,7 +46,9 @@
 }
 
 .docs-head .lede a {
-  color: var(--accent);
+  color: inherit;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
 }
 
 .docs-head__actions {
@@ -243,11 +245,11 @@
   }
 }
 
-/* The record line above the guide. */
+/* The record line above the guide, under a printed rule. */
 .docs-record {
   max-width: 70ch;
-  padding-left: var(--sp-16);
-  border-left: 2px solid var(--accent);
+  padding-top: var(--sp-12);
+  border-top: 1px solid var(--rule);
   color: var(--muted);
   font-size: var(--fs-14);
   line-height: 1.6;
@@ -396,7 +398,7 @@
   max-width: 70ch;
   margin-top: var(--sp-12);
   padding-left: var(--sp-12);
-  border-left: 2px solid var(--line-strong);
+  border-left: 1px solid var(--rule);
   color: var(--muted);
   font-size: var(--fs-14);
   line-height: 1.6;
@@ -439,8 +441,12 @@
 .checks__n {
   padding-top: 0.25rem;
   color: var(--muted);
-  font: 600 var(--fs-12) / 1.4 var(--font-mono);
-  letter-spacing: 0.06em;
+  font-family: var(--font-display);
+  font-size: var(--fs-12);
+  font-stretch: 85%;
+  font-weight: 720;
+  line-height: 1.4;
+  letter-spacing: 0.07em;
 }
 
 .checks__name {
@@ -495,8 +501,12 @@
   content: counter(stage, decimal-leading-zero);
   padding-top: 0.25rem;
   color: var(--muted);
-  font: 600 var(--fs-12) / 1.4 var(--font-mono);
-  letter-spacing: 0.06em;
+  font-family: var(--font-display);
+  font-size: var(--fs-12);
+  font-stretch: 85%;
+  font-weight: 720;
+  line-height: 1.4;
+  letter-spacing: 0.07em;
 }
 
 .stages__name {
@@ -807,7 +817,7 @@
   height: 1.375rem;
   margin-right: var(--sp-8);
   border: 1px solid var(--line-control);
-  border-radius: 50%;
+  border-radius: var(--r-chip);
   letter-spacing: 0;
 }
 
@@ -920,8 +930,12 @@
 .release__date {
   margin-left: var(--sp-12);
   color: var(--muted);
-  font: 600 var(--fs-12) / 1.4 var(--font-mono);
-  letter-spacing: 0.06em;
+  font-family: var(--font-display);
+  font-size: var(--fs-12);
+  font-stretch: 85%;
+  font-weight: 720;
+  line-height: 1.4;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
   vertical-align: middle;
   white-space: nowrap;
@@ -935,8 +949,12 @@
 .docs-section .prose > .release__group {
   margin-top: 2em;
   color: var(--muted);
-  font: 600 var(--fs-12) / 1.4 var(--font-mono);
-  letter-spacing: 0.06em;
+  font-family: var(--font-display);
+  font-size: var(--fs-12);
+  font-stretch: 85%;
+  font-weight: 720;
+  line-height: 1.4;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
 }
 

@@ -20,10 +20,26 @@
    1. Page head
    ========================================================================== */
 
+/* The head is printed on the field (.page-field in base.css) and opens the page. */
 .tool-head {
   display: grid;
   gap: var(--sp-16);
   margin-bottom: var(--sp-32);
+  padding-block: var(--sp-32) var(--sp-48);
+}
+
+@media (min-width: 48em) {
+  .tool-head {
+    padding-top: var(--sp-48);
+  }
+}
+
+.tool-head h1 {
+  max-width: 24ch;
+  font-size: clamp(2.25rem, 1.3rem + 3.2vw, 3.75rem);
+  font-stretch: 76%;
+  font-weight: 860;
+  line-height: 0.98;
 }
 
 .tool-head .lede {
@@ -36,8 +52,12 @@
   align-items: center;
   gap: var(--sp-8);
   color: var(--muted);
-  font: 600 var(--fs-12) / 1.5 var(--font-mono);
-  letter-spacing: 0.06em;
+  font-family: var(--font-display);
+  font-size: var(--fs-12);
+  font-stretch: 85%;
+  font-weight: 700;
+  line-height: 1.5;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
 }
 
@@ -60,26 +80,41 @@
   box-shadow: var(--shadow);
 }
 
+/* The form's head: its number, its name, and what it works on. */
 .tool-panel__bar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 0.625rem;
-  min-height: 2.5rem;
+  gap: var(--sp-8) var(--sp-12);
+  min-height: 2.75rem;
   padding: var(--sp-8) var(--sp-16) var(--sp-8) var(--sp-24);
-  border-bottom: 1px solid var(--line);
+  border-bottom: var(--rule-w) solid var(--rule);
   background: var(--surface-2);
   color: var(--muted);
-  font: 500 var(--fs-12) / 1.4 var(--font-mono);
+  font-family: var(--font-display);
+  font-size: var(--fs-12);
+  font-stretch: 85%;
+  font-weight: 720;
+  line-height: 1.4;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.tool-panel__form {
+  padding: 0.125rem 0.375rem;
+  border: 1px solid var(--rule);
+  color: var(--text);
+  font-weight: 800;
 }
 
 .tool-panel__name {
   color: var(--text);
+  font-size: var(--fs-14);
+  font-weight: 820;
 }
 
 .tool-panel__tag {
   margin-left: auto;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
 }
 
 .tool-panel__body {
@@ -281,9 +316,13 @@
   width: 1.5rem;
   height: 1.5rem;
   border: 1px solid var(--accent);
-  border-radius: 50%;
+  border-radius: var(--r-chip);
   color: var(--accent);
-  font: 600 var(--fs-12) / 1 var(--font-mono);
+  font-family: var(--font-display);
+  font-size: var(--fs-12);
+  font-stretch: 85%;
+  font-weight: 720;
+  line-height: 1;
 }
 
 .tool-state {
@@ -456,8 +495,12 @@
 .tool-row__n {
   padding-top: 0.3rem;
   color: var(--muted);
-  font: 600 var(--fs-12) / 1.4 var(--font-mono);
-  letter-spacing: 0.06em;
+  font-family: var(--font-display);
+  font-size: var(--fs-12);
+  font-stretch: 85%;
+  font-weight: 720;
+  line-height: 1.4;
+  letter-spacing: 0.07em;
 }
 
 .tool-row__title {
@@ -496,8 +539,12 @@
   align-items: center;
   gap: var(--sp-4) var(--sp-8);
   color: var(--muted);
-  font: 600 var(--fs-12) / 1.5 var(--font-mono);
-  letter-spacing: 0.06em;
+  font-family: var(--font-display);
+  font-size: var(--fs-12);
+  font-stretch: 85%;
+  font-weight: 720;
+  line-height: 1.5;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
 }
 
@@ -570,7 +617,12 @@
 
 .score__n {
   color: var(--muted);
-  font: 600 var(--fs-40) / 1 var(--font-mono);
+  font-family: var(--font-display);
+  font-size: var(--fs-40);
+  font-stretch: 74%;
+  font-weight: 840;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
 }
@@ -623,10 +675,8 @@
   display: none;
 }
 
-/* A check row. The spine says how it stands: green passed, amber dashed
-   missing, red flagged. */
+/* A check row. Its stamp says how it stands: passed, missing or flagged. */
 .check {
-  --spine: var(--line-strong);
   position: relative;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -638,16 +688,6 @@
   border-top: 1px solid var(--line);
 }
 
-.check::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  width: 3px;
-  background: var(--spine);
-}
-
 .check[data-status="pending"] {
   padding-block: var(--sp-8);
 }
@@ -655,18 +695,6 @@
 .check[data-status="pending"] .check__label {
   color: var(--muted);
   font-weight: 500;
-}
-
-.check[data-status="pass"] {
-  --spine: var(--ok);
-}
-
-.check[data-status="missing"] {
-  --spine: repeating-linear-gradient(to bottom, var(--gap) 0 4px, transparent 4px 8px);
-}
-
-.check[data-status="flagged"] {
-  --spine: var(--danger);
 }
 
 /* The chip keeps its column and the label wraps beside it, on every width. */
@@ -773,8 +801,7 @@
   display: grid;
   gap: var(--sp-4);
   padding: var(--sp-12) var(--sp-16);
-  border: 1px solid color-mix(in srgb, var(--tone) 40%, transparent);
-  border-left-width: 3px;
+  border: 1px solid color-mix(in srgb, var(--tone) 70%, transparent);
   border-radius: var(--r-ctl);
   background: color-mix(in srgb, var(--tone) 9%, var(--surface));
 }
@@ -796,8 +823,12 @@
 
 .tool-summary__meta {
   color: var(--muted);
-  font: 600 var(--fs-12) / 1.5 var(--font-mono);
-  letter-spacing: 0.06em;
+  font-family: var(--font-display);
+  font-size: var(--fs-12);
+  font-stretch: 85%;
+  font-weight: 720;
+  line-height: 1.5;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
 }
 
@@ -829,8 +860,8 @@
   border-radius: var(--r-ctl);
 }
 
+/* A verified file. Its stamp says how it stands: match, normalised, mismatch or missing. */
 .vrow {
-  --spine: var(--line-strong);
   position: relative;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -840,32 +871,6 @@
 
 .vrow + .vrow {
   border-top: 1px solid var(--line);
-}
-
-.vrow::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  width: 3px;
-  background: var(--spine);
-}
-
-.vrow[data-status="match"] {
-  --spine: var(--ok);
-}
-
-.vrow[data-status="normalised"] {
-  --spine: var(--accent);
-}
-
-.vrow[data-status="mismatch"] {
-  --spine: var(--danger);
-}
-
-.vrow[data-status="missing"] {
-  --spine: repeating-linear-gradient(to bottom, var(--gap) 0 4px, transparent 4px 8px);
 }
 
 .vrow__head {
@@ -901,8 +906,12 @@
 
 .vrow__key {
   color: var(--muted);
-  font: 600 var(--fs-12) / 1.6 var(--font-mono);
-  letter-spacing: 0.06em;
+  font-family: var(--font-display);
+  font-size: var(--fs-12);
+  font-stretch: 85%;
+  font-weight: 720;
+  line-height: 1.6;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
 }
 
@@ -1000,7 +1009,12 @@
 }
 
 .rates-facts__n {
-  font: 600 var(--fs-28) / 1.1 var(--font-mono);
+  font-family: var(--font-display);
+  font-size: var(--fs-28);
+  font-stretch: 74%;
+  font-weight: 840;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
 }
@@ -1067,10 +1081,10 @@
   color: var(--ok);
 }
 
-/* A row opened by its own link. */
+/* A row opened by its own link: tinted with stamp ink and ruled all round. */
 .rates tbody tr:target {
   background: color-mix(in srgb, var(--accent) 12%, transparent);
-  box-shadow: inset 3px 0 0 var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
 }
 
 .rates tbody tr {
@@ -1123,8 +1137,12 @@
 .tool-steps > li::before {
   content: counter(tool-step, decimal-leading-zero);
   color: var(--accent);
-  font: 600 var(--fs-12) / 1.5 var(--font-mono);
-  letter-spacing: 0.06em;
+  font-family: var(--font-display);
+  font-size: var(--fs-12);
+  font-stretch: 85%;
+  font-weight: 720;
+  line-height: 1.5;
+  letter-spacing: 0.07em;
 }
 
 .tool-steps__title {
@@ -1230,10 +1248,8 @@
   justify-content: space-between;
   gap: var(--sp-16) var(--sp-32);
   padding: var(--sp-24);
-  border: 1px solid var(--line);
-  border-left: 3px solid var(--accent);
+  border: 1px solid var(--rule);
   border-radius: var(--r-card);
-  background: var(--surface);
   box-shadow: var(--shadow-card);
 }
 

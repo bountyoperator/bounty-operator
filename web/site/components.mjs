@@ -120,7 +120,7 @@ function slug(text) {
  */
 export const BRAND_MARK = {
   viewBox: '0 0 64 64',
-  tileRadius: 14,
+  tileRadius: 9,
   stem: 'M12.5 15h6.5v31.5h-6.5z',
   bowl: 'M25.5 25a10.75 10.75 0 1 0 0 21.5a10.75 10.75 0 0 0 0-21.5zm0 6.25a4.5 4.5 0 1 1 0 9a4.5 4.5 0 0 1 0-9z',
   slash: 'M45.5 13h6.25l-8.6 37.5h-6.25z',
@@ -264,10 +264,11 @@ export function chip(label, { tone = 'neutral', dashed = false, className } = {}
   return html`<span class="${cx('chip', dashed && 'chip--dashed', className)}" data-tone="${tone}">${label}</span>`;
 }
 
-export function severityChip(severity, label) {
+/** severityChip('high'). `{ stamp: true }` prints it as a hand-stamped impression (.sev--stamp). */
+export function severityChip(severity, label, { stamp = false } = {}) {
   const key = String(severity ?? 'unrated').toLowerCase();
   const known = Object.hasOwn(SEVERITIES, key) ? key : 'unrated';
-  return html`<span class="chip sev" data-sev="${known}">${label ?? SEVERITIES[known]}</span>`;
+  return html`<span class="${cx('chip', 'sev', stamp && 'sev--stamp')}" data-sev="${known}">${label ?? SEVERITIES[known]}</span>`;
 }
 
 export function verdictChip(verdict, { size = 'md', label } = {}) {
@@ -530,15 +531,23 @@ export function faq(items, { id, exclusive, className } = {}) {
 
 /**
  * sectionHeading({ title: 'Free tools', lede: 'Run them without an account.', id: 'tools' })
- * `aside` renders to the right of the heading on wide screens. `eyebrow` is optional.
+ * `aside` renders to the right of the heading on wide screens. A part rule
+ * prints above it; there is no label above the heading.
  */
-export function sectionHeading({ title, lede, eyebrow, aside, level = 2, id, className } = {}) {
+export function sectionHeading({ title, lede, aside, level = 2, id, className } = {}) {
   const headingId = id ?? slug(textOf(title));
-  return html`<header class="${cx('section-head', className)}"><div class="section-head__text">${eyebrow && html`<p class="eyebrow">${eyebrow}</p>`}${raw(`<h${level} id="${esc(headingId)}">`)}${title}${raw(`</h${level}>`)}${lede && html`<p class="lede">${lede}</p>`}</div>${aside && html`<div class="section-head__aside">${aside}</div>`}</header>`;
+  return html`<header class="${cx('section-head', className)}"><div class="section-head__text">${raw(`<h${level} id="${esc(headingId)}">`)}${title}${raw(`</h${level}>`)}${lede && html`<p class="lede">${lede}</p>`}</div>${aside && html`<div class="section-head__aside">${aside}</div>`}</header>`;
 }
 
 /** Visible breadcrumb trail: breadcrumbs([{ label: 'Tools', href: '/tools' }, { label: 'Report check' }]) */
+/**
+ * breadcrumbs([{ label: 'Bounty Operator', href: '/' }, { label: 'Tools', href: '/tools' }, { label: 'Report check' }])
+ * A trail of two (home and this page) prints nothing: the mark in the header
+ * is the way home, and a lone label above a heading reads as a kicker. The
+ * BreadcrumbList in the page's JSON-LD carries every trail.
+ */
 export function breadcrumbs(trail) {
+  if (trail.length <= 2) return '';
   const items = trail.map((crumb, index) => {
     const last = index === trail.length - 1;
     if (last || !crumb.href) return html`<li${attrs({ 'aria-current': last ? 'page' : null })}>${crumb.label}</li>`;

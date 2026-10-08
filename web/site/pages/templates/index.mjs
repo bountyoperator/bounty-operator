@@ -62,7 +62,7 @@ const comparison = stackTable({
 
 const body = html`
 <div class="wrap tpl-page">
-  <header class="tpl-hero">
+  <header class="tpl-hero page-field">
     ${crumbs([])}
     <h1>Bug bounty report templates</h1>
     <p class="lede">Four report templates built from what each platform publishes about submissions and judging, and one Foundry scaffold for the proof. Every page lists what that platform’s judges close reports for, with the source.</p>

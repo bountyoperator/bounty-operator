@@ -7,9 +7,10 @@
   Everything here builds on the tokens and components of base.css; the markup
   comes from web/site/fragments/workbench.mjs and web/public/app/*.mjs.
 
-  The Load and Run steps are ledger sheets: a label in the left margin, the
-  controls to its right, one hairline between rows. It is the same page
-  grammar as the finding card the result is made of.
+  The Load and Run steps are form sheets: a printed caption in the left
+  margin, the controls to its right, one hairline between rows, an ink frame
+  around the sheet. It is the same page grammar as the finding card the
+  result is made of.
 
    1. Shell: head, sticky bar, status line, panels
    2. Sheet and rows
@@ -37,6 +38,7 @@
   scroll-margin-top: 7.5rem;
 }
 
+/* The workbench opens with a part rule, like every section of the page. */
 .wb__head {
   display: flex;
   flex-wrap: wrap;
@@ -44,6 +46,8 @@
   justify-content: space-between;
   gap: var(--sp-16) var(--sp-32);
   margin-bottom: var(--sp-16);
+  padding-top: var(--sp-16);
+  border-top: var(--rule-w) solid var(--rule);
 }
 
 .wb__intro > * + * {
@@ -158,7 +162,7 @@
 
 .wb-sheet {
   overflow: clip;
-  border: 1px solid var(--line);
+  border: 1px solid var(--rule);
   border-radius: var(--r-card);
   background: var(--surface);
   box-shadow: var(--shadow-card);
@@ -176,8 +180,12 @@
 .wb-row__label {
   padding: 1.375rem var(--sp-16) var(--sp-16) var(--sp-24);
   color: var(--muted);
-  font: 600 var(--fs-12) / 1.65 var(--font-mono);
-  letter-spacing: 0.06em;
+  font-family: var(--font-display);
+  font-size: var(--fs-12);
+  font-stretch: 85%;
+  font-weight: 720;
+  line-height: 1.65;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
 }
 
@@ -229,8 +237,10 @@
   align-items: center;
   min-height: var(--tap);
   color: var(--accent);
-  font-size: var(--fs-13);
-  font-weight: 600;
+  font-family: var(--font-display);
+  font-size: var(--fs-14);
+  font-stretch: 90%;
+  font-weight: 720;
   cursor: pointer;
 }
 
@@ -330,12 +340,14 @@
 }
 
 .wb-pick input:hover + .wb-pick__body {
-  border-color: var(--text);
+  border-color: var(--rule);
 }
 
+/* The chosen box is ruled heavy and tinted with stamp ink. */
 .wb-pick input:checked + .wb-pick__body {
-  border-color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 9%, var(--surface));
+  border-color: var(--rule);
+  background: color-mix(in srgb, var(--accent) 8%, var(--surface));
+  box-shadow: inset 0 0 0 1px var(--rule);
 }
 
 .wb-pick input:checked + .wb-pick__body::before {
@@ -349,9 +361,11 @@
 }
 
 .wb-pick__name {
-  font-size: var(--fs-14);
-  font-weight: 600;
-  line-height: 1.4;
+  font-family: var(--font-display);
+  font-size: var(--fs-16);
+  font-stretch: 90%;
+  font-weight: 740;
+  line-height: 1.3;
 }
 
 .wb-pick__tag {
@@ -454,7 +468,10 @@
 }
 
 .wb-drop__title {
-  font-weight: 600;
+  font-family: var(--font-display);
+  font-size: var(--fs-18);
+  font-stretch: 88%;
+  font-weight: 780;
 }
 
 .wb-drop__actions {
@@ -896,8 +913,12 @@
 
 .wb-section__title {
   color: var(--muted);
-  font: 600 var(--fs-12) / 1.5 var(--font-mono);
-  letter-spacing: 0.06em;
+  font-family: var(--font-display);
+  font-size: var(--fs-12);
+  font-stretch: 85%;
+  font-weight: 720;
+  line-height: 1.5;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
 }
 
@@ -1084,7 +1105,11 @@ button.ref {
 
 .wb-ext__count {
   color: var(--muted);
-  font: 600 var(--fs-12) / 1 var(--font-mono);
+  font-family: var(--font-display);
+  font-size: var(--fs-12);
+  font-stretch: 85%;
+  font-weight: 720;
+  line-height: 1;
 }
 
 .wb-gh__tree {

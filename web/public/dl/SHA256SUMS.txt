@@ -1,9 +1,10 @@
-6ea3fe699531444576ce1ffe48df24c4f53c12f5157bfdd483a1d8522380d94f  bounty-operator-mcp-0.7.12.tgz
-6ea3fe699531444576ce1ffe48df24c4f53c12f5157bfdd483a1d8522380d94f  bounty-operator-mcp.tgz
+fc0e9901ff31e3646f4cf40fd5fe9f2be1cbb5c4352abd3001fc07f2bc04dedc  bounty-operator-mcp-0.8.0.tgz
+fc0e9901ff31e3646f4cf40fd5fe9f2be1cbb5c4352abd3001fc07f2bc04dedc  bounty-operator-mcp.tgz
 ceaef56a2af5787d0e9293c3dbe06a46111f32fe37f44cd72bbb988b387cb6d9  bounty-operator-mcp-0.7.0.tgz
 9a368f122d093476e7d299d96c54e9cd392f3c34b4f6b1a6359802c9ddbcd43e  bounty-operator-mcp-0.7.1.tgz
 44a64919dc0befc2e03ea440302765aa429c98e9ddced12f735533b7e24478ff  bounty-operator-mcp-0.7.10.tgz
 2425734ee8f11945fd87f21b441e4206d7e9d66d48269b8f13d3ca6951be6322  bounty-operator-mcp-0.7.11.tgz
+6ea3fe699531444576ce1ffe48df24c4f53c12f5157bfdd483a1d8522380d94f  bounty-operator-mcp-0.7.12.tgz
 c7f7b7b076df7d208d4c5e16ed5ac157ac5ee114e73176d1b87042ee8da749d1  bounty-operator-mcp-0.7.2.tgz
 3da1c264bf98eef8cb26db4c35e2cf0980c938a065abe0399502286c521a11b0  bounty-operator-mcp-0.7.3.tgz
 ae92f5697f76a70b059dc1cb20ce415aeefb878365b01dbdf4e2ba76b5cb7197  bounty-operator-mcp-0.7.4.tgz

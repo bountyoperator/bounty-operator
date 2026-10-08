@@ -272,15 +272,14 @@
 }
 
 /* The current section: full ink, a raised fill and the blue mark of the ledger. */
+/* The open tab is marked with canary, like the current page in the header. */
 .portal__tab[aria-selected="true"] {
-  background: var(--surface-3);
-  box-shadow:
-    inset 2px 0 0 var(--accent),
-    var(--shadow-card);
+  background: var(--stock);
+  color: var(--on-stock);
 }
 
 .portal__tab[aria-selected="true"] .icon {
-  color: var(--accent);
+  color: var(--on-stock);
 }
 
 .portal__main {
@@ -422,8 +421,12 @@
 
 .stat__label {
   color: var(--muted);
-  font: 600 var(--fs-12) / 1.4 var(--font-mono);
-  letter-spacing: 0.06em;
+  font-family: var(--font-display);
+  font-size: var(--fs-12);
+  font-stretch: 85%;
+  font-weight: 720;
+  line-height: 1.4;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
 }
 
@@ -433,7 +436,12 @@
 }
 
 .stat__value {
-  font: 600 var(--fs-22) / 1.15 var(--font-mono);
+  font-family: var(--font-display);
+  font-size: var(--fs-22);
+  font-stretch: 74%;
+  font-weight: 840;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
 }
@@ -727,8 +735,12 @@
 .plan-table thead th {
   background: var(--surface-2);
   color: var(--muted);
-  font: 600 var(--fs-12) / 1.5 var(--font-mono);
-  letter-spacing: 0.06em;
+  font-family: var(--font-display);
+  font-size: var(--fs-12);
+  font-stretch: 85%;
+  font-weight: 720;
+  line-height: 1.5;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
 }
 

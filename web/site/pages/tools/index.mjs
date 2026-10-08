@@ -29,7 +29,7 @@ const itemListLd = {
 
 const body = html`
 <section class="section section--tight wrap">
-<header class="tool-head">
+<header class="tool-head page-field">
 ${breadcrumbs([HOME_CRUMB, { label: 'Tools' }])}
 <h1>Free bug bounty tools</h1>
 <p class="lede">Five tools. No account or API key needed.</p>
@@ -40,7 +40,7 @@ ${localLine()}
 </section>
 
 <section class="section section--tight wrap" aria-labelledby="next-action">
-<div class="tool-next">
+<div class="tool-next on-stock">
 <div class="tool-next__text">
 <h2 class="h3" id="next-action">Want an AI review?</h2>
 <p>Add your draft and supporting files. Get a verdict and next steps.</p>
