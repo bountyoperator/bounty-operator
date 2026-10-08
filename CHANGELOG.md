@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.7.12 — 2026-10-08
+
+Site
+
+- The proof on the home page, the method, pricing and Gauntlet pages and
+  the guide adds Tradi3's ENS result: 15th of 186 in Immunefi's ENS audit
+  competition, with 17 valid Criticals, the most on the board. Firelight's
+  board now lists 135 researchers, so that line reads 2nd of 135. Every
+  result links to its public leaderboard.
+- A new social card carries the same results.
+
 ## 0.7.11 — 2026-10-07
 
 Immunefi Studio
