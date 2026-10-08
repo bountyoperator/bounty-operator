@@ -12,7 +12,7 @@ export const SITE = {
   promise: 'Find the hole in your report before the triager does.',
   summary:
     'Pre-submission review for bug bounty reports and smart-contract findings. The AI argues against the finding. The hunter writes the report.',
-  defaultImage: '/social-v2.png',
+  defaultImage: '/social-v3.png',
   source: 'https://github.com/bountyoperator/bounty-operator',
   support: 'support@bountyoperator.com',
   security: 'security@bountyoperator.com',

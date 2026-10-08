@@ -5,7 +5,7 @@
 // same helpers and stylesheets as the home hero, so the card and the page
 // cannot drift apart.
 //
-//   node web/site/social/render.mjs      writes card.html here and web/public/social-v2.png
+//   node web/site/social/render.mjs      writes card.html here and web/public/social-v3.png
 //
 // This module lives outside web/site/pages, so the generator builds no page from it.
 
@@ -27,7 +27,7 @@ export function cardDocument({ assets = '../../public' } = {}) {
 ${exampleShot({ id: 'card', rows: ['observed'], steps: false, caption: false, level: 2 })}
 </div>
 <footer class="social-card__strip">
-<p class="social-card__proof"><span>Built by Tradi3</span><span>2nd of 133, Firelight</span><span>8th of 65, Quantus</span></p>
+<p class="social-card__proof"><span>Built by Tradi3</span><span>Most valid Criticals, ENS</span><span>2nd of 135, Firelight</span></p>
 <p class="social-card__price"><span>Free: one review a day</span><span>Operator: US$10 a week</span></p>
 </footer>
 </main>`;

@@ -168,7 +168,7 @@ test('renderPage emits the head contract and no markup the CSP would block', () 
   const markup = renderPage(page, site);
 
   assert.match(markup, /<link rel="canonical" href="https:\/\/bountyoperator\.com\/tools\/report-check">/);
-  assert.match(markup, /<meta property="og:image" content="https:\/\/bountyoperator\.com\/social-v2\.png">/);
+  assert.match(markup, /<meta property="og:image" content="https:\/\/bountyoperator\.com\/social-v3\.png">/);
   assert.match(markup, /<meta name="twitter:card" content="summary_large_image">/);
   assert.match(markup, /<meta name="color-scheme" content="dark light">/);
   assert.equal([...markup.matchAll(/<meta name="theme-color"/g)].length, 2);

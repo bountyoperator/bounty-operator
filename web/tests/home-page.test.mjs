@@ -81,14 +81,16 @@ test('the sections come in the order the brief sets', () => {
   assert.deepEqual([...positions].sort((a, b) => a - b), positions);
 });
 
-test('the proof strip links the two leaderboards and the method', () => {
+test('the proof strip links the three leaderboards and the method', () => {
   const hrefs = find('a').map((tag) => tag.attributes.get('href'));
   assert.ok(hrefs.includes('https://immunefi.com/audit-competition/audit-comp-firelight-1/leaderboard/'));
   assert.ok(hrefs.includes('https://immunefi.com/audit-competition/audit-comp-quantus/leaderboard/'));
+  assert.ok(hrefs.includes('https://immunefi.com/audit-competition/audit-competition-ens/leaderboard/'));
   assert.ok(hrefs.includes('/method'));
   const text = textOf(own);
   assert.match(text, /Built by\s+Tradi3/);
-  assert.match(text, /2nd of 133/);
+  assert.match(text, /17 valid Criticals in Immunefi’s ENS competition, the most of 186 researchers/);
+  assert.match(text, /2nd of 135/);
   assert.match(text, /8th of 65/);
 });
 
@@ -203,11 +205,11 @@ test('the social card is a 1200 x 630 document drawn from the same example', asy
   assert.match(card, /<html lang="en" data-theme="dark">/);
   assert.match(card, /Find the hole in your report before the triager does\./);
   assert.match(card, /class="home-shot theme-dark"/);
-  assert.match(textOf(card), /Built by Tradi3\s+2nd of 133, Firelight\s+8th of 65, Quantus/);
+  assert.match(textOf(card), /Built by Tradi3\s+Most valid Criticals, ENS\s+2nd of 135, Firelight/);
   assert.match(textOf(card), /Operator: US\$10 a week/);
   assert.doesNotMatch(card, /\sstyle="/);
 
-  const png = await readFile(path.join(WEB_DIR, 'public', 'social-v2.png'));
+  const png = await readFile(path.join(WEB_DIR, 'public', 'social-v3.png'));
   assert.equal(png.readUInt32BE(16), CARD.width);
   assert.equal(png.readUInt32BE(20), CARD.height);
 });

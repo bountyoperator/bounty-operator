@@ -77,7 +77,7 @@ export default {
 | `description` | yes | 50 to 160 characters. |
 | `body` | yes | The result of `html\`…\``. Rendered inside `<main id="main">`. |
 | `nav` | no | Which header item is current: `workbench`, `method`, `tools`, `benchmark`, `guide`, `mcp`, `pricing`. |
-| `og` | no | `{ image, title, description, type, width, height, alt }`. `image` defaults to `/social-v2.png` (1200 × 630). |
+| `og` | no | `{ image, title, description, type, width, height, alt }`. `image` defaults to `/social-v3.png` (1200 × 630). |
 | `styles` | no | Root-relative stylesheets, loaded after `/css/base.css`. |
 | `scripts` | no | Root-relative module scripts. Their static imports are followed and emitted as `modulepreload` links. |
 | `preload` | no | Extra `modulepreload` hrefs, or `false` to turn the automatic ones off. |

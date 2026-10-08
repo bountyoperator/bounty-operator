@@ -29,9 +29,16 @@ export function workbenchLink(profileId) {
   return profileId ? `/?profile=${profileId}#workspace` : '/#workspace';
 }
 
+/**
+ * Tradi3's results on Immunefi's public leaderboards, read on 8 October 2026:
+ * Firelight 2nd of 135; Quantus 8th of 65; ENS 15th of 186 with 23 valid
+ * findings, 17 of them Critical, the most Criticals of anyone on that board.
+ * Re-read a leaderboard before changing a number.
+ */
 export const LEADERBOARDS = {
   firelight: 'https://immunefi.com/audit-competition/audit-comp-firelight-1/leaderboard/',
   quantus: 'https://immunefi.com/audit-competition/audit-comp-quantus/leaderboard/',
+  ens: 'https://immunefi.com/audit-competition/audit-competition-ens/leaderboard/',
 };
 
 /** The record claim, exactly as PUBLIC-METHOD.md allows it. */
@@ -266,10 +273,14 @@ ${after && html`      ${after}`}
 /** Tradi3's linked results. The only proof the site shows. */
 export function proofLine() {
   return html`<p class="proofline">${icon('shield')}<span>Built by Tradi3: ${link({
-    label: '2nd of 133 in Immunefi’s Firelight competition',
+    label: '2nd of 135 in Immunefi’s Firelight competition',
     href: LEADERBOARDS.firelight,
     external: true,
-  })} and ${link({ label: '8th of 65 in Quantus', href: LEADERBOARDS.quantus, external: true })}.</span></p>`;
+  })}, ${link({ label: '8th of 65 in Quantus', href: LEADERBOARDS.quantus, external: true })} and ${link({
+    label: '15th of 186 in ENS, with 17 valid Criticals, the most on the board',
+    href: LEADERBOARDS.ens,
+    external: true,
+  })}.</span></p>`;
 }
 
 /** A frame around invented example output, so nobody reads it as a real finding. */

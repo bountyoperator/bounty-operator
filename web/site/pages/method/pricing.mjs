@@ -12,7 +12,7 @@ import { breadcrumbsLd, faqPageLd, softwareApplicationLd } from '../../layout.mj
 import { ACCOUNT_SCRIPTS, ACCOUNT_STYLES, accountDialog } from '../../fragments/account-dialog.mjs';
 import { PROFILES } from '../../../public/profiles.mjs';
 import { AGENT_TICK, CHAT_TICK, COUNTED, FREE_LINE, NOT_COUNTED, RENEWAL, RESET_LINE, WHY_PAY } from '../../plans.mjs';
-import { LASTMOD, STYLES, pageHero, relatedLinks, tickList, workbenchLink } from './_shared.mjs';
+import { LASTMOD, STYLES, pageHero, proofLine, relatedLinks, tickList, workbenchLink } from './_shared.mjs';
 
 const PATH = '/pricing';
 
@@ -73,6 +73,7 @@ ${pageHero({
   trail: [{ label: 'Bounty Operator', href: '/' }, { label: 'Pricing' }],
   title: 'Free for 1 review a day. US$10 a week for unlimited.',
   lede: 'You bring the model: your own API key, or your ChatGPT or Claude chat. Your provider bills model usage.',
+  after: proofLine(),
 })}
 
 <section class="section section--tight wrap" aria-labelledby="plans">

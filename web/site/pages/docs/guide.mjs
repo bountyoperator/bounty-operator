@@ -19,6 +19,7 @@ const DESCRIPTION =
 
 const FIRELIGHT = 'https://immunefi.com/audit-competition/audit-comp-firelight-1/leaderboard/';
 const QUANTUS = 'https://immunefi.com/audit-competition/audit-comp-quantus/leaderboard/';
+const ENS = 'https://immunefi.com/audit-competition/audit-competition-ens/leaderboard/';
 
 // ---------------------------------------------------------------------------
 // The worked example
@@ -348,7 +349,7 @@ ${checklist(EVIDENCE.map((item) => html`<p>${item}</p>`), { className: 'checklis
 // Page
 // ---------------------------------------------------------------------------
 
-const record = html`<p>Twelve checks, distilled from 105 real case files across five platforms. The wins and the closures. Built by Tradi3: ${link({ label: '2nd of 133 in Immunefi’s Firelight competition', href: FIRELIGHT, external: true })} and ${link({ label: '8th of 65 in Quantus', href: QUANTUS, external: true })}.</p>`;
+const record = html`<p>Twelve checks, distilled from 105 real case files across five platforms. The wins and the closures. Built by Tradi3: ${link({ label: '2nd of 135 in Immunefi’s Firelight competition', href: FIRELIGHT, external: true })}, ${link({ label: '8th of 65 in Quantus', href: QUANTUS, external: true })} and ${link({ label: '15th of 186 in ENS, with 17 valid Criticals, the most on the board', href: ENS, external: true })}.</p>`;
 
 const body = docPage({
   head: {

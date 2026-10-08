@@ -19,6 +19,7 @@ import {
   pageHero,
   pipeline,
   points,
+  proofLine,
   relatedLinks,
   tickList,
   verdictList,
@@ -189,6 +190,7 @@ ${pageHero({
   lede: 'Give it your draft, your code and the program rules. You get one verdict (submit, rewrite then submit, prove first, hold as duplicate, or drop), the main thing blocking it, and the quickest fix.',
   actions: operatorActions({ secondary: button({ label: 'See the eight stages', href: '#stages', size: 'lg' }) }),
   note: 'US$10 per week. Runs on your own model and key.',
+  after: proofLine(),
   aside: heroAside,
   stickyText: true,
 })}

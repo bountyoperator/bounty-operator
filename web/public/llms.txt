@@ -2,7 +2,7 @@
 
 > Pre-submission review for bug bounty reports and smart-contract findings. The AI argues against the finding. The hunter writes the report. Reviews run on the user's own model key. Free: 1 review a day. Operator: US$10 per week for unlimited reviews. Only hosted reviews count: on the site or through `run_review`.
 
-Built by Tradi3. Platform-neutral: Immunefi, Cantina, Sherlock, HackerOne. Every URL below is canonical and extensionless. Source code: https://github.com/bountyoperator/bounty-operator (MIT). The three core profiles, the free tools, the CLI and the MCP server are in that repository. The gauntlet stages and the panel cross-examination run on the hosted service.
+Built by Tradi3: 2nd of 135 in Immunefi's Firelight audit competition, 8th of 65 in Quantus, and 15th of 186 in ENS with 17 valid Criticals, the most on that board (leaderboards: https://immunefi.com/audit-competition/audit-comp-firelight-1/leaderboard/, https://immunefi.com/audit-competition/audit-comp-quantus/leaderboard/, https://immunefi.com/audit-competition/audit-competition-ens/leaderboard/). Platform-neutral: Immunefi, Cantina, Sherlock, HackerOne. Every URL below is canonical and extensionless. Source code: https://github.com/bountyoperator/bounty-operator (MIT). The three core profiles, the free tools, the CLI and the MCP server are in that repository. The gauntlet stages and the panel cross-examination run on the hosted service.
 
 A hosted review sends the user's files and provider key through bountyoperator.com to the provider the user chose. The server adds the review method and stores no files, prompts, keys or results. For a hosted profile that method goes only to the provider the user chose: no page, download or tool returns it.
 

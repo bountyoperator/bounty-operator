@@ -4,7 +4,7 @@
 //   node web/site/social/render.mjs
 //
 // Writes card.html next to this file (the HTML source of the image) and
-// renders it to web/public/social-v2.png at 1200 x 630. Needs a global
+// renders it to web/public/social-v3.png at 1200 x 630. Needs a global
 // Playwright with Chromium (`npm i -g playwright`), like scripts/build-icons.mjs.
 
 import { execSync } from 'node:child_process';
@@ -17,7 +17,7 @@ import { CARD, cardDocument } from './card.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const source = path.join(here, 'card.html');
-const output = path.resolve(here, '..', '..', 'public', 'social-v2.png');
+const output = path.resolve(here, '..', '..', 'public', 'social-v3.png');
 
 function loadPlaywright() {
   const globalRoot = execSync('npm root -g', { encoding: 'utf8' }).trim();

@@ -225,8 +225,9 @@ node bench/bench.mjs verify --results web/public/bench/latest.json --archive web
 
 ## Built by Tradi3
 
-[2nd of 133 in Immunefi's Firelight competition](https://immunefi.com/audit-competition/audit-comp-firelight-1/leaderboard/)
-and [8th of 65 in Quantus](https://immunefi.com/audit-competition/audit-comp-quantus/leaderboard/).
+[2nd of 135 in Immunefi's Firelight competition](https://immunefi.com/audit-competition/audit-comp-firelight-1/leaderboard/),
+[8th of 65 in Quantus](https://immunefi.com/audit-competition/audit-comp-quantus/leaderboard/)
+and [15th of 186 in ENS, with 17 valid Criticals, the most on the board](https://immunefi.com/audit-competition/audit-competition-ens/leaderboard/).
 
 [Sherlock profile](https://audits.sherlock.xyz/watson/Tradi3) ·
 [Audit portfolio](https://github.com/krutftw/audit-portfolio)
