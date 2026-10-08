@@ -14,7 +14,8 @@
  * Exports
  *   initRun()                         wire #wb-run, #wb-cancel, the quota line and the upgrade panel
  *   runReview({ acknowledge })        -> Promise<void>   start a hosted run now
- *   failureFor(error, via)            -> { message, tone, field?, upgrade?, operatorOnly?, warn?, partial?, signin? }   pure, tested
+ *   failureFor(error, via)            -> { message, tone, field?, upgrade?, operatorOnly?, warn?, partial?, signin?, blocked? }   pure, tested
+ *   finishedLine(result, elapsed)     -> { message, tone, hold }   what the status line says about a finished run          pure, tested
  *   quotaLine(account)                -> { text, used }                                                   pure, tested
  *   listedProfile(id)                 -> boolean   a profile a single run may use                          pure, tested
  *   ensureSignedIn(), upgrade(), openAccount()   the account steps, shared with ./gauntlet.mjs and ./panel.mjs
@@ -26,6 +27,7 @@
 import { describeFinding, manifestFor } from '../review-core.mjs';
 import { reviewProfile } from '../profiles.mjs';
 import { account, currentAccount, planOf, streamReview, subscribeAccount, track } from './api.mjs';
+import { blockedCopy, blockedNotice } from './blocked.mjs';
 import { EVENTS } from './events.mjs';
 import { checkCredentials, clearInvalid, credentials, markInvalid, setVia } from './providers-ui.mjs';
 import { saveWorkbench, workbench } from './state.mjs';
@@ -56,7 +58,7 @@ function wait(retryAfter) {
  *
  * @param {{ code?: string, message?: string, data?: Record<string, any> }} error  An ApiError.
  * @param {'connect' | 'key' | 'export'} [via]
- * @returns {{ message: string, tone: 'error' | 'warn' | 'info', field?: 'key' | 'model' | 'connect', upgrade?: boolean, operatorOnly?: boolean, warn?: boolean, block?: boolean, signin?: boolean, partial?: string, exportHint?: boolean }}
+ * @returns {{ message: string, tone: 'error' | 'warn' | 'info', field?: 'key' | 'model' | 'connect', upgrade?: boolean, operatorOnly?: boolean, warn?: boolean, block?: boolean, signin?: boolean, partial?: string, exportHint?: boolean, blocked?: string }}
  */
 export function failureFor(error, via = 'key') {
   const data = error?.data ?? {};
@@ -87,6 +89,11 @@ export function failureFor(error, via = 'key') {
       return { message: text, tone: 'error', field: keyField };
     case 'bad_model':
       return { message: text, tone: 'error', field: 'model' };
+    case 'provider_policy': {
+      // The provider blocked the request under its usage policy: the key and the model id are fine.
+      const copy = blockedCopy(error);
+      return { message: copy.line, tone: 'warn', blocked: copy.block };
+    }
     case 'provider': {
       if (data.kind === 'auth') {
         return {
@@ -114,6 +121,22 @@ export function failureFor(error, via = 'key') {
     default:
       return { message: text, tone: 'error', partial };
   }
+}
+
+/**
+ * What the status line says when a run comes back with an answer. A blocked
+ * or refused answer is not a review, so it never reads as "Review done".
+ *
+ * @param {{ blocked?: string, refused?: boolean, truncated?: boolean }} result
+ * @param {number} elapsed  milliseconds
+ * @returns {{ message: string, tone: 'warn' | 'success', hold: boolean }}
+ */
+export function finishedLine(result, elapsed) {
+  const blocked = blockedCopy(result);
+  if (blocked) return { message: blocked.line, tone: 'warn', hold: true };
+  if (result.refused) return { message: 'The model declined to answer. Its reply is shown as written.', tone: 'warn', hold: true };
+  if (result.truncated) return { message: 'The answer was cut off before it finished. What arrived is shown.', tone: 'warn', hold: true };
+  return { message: `Review done in ${formatElapsed(elapsed)}.`, tone: 'success', hold: false };
 }
 
 /**
@@ -372,6 +395,14 @@ async function handleFailure(error, request, options) {
     markInvalid(failure.field, failure.message);
     return;
   }
+  if (failure.blocked) {
+    // The notice sits under the Run button, beside the model choice it asks the user to change.
+    const target = qs('#wb-run-warn');
+    const block = blockedNotice(error);
+    if (target && block) clear(target).append(block);
+    say(failure.message, { tone: 'warn', hold: true });
+    return;
+  }
 
   const actions = [];
   if (failure.partial) actions.push({ label: 'Open what arrived', onClick: () => keepPartial(failure.partial, request) });
@@ -506,9 +537,8 @@ export async function runReview(options = {}) {
     result: { ...result, provider: request.provider, source: 'ai', timestamp: new Date().toISOString() },
   });
   setStep('results');
-  if (result.refused) say('The model declined to answer. The review was not counted against today.', { tone: 'warn', hold: true });
-  else if (result.truncated) say('The answer was cut off before it finished. What arrived is shown.', { tone: 'warn', hold: true });
-  else say(`Review done in ${formatElapsed(elapsed)}.`, { tone: 'success' });
+  const line = finishedLine(result, elapsed);
+  say(line.message, { tone: line.tone, hold: line.hold });
 }
 
 /** Wires the Run row. Call after initProviders(). */

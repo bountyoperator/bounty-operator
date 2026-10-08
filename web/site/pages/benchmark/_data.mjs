@@ -7,27 +7,23 @@
 // preview publish). When the folder has no latest.json there is nothing to
 // show: loadPublished() returns null and no benchmark page is generated.
 //
-// Of the results, only the published files are read: latest.json,
-// models/<slug>.json and practice/latest.json. They carry outcomes and hashes,
-// never case text. profileDrift() also reads bench/protocol.json and the
-// frozen profile texts in bench/prompts/frozen, which are public, to tell
-// whether the product still sends each profile as it was measured. Every
-// number a page shows goes through one of the formatters in `fmt`, and the
-// tests run the file's numbers through the same formatters.
+// Only the published files are read: latest.json, models/<slug>.json and
+// practice/latest.json. They carry outcomes and hashes, never case text.
+// Every number a page shows goes through one of the formatters in `fmt`, and
+// the tests run the file's numbers through the same formatters.
+//
+// The pages rank models on the headline (raw) arm. A release's profile arms
+// stay in its results file and are not turned into a view here: the page
+// shows no with/without comparison.
 
-import { createHash } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { liveProfile } from '../../../../bench/lib/arms.mjs';
-import { protocolHashes } from '../../../../bench/lib/protocol.mjs';
 import { longDate } from '../docs/_shared.mjs';
 
 export const DEFAULT_DIR = fileURLToPath(new URL('../../../public/bench/', import.meta.url));
 export const PUBLISHED_DIR = process.env.PAYDIRT_PUBLISHED_DIR ? path.resolve(process.env.PAYDIRT_PUBLISHED_DIR) : DEFAULT_DIR;
-/** The harness folder: protocol.json and the frozen profile texts a run sent. */
-export const BENCH_DIR = fileURLToPath(new URL('../../../../bench/', import.meta.url));
 
 /** Where the published files are served on the site. */
 export const SERVED = '/bench';
@@ -83,35 +79,10 @@ export function loadPublished(dir = PUBLISHED_DIR) {
   return { dir, results, details, practice: practice?.schema === SCHEMA && Array.isArray(practice.models) && practice.models.length ? practice : null };
 }
 
-/**
- * For each profile arm of a published run, whether the product sends that
- * profile today exactly as the run measured it: { <arm>: 'same' | 'changed' }.
- * An arm is left out when this checkout cannot tell: the protocol or the
- * frozen text in `benchDir` is not the one the run recorded.
- */
-export async function profileDrift(results, benchDir = BENCH_DIR) {
-  const protocolFile = path.join(benchDir, 'protocol.json');
-  if (!existsSync(protocolFile)) return {};
-  const protocol = readJson(protocolFile);
-  const now = protocolHashes(protocol).arms;
-  const drift = {};
-  for (const [arm, recorded] of Object.entries(results.hashes?.arms ?? {})) {
-    const frozenFile = path.join(benchDir, 'prompts', 'frozen', `${arm}.md`);
-    const expected = protocol.engine?.profiles?.[arm]?.system_sha256;
-    if (!expected || now[arm] !== recorded || !existsSync(frozenFile)) continue;
-    const frozen = readFileSync(frozenFile, 'utf8').replace(/\r\n?/g, '\n').trim();
-    if (createHash('sha256').update(frozen).digest('hex') !== expected) continue;
-    const live = (await liveProfile(arm)).sent.trim();
-    drift[arm] = live === frozen ? 'same' : 'changed';
-  }
-  return drift;
-}
-
 // ---------------------------------------------------------------------------
 // Formatters: the one place a published number becomes text
 // ---------------------------------------------------------------------------
 
-const MINUS = '−';
 const oneDecimal = (value) => {
   const rounded = Math.round(value * 10) / 10;
   return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1);
@@ -138,13 +109,6 @@ export const fmt = {
     const total = Math.round(value);
     const minutes = Math.floor(total / 60);
     return minutes ? `${minutes}m ${String(total % 60).padStart(2, '0')}s` : `${total}s`;
-  },
-  /** A signed difference in score points: "+10", "−33.3", "0". */
-  delta: (value) => {
-    if (typeof value !== 'number') return null;
-    const text = oneDecimal(Math.abs(value));
-    if (text === '0') return '0';
-    return value > 0 ? `+${text}` : `${MINUS}${text}`;
   },
   /** "2026-10-02T23:05:19.396Z" -> "2 October 2026". */
   date: (iso) => (typeof iso === 'string' && /^\d{4}-\d{2}-\d{2}/.test(iso) ? longDate(iso.slice(0, 10)) : null),
@@ -211,75 +175,13 @@ function pairOutcome(outcomes, pair, arm, repeats) {
   return count('failed') > count('wrong') ? 'failed' : 'wrong';
 }
 
-/** Inputs of `arm` on `pairs`, every repeat: how many there were, failed, and were cut short at the output limit. */
-function armCounts(outcomes, pairs, arm, repeats) {
-  if (!outcomes) return null;
-  const counts = { inputs: 0, failed: 0, truncated: 0 };
-  for (let rep = 1; rep <= repeats; rep += 1) {
-    for (const pair of pairs) {
-      for (const caseId of Object.values(pair.cases ?? {})) {
-        const entry = outcomes.find((o) => o.case === caseId && o.arm === arm && o.rep === rep);
-        if (!entry) return null;
-        counts.inputs += 1;
-        if (entry.status === 'failed') counts.failed += 1;
-        if (entry.failure === 'truncated') counts.truncated += 1;
-      }
-    }
-  }
-  return counts;
-}
-
-/** Combine the matching core profiles over the same pairs, before taking the median repeat. */
-function coreComparison(row, results, outcomes, complete) {
-  const pairs = results.pairs ?? [];
-  const repeats = results.repeats ?? 1;
-  if (!outcomes || !pairs.length || row.arm.pairs !== pairs.length) return null;
-  const profiles = pairs.map((pair) => FAMILIES[pair.family]?.profile);
-  if (profiles.some((arm, index) => !arm || !results.arms?.[pairs[index].family]?.includes(arm) || !complete(row.model, arm))) return null;
-  const records = new Map(outcomes.map((entry) => [`${entry.case}|${entry.arm}|${entry.rep}`, entry]));
-  const without = [], withTool = [];
-  const failures = { raw: 0, profile: 0 }, truncated = { raw: 0, profile: 0 };
-  let inputs = 0;
-  for (let rep = 1; rep <= repeats; rep += 1) {
-    let rawRight = 0, profileRight = 0;
-    for (const [index, pair] of pairs.entries()) {
-      const cases = Object.values(pair.cases ?? {});
-      if (cases.length !== 2) return null;
-      const raw = cases.map((id) => records.get(`${id}|raw|${rep}`));
-      const profile = cases.map((id) => records.get(`${id}|${profiles[index]}|${rep}`));
-      if ([...raw, ...profile].some((entry) => !entry || !['ok', 'failed'].includes(entry.status))) return null;
-      if (raw.every((entry) => entry.status === 'ok' && entry.correct === true)) rawRight += 1;
-      if (profile.every((entry) => entry.status === 'ok' && entry.correct === true)) profileRight += 1;
-      for (const [kind, entries] of Object.entries({ raw, profile })) {
-        failures[kind] += entries.filter((entry) => entry.status === 'failed').length;
-        truncated[kind] += entries.filter((entry) => entry.failure === 'truncated').length;
-      }
-      inputs += cases.length;
-    }
-    without.push(rawRight);
-    withTool.push(profileRight);
-  }
-  const median = (values) => {
-    const sorted = [...values].sort((a, b) => a - b);
-    return (sorted[Math.floor((sorted.length - 1) / 2)] + sorted[Math.floor(sorted.length / 2)]) / 2;
-  };
-  const rawRight = median(without), profileRight = median(withTool);
-  return {
-    row, pairs: pairs.length, rawRight, profileRight,
-    rawScore: rawRight / pairs.length * 100,
-    profileScore: profileRight / pairs.length * 100,
-    delta: (profileRight - rawRight) / pairs.length * 100,
-    failures, truncated, inputs,
-  };
-}
-
 /**
  * Everything the benchmark page shows.
  *
  * A model is ranked when its headline arm has no missing or unresolved run.
  * A model whose headline arm is incomplete is listed with the models that
- * were not run, with how many of its inputs were answered. A lift, a pick or
- * a column of the pair grid is shown only for arms with no unresolved run.
+ * were not run, with how many of its inputs were answered. A pick or a column
+ * of the pair grid is shown only for arms with no unresolved run.
  */
 export function buildView(published) {
   const { results, details } = published;
@@ -328,29 +230,6 @@ export function buildView(published) {
       return { slug: model.slug, name: model.name ?? model.slug, tier: model.run_tier ?? null, answered: arm.runs_expected - arm.unresolved, inputs: arm.runs_expected };
     });
 
-  // Profile lift: ranked models, profile arms that completed.
-  const lifts = [];
-  // Profile arms of ranked models that had not finished: no lift is shown, and the page says so.
-  const liftsPending = [];
-  for (const row of rows) {
-    for (const arm of Object.keys(row.model.arms ?? {}).filter((id) => id !== headline)) {
-      const lift = row.model.lift?.[arm];
-      if (!complete(row.model, arm) && row.model.arms?.[arm]) {
-        const a = row.model.arms[arm];
-        liftsPending.push({ row, arm, answered: a.runs_expected - a.unresolved, inputs: a.runs_expected });
-        continue;
-      }
-      if (!complete(row.model, arm) || typeof lift?.delta !== 'number') continue;
-      const families = Object.entries(results.arms ?? {}).filter(([, arms]) => arms.includes(arm)).map(([family]) => family);
-      // Failed and cut-short answers on the same pairs, arm by arm: a cut-short answer scores as wrong.
-      const armPairs = (results.pairs ?? []).filter((pair) => families.includes(pair.family));
-      const outcomes = details.get(row.slug);
-      const counts = { raw: armCounts(outcomes, armPairs, headline, repeats), profile: armCounts(outcomes, armPairs, arm, repeats) };
-      const mostlyCut = !!counts.profile && counts.profile.truncated * 2 > counts.profile.inputs;
-      lifts.push({ row, arm, families, lift, counts, mostlyCut, profileScore: row.model.arms[arm].score.median, rawScore: families.length === 1 ? row.arm.by_family?.[families[0]] ?? null : null });
-    }
-  }
-
   // Picks: best, budget and open-weight per task family, merged where one model holds several.
   const picks = [];
   for (const family of orderFamilies(new Set((results.picks ?? []).map((pick) => pick.task)))) {
@@ -376,12 +255,6 @@ export function buildView(published) {
   });
   const gridComplete = grid.every((line) => line.cells.every(Boolean));
 
-  // A descriptive overview, not a replacement for the prespecified per-profile lifts.
-  // Include only models with the raw arm and every matching profile fully resolved.
-  const comparisons = headline === 'raw'
-    ? rows.map((row) => coreComparison(row, results, details.get(row.slug), complete)).filter(Boolean)
-    : [];
-
   const usdTotal = results.models.reduce((sum, model) => sum + (typeof model.usd_total === 'number' ? model.usd_total : 0), 0);
   const retries = results.models.filter((model) => Number.isInteger(model.infra_retries));
 
@@ -397,10 +270,6 @@ export function buildView(published) {
     incomplete,
     notRun: results.not_run ?? [],
     notes: results.notes ?? [],
-    lifts,
-    liftsPending,
-    comparisons,
-    liftModels: [...new Set(lifts.map((lift) => lift.row.slug))].length,
     picks,
     pairList,
     grid,

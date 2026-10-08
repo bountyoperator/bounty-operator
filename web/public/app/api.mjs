@@ -35,8 +35,9 @@
  *   bad_key, bad_input, bad_event, privacy_block and privacy_warn
  *   (data.findings), daily_used (data.resetsAt, data.upgradeUrl),
  *   operator_only (data.profile, data.upgradeUrl), output_withheld,
- *   review_running, provider (data.kind, data.retryAfter), review_failed,
- *   reviews_paused, rate_limited (data.retryAfter), billing_exists,
+ *   review_running, provider (data.kind, data.retryAfter), provider_policy
+ *   (data.blocked, data.detail: the provider blocked the request under its
+ *   usage policy; not counted), review_failed, reviews_paused, rate_limited (data.retryAfter), billing_exists,
  *   billing_unavailable, billing_busy, billing_none, not_found,
  *   method_not_allowed, internal.
  *
@@ -97,7 +98,8 @@
  * @property {'bounty' | 'own-code'} mode
  * @property {string} model
  * @property {boolean} truncated        the answer was cut short: the output cap, or a provider that broke off mid-answer
- * @property {boolean} refused          the model declined; the Worker does not count it
+ * @property {boolean} refused          the model or the provider declined. A short refusal is not counted; a long answer the model ended with one is
+ * @property {'anthropic-cyber' | 'openai-cyber' | 'policy'} [blocked]   the provider blocked the review under its usage policy; never counted. See ./blocked.mjs
  * @property {{ input: number | null, output: number | null }} usage   provider token counts
  *
  * @typedef {{ event: string, data: string }} SseEvent
@@ -138,7 +140,7 @@ export class ApiError extends Error {
     this.code = code;
     /** HTTP status, or 0 when no HTTP error answer exists. */
     this.status = status;
-    /** The other fields of the error body: findings, resetsAt, retryAfter, kind, partial. */
+    /** The other fields of the error body: findings, resetsAt, retryAfter, kind, blocked, detail, partial. */
     this.data = data;
   }
 }

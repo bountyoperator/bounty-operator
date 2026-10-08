@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import { GAUNTLET, PROFILES } from '../public/profiles.mjs';
-import { PROVIDERS } from '../public/providers.mjs';
+import { ANTHROPIC_CYBER_NOTICE, PROVIDERS } from '../public/providers.mjs';
 import { sha256 } from '../src/crypto.ts';
 import { VERSION } from '../src/env.ts';
 import { ApiError } from '../src/http.ts';
@@ -446,6 +446,9 @@ test('run_review failures the caller can act on come back as tool errors with th
   const provider = await toolError('run_review', {}, failing(new ApiError('Provider rejected the API key (HTTP 401).', 502, 'provider', { kind: 'auth' })));
   assert.equal(provider.code, 'provider');
   assert.equal(provider.kind, 'auth');
+
+  const policy = await toolError('run_review', {}, failing(new ApiError('Provider blocked this request.', 502, 'provider_policy', { kind: 'policy', blocked: 'openai-cyber' })));
+  assert.deepEqual(policy, { kind: 'policy', blocked: 'openai-cyber', error: 'Provider blocked this request.', code: 'provider_policy' });
 });
 
 // ---------------------------------------------------------------------------
@@ -486,6 +489,22 @@ test('each prompt walks the agent through prepare_review and build_packet', asyn
   GAUNTLET.forEach((id, index) => assert(gauntlet.includes(`${index + 1}. ${id}: `), id));
   assert.match(gauntlet, /stage-<n>-<profile>\.md/);
   assert.match(gauntlet, /source "gauntlet"/);
+});
+
+test('run_review and the gauntlet prompt tell the agent what a refused or blocked review is and what to do', async () => {
+  const { tools } = (await rpc('tools/list')).body.result;
+  const tool = tools.find((entry) => entry.name === 'run_review');
+  assert.match(tool.description, /Uses one hosted review\. A review the provider blocks under its usage policy comes back with refused true and blocked naming the block, or fails with code provider_policy: neither is counted\. A model that declines in its own words comes back with refused true\. Refused text is not a review: do not present it as one and do not run the same model again\./);
+  assert.deepEqual(tool.outputSchema.properties.refused, { type: 'boolean', description: 'True when the model or the provider declined. The text is then not a review.' });
+  assert.deepEqual(tool.outputSchema.properties.blocked, {
+    type: 'string',
+    description: 'Set when the provider blocked the review under its usage policy: anthropic-cyber, openai-cyber or policy. A blocked review is never counted.',
+  });
+
+  const gauntlet = await promptText('gauntlet');
+  assert.match(gauntlet, /If run_review returns refused or blocked, or fails with code provider_policy, the provider or the model declined\. Do not present the text as a review\. Tell me a blocked review was not counted against my allowance\. Do not call run_review again with the same model: offer another model or provider, or prepare_review for a core profile, which you answer yourself\./);
+  assert.deepEqual(gauntlet.slice(gauntlet.indexOf('For each stage:')).match(/^\d+\./gm), ['1.', '2.', '3.', '4.', '5.', '6.']);
+  assert.ok(gauntlet.indexOf('provider_policy') < gauntlet.indexOf('drop or hold-duplicate'));
 });
 
 test('a prompt is found under the name a client lists it as', async () => {
@@ -629,13 +648,13 @@ test('the account tool reads usage with a valid token and answers 401 without on
 });
 
 /** A provider that answers REVIEW as one JSON body, or as a stream when the request asks for one. */
-function providerAnswer(init, { delayMs = 0 } = {}) {
+function providerAnswer(init, { delayMs = 0, review = REVIEW } = {}) {
   if (JSON.parse(init.body).stream !== true) {
-    return Response.json({ model: 'gpt-test', choices: [{ message: { content: REVIEW }, finish_reason: 'stop' }], usage: { prompt_tokens: 5, completion_tokens: 7 } });
+    return Response.json({ model: 'gpt-test', choices: [{ message: { content: review }, finish_reason: 'stop' }], usage: { prompt_tokens: 5, completion_tokens: 7 } });
   }
   const encoder = new TextEncoder();
   const pieces = [
-    `data: ${JSON.stringify({ model: 'gpt-test', choices: [{ delta: { content: REVIEW }, finish_reason: null }] })}\n\n`,
+    `data: ${JSON.stringify({ model: 'gpt-test', choices: [{ delta: { content: review }, finish_reason: null }] })}\n\n`,
     `data: ${JSON.stringify({ model: 'gpt-test', choices: [{ delta: {}, finish_reason: 'stop' }], usage: { prompt_tokens: 5, completion_tokens: 7 } })}\n\n`,
     'data: [DONE]\n\n',
   ];
@@ -674,6 +693,73 @@ async function endpointText(env, message, headers, options) {
 function sseMessages(text) {
   return text.split('\n\n').filter((block) => block.includes('data: ')).map((block) => JSON.parse(block.slice(block.indexOf('data: ') + 6)));
 }
+
+/** What the endpoint answered: the JSON body, or the last message of an event stream. The content type must be the one asked for. */
+function replyOf(response, accept) {
+  const streamed = accept.includes('text/event-stream');
+  assert.match(response.type, streamed ? /^text\/event-stream/ : /^application\/json/, `Accept: ${accept}`);
+  return streamed ? sseMessages(response.text).at(-1) : JSON.parse(response.text);
+}
+
+const ACCEPTS = ['application/json', 'application/json, text/event-stream'];
+
+test('run_review exposes a policy refusal and the unused allowance over JSON and SSE', async (t) => {
+  const review = ANTHROPIC_CYBER_NOTICE;
+  const providerCalls = stubProvider(t, { review });
+  const { tools } = (await rpc('tools/list')).body.result;
+  const schema = tools.find((tool) => tool.name === 'run_review').outputSchema;
+  assert.equal(schema.properties.blocked.type, 'string');
+  for (const accept of ACCEPTS) {
+    const env = createEnv();
+    await withToken(env);
+    const call = request('tools/call', { name: 'run_review', arguments: { files: FILES, provider: 'openrouter', model: 'anthropic/claude-opus-5.5', profile: 'solidity', mode: 'bounty' } });
+    const response = await endpointText(env, call, { Authorization: `Bearer ${TOKEN}`, Accept: accept, 'X-Provider-Key': 'sk-test-key-0123456789' });
+    const reply = replyOf(response, accept);
+    assert.equal(reply.result.isError, false);
+    const output = reply.result.structuredContent;
+    assert.equal(output.refused, true);
+    assert.equal(output.blocked, 'anthropic-cyber');
+    assert.equal(output.verdict, '');
+    assert.match(output.review, /^This request triggered restrictions on violative cyber content/);
+    assert.equal(output.allowance.remainingToday, 1);
+    assert.equal(env.DB.sqlite.prepare("SELECT COUNT(*) AS n FROM reviews WHERE status = 'completed'").get().n, 0);
+  }
+  assert.equal(providerCalls.length, 2, 'only the two explicit requests reached the provider');
+  // The SSE client's review was read as a stream; the JSON-only client's as one answer.
+  assert.deepEqual(providerCalls.map((entry) => JSON.parse(entry.init.body).stream === true), [false, true]);
+});
+
+test('run_review reports a policy block the provider sent as an error as provider_policy, uncounted, over JSON and SSE', async (t) => {
+  const providerCalls = [];
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async (url, init) => {
+    providerCalls.push({ url: String(url), init });
+    return Response.json({ error: { code: 403, message: 'Input flagged', metadata: { reasons: ['illicit'], flagged_input: 'how to…', provider_name: 'OpenAI' } } }, { status: 403 });
+  };
+  t.after(() => {
+    globalThis.fetch = originalFetch;
+  });
+
+  for (const accept of ACCEPTS) {
+    const env = createEnv();
+    await withToken(env);
+    const headers = { Authorization: `Bearer ${TOKEN}`, Accept: accept, 'X-Provider-Key': 'sk-test-key-0123456789' };
+    const call = request('tools/call', { name: 'run_review', arguments: { files: FILES, provider: 'openrouter', model: 'openai/gpt-6.1-sol', profile: 'solidity', mode: 'bounty' } });
+    const reply = replyOf(await endpointText(env, call, headers), accept);
+    assert.equal(reply.result.isError, true);
+    const failure = JSON.parse(reply.result.content[0].text);
+    assert.equal(failure.code, 'provider_policy');
+    assert.equal(failure.kind, 'policy');
+    assert.equal(failure.blocked, 'policy');
+    assert.equal(failure.error, 'Provider blocked this request under its usage policy (HTTP 403), so no review was written; the API key is not the cause. It was not counted against your allowance.');
+
+    // The day's free review is still there.
+    const account = JSON.parse((await endpointText(env, request('tools/call', { name: 'account', arguments: {} }), headers)).text);
+    assert.equal(account.result.structuredContent.usage.remainingToday, 1);
+    assert.equal(env.DB.sqlite.prepare("SELECT COUNT(*) AS n FROM reviews WHERE status = 'completed'").get().n, 0);
+  }
+  assert.equal(providerCalls.length, 2, 'one provider call per request: a block is never retried');
+});
 
 test('run_review takes the provider key from the header, runs the review and reports the allowance', async (t) => {
   const env = createEnv();

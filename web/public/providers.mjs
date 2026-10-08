@@ -59,8 +59,45 @@ const ANTHROPIC_EFFORT_MODELS = new Set(['claude-opus-5-5', 'claude-sonnet-5-5',
 // Stop reasons of the Messages API that mean the answer was cut short.
 const MESSAGES_CUT_OFF = ['max_tokens', 'model_context_window_exceeded'];
 // Finish reasons of a chat completion that mean the same: the output cap, or
-// an upstream failure after part of the answer was written.
-const CHAT_CUT_OFF = ['length', 'error'];
+// an upstream failure after part of the answer was written. DeepSeek adds
+// `insufficient_system_resource` and `aborted`, Mistral `model_length`.
+const CHAT_CUT_OFF = ['length', 'error', 'insufficient_system_resource', 'aborted', 'model_length'];
+
+// A provider's policy block reaches the caller in one of three ways: a stop
+// reason, an error, or (Anthropic through a relay) a short notice written as
+// the answer with a normal stop. `blocked` names what was identified:
+//   'anthropic-cyber'  Anthropic's cyber safeguards
+//   'openai-cyber'     OpenAI's cyber_policy error
+//   'policy'           any other block under a provider's usage policy
+const POLICY_NOTICE_CHARS = 800;
+/** The notice as Anthropic's models returned it in October 2026. Anthropic documents the wording as unstable. */
+export const ANTHROPIC_CYBER_NOTICE = "This request triggered restrictions on violative cyber content and was blocked under Anthropic's Usage Policy. To learn more, see https://platform.claude.com/docs/en/build-with-claude/refusals-and-fallback.";
+// Only this first sentence is matched: the rest of the notice varies.
+const ANTHROPIC_CYBER_OPENING = "This request triggered restrictions on violative cyber content and was blocked under Anthropic's Usage Policy";
+// A line a review opens its verdict with, in the forms the parser reads.
+const VERDICT_LINE = /^[\s>#*_-]*(?:final\s+|overall\s+)?verdict[*_]{0,3}\s*[:：]/im;
+const EXPLANATION_CHARS = 2000;
+// OpenRouter's `metadata.error_type` values for a block reported as an error.
+const POLICY_ERROR_TYPES = ['refusal', 'content_policy_violation'];
+
+function plainSentence(text) {
+  return text.replace(/’/g, "'").replace(/\s+/g, ' ').trim();
+}
+
+/**
+ * Classifies an answer that is a provider's policy notice and not a review.
+ * The text must be short, open with Anthropic's cyber notice and carry no
+ * Verdict line, so a review that quotes the notice is never taken for one.
+ * The hosted run and a reply pasted back from a chat app both use it.
+ *
+ * @param {unknown} text
+ * @returns {'anthropic-cyber' | undefined}
+ */
+export function policyBlock(text) {
+  if (typeof text !== 'string' || text.length > POLICY_NOTICE_CHARS) return undefined;
+  if (VERDICT_LINE.test(text)) return undefined;
+  return plainSentence(text).startsWith(ANTHROPIC_CYBER_OPENING) ? 'anthropic-cyber' : undefined;
+}
 
 /**
  * @typedef {{ id: string, label: string, note?: string }} ProviderModel
@@ -77,9 +114,9 @@ const CHAT_CUT_OFF = ['length', 'error'];
  * @typedef {{ input: number | null, output: number | null }} Usage
  * @typedef {{ messages: { role: string, content: string }[] }} PreparedMessages
  * @typedef {{ provider: string, model: string, apiKey: string, prepared: PreparedMessages, signal?: AbortSignal }} ProviderRequest
- * @typedef {{ text: string, truncated: boolean, refused: boolean, model: string, usage: Usage }} ProviderResult
+ * @typedef {{ text: string, truncated: boolean, refused: boolean, blocked?: string, model: string, usage: Usage }} ProviderResult
  * @typedef {{ type: 'delta', text: string }} StreamDelta
- * @typedef {{ type: 'done', truncated: boolean, refused: boolean, model: string, usage: Usage }} StreamDone
+ * @typedef {{ type: 'done', truncated: boolean, refused: boolean, blocked?: string, model: string, usage: Usage }} StreamDone
  */
 
 function model(id, label, note) {
@@ -287,17 +324,21 @@ export function outputTokenLimit(providerId, modelId, { stream = false } = {}) {
 export class ProviderError extends Error {
   /**
    * @param {string} message
-   * @param {{ status?: number, kind?: string, retryAfter?: number | null }} [details]
+   * @param {{ status?: number, kind?: string, retryAfter?: number | null, blocked?: string, detail?: string }} [details]
    */
-  constructor(message, { status = 0, kind = 'provider', retryAfter = null } = {}) {
+  constructor(message, { status = 0, kind = 'provider', retryAfter = null, blocked = undefined, detail = '' } = {}) {
     super(message);
     this.name = 'ProviderError';
     /** @type {'provider'} */
     this.code = 'provider';
     /** HTTP status of the provider's answer; 0 when it never answered. */
     this.status = status;
-    /** auth, model, credit, rate, server, request, response, redirect, timeout or network. */
+    /** auth, policy, model, credit, rate, server, request, response, redirect, timeout or network. */
     this.kind = kind;
+    /** Set with kind `policy`: 'anthropic-cyber', 'openai-cyber' or 'policy'. @type {string | undefined} */
+    this.blocked = blocked;
+    /** The provider's own words about a policy block, with keys removed; '' when it gave none. */
+    this.detail = detail;
     /** Seconds the provider asked the caller to wait, when it said so. @type {number | null} */
     this.retryAfter = retryAfter;
   }
@@ -527,21 +568,72 @@ async function readSlice(response, limit) {
   return text.slice(0, limit);
 }
 
+/** The provider's message from an error body, and the parsed body when it is whole JSON. */
 async function errorDetail(response, apiKey) {
   const text = await readSlice(response, ERROR_BYTES);
   let detail = '';
+  let payload = null;
   try {
-    detail = messageFrom(JSON.parse(text));
+    payload = JSON.parse(text);
+    detail = messageFrom(payload);
   } catch {
     const cut = text.match(/"message"\s*:\s*"((?:[^"\\]|\\.){1,400})/);
     detail = cut ? cut[1] : '';
   }
-  return redact(detail, apiKey);
+  return { detail: redact(detail, apiKey), payload };
+}
+
+function errorObject(payload) {
+  const first = Array.isArray(payload) ? payload[0] : payload;
+  if (!first || typeof first !== 'object') return null;
+  return first.error && typeof first.error === 'object' ? first.error : first;
+}
+
+/**
+ * The policy block an error reports, or '' for any other error.
+ *   - OpenAI: the error code `cyber_policy`, at any status.
+ *   - OpenRouter: `metadata.error_type` "refusal" or "content_policy_violation",
+ *     or a 403 that carries moderation metadata (`reasons`, `flagged_input`).
+ * A 401 or 403 with none of these is a rejected key and stays one.
+ * `status` is the HTTP status; an error inside a 200 body carries its own in `code`.
+ */
+function policySignal(payload, status = 0) {
+  const error = errorObject(payload);
+  if (!error) return '';
+  if (error.code === 'cyber_policy') return 'openai-cyber';
+
+  const metadata = error.metadata && typeof error.metadata === 'object' ? error.metadata : {};
+  const moderated = (Array.isArray(metadata.reasons) && metadata.reasons.length > 0)
+    || (typeof metadata.flagged_input === 'string' && metadata.flagged_input !== '');
+  const forbidden = (status || Number(error.code)) === 403;
+  if (!POLICY_ERROR_TYPES.includes(metadata.error_type) && !(forbidden && moderated)) return '';
+
+  // A relay passes the upstream provider's own words along.
+  const upstream = [error.message, metadata.raw].filter((part) => typeof part === 'string').join(' ');
+  return plainSentence(upstream).includes(ANTHROPIC_CYBER_OPENING) ? 'anthropic-cyber' : 'policy';
+}
+
+// A block that names no policy of its own is "its usage policy": a relay can
+// pass on an upstream provider's block, so the endpoint's name could be wrong.
+function policyFailure(blocked, { status = 0, detail = '' } = {}) {
+  const policy = {
+    'openai-cyber': "OpenAI's cyber usage policy",
+    'anthropic-cyber': "Anthropic's Usage Policy on cyber content",
+  }[blocked] || 'its usage policy';
+  // The provider's error code and the HTTP status, in one pair of brackets.
+  const marks = [blocked === 'openai-cyber' ? 'cyber_policy' : '', status ? `HTTP ${status}` : ''].filter(Boolean);
+  const where = marks.length ? ` (${marks.join(', ')})` : '';
+  return new ProviderError(
+    `Provider blocked this request under ${policy}${where}, so no review was written; the API key is not the cause.`,
+    { status, kind: 'policy', blocked, detail },
+  );
 }
 
 async function httpFailure(response, selected, request) {
   const { status } = response;
-  const detail = await errorDetail(response, request.apiKey);
+  const { detail, payload } = await errorDetail(response, request.apiKey);
+  const blocked = policySignal(payload, status);
+  if (blocked) return policyFailure(blocked, { status, detail });
   const said = detail ? ` ${selected.label} said: ${detail}` : '';
   const retryHeader = Number(response.headers.get('retry-after'));
   const retryAfter = Number.isFinite(retryHeader) && retryHeader > 0 ? Math.ceil(retryHeader) : null;
@@ -633,37 +725,61 @@ function messagesUsage(usage) {
   };
 }
 
-function inBandError(payload, apiKey) {
-  const detail = redact(messageFrom(payload), apiKey);
+function inBandError(payload, request) {
+  const detail = redact(messageFrom(payload), request.apiKey);
+  const blocked = policySignal(payload);
+  if (blocked) return policyFailure(blocked, { detail });
   return new ProviderError(`Provider returned an error${detail ? `: ${detail}` : '.'}`, { kind: 'response' });
 }
 
 function readChatCompletion(data, request) {
-  if (data && data.error) throw inBandError(data, request.apiKey);
+  if (data && data.error) throw inBandError(data, request);
   const choice = data?.choices?.[0];
   if (!choice) throw new ProviderError('Provider did not return a text review.', { kind: 'response' });
   // OpenRouter reports an upstream failure inside the choice, with HTTP 200.
-  if (choice.error) throw inBandError(choice, request.apiKey);
+  if (choice.error) throw inBandError(choice, request);
 
   const refusal = typeof choice.message?.refusal === 'string' ? choice.message.refusal : '';
+  const filtered = filteredChoice(choice);
   return {
     text: textOf(choice.message?.content) || refusal,
     truncated: CHAT_CUT_OFF.includes(choice.finish_reason),
-    refused: Boolean(refusal) || choice.finish_reason === 'content_filter',
+    refused: Boolean(refusal) || filtered,
+    ...(filtered ? { blocked: 'policy' } : {}),
     model: typeof data.model === 'string' ? data.model : request.model,
     usage: chatUsage(data.usage),
   };
 }
 
+/**
+ * True when the provider's own filter ended the choice: `content_filter`, or
+ * OpenRouter's `native_finish_reason` "refusal", the upstream provider's raw
+ * reason. A `refusal` message with a normal stop is the model's own answer.
+ */
+function filteredChoice(choice) {
+  return choice.finish_reason === 'content_filter' || choice.native_finish_reason === 'refusal';
+}
+
+/**
+ * What a Messages API refusal says: the block it names, and Anthropic's
+ * explanation, shown when the refusal carries no text of its own.
+ */
+function messagesRefusal(details) {
+  const explanation = typeof details?.explanation === 'string' ? details.explanation.trim().slice(0, EXPLANATION_CHARS) : '';
+  return { blocked: details?.category === 'cyber' ? 'anthropic-cyber' : 'policy', explanation };
+}
+
 function readMessage(data, request) {
-  if (data && data.type === 'error') throw inBandError(data, request.apiKey);
+  if (data && data.type === 'error') throw inBandError(data, request);
   if (!data || !Array.isArray(data.content)) {
     throw new ProviderError('Provider did not return a text review.', { kind: 'response' });
   }
+  const refusal = data.stop_reason === 'refusal' ? messagesRefusal(data.stop_details) : null;
   return {
-    text: textOf(data.content),
+    text: textOf(data.content) || (refusal ? refusal.explanation : ''),
     truncated: MESSAGES_CUT_OFF.includes(data.stop_reason),
-    refused: data.stop_reason === 'refusal',
+    refused: Boolean(refusal),
+    ...(refusal ? { blocked: refusal.blocked } : {}),
     model: typeof data.model === 'string' ? data.model : request.model,
     usage: messagesUsage(data.usage),
   };
@@ -703,13 +819,17 @@ function readCompletion(providerId, data, request) {
   const read = WIRE[providerId].style === 'messages' ? readMessage : readChatCompletion;
   const result = read(data, request);
   if (!result.refused && !result.text.trim()) throw emptyAnswer(result.truncated ? 'limit' : '');
-  return result;
+  // The notice names its source, so it outranks a general `policy` mark.
+  const blocked = policyBlock(result.text);
+  return blocked ? { ...result, refused: true, blocked } : result;
 }
 
 /**
  * Sends a prepared review and returns the whole answer.
  * `truncated` is true when the model hit the output cap; `refused` when the
- * model or the provider's filter declined.
+ * model or the provider's filter declined; `blocked` names a policy block
+ * the provider reported. A block the provider sends as an error is thrown as
+ * a ProviderError of kind `policy`.
  *
  * @param {ProviderRequest} request
  * @returns {Promise<ProviderResult>}
@@ -809,10 +929,18 @@ async function* chatStream(events, request) {
   // instead of discarding it: the caller's key has paid for that text.
   // OpenRouter sends such a failure as a chunk with a top-level `error` and
   // `finish_reason: "error"`.
+  // A policy block sent the same way ends the answer as refused: the text is
+  // kept for the user to read and is not a review.
   let wrote = false;
   const failed = (payload) => {
-    if (!wrote) throw inBandError(payload, request.apiKey);
-    state.truncated = true;
+    const error = inBandError(payload, request);
+    if (!wrote) throw error;
+    if (error.kind === 'policy') {
+      state.refused = true;
+      state.blocked = error.blocked;
+    } else {
+      state.truncated = true;
+    }
     state.finished = true;
   };
 
@@ -850,7 +978,11 @@ async function* chatStream(events, request) {
     if (choice.finish_reason) {
       state.finished = true;
       if (CHAT_CUT_OFF.includes(choice.finish_reason)) state.truncated = true;
-      if (choice.finish_reason === 'content_filter') state.refused = true;
+    }
+    if (filteredChoice(choice)) {
+      state.finished = true;
+      state.refused = true;
+      state.blocked ??= 'policy';
     }
   }
 
@@ -870,7 +1002,7 @@ async function* messagesStream(events, request) {
     if (!event) continue;
 
     if (event.type === 'error') {
-      if (!wrote) throw inBandError(event, request.apiKey);
+      if (!wrote) throw inBandError(event, request);
       state.truncated = true;
       state.finished = true;
       break;
@@ -890,7 +1022,16 @@ async function* messagesStream(events, request) {
       }
     } else if (event.type === 'message_delta') {
       if (MESSAGES_CUT_OFF.includes(event.delta?.stop_reason)) state.truncated = true;
-      if (event.delta?.stop_reason === 'refusal') state.refused = true;
+      if (event.delta?.stop_reason === 'refusal') {
+        // Where the stream carries stop_details is not documented: read both places.
+        const refusal = messagesRefusal(event.delta.stop_details ?? event.stop_details);
+        state.refused = true;
+        state.blocked = refusal.blocked;
+        if (!wrote && refusal.explanation) {
+          wrote = true;
+          yield { type: 'delta', text: refusal.explanation };
+        }
+      }
       const output = tokenCount(event.usage?.output_tokens);
       if (output !== null) state.usage = { input, output };
     } else if (event.type === 'message_stop') {
@@ -919,23 +1060,26 @@ async function* streamEvents(providerId, response, deadline, request) {
 
     deltas = read(serverSentEvents(response, deadline), request);
     let characters = 0;
+    let shortText = '';
     let step = await deltas.next();
     while (!step.done) {
       characters += step.value.text.length;
       if (characters > RESPONSE_BYTES) {
         throw new ProviderError('Provider response exceeded the 2 MB limit.', { kind: 'response' });
       }
+      shortText = characters <= POLICY_NOTICE_CHARS ? shortText + step.value.text : '';
       yield step.value;
       step = await deltas.next();
     }
 
     const { truncated, refused, finished, model: answeredBy, usage } = step.value;
+    const blocked = policyBlock(shortText) || step.value.blocked;
     if (characters === 0 && !refused) {
       // Only a stream that reported its own end can blame the output limit.
       const hitLimit = truncated ? 'limit' : '';
       throw emptyAnswer(finished ? hitLimit : 'closed');
     }
-    yield { type: 'done', truncated, refused, model: answeredBy, usage };
+    yield { type: 'done', truncated, refused: refused || Boolean(blocked), ...(blocked ? { blocked } : {}), model: answeredBy, usage };
   } catch (error) {
     throw transportFailure(error, deadline);
   } finally {
@@ -951,10 +1095,10 @@ async function* streamEvents(providerId, response, deadline, request) {
  * Resolves once the provider has accepted the request, so key, model and
  * rate-limit errors reject here, before any event. The iterable then yields
  * `{ type: 'delta', text }` and ends with one
- * `{ type: 'done', truncated, refused, model, usage }`. An error the provider
- * sends mid-stream is thrown from the iterator when no text has arrived yet;
- * after text it ends the stream as truncated, so the text already paid for
- * is kept.
+ * `{ type: 'done', truncated, refused, blocked?, model, usage }`. An error the
+ * provider sends mid-stream is thrown from the iterator when no text has
+ * arrived yet; after text it ends the stream as truncated, so the text already
+ * paid for is kept. A policy block after text ends it as refused and blocked.
  *
  * @param {ProviderRequest} request
  * @returns {Promise<AsyncGenerator<StreamDelta | StreamDone, void, void>>}

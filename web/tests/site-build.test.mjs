@@ -170,6 +170,10 @@ test('renderPage emits the head contract and no markup the CSP would block', () 
   assert.match(markup, /<link rel="canonical" href="https:\/\/bountyoperator\.com\/tools\/report-check">/);
   assert.match(markup, /<meta property="og:image" content="https:\/\/bountyoperator\.com\/social-v4\.png">/);
   assert.match(markup, /<meta name="twitter:card" content="summary_large_image">/);
+  // The builder's handle credits the card. The product has no X account, so there is no twitter:site.
+  assert.equal([...markup.matchAll(/<meta name="twitter:creator" content="@Tradi3_">/g)].length, 1);
+  assert.doesNotMatch(markup, /twitter:site/);
+  assert.doesNotMatch(markup, /href="https?:\/\/(?:www\.)?(?:x|twitter)\.com/, 'no visible X link');
   assert.match(markup, /<meta name="color-scheme" content="dark light">/);
   assert.equal([...markup.matchAll(/<meta name="theme-color"/g)].length, 2);
   assert.match(markup, /<script src="\/theme\.js"><\/script>/);
@@ -178,7 +182,8 @@ test('renderPage emits the head contract and no markup the CSP would block', () 
   assert.match(markup, /<script type="module" src="\/tools\/report-check\.mjs"><\/script>/);
   assert.match(markup, /<a href="\/tools" aria-current="page">Tools<\/a>/);
   assert.match(markup, /<a href="\/benchmark">Benchmark<\/a>/);
-  assert.match(markup, /<a class="btn btn--secondary btn--sm" href="\/#account">Account<\/a>/);
+  // One label for a signed-out visitor on every page: the link here, the button on the home page.
+  assert.match(markup, /<a class="btn btn--secondary btn--sm" href="\/#account">Sign in<\/a>/);
   assert.doesNotMatch(markup, /id="account-button"/);
   assert.match(markup, /support@bountyoperator\.com/);
   assert.match(markup, /Built by <a href="https:\/\/audits\.sherlock\.xyz\/watson\/Tradi3"/);
@@ -188,7 +193,8 @@ test('renderPage emits the head contract and no markup the CSP would block', () 
   assert.deepEqual(errors, []);
 
   const home = renderPage({ ...page, path: '/', nav: undefined }, { has: () => false, pages: [] });
-  assert.match(home, /<button id="account-button"/);
+  assert.match(home, /<button id="account-button" class="btn btn--secondary btn--sm" type="button">Sign in<\/button>/);
+  assert.match(home, /<meta name="twitter:creator" content="@Tradi3_">/);
   assert.doesNotMatch(home, /Benchmark/);
 });
 
@@ -382,4 +388,22 @@ test('the pages DESIGN owns render without errors', async () => {
     assert.match(outputs.get('404.html'), /<h1 class="finding__title" id="not-found-title">No page at this address\.<\/h1>/);
     assert.match(outputs.get('_kit.html'), /data-rail="observed"/);
   }
+});
+
+test('textOf leaves no tag behind when one tag is nested inside another', () => {
+  const cases = [
+    ['<scr<script>ipt>alert(1)</scr</script>ipt>', /alert\(1\)/],
+    // Removing the inline tag would join the pieces into a whole <script> tag.
+    ['<sc<b>ript>alert(2)</sc</b>ript>', /alert\(2\)/],
+    ['<<script>script>alert(3)<</script>/script>', /alert\(3\)/],
+    ['<a<a href="/x">>link</a</a>>', /link/],
+    ['<p>Call <code>run_review</code>.</p><p>Then <strong>stop</strong>.</p>', /^Call run_review\. Then stop\.$/],
+  ];
+  for (const [markup, keeps] of cases) {
+    const text = textOf(raw(markup));
+    assert.doesNotMatch(text, /<\/?[a-z]/i, markup);
+    assert.match(text, keeps, markup);
+  }
+  // Escaped text is not markup: it comes back as the characters the author wrote.
+  assert.equal(textOf(html`${'a <script> b'}`), 'a <script> b');
 });

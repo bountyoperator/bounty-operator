@@ -55,7 +55,55 @@ export function harnessChecks({ ev, requests, expected }) {
   return checks;
 }
 
-/** Sort a provider/transport error into: infra (retry), budget, auth, unavailable (stop), or error (the model's own failure). */
+// ---------------------------------------------------------------- provider policy blocks
+//
+// A run is 'blocked' when the provider or its safety layer declined the request and no model
+// judgment exists. Three signals, and nothing else, make a run blocked:
+//   1. the text notice: the final answer, trimmed, is at most NOTICE_MAX_CHARS long, starts with
+//      CYBER_NOTICE_PREFIX and holds no answer sheet, on a normal stop (policyNotice);
+//   2. the stop reason: 'refusal' or 'content_filter' (BLOCK_STOP_REASONS);
+//   3. a policy error envelope: a cyber_policy or content_policy_violation code, error_type
+//      refusal, the notice's own wording, or a 403 with moderation wording (classifyError).
+// A blocked run is final, is never retried, never halts the model and never counts toward the
+// streak of provider errors that halts one. Its detail is '<vendor>-<category>', for example
+// 'anthropic-cyber' or 'openai-cyber_policy'. It is not a wrong answer: lib/score.mjs counts it
+// in a field of its own and leaves it out of every accuracy denominator.
+// General refusal prose ("I can't help with that") is not matched: an answer can quote it and
+// there is no bounded form to anchor on.
+
+export const BLOCKED = 'blocked';
+/** The opening sentence of Anthropic's cyber-safeguard notice. A prefix: Anthropic calls the rest of the text "not stable". */
+export const CYBER_NOTICE_PREFIX = "This request triggered restrictions on violative cyber content and was blocked under Anthropic's Usage Policy.";
+export const NOTICE_MAX_CHARS = 800;
+export const BLOCK_STOP_REASONS = Object.freeze(['refusal', 'content_filter']);
+
+/**
+ * Is this answer text a provider's block notice and nothing more? Returns the block's detail
+ * ('anthropic-cyber') or null. An answer that quotes the notice further down, or runs past
+ * NOTICE_MAX_CHARS, or carries an answer sheet, is the model's own answer.
+ */
+export function policyNotice(text) {
+  const t = String(text ?? '').trim();
+  if (!t || t.length > NOTICE_MAX_CHARS || !t.startsWith(CYBER_NOTICE_PREFIX)) return null;
+  return extractSheet(t).ok ? null : 'anthropic-cyber';
+}
+
+const POLICY_ENVELOPE = [
+  [/\bcyber_policy\b/i, 'cyber_policy', 'openai'],
+  [/violative cyber content|blocked under Anthropic's Usage Policy/i, 'cyber', 'anthropic'],
+  [/content_policy_violation/i, 'content_policy_violation', null],
+  [/["']?error_type["']?\s*[:=]\s*["']?refusal\b/i, 'refusal', null],
+];
+const MODERATION_403 = /moderation|flagged|guardrail|usage policy|content filter/i;
+const vendorOfModel = (model) => { const s = String(model ?? ''); return s.includes('/') ? s.split('/')[0].toLowerCase() : null; };
+/** '<vendor>-<category>': the model's vendor when its slug names one, else the vendor the signal itself belongs to, else 'provider'. */
+const blockDetail = (category, model, fallback = null) => `${vendorOfModel(model) ?? fallback ?? 'provider'}-${category}`;
+
+/**
+ * Sort a provider/transport error into: infra (retry), budget, auth, unavailable (stop),
+ * blocked (a policy block: final, not the model's answer), or error (the model's own failure).
+ * A blocked result also carries `category` and, where the signal names one, `vendor`.
+ */
 export function classifyError(status, message) {
   const text = String(message ?? '');
   let code = Number(status);
@@ -65,6 +113,10 @@ export function classifyError(status, message) {
   if (code === 404 || /no endpoints found|model not found|not a valid model|no allowed providers|unknown model|does not exist/i.test(text)) return { kind: 'unavailable', retry: false, halt: 'model' };
   // An account-level gate (an attestation, a region, a terms acceptance) says nothing about the model.
   if (code === 403 && /requires you to (?:complete|accept|confirm)|age confirmation|confirm at https?:\/\/|not available in your (?:region|country)|accept the terms/i.test(text)) return { kind: 'unavailable', retry: false, halt: 'model' };
+  // A policy block is checked before the infrastructure pattern: OpenRouter wraps a refusal as
+  // "Provider returned error" from an "upstream" provider, and filed as infra it would be retried on every run.
+  for (const [pattern, category, vendor] of POLICY_ENVELOPE) if (pattern.test(text)) return { kind: BLOCKED, retry: false, halt: null, category, vendor };
+  if (code === 403 && MODERATION_403.test(text)) return { kind: BLOCKED, retry: false, halt: null, category: 'moderation', vendor: null };
   if ([408, 409, 425, 429].includes(code) || code >= 500 || /rate.?limit|overloaded|timed? ?out|ECONN|ENOTFOUND|EAI_AGAIN|ETIMEDOUT|socket|network|fetch failed|terminated|connection|stream (?:ended|closed|error)|stream stalled|stalled while waiting|upstream|provider returned error|temporarily|try again/i.test(text)) return { kind: 'infra', retry: true, halt: null };
   return { kind: 'error', retry: false, halt: null };
 }
@@ -76,7 +128,7 @@ export function classifyError(status, message) {
  *   checks  harnessChecks(...)
  *   stderr  tail of stderr.txt
  * Returns { status, failure, detail, final, retry, halt }.
- *   final=true  the run has a verdict and is never re-rolled (ok, or the model's own failure)
+ *   final=true  the run has a verdict and is never re-rolled (ok, the model's own failure, or a provider policy block)
  *   final=false infrastructure failure: retried now if retry=true, and again on the next invocation
  */
 export function classifyRun({ res, ev, checks, stderr = '' }) {
@@ -95,14 +147,21 @@ export function classifyRun({ res, ev, checks, stderr = '' }) {
     const c = classifyError(null, stderr);
     const tail = stderr.trim().split(/\r?\n/).slice(-3).join(' | ').slice(0, 400);
     if (c.kind === 'error') return infra(`no model response (exit ${res.exitCode}): ${tail || 'no output'}`);
+    if (c.kind === BLOCKED) return model(BLOCKED, blockDetail(c.category, ev.models?.[0], c.vendor));
     return infra(`${c.kind}: ${tail}`, c.retry, c.halt);
   }
   switch (final.stopReason) {
-    case 'stop':
+    case 'stop': {
+      // the provider's block notice in place of an answer: checked first, so a block that reports no usage is not retried as a cached response
+      const notice = policyNotice(final.text ?? ev.finalText);
+      if (notice) return model(BLOCKED, notice);
       if (ev.usage.input + ev.usage.output + ev.usage.cacheRead === 0) return infra('zero token usage (response served from a cache)');
       // the host handed the model's tool call back as reasoning text: no call was made and no answer exists
       if (final.strayToolCall) return infra('the provider returned a tool call as reasoning text (no tool call, no answer)');
       return ok;
+    }
+    case 'refusal':
+    case 'content_filter': return model(BLOCKED, blockDetail(final.stopReason, final.model ?? ev.models?.[0]));
     case 'length': return model('truncated', 'the model hit its output limit');
     case 'toolUse': return model('timeout', 'the session ended between turns (omp --max-time)');
     case 'aborted': return res.sawModelOutput ? model('timeout', 'the session was aborted') : infra('aborted before any model output');
@@ -110,6 +169,7 @@ export function classifyRun({ res, ev, checks, stderr = '' }) {
       const c = classifyError(final.errorStatus, final.errorMessage);
       const detail = `${final.errorStatus ?? ''} ${final.errorMessage ?? ''}`.trim().slice(0, 400);
       if (c.kind === 'error') return model('error', detail);
+      if (c.kind === BLOCKED) return model(BLOCKED, blockDetail(c.category, final.model ?? ev.models?.[0], c.vendor));
       return infra(`${c.kind}: ${detail}`, c.retry, c.halt);
     }
     default: return model('error', `unexpected stop reason "${final.stopReason}"`);

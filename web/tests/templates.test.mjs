@@ -168,3 +168,25 @@ test('the handoff matches the workbench contract', () => {
   assert.equal(sourceText({ textContent: 'a\nb\n' }), 'a\nb');
   assert.equal(sourceText(null), '');
 });
+
+test('the Sherlock pages cite each rule at its current address and say which rules are the earlier contest rules', () => {
+  const sherlock = PLATFORMS.find((platform) => platform.id === 'sherlock');
+  // docs.sherlock.xyz/audits/... now redirects: every cited page is linked where it lives today.
+  for (const page of PAGES) assert.doesNotMatch(renderPage(page), /docs\.sherlock\.xyz\/audits\//, page.path);
+  const moved = sherlock.sources.filter((source) => source.href.includes('/audit-contests-deprecated-replaced-by-audit-engine/'));
+  assert.deepEqual(moved.map((source) => source.id), ['criteria', 'judging', 'discussion', 'points', 'payout']);
+  for (const source of moved) {
+    assert.match(source.dated, /^Earlier contest rules/, source.id);
+    assert.equal(source.checked, '9 Oct 2026', source.id);
+  }
+  const engine = sherlock.sources.find((source) => source.id === 'audit-engine');
+  assert.equal(engine.href, 'https://docs.sherlock.xyz/audit-engine/for-participants');
+
+  const markup = renderPage(platformPages.find((page) => page.path === '/templates/sherlock'));
+  const sources = markup.slice(markup.indexOf('<h2 id="sources">'));
+  assert.match(sources, /Sherlock now files its audit contest pages as deprecated, replaced by Audit Engine\./);
+  assert.equal((sources.match(/Earlier contest rules/g) ?? []).length, 5);
+  assert.match(sources, /Earlier contest rules · Version 1\.12, 24 Jun 2025 · checked 9 Oct 2026/);
+  // A source read on the page's own date keeps that date.
+  assert.match(sources, /Updated 18 Mar 2026 · checked 2 Oct 2026/);
+});

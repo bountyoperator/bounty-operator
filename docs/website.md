@@ -35,6 +35,7 @@ scripts/build-mcp.mjs        packs the MCP download served under /dl/
 scripts/select-profiles.mjs  chooses where the Worker gets the hosted profiles from
 scripts/deploy.mjs           the production deploy and the gates in front of it
 scripts/verify-live.mjs      checks a running site from the outside
+scripts/lighthouse.mjs       runs Lighthouse on the pages of a running site
 mcp/                     the bounty-operator-mcp package
 ```
 
@@ -286,6 +287,16 @@ security headers and the content security policy on `/` and `/guide`,
 `<title>`, no script from another origin), the redirect from an alias host,
 `/api/profiles` as metadata only, the MCP endpoint, and the checksum of the
 served MCP package. It sends no secret.
+
+`npm run lighthouse` measures the main pages of the live site with Lighthouse,
+on a phone and on a desktop, and prints the four category scores, the lab
+metrics and every audit that did not pass. It runs one pinned Lighthouse
+release through `npx` on the Chrome installed on the machine, which needs
+Node 22.19 or newer;
+`npm run lighthouse -- --psi` measures through Google's PageSpeed Insights API
+instead, with a key in `PAGESPEED_API_KEY`. `-- --all` covers every page of
+the sitemap, `-- --min 90` exits 1 when a score is under 90, and
+`-- --base-url http://localhost:8787` measures a local server.
 
 A fork deploys its own Worker from the template: set a route or `workers_dev`,
 its D1 database id and `SITE_ORIGIN` in `web/wrangler.jsonc`, then

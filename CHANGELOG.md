@@ -1,5 +1,98 @@
 # Changelog
 
+## 0.8.2 — 2026-10-09
+
+Reviews
+
+- A review the provider blocks under its usage policy is recognised however
+  the block arrives: as a stop reason, as an error, or as a short notice
+  written in place of the answer. That covers Anthropic's cyber safeguards on
+  a direct key and through OpenRouter, and OpenAI's `cyber_policy` error. A
+  blocked review is never counted against your allowance.
+- A block the provider sends as an error is named as a block. It used to read
+  as a rejected API key.
+- The result names who blocked the review, says it did not count, and gives
+  the way on: run it again on another model or provider. It links to the new
+  guide entry. The status line says "Review done" only for a review.
+- A blocked or declined answer shows no export buttons: there is no review to
+  download. The reply stays on the page, and its files are listed as sent,
+  not as reviewed.
+- The Gauntlet stops at a blocked stage, keeps the stages that finished, and
+  asks for another model before you resume. It no longer says to ask the same
+  model again. The stage reads Blocked, or Declined when the model refused in
+  its own words. Failed is kept for a stage that broke.
+- Panel review names a blocked seat and asks for another model in it. When the
+  cross-examination is blocked, it asks for another model to cross-examine.
+- A reply pasted back from a chat app that is the provider's notice is shown
+  as a block, with the step that applies there: paste the same prompt into
+  another model. It used to read as a reply with no Verdict line.
+- Review history marks a saved answer that is not a review: Blocked or
+  Declined.
+- MCP: `run_review` returns `blocked` (`anthropic-cyber`, `openai-cyber` or
+  `policy`) next to `refused`, or fails with the code `provider_policy`. The
+  gauntlet prompt on both servers and the gauntlet skill tell an agent not to
+  present a blocked answer as a review, to say it was not counted, and to
+  offer another model or provider instead of calling the same model again.
+- On a phone, a result shows its verdict before the export buttons. Download
+  packet stays in view and the four other exports open under More exports.
+- In an in-app browser (X, Facebook, Instagram, LinkedIn, TikTok) the sign-in
+  dialog says to open the page in Safari or Chrome when no passkey prompt
+  appears, and gives a Copy link button.
+
+Benchmark
+
+- The comparison with and without Bounty Operator is no longer shown on
+  /benchmark. The page ranks the models on their own. The results file keeps
+  every published number of the 2026-10 release, and the published files are
+  unchanged.
+- A note under "How it is kept honest": Anthropic's cyber safeguards blocked 5
+  answers in the 2026-10 release, 3 from Claude Fable 5.1 and 2 from Claude
+  Opus 5.5, all on the raw arm, the model alone. The benchmark account is not
+  in Anthropic's Cyber Verification Program, and the blocks count as misses
+  in that release.
+- From the next release on, the harness records a provider block as its own
+  outcome, `blocked`: the run is left out of the score and counted in its own
+  column, not marked as a miss. The 2026-10 release is not regraded.
+
+Site
+
+- On a phone, the home page prints "Free: 1 review a day on your own model
+  key." directly under its two buttons.
+- The guide has a new entry, "When the model refuses", at
+  /guide#model-refuses: run the review on another model or provider, or apply
+  to Anthropic's Cyber Verification Program or OpenAI's Trusted Access for
+  Cyber.
+- Every page gives the ENS result as 17 valid Critical submissions, the most
+  of 186 researchers on that board. Some pages said "17 valid Criticals".
+- Page heads hold steadier while the display font loads. Until it arrives,
+  headings print in a fallback face sized to match it, and on a phone a
+  breadcrumb prints its section and page, which stay on one line when the
+  font lands. A headline or a breadcrumb could take an extra line for half a
+  second and push the page down. Measured with the font held back on every
+  page of the sitemap at ten widths from 320 to 1440 px, the largest layout
+  shift is 0.03.
+- /invalid-report-costs carries Bugcrowd's limits as changed on 8 October
+  2026: an account under 50% accuracy over the last 90 days is limited to 6
+  submissions a week for at least 7 days, a report closed N/A counts as a
+  rejection, and identity verification comes before any managed programme.
+- /compare was read again on 9 October 2026. It gives the hosted bounty
+  tool's monthly prices beside its lifetime price, and dates Immunefi's
+  statement that Studio is invite-only: 30 September 2026. On a phone the
+  last column of its first table no longer runs under the row label.
+- /pricing and /your-model-your-key answer a Claude Max or Team subscriber:
+  since October 2026 those plans include monthly credits for the Claude API,
+  and a review on a key from the linked Console organization draws on them.
+- The header button reads "Sign in" on every page for a signed-out visitor.
+  It read "Account" on pages without the account script.
+- Link previews credit the builder's handle on X.
+- The Sherlock template links each rule where Sherlock keeps it today and
+  marks the audit contest rules as the earlier rules: Sherlock has replaced
+  audit contests with Audit Engine.
+- Breadcrumb links and the column tick boxes on /benchmark take a touch on
+  44 px. Inline code in fine print is 12 px. On a phone, the benchmark strip
+  on the home page no longer prints a "Cost / run" label over a column it
+  does not show, and the two template buttons each take a full row.
+
 ## 0.8.1 — 2026-10-08
 
 Site

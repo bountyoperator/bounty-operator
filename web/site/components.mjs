@@ -89,11 +89,18 @@ export function inline(text) {
 /** Plain text of a value, for JSON-LD and meta tags. */
 export function textOf(value) {
   const source = Array.isArray(value) ? value.map(render).join('') : render(value);
-  return source
-    // An inline tag joins its text to the words around it ("`run_review`." reads "run_review.");
-    // any other tag is a word break.
-    .replace(/<\/?(?:a|abbr|b|code|em|i|kbd|mark|small|span|strong|sub|sup|time)(?=[\s>/])[^>]*>/gi, '')
-    .replace(/<[^>]*>/g, ' ')
+  // An inline tag joins its text to the words around it ("`run_review`." reads "run_review.");
+  // any other tag is a word break. Removing one tag can join the pieces of another
+  // ("<sc<b>ript>" becomes "<script>"), so both passes repeat until nothing changes.
+  let text = source;
+  let before;
+  do {
+    before = text;
+    text = text
+      .replace(/<\/?(?:a|abbr|b|code|em|i|kbd|mark|small|span|strong|sub|sup|time)(?=[\s>/])[^>]*>/gi, '')
+      .replace(/<[^>]*>/g, ' ');
+  } while (text !== before);
+  return text
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>')
     .replace(/&quot;/g, '"')

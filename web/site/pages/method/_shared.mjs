@@ -30,15 +30,36 @@ export function workbenchLink(profileId) {
 }
 
 /**
- * Tradi3's results on Immunefi's public leaderboards, read on 8 October 2026:
- * Firelight 2nd of 135; Quantus 8th of 65; ENS 15th of 186 with 23 valid
- * findings, 17 of them Critical, the most Criticals of anyone on that board.
- * Re-read a leaderboard before changing a number.
+ * Tradi3's results on Immunefi's public leaderboards, read on 8 October 2026
+ * (ENS again on 9 October 2026): Firelight 2nd of 135; Quantus 8th of 65; ENS
+ * 15th of 186. ENS credits 23 valid submissions: 1 Chief and 22 duplicates
+ * (17 Critical, 1 High, 4 Medium, 1 Low), plus 1 separate Insight. 17 valid
+ * Critical submissions is the most on that board; the next count is 14.
+ *
+ * One wording everywhere. A short proof line says "17 valid Critical
+ * submissions in Immunefi's ENS competition, the most of 186 researchers", or
+ * the same fact in the line's own shape. The full breakdown is in README.md
+ * and PRODUCT.md. Re-read a leaderboard before changing a number.
  */
 export const LEADERBOARDS = {
   firelight: 'https://immunefi.com/audit-competition/audit-comp-firelight-1/leaderboard/',
   quantus: 'https://immunefi.com/audit-competition/audit-comp-quantus/leaderboard/',
   ens: 'https://immunefi.com/audit-competition/audit-competition-ens/leaderboard/',
+};
+
+/**
+ * The FAQ entry for a Claude Max or Team subscriber, on /pricing and
+ * /your-model-your-key. Every figure is from Anthropic's help article
+ * "Monthly API credits for Max and Team plans", dated 7 October 2026 and read
+ * on 9 October 2026: the credits cover the Claude API, are spent before
+ * purchased credits, can be claimed after seven days on the plan, and are not
+ * offered on Free, Pro or Enterprise. Read the article again before changing
+ * a number.
+ */
+export const CLAUDE_CREDITS_FAQ = {
+  id: 'claude-plan-credits',
+  q: 'I am on Claude Max or Team. Do I have to buy API credit as well?',
+  a: html`<p>Since October 2026 those plans include monthly credits for the Claude API: US$100 on Max 5x, US$200 on Max 20x, and up to US$500 pooled on Team. Link a Claude Console organization in the billing settings on claude.ai, create an API key in it, and reviews on that key draw on those credits first. New subscribers can claim them after seven days on the plan. Free, Pro and Enterprise plans are not eligible. The terms are in ${link({ label: 'Anthropic’s article on the credits', href: 'https://support.claude.com/en/articles/17154008-monthly-api-credits-for-max-and-team-plans', external: true })}.</p><p>If Claude blocks a review, see <a class="link" href="/guide#model-refuses">When the model refuses</a>.</p>`,
 };
 
 /** The record claim, exactly as PUBLIC-METHOD.md allows it. */
@@ -278,7 +299,7 @@ export function proofLine() {
     href: LEADERBOARDS.firelight,
     external: true,
   })}, ${link({ label: '8th of 65 in Quantus', href: LEADERBOARDS.quantus, external: true })} and ${link({
-    label: '15th of 186 in ENS, with 17 valid Criticals, the most on the board',
+    label: '15th of 186 in ENS, with 17 valid Critical submissions, the most on the board',
     href: LEADERBOARDS.ens,
     external: true,
   })}.</span></p>`;

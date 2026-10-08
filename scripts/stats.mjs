@@ -156,6 +156,7 @@ function report(rows, options, range) {
 
   printTable('Completed reviews by profile', reviewsByProfile, (_name, n) => percent(n, reviews));
   // Counted since 0.7.5: provider_<kind>, cut_short, refused, single_answer_limit, client_gone, other.
+  // Since 0.8.2: blocked (an answer the provider blocked) and provider_policy (a block sent as an error).
   printTable('Failed reviews by reason', failuresByReason, (_name, n) => percent(n, sum(failuresByReason)));
   // Counted since 0.7.7: answers stopped because they repeated the method. They use the review.
   printTable(`Withheld answers: ${sum(withheldByProfile)}`, withheldByProfile);

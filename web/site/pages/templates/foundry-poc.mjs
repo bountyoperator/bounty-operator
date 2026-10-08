@@ -133,9 +133,10 @@ const SOURCES = [
   },
   {
     label: 'Sherlock Criteria for Issue Validity',
-    href: 'https://docs.sherlock.xyz/audits/judging/guidelines',
+    href: 'https://docs.sherlock.xyz/audit-contests-deprecated-replaced-by-audit-engine/judging/guidelines',
     note: 'The cases where a coded PoC is recommended.',
-    dated: 'Version 1.12, 24 Jun 2025',
+    dated: 'Earlier contest rules · Version 1.12, 24 Jun 2025',
+    checked: '9 Oct 2026',
   },
   {
     label: 'Sherlock bug bounty Platform Rules',
@@ -274,6 +275,7 @@ export default {
       { name: 'Foundry PoC', path: '/templates/foundry-poc' },
     ]),
   ],
-  lastmod: CHECKED.iso,
+  // The Sherlock link in its sources was re-pointed and re-read after CHECKED.
+  lastmod: '2026-10-09',
   body,
 };

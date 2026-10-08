@@ -46,6 +46,12 @@
 // without a finish reason), unparseable or empty (no answer sheet). A truncated answer is
 // wrong even when a sheet can be read from it; that is recorded as sheet_in_truncated.
 //
+// Two kinds are not answers of the model's and are never sent again. privacy_block: the
+// product's own privacy check refused the files, so the product arm sent nothing. blocked: the
+// provider's policy layer declined the request (the product's `blocked` flag, or the block
+// notice as the whole answer: bench/lib/runs.mjs policyNotice). A blocked call is counted on
+// its own, is not a failed call, and its pair leaves both lifts.
+//
 // Retries. None, except for an attempt that failed with HTTP 429 or 5xx, an in-band 429 or
 // 5xx, a network error, a stalled connection or a stream that closed before ANY output (no
 // content, no reasoning, no output tokens): up to 2 more attempts, each recorded under
@@ -90,6 +96,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { DRAFT, FAMILIES, isSupportingDoc, loadCases, pairsOf } from '../lib/cases.mjs';
 import { readPrompt } from '../lib/arms.mjs';
 import { extractSheet } from '../lib/parse.mjs';
+import { policyNotice } from '../lib/runs.mjs';
 import { DEFAULT_SCORING, scoreInput } from '../lib/score.mjs';
 import { envFilePath, fetchModels, generationStats, keyStatus, readKey, redact } from '../lib/openrouter.mjs';
 import { median, pairedBootstrap, quantileSorted, round } from '../lib/stats.mjs';
@@ -164,7 +171,7 @@ export function buildRawRequest(kase, benchDir = BENCH) {
 /**
  * The product arm: the Worker's prepared messages for the case's core profile, the bridge and
  * the answer sheet. When the product's privacy check blocks the files, the product would send
- * nothing; the request is then `{ blocked: true }` and is never sent.
+ * nothing; the request is then `{ privacy_block: true }` and is never sent.
  */
 export async function buildProductRequest(kase, { benchDir = BENCH, engineDir = ENGINE_DIR } = {}) {
   const { core } = await productEngine(engineDir);
@@ -178,7 +185,7 @@ export async function buildProductRequest(kase, { benchDir = BENCH, engineDir = 
     // review.ts prepare(): the request text is empty, so the profile's default focus is the Request
     prepared = await core.prepareReview(files, '', profileId, { acknowledgeWarnings: true, mode: 'bounty', coverage });
   } catch (error) {
-    if (error?.code === 'privacy_block') return { arm: 'product', blocked: true, profile: profileId, privacy };
+    if (error?.code === 'privacy_block') return { arm: 'product', privacy_block: true, profile: profileId, privacy };
     throw error;
   }
   const [system, user] = prepared.messages;
@@ -325,10 +332,14 @@ const infraCode = (code) => { const n = Number(code); return Number.isInteger(n)
 
 /**
  * What one attempt came to: { failure, retryable, before_output, reason }.
- * failure: null (an answer to score), 'truncated', 'refused' or 'error'.
+ * failure: null (an answer to score), 'truncated', 'refused', 'blocked' or 'error'.
+ * 'blocked' is a provider policy block (bench/lib/runs.mjs): the product flagged it, or the
+ * answer is the provider's block notice and nothing more. `reason` then holds its detail.
  */
 export function classify(res, s) {
   const started = outputStarted(res, s);
+  const block = (typeof res.done?.blocked === 'string' && res.done.blocked) || (!res.error && s.finish !== 'length' ? policyNotice(res.text) : null);
+  if (block) return { failure: 'blocked', retryable: false, before_output: !started, reason: block };
   if (res.error) {
     const e = res.error;
     if (s.finish === 'length') return { failure: 'truncated', retryable: false, before_output: !started, reason: 'output allowance used before any answer text' };
@@ -418,14 +429,14 @@ export async function planJobs({ cases, pairs, models, arms, prices, allowances,
       const pairOrder = i % 2 === 0 ? ['raw', 'product'] : ['product', 'raw'];
       for (const arm of pairOrder.filter((a) => arms.includes(a))) {
         const request = built.get(kase.id)[arm];
-        const chars = request.blocked ? 0 : request.system.length + request.user.length;
+        const chars = request.privacy_block ? 0 : request.system.length + request.user.length;
         const inTokens = Math.ceil(chars / LIFT_DEFAULTS.charsPerToken);
         const outTokens = estimateOut({ model, arm, allowance, estOut, records });
         jobs.push({
           model, arm, kase, request, chars, allowance, price,
-          messages_sha256: request.blocked ? null : sha256(`${request.system}\0${request.user}`),
-          est_usd: request.blocked ? 0 : (inTokens * price.in + outTokens * price.out) / 1e6,
-          reserve_usd: request.blocked ? 0 : (Math.ceil(chars / LIFT_DEFAULTS.reserveCharsPerToken) * price.in + allowance * price.out) / 1e6,
+          messages_sha256: request.privacy_block ? null : sha256(`${request.system}\0${request.user}`),
+          est_usd: request.privacy_block ? 0 : (inTokens * price.in + outTokens * price.out) / 1e6,
+          reserve_usd: request.privacy_block ? 0 : (Math.ceil(chars / LIFT_DEFAULTS.reserveCharsPerToken) * price.in + allowance * price.out) / 1e6,
           est_in: inTokens, est_out: outTokens,
         });
       }
@@ -520,8 +531,8 @@ export async function liftAll({ jobs, runDir, outDir, runName, key, providers, m
       profile: job.arm === 'product' ? job.request.profile : null, input_hash: kase.inputHash, messages_sha256: job.messages_sha256,
       chars: job.chars, allowance: job.allowance, price: job.price, reserve_usd: job.reserve_usd,
     };
-    if (job.request.blocked) {
-      const rec = { ...common, status: 'failed', failure: 'blocked', truncated: false, refused: false, provider_error: false, unparseable: false, correct: false, attempts: [], retries: 0, usd: 0, privacy: job.request.privacy, stored_at: now() };
+    if (job.request.privacy_block) {
+      const rec = { ...common, status: 'failed', failure: 'privacy_block', truncated: false, refused: false, provider_error: false, unparseable: false, correct: false, attempts: [], retries: 0, usd: 0, privacy: job.request.privacy, stored_at: now() };
       fs.writeFileSync(job.file, `${JSON.stringify(rec, null, 2)}\n`);
       return rec;
     }
@@ -565,7 +576,7 @@ export async function liftAll({ jobs, runDir, outDir, runName, key, providers, m
       ...common,
       request: res.request ? { url: res.request.url, method: res.request.method, headers: res.request.headers, body_file: `${base}.request-body.json`, body_sha256: res.request.body ? sha256(res.request.body) : null } : null,
       status: o.status, failure: o.failure, correct: o.correct === true,
-      truncated: o.failure === 'truncated', refused: o.failure === 'refused', provider_error: o.failure === 'error', unparseable: o.failure === 'unparseable' || o.failure === 'empty',
+      truncated: o.failure === 'truncated', refused: o.failure === 'refused', blocked: o.failure === 'blocked', provider_error: o.failure === 'error', unparseable: o.failure === 'unparseable' || o.failure === 'empty',
       before_output: verdict.failure === 'error' ? verdict.before_output : null, reason: verdict.reason,
       finish: last.stream.finish, native_finish: last.stream.native_finish, provider: last.stream.provider, model_served: last.stream.model ?? res.done?.model ?? null,
       hits: (o.hits ?? []).length, hit_detail: o.hits ?? [], primary_all: o.primary_all ?? null, bite: o.bite ?? null, decoy_bites: o.decoy_bites ?? 0, unmatched: o.unmatched ?? 0,
@@ -643,6 +654,10 @@ const pct = (num, den) => (den ? round((100 * num) / den, 1) : null);
  * Per model, from the stored records: pairs right per arm (overall and per family), failures
  * by kind, the lift on the pairs where neither arm failed, every pair that flipped with the
  * reason on each twin, token medians and spend.
+ *
+ * A call the provider's policy layer blocked (failure 'blocked') is not a wrong answer and not
+ * a failed call: it is counted under `blocked`, and a pair with a blocked twin on either arm
+ * (`blocked_pairs`) is left out of the change, of both lifts and of the flips.
  */
 export function summarise({ records, pairs, models, scoringSeed = 'product-lift-v1' }) {
   const fams = [...new Set(pairs.map((p) => p.family))].sort();
@@ -652,8 +667,8 @@ export function summarise({ records, pairs, models, scoringSeed = 'product-lift-
     if (!mine.length) continue;
     const get = (caseId, arm) => mine.find((r) => r.case === caseId && r.arm === arm) ?? null;
     const twins = (p) => FAMILIES[p.family].variants.filter((v) => p.cases[v]).map((v) => p.cases[v]);
-    const row = { model, calls: {}, missing: {}, correct: {}, by_family: {}, failures: {}, failed_calls: {}, failure_rate: {}, tokens: {}, usd: {}, retries: 0, input_labels_stripped: 0, sheet_in_truncated: 0 };
-    const pairRight = {}, pairFailed = {};
+    const row = { model, calls: {}, missing: {}, correct: {}, by_family: {}, failures: {}, failed_calls: {}, failure_rate: {}, blocked: {}, tokens: {}, usd: {}, retries: 0, input_labels_stripped: 0, sheet_in_truncated: 0 };
+    const pairRight = {}, pairFailed = {}, pairBlocked = {};
     for (const arm of ARMS) {
       const recs = pairs.flatMap((p) => twins(p).map((c) => get(c, arm)));
       const present = recs.filter(Boolean);
@@ -661,13 +676,16 @@ export function summarise({ records, pairs, models, scoringSeed = 'product-lift-
       row.missing[arm] = recs.length - present.length;
       pairRight[arm] = new Map(pairs.map((p) => [p.pair, twins(p).every((c) => get(c, arm)?.correct === true)]));
       pairFailed[arm] = new Map(pairs.map((p) => [p.pair, twins(p).some((c) => { const r = get(c, arm); return !r || !!r.failure; })]));
+      pairBlocked[arm] = new Map(pairs.map((p) => [p.pair, twins(p).some((c) => get(c, arm)?.failure === 'blocked')]));
+      row.blocked[arm] = present.filter((r) => r.failure === 'blocked').length;
       row.correct[arm] = [...pairRight[arm].values()].filter(Boolean).length;
       for (const f of fams) (row.by_family[f] ??= {})[arm] = pairs.filter((p) => p.family === f && pairRight[arm].get(p.pair)).length;
       const kinds = {};
-      for (const r of present) if (r.failure) kinds[r.failure] = (kinds[r.failure] ?? 0) + 1;
+      for (const r of present) if (r.failure && r.failure !== 'blocked') kinds[r.failure] = (kinds[r.failure] ?? 0) + 1;
       row.failures[arm] = kinds;
-      row.failed_calls[arm] = present.filter((r) => r.failure).length + (recs.length - present.length);
-      row.failure_rate[arm] = recs.length ? round(row.failed_calls[arm] / recs.length, 4) : null;
+      row.failed_calls[arm] = present.filter((r) => r.failure && r.failure !== 'blocked').length + (recs.length - present.length);
+      const answerable = recs.length - row.blocked[arm];
+      row.failure_rate[arm] = answerable ? round(row.failed_calls[arm] / answerable, 4) : null;
       const outs = present.map((r) => r.tokens?.out).filter(Number.isFinite);
       const reas = present.map((r) => r.tokens?.reasoning).filter(Number.isFinite);
       const ins = present.map((r) => r.tokens?.in).filter(Number.isFinite);
@@ -678,10 +696,13 @@ export function summarise({ records, pairs, models, scoringSeed = 'product-lift-
       row.sheet_in_truncated += present.filter((r) => r.sheet_in_truncated === true).length;
     }
     row.usd.total = round(row.usd.raw + row.usd.product, 6);
-    row.delta = row.correct.product - row.correct.raw;
-    const a = pairs.map((p) => (pairRight.product.get(p.pair) ? 1 : 0)), b = pairs.map((p) => (pairRight.raw.get(p.pair) ? 1 : 0));
+    // the pairs both arms can be compared on: no twin blocked by the provider on either arm
+    const comparable = pairs.filter((p) => !pairBlocked.raw.get(p.pair) && !pairBlocked.product.get(p.pair));
+    row.blocked_pairs = pairs.length - comparable.length;
+    const a = comparable.map((p) => (pairRight.product.get(p.pair) ? 1 : 0)), b = comparable.map((p) => (pairRight.raw.get(p.pair) ? 1 : 0));
+    row.delta = a.reduce((n, v) => n + v, 0) - b.reduce((n, v) => n + v, 0);
     const all = pairedBootstrap(a, b, { seed: `${scoringSeed}|${model}|all` });
-    row.lift_all = { delta_pairs: row.delta, delta_pct: all.delta === null ? null : round(100 * all.delta, 2), ci95_pct: all.ci ? [round(100 * all.ci[0], 2), round(100 * all.ci[1], 2)] : null };
+    row.lift_all = { pairs: comparable.length, delta_pairs: row.delta, delta_pct: all.delta === null ? null : round(100 * all.delta, 2), ci95_pct: all.ci ? [round(100 * all.ci[0], 2), round(100 * all.ci[1], 2)] : null };
     const answered = pairs.filter((p) => !pairFailed.raw.get(p.pair) && !pairFailed.product.get(p.pair));
     const ar = answered.filter((p) => pairRight.raw.get(p.pair)).length, ap = answered.filter((p) => pairRight.product.get(p.pair)).length;
     const aa = answered.map((p) => (pairRight.product.get(p.pair) ? 1 : 0)), ab = answered.map((p) => (pairRight.raw.get(p.pair) ? 1 : 0));
@@ -690,7 +711,7 @@ export function summarise({ records, pairs, models, scoringSeed = 'product-lift-
     row.flips = [];
     for (const p of pairs) {
       const r = pairRight.raw.get(p.pair), q = pairRight.product.get(p.pair);
-      if (r === q) continue;
+      if (r === q || !comparable.includes(p)) continue;
       const detail = (arm) => Object.fromEntries(twins(p).map((c) => { const rec = get(c, arm); return [rec?.variant ?? c, twinReason(rec)]; }));
       row.flips.push({ pair: p.pair, family: p.family, direction: q ? 'gain' : 'loss', answered: answered.includes(p), raw: detail('raw'), product: detail('product') });
     }
@@ -716,7 +737,7 @@ export function renderSummary(summary) {
   L.push(`| Model | Raw right (/${summary.pairs}) | Product right (/${summary.pairs}) | Change | ${fams.map((f) => `${f} raw / product (/${summary.by_family_pairs[f]})`).join(' | ')} | Pairs neither arm failed | Raw / product on those | Lift on those | Flags |`);
   L.push(`|---|---|---|---|${fams.map(() => '---').join('|')}|---|---|---|---|`);
   for (const m of summary.models) {
-    const flags = [m.flags.worse_on_answered ? '**product worse on answered pairs**' : null, m.flags.failure_rate_rises ? '**failure rate rises with product**' : null, m.flags.incomplete ? `incomplete (${m.missing.raw + m.missing.product} calls missing)` : null].filter(Boolean).join('; ') || '-';
+    const flags = [m.flags.worse_on_answered ? '**product worse on answered pairs**' : null, m.flags.failure_rate_rises ? '**failure rate rises with product**' : null, m.flags.incomplete ? `incomplete (${m.missing.raw + m.missing.product} calls missing)` : null, m.blocked_pairs ? `provider blocked ${m.blocked.raw} raw / ${m.blocked.product} product calls: ${m.blocked_pairs} pair${m.blocked_pairs === 1 ? '' : 's'} left out of the change and the lifts` : null].filter(Boolean).join('; ') || '-';
     L.push(`| \`${m.model}\` | ${m.correct.raw} | ${m.correct.product} | ${m.delta > 0 ? '+' : ''}${m.delta} | ${fams.map((f) => `${m.by_family[f].raw} / ${m.by_family[f].product}`).join(' | ')} | ${m.answered.pairs} | ${m.answered.raw} / ${m.answered.product} | ${m.answered.lift_pairs > 0 ? '+' : ''}${m.answered.lift_pairs} | ${flags} |`);
   }
   L.push('');
@@ -731,7 +752,7 @@ export function renderSummary(summary) {
   L.push('|---|---|---|---|---|---|');
   for (const m of summary.models) {
     const ci = (c) => (c ? `[${c[0]}, ${c[1]}]` : '-');
-    L.push(`| \`${m.model}\` | ${m.lift_all.delta_pct} pts ${ci(m.lift_all.ci95_pct)} | ${m.answered.lift_pct ?? '-'} pts ${ci(m.answered.ci95_pct)} on ${m.answered.pairs} | ${m.gains} / ${m.losses} | ${m.retries} | ${m.input_labels_stripped} findings |`);
+    L.push(`| \`${m.model}\` | ${m.lift_all.delta_pct ?? '-'} pts ${ci(m.lift_all.ci95_pct)}${m.blocked_pairs ? ` on ${m.lift_all.pairs}` : ''} | ${m.answered.lift_pct ?? '-'} pts ${ci(m.answered.ci95_pct)} on ${m.answered.pairs} | ${m.gains} / ${m.losses} | ${m.retries} | ${m.input_labels_stripped} findings |`);
   }
   L.push('');
   for (const m of summary.models) {
@@ -830,10 +851,10 @@ async function main() {
   out(`  product: providers.mjs providerStream, provider ${PROVIDER_ID}; engine ${Object.entries(engineHashes()).map(([f, h]) => `${path.basename(f)} ${h ? h.slice(0, 12) : 'missing'}`).join(', ')}`);
   for (const kase of inputs) {
     const p = built.get(kase.id).product;
-    if (p.blocked) out(`  BLOCKED ${kase.id}: the product's privacy check refuses these files (${p.privacy.kinds.join(', ')}); its product arm is recorded as blocked and never sent`);
+    if (p.privacy_block) out(`  PRIVACY ${kase.id}: the product's privacy check refuses these files (${p.privacy.kinds.join(', ')}); its product arm is recorded as privacy_block and never sent`);
     else if (p.privacy.warnings) out(`  note    ${kase.id}: the product's privacy check warns (${p.privacy.kinds.join(', ')}); sent as acknowledged, as a user confirming the warning would`);
   }
-  const charsBy = (arm) => jobs.filter((j) => j.arm === arm && !j.request.blocked).map((j) => j.chars);
+  const charsBy = (arm) => jobs.filter((j) => j.arm === arm && !j.request.privacy_block).map((j) => j.chars);
   for (const arm of arms) { const c = charsBy(arm); if (c.length) out(`  ${arm.padEnd(7)} prompt ${Math.min(...c)} to ${Math.max(...c)} characters (about ${Math.round(Math.min(...c) / 3)} to ${Math.round(Math.max(...c) / 3)} tokens at 3 characters a token)`); }
   out(`  recorded spend in the ledger before this run: $${ledger.usd.toFixed(4)} (${ledger.attempts} attempts); cap --max-usd ${maxUsd}`);
   out(`  ${'model'.padEnd(32)} ${'$/M in'.padStart(7)} ${'$/M out'.padStart(8)} ${'allow'.padStart(6)} ${'est out'.padStart(8)} ${'calls'.padStart(5)} ${'estimate'.padStart(9)} ${'worst'.padStart(8)} ${'running'.padStart(9)}`);
@@ -850,7 +871,7 @@ async function main() {
     fs.mkdirSync(dumpDir, { recursive: true });
     for (const kase of inputs) for (const arm of arms) {
       const r = built.get(kase.id)[arm];
-      if (r.blocked) continue;
+      if (r.privacy_block) continue;
       fs.writeFileSync(path.join(dumpDir, `${kase.id}.${arm}.system.txt`), r.system);
       fs.writeFileSync(path.join(dumpDir, `${kase.id}.${arm}.user.txt`), r.user);
     }

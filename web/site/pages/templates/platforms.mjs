@@ -63,6 +63,7 @@ function platformPage(platform) {
       <section class="tpl-block" aria-labelledby="sources">
         <h2 id="sources">Sources</h2>
         <p class="tpl-block__lede">Primary sources only, read on ${CHECKED.label}. Rules change. Read the programme page on the day you submit.</p>
+        ${platform.sourcesNote && html`<p class="tpl-block__lede">${platform.sourcesNote}</p>`}
         ${sourceList(platform.sources)}
       </section>
 
@@ -91,7 +92,7 @@ function platformPage(platform) {
         { name: platform.name, path: platform.path },
       ]),
     ],
-    lastmod: CHECKED.iso,
+    lastmod: platform.lastmod ?? CHECKED.iso,
     body,
   };
 }

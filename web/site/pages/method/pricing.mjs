@@ -12,7 +12,7 @@ import { breadcrumbsLd, faqPageLd, softwareApplicationLd } from '../../layout.mj
 import { ACCOUNT_SCRIPTS, ACCOUNT_STYLES, accountDialog } from '../../fragments/account-dialog.mjs';
 import { PROFILES } from '../../../public/profiles.mjs';
 import { AGENT_TICK, CHAT_TICK, COUNTED, FREE_LINE, NOT_COUNTED, RENEWAL, RESET_LINE, WHY_PAY } from '../../plans.mjs';
-import { LASTMOD, STYLES, pageHero, proofLine, relatedLinks, tickList, workbenchLink } from './_shared.mjs';
+import { CLAUDE_CREDITS_FAQ, STYLES, pageHero, proofLine, relatedLinks, tickList, workbenchLink } from './_shared.mjs';
 
 const PATH = '/pricing';
 
@@ -58,6 +58,7 @@ const FAQ_ITEMS = [
     q: 'Can I use my ChatGPT or Claude subscription instead of an API key?',
     a: `Yes, for 3 review types: ${CORE_NAMES}. Copy the prompt into your chat, then paste the answer back. No account and no daily limit. The other ${API_ONLY} review types, the Gauntlet and Panel review need an API key.`,
   },
+  CLAUDE_CREDITS_FAQ,
   {
     q: 'How does billing work?',
     a: `US$10 a week. ${RENEWAL}`,
@@ -145,6 +146,6 @@ export default {
   scripts: ACCOUNT_SCRIPTS,
   overlays: accountDialog(),
   jsonld: [breadcrumbsLd([{ name: 'Pricing', path: PATH }]), softwareApplicationLd(), faqPageLd(FAQ_ITEMS)],
-  lastmod: LASTMOD,
+  lastmod: '2026-10-09',
   body,
 };

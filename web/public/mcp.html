@@ -19,6 +19,7 @@
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Bounty Operator. Find the hole in your report before the triager does.">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:creator" content="@Tradi3_">
 <meta name="twitter:title" content="MCP server for Claude Code, Codex, Cursor | Bounty Operator">
 <meta name="twitter:description" content="Copy-paste install for the Bounty Operator MCP server in Claude Code, Codex and Cursor, with its tools, three prompts and token setup.">
 <meta name="twitter:image" content="https://bountyoperator.com/social-v4.png">
@@ -53,7 +54,7 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
 <nav class="site-nav" aria-label="Main"><ul><li><a href="/#workspace">Review</a></li><li><a href="/benchmark">Benchmark</a></li><li><a href="/tools">Tools</a></li><li><a href="/guide">Guide</a></li><li><a href="/pricing">Pricing</a></li></ul></nav>
 <div class="site-header__actions">
 <button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch colour theme"><span class="icon theme-toggle__icon" aria-hidden="true"></span></button>
-<a class="btn btn--secondary btn--sm" href="/#account">Account</a>
+<a class="btn btn--secondary btn--sm" href="/#account">Sign in</a>
 </div>
 </div>
 </header>
@@ -267,7 +268,7 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
 <p class="tool-list__text">A failed call with the code <code>hosted_profile</code>, the profile id and a sentence that names <code>run_review</code>. It is refused before any file is read.</p>
 </li><li class="tool-list__item">
 <p class="tool-list__name"><code>run_review</code></p>
-<p class="tool-list__text">The review, its verdict, the reference check, the manifest and your remaining allowance. It uses one hosted review. <code>verdict</code> and <code>panel</code> run on Operator only.</p>
+<p class="tool-list__text">The review, its verdict, the reference check, the manifest and your remaining allowance. It uses one hosted review. A review the provider blocks under its usage policy comes back with <code>blocked</code> set and is not counted. <code>verdict</code> and <code>panel</code> run on Operator only.</p>
 </li><li class="tool-list__item">
 <p class="tool-list__name"><code>build_packet</code></p>
 <p class="tool-list__text">The evidence packet for the review <code>run_review</code> returned. Pass <code>source: &quot;ai&quot;</code>.</p>
@@ -418,7 +419,10 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
 <p class="tool-list__text">The account is running as many reviews as its plan allows. Call again when one finishes.</p>
 </li><li class="tool-list__item">
 <p class="tool-list__name"><code>provider</code></p>
-<p class="tool-list__text">Your provider refused the call or timed out: a rejected key, an unknown model, a rate limit. The review is not counted.</p>
+<p class="tool-list__text">Your provider rejected the key or the model, had no credit, hit a rate limit, failed or timed out. The review is not counted.</p>
+</li><li class="tool-list__item">
+<p class="tool-list__name"><code>provider_policy</code></p>
+<p class="tool-list__text">Your provider blocked the request under its usage policy. The key is not the cause and the review is not counted. Call again with another model or provider, not the same one.</p>
 </li><li class="tool-list__item">
 <p class="tool-list__name"><code>output_withheld</code></p>
 <p class="tool-list__text">The model repeated its instructions instead of reviewing, so the answer was stopped and the call used one review. Run it again or choose a stronger model.</p>

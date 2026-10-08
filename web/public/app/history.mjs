@@ -15,6 +15,8 @@
  *   deleteReview(id), clearReviews()   -> Promise<void>
  *   exportAll()                        -> Promise<string>     JSON
  *   historyRecord(input)               -> Record              pure, tested: the only fields that are stored
+ *   resultFrom(record)                 -> WorkbenchResult     pure, tested: what a stored record opens as
+ *   outcomeMark(record)                -> '' | 'Blocked' | 'Declined'   pure, tested: the mark of a row that is not a review
  *
  * Events on #workspace
  *   wb:history   detail { enabled }   the switch changed; results.mjs saves the review on screen when it turns on
@@ -22,6 +24,7 @@
  * DOM this module owns: #wb-history-open and everything inside #wb-history-dialog.
  */
 
+import { blockOf } from './blocked.mjs';
 import { workbench } from './state.mjs';
 import { announce, button, clear, dialogController, download, el, formatDate, on, qs, setBusy } from './ui.mjs';
 import { emit, returnFocus, setStep, view } from './workbench.mjs';
@@ -105,6 +108,7 @@ export function historyRecord({ result, packet, verdict = '', headline = '', cou
     model: text(result.model, 200),
     truncated: result.truncated === true,
     refused: result.refused === true,
+    ...(blockOf(result.blocked) ? { blocked: blockOf(result.blocked) } : {}),
     verdict: text(verdict, 40),
     headline: text(headline, 300),
     counts: counts && typeof counts === 'object'
@@ -116,8 +120,8 @@ export function historyRecord({ result, packet, verdict = '', headline = '', cou
   };
 }
 
-/** The result a stored record shows as, read only. */
-function resultFrom(record) {
+/** The result a stored record shows as, read only. Only a known block id comes back out of storage. */
+export function resultFrom(record) {
   return {
     review: record.review,
     manifest: record.manifest,
@@ -127,6 +131,7 @@ function resultFrom(record) {
     model: record.model,
     truncated: record.truncated,
     refused: record.refused,
+    ...(blockOf(record.blocked) ? { blocked: blockOf(record.blocked) } : {}),
     source: record.source,
     timestamp: record.created,
   };
@@ -219,12 +224,27 @@ function status(message, options = {}) {
   announce(message, { target: '#wb-history-status', ...options });
 }
 
+/**
+ * The mark of a saved answer that is not a review: the provider blocked it, or
+ * the model declined. '' for a review.
+ *
+ * @param {{ blocked?: unknown, refused?: unknown }} record
+ * @returns {'' | 'Blocked' | 'Declined'}
+ */
+export function outcomeMark(record) {
+  if (blockOf(record?.blocked)) return 'Blocked';
+  return record?.refused === true ? 'Declined' : '';
+}
+
 function row(record) {
-  const title = record.headline || record.profileName || 'Review';
+  const mark = outcomeMark(record);
+  const title = record.headline || (mark ? `${mark}: ${record.profileName || 'Review'}` : record.profileName || 'Review');
   const facts = [record.profileName, record.model, `${record.manifest.length} file${record.manifest.length === 1 ? '' : 's'}`, formatDate(record.savedAt, { time: true })].filter(Boolean);
   return el('li', { class: 'wb-history__item', dataset: { id: record.id } },
     el('div', { class: 'wb-history__text' },
       record.verdict ? el('span', { class: 'chip verdict', dataset: { verdict: record.verdict }, text: VERDICT_LABELS[record.verdict] ?? record.verdict }) : null,
+      // A blocked or declined answer has no verdict: the row says which it is, in the unproven ink.
+      mark ? el('span', { class: 'chip', dataset: { tone: 'unproven', outcome: mark.toLowerCase() }, text: mark }) : null,
       el('p', { class: 'wb-history__title', text: title }),
       el('p', { class: 'fine', text: facts.join(' · ') })),
     el('div', { class: 'wb-history__actions' },

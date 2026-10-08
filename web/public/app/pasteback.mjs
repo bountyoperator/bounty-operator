@@ -7,6 +7,7 @@
  *   initPasteback()                       wire #wb-copy-prompt, #wb-download-prompt, #wb-reply, #wb-reply-build
  *   pastedResult({ reply, model, files, profile, mode, manifest, now })   -> WorkbenchResult   pure, tested
  *   cleanReply(text)                      -> string   the reply without the chat wrapper around it; pure, tested
+ *   pastedLine(result, parsedOk)          -> { message, tone, hold }   the status line for a pasted reply; pure, tested
  *
  * DOM this module owns: #wb-copy-prompt, #wb-download-prompt, #wb-prompt-size,
  * #wb-reply, #wb-reply-model, #wb-reply-build.
@@ -16,6 +17,7 @@ import { parseReview } from '../parse.mjs';
 import { reviewProfile } from '../profiles.mjs';
 import { manifestFor, promptExport } from '../review-core.mjs';
 import { track } from './api.mjs';
+import { blockedCopy, pastedBlock } from './blocked.mjs';
 import { EVENTS } from './events.mjs';
 import { workbench } from './state.mjs';
 import { copyText, download, on, qs, setBusy } from './ui.mjs';
@@ -37,6 +39,21 @@ export function cleanReply(text) {
 }
 
 /**
+ * What the status line says about a pasted reply. A reply that is the
+ * provider's notice gets the block, not "no Verdict line".
+ *
+ * @param {{ blocked?: string }} result
+ * @param {boolean} parsedOk
+ * @returns {{ message: string, tone: 'success' | 'warn', hold: boolean }}
+ */
+export function pastedLine(result, parsedOk) {
+  const blocked = blockedCopy(result);
+  if (blocked) return { message: blocked.line, tone: 'warn', hold: true };
+  if (parsedOk) return { message: 'Result built from the pasted reply.', tone: 'success', hold: false };
+  return { message: 'The reply has no Verdict line in the review format, so it is shown as written.', tone: 'warn', hold: true };
+}
+
+/**
  * The result object for a pasted reply. The same shape a hosted run stores,
  * with source 'pasted'.
  *
@@ -45,15 +62,19 @@ export function cleanReply(text) {
  */
 export function pastedResult({ reply, model = '', profile, mode, manifest, now = new Date() }) {
   const named = String(model).trim();
+  const review = cleanReply(reply);
+  // The chat app answered with the provider's notice: a block, not a review.
+  const blocked = pastedBlock(review);
   return {
-    review: cleanReply(reply),
+    review,
     manifest,
     profile: { id: profile.id, name: profile.name },
     mode: profile.mode === 'either' ? mode : profile.mode,
     provider: '',
     model: MODEL_ID.test(named) ? named : '',
     truncated: false,
-    refused: false,
+    refused: Boolean(blocked),
+    ...(blocked ? { blocked } : {}),
     usage: { input: null, output: null },
     source: 'pasted',
     timestamp: now.toISOString(),
@@ -175,8 +196,8 @@ async function buildResult() {
     workbench.set({ result });
     track(EVENTS.REPLY_PASTED);
     setStep('results');
-    if (parsed.ok) say('Result built from the pasted reply.', { tone: 'success' });
-    else say('The reply has no Verdict line in the review format, so it is shown as written.', { tone: 'warn', hold: true });
+    const line = pastedLine(result, parsed.ok);
+    say(line.message, { tone: line.tone, hold: line.hold });
     field.value = '';
   } catch (error) {
     say(error instanceof Error ? error.message : 'The reply could not be read.', { error: true });

@@ -50,6 +50,97 @@
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
+/* What prints until Archivo arrives: Arial Narrow Bold from the visitor's own
+   machine, sized so a line holds the same words and sits on the same baseline,
+   and the page does not move when the font lands. Without this the stack fell
+   to "Arial Narrow" by family name, and at the weights of a page head Windows
+   answers that with Arial Black, about a third wider: the headline took an
+   extra line and gave it back half a second later.
+
+   One face per band of width, because Archivo's width axis changes how much
+   room a line takes and Arial Narrow has one width. Each size-adjust is the
+   advance of the site's own text at that width in Archivo over its advance in
+   Arial Narrow Bold, measured over every page and weighted by printed size
+   (stamps, the hero, page heads and chips, plan names, labels, headings,
+   controls). The overrides are Archivo's own ascent and descent. A machine without Arial Narrow skips the family and falls to
+   the next name in the stack, as before. No file is fetched. */
+@font-face {
+  font-family: "Archivo fallback";
+  font-weight: 100 900;
+  font-stretch: 62% 70%;
+  src: local("Arial Narrow Bold"), local("ArialNarrow-Bold");
+  size-adjust: 93%;
+  ascent-override: 88%;
+  descent-override: 21%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: "Archivo fallback";
+  font-weight: 100 900;
+  font-stretch: 71% 74%;
+  src: local("Arial Narrow Bold"), local("ArialNarrow-Bold");
+  size-adjust: 98%;
+  ascent-override: 88%;
+  descent-override: 21%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: "Archivo fallback";
+  font-weight: 100 900;
+  font-stretch: 75% 79%;
+  src: local("Arial Narrow Bold"), local("ArialNarrow-Bold");
+  size-adjust: 103%;
+  ascent-override: 88%;
+  descent-override: 21%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: "Archivo fallback";
+  font-weight: 100 900;
+  font-stretch: 80% 82%;
+  src: local("Arial Narrow Bold"), local("ArialNarrow-Bold");
+  size-adjust: 106%;
+  ascent-override: 88%;
+  descent-override: 21%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: "Archivo fallback";
+  font-weight: 100 900;
+  font-stretch: 83% 85%;
+  src: local("Arial Narrow Bold"), local("ArialNarrow-Bold");
+  size-adjust: 107%;
+  ascent-override: 88%;
+  descent-override: 21%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: "Archivo fallback";
+  font-weight: 100 900;
+  font-stretch: 86% 89%;
+  src: local("Arial Narrow Bold"), local("ArialNarrow-Bold");
+  size-adjust: 113%;
+  ascent-override: 88%;
+  descent-override: 21%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: "Archivo fallback";
+  font-weight: 100 900;
+  font-stretch: 90% 125%;
+  src: local("Arial Narrow Bold"), local("ArialNarrow-Bold");
+  size-adjust: 111%;
+  ascent-override: 88%;
+  descent-override: 21%;
+  line-gap-override: 0%;
+}
+
 /* ==========================================================================
    1. Tokens
    ========================================================================== */
@@ -57,7 +148,7 @@
 :root {
   /* Type. Archivo prints headings, labels, buttons and stamps. Running text
      uses the system face, so it renders before the font arrives. */
-  --font-display: "Archivo", "Arial Narrow", system-ui, sans-serif;
+  --font-display: "Archivo", "Archivo fallback", "Arial Narrow", system-ui, sans-serif;
   --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
   /* Cascadia Mono before Cascadia Code: Code turns != into a single glyph, and
      source under review has to read character for character. Mono is for code,
@@ -627,12 +718,13 @@ pre {
   font-variant-ligatures: none;
 }
 
-/* Inline code. Code inside a <pre> keeps the block's own styling. */
+/* Inline code. Code inside a <pre> keeps the block's own styling. It never
+   prints under 12px: 0.875em of 13px fine print would. */
 :not(pre) > code {
   padding: 0.1em 0.35em;
   border-radius: var(--r-chip);
   background: color-mix(in srgb, var(--text) 8%, transparent);
-  font-size: 0.875em;
+  font-size: max(0.875em, var(--fs-12));
   overflow-wrap: anywhere;
 }
 
@@ -3410,7 +3502,8 @@ button.ref:hover {
 
 /* The promise, set like the line printed across the foot of a form. */
 .site-footer__promise {
-  max-width: 17ch;
+  /* 17 characters of this cut, in em (17 x 0.499em). */
+  max-width: 8.483em;
   margin-top: var(--sp-16);
   color: var(--text);
   font-family: var(--font-display);
@@ -3559,8 +3652,32 @@ button.ref:hover {
   color: var(--muted);
 }
 
+/* On a phone a trail of three drops its first crumb, the site's name: the
+   mark in the header is the way home. Section and page fit one line at every
+   phone width in either face, so the trail cannot go from one line to two
+   when the webfont lands and push the page down. */
+@media (max-width: 29.99em) {
+  .breadcrumbs li:first-child:nth-last-child(n + 3) {
+    display: none;
+  }
+
+  .breadcrumbs li:first-child:nth-last-child(n + 3) + li::before {
+    content: none;
+  }
+}
+
+/* A crumb prints as one 12px line and takes touches on 44px of height: the
+   clear target reaches 15px above and below the line and 6px to each side,
+   short of the slash, so two crumbs never share it. */
 .breadcrumbs a {
+  position: relative;
   text-decoration: none;
+}
+
+.breadcrumbs a::after {
+  content: "";
+  position: absolute;
+  inset: -0.9375rem -0.375rem;
 }
 
 .breadcrumbs a:hover {

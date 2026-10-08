@@ -10,8 +10,10 @@
 // condition does not hold, the sentence is left out. No case text exists in
 // the published files and none is described here.
 //
-// Sections: hero and facts, with/without comparison, leaderboard, findings, picks, profile
-// lift, pair by pair, how it is kept honest, check it yourself, not run, FAQ.
+// Sections: hero and facts, leaderboard, findings, picks, pair by pair, how it
+// is kept honest, check it yourself, not run, FAQ. The page ranks models on the
+// raw arm only. The profile arms of a release stay in its results file, which
+// is published and downloadable; the page shows no with/without comparison.
 // /benchmark/leaderboard.mjs adds column sorting and a column picker; the
 // table reads the same without it.
 
@@ -21,12 +23,14 @@ import { attrs, button, chip, codeBlock, cx, faq, html, icon, inline, link, sect
 import { SITE, absoluteUrl, breadcrumbsLd, faqPageLd } from '../../layout.mjs';
 import { pageHero, workbenchLink } from '../method/_shared.mjs';
 import { reviewProfile } from '../../../public/profiles.mjs';
-import { FAMILIES, METHOD_PATH, PAGE_PATH, SERVED, buildView, familyLabel, findings, fmt, inWords, listing, listingOr, loadPublished, pairsRight, profileDrift } from './_data.mjs';
+import { FAMILIES, METHOD_PATH, PAGE_PATH, SERVED, buildView, familyLabel, findings, fmt, listingOr, loadPublished, pairsRight } from './_data.mjs';
 import { BLOB, methodSentence } from './_markdown.mjs';
 import { METHOD_SOURCE } from './method.mjs';
 
 export const STYLES = ['/css/landing.css', '/css/benchmark.css'];
 export const SCRIPTS = ['/benchmark/leaderboard.mjs'];
+/** The day the page around the results last changed. The results carry their own date. */
+const PAGE_UPDATED = '2026-10-09';
 
 const NONE = html`<span class="bench-none" aria-hidden="true">–</span><span class="visually-hidden">none</span>`;
 /** A formatted value, or the dash that says there is none. */
@@ -38,14 +42,14 @@ const TIER_LABEL = { best: 'Best score', budget: 'Budget', 'open-weight': 'Open 
 // ---------------------------------------------------------------------------
 
 /** The 95% interval as a bar on 0 to 100, with the score marked. The numbers are in the text beside it. */
-function intervalBar(ci, score, { min = 0, max = 100, zero = false } = {}) {
+function intervalBar(ci, score, { min = 0, max = 100 } = {}) {
   if (!ci) return '';
   const span = max - min;
   const x = (value) => (((Math.min(max, Math.max(min, value)) - min) / span) * 100).toFixed(2);
   const lo = Number(x(ci[0]));
   const hi = Number(x(ci[1]));
   const mark = Number(x(score));
-  return html`<svg class="ci" viewBox="0 0 100 8" preserveAspectRatio="none" aria-hidden="true" focusable="false"><rect class="ci__track" x="0" y="3" width="100" height="2"/>${zero && html`<rect class="ci__zero" x="${x(0)}" y="0" width="0.6" height="8"/>`}<rect class="ci__range" x="${lo}" y="1.5" width="${Math.max(0.8, hi - lo).toFixed(2)}" height="5" rx="1"/><rect class="ci__mark" x="${Math.max(0, mark - 0.9).toFixed(2)}" y="0" width="1.8" height="8"/></svg>`;
+  return html`<svg class="ci" viewBox="0 0 100 8" preserveAspectRatio="none" aria-hidden="true" focusable="false"><rect class="ci__track" x="0" y="3" width="100" height="2"/><rect class="ci__range" x="${lo}" y="1.5" width="${Math.max(0.8, hi - lo).toFixed(2)}" height="5" rx="1"/><rect class="ci__mark" x="${Math.max(0, mark - 0.9).toFixed(2)}" y="0" width="1.8" height="8"/></svg>`;
 }
 
 function modelCell(row, { level = 'th' } = {}) {
@@ -200,94 +204,6 @@ function picksSection(view) {
 </section>`;
 }
 
-function comparisonSection(view) {
-  if (!view.comparisons.length) return '';
-  const resultCell = (entry, kind, label) => {
-    const score = kind === 'raw' ? entry.rawScore : entry.profileScore;
-    const right = kind === 'raw' ? entry.rawRight : entry.profileRight;
-    return html`<td class="num"><span class="cell-label">${label}</span><span class="comparison__score">${fmt.score(score)}%</span><span class="comparison__detail">${fmt.score(right)} of ${entry.pairs} pairs right</span>${entry.failures[kind] > 0 && html`<span class="comparison__failure">${entry.failures[kind]} of ${entry.inputs} answers failed${entry.truncated[kind] > 0 ? `; ${entry.truncated[kind]} cut short` : ''}</span>`}</td>`;
-  };
-  const rows = view.comparisons.map((entry) => html`<tr>
-<th scope="row">${modelCell(entry.row, { level: 'none' })}</th>
-${resultCell(entry, 'raw', 'Without Bounty Operator')}
-${resultCell(entry, 'profile', 'With Bounty Operator')}
-<td class="num lift__delta" data-sign="${entry.delta > 0 ? 'up' : entry.delta < 0 ? 'down' : 'flat'}"><span class="cell-label">Change</span><span class="comparison__score">${fmt.delta(entry.delta)}<span class="comparison__unit"> pp</span></span><span class="comparison__detail">${fmt.delta(entry.profileRight - entry.rawRight)} ${Math.abs(entry.profileRight - entry.rawRight) === 1 ? 'pair' : 'pairs'} right</span></td>
-</tr>`);
-  return html`<section class="section section--tight wrap" aria-labelledby="comparison">
-  ${sectionHeading({
-    title: 'With and without Bounty Operator',
-    id: 'comparison',
-    lede: `${inWords(view.comparisons.length).replace(/^./, (letter) => letter.toUpperCase())} models. ${view.pairs} paired tests. Same harness and answer format. “With” adds the matching Bounty Operator core profile.`,
-  })}
-  <p class="bench-note">This tests the core review profiles. Gauntlet and Panel were not tested here. The larger leaderboard below shows models without Bounty Operator.</p>
-  <div class="table-wrap" tabindex="0" role="region" aria-label="The same models with and without Bounty Operator" aria-describedby="comparison-notes">
-  <table class="table stack-table stack-table--wide comparison">
-  <thead><tr><th scope="col">Model</th><th scope="col" class="num">Without Bounty Operator<span class="comparison__detail">Model alone</span></th><th scope="col" class="num">With Bounty Operator<span class="comparison__detail">Matching core profiles</span></th><th scope="col" class="num">Change<span class="comparison__detail">Percentage points</span></th></tr></thead>
-  <tbody>${rows}</tbody>
-  </table>
-  </div>
-  <p class="fine bench-note" id="comparison-notes">A pair is right only when both answers are right. ${view.repeats > 1 ? `Counts are medians across ${view.repeats} repeats, combining the matching profiles within each repeat first.` : 'Each input was run once per arm.'} Failed or cut-short answers count against the score. These results describe this harness and its output limits.</p>
-  <p class="fine bench-note">This combined summary is descriptive and was added after the runs; it does not establish a general improvement. <a class="link" href="#lift">See each profile’s comparison and uncertainty</a>. <a class="link" href="${METHOD_PATH}">Read the full method</a>.</p>
-</section>`;
-}
-
-/** "3 of 12 answers failed; 2 cut short", in the words of the combined comparison, when any failed. */
-function failureLine(counts) {
-  if (!counts || counts.failed === 0) return '';
-  return html`<span class="comparison__failure">${counts.failed} of ${counts.inputs} answers failed${counts.truncated > 0 ? `; ${counts.truncated} cut short` : ''}</span>`;
-}
-
-/**
- * What a reader needs before judging a lift: rows where most answers were cut
- * short at the output limit, and profiles the product no longer sends as they
- * were measured (`drift` from profileDrift()).
- */
-function liftNotes(view, drift) {
-  const cutRows = view.lifts.filter((entry) => entry.mostlyCut);
-  const cutModels = [...new Map(cutRows.map((entry) => [entry.row.slug, entry.row.name])).values()];
-  const arms = [...new Set(view.lifts.map((entry) => entry.arm))];
-  const changed = arms.filter((arm) => drift[arm] === 'changed').map((arm) => reviewProfile(arm).name);
-  const same = arms.filter((arm) => drift[arm] === 'same').map((arm) => reviewProfile(arm).name);
-  return html`${cutRows.length > 0 && html`<p class="fine bench-note">${listing(cutModels)}: in ${cutRows.length === 1 ? 'one profile arm' : `${inWords(cutRows.length)} profile arms`} most answers were cut short at the output limit, marked under the lift. A cut-short answer scores as wrong, so ${cutRows.length === 1 ? 'that lift measures' : 'those lifts measure'} where the limit fell, not what the profile changed in the review. The harness requests each model’s highest reasoning effort, and reasoning counts toward the same limit. The product does not request the highest effort, and a streamed review on a model it lists gets 64,000 output tokens. Neither setting is measured here.</p>`}
-  ${changed.length > 0 && html`<p class="fine bench-note">${listing(changed)} ${changed.length === 1 ? 'has' : 'have'} changed since these runs (see the <a class="link" href="/changelog">changelog</a>), so ${changed.length === 1 ? 'its rows measure' : 'their rows measure'} the earlier text.${same.length > 0 ? ` ${listing(same)} ${same.length === 1 ? 'is' : 'are'} sent today exactly as measured.` : ''}</p>`}`;
-}
-
-function liftSection(view, drift = {}) {
-  if (!view.lifts.length && !view.liftsPending.length) return '';
-  const pending = view.liftsPending.map(({ row, arm, answered, inputs }) => `${row.name} with the ${reviewProfile(arm).name} profile (${answered} of ${inputs} inputs completed)`);
-  const rows = view.lifts.map(({ row, arm, families, lift, counts, mostlyCut, profileScore, rawScore }) => {
-    const profile = reviewProfile(arm);
-    const interval = lift.ci95 ? `${fmt.delta(lift.ci95[0])} to ${fmt.delta(lift.ci95[1])}` : null;
-    return html`<tr>
-<th scope="row" class="lift__model">${modelCell(row, { level: 'none' })}</th>
-<td><span class="cell-label">Profile</span>${profile.name}<span class="lift__pairs">${lift.n_pairs} ${families.map((family) => FAMILIES[family]?.noun ?? family).join(', ')} pairs</span></td>
-<td class="num"><span class="cell-label">Without Bounty Operator</span>${show(fmt.score(rawScore))}${failureLine(counts?.raw)}</td>
-<td class="num"><span class="cell-label">With Bounty Operator</span>${show(fmt.score(profileScore))}${failureLine(counts?.profile)}</td>
-<td class="num lift__delta" data-sign="${lift.delta > 0 ? 'up' : lift.delta < 0 ? 'down' : 'flat'}"><span class="cell-label">Lift</span>${fmt.delta(lift.delta)}${mostlyCut && html`<span class="comparison__failure">Most answers cut short</span>`}</td>
-<td class="num lift__ci"><span class="cell-label">95% interval</span>${intervalBar(lift.ci95, lift.delta, { min: -100, max: 100, zero: true })}${show(interval)}</td>
-<td><span class="cell-label">Significant</span>${lift.significant ? chip('Yes', { tone: 'observed' }) : chip('No', { tone: 'neutral' })}</td>
-</tr>`;
-  });
-  // The models whose profile arms were run, as the file lists them; a lift is shown only for an arm that finished.
-  const total = view.results.models.filter((model) => Object.keys(model.lift ?? {}).length).length;
-  return html`<section class="section section--tight wrap" aria-labelledby="lift">
-  ${sectionHeading({
-    title: 'With and without, by profile',
-    id: 'lift',
-    lede: `The same model on the same pairs, once raw and once with the matching Bounty Operator core profile. A profile arm differs from the raw arm in one thing: the profile’s system message is appended to the system prompt. The task and the answer sheet are the same. Profile arms ran for ${total === 1 ? 'one model' : `${inWords(total)} models`}, chosen before any scored run.`,
-  })}
-  ${rows.length > 0 && html`<div class="table-wrap" tabindex="0" role="region" aria-label="Lift of each finished profile arm">
-  <table class="table stack-table stack-table--wide lift">
-  <thead><tr><th scope="col">Model</th><th scope="col">Profile</th><th scope="col" class="num">Without Bounty Operator</th><th scope="col" class="num">With Bounty Operator</th><th scope="col" class="num">Lift</th><th scope="col" class="num">95% interval</th><th scope="col">Significant</th></tr></thead>
-  <tbody>${rows}</tbody>
-  </table>
-  </div>`}
-  ${pending.length > 0 && html`<p class="fine bench-note">No lift is shown for ${listing(pending)}: ${pending.length === 1 ? 'its runs' : 'their runs'} had not finished when this release was published.</p>`}
-  <p class="fine bench-note">Lift is the profile score minus the raw score on the same pairs, in points, with a paired bootstrap interval. It is called significant only when the interval excludes zero. Negative lifts are published as they are.</p>
-  ${liftNotes(view, drift)}
-</section>`;
-}
-
 const OUTCOME = {
   right: { icon: 'check', label: 'Right' },
   wrong: { icon: 'x', label: 'Wrong' },
@@ -325,6 +241,7 @@ function pairGrid(view, distribution) {
 
 function honestSection(view) {
   const { results } = view;
+  const originalRelease = results.run_id === '2026-10' && results.harness_commit === '2aa1601b097aea7edc8711d88b4219bc900e8dc7';
   const commitments = Array.isArray(results.commitments) ? results.commitments.length : 0;
   const harness = typeof results.omp_version === 'string' ? results.omp_version.replace('/', ' ') : 'one pinned agent harness';
   const cards = [
@@ -359,7 +276,7 @@ function honestSection(view) {
   const models = results.models.filter((model) => model.detail);
   const links = html`<ul class="bench-links">
   <li>${icon('file')}<div><a class="link" href="${METHOD_PATH}">The full method</a><span class="fine">Cases, twins, the scoring rule, the harness command, routing, the three sets.</span></div></li>
-  <li>${icon('download')}<div><a class="link" href="${SERVED}/latest.json">Results file</a><span class="fine">latest.json: every score, interval, tier, pick and lift on this page, and each model’s score without the pairs its own vendor drafted.</span></div></li>
+  <li>${icon('download')}<div><a class="link" href="${SERVED}/latest.json">Results file</a><span class="fine">latest.json: every published number of this release, with each model’s score without the pairs its own vendor drafted.</span></div></li>
   ${models.length > 0 && html`<li>${icon('download')}<div><details class="disclosure bench-files"><summary class="disclosure__summary">Per-model outcome files<span class="disclosure__hint">${models.length}</span></summary><div class="disclosure__body"><ul class="bench-files__list">${models.map((model) => html`<li><a class="link mono" href="${SERVED}/${model.detail}">${model.detail.replace(/^models\//, '')}</a></li>`)}</ul></div></details><span class="fine">The outcome of every run: right or wrong, hits, bites, cost and time. No case text.</span></div></li>`}
   ${downloads?.archive && html`<li>${icon('download')}<div><a class="link" href="${SERVED}/${downloads.archive}">Public archive</a> <span class="meta">${fmt.bytes(downloads.bytes) ?? ''}</span>${downloads.sha256 && html`<span class="bench-links__hash"><span class="meta">SHA-256</span> <span class="mono">${downloads.sha256}</span></span>`}<span class="fine">The harness, the scorer, the prompts, protocol.json, the public practice cases with their answer keys and proofs, and the held-case commitments.</span></div></li>`}
   ${results.harness_commit && html`<li>${icon('code')}<div>${link({ label: 'The harness at this release', href: `${SITE.source}/tree/${results.harness_commit}/bench`, external: true })}<span class="fine mono">${results.harness_commit}</span></div></li>`}
@@ -377,6 +294,7 @@ ${hashes.map(([arm, hash]) => html`<tr><th scope="row">${arm === view.headline ?
 
   return html`<section class="section section--tight wrap" aria-labelledby="honest">
   ${sectionHeading({ title: 'How it is kept honest', id: 'honest', lede: 'Each claim, and the mechanism behind it.' })}
+  ${originalRelease && html`<p class="bench-note" id="blocked-answers"><strong>Blocked answers:</strong> Anthropic’s cyber safeguards blocked 5 answers in this release: 3 from Claude Fable 5.1 and 2 from Claude Opus 5.5, all on the raw arm, the model alone. The benchmark account is not in Anthropic’s Cyber Verification Program. The blocks count as misses in this release.</p>`}
   <ul class="bench-honest">${cards.map((card) => html`<li class="bench-honest__card"><h3 class="bench-honest__title">${card.title}</h3><p class="bench-honest__text">${card.text}</p></li>`)}</ul>
   <div class="bench-proof">
     <div class="bench-proof__links">${links}</div>
@@ -390,7 +308,7 @@ function verifySection(view) {
   const steps = [
     {
       title: 'Check the published numbers',
-      text: 'Needs Node 22 or later and nothing else. It recomputes every score, interval, tier and lift from the per-run outcomes, recomputes the hashes from the files in the archive, and re-scores every run on a public case from its stored output.',
+      text: 'Needs Node 22 or later and nothing else. It recomputes every published number from the per-run outcomes, recomputes the hashes from the files in the archive, and re-scores every run on a public case from its stored output.',
       code: [`node bench/bench.mjs verify --results latest.json --archive ${archive}`, ...(view.practice ? [`node bench/bench.mjs verify --results practice/latest.json --archive ${archive}`] : [])].join('\n'),
       label: 'Verify the results',
     },
@@ -466,6 +384,8 @@ function notRunSection(view) {
 function faqItems(view) {
   const { results } = view;
   const commitments = Array.isArray(results.commitments) ? results.commitments.length : 0;
+  // True when the release ran any arm besides the ranked one.
+  const profileArms = results.models.some((model) => Object.keys(model.arms ?? {}).some((arm) => arm !== view.headline));
   const repeats = view.repeats === 1
     ? 'Every model answers every input once. The release’s credit covered one repeat for many models rather than three for a handful, so the score carries the noise of one run per input: the interval covers which pairs were drawn, not how a model varies between runs.'
     : `Every model answers every input ${view.repeats} times, and the score is the median of the repeats.`;
@@ -480,7 +400,7 @@ function faqItems(view) {
     },
     {
       q: 'Is the benchmark tuned to Bounty Operator?',
-      a: 'Bounty Operator is not a row. The ranked score comes from the raw arm, which sends no product text: the same system prompt, task and answer sheet to every model. The profile arms, which add a Bounty Operator core profile, are published separately, negative lifts included. Each pair started as a draft by a model of one of nine vendors. Sessions of Claude Opus 5.5, a ranked model, directed by the benchmark’s owner, then checked, repaired and proved every pair and wrote two of the hard pairs. Those two count as Anthropic-drafted, and the results file gives every model’s score without the pairs its own vendor drafted. Two ranked models, DeepSeek V4.1 Flash and GLM 5.3 Flash, ran the pilot on the find pairs of that time, and while nine pairs were written, drafts were sent to a few ranked models to see whether they could be decided both ways; the method names the models and the pairs whose design changed after such a check.',
+      a: `Bounty Operator is not a row. The ranked score comes from the raw arm, which sends no product text: the same system prompt, task and answer sheet to every model. ${profileArms ? 'The profile arms, which add a Bounty Operator core profile, are in the results file: download it, the file keeps every published number. ' : ''}Each pair started as a draft by a model of one of nine vendors. Sessions of Claude Opus 5.5, a ranked model, directed by the benchmark’s owner, then checked, repaired and proved every pair and wrote two of the hard pairs. Those two count as Anthropic-drafted, and the results file gives every model’s score without the pairs its own vendor drafted. Two ranked models, DeepSeek V4.1 Flash and GLM 5.3 Flash, ran the pilot on the find pairs of that time, and while nine pairs were written, drafts were sent to a few ranked models to see whether they could be decided both ways; the method names the models and the pairs whose design changed after such a check.`,
     },
     {
       q: 'What does held mean?',
@@ -530,36 +450,33 @@ function datasetLd(view) {
   };
 }
 
-/**
- * The /benchmark page for one publication, or [] when nothing is published.
- * `drift`: profileDrift() of the publication, { <arm>: 'same' | 'changed' }.
- */
-export function benchmarkPages(published, drift = {}) {
+/** The /benchmark page for one publication, or [] when nothing is published. */
+export function benchmarkPages(published) {
   if (!published) return [];
   const view = buildView(published);
   if (!view.rows.length) return [];
   const method = readFileSync(METHOD_SOURCE, 'utf8');
   const distribution = methodSentence(method, 'Bug classes of the scored find pairs');
   const items = faqItems(view);
-  const lastmod = fmt.date(view.results.generated_at) ? view.results.generated_at.slice(0, 10) : undefined;
+  // The later of the day the results were published and the day the page around them last changed.
+  const publishedOn = fmt.date(view.results.generated_at) ? view.results.generated_at.slice(0, 10) : undefined;
+  const lastmod = publishedOn && publishedOn > PAGE_UPDATED ? publishedOn : PAGE_UPDATED;
 
   const body = html`
 ${pageHero({
   trail: [{ label: 'Bounty Operator', href: '/' }, { label: 'Benchmark' }],
   meta: `Paydirt · release ${view.release}`,
   title: 'AI model benchmark',
-  lede: `Compare ${view.rows.length} models on ${view.pairs} paired tests, then see what changes with Bounty Operator.`,
-  actions: html`${view.comparisons.length > 0 && button({ label: 'Compare with and without', href: '#comparison', variant: 'primary', iconEnd: 'arrow-right' })}${button({ label: 'See the model leaderboard', href: '#board', variant: view.comparisons.length > 0 ? 'secondary' : 'primary' })}${button({ label: 'Read the method', href: METHOD_PATH })}`,
+  lede: `${view.rows.length} models on ${view.pairs} held pairs: which one finds the planted bug, leaves the fixed code alone and catches an overclaimed report, and what a run costs.`,
+  actions: html`${button({ label: 'See the model leaderboard', href: '#board', variant: 'primary', iconEnd: 'arrow-right' })}${button({ label: 'Read the method', href: METHOD_PATH })}`,
 })}
-
-${comparisonSection(view)}
 
 <section class="section section--tight wrap" aria-label="Test setup">
 <details class="disclosure"><summary class="disclosure__summary">Test setup and recorded cost</summary><div class="disclosure__body">${factsStrip(view)}<p class="fine">The harness requests each model’s highest reasoning effort. A pair counts only when both answers are right. <a class="link" href="${METHOD_PATH}">Full benchmark method</a></p></div></details>
 </section>
 
 <section class="section section--tight wrap lb-section" aria-labelledby="board">
-  ${sectionHeading({ title: 'Models without Bounty Operator', id: 'board', lede: 'The model leaderboard uses the raw arm: the shared harness and answer format, without a Bounty Operator core profile. Ranked by score and grouped by tier.' })}
+  ${sectionHeading({ title: 'Model leaderboard', id: 'board', lede: 'Each model alone on the raw arm: the shared harness and answer format, with no Bounty Operator profile added. Ranked by score and grouped by tier.' })}
   ${leaderboard(view)}
   <p class="bench-tier-line">A tier starts at its highest-scoring model and takes in every model whose 95% interval overlaps that model’s. These are descriptive groups; overlapping intervals do not establish equal performance.</p>
   ${columnNotes(view)}
@@ -567,7 +484,6 @@ ${comparisonSection(view)}
 
 ${findingsSection(view)}
 ${picksSection(view)}
-${liftSection(view, drift)}
 ${pairGrid(view, distribution)}
 ${honestSection(view)}
 ${verifySection(view)}
@@ -599,4 +515,4 @@ ${notRunSection(view)}
 }
 
 const published = loadPublished();
-export default benchmarkPages(published, published ? await profileDrift(published.results) : {});
+export default benchmarkPages(published);

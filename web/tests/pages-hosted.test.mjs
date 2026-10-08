@@ -221,14 +221,14 @@ test('every install line is the one that works today', () => {
   }
   assert.match(pages.get('index.html'), /href="\/mcp"/, 'the home page links to the install instructions');
   assert.ok(release.includes(remote) && release.includes(local));
-  assert.ok(readme.includes('pip install "git+https://github.com/bountyoperator/bounty-operator@v0.8.1"'));
+  assert.ok(readme.includes('pip install "git+https://github.com/bountyoperator/bounty-operator@v0.8.2"'));
 });
 
 test('the error codes the documents list are codes the service raises', async () => {
   const sources = (await Promise.all(['web/src/review.ts', 'web/public/review-core.mjs', 'web/public/profiles.mjs'].map((file) => read(...file.split('/'))))).join('\n');
   assert.deepEqual(
     ERROR_CODES.map(([code]) => code),
-    ['hosted_profile', 'privacy_block', 'privacy_warn', 'daily_used', 'operator_only', 'review_running', 'provider', 'output_withheld'],
+    ['hosted_profile', 'privacy_block', 'privacy_warn', 'daily_used', 'operator_only', 'review_running', 'provider', 'provider_policy', 'output_withheld'],
   );
   const mcp = text('mcp.html');
   for (const [code] of ERROR_CODES) {
@@ -238,6 +238,11 @@ test('the error codes the documents list are codes the service raises', async ()
     assert.ok(llms.includes(`\`${code}\``), `llms.txt: ${code}`);
   }
   assert.ok(websiteDoc.includes('`output_withheld`') && websiteDoc.includes('`hosted_profile`'));
+
+  // provider_policy: a block is not a bad key and is never counted. The /mcp table and llms.txt say so.
+  assert.match(mcp, /Your provider blocked the request under its usage policy\. The key is not the cause and the review is not counted\./);
+  assert.match(mcp, /A review the provider blocks under its usage policy comes back with blocked set and is not counted\./);
+  assert.match(llms, /A review the provider blocks under its usage policy is not counted: the result carries `blocked` \(`anthropic-cyber`, `openai-cyber` or `policy`\) with `refused`, or the call fails with the code `provider_policy`\./);
 
   // What the documents say about output_withheld is what the Worker does: the answer is stopped and the review counts.
   const review = await read('web', 'src', 'review.ts');

@@ -882,20 +882,46 @@
   gap: var(--sp-8);
 }
 
-/* On a phone the actions form a tidy grid: the packet across the top, the rest in pairs. */
+/* From a tablet up every export action sits in the row: the group is not a box
+   of its own and its toggle is not shown. */
+.wb-result__more {
+  display: contents;
+}
+
+.wb-result__more-toggle {
+  display: none;
+}
+
+/* On a phone the script places the actions under the review, so the verdict
+   comes first. The packet and "More exports" each take a row; the four
+   secondary actions open under the toggle, in pairs. */
 @media (max-width: 39.99em) {
   .wb-result__actions {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1fr);
     width: 100%;
   }
 
-  .wb-result__actions > .btn {
+  .wb-result__actions .btn {
     white-space: normal;
   }
 
-  .wb-result__actions > .btn:first-child {
-    grid-column: 1 / -1;
+  .wb-result__more-toggle {
+    display: inline-flex;
+  }
+
+  .wb-result__more-toggle[aria-expanded="true"] .icon {
+    transform: rotate(180deg);
+  }
+
+  .wb-result__more {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--sp-8);
+  }
+
+  .wb-result__more[data-open="false"] {
+    display: none;
   }
 }
 

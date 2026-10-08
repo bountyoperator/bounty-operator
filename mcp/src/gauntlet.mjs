@@ -87,6 +87,7 @@ export function gauntletPlan(context) {
       'Keep every review under its stage\'s saveAs name.',
       'From stage 2 on, pass every earlier review under files: its saveAs name as the name, the review text as the content.',
       'When the privacy check stops a call, show each file, line and kind of match. For a block, wait until it is redacted. For a warning, ask whether to send the files as they are, then repeat the call with acknowledgeWarnings set to true.',
+      ...(hostedCount ? ['When run_review returns refused or blocked, or fails with code provider_policy, the provider or the model declined. Do not present the text as a review and do not keep it as a stage review. Say that a blocked review was not counted against the allowance. Do not call run_review again with the same model: ask for another model or provider, then run that stage again.'] : []),
       'When a stage ends in drop or hold-duplicate, show why and ask whether to continue.',
       `After stage ${total}, call build_packet with the arguments under "finish".`,
       'Show the final verdict, what each stage decided in one line, every open counterargument and every reference problem. Then give the packet.',

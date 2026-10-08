@@ -119,6 +119,12 @@
   margin-top: 0.2em;
 }
 
+/* The page address printed beside "Copy link", for a browser with no clipboard: one tap selects it. */
+.account__link {
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+
 /* Recovery sits below everything else: it is the way in when the passkey is gone. */
 .account__body > .account__recover {
   margin-top: var(--sp-24);
@@ -171,6 +177,14 @@
 
 .btn[data-copied] {
   border-color: var(--ok);
+  color: var(--ok);
+}
+
+/* A touch leaves the pointer over the button it pressed. The ruled box would
+   stay filled with ink under the green "Copied", which cannot be read. */
+.btn--secondary[data-copied]:hover {
+  border-color: var(--ok);
+  background: transparent;
   color: var(--ok);
 }
 

@@ -9,7 +9,7 @@ import { breadcrumbsLd, faqPageLd } from '../../layout.mjs';
 import { WHY_PAY } from '../../plans.mjs';
 import { PROVIDERS } from '../../../public/providers.mjs';
 import { LIMITS_LINE } from './_landing.mjs';
-import { LASTMOD, STYLES, ctaBand, pageHero, relatedLinks, tickList, workbenchLink } from './_shared.mjs';
+import { CLAUDE_CREDITS_FAQ, STYLES, ctaBand, pageHero, relatedLinks, tickList, workbenchLink } from './_shared.mjs';
 
 const PATH = '/your-model-your-key';
 
@@ -90,8 +90,9 @@ const providerTable = stackTable({
 const FAQ_ITEMS = [
   {
     q: 'Can I use my ChatGPT or Claude subscription?',
-    a: 'Yes, for 3 review types: Code security review, Solidity review and Challenge a draft report. Copy the prompt into your chat, then paste the answer back. You get the same findings and download as with an API key. The other review types need an API key, which providers bill separately from a chat subscription.',
+    a: 'Yes, for 3 review types: Code security review, Solidity review and Challenge a draft report. Copy the prompt into your chat, then paste the answer back. You get the same findings and download as with an API key. The other review types need an API key, which providers bill separately from a chat subscription. Claude Max and Team plans include a monthly API credit: see the next answer.',
   },
+  CLAUDE_CREDITS_FAQ,
   {
     q: 'Does Bounty Operator see my API key?',
     a: 'The key passes through our server in memory for the one request it belongs to and goes to your provider’s endpoint. It is not written to the database or to logs.',
@@ -273,6 +274,6 @@ export default {
   label: 'Your model, your key',
   styles: STYLES,
   jsonld: [breadcrumbsLd([{ name: 'Your model, your key', path: PATH }]), faqPageLd(FAQ_ITEMS)],
-  lastmod: LASTMOD,
+  lastmod: '2026-10-09',
   body,
 };

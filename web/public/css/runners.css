@@ -24,6 +24,14 @@
   margin-right: var(--sp-8);
 }
 
+/* The parts of an Operator row stand apart: lead, strip, note, actions and
+   the live text. Without this the note sat flush on the strip and the button. */
+:is(#wb-row-gauntlet, #wb-row-panel) .disclosure__body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-12);
+}
+
 .rn-note {
   display: grid;
   grid-template-columns: minmax(0, 1fr);

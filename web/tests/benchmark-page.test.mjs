@@ -1,12 +1,17 @@
 // /benchmark, /benchmark/method and the home-page strip, built from published
 // Paydirt results. The fixture releases are made by the benchmark's own
-// aggregate() from synthetic outcomes, in three shapes: many models with
-// lift and a practice set; six models with neither; and a release whose
-// not_run list is partly filled, with a model whose runs did not finish.
+// aggregate() from synthetic outcomes, in three shapes: many models, two of
+// them with profile arms, and a practice set; six models with neither; and a
+// release whose not_run list is partly filled, with a model whose runs did
+// not finish.
+//
+// The page ranks models on the raw arm and shows no with/without comparison.
+// The "many" release has profile arms that score below the raw arm and above
+// it, so the tests here prove that neither reaches the page.
 
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
@@ -210,10 +215,12 @@ const mainOf = (markup) => markup.slice(markup.indexOf('<main'), markup.indexOf(
 test('the fixture releases have the shapes the page must handle', () => {
   const { many, six, partial } = fixtures;
   assert.equal(many.view.rows.length, 12);
-  assert.ok(many.view.lifts.length >= 4, 'two models with three profile arms each');
+  const withProfiles = many.published.results.models.filter((entry) => Object.keys(entry.lift ?? {}).length);
+  assert.equal(withProfiles.length, 2, 'two models with profile arms in the results file');
+  const deltas = withProfiles.flatMap((entry) => Object.values(entry.lift).map((lift) => lift.delta));
+  assert.ok(deltas.some((delta) => delta < 0) && deltas.some((delta) => delta > 0), 'the file holds a profile arm below the raw arm and one above it');
   assert.ok(many.view.practice, 'a practice set');
   assert.equal(six.view.rows.length, 6);
-  assert.equal(six.view.lifts.length, 0);
   assert.equal(six.view.practice, null);
   assert.equal(partial.view.rows.length, 5, 'the unfinished model is not ranked');
   assert.deepEqual(partial.view.incomplete.map((entry) => entry.slug), ['google/gg-pro']);
@@ -294,12 +301,12 @@ test('every number in the leaderboard is the file’s number through the page’
   }
 });
 
-test('picks, lift, the pair grid and the not-run list show the file’s values and nothing invented', () => {
+test('picks, the pair grid and the not-run list show the file’s values and nothing invented', () => {
   const { many, six, partial } = fixtures;
   const markup = render(many.page, many.dir, [many.page]);
   const text = textOf(markup);
   // picks: every shown pick is in the file with that score and cost
-  const pickSection = textOf(markup.slice(markup.indexOf('id="picks"'), markup.indexOf('id="lift"')));
+  const pickSection = textOf(markup.slice(markup.indexOf('id="picks"'), markup.indexOf('id="pairs"')));
   for (const group of many.view.picks) {
     for (const entry of group.entries) {
       assert.ok(pickSection.includes(entry.row.name));
@@ -308,24 +315,14 @@ test('picks, lift, the pair grid and the not-run list show the file’s values a
     }
   }
   assert.match(markup, /href="\/\?profile=solidity#workspace"/);
-  // lift: delta, interval and significance as the file says, negatives included
-  const liftSection = textOf(markup.slice(markup.indexOf('id="lift"'), markup.indexOf('id="pairs"')));
-  for (const { row, lift } of many.view.lifts) {
-    assert.ok(liftSection.includes(row.name));
-    assert.ok(liftSection.includes(fmt.delta(lift.delta)), fmt.delta(lift.delta));
-    assert.ok(liftSection.includes(`${fmt.delta(lift.ci95[0])} to ${fmt.delta(lift.ci95[1])}`));
-  }
-  assert.ok(many.view.lifts.some(({ lift }) => lift.delta < 0), 'the fixture has a negative lift');
-  assert.ok(liftSection.includes('−'), 'a negative lift is shown with its sign');
   // pair grid: one row per ranked model, one cell per pair, right counts match the score
   for (const line of many.view.grid) {
     assert.equal(line.cells.length, many.published.results.pairs.length);
     assert.equal(line.right, Math.round((line.row.score * line.row.pairs) / 100), line.row.slug);
   }
   assert.equal((markup.match(/class="pg__cell" data-outcome=/g) ?? []).length, many.view.grid.length * 18);
-  // no lift and no practice: those sections are absent
+  // no practice set: that section is absent
   const sixMarkup = render(six.page, six.dir, [six.page]);
-  assert.doesNotMatch(sixMarkup, /id="lift"/);
   assert.doesNotMatch(sixMarkup, /The practice set/);
   assert.match(text, /The practice set/);
   // not run: every listed model, the default reason, and the unfinished model with its count
@@ -339,66 +336,70 @@ test('picks, lift, the pair grid and the not-run list show the file’s values a
   assert.ok(text.includes('gpt-oss-x'));
 });
 
-test('the with/without overview precedes the raw leaderboard and includes declines and test limits', () => {
-  const { many, six, partial } = fixtures;
-  const markup = String(many.page.body);
-  assert.equal(many.view.comparisons.length, 2);
-  assert.ok(markup.indexOf('id="comparison"') < markup.indexOf('id="board"'));
-  assert.match(markup, /href="#comparison"/);
-  const section = markup.slice(markup.indexOf('id="comparison"'), markup.indexOf('aria-labelledby="board"'));
-  for (const entry of many.view.comparisons) {
-    assert.ok(section.includes(entry.row.name));
-    assert.ok(section.includes(`${fmt.score(entry.rawRight)} of 18 pairs right`));
-    assert.ok(section.includes(`${fmt.score(entry.profileRight)} of 18 pairs right`));
-    assert.ok(section.includes(fmt.delta(entry.delta)));
-    assert.equal(fmt.score(entry.rawScore), fmt.score(entry.row.score));
+/** What the page must never carry: the comparison, the lift table, a signed drop, a link to either. */
+function assertNoComparison(markup, where) {
+  assert.doesNotMatch(markup, /id="comparison"/, `${where}: no comparison section`);
+  assert.doesNotMatch(markup, /id="lift"/, `${where}: no lift section`);
+  assert.doesNotMatch(markup, /href="[^"]*#(?:comparison|lift)"/, `${where}: no link to either`);
+  assert.doesNotMatch(markup, /data-sign=/, `${where}: no signed change cell`);
+  const text = textOf(markup);
+  // U+2212 is the minus the formatters printed; a hyphen counts when it opens a number.
+  assert.doesNotMatch(text, /\u2212\s?\d/, `${where}: no minus sign before a digit`);
+  assert.doesNotMatch(text, /(?:^|[\s(])-\d/, `${where}: no hyphen-minus opening a number`);
+  for (const phrase of [/with and without/i, /without Bounty Operator/i, /With Bounty Operator/, /\blifts?\b/i, /\bdeclines?\b/i, /percentage points/i, /Historical comparison/i]) {
+    assert.doesNotMatch(text, phrase, `${where}: ${phrase}`);
   }
-  assert.ok(many.view.comparisons.some((entry) => entry.delta < 0));
-  assert.match(section, /data-sign="down"/);
-  assert.match(section, /Without Bounty Operator/);
-  assert.match(section, /With Bounty Operator/);
-  assert.match(section, /Matching core profiles/);
-  assert.match(section, /Gauntlet and Panel were not tested here/);
-  assert.match(section, /descriptive and was added after the runs/);
-  assert.match(markup, /Models without Bounty Operator/);
-  for (const fixture of [six, partial]) {
-    assert.equal(fixture.view.comparisons.length, 0);
-    assert.doesNotMatch(String(fixture.page.body), /(?:id|href)="#?comparison"/);
+}
+
+test('the with/without comparison is withheld: no section, no lift table, no negative number, no link to either', () => {
+  const { many } = fixtures;
+  for (const [name, fixture] of Object.entries(fixtures)) {
+    assertNoComparison(render(fixture.page, fixture.dir, [fixture.page, fixture.method]), `/benchmark (${name})`);
   }
+  // The hero leads to the leaderboard and the method, and nowhere else.
+  const body = String(many.page.body);
+  const hero = body.slice(0, body.indexOf('aria-label="Test setup"'));
+  assert.deepEqual([...hero.matchAll(/<a class="btn[^"]*" href="([^"]+)"/g)].map((match) => match[1]), ['#board', '/benchmark/method']);
+  assert.match(textOf(hero), /12 models on 18 held pairs: which one finds the planted bug/);
+  assert.match(body, /<h2 id="board">Model leaderboard<\/h2>/);
+  // The view the pages are built from carries no comparison either.
+  for (const key of ['lifts', 'liftsPending', 'comparisons', 'liftModels']) assert.ok(!(key in many.view), key);
+  assert.equal(fmt.delta, undefined, 'the signed-difference formatter is gone with its only users');
+  // The frozen results file still holds every profile arm: withheld from the page, not removed from the release.
+  const file = JSON.parse(readFileSync(path.join(many.dir, 'latest.json'), 'utf8'));
+  assert.ok(file.models.some((entry) => Object.values(entry.lift ?? {}).some((lift) => lift.delta < 0)));
+  assert.match(body, /href="\/bench\/latest\.json"/);
+  assert.match(textOf(body), /The profile arms, which add a Bounty Operator core profile, are in the results file: download it, the file keeps every published number\./);
+  // A release that ran no profile arm says nothing about them.
+  assert.doesNotMatch(textOf(String(fixtures.six.page.body)), /profile arms/);
 });
 
-test('combined profiles are scored within each repeat before the median, with failed answers retained', () => {
-  const pairs = Object.keys(ARMS).map((family) => SCORED.find((pair) => pair.family === family));
-  const entry = model('test/repeated', 'Repeated', 1, 0);
-  const outcomes = [];
-  for (let rep = 1; rep <= 3; rep += 1) {
-    pairs.forEach((pair, index) => {
-      for (const arm of ARMS[pair.family]) {
-        for (const variant of VARIANTS[pair.family]) {
-          outcomes.push({ ...outcome({ pair, variant, arm, model: entry, correct: arm === 'raw' || index === rep - 1, failed: false, usd: 0 }), rep });
-        }
-      }
-    });
+test('no page source and no stylesheet links or styles the withheld sections', () => {
+  const sources = [];
+  const walk = (dir) => {
+    for (const name of readdirSync(dir)) {
+      const file = path.join(dir, name);
+      if (statSync(file).isDirectory()) walk(file);
+      else if (/\.(?:mjs|md)$/.test(name)) sources.push(file);
+    }
+  };
+  walk(path.join(WEB_DIR, 'site'));
+  assert.ok(sources.length > 30);
+  for (const file of sources) {
+    assert.doesNotMatch(readFileSync(file, 'utf8'), /#comparison\b|#lift\b|id="comparison"|id="lift"|data-sign/, path.relative(WEB_DIR, file));
   }
-  // An already-wrong answer ends without output: it must remain in the denominator.
-  const cut = outcomes.find((o) => o.rep === 1 && o.arm === 'general');
-  Object.assign(cut, { status: 'failed', failure: 'truncated', correct: false });
-  const results = aggregate({ meta: { release: 'repeated', repeats: 3 }, scoring: DEFAULT_SCORING, arms: ARMS, pairs, models: [{ ...entry, vendor: 'test', outcomes }] });
-  const published = { results, details: new Map([[entry.slug, outcomes]]), practice: null };
-  const [comparison] = buildView(published).comparisons;
-  assert.equal(comparison.rawRight, 3);
-  assert.equal(comparison.profileRight, 1, 'summing the three per-family medians would incorrectly give zero');
-  assert.equal(fmt.score(comparison.profileScore), '33.3');
-  assert.equal(comparison.inputs, 18);
-  assert.deepEqual(comparison.failures, { raw: 0, profile: 1 });
-  assert.deepEqual(comparison.truncated, { raw: 0, profile: 1 });
-  const markup = String(benchmarkPages(published)[0].body);
-  assert.match(markup, /1 of 18 answers failed; 1 cut short/);
-  assert.match(markup, /Counts are medians across 3 repeats/);
-  const missing = { ...published, details: new Map([[entry.slug, outcomes.slice(1)]]) };
-  assert.equal(buildView(missing).comparisons.length, 0, 'missing detail data is not scored as a failure or guessed');
-  const absent = { ...published, details: new Map([[entry.slug, null]]) };
-  assert.equal(buildView(absent).comparisons.length, 0);
+  for (const name of ['benchmark.css', 'home.css', 'landing.css']) {
+    assert.doesNotMatch(readFileSync(path.join(PUBLIC_DIR, 'css', name), 'utf8'), /\.comparison|\.lift\b|\.lift__|data-sign/, name);
+  }
+  // Every page of the site, rendered with the fixture release in place.
+  const site = siteWith(fixtures.many.dir);
+  assert.deepEqual(site.errors, []);
+  for (const [file, markup] of Object.entries(site.pages)) {
+    assert.doesNotMatch(markup, /href="[^"]*#(?:comparison|lift)"/, file);
+    assert.doesNotMatch(markup, /id="(?:comparison|lift)"/, file);
+  }
+  assert.match(site.pages['index.html'], /<a class="link" href="\/benchmark">See the model benchmark<\/a>/);
+  assertNoComparison(site.pages['benchmark.html'], 'benchmark.html in the built site');
 });
 
 test('each finding is true of the data or left out', () => {
@@ -628,84 +629,34 @@ test('dollars read the same at every size: no trailing zero after rounding', () 
   assert.equal(fmt.usd(0), '$0');
 });
 
-test('an unfinished profile arm of a ranked model gets no lift row, and the page names it', () => {
+test('the blocked-answers note is shown for the verified original release only', () => {
   const { many } = fixtures;
-  const results = structuredClone(many.published.results);
-  const ranked = results.models.find((m) => Object.keys(m.lift ?? {}).length && m.arms.raw?.unresolved === 0);
-  const arm = Object.keys(ranked.lift)[0];
-  ranked.arms[arm] = { ...ranked.arms[arm], unresolved: 3, runs: ranked.arms[arm].runs_expected - 3 };
-  delete ranked.lift[arm]; // The scorer emits no comparison for an unfinished arm.
-  const published = { ...many.published, results };
-  const view = buildView(published);
-  assert.ok(!view.lifts.some((entry) => entry.row.slug === ranked.slug && entry.arm === arm));
-  assert.ok(!view.comparisons.some((entry) => entry.row.slug === ranked.slug), 'partial profiles cannot enter the combined comparison');
-  const pending = view.liftsPending.find((entry) => entry.row.slug === ranked.slug && entry.arm === arm);
-  assert.ok(pending && pending.answered === ranked.arms[arm].runs_expected - 3);
-  const text = textOf(String(benchmarkPages(published)[0].body));
-  assert.ok(text.includes('No lift is shown for '), 'the unfinished arm is named');
-  assert.ok(text.includes(`${ranked.name} with the `) && text.includes(`(${pending.answered} of ${pending.inputs} inputs completed)`), 'with its model and its count');
+  const original = {
+    ...many.published,
+    results: { ...many.published.results, run_id: '2026-10', harness_commit: '2aa1601b097aea7edc8711d88b4219bc900e8dc7' },
+  };
+  const body = String(benchmarkPages(original)[0].body);
+  const honest = textOf(body.slice(body.indexOf('aria-labelledby="honest"'), body.indexOf('aria-labelledby="verify"')));
+  assert.ok(honest.includes('Blocked answers: Anthropic’s cyber safeguards blocked 5 answers in this release: 3 from Claude Fable 5.1 and 2 from Claude Opus 5.5, all on the raw arm, the model alone.'));
+  assert.ok(honest.includes('The benchmark account is not in Anthropic’s Cyber Verification Program.'));
+  assert.ok(honest.includes('The blocks count as misses in this release.'));
+  // One plain note: it names no other model and explains no other result.
+  const note = honest.slice(honest.indexOf('Blocked answers:'), honest.indexOf('The blocks count as misses in this release.'));
+  assert.doesNotMatch(note, /Luna|Sonnet|GLM|DeepSeek/);
+  assertNoComparison(body, 'the original release');
+  for (const changed of [{ run_id: 'later-run' }, { harness_commit: 'another-harness' }]) {
+    const other = { ...original, results: { ...original.results, ...changed } };
+    assert.ok(!textOf(String(benchmarkPages(other)[0].body)).includes('Blocked answers'), 'no unverified counts on another release');
+  }
 });
 
-test('a lift row counts failed and cut-short answers on its own pairs, and marks an arm that was mostly cut short', () => {
-  const { many } = fixtures;
-  const entry = many.view.lifts.find((lift) => lift.arm === 'report');
-  assert.ok(entry && entry.counts.profile && entry.counts.raw, 'the fixture has a report lift with counts');
-  // Six draft-report pairs, two inputs each, one repeat.
-  assert.equal(entry.counts.profile.inputs, 12);
-  assert.equal(entry.counts.raw.inputs, 12);
-  // Cut every profile answer of that model's report arm short at the output limit.
-  const details = new Map(many.published.details);
-  details.set(entry.row.slug, details.get(entry.row.slug).map((o) => (o.arm === 'report' ? { ...o, status: 'failed', failure: 'truncated', correct: false } : o)));
-  const published = { ...many.published, details };
-  const view = buildView(published);
-  const cut = view.lifts.find((lift) => lift.row.slug === entry.row.slug && lift.arm === 'report');
-  assert.deepEqual(cut.counts.profile, { inputs: 12, failed: 12, truncated: 12 });
-  assert.equal(cut.mostlyCut, true);
-  assert.ok(view.lifts.filter((lift) => lift !== cut).every((lift) => !lift.mostlyCut || lift.row.slug === entry.row.slug));
-  const markup = String(benchmarkPages(published)[0].body);
-  const text = textOf(markup.slice(markup.indexOf('id="lift"')));
-  assert.ok(text.includes('12 of 12 answers failed; 12 cut short'));
-  assert.ok(text.includes('Most answers cut short'));
-  assert.ok(text.includes(`${entry.row.name}: in one profile arm most answers were cut short at the output limit`));
-  assert.ok(text.includes('A cut-short answer scores as wrong, so that lift measures where the limit fell'));
-  // The untouched release says none of it.
-  const plain = textOf(String(many.page.body));
-  assert.ok(!plain.includes('Most answers cut short') && !plain.includes('most answers were cut short'));
-});
-
-test('the lift notes name a profile the product no longer sends as measured, and only one the run recorded', async () => {
-  const { many } = fixtures;
-  const text = textOf(String(benchmarkPages(many.published, { report: 'changed', solidity: 'same', general: 'same' })[0].body));
-  assert.ok(text.includes('Challenge a draft report has changed since these runs'));
-  assert.ok(text.includes('so its rows measure the earlier text. Solidity review and Code security review are sent today exactly as measured.'));
-  assert.ok(!textOf(String(many.page.body)).includes('changed since these runs'), 'no drift given, no note');
-
-  // profileDrift against the published run: one verdict per profile arm, and it agrees with the texts.
-  const { profileDrift, BENCH_DIR } = await import('../site/pages/benchmark/_data.mjs');
-  const { liveProfile, frozenProfile } = await import('../../bench/lib/arms.mjs');
-  const results = JSON.parse(readFileSync(path.join(DEFAULT_DIR, 'latest.json'), 'utf8'));
-  const drift = await profileDrift(results);
-  const arms = Object.keys(results.hashes.arms).filter((arm) => arm !== 'raw');
-  assert.deepEqual(Object.keys(drift).sort(), [...arms].sort());
-  for (const arm of arms) {
-    const same = (await liveProfile(arm)).sent.trim() === frozenProfile(arm);
-    assert.equal(drift[arm], same ? 'same' : 'changed', arm);
-  }
-
-  // A frozen text that is not the one the run recorded, or a protocol that moved: no verdict for that arm.
-  const bench = mkdtempSync(path.join(tmpdir(), 'paydirt-drift-'));
-  try {
-    cpSync(path.join(BENCH_DIR, 'protocol.json'), path.join(bench, 'protocol.json'));
-    cpSync(path.join(BENCH_DIR, 'prompts', 'frozen'), path.join(bench, 'prompts', 'frozen'), { recursive: true });
-    writeFileSync(path.join(bench, 'prompts', 'frozen', 'solidity.md'), 'edited after the run\n');
-    const edited = await profileDrift(results, bench);
-    assert.ok(!('solidity' in edited));
-    assert.deepEqual(Object.keys(edited).sort(), arms.filter((arm) => arm !== 'solidity').sort());
-    const protocol = JSON.parse(readFileSync(path.join(bench, 'protocol.json'), 'utf8'));
-    writeFileSync(path.join(bench, 'protocol.json'), JSON.stringify({ ...protocol, release: `${protocol.release}-moved` }));
-    assert.deepEqual(await profileDrift(results, bench), {});
-    assert.deepEqual(await profileDrift(results, path.join(bench, 'missing')), {});
-  } finally {
-    rmSync(bench, { recursive: true, force: true });
-  }
+test('the published release: five blocked answers on the page, no comparison, and the profile arms still in the results file', () => {
+  const published = loadPublished(DEFAULT_DIR);
+  if (!published || published.results.run_id !== '2026-10') return;
+  const [page] = benchmarkPages(published);
+  const body = String(page.body);
+  assertNoComparison(body, 'the published release');
+  assert.ok(textOf(body).includes('Anthropic’s cyber safeguards blocked 5 answers in this release'));
+  // Withheld, not removed: the file the page links keeps the profile arms it no longer shows.
+  assert.ok(published.results.models.some((entry) => Object.keys(entry.lift ?? {}).length > 0));
 });

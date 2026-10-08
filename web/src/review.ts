@@ -44,6 +44,8 @@ export interface ReviewResult {
   model: string;
   truncated: boolean;
   refused: boolean;
+  /** The provider's policy block, when one was identified: 'anthropic-cyber', 'openai-cyber' or 'policy'. Never counted. */
+  blocked?: string;
   /** Tokens the provider counted for this call. */
   usage: ProviderAnswer['usage'];
 }
@@ -64,12 +66,15 @@ const KEEP_ALIVE_MS = 5000;
 const COUNTED_AFTER_CHARS = 2000;
 
 /**
- * A short refusal is not a review, and neither is an answer that broke off
- * before it said anything. A review that was written out and then flagged by
- * an output filter at its end did reach the caller, so it counts like any
- * other answer of that length.
+ * An answer the provider blocked under its usage policy is never a review,
+ * whatever its length: the provider says text written before a block is
+ * incomplete and to be discarded. A short refusal in the model's own words is
+ * not a review either, and neither is an answer that broke off before it said
+ * anything. A long answer the model itself ended with a refusal did reach the
+ * caller, so it counts like any other answer of that length.
  */
-function counts(answer: { refused: boolean; truncated: boolean }, chars: number): boolean {
+function counts(answer: { refused: boolean; truncated: boolean; blocked?: string }, chars: number): boolean {
+  if (answer.blocked) return false;
   if (answer.refused && chars < COUNTED_AFTER_CHARS) return false;
   return !answer.truncated || chars >= COUNTED_AFTER_CHARS;
 }
@@ -288,7 +293,8 @@ function createSettler(env: Env, ctx: ExecutionContext, accountId: string, revie
 
 /**
  * Why a reserved review failed, as a counter suffix from a fixed set: the
- * provider error kind, the single-answer limit, a client that left, or other.
+ * provider error kind (`provider_policy` for a block the provider sent as an
+ * error), the single-answer limit, a client that left, or other.
  */
 export function failureReason(error: unknown, clientGone = false): string {
   if (clientGone) return 'client_gone';
@@ -298,8 +304,13 @@ export function failureReason(error: unknown, clientGone = false): string {
   return 'other';
 }
 
-/** Why a finished answer did not count: a refusal, or text cut short before COUNTED_AFTER_CHARS. */
-function answerReason(answer: { refused: boolean }): string {
+/**
+ * Why a finished answer did not count: a provider policy block, a refusal, or
+ * text cut short before COUNTED_AFTER_CHARS. A block has its own reason so
+ * that how often providers block reviews can be measured.
+ */
+function answerReason(answer: { refused: boolean; blocked?: string }): string {
+  if (answer.blocked) return 'blocked';
   return answer.refused ? 'refused' : 'cut_short';
 }
 
@@ -319,6 +330,12 @@ function withheld(): ApiError {
 export function reviewFailure(error: unknown): ApiError {
   if (error instanceof ApiError) return error;
   if (error instanceof ProviderError) {
+    if (error.kind === 'policy') {
+      // The provider answered, and its answer was a block: not a key, model or network fault.
+      const extra: Record<string, unknown> = { kind: 'policy', blocked: error.blocked ?? 'policy' };
+      if (error.detail) extra.detail = error.detail;
+      return new ApiError(`${error.message} It was not counted against your allowance.`, 502, 'provider_policy', extra);
+    }
     const extra: Record<string, unknown> = { kind: error.kind };
     if (error.retryAfter) extra.retryAfter = error.retryAfter;
     return new ApiError(error.message, error.kind === 'timeout' ? 504 : 502, 'provider', extra);
@@ -344,6 +361,7 @@ function toResult(prepared: Prepared, review: string, answer: ProviderAnswer): R
     model: answer.model,
     truncated: answer.truncated,
     refused: answer.refused,
+    ...(answer.blocked ? { blocked: answer.blocked } : {}),
     usage: answer.usage,
   };
 }
@@ -493,7 +511,9 @@ async function* withKeepAlive<T>(source: AsyncIterable<T>, intervalMs: number): 
 /**
  * Runs a hosted review as server-sent events: `delta` {text} while the model
  * writes, then one `done` with the same body the JSON route returns, or one
- * `error` {error, code}.
+ * `error` {error, code}. A review the provider blocked is a `done` with
+ * `refused` and `blocked` set when the block came as an answer, and an error
+ * with code `provider_policy` when it came as an error; neither is counted.
  *
  * Errors the provider reports before its first token (bad key, unknown model,
  * rate limit) are thrown, so the caller answers them as ordinary JSON errors.
@@ -583,8 +603,10 @@ export async function streamHostedReview({ env, ctx, request }: Call, accountId:
     } catch (error) {
       abort.abort();
       // Text the reader already holds is a review once it passes COUNTED_AFTER_CHARS,
-      // whether the reader left or the provider failed after writing it.
-      settle(delivered >= COUNTED_AFTER_CHARS, failureReason(error, clientGone));
+      // whether the reader left or the provider failed after writing it. A policy
+      // block is never one.
+      const policy = error instanceof ProviderError && error.kind === 'policy';
+      settle(delivered >= COUNTED_AFTER_CHARS && !policy, failureReason(error, clientGone));
       if (!finished && !clientGone) {
         await send(sseEvent('error', errorBody(reviewFailure(error)))).catch(() => {});
       }

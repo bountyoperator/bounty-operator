@@ -4,6 +4,8 @@
 // Every rule stated here comes from a page listed in that platform's `sources`,
 // read on the date in CHECKED. When a platform changes its rules, update the
 // entry, bump CHECKED, and run `node web/site/pages/templates/write-md.mjs`.
+// A source read on a later day carries its own `checked` label, and a source
+// its platform has retired carries `dated` saying so.
 //
 // Template bodies use a small Markdown subset: paragraphs, "- " and "1. " lists,
 // fenced code, `inline code` and {placeholders}. Never nest braces.
@@ -238,6 +240,8 @@ const sherlock = {
   id: 'sherlock',
   name: 'Sherlock',
   path: '/templates/sherlock',
+  // Its sources were re-pointed and re-read after CHECKED: see `checked` on each.
+  lastmod: '2026-10-09',
   title: 'Sherlock audit contest report template | Bounty Operator',
   h1: 'Sherlock audit contest report template',
   description:
@@ -252,6 +256,12 @@ const sherlock = {
   formNote:
     'The headings from Summary to Mitigation are the ones in Sherlock’s published report template. Keep them as they are. One issue per submission, even when two issues share a line.',
   focus: 'Sherlock contest report draft. Check root cause, pre-conditions and the High or Medium loss threshold against the judging criteria.',
+  // Read at docs.sherlock.xyz on 9 Oct 2026: the five audit contest pages cited
+  // below moved under /audit-contests-deprecated-replaced-by-audit-engine/. The
+  // rules on this page are those contest rules. Audit Engine sets judging
+  // guidelines and severity weights per engagement and publishes no fixed
+  // thresholds, so there is nothing to re-point the rules at.
+  sourcesNote: 'Sherlock now files its audit contest pages as deprecated, replaced by Audit Engine. The contest rules on this page are those earlier rules, as Sherlock still publishes them. An Audit Engine engagement sets its own judging guidelines and severity weights: read the ones published for your engagement first. The bug bounty sources are current.',
   sections: [
     {
       id: 'title',
@@ -406,9 +416,10 @@ Severity claimed: {High or Medium}, because {the threshold the number clears}.`,
     {
       id: 'criteria',
       label: 'Criteria for Issue Validity',
-      href: 'https://docs.sherlock.xyz/audits/judging/guidelines',
+      href: 'https://docs.sherlock.xyz/audit-contests-deprecated-replaced-by-audit-engine/judging/guidelines',
       note: 'Severity thresholds, invalid categories, PoC recommendation, duplication rules.',
-      dated: 'Version 1.12, 24 Jun 2025',
+      dated: 'Earlier contest rules · Version 1.12, 24 Jun 2025',
+      checked: '9 Oct 2026',
     },
     {
       id: 'template',
@@ -416,19 +427,30 @@ Severity claimed: {High or Medium}, because {the threshold the number clears}.`,
       href: 'https://github.com/sherlock-protocol/sherlock-v2-docs/blob/main/.report/README.md',
       note: 'The headings from Title to Mitigation.',
     },
-    { id: 'judging', label: 'Judging', href: 'https://docs.sherlock.xyz/audits/judging', note: 'The four judging phases and the 24-hour escalation period.' },
-    { id: 'discussion', label: 'Discussion', href: 'https://docs.sherlock.xyz/audits/judging/discussion', note: 'Escalations and their Signal cost.' },
+    { id: 'judging', label: 'Judging', href: 'https://docs.sherlock.xyz/audit-contests-deprecated-replaced-by-audit-engine/judging', note: 'The four judging phases and the 24-hour escalation period.', dated: 'Earlier contest rules', checked: '9 Oct 2026' },
+    { id: 'discussion', label: 'Discussion', href: 'https://docs.sherlock.xyz/audit-contests-deprecated-replaced-by-audit-engine/judging/discussion', note: 'Escalations and their Signal cost.', dated: 'Earlier contest rules', checked: '9 Oct 2026' },
     {
       id: 'points',
       label: 'How to Score Issue Points in a Contest',
-      href: 'https://docs.sherlock.xyz/audits/watsons/how-to-score-issue-points-in-a-contest',
+      href: 'https://docs.sherlock.xyz/audit-contests-deprecated-replaced-by-audit-engine/watsons/how-to-score-issue-points-in-a-contest',
       note: 'High and Medium weighting, and how duplicates share points.',
+      dated: 'Earlier contest rules',
+      checked: '9 Oct 2026',
     },
     {
       id: 'payout',
       label: 'Meeting the Payout Criteria',
-      href: 'https://docs.sherlock.xyz/audits/watsons/meeting-the-payout-criteria',
+      href: 'https://docs.sherlock.xyz/audit-contests-deprecated-replaced-by-audit-engine/watsons/meeting-the-payout-criteria',
       note: 'Two valid issues and the 20% issues ratio.',
+      dated: 'Earlier contest rules',
+      checked: '9 Oct 2026',
+    },
+    {
+      id: 'audit-engine',
+      label: 'Audit Engine: For Participants',
+      href: 'https://docs.sherlock.xyz/audit-engine/for-participants',
+      note: 'What replaced audit contests: invited engagements, the Issues Ratio, and judging guidelines set per engagement.',
+      checked: '9 Oct 2026',
     },
     {
       id: 'bounty-criteria',

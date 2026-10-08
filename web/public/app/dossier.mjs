@@ -520,19 +520,20 @@ const STATE_CHIPS = Object.freeze({
   waiting: () => el('span', { class: 'chip chip--dashed', text: 'Waiting' }),
   running: () => el('span', { class: 'chip status', dataset: { status: 'running' }, text: 'Running' }),
   stopped: () => el('span', { class: 'chip chip--dashed', text: 'Not run' }),
-  failed: () => el('span', { class: 'chip status', dataset: { status: 'failed' }, text: 'Failed' }),
+  // A stage the provider blocked or the model declined did not break: `failedAs` names it.
+  failed: (failedAs) => el('span', { class: 'chip status', dataset: { status: 'failed' }, text: failedAs || 'Failed' }),
 });
 
 /**
  * The stage strip: one cell per stage with its number, its name and its state.
  * A finished stage shows its verdict. An entry with `onOpen` is a button.
  *
- * @param {{ number: number, label: string, state: 'waiting' | 'running' | 'done' | 'stopped' | 'failed', verdict?: string, title?: string, onOpen?: (() => void) | null }[]} entries
+ * @param {{ number: number, label: string, state: 'waiting' | 'running' | 'done' | 'stopped' | 'failed', failedAs?: string | null, verdict?: string, title?: string, onOpen?: (() => void) | null }[]} entries
  * @param {{ label?: string, id?: string }} [options]
  */
 export function stageStrip(entries, { label = 'Stages', id } = {}) {
   return el('ol', { class: 'rn-pipe', id, 'aria-label': label }, entries.map((entry) => {
-    const state = entry.state === 'done' ? verdictChip(entry.verdict) : (STATE_CHIPS[entry.state] ?? STATE_CHIPS.waiting)();
+    const state = entry.state === 'done' ? verdictChip(entry.verdict) : (STATE_CHIPS[entry.state] ?? STATE_CHIPS.waiting)(entry.failedAs);
     const content = [
       el('span', { class: 'rn-pipe__n num', 'aria-hidden': 'true', text: String(entry.number) }),
       el('span', { class: 'rn-pipe__name', text: entry.label }),

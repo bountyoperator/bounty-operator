@@ -36,7 +36,7 @@ import { LEADERBOARDS, VERDICTS } from './method/_shared.mjs';
 import { BENCH_TEASER } from './benchmark/_teaser.mjs';
 import { AGENT_TICK, CHAT_TICK, RENEWAL, WHY_PAY } from '../plans.mjs';
 
-const LASTMOD = '2026-10-04';
+const LASTMOD = '2026-10-09';
 const DEV_BUILD = process.argv.includes('--dev');
 
 // ---------------------------------------------------------------------------
@@ -114,15 +114,16 @@ const hero = html`
         ${button({ label: 'Review my report', href: '/?profile=report#workspace', variant: 'primary', size: 'lg', iconEnd: 'arrow-right' })}
         ${button({ label: 'View example', href: '#workspace', variant: 'secondary', size: 'lg', attrs: { 'data-demo': true, 'data-example': '' } })}
       </div>
+      <p class="home-hero__free">Free: 1 review a day on your own model key.</p>
       <p class="home-hero__note">The example needs no account or API key.</p>
-      <p class="home-hero__links">${BENCH_TEASER && html`<a class="link" href="/benchmark#comparison">See the model benchmark</a>`}<a class="link" href="/mcp">Use in your coding agent</a></p>
+      <p class="home-hero__links">${BENCH_TEASER && html`<a class="link" href="/benchmark">See the model benchmark</a>`}<a class="link" href="/mcp">Use in your coding agent</a></p>
     </div>
     <div class="home-hero__shot">
       ${reportSlip()}
     </div>
   </section>
   <div class="wrap">
-    <p class="home-proof fine">Built by Tradi3. <a class="link" href="${LEADERBOARDS.ens}" target="_blank" rel="noopener noreferrer">17 valid Criticals in Immunefi’s ENS competition, the most of 186 researchers</a> · <a class="link" href="${LEADERBOARDS.firelight}" target="_blank" rel="noopener noreferrer">2nd of 135 in Firelight</a> · <a class="link" href="${LEADERBOARDS.quantus}" target="_blank" rel="noopener noreferrer">8th of 65 in Quantus</a>.</p>
+    <p class="home-proof fine">Built by Tradi3. <a class="link" href="${LEADERBOARDS.ens}" target="_blank" rel="noopener noreferrer">17 valid Critical submissions in Immunefi’s ENS competition, the most of 186 researchers</a> · <a class="link" href="${LEADERBOARDS.firelight}" target="_blank" rel="noopener noreferrer">2nd of 135 in Firelight</a> · <a class="link" href="${LEADERBOARDS.quantus}" target="_blank" rel="noopener noreferrer">8th of 65 in Quantus</a>.</p>
   </div>
 </div>`;
 

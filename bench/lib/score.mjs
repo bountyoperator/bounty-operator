@@ -9,6 +9,23 @@ export const RESULTS_SCHEMA = 'paydirt.results/1';
 export const SEVERITY_LEVEL = Object.freeze({ info: 1, low: 1, medium: 2, high: 3, critical: 4 });
 /** Failure kinds that mean "the harness or the network failed", not "the model failed". */
 export const UNRESOLVED = Object.freeze(['missing', 'infra']);
+/**
+ * The failure kind of a provider policy block (lib/runs.mjs): the provider or its safety layer
+ * declined the request, so no model judgment exists. A blocked input is not a wrong answer.
+ *   - It is counted on its own: `blocked` per arm and per model, `pairs_blocked` per arm and per lift.
+ *   - It is left out of every accuracy denominator. A pair has no result in a repeat where either
+ *     twin was blocked, so the pair leaves that repeat's score; a pair blocked in every repeat
+ *     leaves the majority score and its interval. The per-input rates (recall, fools_gold,
+ *     decoy_rate, false_reject, challenge_ba, failure, truncated) are taken over the inputs that
+ *     were not blocked.
+ *   - A paired comparison (lift) drops a pair when either arm has no result for it.
+ * Cost, latency, `runs` and `runs_expected` still include blocked runs: they were made.
+ * These fields are written only when the results hold at least one blocked outcome, so a
+ * release without one (2026-10, whose five block notices are stored as 'unparseable' and stay
+ * scored as published) recomputes to the same bytes as before the rule existed.
+ */
+export const BLOCKED = 'blocked';
+const isBlocked = (o) => o?.failure === BLOCKED;
 
 export const DEFAULT_SCORING = Object.freeze({
   headline_arm: 'raw',
@@ -140,7 +157,7 @@ function severityAgainst(severity, accepted) {
  *   kase   { id, pair, family, variant }
  *   truth  the case's truth.json
  *   run    null when the run is missing, else
- *          { failure: null|'timeout'|'truncated'|'error'|'infra', sheet: {ok, sheet, reason}, draft: string|null, facts: {...} }
+ *          { failure: null|'timeout'|'truncated'|'error'|'infra'|'blocked', sheet: {ok, sheet, reason}, draft: string|null, facts: {...} }
  * `facts` (cost, time, tokens, effort, provider) is copied through untouched.
  */
 export function scoreInput(kase, truth, run, scoring = DEFAULT_SCORING) {
@@ -262,6 +279,8 @@ export function aggregate(input) {
   };
 
   const cmp = (x, y) => (x < y ? -1 : x > y ? 1 : 0);
+  // the blocked rule (see BLOCKED): its fields exist only in results that hold a blocked outcome
+  const anyBlocked = input.models.some((m) => m.outcomes.some(isBlocked));
   const models = input.models.map((model) => {
     const vendor = model.vendor ?? vendorOf(model.slug);
     const byKey = new Map(model.outcomes.map((o) => [`${o.case}|${o.arm}|${o.rep}`, o]));
@@ -277,18 +296,30 @@ export function aggregate(input) {
       const outcome = (p, variant, rep) => get(p.cases[variant], arm, rep)
         ?? { case: p.cases[variant], pair: p.pair, family: p.family, variant, status: 'failed', failure: 'missing', correct: false, hits: [], planted: 0, decoys: 0, decoy_bites: 0, bite: null };
       const pairOk = (p, rep) => Object.keys(p.cases).every((variant) => outcome(p, variant, rep).correct === true);
-      const correct = new Map(armPairs.map((p) => [p.pair, reps.map((rep) => pairOk(p, rep))]));
-      const scoreOn = (subset, rep) => (subset.length ? (100 * subset.filter((p) => correct.get(p.pair)[rep - 1]).length) / subset.length : null);
-      const medOn = (subset) => (subset.length && reps.length ? round(median(reps.map((rep) => scoreOn(subset, rep))), 2) : null);
-      const majority = armPairs.map((p) => (correct.get(p.pair).filter(Boolean).length * 2 > reps.length ? 1 : 0));
-      majorityByArm[arm] = new Map(armPairs.map((p, i) => [p.pair, majority[i]]));
-      const perRep = reps.map((rep) => scoreOn(armPairs, rep));
+      // correct[pair][rep]: true, false, or null when either twin was blocked in that repeat (no result)
+      const pairBlocked = (p, rep) => anyBlocked && Object.keys(p.cases).some((variant) => isBlocked(outcome(p, variant, rep)));
+      const correct = new Map(armPairs.map((p) => [p.pair, reps.map((rep) => (pairBlocked(p, rep) ? null : pairOk(p, rep)))]));
+      const judgedIn = (subset, rep) => subset.filter((p) => correct.get(p.pair)[rep - 1] !== null);
+      const scoreOn = (subset, rep) => { const judged = judgedIn(subset, rep); return judged.length ? (100 * judged.filter((p) => correct.get(p.pair)[rep - 1]).length) / judged.length : null; };
+      const scoresOn = (subset) => reps.map((rep) => scoreOn(subset, rep)).filter((v) => v !== null);
+      const medOn = (subset) => (subset.length && reps.length ? round(median(scoresOn(subset)), 2) : null);
+      // majority[pair]: 1 or 0 over the repeats that have a result, null when every repeat was blocked
+      const majorityAll = armPairs.map((p) => {
+        const judged = correct.get(p.pair).filter((v) => v !== null);
+        if (reps.length && !judged.length) return null;
+        return judged.filter(Boolean).length * 2 > judged.length ? 1 : 0;
+      });
+      majorityByArm[arm] = new Map(armPairs.map((p, i) => [p.pair, majorityAll[i]]));
+      const majority = majorityAll.filter((v) => v !== null);
+      const perRep = scoresOn(armPairs);
 
       const all = [];
       for (const p of armPairs) for (const variant of Object.keys(p.cases)) for (const rep of reps) all.push(outcome(p, variant, rep));
       const present = all.filter((o) => o.failure !== 'missing');
-      const of = (variant) => all.filter((o) => o.variant === variant);
-      const findInputs = all.filter((o) => o.family !== 'challenge');
+      // the inputs the per-input rates are taken over: every input but the blocked ones
+      const answerable = anyBlocked ? all.filter((o) => !isBlocked(o)) : all;
+      const of = (variant) => answerable.filter((o) => o.variant === variant);
+      const findInputs = answerable.filter((o) => o.family !== 'challenge');
       const hits = of('vulnerable').flatMap((o) => o.hits ?? []);
       const rated = hits.filter((h) => h.severity_distance !== null && h.severity_distance !== undefined);
       const usd = present.map((o) => o.usd).filter((v) => typeof v === 'number');
@@ -309,7 +340,7 @@ export function aggregate(input) {
       arms[arm] = {
         pairs: armPairs.length,
         score: {
-          median: round(median(perRep), 2), min: round(Math.min(...perRep), 2), max: round(Math.max(...perRep), 2),
+          median: round(median(perRep), 2), min: perRep.length ? round(Math.min(...perRep), 2) : null, max: perRep.length ? round(Math.max(...perRep), 2) : null,
           majority: pct(mean(majority)), ci95: boot(majority, `${model.slug}|${arm}|score`),
         },
         by_family: byFamily,
@@ -326,9 +357,9 @@ export function aggregate(input) {
         challenge_ba: of('overclaimed').length && of('accurate').length
           ? round((of('overclaimed').filter((o) => o.correct).length / of('overclaimed').length + of('accurate').filter((o) => o.correct).length / of('accurate').length) / 2, 4)
           : null,
-        failure: rate(all.filter((o) => o.status === 'failed').length, all.length),
-        truncated: rate(all.filter((o) => o.failure === 'truncated').length, all.length),
-        repeat_agreement: reps.length > 1 ? rate(armPairs.filter((p) => new Set(correct.get(p.pair)).size === 1).length, armPairs.length) : null,
+        failure: rate(answerable.filter((o) => o.status === 'failed').length, answerable.length),
+        truncated: rate(answerable.filter((o) => o.failure === 'truncated').length, answerable.length),
+        repeat_agreement: reps.length > 1 ? rate(armPairs.filter((p) => new Set(correct.get(p.pair).filter((v) => v !== null)).size === 1).length, majority.length) : null,
         usd_run: usd.length ? round(mean(usd), 6) : null,
         usd_run_p50: usd.length ? round(median(usd), 6) : null,
         usd_total: round(usdTotal, 6),
@@ -337,6 +368,8 @@ export function aggregate(input) {
         runs: present.length,
         runs_expected: all.length,
         unresolved,
+        // blocked: inputs the provider declined; pairs_blocked: pairs with no result in any repeat
+        ...(anyBlocked ? { blocked: all.filter(isBlocked).length, pairs_blocked: majorityAll.length - majority.length } : {}),
       };
     }
 
@@ -344,11 +377,13 @@ export function aggregate(input) {
     for (const arm of armList) {
       if (arm === headline || !majorityByArm[arm] || !majorityByArm[headline]) continue;
       if (!completeArm(arms[arm]) || !completeArm(arms[headline])) continue;
-      const ids = [...majorityByArm[arm].keys()].filter((id) => majorityByArm[headline].has(id));
+      const shared = [...majorityByArm[arm].keys()].filter((id) => majorityByArm[headline].has(id));
+      // paired on the pairs that have a result on both arms: a pair blocked on either side is left out
+      const ids = shared.filter((id) => majorityByArm[arm].get(id) !== null && majorityByArm[headline].get(id) !== null);
       const a = ids.map((id) => majorityByArm[arm].get(id)), b = ids.map((id) => majorityByArm[headline].get(id));
       const res = pairedBootstrap(a, b, { resamples: scoring.bootstrap.resamples, level: scoring.bootstrap.level, seed: `${scoring.bootstrap.seed}|${model.slug}|${arm}|lift` });
       const ci = res.ci ? [pct(res.ci[0]), pct(res.ci[1])] : null;
-      lift[arm] = { delta: pct(res.delta), ci95: ci, n_pairs: ids.length, significant: !!ci && (ci[0] > 0 || ci[1] < 0) };
+      lift[arm] = { delta: pct(res.delta), ci95: ci, n_pairs: ids.length, significant: !!ci && (ci[0] > 0 || ci[1] < 0), ...(anyBlocked ? { pairs_blocked: shared.length - ids.length } : {}) };
     }
 
     const seen = model.outcomes.filter((o) => o.failure !== 'missing');
@@ -374,16 +409,18 @@ export function aggregate(input) {
       complete: Object.values(arms).every((a) => a.unresolved === 0),
       usd_total: round(totalUsd, 6),
       ...(retried.length ? { infra_retries: retried.reduce((n, o) => n + o.infra_retries, 0) } : {}),
+      ...(anyBlocked ? { blocked: seen.filter(isBlocked).length } : {}),
       arms,
       lift,
       detail: `models/${modelFile(model.slug)}`,
     };
   });
 
-  const ranked = models.filter((m) => completeArm(m.arms[headline]));
+  // a model whose every headline pair was blocked has no score to rank
+  const ranked = models.filter((m) => completeArm(m.arms[headline]) && m.arms[headline].score.majority !== null);
   const tiers = tiersByOverlap(ranked.map((m) => ({ key: m.slug, score: m.arms[headline].score.majority, ci: m.arms[headline].score.ci95 })));
   for (const m of ranked) m.tier = tiers.get(m.slug);
-  const key = (m) => (m.arms[headline] ? [m.arms[headline].score.median, m.arms[headline].score.majority] : [-1, -1]);
+  const key = (m) => (m.arms[headline] ? [m.arms[headline].score.median ?? -1, m.arms[headline].score.majority ?? -1] : [-1, -1]);
   models.sort((x, y) => key(y)[0] - key(x)[0] || key(y)[1] - key(x)[1] || cmp(x.slug, y.slug));
 
   // picks: best score per task; equal scores go to the cheaper run

@@ -82,16 +82,41 @@ test('the sections come in the order the brief sets', () => {
 });
 
 test('the proof strip links the three leaderboards and the method', () => {
-  const hrefs = find('a').map((tag) => tag.attributes.get('href'));
-  assert.ok(hrefs.includes('https://immunefi.com/audit-competition/audit-comp-firelight-1/leaderboard/'));
-  assert.ok(hrefs.includes('https://immunefi.com/audit-competition/audit-comp-quantus/leaderboard/'));
-  assert.ok(hrefs.includes('https://immunefi.com/audit-competition/audit-competition-ens/leaderboard/'));
-  assert.ok(hrefs.includes('/method'));
+  // Each link is parsed and compared whole: origin and path, not a substring of the href.
+  const links = find('a').map((tag) => new URL(tag.attributes.get('href'), 'https://bountyoperator.com'));
+  const linksTo = (origin, pathname) => links.some((url) => url.origin === origin && url.pathname === pathname && url.search === '' && url.hash === '');
+  for (const board of ['audit-comp-firelight-1', 'audit-comp-quantus', 'audit-competition-ens']) {
+    assert.ok(linksTo('https://immunefi.com', `/audit-competition/${board}/leaderboard/`), `no link to the ${board} leaderboard`);
+  }
+  assert.ok(linksTo('https://bountyoperator.com', '/method'));
   const text = textOf(own);
   assert.match(text, /Built by\s+Tradi3/);
-  assert.match(text, /17 valid Criticals in Immunefi’s ENS competition, the most of 186 researchers/);
+  // One wording for the ENS result on every short proof line.
+  assert.match(text, /17 valid Critical submissions in Immunefi’s ENS competition, the most of 186 researchers/);
+  assert.doesNotMatch(text, /including duplicates|Critical-rated|listed researchers/);
   assert.match(text, /2nd of 135/);
   assert.match(text, /8th of 65/);
+});
+
+test('the hero says what a review costs under its two buttons, and a phone shows it in the first screen', async () => {
+  const hero = main.slice(main.indexOf('class="wrap home-hero"'), main.indexOf('class="home-hero__shot"'));
+  // Actions, the price line, the note, then the links: in that order in the markup.
+  const order = ['class="home-hero__actions"', '<p class="home-hero__free">Free: 1 review a day on your own model key.</p>', '<p class="home-hero__note">The example needs no account or API key.</p>', 'class="home-hero__links"'];
+  const positions = order.map((needle) => hero.indexOf(needle));
+  assert.ok(positions.every((position) => position > 0), `missing: ${order.filter((_, index) => positions[index] < 0).join(', ')}`);
+  assert.deepEqual([...positions].sort((a, b) => a - b), positions);
+  assert.match(hero, /<a class="link" href="\/benchmark">See the model benchmark<\/a>/);
+  assert.doesNotMatch(markup, /href="\/benchmark#/);
+
+  // Up to 480px the two lines sit with the actions, ahead of the slip; wider screens do not print the price line.
+  const css = (await readFile(path.join(WEB_DIR, 'public', 'css', 'home.css'), 'utf8')).replace(/\r\n/g, '\n');
+  assert.match(css, /\n\.home-hero__free \{\n  display: none;\n\}/);
+  const phone = css.slice(css.indexOf('@media (max-width: 30em) {'));
+  const block = phone.slice(0, phone.indexOf('\n}\n') + 2);
+  assert.match(block, /\.home-hero__free \{\n    display: block;\n    order: 3;/);
+  assert.match(block, /\.home-hero__note \{\n    order: 3;/);
+  assert.match(css, /\.home-hero__actions \{\n  order: 3;/);
+  assert.match(css, /\.home-hero__shot \{\n  order: 4;/);
 });
 
 test('pricing states the two fixed plans and nothing else', () => {

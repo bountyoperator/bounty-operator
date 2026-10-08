@@ -39,6 +39,7 @@ import { checkRefs, defang, extractRefs, parseReview } from '../parse.mjs';
 import { reviewProfile } from '../profiles.mjs';
 import { PROVIDERS } from '../providers.mjs';
 import { track } from './api.mjs';
+import { blockedNotice } from './blocked.mjs';
 import { EVENTS } from './events.mjs';
 import { addEntries } from './files.mjs';
 import { historyEnabled, saveReview } from './history.mjs';
@@ -652,12 +653,18 @@ function sectionNode(section, context) {
   return el('section', { class: 'wb-section', dataset: { section: sectionKey(section.title) } }, heading, body);
 }
 
-function manifestNode(result) {
+/**
+ * The files of a result, with their hashes. A blocked or declined answer
+ * reviewed nothing: its list is what was sent, and there is no packet to
+ * check it against.
+ */
+function manifestNode(result, { review = true } = {}) {
   const manifest = result.manifest ?? [];
   if (!manifest.length) return null;
+  const title = review ? 'Files reviewed' : 'Files sent';
   return el('section', { class: 'wb-section', dataset: { section: 'files' } },
-    el('h4', { class: 'wb-section__title', text: 'Files reviewed' }),
-    el('div', { class: 'table-wrap', tabindex: '0', role: 'region', 'aria-label': 'Files reviewed' },
+    el('h4', { class: 'wb-section__title', text: title }),
+    el('div', { class: 'table-wrap', tabindex: '0', role: 'region', 'aria-label': title },
       el('table', { class: 'table table--dense' },
         el('thead', {}, el('tr', {},
           el('th', { scope: 'col', text: 'File' }),
@@ -669,7 +676,7 @@ function manifestNode(result) {
           el('td', { class: 'num', text: formatBytes(entry.bytes) }),
           el('td', { class: 'num', text: Number.isFinite(entry.lines) ? entry.lines.toLocaleString('en-US') : '' }),
           el('td', { class: 'mono wb-hash', title: entry.sha256, text: entry.sha256 })))))),
-    el('p', { class: 'fine' }, 'Check any file against this list at ', el('a', { class: 'link', href: '/tools/verify', text: 'the verifier' }), '. It runs in the browser.'));
+    review ? el('p', { class: 'fine' }, 'Check any file against this list at ', el('a', { class: 'link', href: '/tools/verify', text: 'the verifier' }), '. It runs in the browser.') : null);
 }
 
 /**
@@ -799,14 +806,56 @@ function metaLine(result, shown) {
   return el('div', { class: 'wb-result__meta' }, items);
 }
 
+/**
+ * The export actions. On a wide screen all five sit in the result bar. On a
+ * narrow one the row is placed under the review, so the verdict comes first,
+ * and the four secondary actions fold behind "More exports" (the stylesheet
+ * shows the toggle only there).
+ */
 function actionsRow() {
   const action = (name, label, iconName, variant = 'secondary') => button({ label, icon: iconName, variant, size: 'sm', attrs: { 'data-action': name } });
-  return el('div', { class: 'wb-result__actions no-print' },
+  return el('div', { class: 'wb-result__actions no-print', id: 'wb-result-actions' },
     action('packet', 'Download packet', 'download', 'primary'),
-    action('copy', 'Copy review', 'copy'),
-    action('issue', 'Copy as issue', 'copy'),
-    action('manifest', 'Manifest .json', 'hash'),
-    action('print', 'Print or save PDF', 'file'));
+    button({ label: 'More exports', iconEnd: 'chevron-down', size: 'sm', className: 'wb-result__more-toggle', attrs: { 'data-export-more': '', 'aria-expanded': 'false', 'aria-controls': 'wb-result-more' } }),
+    el('div', { class: 'wb-result__more', id: 'wb-result-more', dataset: { open: 'false' } },
+      action('copy', 'Copy review', 'copy'),
+      action('issue', 'Copy as issue', 'copy'),
+      action('manifest', 'Manifest .json', 'hash'),
+      action('print', 'Print or save PDF', 'file')));
+}
+
+// Below this width the export actions follow the review. The same breakpoint as the stylesheet.
+const NARROW = '(max-width: 39.99em)';
+
+function isNarrow() {
+  return typeof window !== 'undefined' && typeof window.matchMedia === 'function' && window.matchMedia(NARROW).matches;
+}
+
+/**
+ * Puts the export actions where the screen width wants them: in the bar, or
+ * after the review on a narrow screen. Moving the node keeps the reading and
+ * tab order the same as what is on screen.
+ */
+function placeActions() {
+  const target = qs('#wb-result');
+  const actions = qs('#wb-result-actions');
+  const bar = target?.querySelector?.('.wb-result__bar');
+  const raw = qs('#panel-raw');
+  if (!actions || !bar || !raw) return;
+  if (isNarrow()) {
+    if (actions.previousElementSibling !== raw) raw.after(actions);
+  } else if (actions.parentElement !== bar) {
+    bar.append(actions);
+  }
+}
+
+function toggleMoreExports(control) {
+  const more = qs('#wb-result-more');
+  if (!more) return;
+  const open = more.dataset.open !== 'true';
+  more.dataset.open = String(open);
+  control.setAttribute('aria-expanded', String(open));
+  if (open) more.querySelector('button')?.focus();
 }
 
 function nextRow(result, shown) {
@@ -866,9 +915,15 @@ function render() {
       el('p', { text: 'The source files were not saved, so cited lines cannot be opened.' }),
       el('div', {}, button({ label: 'Back to my work', size: 'sm', attrs: { 'data-action': 'leave-history' } })))));
   }
-  if (result.refused) notices.push(notice('warn', 'The model declined to answer', 'Its reply is shown as written. A refusal is not counted against the daily review.'));
+  // A block or a refusal is not a review: it gets its own notice and never the "no Verdict line" one.
+  const blocked = blockedNotice(result);
+  if (blocked) notices.push(blocked);
+  else if (result.refused) notices.push(notice('warn', 'The model declined to answer', 'Its reply is shown as written.'));
   if (result.truncated) notices.push(notice('warn', 'The answer was cut off', 'The model stopped before the end. What arrived is shown. The last finding ends where the answer stopped.'));
-  if (!parsed.ok) notices.push(notice('info', 'Shown as written', 'The reply has no Verdict line in the review format, so it could not be split into findings.'));
+  if (!parsed.ok && !result.refused && !blocked) notices.push(notice('info', 'Shown as written', 'The reply has no Verdict line in the review format, so it could not be split into findings.'));
+  // A blocked or declined answer is not a review: its files were sent, not reviewed, there is
+  // nothing to export, and it is not offered as a stage file. The reply stays on the page, under Raw.
+  const review = !blocked && !result.refused;
 
   const tabs = el('div', { class: 'tabs no-print', id: 'wb-result-tabs', role: 'tablist', 'aria-label': 'Result view' },
     el('button', { class: 'tabs__tab', type: 'button', role: 'tab', id: 'tab-findings', 'aria-controls': 'panel-findings', dataset: { tab: 'findings' } },
@@ -879,20 +934,23 @@ function render() {
   // A gauntlet or a panel run draws its own body; every other result is one review.
   const own = bodies.get(result.source)?.(result, { files: shown.files, readOnly: shown.readOnly, analysis });
   findings.append(...(own ?? reviewNodes(result, { files: shown.files, analysis }).nodes));
-  const files = manifestNode(result);
+  const files = manifestNode(result, { review });
   if (files) findings.append(files);
 
   const raw = el('div', { class: 'wb-result__body', id: 'panel-raw', role: 'tabpanel', 'aria-labelledby': 'tab-raw', dataset: { tab: 'raw' }, hidden: true },
     el('pre', { class: 'wb-raw', tabindex: '0', 'aria-label': 'The review as the model wrote it', text: result.review }));
 
+  // On a narrow screen the export actions follow the review, so the verdict is the first thing under the bar.
+  const narrow = isNarrow();
   target.append(
-    el('div', { class: 'wb-result__bar' }, metaLine(result, shown), actionsRow()),
+    el('div', { class: 'wb-result__bar' }, metaLine(result, shown), review && !narrow ? actionsRow() : null),
     ...notices,
     tabs,
     findings,
     raw,
+    ...(review && narrow ? [actionsRow()] : []),
   );
-  const next = nextRow(result, shown);
+  const next = review ? nextRow(result, shown) : null;
   if (next) target.append(next);
   selectTab(parsed.ok ? tab : 'findings');
   notifyDrawn(target, result, shown.readOnly);
@@ -984,6 +1042,8 @@ export function initResults() {
   const target = qs('#wb-result');
   if (!target) return;
 
+  on(target, 'click', '[data-export-more]', (event, control) => toggleMoreExports(control));
+  if (typeof window.matchMedia === 'function') window.matchMedia(NARROW).addEventListener?.('change', placeActions);
   on(target, 'click', '[data-action]', (event, control) => {
     act(control.dataset.action);
   });

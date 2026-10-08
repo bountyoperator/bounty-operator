@@ -85,7 +85,7 @@ test('an account-level gate on a model stops that model and is never scored', as
   const { classifyError } = await import('../lib/runs.mjs');
   assert.deepEqual(classifyError(403, '403 This model requires you to complete the following before use: 18+ age confirmation. Confirm at https://openrouter.ai/settings/preferences.'), { kind: 'unavailable', retry: false, halt: 'model' });
   assert.deepEqual(classifyError(403, 'This model is not available in your region'), { kind: 'unavailable', retry: false, halt: 'model' });
-  assert.equal(classifyError(403, 'Your chosen model requires moderation and your input was flagged for violence').kind, 'error', 'a moderation refusal stays the model\'s own failure');
+  assert.equal(classifyError(403, 'Your chosen model requires moderation and your input was flagged for violence').kind, 'blocked', 'a moderation 403 is a provider policy block: neither an account gate nor the model\'s answer');
 });
 
 test('a stalled provider stream is infrastructure; a reasoning loop the harness stops is the model\'s own failure', async () => {

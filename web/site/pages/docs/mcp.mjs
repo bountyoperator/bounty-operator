@@ -21,7 +21,7 @@ import { PROVIDERS } from '../../../public/providers.mjs';
 import { LIMITS } from '../../../public/review-core.mjs';
 import { button, chip, codeBlock, disclosure, faq, html, inline, table, tabs } from '../../components.mjs';
 import { breadcrumbsLd, faqPageLd } from '../../layout.mjs';
-import { DOCS_STYLES, UPDATED, docPage, facts, nextStep } from './_shared.mjs';
+import { DOCS_STYLES, docPage, facts, nextStep } from './_shared.mjs';
 import { NOT_COUNTED } from '../../plans.mjs';
 
 const PATH = '/mcp';
@@ -269,7 +269,7 @@ export const HOSTED_REFUSAL = {
 const HOSTED_ANSWERS = [
   ['list_profiles', 'The profile with its name, its description, the inputs it reads and `hosted: true`.'],
   ['prepare_review', 'A failed call with the code `hosted_profile`, the profile id and a sentence that names `run_review`. It is refused before any file is read.'],
-  ['run_review', 'The review, its verdict, the reference check, the manifest and your remaining allowance. It uses one hosted review. `verdict` and `panel` run on Operator only.'],
+  ['run_review', 'The review, its verdict, the reference check, the manifest and your remaining allowance. It uses one hosted review. A review the provider blocks under its usage policy comes back with `blocked` set and is not counted. `verdict` and `panel` run on Operator only.'],
   ['build_packet', 'The evidence packet for the review `run_review` returned. Pass `source: "ai"`.'],
 ];
 
@@ -466,7 +466,8 @@ export const ERROR_CODES = [
   ['daily_used', 'The free review of the day is used. The result carries `resetsAt`, the time the next one opens.'],
   ['operator_only', '`run_review` was called with `verdict` or `panel` on an account without Operator. Those two profiles run only inside the gauntlet and a panel review. Nothing was sent to the provider and the review of the day is not used.'],
   ['review_running', 'The account is running as many reviews as its plan allows. Call again when one finishes.'],
-  ['provider', 'Your provider refused the call or timed out: a rejected key, an unknown model, a rate limit. The review is not counted.'],
+  ['provider', 'Your provider rejected the key or the model, had no credit, hit a rate limit, failed or timed out. The review is not counted.'],
+  ['provider_policy', 'Your provider blocked the request under its usage policy. The key is not the cause and the review is not counted. Call again with another model or provider, not the same one.'],
   [
     'output_withheld',
     'The model repeated its instructions instead of reviewing, so the answer was stopped and the call used one review. Run it again or choose a stronger model.',
@@ -562,6 +563,7 @@ export default {
   styles: DOCS_STYLES,
   scripts: ['/docs/tabs.mjs', '/docs/copy-ping.mjs'],
   jsonld: [breadcrumbsLd([{ name: 'MCP server', path: PATH }]), faqPageLd(FAQ)],
-  lastmod: UPDATED,
+  // The day this page's own text last changed, not the legal pages' date.
+  lastmod: '2026-10-09',
   body,
 };

@@ -15,6 +15,10 @@ const IMMUNEFI_STEP =
 const IMMUNEFI_RULES_STEP =
   "If the report is for an Immunefi programme and Immunefi Studio's MCP server is connected, find the programme with its list_programs tool and pass what it returns about the programme as one more file.";
 
+// What an agent does with a review the provider or the model declined. The remote endpoint's prompt uses the same sentences.
+const REFUSED_STEP =
+  'If run_review returns refused or blocked, or fails with code provider_policy, the provider or the model declined. Do not present the text as a review. Tell me a blocked review was not counted against my allowance. Do not call run_review again with the same model: offer another model or provider, or prepare_review for a core profile, which you answer yourself.';
+
 function platformLine(platform) {
   return platform ? ` The report is for ${platform}.` : '';
 }
@@ -80,9 +84,10 @@ export const PROMPTS = Object.freeze([
         '4. Ask me once for the fields the plan lists under "ask". I will leave out what I do not have.',
         '5. Follow the plan: run each stage in order with its instruction and keep every review under its saveAs name. A run_review stage runs on the Bounty Operator server with my connection token and my provider key, so ask me once which provider and model to use. A prepare_review stage you answer yourself.',
         `6. ${PRIVACY_STEP}`,
-        '7. If a stage ends in drop or hold-duplicate, show me why and ask whether to continue.',
-        '8. After the last stage, call build_packet with the arguments the plan gives under "finish".',
-        '9. Show me the final verdict, what each stage decided in one line, every open counterargument and every reference problem. Then give me the packet.',
+        `7. ${REFUSED_STEP}`,
+        '8. If a stage ends in drop or hold-duplicate, show me why and ask whether to continue.',
+        '9. After the last stage, call build_packet with the arguments the plan gives under "finish".',
+        '10. Show me the final verdict, what each stage decided in one line, every open counterargument and every reference problem. Then give me the packet.',
       ].join('\n'),
   },
 ]);

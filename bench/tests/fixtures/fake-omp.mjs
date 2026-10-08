@@ -4,6 +4,8 @@
 //   ok      answer with a sheet and exit 0
 //   flaky   fail with HTTP 429 on the first call in this home directory, then behave like ok
 //   hang    start a grandchild process and never exit (the harness must kill the tree)
+//   notice  answer with Anthropic's cyber-safeguard notice in place of a review, on a normal stop
+//   policy403  end in a 403 error the way OpenRouter wraps a provider's refusal
 //   sheet <answers.json>   answer each workspace with the text stored for it in answers.json, a map
 //           from the workspace digest (sha256 over "<path>\0<sha256 of the file>\n" for every file
 //           in path order) to the answer text; an unknown workspace gets an answer without a sheet.
@@ -55,6 +57,14 @@ if (mode === 'hang') {
   emit(assistant({ content: [{ type: 'text', text }], usage: { input: 1000, output: 200, cacheRead: 0, cacheWrite: 0, reasoningTokens: 0, cost: { total: 0.0001 } }, stopReason: 'stop', responseId: 'gen-fake-sheet' }));
   emit({ type: 'agent_end', messages: [1], isTerminal: true, yielded: true });
   process.exit(0);
+} else if (mode === 'notice') {
+  const text = "This request triggered restrictions on violative cyber content and was blocked under Anthropic's Usage Policy. To learn more, see https://platform.claude.com/docs/en/build-with-claude/refusals-and-fallback.";
+  emit(assistant({ content: [{ type: 'text', text }], usage: { input: 5711, output: 300, cacheRead: 0, cacheWrite: 0, reasoningTokens: 22, cost: { total: 0.0321 } }, stopReason: 'stop', responseId: 'gen-fake-notice' }));
+  emit({ type: 'agent_end', messages: [1], isTerminal: true, yielded: true });
+  process.exit(0);
+} else if (mode === 'policy403') {
+  emit(assistant({ content: [], usage: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, cost: { total: 0 } }, stopReason: 'error', errorStatus: 403, errorMessage: 'Provider returned error: {"error":{"code":403,"message":"The upstream provider refused to respond","metadata":{"error_type":"refusal","provider_name":"Stand-in"}}}' }));
+  process.exit(1);
 } else if (mode === 'flaky' && calls === 1) {
   emit(assistant({ content: [], usage: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, cost: { total: 0 } }, stopReason: 'error', errorStatus: 429, errorMessage: 'Rate limit exceeded: try again later' }));
   process.exit(1);

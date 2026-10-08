@@ -30,7 +30,8 @@ export function sweepStray(runRoot, { apply = false, log = console.log } = {}) {
     } catch { continue; }
     seen++;
     const record = { dir, metaText, events, model: meta.model, run: path.basename(dir), providers: meta.providers ?? [] };
-    if (meta.failure === 'error' && classifyError(null, meta.failure_detail ?? '').kind !== 'error') {
+    // a stored error the current rules read as a provider policy block is not infrastructure: it stays as stored
+    if (meta.failure === 'error' && !['error', 'blocked'].includes(classifyError(null, meta.failure_detail ?? '').kind)) {
       stray.push({ ...record, stored: `error (${String(meta.failure_detail).slice(0, 60)})` });
       continue;
     }

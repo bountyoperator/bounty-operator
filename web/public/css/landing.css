@@ -42,8 +42,11 @@
   margin-bottom: var(--sp-32);
 }
 
+/* The measure of a page head is 22 characters of this cut, written in em
+   (22 x 0.516em): a ch is the width of the font in use, so a ch measure
+   changes when the webfont lands and the headline re-breaks. */
 .lp-hero h1 {
-  max-width: 22ch;
+  max-width: 11.352em;
   font-size: clamp(2.25rem, 1.2rem + 3.6vw, 4rem);
   font-stretch: 76%;
   font-weight: 860;
@@ -1226,6 +1229,15 @@
   background: var(--surface-2);
 }
 
+/* base.css gives the last text column of a table 14rem. Here every option
+   column takes the same measure, or the last one is wider than the space
+   beside the label and its first letters sit under it at the end of the scroll. */
+@media (max-width: 63.99em) {
+  .table.compare tbody td:last-child:not(.num) {
+    min-width: max(11rem, calc(100vw - 2 * var(--gutter) - 9.5rem - 2px));
+  }
+}
+
 .compare__hint {
   margin: calc(-1 * var(--sp-16)) 0 var(--sp-16);
 }
@@ -1496,8 +1508,9 @@
   background: var(--surface-2);
 }
 
+/* 24 characters of the section cut, in em (24 x 0.562em). */
 .cta-band__title {
-  max-width: 24ch;
+  max-width: 13.488em;
 }
 
 .cta-band__lede {

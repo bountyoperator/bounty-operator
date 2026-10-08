@@ -819,7 +819,8 @@ async function cmdRun(flags) {
       spend.set(task.model, (spend.get(task.model) ?? 0) + (meta.usd_all_attempts ?? 0));
       counts.set(task.model, (counts.get(task.model) ?? 0) + 1);
       if (meta.failure) failures.set(`${task.model}|${meta.failure}`, (failures.get(`${task.model}|${meta.failure}`) ?? 0) + 1);
-      out(`[${done}] ${task.model} ${runName(task.kase.id, task.arm, task.rep)} ${meta.failure ? `FAIL(${meta.failure})` : 'ok'} ${meta.wall_s}s ${usd(meta.usd)} turns=${meta.turns} effort=${meta.effort}${meta.providers.length ? ` via ${meta.providers.join('+')}` : ''}${meta.failure_detail ? `  ${String(meta.failure_detail).slice(0, 140)}` : ''}`);
+      out(`[${done}] ${task.model} ${runName(task.kase.id, task.arm, task.rep)} ${meta.failure === 'blocked' ? 'BLOCKED' : meta.failure ? `FAIL(${meta.failure})` : 'ok'} ${meta.wall_s}s ${usd(meta.usd)} turns=${meta.turns} effort=${meta.effort}${meta.providers.length ? ` via ${meta.providers.join('+')}` : ''}${meta.failure_detail ? `  ${String(meta.failure_detail).slice(0, 140)}` : ''}`);
+      // a provider policy block ('blocked') is neither: it never counts toward the streak that halts a model
       const harnessTrouble = meta.failure === 'infra' || meta.failure === 'error';
       streak.set(task.model, harnessTrouble ? (streak.get(task.model) ?? 0) + 1 : 0);
       if (meta.halt === 'all') { env.stop.reason = `stopped: ${meta.failure_detail}`; exitCode = 1; }
@@ -948,7 +949,7 @@ function printBoard(results) {
     const a = m.arms[head];
     if (!a) continue;
     const lift = Object.entries(m.lift).map(([k, v]) => `${k} ${v.delta > 0 ? '+' : ''}${v.delta}${v.significant ? '*' : ''}`).join('  ');
-    out(`${String(m.tier ?? '-').padEnd(5)}${m.slug.padEnd(38)}${String(a.score.median).padEnd(8)}${`${a.score.min}-${a.score.max}`.padEnd(12)}${(a.score.ci95 ? `${a.score.ci95[0]}-${a.score.ci95[1]}` : '-').padEnd(16)}${String(a.recall ?? '-').padEnd(8)}${String(a.fools_gold ?? '-').padEnd(7)}${String(a.failure ?? '-').padEnd(7)}${usd(a.usd_run).padEnd(10)}${String(m.effort ?? '-').padEnd(9)}${lift}${m.complete ? '' : '  [incomplete]'}`);
+    out(`${String(m.tier ?? '-').padEnd(5)}${m.slug.padEnd(38)}${String(a.score.median).padEnd(8)}${`${a.score.min}-${a.score.max}`.padEnd(12)}${(a.score.ci95 ? `${a.score.ci95[0]}-${a.score.ci95[1]}` : '-').padEnd(16)}${String(a.recall ?? '-').padEnd(8)}${String(a.fools_gold ?? '-').padEnd(7)}${String(a.failure ?? '-').padEnd(7)}${usd(a.usd_run).padEnd(10)}${String(m.effort ?? '-').padEnd(9)}${lift}${m.complete ? '' : '  [incomplete]'}${a.blocked ? `  [blocked ${a.blocked}: left out of the score]` : ''}`);
   }
 }
 
@@ -1322,7 +1323,7 @@ const USAGE = `Paydirt benchmark harness
                                 [--budget-usd X]   cost per model for the raw arm at one repeat, in run order, with the budget line
                                 [--order tier|cost] [--json <file>]
   node bench/bench.mjs run      [--tier 1|2|3 | --models a,b] [--repeats N] [--arms ...] [--cases <glob>] [--concurrency N] [--max-usd X] [--run-id <id>]
-                                [--per-model N] [--stagger-ms N] [--floor-usd X] [--redo error,timeout] [--gen-stats ends|all|off] [--dry-run] [--no-lint]
+                                [--per-model N] [--stagger-ms N] [--floor-usd X] [--redo error,timeout,blocked] [--gen-stats ends|all|off] [--dry-run] [--no-lint]
                                 [--max-minutes N]      end inside N minutes: no run starts that could not finish in time; rerun to resume
                                 [--run-budget-usd X]   stop when everything stored under this run id has cost X
                                 [--allow-core-change]  go on although raw-arm runs are stored under another core hash

@@ -35,8 +35,9 @@
   }
 }
 
+/* 20 characters of the page-head cut, in em (20 x 0.516em), so the measure does not move when the webfont lands. */
 .tpl-hero > h1 {
-  max-width: 20ch;
+  max-width: 10.32em;
   margin-top: var(--sp-8);
   font-size: clamp(2.25rem, 1.3rem + 3.2vw, 3.75rem);
   font-stretch: 76%;
@@ -50,6 +51,15 @@
 
 .tpl-actions {
   margin-top: var(--sp-8);
+}
+
+/* On a phone the two actions share the row width, one above the other, as on
+   the landing pages. Side by side they fit at some widths and not at others,
+   and at the edge the row re-broke when the webfont landed. */
+@media (max-width: 29.99em) {
+  .tpl-actions > .btn {
+    flex: 1 1 100%;
+  }
 }
 
 .tpl-actions__status {

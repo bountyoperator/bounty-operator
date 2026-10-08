@@ -20,6 +20,8 @@
  *   REASONS                          the built-in reasons: 'review', 'operator', 'billing', 'account'
  *   reasonText(reason, returning)    -> string             the line the dialog shows for a reason
  *   headerControl(account)           -> { label, chip, tone, name }    what the header button says for an account
+ *   inAppBrowser(userAgent)          -> '' | 'X' | 'Facebook' | 'Instagram' | 'LinkedIn' | 'TikTok'   the app whose in-app browser this is
+ *   capabilityMessage(support, userAgent) -> { tone, title, body, copyLink } | null   what the dialog says about passkeys here
  *
  * `reason` is one of the REASONS keys, or your own sentence. It is the first
  * line of the dialog:
@@ -64,7 +66,7 @@ import {
 } from './billing-ui.mjs';
 import { EVENTS } from './events.mjs';
 import { PASSKEY_PROVIDERS, isCancelled, passkeySupport, registerPasskey, signInWithPasskey } from './passkey.mjs';
-import { clearStatus, closePortal, dialogShell, isPortalOpen, onPortalSignedOut, openPortal, portalPasskeyIds, recoveryPanel, setStatus } from './portal.mjs';
+import { clearStatus, closePortal, copyButton, dialogShell, isPortalOpen, onPortalSignedOut, openPortal, portalPasskeyIds, recoveryPanel, setStatus } from './portal.mjs';
 import { announce, button, dialogController, el, formatCountdown, icon, isBusy, on, setBusy } from './ui.mjs';
 
 const KNOWN_KEY = 'bo:known';
@@ -308,21 +310,89 @@ async function runRecovery(control, input) {
   }
 }
 
-function capabilityNotice() {
-  const node = el('div', { class: 'notice', id: 'account-capability' });
-  if (!support.webauthn) {
-    setStatus(node, {
+// Apps that open a link in their own in-app browser, each with the tokens its
+// user agent carries. An in-app browser often has no WebAuthn, and an account
+// is created with a passkey. The match is narrow on purpose: Safari, Chrome
+// and every other browser must never be taken for one.
+const IN_APP_BROWSERS = Object.freeze([
+  ['Instagram', /\bInstagram\b/],
+  ['Facebook', /\bFBA[NV]\//],
+  ['LinkedIn', /\bLinkedInApp\b/],
+  ['TikTok', /\bTikTok\b|musical_ly|BytedanceWebview/],
+  ['X', /\bTwitter(?: for |Android\b)/],
+]);
+
+/**
+ * The app whose in-app browser sent this user agent, or '' for a browser.
+ *
+ * @param {unknown} userAgent
+ * @returns {'' | 'X' | 'Facebook' | 'Instagram' | 'LinkedIn' | 'TikTok'}
+ */
+export function inAppBrowser(userAgent) {
+  if (typeof userAgent !== 'string') return '';
+  const found = IN_APP_BROWSERS.find(([, pattern]) => pattern.test(userAgent));
+  return found ? /** @type {any} */ (found[0]) : '';
+}
+
+/**
+ * What the sign-in dialog says about passkeys in this browser, or null when
+ * there is nothing to say. Without WebAuthn the way on is Safari or Chrome.
+ * Inside a known in-app browser the same hint shows before anything fails,
+ * and nothing is disabled: where the passkey prompt works, it works.
+ *
+ * @param {{ webauthn: boolean, platform: boolean }} capability
+ * @param {unknown} userAgent
+ * @returns {{ tone: 'warn' | 'info', title: string, body: string, copyLink: boolean } | null}
+ */
+export function capabilityMessage(capability, userAgent) {
+  const app = inAppBrowser(userAgent);
+  if (!capability.webauthn) {
+    return {
       tone: 'warn',
-      title: 'This browser cannot use passkeys.',
-      body: `Open the site in a current Chrome, Edge, Safari or Firefox. A passkey comes from ${PASSKEY_PROVIDERS}.`,
-    });
-  } else if (!support.platform) {
-    setStatus(node, {
+      title: app ? `${app}'s in-app browser cannot use passkeys.` : 'This browser cannot use passkeys.',
+      body: 'Open this page in Safari or Chrome to create your account or sign in.',
+      copyLink: true,
+    };
+  }
+  if (app) {
+    return {
+      tone: 'info',
+      title: `You are in ${app}'s in-app browser.`,
+      body: 'If no passkey prompt appears, open this page in Safari or Chrome.',
+      copyLink: true,
+    };
+  }
+  if (!capability.platform) {
+    return {
       tone: 'info',
       title: 'No passkey provider is set up on this device.',
       body: 'Turn on Windows Hello or Touch ID, or use iCloud Keychain, Google Password Manager, 1Password, Bitwarden or a security key with a PIN.',
-    });
+      copyLink: false,
+    };
   }
+  return null;
+}
+
+/** This page's address, without the fragment: what the visitor opens in Safari or Chrome. */
+function pageLink() {
+  const { origin, pathname, search } = window.location;
+  return `${origin}${pathname}${search}`;
+}
+
+function capabilityNotice() {
+  const node = el('div', { class: 'notice', id: 'account-capability' });
+  const message = capabilityMessage(support, globalThis.navigator?.userAgent);
+  if (!message) return node;
+  const link = pageLink();
+  setStatus(node, {
+    tone: message.tone,
+    title: message.title,
+    body: message.body,
+    // The address is also printed, so it can be selected where the clipboard is not available.
+    actions: message.copyLink
+      ? [copyButton({ text: link, label: 'Copy link', size: 'sm', id: 'account-copy-link' }), el('code', { class: 'account__link', id: 'account-link', text: link })]
+      : [],
+  });
   return node;
 }
 

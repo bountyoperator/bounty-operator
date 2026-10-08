@@ -27,7 +27,8 @@
 /* On a phone the page reads headline, lede, action, then the stamped slip,
    so the verdict lands in the first screen; the note and the links follow
    the slip. The text block steps aside (display: contents) and its parts
-   take their places. */
+   take their places. Up to 480px the price line and the note move up under
+   the actions, so the first screen says what a review costs. */
 .home-hero {
   display: flex;
   flex-direction: column;
@@ -37,9 +38,12 @@
   display: contents;
 }
 
+/* The measure is 11 characters of this cut, written in em (11 x 0.493em) so
+   the box is the same width before the font arrives and the lines do not
+   re-break when it lands. */
 .home-hero__title {
   order: 1;
-  max-width: 11ch;
+  max-width: 5.423em;
 }
 
 .home-hero__actions {
@@ -67,6 +71,32 @@
   margin-top: var(--sp-12);
   color: var(--muted);
   font-size: var(--fs-13);
+}
+
+/* The price line: printed on a phone only, where the pricing section is far
+   below the first screen. Wider screens keep the hero as it was. */
+.home-hero__free {
+  display: none;
+}
+
+@media (max-width: 30em) {
+  .home-hero__free {
+    display: block;
+    order: 3;
+    margin-top: var(--sp-16);
+    font-size: var(--fs-14);
+    font-weight: 650;
+    line-height: 1.4;
+  }
+
+  .home-hero__note {
+    order: 3;
+    margin-top: var(--sp-4);
+  }
+
+  .home-hero__shot {
+    margin-top: var(--sp-24);
+  }
 }
 
 .home-hero__links {
@@ -514,8 +544,9 @@
   margin-top: var(--sp-8);
 }
 
+/* 20 characters of the section cut, in em (20 x 0.562em). */
 .bench-teaser__title {
-  max-width: 20ch;
+  max-width: 11.24em;
 }
 
 .bench-teaser__table {
@@ -618,12 +649,14 @@
   }
 }
 
+/* On a phone the cost column leaves, and its head leaves with it. */
 @media (max-width: 29.99em) {
   .bench-teaser__row {
     grid-template-columns: 1.75rem minmax(0, 1fr) 3.75rem;
   }
 
-  .bench-teaser__cost {
+  .bench-teaser__cost,
+  .bench-teaser__labels > :nth-child(4) {
     display: none;
   }
 }

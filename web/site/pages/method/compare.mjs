@@ -7,7 +7,7 @@
 
 import { button, html, inline, link, sectionHeading, stackTable, table } from '../../components.mjs';
 import { breadcrumbsLd } from '../../layout.mjs';
-import { LASTMOD, STYLES, ctaBand, pageHero, points, relatedLinks, workbenchLink } from './_shared.mjs';
+import { STYLES, ctaBand, pageHero, points, relatedLinks, workbenchLink } from './_shared.mjs';
 
 const PATH = '/compare';
 const CHECKED = 'checked 2 October 2026';
@@ -15,10 +15,12 @@ const CHECKED = 'checked 2 October 2026';
 const CHECKED_TOOLS = 'checked 3 October 2026';
 // The Intigriti pre-check and the last three tool rows were read on this date.
 const CHECKED_NEW = 'checked 7 October 2026';
+// Immunefi Studio's page and posts, and the hosted bounty tool's README and prices, were read again on this date.
+const CHECKED_AGAIN = 'checked 9 October 2026';
 
 const SOURCES = [
-  { n: 1, label: 'Immunefi, “Immunefi Studio”', href: 'https://immunefi.com/studio/', date: CHECKED },
-  { n: 2, label: 'Immunefi on X: Studio Review checks and beta status', href: 'https://x.com/immunefi/status/2098092155067826574', date: `posted 10 September 2026, ${CHECKED}` },
+  { n: 1, label: 'Immunefi, “Immunefi Studio”', href: 'https://immunefi.com/studio/', date: CHECKED_AGAIN },
+  { n: 2, label: 'Immunefi on X: Studio Review checks and beta status', href: 'https://x.com/immunefi/status/2098092155067826574', date: `posted 10 September 2026, ${CHECKED_AGAIN}` },
   { n: 3, label: 'Immunefi on X: the agent behind Studio Review', href: 'https://x.com/immunefi/status/2098494040618770874', date: `posted 11 September 2026, ${CHECKED}` },
   { n: 4, label: 'HackerOne Help Center, “Report Assistant”', href: 'https://docs.hackerone.com/en/articles/12648472-report-assistant', date: `dated 13 April 2026, ${CHECKED}` },
   { n: 5, label: 'Agent Skills, “What are Agent Skills?”', href: 'https://agentskills.io/', date: CHECKED },
@@ -30,8 +32,8 @@ const SOURCES = [
     date: `dated 16 March 2026, ${CHECKED}`,
   },
   { n: 8, label: 'GitHub, “awarexone/Agentic-Bug-Hunter”, README', href: 'https://github.com/awarexone/Agentic-Bug-Hunter', date: CHECKED_TOOLS },
-  { n: 9, label: 'GitHub, “Gabson0x/bountyforge”, README', href: 'https://github.com/Gabson0x/bountyforge', date: CHECKED_TOOLS },
-  { n: 10, label: 'BountyForge, hosted version', href: 'https://bountyforge.xyz/', date: `price ${CHECKED_TOOLS}` },
+  { n: 9, label: 'GitHub, “Gabson0x/bountyforge”, README', href: 'https://github.com/Gabson0x/bountyforge', date: CHECKED_AGAIN },
+  { n: 10, label: 'BountyForge, “Simple, transparent pricing”', href: 'https://bountyforge.xyz/pricing', date: `prices ${CHECKED_AGAIN}` },
   { n: 11, label: 'GitHub, “J4X-Security/K.I.T”, README', href: 'https://github.com/J4X-Security/K.I.T', date: CHECKED_TOOLS },
   { n: 12, label: 'GitHub, “heavyw8t/The-Judge”, README', href: 'https://github.com/heavyw8t/The-Judge', date: CHECKED_TOOLS },
   { n: 13, label: 'Intigriti, “Platform changelog”: Submission Draft Agent', href: 'https://www.intigriti.com/changelog', date: `dated 15 July 2026, ${CHECKED_NEW}` },
@@ -43,6 +45,7 @@ const SOURCES = [
     href: 'https://www.testmachine.ai/blog/automated-vulnerability-triage-sherlock-benchmark',
     date: `dated 7 August 2026, ${CHECKED_NEW}`,
   },
+  { n: 17, label: 'Immunefi on X: access to Studio', href: 'https://x.com/immunefi/status/2105270442730897678', date: `posted 30 September 2026, ${CHECKED_AGAIN}` },
 ];
 
 const NBSP = ' ';
@@ -92,7 +95,8 @@ const ROWS = [
     ),
   ],
   [
-    'Counterargument',
+    // A soft hyphen: the label column on a phone is narrower than the word, which broke before its last letter.
+    'Counter­argument',
     cell('Every finding carries the strongest objection, marked resolved or open, with the line that settles it.'),
     cell('When you ask for one.'),
     cell('When the skill’s instructions ask for one.'),
@@ -124,7 +128,7 @@ const ROWS = [
     cell('Open to anyone. Free: 1 review a day. Operator: US$10 per week, unlimited. Your provider bills model usage to your key.'),
     cell('Your chat subscription.'),
     cells(cell('A folder you install.', 5), cell('Model usage is billed by the plan your coding agent runs on.')),
-    cells(cell('Studio Review is in invite-only beta.', 2), cell('Report Assistant is optional in the report form.', 4), cell('None of the pages cited states a price.')),
+    cells(cell('Immunefi described Studio as invite-only on 30 September 2026.', 17), cell('Report Assistant is optional in the report form.', 4), cell('None of the pages cited states a price.')),
   ],
   [
     'Where your draft goes',
@@ -171,8 +175,8 @@ const TOOL_ROWS = [
       'Eight agents hunt in parallel across web, API and smart-contract targets. Findings are deduplicated, put through four gates (refutation, reachability, trigger, impact), scored with CVSS and written up for the same four platforms.',
       9,
     ),
-    cell('A skill for a coding agent, and a hosted version that runs each session in its own sandbox on your AI key.', 9),
-    cells(cell('The skill is free.', 9), cell('The hosted version listed a one-time lifetime price of US$199.', 10)),
+    cell('A skill for a coding agent, and a hosted version that runs each session in its own sandbox.', 9),
+    cells(cell('The skill installs with `git clone`. Its README states no price.', 9), cell('The hosted version lists Pro at US$30 a month, Enterprise at US$90 a month and a one-time lifetime price of US$199.', 10)),
     'Provenance, proof',
   ],
   [
@@ -318,6 +322,6 @@ export default {
   label: 'Compare',
   styles: STYLES,
   jsonld: [breadcrumbsLd([{ name: 'Compare', path: PATH }])],
-  lastmod: LASTMOD,
+  lastmod: '2026-10-09',
   body,
 };

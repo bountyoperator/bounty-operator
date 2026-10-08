@@ -30,6 +30,9 @@
  *     stageInputs(files, stages, { focus, context })          -> the same, for stage records
  *     signatureOf(files, extra?)         -> string   identifies the files a run was made on
  *     stageStates(run)                   -> ('waiting' | 'running' | 'done' | 'stopped' | 'failed')[]
+ *     stageEnd(stop)                     -> { status, what, chip? }   how a stage that is not a review ends: Blocked, Declined or Failed
+ *     stopState(stop, done)              -> { failedAt, failedAs }    what a stopped run remembers about that stage
+ *     stageNames(run)                    -> (string | null)[]         the name the strip prints on a stage that did not finish
  *     stageFileName, panelFileName       re-exported from ./dossier.mjs
  *
  * DOM this module owns: #wb-row-gauntlet and everything inside it
@@ -42,6 +45,7 @@ import { parseReview } from '../parse.mjs';
 import { GAUNTLET, reviewProfile } from '../profiles.mjs';
 import { LIMITS, checkInputs, describeFinding } from '../review-core.mjs';
 import { account, currentAccount, planOf, streamReview, subscribeAccount, track } from './api.mjs';
+import { blockOf, blockedCopy, blockedNotice } from './blocked.mjs';
 import {
   VERDICT_LABELS, gauntletResult, openExampleRun, panelFileName, stageFileName, stageLabel, stageRecord, stageStrip, stopsRun,
 } from './dossier.mjs';
@@ -428,11 +432,12 @@ export async function preflight({ feature, showNote, checkKey = true, retry = nu
  * @property {string} provider
  * @property {boolean} force      run past a gate
  * @property {number | null} failedAt  the stage that did not finish
+ * @property {string | null} failedAs  'Blocked' or 'Declined' when that is why it did not finish
  * @property {{ name: string, content: string }[]} sent  the stage files as the last stage received them
  */
 
 function idleRun(signature = '') {
-  return { signature, stages: [], status: 'idle', manifest: [], provider: '', force: false, failedAt: null, sent: [] };
+  return { signature, stages: [], status: 'idle', manifest: [], provider: '', force: false, failedAt: null, failedAs: null, sent: [] };
 }
 
 /** @type {GauntletRun} */
@@ -536,12 +541,14 @@ function paint() {
   row.hidden = via === 'export';
 
   const states = stageStates(run);
+  const names = stageNames(run);
   const strip = stageStrip(GAUNTLET.map((profileId, index) => {
     const stage = run.stages[index];
     return {
       number: index + 1,
       label: stageLabel(profileId),
       state: states[index],
+      failedAs: names[index],
       verdict: stage?.verdict,
       title: stage?.headline || reviewProfile(profileId).tagline,
       onOpen: stage && run.status !== 'running' ? () => openStage(index) : null,
@@ -604,6 +611,77 @@ function gateNote(stage) {
     el('p', { text: `This verdict ends the report, so the run stopped. ${count(left, 'stage')} ${left === 1 ? 'was' : 'were'} not run.` })));
 }
 
+/**
+ * What to say when a stage came back without a review: the provider blocked
+ * it (as an answer or as an error), or the model declined. Null for any other
+ * stop. The earlier stages are kept, and the way on is another model: the same
+ * request to the same model is blocked again, so it never says to ask again.
+ *
+ * @param {{ kind: string, blocked?: string, error?: unknown }} stop
+ * @param {{ at: string, keptLine?: string }} where  `at` reads "stage 3, Prior art"
+ * @returns {{ blocked: string, title: string, context: string, status: string } | null}
+ */
+export function declinedStop(stop, { at, keptLine = '' }) {
+  const blocked = blockedCopy(stop.blocked || stop.error);
+  if (blocked) {
+    return {
+      blocked: blocked.block,
+      title: blocked.title,
+      context: `The run stopped at ${at}.${keptLine} Pick another model above, then resume.`,
+      status: `${blocked.title}: the gauntlet stopped at ${at}.${keptLine} Pick another model, then resume.`,
+    };
+  }
+  if (stop.kind !== 'refused') return null;
+  return {
+    blocked: '',
+    title: `The model declined ${at}`,
+    context: `Its answer is not a stage review.${keptLine} Pick another model above, then resume.`,
+    status: `The model declined ${at}.${keptLine} Pick another model, then resume.`,
+  };
+}
+
+/**
+ * How the live box of a stage that did not become a review ends: its chip and
+ * the words after the stage name. A block and a refusal are named as what
+ * they are; only a stage that broke reads "Failed".
+ *
+ * @param {{ kind: string, blocked?: string, error?: unknown }} stop
+ * @returns {{ status: 'queued' | 'failed', what: string, chip?: string }}
+ */
+export function stageEnd(stop) {
+  if (stop.kind === 'aborted') return { status: 'queued', what: 'stopped' };
+  if (blockOf(stop.blocked || stop.error)) return { status: 'failed', what: 'blocked by the provider', chip: 'Blocked' };
+  if (stop.kind === 'refused') return { status: 'failed', what: 'declined by the model', chip: 'Declined' };
+  return { status: 'failed', what: 'did not finish' };
+}
+
+/**
+ * What a stopped run remembers about the stage it stopped at: which stage
+ * did not finish, and whether that was a block or a refusal. A stage that
+ * never started (the allowance, the plan, a sign-in, the input limits, a
+ * cancel) did not fail, so nothing is marked.
+ *
+ * @param {{ kind: string, blocked?: string, error?: any }} stop
+ * @param {number} done  the stages finished before it
+ * @returns {{ failedAt: number | null, failedAs: string | null }}
+ */
+export function stopState(stop, done) {
+  const started = stop.kind !== 'aborted' && stop.kind !== 'input' && !['daily_used', 'operator_only', 'signin'].includes(stop.error?.code);
+  return started ? { failedAt: done, failedAs: stageEnd(stop).chip ?? null } : { failedAt: null, failedAs: null };
+}
+
+/**
+ * The name the strip prints on each stage: 'Blocked' or 'Declined' on the
+ * stage that stopped for that reason, null everywhere else (a stage that
+ * broke reads Failed, and every other state has its own chip).
+ *
+ * @param {{ status: string, stages: unknown[], failedAt?: number | null, failedAs?: string | null }} run
+ * @returns {(string | null)[]}
+ */
+export function stageNames(run) {
+  return stageStates(run).map((state) => (state === 'failed' ? run.failedAs ?? null : null));
+}
+
 /** Tells the user why the run stopped, and leaves the way on in the row. */
 async function reportStop(stop, request, options) {
   const done = run.stages.length;
@@ -625,9 +703,12 @@ async function reportStop(stop, request, options) {
     say(`${stop.error.message} The earlier stage answers travel with each stage: remove a file to make room.`, { error: true });
     return;
   }
-  if (stop.kind === 'refused') {
-    showNote(notice('warn', `The model declined ${at}`, `A refusal is not counted against the allowance.${keptLine} Resume to ask again, or pick another model above.`));
-    say(`The model declined ${at}.`, { tone: 'warn', hold: true });
+  const declined = declinedStop(stop, { at, keptLine });
+  if (declined) {
+    showNote(declined.blocked
+      ? blockedNotice(stop.blocked || stop.error, { context: declined.context })
+      : notice('warn', declined.title, declined.context));
+    say(declined.status, { tone: 'warn', hold: true });
     return;
   }
   if (stop.kind === 'format') {
@@ -716,6 +797,7 @@ export async function runGauntlet(options = {}) {
   controller = new AbortController();
   run.status = 'running';
   run.failedAt = null;
+  run.failedAs = null;
   run.provider = request.provider;
   workbench.set({ busy: true });
   setBusy(runButton, true, 'Running');
@@ -758,8 +840,8 @@ export async function runGauntlet(options = {}) {
       stop = { kind: error?.code === 'aborted' ? 'aborted' : 'error', error };
       break;
     }
-    if (result.refused) {
-      stop = { kind: 'refused' };
+    if (result.refused || blockOf(result)) {
+      stop = { kind: 'refused', blocked: blockOf(result) };
       break;
     }
 
@@ -807,11 +889,10 @@ export async function runGauntlet(options = {}) {
     run.status = 'gate';
   } else {
     run.status = 'stopped';
-    // A stage that never started (the allowance, the plan, a sign-in, the input limits) did not fail.
-    const started = stop.kind !== 'aborted' && stop.kind !== 'input' && !['daily_used', 'operator_only', 'signin'].includes(stop.error?.code);
-    run.failedAt = started ? run.stages.length : null;
+    Object.assign(run, stopState(stop, run.stages.length));
     const where = `Stage ${run.stages.length + 1} of ${TOTAL} · ${stageLabel(GAUNTLET[run.stages.length])}`;
-    if (live.written) live.end(stop.kind === 'aborted' ? 'queued' : 'failed', `${where} · ${stop.kind === 'aborted' ? 'stopped' : 'did not finish'}`);
+    const ended = stageEnd(stop);
+    if (live.written) live.end(ended.status, `${where} · ${ended.what}`, ended.chip);
     else live.hide();
   }
   persist();

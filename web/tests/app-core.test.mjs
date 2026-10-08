@@ -74,7 +74,7 @@ import { assertNoBannedNames } from './private-lists.mjs';
 const APP_DIR = new URL('../public/app/', import.meta.url);
 const CORE_MODULES = [
   'main.mjs', 'workbench.mjs', 'files.mjs', 'github-ui.mjs', 'providers-ui.mjs',
-  'run.mjs', 'results.mjs', 'source-pane.mjs', 'pasteback.mjs', 'history.mjs',
+  'run.mjs', 'results.mjs', 'source-pane.mjs', 'pasteback.mjs', 'history.mjs', 'blocked.mjs',
 ];
 
 const file = (name, content) => ({ name, content });
@@ -797,6 +797,7 @@ describe('workbench fragment', () => {
       'wb-more-profiles',
       // Built by script inside the containers above.
       'wb-privacy-ack', 'wb-files-toggle', 'wb-source-code', 'wb-upgrade-go', 'wb-upgrade-export', 'wb-run-ack', 'wb-result-tabs', 'wb-export-hosted',
+      'wb-result-actions', 'wb-result-more', 'panel-raw',
       // Owned by other modules or pages.
       'account-button', 'workspace',
     ]);

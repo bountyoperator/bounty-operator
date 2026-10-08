@@ -39,6 +39,7 @@ import { parseReview } from '../parse.mjs';
 import { reviewProfile } from '../profiles.mjs';
 import { PROVIDERS, validateProviderRequest } from '../providers.mjs';
 import { account, currentAccount, planOf, streamReview, subscribeAccount, track } from './api.mjs';
+import { blockOf, blockedCopy, blockedNotice } from './blocked.mjs';
 import { VERDICT_LABELS, openExampleRun, panelFileName, panelResult, seatRecord } from './dossier.mjs';
 import { EVENTS } from './events.mjs';
 import { compactFile, effectiveMode, extraInputs, liveBox, preflight, signatureOf, upgradeNote } from './gauntlet.mjs';
@@ -424,7 +425,7 @@ async function runSeat(seat, index, { state, profile, mode, acknowledge, live, s
         mode,
         acknowledgeWarnings: acknowledge,
       }, { signal, onDelta: live.write });
-      if (result.refused) throw Object.assign(new Error('The model declined to answer.'), { code: 'refused' });
+      if (result.refused || blockOf(result)) throw declined(result);
 
       const record = seatRecord({ number: index + 1, provider: seat.provider, model: seat.model, review: result.review, usage: result.usage, elapsed: Date.now() - began });
       if (!record.verdict) {
@@ -448,7 +449,16 @@ async function runSeat(seat, index, { state, profile, mode, acknowledge, live, s
   }
 }
 
-function failureLine(seat, error, via) {
+/** The error for an answer that is a refusal or a provider block, carrying the block when there is one. */
+function declined(result) {
+  const blocked = blockOf(result);
+  return Object.assign(new Error('The model declined to answer.'), { code: 'refused', ...(blocked ? { blocked } : {}) });
+}
+
+/** One row's reason. A seat the provider blocked names the block and the way on: another model in that seat. */
+export function failureLine(seat, error, via) {
+  const blocked = blockedCopy(error);
+  if (blocked) return `${seat.model}: ${blocked.line} Pick another model for this seat.`;
   if (error?.code === 'refused' || error?.code === 'format') return `${seat.model}: ${error.message}`;
   return `${seat.model}: ${failureFor(error, via).message}`;
 }
@@ -606,7 +616,7 @@ export async function runPanel(options = {}) {
       mode,
       acknowledgeWarnings: acknowledge || inputs.warnings > 0,
     }, { signal, onDelta: merge.write });
-    if (result.refused) failure = Object.assign(new Error('The model declined to answer.'), { code: 'refused' });
+    if (result.refused || blockOf(result)) failure = declined(result);
     else if (!parseReview(result.review).ok) {
       failure = Object.assign(new Error(result.truncated ? 'The answer was cut off before its verdict.' : 'The answer is not in the review format.'), { code: 'format' });
     }
@@ -630,6 +640,12 @@ export async function runPanel(options = {}) {
       note(upgradeNote({ feature: 'panel', plan: plan === 'operator' ? 'free' : plan, kept: keptCount(), used, retry: () => runPanel() }));
       say(`${used ? "Today's free review is used." : 'The panel runs on Operator.'}${keptLine()}`, { tone: 'warn', hold: true });
       qs('#wb-row-panel [data-upgrade]')?.focus();
+      return;
+    }
+    const blocked = blockedCopy(failure);
+    if (blocked) {
+      note(blockedNotice(failure, { context: `The cross-examination by ${judgeSeat.model} was blocked.${keptLine()} Let another model cross-examine.` }));
+      say(`${blocked.title}: the panel stopped at the cross-examination.${keptLine()} Let another model cross-examine.`, { tone: 'warn', hold: true });
       return;
     }
     note(notice('error', 'The cross-examination did not finish', `${failureLine(judgeSeat, failure, via)}${keptLine()} Run it again, or let another model cross-examine.`));

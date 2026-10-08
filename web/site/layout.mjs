@@ -16,8 +16,9 @@ export const SITE = {
   source: 'https://github.com/bountyoperator/bounty-operator',
   support: 'support@bountyoperator.com',
   security: 'security@bountyoperator.com',
-  // The builder's public contest profile.
-  builder: { name: 'Tradi3', url: 'https://audits.sherlock.xyz/watson/Tradi3' },
+  // The builder's public contest profile, and the builder's handle on X for link
+  // previews (twitter:creator). The product has no X account, so no twitter:site.
+  builder: { name: 'Tradi3', url: 'https://audits.sherlock.xyz/watson/Tradi3', x: '@Tradi3_' },
   // Keep in step with --bg in web/public/css/base.css and with web/public/theme.js.
   themeColor: { dark: '#17132e', light: '#fbfbf8' },
 };
@@ -193,6 +194,7 @@ function socialTags(page, canonical) {
 <meta property="og:image:height" content="${height}">`}
 <meta property="og:image:alt" content="${alt}">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:creator" content="${SITE.builder.x}">
 <meta name="twitter:title" content="${title}">
 <meta name="twitter:description" content="${description}">
 <meta name="twitter:image" content="${image}">
@@ -242,10 +244,12 @@ function siteHeader(page, site) {
   });
 
   // The home page hosts the account dialog, so its control is a button the app wires up.
+  // Both ship with the same label, the one a signed-out visitor needs. A page that
+  // loads /app/account.mjs relabels it "Account" once it knows the visitor is signed in.
   const account =
     page.path === '/'
       ? html`<button id="account-button" class="btn btn--secondary btn--sm" type="button">Sign in</button>`
-      : html`<a class="btn btn--secondary btn--sm" href="/#account">Account</a>`;
+      : html`<a class="btn btn--secondary btn--sm" href="/#account">Sign in</a>`;
 
   return html`<header class="site-header">
 <div class="wrap site-header__inner">

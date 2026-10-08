@@ -91,13 +91,19 @@ beats their current workflow.
 
 ## Evidence on Hand
 
-- Leaderboards, read 2026-10-08: 2nd of 135 in Immunefi's Firelight
-  competition; 8th of 65 in Quantus; 15th of 186 in ENS with 23 valid findings,
-  17 Critical, the most Criticals on that board. Links in
+- Leaderboards, read 2026-10-08 (ENS again 2026-10-09): 2nd of 135 in
+  Immunefi's Firelight competition; 8th of 65 in Quantus; 15th of 186 in ENS.
+  ENS credits 23 valid submissions: 1 Chief and 22 duplicates, plus 1 separate
+  Insight. 17 of the 23 are rated Critical (1 High, 4 Medium, 1 Low), the
+  most Critical submissions on that board. Short proof lines say "17 valid
+  Critical submissions in Immunefi's ENS competition, the most of 186
+  researchers"; this fuller sentence stays here and in the README. Links in
   `web/site/pages/method/_shared.mjs`. These are the builder's results, not
   results of the tool.
 - Paydirt benchmark release 2026-10: 22 models on 18 held pairs
-  (`web/public/bench/2026-10.json`). Frozen; never regraded.
+  (`web/public/bench/2026-10.json`). Frozen; never regraded. /benchmark ranks
+  the models on the raw arm, the model alone. The release's profile arms stay
+  in the results file and are not shown as a comparison on the site.
 - Saved examples: `web/public/example.mjs` (Tessera Staking, an invented
   protocol: a draft claiming Critical cut to Medium with file-and-line citations;
   a confirmed Critical). Render through `web/site/social/example.mjs`.

@@ -34,8 +34,9 @@
   }
 }
 
+/* 24 characters of the page-head cut, in em (24 x 0.516em), so the measure does not move when the webfont lands. */
 .tool-head h1 {
-  max-width: 24ch;
+  max-width: 12.384em;
   font-size: clamp(2.25rem, 1.3rem + 3.2vw, 3.75rem);
   font-stretch: 76%;
   font-weight: 860;

@@ -423,6 +423,59 @@ test('run_review sends the files and the key from the environment, and returns t
   assert.ok(!wire.includes(TOKEN));
 });
 
+test('run_review declares and preserves a refused or blocked review, and says what it means', async () => {
+  const review = "This request triggered restrictions on violative cyber content and was blocked under Anthropic's Usage Policy. To learn more, see https://platform.claude.com/docs/en/build-with-claude/refusals-and-fallback.";
+  const { call } = server();
+  const described = (await call('tools/list')).result.tools.find((entry) => entry.name === 'run_review');
+  assert.deepEqual(described.outputSchema.properties.refused, { type: 'boolean', description: 'True when the model or the provider declined. The text is then not a review.' });
+  assert.deepEqual(described.outputSchema.properties.blocked, {
+    type: 'string',
+    description: 'Set when the provider blocked the review under its usage policy: anthropic-cyber, openai-cyber or policy. A blocked review is never counted.',
+  });
+  assert.match(described.description, /Uses one hosted review\. A review the provider blocks under its usage policy comes back with refused true and blocked naming the block, or fails with code provider_policy: neither is counted\. A model that declines in its own words comes back with refused true\. Refused text is not a review: do not present it as one and do not run the same model again\./);
+
+  for (const [extra, blocked] of [
+    [{ refused: true, blocked: 'anthropic-cyber' }, 'anthropic-cyber'],
+    [{ refused: true, blocked: 'openai-cyber' }, 'openai-cyber'],
+    [{ refused: true, blocked: 'policy' }, 'policy'],
+    [{ refused: true }, undefined],
+  ]) {
+    const api = reviewApi(review, extra);
+    const result = await server({ fetch: api.fetch, env: HOSTED_ENV }).tool('run_review', { files: [{ name: 'a.sol', content: VAULT }], provider: 'openrouter', model: 'm' });
+    assert.equal(result.isError, false);
+    assert.equal(result.structuredContent.refused, true);
+    assert.equal(result.structuredContent.blocked, blocked);
+    assert.equal(result.structuredContent.verdict, '', 'a refused answer carries no verdict');
+    assert.match(result.structuredContent.review, /^This request triggered restrictions on violative cyber content/);
+    assert.deepEqual(result.structuredContent.allowance, USAGE, 'the allowance is read after the call, so the agent sees it was not used');
+    assert.equal(api.calls.filter((entry) => entry.path === '/api/client/review').length, 1, 'never retried');
+  }
+});
+
+test('run_review passes on a policy block the provider sent as an error, with its own code', async () => {
+  const sentence = "Provider blocked this request under OpenAI's cyber usage policy (cyber_policy, HTTP 400), so no review was written; the API key is not the cause. It was not counted against your allowance.";
+  const blocked = fakeFetch({
+    'POST /api/client/review': () => ({ status: 502, body: { kind: 'policy', blocked: 'openai-cyber', detail: 'This request was flagged.', error: sentence, code: 'provider_policy' } }),
+  });
+  const result = await server({ fetch: blocked.fetch, env: { ...HOSTED_ENV, OPENAI_API_KEY: PROVIDER_KEY } }).tool('run_review', { files: [{ name: 'a.sol', content: VAULT }], provider: 'openai', model: 'gpt-6.1-sol' });
+  assert.equal(result.isError, true);
+  assert.deepEqual(failure(result), { kind: 'policy', blocked: 'openai-cyber', detail: 'This request was flagged.', error: sentence, code: 'provider_policy' });
+  assert.equal(blocked.calls.length, 1, 'one request: a blocked review is not sent again');
+});
+
+test('the gauntlet prompt and plan tell the agent what to do with a refused or blocked stage', async () => {
+  const { call, tool } = server();
+  const prompt = (await call('prompts/get', { name: 'gauntlet', arguments: {} })).result.messages[0].content.text;
+  assert.match(prompt, /If run_review returns refused or blocked, or fails with code provider_policy, the provider or the model declined\. Do not present the text as a review\. Tell me a blocked review was not counted against my allowance\. Do not call run_review again with the same model: offer another model or provider, or prepare_review for a core profile, which you answer yourself\./);
+  // The step sits before the gate on drop and hold-duplicate, and the numbering has no gap.
+  assert.deepEqual(prompt.match(/^\d+\./gm), ['1.', '2.', '3.', '4.', '5.', '6.', '7.', '8.', '9.', '10.']);
+  assert.ok(prompt.indexOf('provider_policy') < prompt.indexOf('drop or hold-duplicate'));
+
+  const plan = (await tool('run_gauntlet_plan')).structuredContent;
+  const step = plan.steps.find((entry) => entry.includes('provider_policy'));
+  assert.equal(step, 'When run_review returns refused or blocked, or fails with code provider_policy, the provider or the model declined. Do not present the text as a review and do not keep it as a stage review. Say that a blocked review was not counted against the allowance. Do not call run_review again with the same model: ask for another model or provider, then run that stage again.');
+});
+
 test('run_review takes the model from BOUNTY_OPERATOR_MODEL, and asks for one when neither is given', async () => {
   const files = [{ name: 'a.sol', content: VAULT }];
 
@@ -658,7 +711,7 @@ test('run_gauntlet_plan lays out the eight stages in order, and the call that en
 
   assert.equal(plan.hosted.stages, 7);
   assert.match(plan.hosted.needs, /7 of the 8 stages run on the Bounty Operator server through run_review/);
-  assert.equal(plan.steps.length, 10);
+  assert.equal(plan.steps.length, 11);
   assert.match(plan.steps.join('\n'), /drop or hold-duplicate/);
   assert.match(plan.steps.join('\n'), /which provider and model/);
   assert.deepEqual(plan.verdicts, ['submit', 'rewrite-then-submit', 'prove-first', 'hold-duplicate', 'drop']);

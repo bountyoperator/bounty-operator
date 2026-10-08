@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { afterEach, beforeEach, describe, test } from 'node:test';
 
-import { REASONS, headerControl, onAccountChange, reasonText, requireSignIn } from '../public/app/account.mjs';
+import { REASONS, capabilityMessage, headerControl, inAppBrowser, onAccountChange, reasonText, requireSignIn } from '../public/app/account.mjs';
 import { ApiError, currentAccount, refreshAccount } from '../public/app/api.mjs';
 import {
   OPERATOR_ACTIVE,
@@ -756,6 +756,99 @@ const read = (path) => readFileSync(new URL(path, import.meta.url), 'utf8');
 const MODULES = ['account.mjs', 'portal.mjs', 'billing-ui.mjs', 'passkey.mjs'];
 const sources = Object.fromEntries(MODULES.map((name) => [name, read(`../public/app/${name}`)]));
 const css = read('../public/css/account.css');
+
+// ---------------------------------------------------------------------------
+// Passkeys inside an in-app browser
+// ---------------------------------------------------------------------------
+
+// User agents in the form each app and browser sends. The app tokens are what
+// the detection keys on; the version numbers are examples.
+const IOS = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko)';
+const ANDROID_WEBVIEW = 'Mozilla/5.0 (Linux; Android 14; Pixel 8 Build/AP2A.240705.005; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/126.0.6478.134 Mobile Safari/537.36';
+const IN_APP_AGENTS = [
+  ['X', `${IOS} Mobile/15E148 Twitter for iPhone/10.50`],
+  ['X', `${IOS.replace('iPhone; CPU iPhone OS', 'iPad; CPU OS')} Mobile/15E148 Twitter for iPad/10.50`],
+  ['X', `${ANDROID_WEBVIEW} TwitterAndroid`],
+  ['Facebook', `${IOS} Mobile/21F90 [FBAN/FBIOS;FBAV/471.0.0.36.103;FBBV/617042697;FBDV/iPhone15,3;FBMD/iPhone;FBSN/iOS;FBSV/17.5.1;FBSS/3;FBID/phone;FBLC/en_US;FBOP/5;FBRV/619531393]`],
+  ['Facebook', `${ANDROID_WEBVIEW} [FB_IAB/FB4A;FBAV/470.0.0.37.109;]`],
+  ['Facebook', `${IOS} Mobile/21F90 [FBAN/MessengerForiOS;FBAV/465.0.0.38.105;FBBV/612458113;FBDV/iPhone15,3;FBMD/iPhone;FBSN/iOS;FBSV/17.5.1;FBSS/3;FBCR/;FBID/phone;FBLC/en_US;FBOP/5]`],
+  ['Instagram', `${IOS} Mobile/15E148 Instagram 337.0.2.24.86 (iPhone15,3; iOS 17_5_1; en_US; en; scale=3.00; 1290x2796; 614840153)`],
+  ['Instagram', `${ANDROID_WEBVIEW} Instagram 338.0.0.47.90 Android (34/14; 420dpi; 1080x2400; Google/google; Pixel 8; shiba; shiba; en_US; 618537213)`],
+  ['LinkedIn', `${IOS} Mobile/15E148 [LinkedInApp]/9.29.8436`],
+  ['LinkedIn', `${ANDROID_WEBVIEW} [LinkedInApp]`],
+  ['TikTok', `${IOS} Mobile/15E148 musical_ly_35.3.0 JsSdk/2.0 NetType/WIFI Channel/App Store ByteLocale/en Region/US isDarkMode/1 WKWebView/1 RevealType/Dialog BytedanceWebview/d8a21c6`],
+  ['TikTok', `${ANDROID_WEBVIEW} trill_2023503040 JsSdk/1.0 NetType/WIFI Channel/googleplay AppName/trill app_version/35.3.4 ByteLocale/en ByteFullLocale/en Region/MY AppId/1180 BytedanceWebview/d8a21c6`],
+  ['TikTok', `${IOS} Mobile/15E148 TikTok 35.3.0 rv:353024 (iPhone; iOS 17.5.1; en_US) Cronet`],
+];
+const BROWSER_AGENTS = [
+  // Safari on iPhone, iPad and Mac.
+  `${IOS} Version/17.5 Mobile/15E148 Safari/604.1`,
+  'Mozilla/5.0 (iPad; CPU OS 17_5_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1',
+  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Safari/605.1.15',
+  // Chrome on Android, iPhone, Windows and Mac.
+  'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36',
+  `${IOS} CriOS/126.0.6478.153 Mobile/15E148 Safari/604.1`,
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
+  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
+  // Other browsers a visitor may have.
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:127.0) Gecko/20100101 Firefox/127.0',
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36 Edg/126.0.0.0',
+  'Mozilla/5.0 (Linux; Android 14; SAMSUNG SM-S918B) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/25.0 Chrome/121.0.0.0 Mobile Safari/537.36',
+  `${IOS} FxiOS/127.0 Mobile/15E148 Safari/605.1.15`,
+  // The crawlers that build link previews are not in-app browsers.
+  'Twitterbot/1.0',
+  'facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)',
+  'LinkedInBot/1.0 (compatible; Mozilla/5.0; Apache-HttpClient +http://www.linkedin.com)',
+];
+
+describe('passkeys inside an in-app browser', () => {
+  test('each app that opens links in its own browser is recognised', () => {
+    for (const [app, agent] of IN_APP_AGENTS) assert.equal(inAppBrowser(agent), app, agent);
+  });
+
+  test('Safari, Chrome, other browsers and preview crawlers are never taken for one', () => {
+    for (const agent of BROWSER_AGENTS) assert.equal(inAppBrowser(agent), '', agent);
+    for (const value of [undefined, null, '', 42, {}]) assert.equal(inAppBrowser(value), '');
+  });
+
+  test('without WebAuthn the dialog says so in one sentence and sends the visitor to Safari or Chrome, with the link to copy', () => {
+    const none = { webauthn: false, platform: false };
+    assert.deepEqual(capabilityMessage(none, BROWSER_AGENTS[0]), {
+      tone: 'warn',
+      title: 'This browser cannot use passkeys.',
+      body: 'Open this page in Safari or Chrome to create your account or sign in.',
+      copyLink: true,
+    });
+    for (const [app, agent] of IN_APP_AGENTS) {
+      assert.deepEqual(capabilityMessage(none, agent), {
+        tone: 'warn',
+        title: `${app}'s in-app browser cannot use passkeys.`,
+        body: 'Open this page in Safari or Chrome to create your account or sign in.',
+        copyLink: true,
+      });
+    }
+  });
+
+  test('inside an in-app browser the hint shows before anything fails, and blocks nothing', () => {
+    for (const capability of [{ webauthn: true, platform: true }, { webauthn: true, platform: false }]) {
+      for (const [app, agent] of IN_APP_AGENTS) {
+        assert.deepEqual(capabilityMessage(capability, agent), {
+          tone: 'info',
+          title: `You are in ${app}'s in-app browser.`,
+          body: 'If no passkey prompt appears, open this page in Safari or Chrome.',
+          copyLink: true,
+        });
+      }
+    }
+  });
+
+  test('a browser where passkeys work gets no notice, and one with no provider keeps its own', () => {
+    for (const agent of BROWSER_AGENTS) assert.equal(capabilityMessage({ webauthn: true, platform: true }, agent), null);
+    const noProvider = capabilityMessage({ webauthn: true, platform: false }, BROWSER_AGENTS[3]);
+    assert.deepEqual([noProvider.tone, noProvider.title, noProvider.copyLink], ['info', 'No passkey provider is set up on this device.', false]);
+    assert.equal(capabilityMessage({ webauthn: true, platform: true }, undefined), null);
+  });
+});
 
 describe('fragment', () => {
   const markup = String(accountDialog());

@@ -12,7 +12,7 @@ node bench/bench.mjs plan     [--tier 1|2|3 | --models a,b] [--arms raw,solidity
                               [--budget-usd X] [--order tier|cost] [--json <file>]
 node bench/bench.mjs run      [--tier 1|2|3 | --models a,b] [--repeats N] [--arms ...] [--cases <glob>]
                               [--concurrency N] [--max-usd X] [--run-budget-usd X] [--max-minutes N] [--run-id <id>]
-                              [--per-model N] [--stagger-ms N] [--floor-usd X] [--redo error,timeout]
+                              [--per-model N] [--stagger-ms N] [--floor-usd X] [--redo error,timeout,blocked]
                               [--gen-stats ends|all|off] [--dry-run] [--no-lint] [--allow-core-change]
 node bench/bench.mjs score    [--run-id <id>] [--models a,b] [--cases <glob>] [--repeats N] [--out <file>] [--any-protocol]
 node bench/bench.mjs publish  [--run-id <id>] [--release <name>] [--out-dir <dir>] [--salts <file>] [--allow-incomplete]
@@ -193,11 +193,40 @@ Every command that starts `omp` (`plan`, `run`, `selftest`) reads the two settin
 | `unparseable`, `empty` | the model stopped without a readable answer sheet | yes |
 | `truncated` | stop reason `length` | yes |
 | `timeout` | the time limit was reached after the model had started answering | yes |
-| `error` | a provider error that is the model's own (for example a content filter) | yes |
+| `error` | a provider error that is the model's own (for example a request over the context window) | yes |
+| `blocked` | the provider or its safety layer declined the request, so there is no answer from the model to score (see "Blocked runs") | yes |
 | `infra` | rate limit, 5xx, network, a timeout before any output, a failed harness check (including a request without the routing block) | no: retried on the next `run` |
 | `missing` | the run was never made | no |
 
-Final failures count as wrong and are never re-rolled unless `--redo <kind>` names them. `infra` and `missing` also count as wrong in `score`, mark the model `[incomplete]`, and block `publish`.
+Final failures count as wrong and are never re-rolled unless `--redo <kind>` names them. `blocked` is the exception: it is final and is not a wrong answer (next section). `infra` and `missing` also count as wrong in `score`, mark the model `[incomplete]`, and block `publish`.
+
+## Blocked runs
+
+A run is `blocked` when the provider or its safety layer declined the request and no model judgment exists. The rule is in `lib/runs.mjs` (`policyNotice`, `classifyError`, `classifyRun`). Three signals make a run blocked, and nothing else does:
+
+1. **The notice as the answer.** The run stopped normally, and its final text, trimmed, is at most 800 characters, starts with `This request triggered restrictions on violative cyber content and was blocked under Anthropic's Usage Policy.` and holds no answer sheet. The match is on that opening sentence only, because Anthropic documents the rest of the text as not stable.
+2. **The stop reason.** `refusal` or `content_filter`.
+3. **A policy error.** The error text carries the code `cyber_policy` or `content_policy_violation`, `error_type` `refusal`, or the wording of the notice; or the status is 403 and the text says `moderation`, `flagged`, `guardrail`, `usage policy` or `content filter`. This is checked after the credit, key, missing-model and account-gate checks and before the infrastructure pattern, so a 403 that wraps a refusal as "Provider returned error" is not retried as a network fault.
+
+Not blocked: an answer longer than 800 characters that opens with or quotes the notice, a notice followed by an answer sheet, a 403 without policy wording (a key or permission failure), and refusal prose such as "I can't help with that". Prose has no bounded form to match and a real answer can quote it; it is scored like any other answer and usually comes out `unparseable`.
+
+A blocked run is final: it is not retried, does not halt the model, and does not count toward the four consecutive provider errors that do. `meta.json` stores `failure: "blocked"` and, in `failure_detail`, `<vendor>-<category>`: `anthropic-cyber`, `openai-cyber_policy`, `google-content_policy_violation`, `anthropic-refusal`, `x-ai-moderation`. The vendor is the one in the model's slug. `run` prints the line as `BLOCKED`. To make the blocked runs again, for instance after the account was approved for a provider's access programme, pass `--redo blocked`.
+
+Scoring (`lib/score.mjs`, `BLOCKED`):
+
+- A blocked input is not a wrong answer. It is counted in a field of its own: `blocked` on each arm and on the model, and `pairs_blocked` on each arm (pairs with no result in any repeat) and on each lift.
+- It is left out of every accuracy denominator. A pair has no result in a repeat where either twin was blocked, so that repeat's score is taken over the remaining pairs. A pair is judged by majority over the repeats in which it has a result, and a pair blocked in every repeat leaves the majority score and its interval. `recall`, `fools_gold`, `decoy_rate`, `false_reject`, `challenge_ba`, `failure` and `truncated` are taken over the inputs that were not blocked.
+- A profile lift is paired on the pairs that have a result on both arms. A pair blocked on either arm is left out, and the lift's `n_pairs` and `pairs_blocked` say how many were compared and how many were not.
+- `runs`, `runs_expected`, cost and latency still include blocked runs. A blocked run does not make a model incomplete and does not hold `publish` back.
+- An arm, a family or a lift with no pair left has `null` for its score. A model whose headline arm has none is not ranked.
+
+These fields are written only when the results hold at least one blocked outcome. A results file without one is byte for byte what the scorer wrote before the rule existed, and `verify` recomputes it unchanged.
+
+`score` and `verify` never classify a stored run again: they go by the `failure` in its `meta.json`. The 2026-10 release was run before this rule. Five of its answers are the notice; they are stored as `unparseable` and stay scored as wrong answers, exactly as published. `tools/sweep-stray.mjs` leaves a stored `error` alone when today's rules would read it as a block.
+
+When a release has blocked runs, say next to its table which access programmes the benchmark account was approved for; `--release-notes` takes that sentence under `notes`.
+
+`tools/product-lift.mjs` uses the same name for the same thing: a call the provider blocked is `blocked`, is not a failed call, and its pair leaves the change, both lifts and the list of flips. A request the product's own privacy check refused, which is never sent, is `privacy_block`.
 
 If a release intentionally includes unresolved inputs, `publish --allow-incomplete` retains their outcomes but leaves those models unranked. Only complete arms can supply recommendations or profile comparisons. `--release-notes` supplies a JSON object with `not_run` reasons and a `notes` array; the default is `bench/release-notes/<release>.json`. `--harness-commit` records the public commit containing the harness used to prepare the release.
 
@@ -213,7 +242,7 @@ Profile arms take the product's system message from `web/public/review-core.mjs`
 node --test bench/tests
 ```
 
-Offline. They cover answer-sheet extraction, scoring rules on hand-built fixtures, the seeded statistics, lint on the fixture cases, resume-key stability, the runner against a stand-in `omp` (clean environment, the routing file and its check, retries, hard kill of the process tree), the pin of `omp` in the env file, the budget plan and its run order, the difficulty probe against a stand-in model, the selection rule, the sets and the commitments, the time window and the run budget of the runner, and a full score, publish, verify round trip including the practice set.
+Offline. They cover answer-sheet extraction, scoring rules on hand-built fixtures, the seeded statistics, lint on the fixture cases, resume-key stability, the runner against a stand-in `omp` (clean environment, the routing file and its check, retries, hard kill of the process tree), the pin of `omp` in the env file, the budget plan and its run order, the difficulty probe against a stand-in model, the selection rule, the sets and the commitments, the time window and the run budget of the runner, a full score, publish, verify round trip including the practice set, and the blocked rule (`tests/blocked.test.mjs`: every signal, the answers that must not match, the scoring rules, the runner, and a publish and verify round trip with a blocked run and with the same answer stored as `unparseable`).
 
 No test can start a real `omp`: the tests that call `run` to see it refuse give it a `PAYDIRT_OMP` that does not exist, so a refusal that broke would end at "omp not found" and not at a paid run with the key and the pin of `.local/benchmark.env`.
 

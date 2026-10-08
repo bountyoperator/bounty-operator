@@ -91,7 +91,7 @@ For a hosted profile:
 
 - `list_profiles` returns it with `hosted: true`.
 - `prepare_review` fails with the code `hosted_profile` before any file is read.
-- `run_review` runs it and uses one hosted review. The two profiles no list shows, `verdict` and `panel`, are the last step of the gauntlet and of a panel review: they run on Operator only.
+- `run_review` runs it and uses one hosted review. A review the provider blocks under its usage policy is not counted. The two profiles no list shows, `verdict` and `panel`, are the last step of the gauntlet and of a panel review: they run on Operator only.
 
 ```json
 {
@@ -137,6 +137,8 @@ A run uses seven hosted reviews. Free covers one hosted review per UTC day, so a
 ## Hosted reviews
 
 `run_review` runs any profile on a provider's model with your own API key and returns the review checked. It is the only way to run a hosted profile from an agent. It uses the same allowance as the website: one hosted review per UTC day on Free, any profile, and unlimited on Operator at US$10 per week.
+
+Three result fields say when the text is not a review. `truncated` is true when the provider cut the answer short. `refused` is true when the model or the provider declined. `blocked` is set when the provider blocked the review under its usage policy (`anthropic-cyber`, `openai-cyber` or `policy`); a blocked review is never counted. After a refusal or a block, do not call again with the same model: use another model or provider, or `prepare_review` for a core profile.
 
 1. Sign in at [bountyoperator.com](https://bountyoperator.com/#account) and create a connection in the account panel. The token starts with `bok_` and is shown once.
 2. Start the server with the token and one provider key in its environment.
@@ -189,7 +191,8 @@ A failed call returns `isError` with one JSON object: `error`, a sentence the ag
 | `daily_used` | The free review of the day is used. The result carries `resetsAt`. |
 | `operator_only` | `run_review` was called with `verdict` or `panel` on an account without Operator. Nothing was sent to the provider and the review of the day is not used. |
 | `review_running` | The account is running as many reviews as its plan allows. |
-| `provider` | The provider refused the call or timed out. The review is not counted. |
+| `provider` | The provider rejected the key or the model, had no credit, failed or timed out. The review is not counted. |
+| `provider_policy` | The provider blocked the request under its usage policy. The key is not the cause and the review is not counted. Call again with another model or provider, not the same one. |
 | `output_withheld` | The model repeated its instructions instead of reviewing, so the answer was stopped and the call used one review. Run it again or choose a stronger model. |
 | `bad_path`, `bad_root` | A path cannot be read under the working directory, or the working directory itself cannot be used. |
 | `network`, `timeout`, `cancelled` | The service was not reached, did not answer within 300 seconds, or the client cancelled the call. |
@@ -199,9 +202,9 @@ A failed call returns `isError` with one JSON object: `error`, a sentence the ag
 The tarball on the site is listed with its SHA-256 at `https://bountyoperator.com/dl/SHA256SUMS.txt`.
 
 ```bash
-curl -sO https://bountyoperator.com/dl/bounty-operator-mcp-0.8.1.tgz
+curl -sO https://bountyoperator.com/dl/bounty-operator-mcp-0.8.2.tgz
 curl -s https://bountyoperator.com/dl/SHA256SUMS.txt | sha256sum -c --ignore-missing
-npx -y file:$PWD/bounty-operator-mcp-0.8.1.tgz --version
+npx -y file:$PWD/bounty-operator-mcp-0.8.2.tgz --version
 ```
 
 Start a downloaded tarball with the `file:` prefix and its absolute path. npm reads a bare path as a command to run.

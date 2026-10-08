@@ -401,3 +401,55 @@ test('the MCP page shows how to add Immunefi Studio’s own MCP server next to t
   assert.match(mcp, /The gauntlet writes a case to your Studio workspace only when you say yes\./);
   assert.match(rendered.get('/mcp'), /href="https:\/\/studio\.immunefi\.com\/agents"/);
 });
+
+test('the guide says what to do when the model refuses, at #model-refuses, with the same text in its structured data', () => {
+  const markup = rendered.get('/guide');
+  const start = markup.indexOf('<h2 class="docs-section__title" id="model-refuses">When the model refuses</h2>');
+  assert.ok(start > 0, 'the section and its anchor');
+  assert.match(markup, /<li><a href="#model-refuses">When the model refuses<\/a><\/li>/, 'listed under On this page');
+  const section = markup.slice(start, markup.indexOf('</section>', start));
+  // A link joins its words to the sentence around it, as it does on the page.
+  const text = textOf(section.replace(new RegExp('</?a(?=[ >])[^>]*>', 'g'), ''));
+
+  // What works today comes before any programme.
+  const order = ['Run it again on another model or provider.', 'Cyber Verification Program', 'Trusted Access for Cyber', 'An approval reduces blocks. It does not remove them.'];
+  const positions = order.map((needle) => text.indexOf(needle));
+  assert.ok(positions.every((position) => position > 0), `missing: ${order.filter((_, index) => positions[index] < 0).join(', ')}`);
+  assert.deepEqual([...positions].sort((a, b) => a - b), positions);
+
+  for (const sentence of [
+    'Bounty Operator tells you when a provider blocked a review. A blocked review is never counted.',
+    'Bug bounty hunters apply as individuals for Defense Access, on a paid plan, at portal.anthropic.com/programs.',
+    'Anthropic aims to answer within seven business days.',
+    'The programme has its own rules for API keys: read them before you use a granted key in any tool.',
+    'On OpenAI, Trusted Access for Cyber grants Daybreak access. Individuals request it at chatgpt.com/cyber.',
+  ]) {
+    assert.ok(text.includes(sentence), sentence);
+  }
+  // Said once each.
+  assert.equal(text.split('never counted').length - 1, 1);
+  assert.equal(text.split('reduces blocks').length - 1, 1);
+
+  // Only the links read at their primary source, each opening in a new tab.
+  const links = [...section.matchAll(/<a href="([^"]+)"([^>]*)>/g)];
+  assert.deepEqual(links.map((match) => match[1]), [
+    'https://support.claude.com/en/articles/14604842-cyber-verification-program',
+    'https://portal.anthropic.com/programs',
+    'https://support.claude.com/en/articles/17202708-cyber-verification-program-security-requirements',
+    'https://chatgpt.com/cyber',
+  ]);
+  for (const match of links) assert.match(match[2], /target="_blank" rel="noopener noreferrer"/, match[1]);
+
+  // No promise the programmes do not make, and no other provider's programme.
+  for (const pattern of [/guarantee/i, /unlock/i, /Red Team/i, /Daybreak (?:Blue|Red)/, /Fairwind/i, /\bmay\b/i, /\bmight\b/i, /—/]) {
+    assert.doesNotMatch(text, pattern, String(pattern));
+  }
+
+  const blocks = scanTags(markup).filter((tag) => tag.name === 'script' && tag.attributes.get('type') === 'application/ld+json').map((tag) => JSON.parse(tag.content));
+  const faq = blocks.find((block) => block['@type'] === 'FAQPage');
+  assert.equal(faq.mainEntity.length, 1);
+  assert.equal(faq.mainEntity[0].name, 'When the model refuses');
+  assert.ok(text.includes(faq.mainEntity[0].acceptedAnswer.text), 'the answer in the structured data is the visible text');
+  const article = blocks.find((block) => block['@type'] === 'TechArticle');
+  assert.equal(article.dateModified, '2026-10-09');
+});

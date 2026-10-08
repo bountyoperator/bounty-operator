@@ -8,9 +8,9 @@
 // Foundry; the output shown is that run.
 
 import { button, chip, codeBlock, disclosure, html, inline, link, verdictChip } from '../../components.mjs';
-import { SITE, absoluteUrl, breadcrumbsLd } from '../../layout.mjs';
+import { SITE, absoluteUrl, breadcrumbsLd, faqPageLd } from '../../layout.mjs';
 import { CHECKS, checksRunLine } from '../method/_shared.mjs';
-import { DOCS_STYLES, UPDATED, checklist, docPage, nextStep } from './_shared.mjs';
+import { DOCS_STYLES, UPDATED, checklist, docPage, ext, nextStep } from './_shared.mjs';
 
 const PATH = '/guide';
 const TITLE = 'Bug bounty report guide';
@@ -20,6 +20,9 @@ const DESCRIPTION =
 const FIRELIGHT = 'https://immunefi.com/audit-competition/audit-comp-firelight-1/leaderboard/';
 const QUANTUS = 'https://immunefi.com/audit-competition/audit-comp-quantus/leaderboard/';
 const ENS = 'https://immunefi.com/audit-competition/audit-competition-ens/leaderboard/';
+
+/** The day this page's own text last changed. UPDATED is the legal pages' date and stays the publication date. */
+const GUIDE_UPDATED = '2026-10-09';
 
 // ---------------------------------------------------------------------------
 // The worked example
@@ -346,10 +349,34 @@ const evidence = html`
 ${checklist(EVIDENCE.map((item) => html`<p>${item}</p>`), { className: 'checklist--columns' })}`;
 
 // ---------------------------------------------------------------------------
+// When the model refuses
+// ---------------------------------------------------------------------------
+
+// Every name and link here was read at its primary source on 9 October 2026:
+// Anthropic's Help Center article on the Cyber Verification Program and its
+// security requirements, and OpenAI's cyber safety documentation. Read them
+// again before changing a word. The app links to this section as
+// /guide#model-refuses.
+const CVP = 'https://support.claude.com/en/articles/14604842-cyber-verification-program';
+const CVP_PORTAL = 'https://portal.anthropic.com/programs';
+const CVP_KEY_RULES = 'https://support.claude.com/en/articles/17202708-cyber-verification-program-security-requirements';
+const OPENAI_CYBER = 'https://chatgpt.com/cyber';
+
+const REFUSES = {
+  q: 'When the model refuses',
+  a: html`<p>Some providers screen security work before the model answers. Anthropic’s newest Claude models block most of it by default, and OpenAI’s newer models can return a cyber policy error. A report about an exploit reads the same to a filter whether you found the bug or plan to use it.</p>
+<p>Bounty Operator tells you when a provider blocked a review. A blocked review is never counted.</p>
+<p>Run it again on another model or provider. That works today and needs no approval.</p>
+<p>For fewer blocks on your own Anthropic account, apply to the ${ext('Cyber Verification Program', CVP)}. Bug bounty hunters apply as individuals for Defense Access, on a paid plan, at ${ext('portal.anthropic.com/programs', CVP_PORTAL)}. Anthropic aims to answer within seven business days. The programme has ${ext('its own rules for API keys', CVP_KEY_RULES)}: read them before you use a granted key in any tool.</p>
+<p>On OpenAI, Trusted Access for Cyber grants Daybreak access. Individuals request it at ${ext('chatgpt.com/cyber', OPENAI_CYBER)}.</p>
+<p>An approval reduces blocks. It does not remove them.</p>`,
+};
+
+// ---------------------------------------------------------------------------
 // Page
 // ---------------------------------------------------------------------------
 
-const record = html`<p>Twelve checks, distilled from 105 real case files across five platforms. The wins and the closures. Built by Tradi3: ${link({ label: '2nd of 135 in Immunefi’s Firelight competition', href: FIRELIGHT, external: true })}, ${link({ label: '8th of 65 in Quantus', href: QUANTUS, external: true })} and ${link({ label: '15th of 186 in ENS, with 17 valid Criticals, the most on the board', href: ENS, external: true })}.</p>`;
+const record = html`<p>Twelve checks, distilled from 105 real case files across five platforms. The wins and the closures. Built by Tradi3: ${link({ label: '2nd of 135 in Immunefi’s Firelight competition', href: FIRELIGHT, external: true })}, ${link({ label: '8th of 65 in Quantus', href: QUANTUS, external: true })} and ${link({ label: '15th of 186 in ENS, with 17 valid Critical submissions, the most on the board', href: ENS, external: true })}.</p>`;
 
 const body = docPage({
   head: {
@@ -365,6 +392,8 @@ const body = docPage({
     { id: 'checks', title: 'The twelve checks', body: checks, prose: false },
     { id: 'order', title: 'The order to work in', label: 'Order of work', body: order, prose: false },
     { id: 'evidence', title: 'Evidence to collect before you write', label: 'Evidence to collect', body: evidence, prose: false },
+    // A section, not a folded answer: a visitor sent here by a blocked review reads it without opening anything.
+    { id: 'model-refuses', title: REFUSES.q, body: REFUSES.a },
   ],
   after: nextStep({
     title: 'Find the hole before the triager does',
@@ -381,7 +410,7 @@ const articleLd = {
   url: absoluteUrl(PATH),
   mainEntityOfPage: absoluteUrl(PATH),
   datePublished: UPDATED,
-  dateModified: UPDATED,
+  dateModified: GUIDE_UPDATED,
   author: { '@type': 'Organization', name: SITE.builder.name, url: SITE.builder.url },
   publisher: { '@type': 'Organization', name: SITE.name, url: `${SITE.origin}/` },
 };
@@ -395,7 +424,7 @@ export default {
   og: { type: 'article' },
   styles: DOCS_STYLES,
   scripts: ['/docs/handoff.mjs'],
-  jsonld: [breadcrumbsLd([{ name: 'Report guide', path: PATH }]), articleLd],
-  lastmod: UPDATED,
+  jsonld: [breadcrumbsLd([{ name: 'Report guide', path: PATH }]), articleLd, faqPageLd([REFUSES])],
+  lastmod: GUIDE_UPDATED,
   body,
 };

@@ -9,16 +9,23 @@ import { STYLES, ctaBand, pageHero, points, relatedLinks, workbenchLink } from '
 
 const PATH = '/invalid-report-costs';
 const CHECKED = 'checked 7 October 2026';
+// Bugcrowd changed its limits on 8 October 2026; its three sources were read again on this date.
+const CHECKED_BUGCROWD = 'checked 9 October 2026';
 
 const SOURCES = [
   { n: 1, label: 'HackerOne Help Center, “Reputation”', href: 'https://docs.hackerone.com/en/articles/8369865-reputation', date: `dated 1 December 2025, ${CHECKED}` },
   { n: 2, label: 'HackerOne, “Code of Conduct”', href: 'https://www.hackerone.com/policies/code-of-conduct', date: CHECKED },
-  { n: 3, label: 'Bugcrowd Docs, “Submission Limits for MBB Programs”', href: 'https://docs.bugcrowd.com/changelog/researchers/submissions-throttling/', date: `dated 4 May 2026, ${CHECKED}` },
+  {
+    n: 3,
+    label: 'Bugcrowd Docs, “Submission Limit”',
+    href: 'https://docs.bugcrowd.com/researchers/reporting-managing-submissions/reporting-a-bug/submissions-limit/',
+    date: `updated 8 October 2026, ${CHECKED_BUGCROWD}`,
+  },
   {
     n: 4,
     label: 'Bugcrowd, “Bugcrowd policy changes to address AI slop submissions”',
     href: 'https://www.bugcrowd.com/blog/bugcrowd-policy-changes-to-address-ai-slop-submissions/',
-    date: `dated 10 March 2026, ${CHECKED}`,
+    date: `dated 10 March 2026, ${CHECKED_BUGCROWD}`,
   },
   { n: 5, label: 'Intigriti Help Center, “Submission limits (open submissions)”', href: 'https://kb.intigriti.com/en/articles/14482892-submission-limits-open-submissions', date: `dated 8 June 2026, ${CHECKED}` },
   { n: 6, label: 'Intigriti Help Center, “Community Code of Conduct”', href: 'https://kb.intigriti.com/en/articles/5247238-community-code-of-conduct', date: `dated 9 March 2026, ${CHECKED}` },
@@ -26,6 +33,12 @@ const SOURCES = [
   { n: 8, label: 'Immunefi, “Rules”', href: 'https://immunefi.com/rules/', date: CHECKED },
   { n: 9, label: 'Cantina Documentation, “Deposits for Bounty Submissions”', href: 'https://docs.cantina.security/researchers/participation/deposits', date: CHECKED },
   { n: 10, label: 'Sherlock Docs, “Audit Engine: For Participants”', href: 'https://docs.sherlock.xyz/audit-engine/for-participants', date: CHECKED },
+  {
+    n: 11,
+    label: 'Bugcrowd Docs, “Accuracy Calculation Update”',
+    href: 'https://docs.bugcrowd.com/changelog/researchers/accuracy-update/',
+    date: `dated 8 October 2026, ${CHECKED_BUGCROWD}`,
+  },
 ];
 
 const NBSP = ' ';
@@ -60,8 +73,10 @@ const ROWS = [
   [
     'Bugcrowd',
     cells(
-      cell('Managed programmes: at most 5 open submissions at a time, unless the account has a proven record of quality.', 3),
-      cell('10 or more invalid reports: identity verification before you can submit again.', 4),
+      cell('Managed programmes: an account whose accuracy over the last 90 days is below 50% is limited to 6 submissions a week, for at least 7 days. Accounts with a proven record of quality are exempt.', 3),
+      cell('The limit is assessed once you have made 10 submissions in 90 days. Until 5 of them have a final state, your lifetime accuracy is used.', 3),
+      cell('A report closed N/A counts as a rejection in that accuracy. Informational and duplicate reports are left out of it.', 11),
+      cell('Identity verification is required before you take part in a managed programme.', 3),
     ),
     cell('10 or more invalid reports in a row: account review, and a possible 30-day suspension where they were AI-generated or automated without validation. Submission farming: a permanent ban.', 4),
   ],
@@ -109,7 +124,7 @@ const body = html`
 ${pageHero({
   trail: [{ label: 'Bounty Operator', href: '/' }, { label: 'Invalid report costs' }],
   title: 'What an invalid report costs on each platform',
-  lede: 'A report closed as invalid, N/A or spam can cost you reputation, credits, open submission slots, a deposit or the account. The table gives each platform’s rule, from its own pages, with the date we read it.',
+  lede: 'A report closed as invalid, N/A or spam can cost you reputation, credits, submission slots, a deposit or the account. The table gives each platform’s rule, from its own pages, with the date we read it.',
   actions: html`${button({ label: 'Check a draft for free', href: '/tools/report-check', variant: 'primary', size: 'lg', iconEnd: 'arrow-right' })}${button({ label: 'Challenge it on your model', href: workbenchLink('report'), size: 'lg' })}`,
 })}
 
@@ -157,6 +172,6 @@ export default {
   label: 'Invalid report costs',
   styles: STYLES,
   jsonld: [breadcrumbsLd([{ name: 'Invalid report costs', path: PATH }])],
-  lastmod: '2026-10-07',
+  lastmod: '2026-10-09',
   body,
 };

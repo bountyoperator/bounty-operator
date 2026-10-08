@@ -77,34 +77,34 @@ colors:
   code-line-night: "#2a2449"
 typography:
   display:
-    fontFamily: "Archivo, 'Arial Narrow', system-ui, sans-serif"
+    fontFamily: "Archivo, 'Archivo fallback', 'Arial Narrow', system-ui, sans-serif"
     fontSize: "clamp(2.75rem, 1.1rem + 6.4vw, 5.5rem)"
     fontWeight: 860
     lineHeight: 0.93
     letterSpacing: "-0.004em"
     fontVariation: "'wdth' 72"
   headline-page:
-    fontFamily: "Archivo, 'Arial Narrow', system-ui, sans-serif"
+    fontFamily: "Archivo, 'Archivo fallback', 'Arial Narrow', system-ui, sans-serif"
     fontSize: "clamp(2.25rem, 1.3rem + 3.2vw, 3.75rem)"
     fontWeight: 860
     lineHeight: 0.98
     fontVariation: "'wdth' 76"
   headline:
-    fontFamily: "Archivo, 'Arial Narrow', system-ui, sans-serif"
+    fontFamily: "Archivo, 'Archivo fallback', 'Arial Narrow', system-ui, sans-serif"
     fontSize: "clamp(2rem, 1.3rem + 2.8vw, 3.25rem)"
     fontWeight: 820
     lineHeight: 1.02
     letterSpacing: "-0.012em"
     fontVariation: "'wdth' 88"
   headline-section:
-    fontFamily: "Archivo, 'Arial Narrow', system-ui, sans-serif"
+    fontFamily: "Archivo, 'Archivo fallback', 'Arial Narrow', system-ui, sans-serif"
     fontSize: "clamp(1.625rem, 1.25rem + 1.5vw, 2.375rem)"
     fontWeight: 800
     lineHeight: 1.06
     letterSpacing: "-0.01em"
     fontVariation: "'wdth' 88"
   title:
-    fontFamily: "Archivo, 'Arial Narrow', system-ui, sans-serif"
+    fontFamily: "Archivo, 'Archivo fallback', 'Arial Narrow', system-ui, sans-serif"
     fontSize: "1.375rem"
     fontWeight: 760
     lineHeight: 1.18
@@ -126,34 +126,34 @@ typography:
     fontWeight: 400
     lineHeight: 1.5
   label:
-    fontFamily: "Archivo, 'Arial Narrow', system-ui, sans-serif"
+    fontFamily: "Archivo, 'Archivo fallback', 'Arial Narrow', system-ui, sans-serif"
     fontSize: "0.75rem"
     fontWeight: 680
     lineHeight: 1.4
     letterSpacing: "0.07em"
     fontVariation: "'wdth' 85"
   label-field:
-    fontFamily: "Archivo, 'Arial Narrow', system-ui, sans-serif"
+    fontFamily: "Archivo, 'Archivo fallback', 'Arial Narrow', system-ui, sans-serif"
     fontSize: "0.875rem"
     fontWeight: 700
     lineHeight: 1.4
     fontVariation: "'wdth' 90"
   button:
-    fontFamily: "Archivo, 'Arial Narrow', system-ui, sans-serif"
+    fontFamily: "Archivo, 'Archivo fallback', 'Arial Narrow', system-ui, sans-serif"
     fontSize: "0.9375rem"
     fontWeight: 700
     lineHeight: 1.2
     letterSpacing: "0.01em"
     fontVariation: "'wdth' 90"
   chip:
-    fontFamily: "Archivo, 'Arial Narrow', system-ui, sans-serif"
+    fontFamily: "Archivo, 'Archivo fallback', 'Arial Narrow', system-ui, sans-serif"
     fontSize: "0.75rem"
     fontWeight: 780
     lineHeight: 1
     letterSpacing: "0.08em"
     fontVariation: "'wdth' 78"
   stamp:
-    fontFamily: "Archivo, 'Arial Narrow', system-ui, sans-serif"
+    fontFamily: "Archivo, 'Archivo fallback', 'Arial Narrow', system-ui, sans-serif"
     fontSize: "1.125rem"
     fontWeight: 860
     lineHeight: 1
@@ -323,11 +323,11 @@ Stamp inks, each tuned per theme (the `-night` keys lift them for carbon):
 
 ## Typography
 
-**Display Font:** Archivo (with Arial Narrow, then system-ui)
+**Display Font:** Archivo (with Archivo fallback, then Arial Narrow, then system-ui)
 **Body Font:** the system face (system-ui, -apple-system, Segoe UI, Roboto, Helvetica Neue)
 **Label/Mono Font:** Archivo condensed caps for printed labels; ui-monospace (SF Mono, Cascadia Mono before Cascadia Code, Menlo, Consolas) for code
 
-**Character:** One variable grotesque does all the printing. Archivo's width axis runs from the condensed black of a rubber stamp to the semi-condensed bold of a form's title line, so rank is set by width and weight instead of by a second face. Running text stays in the system face so it renders before the font arrives. Archivo is self-hosted as one variable file (weight 100 to 900, width 62% to 125%, Latin), preloaded on every page and licensed under the OFL.
+**Character:** One variable grotesque does all the printing. Archivo's width axis runs from the condensed black of a rubber stamp to the semi-condensed bold of a form's title line, so rank is set by width and weight instead of by a second face. Running text stays in the system face so it renders before the font arrives. Archivo is self-hosted as one variable file (weight 100 to 900, width 62% to 125%, Latin), preloaded on every page and licensed under the OFL. Until it arrives, headings print in "Archivo fallback": the machine's own Arial Narrow Bold declared as seven faces by width band, each with a `size-adjust` measured against Archivo, so a line takes close to the same room before and after the swap. No file is fetched for it, and heading measures are set in `em`, not `ch`, so the box does not change with the face. The match is close, not exact, so a line whose count must never change is fixed in the layout: on a phone a breadcrumb prints its last two crumbs, which fit one line in either face.
 
 ### Hierarchy
 - **Display** (860, 44px to 88px, line-height 0.93, width 72%): the home hero headline only, on the field, about 11 characters to the line.
@@ -343,7 +343,7 @@ Stamp inks, each tuned per theme (the `-night` keys lift them for carbon):
 - **Button** (700, 15px, width 90%, 0.01em): buttons, tabs, stepper and segmented options, and nav links (650, the current one 760).
 - **Chip** (780, 12px, 0.08em, uppercase, width 78%): severity, verdict, status and tone chips.
 - **Stamp** (860, 18px, 0.1em, uppercase, width 68%): the rubber-stamp verdict. The hand-stamped severity is 14px at width 72% and 0.08em.
-- **Code** (mono, 13px, 1.7, ligatures off): code blocks. File references and hashes run at 12px and 500; inline code at 0.875em on an 8% ink tint.
+- **Code** (mono, 13px, 1.7, ligatures off): code blocks. File references and hashes run at 12px and 500; inline code at 0.875em, never under 12px, on an 8% ink tint.
 
 Width is set with `font-stretch` against the face's declared range. Figures that are counted or ranked (counts, scores, prices, step numbers) are tabular and condensed: counts at 28px and width 75%, the price at 64px and width 68%.
 
@@ -358,7 +358,7 @@ The page is a stack of forms in one centred column. The wrap holds 75rem of cont
 
 Every page opens on the field: the page head prints in a band the full width of the window, canary by day and lifted carbon at night, starting directly under the header rule while its content keeps to the wrap. The section holding it gives up its top padding. The band is painted outside the box, so it adds no sideways scroll.
 
-On the home page the first viewport is that field. From 960px it holds two columns (1.05fr of text and 0.95fr of slip, 72px apart): the condensed headline, the lede, the solid Review my report box and the ruled View example box, then a note and two links. The tilted paper slip stands on the right, and the proof line sits on the field's foot under a 1px rule. On a phone the order is headline, lede, actions, slip, note, links, so the stamped verdict lands in the first screen.
+On the home page the first viewport is that field. From 960px it holds two columns (1.05fr of text and 0.95fr of slip, 72px apart): the condensed headline, the lede, the solid Review my report box and the ruled View example box, then a note and two links. The tilted paper slip stands on the right, and the proof line sits on the field's foot under a 1px rule. On a phone the order is headline, lede, actions, slip, note, links, so the stamped verdict lands in the first screen. Up to 480px the price line ("Free: 1 review a day on your own model key.") and the note print directly under the actions, ahead of the slip; above 480px the price line is not printed.
 
 Forms are ledgers. The finding card and the workbench sheet print a 9.75rem caption margin, one 1px rule and the content to its right, and under 704px the caption moves above its content. Key/value ledgers give the key 30% of the row (at least 6.5rem). Grids of cells are ruled by 1px gaps over the hairline ground inside a 1px frame, like the rack of verdict stamps and the benchmark facts.
 

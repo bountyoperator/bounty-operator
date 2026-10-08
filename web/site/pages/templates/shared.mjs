@@ -187,13 +187,13 @@ export function closedList(platform) {
   return html`<ol class="closed">${items}</ol>`;
 }
 
-/** The primary sources, each with the date it was read. */
+/** The primary sources, each with the date it was read: its own `checked`, or the page's. */
 export function sourceList(sources) {
   const items = sources.map(
     (source) => html`<li class="sources__item">
       <p class="sources__link">${link({ label: source.label, href: source.href, external: true })}</p>
       <p class="sources__note">${source.note}</p>
-      <p class="sources__date meta">${source.dated ? `${source.dated} · ` : ''}checked ${CHECKED.label}</p>
+      <p class="sources__date meta">${source.dated ? `${source.dated} · ` : ''}checked ${source.checked ?? CHECKED.label}</p>
     </li>`,
   );
   return html`<ul class="sources">${items}</ul>`;

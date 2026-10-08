@@ -19,6 +19,7 @@
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Bounty Operator. Find the hole in your report before the triager does.">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:creator" content="@Tradi3_">
 <meta name="twitter:title" content="Sherlock audit contest report template | Bounty Operator">
 <meta name="twitter:description" content="Sherlock report template in Markdown: root cause, pre-conditions, attack path and impact against the High and Medium thresholds, plus what judges invalidate.">
 <meta name="twitter:image" content="https://bountyoperator.com/social-v4.png">
@@ -51,7 +52,7 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
 <nav class="site-nav" aria-label="Main"><ul><li><a href="/#workspace">Review</a></li><li><a href="/benchmark">Benchmark</a></li><li><a href="/tools">Tools</a></li><li><a href="/guide">Guide</a></li><li><a href="/pricing">Pricing</a></li></ul></nav>
 <div class="site-header__actions">
 <button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch colour theme"><span class="icon theme-toggle__icon" aria-hidden="true"></span></button>
-<a class="btn btn--secondary btn--sm" href="/#account">Account</a>
+<a class="btn btn--secondary btn--sm" href="/#account">Sign in</a>
 </div>
 </div>
 </header>
@@ -67,7 +68,7 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
     <a class="btn btn--secondary" href="/templates/sherlock.md" download="sherlock-report-template.md"><span class="icon icon--download" aria-hidden="true"></span><span class="btn__label">Download .md</span></a>
     <span class="tpl-actions__status" role="status" data-template-status></span>
   </div>
-    <p class="meta">Rules checked 2 Oct 2026 · 9 sources</p>
+    <p class="meta">Rules checked 2 Oct 2026 · 10 sources</p>
   </header>
 
   <div class="tpl-layout">
@@ -255,35 +256,35 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
         <ol class="closed"><li class="closed__item">
       <h3 class="closed__title">Loss below the written thresholds</h3>
       <p>Only High and Medium score in a contest. High is a direct loss above 1% and $10 without extensive external conditions. Medium is a loss above 0.01% and $10 that needs conditions, or broken core functionality. Likelihood is not considered.</p>
-      <p class="closed__refs"><span class="meta">Source</span> <a class="link" href="https://docs.sherlock.xyz/audits/judging/guidelines" target="_blank" rel="noopener noreferrer">Criteria for Issue Validity</a>, <a class="link" href="https://docs.sherlock.xyz/audits/watsons/how-to-score-issue-points-in-a-contest" target="_blank" rel="noopener noreferrer">How to Score Issue Points in a Contest</a></p>
+      <p class="closed__refs"><span class="meta">Source</span> <a class="link" href="https://docs.sherlock.xyz/audit-contests-deprecated-replaced-by-audit-engine/judging/guidelines" target="_blank" rel="noopener noreferrer">Criteria for Issue Validity</a>, <a class="link" href="https://docs.sherlock.xyz/audit-contests-deprecated-replaced-by-audit-engine/watsons/how-to-score-issue-points-in-a-contest" target="_blank" rel="noopener noreferrer">How to Score Issue Points in a Contest</a></p>
     </li><li class="closed__item">
       <h3 class="closed__title">Denial of service that does not last</h3>
       <p>A DoS counts when funds are locked for more than a week or a time-sensitive function is affected. One of the two is Medium, both is High. A repeatable attack is judged on a single occurrence.</p>
-      <p class="closed__refs"><span class="meta">Source</span> <a class="link" href="https://docs.sherlock.xyz/audits/judging/guidelines" target="_blank" rel="noopener noreferrer">Criteria for Issue Validity</a></p>
+      <p class="closed__refs"><span class="meta">Source</span> <a class="link" href="https://docs.sherlock.xyz/audit-contests-deprecated-replaced-by-audit-engine/judging/guidelines" target="_blank" rel="noopener noreferrer">Criteria for Issue Validity</a></p>
     </li><li class="closed__item">
       <h3 class="closed__title">Trusted roles and design decisions</h3>
       <p>Admin functions are assumed to be used correctly. Internal roles are trusted unless the README names them untrusted. A design decision that causes no loss is informational. The README outranks code comments, and past judging decisions carry no weight:</p><blockquote class="closed__quote"><p>Historical decisions are not considered sources of truth.</p><footer>Criteria for Issue Validity, Sherlock</footer></blockquote>
-      <p class="closed__refs"><span class="meta">Source</span> <a class="link" href="https://docs.sherlock.xyz/audits/judging/guidelines" target="_blank" rel="noopener noreferrer">Criteria for Issue Validity</a></p>
+      <p class="closed__refs"><span class="meta">Source</span> <a class="link" href="https://docs.sherlock.xyz/audit-contests-deprecated-replaced-by-audit-engine/judging/guidelines" target="_blank" rel="noopener noreferrer">Criteria for Issue Validity</a></p>
     </li><li class="closed__item">
       <h3 class="closed__title">Known issues</h3>
       <p>Issues labelled <code>wont fix</code> in a previous contest and acknowledged findings in the audits linked from the README are invalid. On bounties, publicly known bugs and bugs from a previous audit are never eligible for a payout.</p>
-      <p class="closed__refs"><span class="meta">Source</span> <a class="link" href="https://docs.sherlock.xyz/audits/judging/guidelines" target="_blank" rel="noopener noreferrer">Criteria for Issue Validity</a>, <a class="link" href="https://docs.sherlock.xyz/bug-bounties/post-launch-bounty/platform-rules" target="_blank" rel="noopener noreferrer">Bug bounty Platform Rules</a></p>
+      <p class="closed__refs"><span class="meta">Source</span> <a class="link" href="https://docs.sherlock.xyz/audit-contests-deprecated-replaced-by-audit-engine/judging/guidelines" target="_blank" rel="noopener noreferrer">Criteria for Issue Validity</a>, <a class="link" href="https://docs.sherlock.xyz/bug-bounties/post-launch-bounty/platform-rules" target="_blank" rel="noopener noreferrer">Bug bounty Platform Rules</a></p>
     </li><li class="closed__item">
       <h3 class="closed__title">The listed invalid categories</h3>
       <p>Gas optimisations, wrong event values, zero-address checks, user and admin input validation, blacklisting, initializer front-running, non-standard tokens the README does not name, stale-price recommendations, re-orgs, sequencer downtime, future integrations, and wrong values in view functions that nothing else consumes.</p>
-      <p class="closed__refs"><span class="meta">Source</span> <a class="link" href="https://docs.sherlock.xyz/audits/judging/guidelines" target="_blank" rel="noopener noreferrer">Criteria for Issue Validity</a></p>
+      <p class="closed__refs"><span class="meta">Source</span> <a class="link" href="https://docs.sherlock.xyz/audit-contests-deprecated-replaced-by-audit-engine/judging/guidelines" target="_blank" rel="noopener noreferrer">Criteria for Issue Validity</a></p>
     </li><li class="closed__item">
       <h3 class="closed__title">No PoC where one is needed</h3>
       <p>A PoC is recommended for complex paths, non-trivial input constraints, precision loss, reentrancy and gas or revert attacks. A report that cannot be understood without one is invalid without one.</p>
-      <p class="closed__refs"><span class="meta">Source</span> <a class="link" href="https://docs.sherlock.xyz/audits/judging/guidelines" target="_blank" rel="noopener noreferrer">Criteria for Issue Validity</a></p>
+      <p class="closed__refs"><span class="meta">Source</span> <a class="link" href="https://docs.sherlock.xyz/audit-contests-deprecated-replaced-by-audit-engine/judging/guidelines" target="_blank" rel="noopener noreferrer">Criteria for Issue Validity</a></p>
     </li><li class="closed__item">
       <h3 class="closed__title">Duplicates</h3>
       <p>A report is grouped with a valid issue only when it identifies the root cause, shows at least Medium impact and gives a valid path. Duplicates share the points: each of n submissions is weighted by 0.9 to the power n − 1, divided by n. On bounties the earlier timestamp wins and the duplicate is not rewarded.</p>
-      <p class="closed__refs"><span class="meta">Source</span> <a class="link" href="https://docs.sherlock.xyz/audits/judging/guidelines" target="_blank" rel="noopener noreferrer">Criteria for Issue Validity</a>, <a class="link" href="https://docs.sherlock.xyz/audits/watsons/how-to-score-issue-points-in-a-contest" target="_blank" rel="noopener noreferrer">How to Score Issue Points in a Contest</a>, <a class="link" href="https://docs.sherlock.xyz/bug-bounties/criteria-for-bug-bounty-reports-validity" target="_blank" rel="noopener noreferrer">Criteria for Bug Bounty reports validity</a></p>
+      <p class="closed__refs"><span class="meta">Source</span> <a class="link" href="https://docs.sherlock.xyz/audit-contests-deprecated-replaced-by-audit-engine/judging/guidelines" target="_blank" rel="noopener noreferrer">Criteria for Issue Validity</a>, <a class="link" href="https://docs.sherlock.xyz/audit-contests-deprecated-replaced-by-audit-engine/watsons/how-to-score-issue-points-in-a-contest" target="_blank" rel="noopener noreferrer">How to Score Issue Points in a Contest</a>, <a class="link" href="https://docs.sherlock.xyz/bug-bounties/criteria-for-bug-bounty-reports-validity" target="_blank" rel="noopener noreferrer">Criteria for Bug Bounty reports validity</a></p>
     </li><li class="closed__item">
       <h3 class="closed__title">Penalties and fees</h3>
       <p>Contest payouts are withheld until the account has two valid issues and at least 20% of everything it has submitted is valid. An escalation costs Signal Score that is not refunded, and the window is 24 hours. On bounties, escalating a decision to the claims committee costs $1,000.</p>
-      <p class="closed__refs"><span class="meta">Source</span> <a class="link" href="https://docs.sherlock.xyz/audits/watsons/meeting-the-payout-criteria" target="_blank" rel="noopener noreferrer">Meeting the Payout Criteria</a>, <a class="link" href="https://docs.sherlock.xyz/audits/judging/discussion" target="_blank" rel="noopener noreferrer">Discussion</a>, <a class="link" href="https://docs.sherlock.xyz/audits/judging" target="_blank" rel="noopener noreferrer">Judging</a>, <a class="link" href="https://docs.sherlock.xyz/bug-bounties/post-launch-bounty/dispute-resolution" target="_blank" rel="noopener noreferrer">Dispute Resolution</a></p>
+      <p class="closed__refs"><span class="meta">Source</span> <a class="link" href="https://docs.sherlock.xyz/audit-contests-deprecated-replaced-by-audit-engine/watsons/meeting-the-payout-criteria" target="_blank" rel="noopener noreferrer">Meeting the Payout Criteria</a>, <a class="link" href="https://docs.sherlock.xyz/audit-contests-deprecated-replaced-by-audit-engine/judging/discussion" target="_blank" rel="noopener noreferrer">Discussion</a>, <a class="link" href="https://docs.sherlock.xyz/audit-contests-deprecated-replaced-by-audit-engine/judging" target="_blank" rel="noopener noreferrer">Judging</a>, <a class="link" href="https://docs.sherlock.xyz/bug-bounties/post-launch-bounty/dispute-resolution" target="_blank" rel="noopener noreferrer">Dispute Resolution</a></p>
     </li></ol>
       </section>
 
@@ -304,30 +305,35 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
       <section class="tpl-block" aria-labelledby="sources">
         <h2 id="sources">Sources</h2>
         <p class="tpl-block__lede">Primary sources only, read on 2 Oct 2026. Rules change. Read the programme page on the day you submit.</p>
+        <p class="tpl-block__lede">Sherlock now files its audit contest pages as deprecated, replaced by Audit Engine. The contest rules on this page are those earlier rules, as Sherlock still publishes them. An Audit Engine engagement sets its own judging guidelines and severity weights: read the ones published for your engagement first. The bug bounty sources are current.</p>
         <ul class="sources"><li class="sources__item">
-      <p class="sources__link"><a class="link link--external" href="https://docs.sherlock.xyz/audits/judging/guidelines" target="_blank" rel="noopener noreferrer">Criteria for Issue Validity<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></p>
+      <p class="sources__link"><a class="link link--external" href="https://docs.sherlock.xyz/audit-contests-deprecated-replaced-by-audit-engine/judging/guidelines" target="_blank" rel="noopener noreferrer">Criteria for Issue Validity<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></p>
       <p class="sources__note">Severity thresholds, invalid categories, PoC recommendation, duplication rules.</p>
-      <p class="sources__date meta">Version 1.12, 24 Jun 2025 · checked 2 Oct 2026</p>
+      <p class="sources__date meta">Earlier contest rules · Version 1.12, 24 Jun 2025 · checked 9 Oct 2026</p>
     </li><li class="sources__item">
       <p class="sources__link"><a class="link link--external" href="https://github.com/sherlock-protocol/sherlock-v2-docs/blob/main/.report/README.md" target="_blank" rel="noopener noreferrer">Report template in the Sherlock docs repository<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></p>
       <p class="sources__note">The headings from Title to Mitigation.</p>
       <p class="sources__date meta">checked 2 Oct 2026</p>
     </li><li class="sources__item">
-      <p class="sources__link"><a class="link link--external" href="https://docs.sherlock.xyz/audits/judging" target="_blank" rel="noopener noreferrer">Judging<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></p>
+      <p class="sources__link"><a class="link link--external" href="https://docs.sherlock.xyz/audit-contests-deprecated-replaced-by-audit-engine/judging" target="_blank" rel="noopener noreferrer">Judging<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></p>
       <p class="sources__note">The four judging phases and the 24-hour escalation period.</p>
-      <p class="sources__date meta">checked 2 Oct 2026</p>
+      <p class="sources__date meta">Earlier contest rules · checked 9 Oct 2026</p>
     </li><li class="sources__item">
-      <p class="sources__link"><a class="link link--external" href="https://docs.sherlock.xyz/audits/judging/discussion" target="_blank" rel="noopener noreferrer">Discussion<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></p>
+      <p class="sources__link"><a class="link link--external" href="https://docs.sherlock.xyz/audit-contests-deprecated-replaced-by-audit-engine/judging/discussion" target="_blank" rel="noopener noreferrer">Discussion<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></p>
       <p class="sources__note">Escalations and their Signal cost.</p>
-      <p class="sources__date meta">checked 2 Oct 2026</p>
+      <p class="sources__date meta">Earlier contest rules · checked 9 Oct 2026</p>
     </li><li class="sources__item">
-      <p class="sources__link"><a class="link link--external" href="https://docs.sherlock.xyz/audits/watsons/how-to-score-issue-points-in-a-contest" target="_blank" rel="noopener noreferrer">How to Score Issue Points in a Contest<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></p>
+      <p class="sources__link"><a class="link link--external" href="https://docs.sherlock.xyz/audit-contests-deprecated-replaced-by-audit-engine/watsons/how-to-score-issue-points-in-a-contest" target="_blank" rel="noopener noreferrer">How to Score Issue Points in a Contest<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></p>
       <p class="sources__note">High and Medium weighting, and how duplicates share points.</p>
-      <p class="sources__date meta">checked 2 Oct 2026</p>
+      <p class="sources__date meta">Earlier contest rules · checked 9 Oct 2026</p>
     </li><li class="sources__item">
-      <p class="sources__link"><a class="link link--external" href="https://docs.sherlock.xyz/audits/watsons/meeting-the-payout-criteria" target="_blank" rel="noopener noreferrer">Meeting the Payout Criteria<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></p>
+      <p class="sources__link"><a class="link link--external" href="https://docs.sherlock.xyz/audit-contests-deprecated-replaced-by-audit-engine/watsons/meeting-the-payout-criteria" target="_blank" rel="noopener noreferrer">Meeting the Payout Criteria<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></p>
       <p class="sources__note">Two valid issues and the 20% issues ratio.</p>
-      <p class="sources__date meta">checked 2 Oct 2026</p>
+      <p class="sources__date meta">Earlier contest rules · checked 9 Oct 2026</p>
+    </li><li class="sources__item">
+      <p class="sources__link"><a class="link link--external" href="https://docs.sherlock.xyz/audit-engine/for-participants" target="_blank" rel="noopener noreferrer">Audit Engine: For Participants<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></p>
+      <p class="sources__note">What replaced audit contests: invited engagements, the Issues Ratio, and judging guidelines set per engagement.</p>
+      <p class="sources__date meta">checked 9 Oct 2026</p>
     </li><li class="sources__item">
       <p class="sources__link"><a class="link link--external" href="https://docs.sherlock.xyz/bug-bounties/criteria-for-bug-bounty-reports-validity" target="_blank" rel="noopener noreferrer">Criteria for Bug Bounty reports validity<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></p>
       <p class="sources__note">Bounty standards, invalid categories and duplicates.</p>

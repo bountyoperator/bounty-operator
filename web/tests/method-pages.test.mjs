@@ -197,10 +197,16 @@ test('/compare cites a dated source for every fact about another product and sco
 
   const cited = new Set([...markup.matchAll(/href="#source-(\d+)"/g)].map((match) => Number(match[1])));
   const listed = [...markup.matchAll(/id="source-(\d+)"/g)].map((match) => Number(match[1]));
-  assert.deepEqual(listed, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]);
+  assert.deepEqual(listed, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]);
   assert.deepEqual([...cited].sort((a, b) => a - b), listed, 'every source is cited and every citation has a source');
   const sources = markup.slice(markup.indexOf('<ol class="sources">'), markup.indexOf('</ol>', markup.indexOf('<ol class="sources">')));
-  assert.equal(count(sources, 'checked 2 October 2026') + count(sources, 'checked 3 October 2026') + count(sources, 'checked 7 October 2026'), listed.length, 'every source carries its check date');
+  const checkedOn = (day) => count(sources, `checked ${day} October 2026`);
+  assert.equal(checkedOn(2) + checkedOn(3) + checkedOn(7) + checkedOn(9), listed.length, 'every source carries its check date');
+  // Read again on 9 October: Immunefi Studio's page and two posts, and the hosted bounty tool's README and prices.
+  assert.equal(checkedOn(9), 5);
+  // A statement about access that can change carries its own date, from the post that made it.
+  assert.ok(body.includes('Immunefi described Studio as invite-only on 30 September 2026.'));
+  assert.doesNotMatch(body, /is in invite-only beta/);
 
   // The seven overlapping tools are rows named by what they do. Their names and authors stay in the source list.
   const start = markup.indexOf('compare-tools');
@@ -258,7 +264,10 @@ test('/invalid-report-costs cites a dated source for every platform rule and ran
   assert.ok(listed.length >= 10);
   assert.deepEqual([...cited].sort((a, b) => a - b), listed, 'every source is cited and every citation has a source');
   const sources = markup.slice(markup.indexOf('<ol class="sources">'), markup.indexOf('</ol>', markup.indexOf('<ol class="sources">')));
-  assert.equal(count(sources, 'checked 7 October 2026'), listed.length, 'every source carries its check date');
+  assert.equal(count(sources, 'checked 7 October 2026') + count(sources, 'checked 9 October 2026'), listed.length, 'every source carries its check date');
+  // Bugcrowd's three sources were read again after its rules changed on 8 October 2026.
+  assert.equal(count(sources, 'checked 9 October 2026'), 3);
+  for (const line of sources.split('</li>').filter((item) => item.includes('Bugcrowd'))) assert.match(line, /checked 9 October 2026/);
 
   // One row per platform, each with at least one source in its row.
   const start = markup.indexOf('compare-tools');
@@ -268,7 +277,7 @@ test('/invalid-report-costs cites a dated source for every platform rule and ran
   for (const row of rows.slice(0, 6)) assert.match(row, /href="#source-\d+"/);
 
   // The figures as the platforms state them.
-  for (const figure of ['−5 reputation', 'Spam: −10 reputation', 'at most 5 open submissions', '30-day suspension', '1 below 20%', 'three times the price in all', 'four times in all', 'immediate and permanent ban', 'the deposit is slashed', 'at least 20% and you have 2 valid findings']) {
+  for (const figure of ['−5 reputation', 'Spam: −10 reputation', 'below 50% is limited to 6 submissions a week, for at least 7 days', '10 submissions in 90 days', 'A report closed N/A counts as a rejection', '30-day suspension', '1 below 20%', 'three times the price in all', 'four times in all', 'immediate and permanent ban', 'the deposit is slashed', 'at least 20% and you have 2 valid findings']) {
     assert.ok(body.includes(figure), figure);
   }
 

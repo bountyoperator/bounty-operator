@@ -18,8 +18,10 @@ import {
 } from '../public/review-core.mjs';
 import { GAUNTLET, INPUT_KINDS, CORE_PROFILE_IDS, PROFILES, profileInstructions, reviewProfile } from '../public/profiles.mjs';
 import {
+  ANTHROPIC_CYBER_NOTICE,
   PROVIDERS,
   ProviderError,
+  policyBlock,
   provider,
   providerReview,
   outputTokenLimit,
@@ -1140,6 +1142,29 @@ describe('profiles', () => {
 // ---------------------------------------------------------------------------
 
 describe('providers', () => {
+  const cyberNotice = "This request triggered restrictions on violative cyber content and was blocked under Anthropic's Usage Policy. To learn more, see https://platform.claude.com/docs/en/build-with-claude/refusals-and-fallback.";
+  const cyberOpening = "This request triggered restrictions on violative cyber content and was blocked under Anthropic's Usage Policy";
+  const policyCases = [
+    [cyberNotice, true],
+    [` \n${cyberNotice}\n`, true],
+    // Anthropic documents the wording as unstable: only the first sentence is fixed.
+    [`${cyberOpening}. To request an adjustment pursuant to our Cyber Verification Program, see the Help Center.`, true],
+    [`${cyberOpening}...`, true],
+    [cyberNotice.replace("Anthropic's", 'Anthropic’s'), true],
+    [cyberNotice.replace('refusals-and-fallback', 'a-page-that-moved'), true],
+    [cyberNotice.replace(/ /g, '\n'), true],
+    [`${cyberNotice}\nThat is the message being reviewed.`, true],
+    // A review is never a notice: it carries a Verdict line, quotes the notice or runs long.
+    [`${cyberNotice}\nVerdict: drop`, false],
+    [`${cyberNotice}\n\n**Verdict:** submit`, false],
+    [`${cyberNotice}\n## Final verdict: prove-first`, false],
+    [`"${cyberNotice}"`, false],
+    [`# Review\nVerdict: no-blocking-issues\nUpstream said: ${cyberNotice}`, false],
+    [`${cyberNotice}\n${'The configuration was reviewed. '.repeat(80)}`, false],
+    [`${' '.repeat(800)}${cyberNotice}`, false],
+    ["The log says it was blocked under Anthropic's Usage Policy.", false],
+    ['No issues found in the supplied file.', false],
+  ];
   const expected = {
     openrouter: { url: 'https://openrouter.ai/api/v1/chat/completions', model: 'openai/gpt-6.1-sol', cap: 'max_tokens' },
     anthropic: { url: 'https://api.anthropic.com/v1/messages', model: 'claude-opus-5-5', cap: 'max_tokens' },
@@ -1480,6 +1505,280 @@ describe('providers', () => {
       await assert.rejects(providerReview({ provider: 'openrouter', model: 'anthropic/claude-opus-5.5', apiKey: API_KEY, prepared: PREPARED }), /HTTP 400/);
       assert.equal(calls.length, 1);
     });
+  });
+
+  test('policyBlock is the one classifier of the notice, and the exported notice is the observed one', () => {
+    assert.equal(ANTHROPIC_CYBER_NOTICE, cyberNotice);
+    for (const [text, refused] of policyCases) {
+      assert.equal(policyBlock(text), refused ? 'anthropic-cyber' : undefined, JSON.stringify(text.slice(0, 90)));
+    }
+    for (const value of [undefined, null, 42, { text: cyberNotice }, '']) assert.equal(policyBlock(value), undefined);
+  });
+
+  test('a complete short Anthropic policy notice is a refusal on either JSON wire', async () => {
+    for (const [text, refused] of policyCases) {
+      for (const id of ['openrouter', 'anthropic']) {
+        const payload = id === 'anthropic'
+          ? anthropicAnswer({ content: [{ type: 'text', text }] })
+          : chatAnswer({ choices: [{ message: { content: text }, finish_reason: 'stop' }] });
+        await withFetch(() => json(payload), async (calls) => {
+          const request = { provider: id, model: 'm', apiKey: API_KEY, prepared: PREPARED };
+          const result = await providerReview(request);
+          assert.equal(result.text, text);
+          assert.equal(result.refused, refused);
+          assert.equal(result.blocked, refused ? 'anthropic-cyber' : undefined);
+          assert.equal(result.truncated, false);
+          assert.equal(calls.length, 1, 'a policy notice never triggers a retry');
+
+          // A JSON reply to a streaming request follows the same classification.
+          const events = await collect(await providerStream(request));
+          assert.equal(events[0].text, text);
+          assert.equal(events.at(-1).refused, refused);
+          assert.equal(events.at(-1).blocked, refused ? 'anthropic-cyber' : undefined);
+          assert.equal(calls.length, 2);
+        });
+      }
+    }
+  });
+
+  test('a policy notice is classified only after all streamed text arrives, across chunk boundaries', async () => {
+    for (const [text, refused] of policyCases) {
+      const parts = [text.slice(0, 80), text.slice(80, 150), text.slice(150)].filter(Boolean);
+      for (const id of ['openrouter', 'anthropic']) {
+        const stream = id === 'anthropic'
+          ? anthropicEvents(
+            ...parts.map((part) => ({ type: 'content_block_delta', delta: { type: 'text_delta', text: part } })),
+            { type: 'message_delta', delta: { stop_reason: 'end_turn' } },
+            { type: 'message_stop' },
+          )
+          : dataLines(
+            ...parts.map((part) => ({ choices: [{ delta: { content: part } }] })),
+            { choices: [{ delta: {}, finish_reason: 'stop' }] }, '[DONE]',
+          );
+        for (const chunkSize of [1, 19]) {
+          await withFetch(() => sse(stream, chunkSize), async (calls) => {
+            const events = await collect(await providerStream({ provider: id, model: 'm', apiKey: API_KEY, prepared: PREPARED }));
+            assert.equal(events.filter((event) => event.type === 'delta').map((event) => event.text).join(''), text);
+            assert.equal(events.at(-1).refused, refused);
+            assert.equal(events.at(-1).blocked, refused ? 'anthropic-cyber' : undefined);
+            assert.equal(events.at(-1).truncated, false);
+            assert.equal(calls.length, 1, 'a policy notice never triggers a retry');
+          });
+        }
+      }
+    }
+  });
+
+  test('a Messages refusal names its category and shows the provider explanation', async () => {
+    const request = { provider: 'anthropic', model: 'claude-opus-5-5', apiKey: API_KEY, prepared: PREPARED };
+    const explanation = `${cyberOpening}. The wording after this sentence changes.`;
+    const refusal = (stop_details, content = []) => anthropicAnswer({ stop_reason: 'refusal', content, ...(stop_details ? { stop_details } : {}) });
+    const cases = [
+      // [body, text, blocked]
+      [refusal({ type: 'refusal', category: 'cyber', explanation }), explanation, 'anthropic-cyber'],
+      [refusal({ type: 'refusal', category: 'cyber', explanation: 'Blocked.' }), 'Blocked.', 'anthropic-cyber'],
+      [refusal({ type: 'refusal', category: 'cyber' }), '', 'anthropic-cyber'],
+      [refusal({ type: 'refusal', category: 'bio', explanation: 'Not this.' }), 'Not this.', 'policy'],
+      [refusal({ type: 'refusal', category: null, explanation: 42 }), '', 'policy'],
+      [refusal(null), '', 'policy'],
+      // Text the model wrote before the refusal is kept; the explanation does not replace it.
+      [refusal({ type: 'refusal', category: 'cyber', explanation }, [{ type: 'text', text: '# Review\npartial' }]), '# Review\npartial', 'anthropic-cyber'],
+    ];
+    for (const [body, text, blocked] of cases) {
+      await withFetch(() => json(body), async () => {
+        const result = await providerReview(request);
+        assert.deepEqual([result.text, result.refused, result.blocked, result.truncated], [text, true, blocked, false]);
+        // The same body answering a streaming request.
+        const events = await collect(await providerStream(request));
+        assert.equal(events.filter((event) => event.type === 'delta').map((event) => event.text).join(''), text);
+        assert.deepEqual([events.at(-1).refused, events.at(-1).blocked], [true, blocked]);
+      });
+    }
+  });
+
+  test('a streamed Messages refusal reads stop_details from either place and keeps partial text', async () => {
+    const run = (events) => withFetch(() => sse(anthropicEvents(...events), 11), async () => collect(await providerStream({ provider: 'anthropic', model: 'claude-opus-5-5', apiKey: API_KEY, prepared: PREPARED })));
+    const start = { type: 'message_start', message: { model: 'claude-opus-5-5', usage: { input_tokens: 10, output_tokens: 0 } } };
+    const stop = { type: 'message_stop' };
+    const details = { type: 'refusal', category: 'cyber', explanation: 'Blocked by the cyber safeguards.' };
+    const done = (blocked) => ({ type: 'done', truncated: false, refused: true, blocked, model: 'claude-opus-5-5', usage: { input: 10, output: 0 } });
+
+    // stop_details inside the delta, beside stop_reason.
+    assert.deepEqual(
+      await run([start, { type: 'message_delta', delta: { stop_reason: 'refusal', stop_details: details }, usage: { output_tokens: 0 } }, stop]),
+      [{ type: 'delta', text: 'Blocked by the cyber safeguards.' }, done('anthropic-cyber')],
+    );
+    // stop_details on the event itself.
+    assert.deepEqual(
+      await run([start, { type: 'message_delta', delta: { stop_reason: 'refusal' }, stop_details: details, usage: { output_tokens: 0 } }, stop]),
+      [{ type: 'delta', text: 'Blocked by the cyber safeguards.' }, done('anthropic-cyber')],
+    );
+    // Another category, and a refusal with no details at all: both are policy blocks with no text.
+    assert.deepEqual(
+      await run([start, { type: 'message_delta', delta: { stop_reason: 'refusal', stop_details: { type: 'refusal', category: 'general_harms' } }, usage: { output_tokens: 0 } }, stop]),
+      [done('policy')],
+    );
+    assert.deepEqual(await run([start, { type: 'message_delta', delta: { stop_reason: 'refusal' }, usage: { output_tokens: 0 } }, stop]), [done('policy')]);
+
+    // A refusal after part of the answer: the text stays, the explanation is not appended, the result is refused.
+    const partial = 'Review text written before the block. '.repeat(70);
+    const late = await run([
+      start,
+      { type: 'content_block_delta', index: 0, delta: { type: 'text_delta', text: partial } },
+      { type: 'message_delta', delta: { stop_reason: 'refusal', stop_details: details }, usage: { output_tokens: 600 } },
+      stop,
+    ]);
+    assert.deepEqual(late, [
+      { type: 'delta', text: partial },
+      { type: 'done', truncated: false, refused: true, blocked: 'anthropic-cyber', model: 'claude-opus-5-5', usage: { input: 10, output: 600 } },
+    ]);
+  });
+
+  test('a chat refusal: the provider filter is a policy block, the model declining in its own words is not', async () => {
+    const review = (id, choice) => withFetch(() => json(chatAnswer({ choices: [choice] })), () => providerReview({ provider: id, model: 'm', apiKey: API_KEY, prepared: PREPARED }));
+    const stream = (id, ...chunks) => withFetch(() => sse(dataLines(...chunks, '[DONE]')), async () => (await collect(await providerStream({ provider: id, model: 'm', apiKey: API_KEY, prepared: PREPARED }))).at(-1));
+    const flags = (result) => [result.refused, result.blocked, result.truncated];
+
+    // OpenRouter's raw upstream finish reason.
+    assert.deepEqual(flags(await review('openrouter', { message: { content: '' }, finish_reason: 'stop', native_finish_reason: 'refusal' })), [true, 'policy', false]);
+    assert.deepEqual(flags(await stream('openrouter', { choices: [{ delta: {}, finish_reason: 'stop', native_finish_reason: 'refusal' }] })), [true, 'policy', false]);
+    // The documented OpenRouter shape for an Anthropic refusal: message.refusal with content_filter.
+    const relayed = await review('openrouter', { message: { content: null, refusal: 'Refused upstream.' }, finish_reason: 'content_filter', native_finish_reason: 'refusal' });
+    assert.deepEqual([relayed.text, ...flags(relayed)], ['Refused upstream.', true, 'policy', false]);
+    // content_filter alone, on any chat provider.
+    for (const id of ['openai', 'gemini', 'deepseek', 'xai']) {
+      assert.deepEqual(flags(await review(id, { message: { content: '' }, finish_reason: 'content_filter' })), [true, 'policy', false], id);
+      assert.deepEqual(flags(await stream(id, { choices: [{ delta: {}, finish_reason: 'content_filter' }] })), [true, 'policy', false], id);
+    }
+    // A notice written as the answer names its source, and that outranks the general mark.
+    assert.deepEqual(flags(await review('openrouter', { message: { content: cyberNotice }, finish_reason: 'stop', native_finish_reason: 'refusal' })), [true, 'anthropic-cyber', false]);
+    assert.deepEqual(
+      flags(await stream('openrouter', { choices: [{ delta: { content: cyberNotice } }] }, { choices: [{ delta: {}, finish_reason: 'stop', native_finish_reason: 'refusal' }] })),
+      [true, 'anthropic-cyber', false],
+    );
+    // The model's own refusal message with a normal stop is a refusal and no block.
+    assert.deepEqual(flags(await review('openai', { message: { content: null, refusal: 'I cannot help with that.' }, finish_reason: 'stop' })), [true, undefined, false]);
+    assert.deepEqual(flags(await stream('openai', { choices: [{ delta: { refusal: 'No.' } }] }, { choices: [{ delta: {}, finish_reason: 'stop' }] })), [true, undefined, false]);
+    // An ordinary native finish reason changes nothing.
+    assert.deepEqual(flags(await review('openrouter', { message: { content: '# Review\nVerdict: submit' }, finish_reason: 'stop', native_finish_reason: 'end_turn' })), [false, undefined, false]);
+  });
+
+  test('a policy block sent as an HTTP error is not a rejected key', async () => {
+    const failure = (id, body, status) => withFetch(() => json(body, status), () => providerReview({ provider: id, model: 'm', apiKey: API_KEY, prepared: PREPARED })
+      .then(() => null, (reason) => reason));
+    const openRouter = (metadata, message = 'Provider returned error') => ({ error: { code: 403, message, metadata } });
+    const cases = [
+      // [provider, status, body, blocked, the policy the message names, with the code and status in one pair of brackets]
+      ['openrouter', 403, openRouter({ error_type: 'refusal', provider_name: 'Anthropic', raw: `refused to respond for ${API_KEY}` }), 'policy', 'its usage policy (HTTP 403)'],
+      ['openrouter', 403, openRouter({ error_type: 'content_policy_violation', provider_name: 'Google' }), 'policy', 'its usage policy (HTTP 403)'],
+      ['openrouter', 403, openRouter({ reasons: ['illicit'], flagged_input: 'how to…', provider_name: 'OpenAI', model_slug: 'openai/gpt-6.1-sol' }, 'Input flagged'), 'policy', 'its usage policy (HTTP 403)'],
+      ['openrouter', 403, openRouter({ flagged_input: 'how to…' }), 'policy', 'its usage policy (HTTP 403)'],
+      ['openrouter', 400, openRouter({ error_type: 'refusal' }), 'policy', 'its usage policy (HTTP 400)'],
+      // The relay passes Anthropic's own notice along: the block is named.
+      ['openrouter', 403, openRouter({ error_type: 'refusal', raw: JSON.stringify({ error: { message: cyberNotice } }) }), 'anthropic-cyber', "Anthropic's Usage Policy on cyber content (HTTP 403)"],
+      // OpenAI documents the code and no status.
+      ['openai', 400, { error: { message: 'This request was flagged.', type: 'invalid_request_error', code: 'cyber_policy' } }, 'openai-cyber', "OpenAI's cyber usage policy (cyber_policy, HTTP 400)"],
+      ['openai', 403, { error: { message: `Flagged for ${API_KEY}`, code: 'cyber_policy' } }, 'openai-cyber', "OpenAI's cyber usage policy (cyber_policy, HTTP 403)"],
+      ['openai', 429, { error: { message: 'Access limited while activity is reviewed.', code: 'cyber_policy' } }, 'openai-cyber', "OpenAI's cyber usage policy (cyber_policy, HTTP 429)"],
+    ];
+    for (const [id, status, body, blocked, policy] of cases) {
+      const error = await failure(id, body, status);
+      assert.ok(error instanceof ProviderError, `${id} ${status}`);
+      assert.deepEqual([error.kind, error.blocked, error.status, error.code], ['policy', blocked, status, 'provider']);
+      assert.equal(error.message, `Provider blocked this request under ${policy}, so no review was written; the API key is not the cause.`);
+      assert.equal(error.message.split('(').length - 1, 1, 'one pair of brackets');
+      assert.equal((error.message.match(/[.!?](?:\s|$)/g) || []).length, 1, 'one sentence');
+      assert.doesNotMatch(error.message, /rejected the API key|Check that the key/);
+      assert.ok(!error.message.includes(API_KEY) && !error.detail.includes(API_KEY), 'the key is in neither the message nor the detail');
+    }
+
+    // The provider's own words travel beside the message, with the key removed.
+    const worded = await failure('openai', { error: { message: `Flagged for ${API_KEY}`, code: 'cyber_policy' } }, 403);
+    assert.equal(worded.detail, 'Flagged for [key]');
+
+    // A 401 or 403 with no policy signal is still a rejected key, word for word.
+    const plain = [
+      [403, { error: { message: 'Forbidden' } }],
+      [403, { error: { code: 403, message: 'Key disabled', metadata: { provider_name: 'OpenAI' } } }],
+      [403, { error: { code: 403, message: 'No access', metadata: { reasons: [], flagged_input: '' } } }],
+      [403, { error: { message: 'insufficient permissions', code: 'insufficient_permissions' } }],
+      [401, { error: { code: 401, message: 'No auth', metadata: { reasons: ['x'] } } }],
+      [403, 'not json'],
+    ];
+    for (const [status, body] of plain) {
+      const respond = () => (typeof body === 'string' ? new Response(body, { status }) : json(body, status));
+      const error = await withFetch(respond, () => providerReview({ provider: 'openrouter', model: 'm', apiKey: API_KEY, prepared: PREPARED }).then(() => null, (reason) => reason));
+      assert.deepEqual([error.kind, error.blocked, error.status], ['auth', undefined, status], JSON.stringify(body));
+      assert.ok(error.message.startsWith(`Provider rejected the API key (HTTP ${status}). Check that the key belongs to OpenRouter and is still active.`));
+    }
+    // Moderation metadata on a status that is not 403 changes nothing either.
+    const rate = await failure('openrouter', { error: { code: 429, message: 'Slow down', metadata: { reasons: ['x'] } } }, 429);
+    assert.deepEqual([rate.kind, rate.blocked], ['rate', undefined]);
+
+    // A streaming request is refused the same way, before any event.
+    await withFetch(() => json(openRouter({ error_type: 'refusal' }), 403), async () => {
+      await assert.rejects(
+        providerStream({ provider: 'openrouter', model: 'm', apiKey: API_KEY, prepared: PREPARED }),
+        (error) => error instanceof ProviderError && error.kind === 'policy' && error.blocked === 'policy',
+      );
+    });
+  });
+
+  test('a policy block inside a 200 body or mid-stream is reported as one', async () => {
+    const request = (id) => ({ provider: id, model: 'm', apiKey: API_KEY, prepared: PREPARED });
+    const moderation = { error: { code: 403, message: 'Input flagged', metadata: { reasons: ['illicit'], flagged_input: 'how to…', provider_name: 'OpenAI' } } };
+    const refusal = { error: { code: 403, message: 'Provider returned error', metadata: { error_type: 'refusal', provider_name: 'Anthropic' } } };
+    const cyber = { error: { message: 'This request was flagged.', code: 'cyber_policy' } };
+    // With no HTTP status to report, the brackets hold the provider's code or are left out.
+    const named = { policy: 'its usage policy', 'openai-cyber': "OpenAI's cyber usage policy (cyber_policy)" };
+    const policy = (blocked) => (error) => error instanceof ProviderError
+      && error.kind === 'policy' && error.blocked === blocked && error.status === 0
+      && error.message === `Provider blocked this request under ${named[blocked]}, so no review was written; the API key is not the cause.`;
+
+    // A 200 answer whose body is an error object, with and without streaming.
+    for (const [id, body, blocked] of [['openrouter', moderation, 'policy'], ['openrouter', refusal, 'policy'], ['openai', cyber, 'openai-cyber']]) {
+      await withFetch(() => json(body), async () => {
+        await assert.rejects(providerReview(request(id)), policy(blocked));
+        await assert.rejects(collect(await providerStream(request(id))), policy(blocked));
+      });
+      // OpenRouter also reports it inside the choice.
+      await withFetch(() => json(chatAnswer({ choices: [{ ...body, message: { content: '' }, finish_reason: 'error' }] })), async () => {
+        await assert.rejects(providerReview(request(id)), policy(blocked));
+      });
+
+      // Mid-stream, before any text: the provider's block, thrown.
+      await withFetch(() => sse(dataLines({ ...body, choices: [{ delta: { content: '' }, finish_reason: 'error' }] })), async () => {
+        await assert.rejects(collect(await providerStream(request(id))), policy(blocked));
+      });
+      // Mid-stream, after text: the text is kept and the answer ends refused and blocked, not cut short.
+      await withFetch(() => sse(dataLines({ choices: [{ delta: { content: 'so far' } }] }, { ...body, choices: [{ delta: { content: '' }, finish_reason: 'error' }] })), async () => {
+        assert.deepEqual(await collect(await providerStream(request(id))), [
+          { type: 'delta', text: 'so far' },
+          { type: 'done', truncated: false, refused: true, blocked, model: 'm', usage: { input: null, output: null } },
+        ]);
+      });
+      await withFetch(() => sse(dataLines({ choices: [{ delta: { content: 'so far' } }] }, { choices: [{ ...body, delta: {} }] })), async () => {
+        const events = await collect(await providerStream(request(id)));
+        assert.deepEqual([events.at(-1).refused, events.at(-1).blocked, events.at(-1).truncated], [true, blocked, false]);
+      });
+    }
+
+    // An in-band error with no policy signal keeps its old meaning.
+    await withFetch(() => json({ error: { code: 403, message: 'Forbidden' } }), async () => {
+      await assert.rejects(providerReview(request('openrouter')), (error) => error.kind === 'response' && /^Provider returned an error: Forbidden$/.test(error.message));
+    });
+  });
+
+  test('finish reasons that mean the answer was cut short, from the vendors that document them', async () => {
+    const cases = [['deepseek', 'insufficient_system_resource'], ['deepseek', 'aborted'], ['mistral', 'model_length'], ['openai', 'length'], ['openrouter', 'error']];
+    for (const [id, reason] of cases) {
+      const whole = await withFetch(() => json(chatAnswer({ choices: [{ message: { content: 'partial' }, finish_reason: reason }] })), () => providerReview({ provider: id, model: 'm', apiKey: API_KEY, prepared: PREPARED }));
+      assert.deepEqual([whole.truncated, whole.refused, whole.blocked], [true, false, undefined], `${id} ${reason}`);
+      const streamed = await withFetch(() => sse(dataLines({ choices: [{ delta: { content: 'partial' }, finish_reason: reason }] }, '[DONE]')), async () => (await collect(await providerStream({ provider: id, model: 'm', apiKey: API_KEY, prepared: PREPARED }))).at(-1));
+      assert.deepEqual([streamed.truncated, streamed.refused, streamed.blocked], [true, false, undefined], `${id} ${reason} streamed`);
+    }
+    const stopped = await withFetch(() => json(chatAnswer()), () => providerReview({ provider: 'deepseek', model: 'm', apiKey: API_KEY, prepared: PREPARED }));
+    assert.equal(stopped.truncated, false);
   });
 
   test('truncation and refusal are reported for both API styles', async () => {

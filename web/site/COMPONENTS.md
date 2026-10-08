@@ -94,9 +94,9 @@ export default {
 
 A module may default-export an array of pages. A module with no default export is treated as a shared helper and skipped.
 
-What the layout adds: charset, viewport, title, description, canonical, `color-scheme`, two `theme-color` metas, Open Graph and Twitter tags, icons, manifest, `/theme.js`, stylesheets, preloads, scripts, JSON-LD, the skip link, the header and the footer.
+What the layout adds: charset, viewport, title, description, canonical, `color-scheme`, two `theme-color` metas, Open Graph and Twitter tags (with `twitter:creator` set to the builder's handle; there is no `twitter:site`, the product has no X account), icons, manifest, `/theme.js`, stylesheets, preloads, scripts, JSON-LD, the skip link, the header and the footer.
 
-Header: brand, nav (Workbench `/#workspace`, Method `/method`, Tools `/tools`, Benchmark `/benchmark` only when that page exists, Guide `/guide`, MCP `/mcp`, Pricing), theme toggle, account control. Pricing links to `/#pricing` on the home page and to `/pricing` everywhere else. The account control is `<button id="account-button">` on `/` and a link to `/#account` everywhere else.
+Header: brand, nav (Workbench `/#workspace`, Method `/method`, Tools `/tools`, Benchmark `/benchmark` only when that page exists, Guide `/guide`, MCP `/mcp`, Pricing), theme toggle, account control. Pricing links to `/#pricing` on the home page and to `/pricing` everywhere else. The account control is `<button id="account-button">` on `/` and a link to `/#account` everywhere else. Both read "Sign in" in the static markup; a page that loads `/app/account.mjs` relabels it "Account" for a signed-in visitor.
 
 Footer: Product, Tools, Resources and Legal columns. The Tools column lists the first six `/tools/*` pages. Method, gauntlet, panel review, templates, changelog, benchmark, security and licences links appear when those pages exist.
 
@@ -195,11 +195,18 @@ Plain `h1` to `h6` are styled. `.h1` to `.h4` give any element that look.
 | `.display` | Hero headline. Archivo condensed black, 44px on a phone, 88px on a desktop. |
 | `.lede` | Intro paragraph, 18px, muted. |
 | `.meta` | Archivo condensed caps, 12px, muted: printed labels and counters. |
-
-Headings print in Archivo, semi-condensed and heavy. Nothing sits above a heading: no eyebrow, no kicker. A section opens with a part rule (`.section-head`).
 | `.muted` `.small` `.fine` | Secondary ink · 14px · 13px muted. |
 | `.mono` `.num` `.nowrap` | Mono family, for code, paths, hashes and typed entries · tabular figures · no wrapping. |
 | `.prose` | Wrapper for long-form pages. Plain `h2`, `p`, `ul`, `ol`, `blockquote`, `a`, `code`, `kbd`, `table`, `hr`, `img` inside it are styled. |
+
+Headings print in Archivo, semi-condensed and heavy. Nothing sits above a heading: no eyebrow, no kicker. A section opens with a part rule (`.section-head`).
+
+Until Archivo arrives, its text prints in `"Archivo fallback"`: Arial Narrow Bold from the visitor's machine, declared in `base.css` as one `@font-face` per band of `font-stretch`, each with the `size-adjust` that brings a line close to Archivo's width. The match is close, not exact: a line that fits by a pixel or two can still re-break when the font lands. Two rules keep that rare:
+
+- Give the measure of an Archivo heading in `em`, not `ch`. A `ch` is the width of "0" in the font in use, so a `ch` measure changes at the swap and the heading re-breaks. `22ch` of a page head is `11.352em` (the advance of "0" is 0.493em at width 72%, 0.516em at 76% and 0.562em at 88%).
+- A new `font-stretch` value is covered by the band it falls in. Re-measure the bands only when the font file changes.
+
+Where a line of Archivo text must not change its line count at any width, do not leave it to the match: fix the count in the layout, as the breadcrumb does on a phone.
 
 Inline `<code>` is styled everywhere. The mono stack puts Cascadia Mono before Cascadia Code so `!=` and `<=` are never drawn as ligatures.
 
@@ -412,7 +419,7 @@ sectionHeading({ title: 'Free tools', lede: 'Run them without an account.', id: 
 breadcrumbs([{ label: 'Tools', href: '/tools' }, { label: 'Report check' }])
 ```
 
-`header.section-head` > `.section-head__text` + `.section-head__aside`, under a part rule. `nav.breadcrumbs` > `ol` > `li`. A trail of two (home and this page) prints nothing: the mark in the header is the way home, and a lone label above a heading reads as a kicker. Every trail stays in the page's BreadcrumbList JSON-LD.
+`header.section-head` > `.section-head__text` + `.section-head__aside`, under a part rule. `nav.breadcrumbs` > `ol` > `li`. A trail of two (home and this page) prints nothing: the mark in the header is the way home, and a lone label above a heading reads as a kicker. Under 480px a trail of three or more drops its first crumb, for the same reason: section and page fit one line in the fallback face and in Archivo, so the trail has the same height before and after the font lands. Every trail stays in the page's BreadcrumbList JSON-LD.
 
 ### Page head on the field
 

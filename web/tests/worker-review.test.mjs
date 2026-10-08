@@ -4,13 +4,14 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { ProviderError } from '../public/providers.mjs';
+import { ANTHROPIC_CYBER_NOTICE, ProviderError } from '../public/providers.mjs';
 import { ApiError } from '../src/http.ts';
 import { failureReason, parseReviewRequest, reviewFailure, runHostedReview, streamHostedReview } from '../src/review.ts';
 import { SITE_ORIGIN, addAccount, addSubscription, createCall, createContext, createEnv, funnelCounts } from './worker-helpers.mjs';
 
 const ACCOUNT = 'account-1';
 const KEY = 'sk-test-key-0123456789';
+const CYBER_NOTICE = ANTHROPIC_CYBER_NOTICE;
 const REVIEW_TEXT = '# Review\nVerdict: no-blocking-issues\nMode: own-code\nCounts: critical=0 high=0 medium=0 hardening=0 checked-safe=0\nHeadline: Nothing blocks.\n';
 
 function body(overrides = {}) {
@@ -234,8 +235,30 @@ test('a refusal is returned but not counted against the day', async (t) => {
   );
   const result = await runHostedReview(call, ACCOUNT, parseReviewRequest(body()), 'web');
   assert.equal(result.refused, true);
+  assert.equal(Object.hasOwn(result, 'blocked'), false, 'the model declining in its own words is not a policy block');
   await ctx.settled();
   assert.equal(reviews(env)[0].status, 'failed');
+  assert.deepEqual(funnelCounts(env.DB), { review_fail: 1, 'review_fail:refused': 1 });
+});
+
+test('an ordinary-content policy refusal preserves the free allowance for a later review', async (t) => {
+  let reply = CYBER_NOTICE;
+  const { env, ctx, call, calls } = setup(t, () => completion(reply));
+  const result = await runHostedReview(call, ACCOUNT, parseReviewRequest(body()), 'web');
+  assert.equal(result.review, CYBER_NOTICE);
+  assert.equal(result.refused, true);
+  assert.equal(result.blocked, 'anthropic-cyber');
+  await ctx.settled();
+  assert.equal(reviews(env)[0].status, 'failed');
+  assert.deepEqual(funnelCounts(env.DB), { review_fail: 1, 'review_fail:blocked': 1 }, 'a block has its own failure reason');
+
+  reply = REVIEW_TEXT;
+  const next = await runHostedReview(call, ACCOUNT, parseReviewRequest(body()), 'web');
+  assert.equal(next.refused, false);
+  assert.equal(next.blocked, undefined);
+  await ctx.settled();
+  assert.deepEqual(reviews(env).map((review) => review.status), ['failed', 'completed']);
+  assert.equal(calls.length, 2, 'only the two explicit requests reached the provider');
 });
 
 test('the free review of the day, then daily_used with the reset time', async (t) => {
@@ -378,6 +401,201 @@ test('a streamed review sends deltas, then done with the whole review', async (t
   await ctx.settled();
   assert.deepEqual(reviews(env), [{ status: 'completed', profile: 'solidity', channel: 'web' }]);
   assert.deepEqual(funnelCounts(env.DB), { 'review_ok:solidity': 1 });
+});
+
+test('a chunked ordinary-content policy refusal sends its category and keeps the free allowance', async (t) => {
+  let provider;
+  let blocked = true;
+  const { env, ctx, call, calls } = setup(t, (init) => {
+    if (!blocked) return completion();
+    provider = providerStream(init);
+    return provider.response;
+  });
+  const response = await streamHostedReview(call, ACCOUNT, parseReviewRequest(body()), 'web');
+  for (const part of [CYBER_NOTICE.slice(0, 48), CYBER_NOTICE.slice(48, 120), CYBER_NOTICE.slice(120)]) provider.push(chunk(part));
+  provider.push(chunk(null, 'stop'));
+  provider.push('data: [DONE]\n\n');
+  provider.close();
+  const events = parseEvents(await response.text());
+  assert.equal(events.filter((event) => event.event === 'delta').map((event) => event.data.text).join(''), CYBER_NOTICE);
+  const done = events.at(-1).data;
+  assert.equal(events.at(-1).event, 'done');
+  assert.equal(done.review, CYBER_NOTICE);
+  assert.equal(done.refused, true);
+  assert.equal(done.blocked, 'anthropic-cyber');
+  await ctx.settled();
+  assert.equal(reviews(env)[0].status, 'failed');
+  assert.deepEqual(funnelCounts(env.DB), { review_fail: 1, 'review_fail:blocked': 1 });
+
+  blocked = false;
+  await runHostedReview(call, ACCOUNT, parseReviewRequest(body()), 'web');
+  await ctx.settled();
+  assert.deepEqual(reviews(env).map((review) => review.status), ['failed', 'completed']);
+  assert.equal(calls.length, 2);
+});
+
+test('generic refusals retain the existing allowance threshold on both response paths', async (t) => {
+  // The model declines in its own words (a refusal message, a normal stop): no provider block.
+  for (const [chars, counted] of [[1999, false], [2000, true], [2500, true]]) {
+    for (const streamed of [false, true]) {
+      await t.test(`${chars} characters over ${streamed ? 'SSE' : 'JSON'}`, async (subtest) => {
+        const text = 'Review text. '.repeat(210).slice(0, chars);
+        let provider;
+        const { env, ctx, call, calls } = setup(subtest, (init) => {
+          if (!streamed) return completion(text, { choices: [{ message: { content: null, refusal: text }, finish_reason: 'stop' }] });
+          provider = providerStream(init);
+          return provider.response;
+        });
+        let result;
+        if (streamed) {
+          const response = await streamHostedReview(call, ACCOUNT, parseReviewRequest(body()), 'web');
+          provider.push(`data: ${JSON.stringify({ model: 'gpt-test-2026', choices: [{ delta: { refusal: text }, finish_reason: null }] })}\n\n`);
+          provider.push(chunk(null, 'stop'));
+          provider.push('data: [DONE]\n\n');
+          provider.close();
+          result = parseEvents(await response.text()).at(-1).data;
+        } else {
+          result = await runHostedReview(call, ACCOUNT, parseReviewRequest(body()), 'web');
+        }
+        assert.equal(result.review, text);
+        assert.equal(result.refused, true);
+        assert.equal(result.blocked, undefined);
+        await ctx.settled();
+        assert.equal(reviews(env)[0].status, counted ? 'completed' : 'failed');
+        assert.deepEqual(funnelCounts(env.DB), counted ? { 'review_ok:solidity': 1 } : { review_fail: 1, 'review_fail:refused': 1 });
+        assert.equal(calls.length, 1);
+      });
+    }
+  }
+});
+
+test('a blocked answer is never counted, whatever its length, on both response paths', async (t) => {
+  const anthropic = { provider: 'anthropic', model: 'claude-opus-5-5' };
+  const messageEvents = (...events) => events.map((event) => `event: ${event.type}\ndata: ${JSON.stringify(event)}\n\n`);
+  const details = { type: 'refusal', category: 'cyber', explanation: 'Blocked by the cyber safeguards.' };
+
+  for (const chars of [0, 1999, 2000, 25000]) {
+    const text = 'Review text written before the block. '.repeat(700).slice(0, chars);
+    // [name, request overrides, blocked, one-answer body, stream chunks]
+    const signals = [
+      ['a provider filter (content_filter)', {}, 'policy',
+        { model: 'gpt-test-2026', choices: [{ message: { content: text }, finish_reason: 'content_filter' }] },
+        [...(text ? [chunk(text)] : []), chunk(null, 'content_filter'), 'data: [DONE]\n\n']],
+      ['a raw upstream refusal (native_finish_reason)', { provider: 'openrouter', model: 'anthropic/claude-opus-5.5' }, 'policy',
+        { model: 'gpt-test-2026', choices: [{ message: { content: text }, finish_reason: 'stop', native_finish_reason: 'refusal' }] },
+        [...(text ? [chunk(text)] : []), `data: ${JSON.stringify({ choices: [{ delta: {}, finish_reason: 'stop', native_finish_reason: 'refusal' }] })}\n\n`, 'data: [DONE]\n\n']],
+      ['a Messages refusal (stop_reason, category cyber)', anthropic, 'anthropic-cyber',
+        { type: 'message', model: 'claude-opus-5-5', content: text ? [{ type: 'text', text }] : [], stop_reason: 'refusal', stop_details: details, usage: { input_tokens: 5, output_tokens: 1 } },
+        messageEvents(
+          { type: 'message_start', message: { model: 'claude-opus-5-5', usage: { input_tokens: 5, output_tokens: 0 } } },
+          ...(text ? [{ type: 'content_block_delta', index: 0, delta: { type: 'text_delta', text } }] : []),
+          { type: 'message_delta', delta: { stop_reason: 'refusal', stop_details: details }, usage: { output_tokens: 1 } },
+          { type: 'message_stop' },
+        )],
+    ];
+    // A policy error after text, mid-stream: only a stream can carry it.
+    if (text) {
+      signals.push(['a policy error after text, mid-stream', { provider: 'openrouter', model: 'openai/gpt-6.1-sol' }, 'policy', null, [
+        chunk(text),
+        `data: ${JSON.stringify({ error: { code: 403, message: 'Provider returned error', metadata: { error_type: 'refusal' } }, choices: [{ delta: { content: '' }, finish_reason: 'error' }] })}\n\n`,
+      ]]);
+    }
+
+    for (const [name, overrides, blocked, whole, chunks] of signals) {
+      for (const streamed of [false, true]) {
+        if (!streamed && !whole) continue;
+        await t.test(`${name}, ${chars} characters over ${streamed ? 'SSE' : 'JSON'}`, async (subtest) => {
+          let provider;
+          const { env, ctx, call } = setup(subtest, (init) => {
+            if (!streamed) return Response.json(whole);
+            provider = providerStream(init);
+            return provider.response;
+          });
+          const input = parseReviewRequest(body(overrides));
+          let result;
+          if (streamed) {
+            const response = await streamHostedReview(call, ACCOUNT, input, 'web');
+            for (const part of chunks) provider.push(part);
+            provider.close();
+            const events = parseEvents(await response.text());
+            assert.equal(events.at(-1).event, 'done');
+            result = events.at(-1).data;
+          } else {
+            result = await runHostedReview(call, ACCOUNT, input, 'web');
+          }
+          assert.equal(result.refused, true);
+          assert.equal(result.blocked, blocked);
+          // The text the provider wrote before the block is shown; with none, its explanation is.
+          assert.equal(result.review, text || (blocked === 'anthropic-cyber' ? details.explanation : ''));
+          await ctx.settled();
+          assert.equal(reviews(env)[0].status, 'failed', 'not counted');
+          assert.deepEqual(funnelCounts(env.DB), { review_fail: 1, 'review_fail:blocked': 1 });
+        });
+      }
+    }
+  }
+});
+
+test('a policy block the provider sends as an error is provider_policy, is not charged, and leaves the daily review', async (t) => {
+  const moderation = { error: { code: 403, message: 'Input flagged', metadata: { reasons: ['illicit'], flagged_input: 'how to…', provider_name: 'OpenAI' } } };
+  const cyber = { error: { message: `This request was flagged for ${KEY}.`, type: 'invalid_request_error', code: 'cyber_policy' } };
+  const cases = [
+    // [name, request overrides, HTTP status of the provider answer, body, blocked]
+    ['an OpenRouter moderation 403', { provider: 'openrouter', model: 'openai/gpt-6.1-sol' }, 403, moderation, 'policy'],
+    ['an OpenAI cyber_policy error', {}, 400, cyber, 'openai-cyber'],
+    ['a block inside a 200 body', { provider: 'openrouter', model: 'openai/gpt-6.1-sol' }, 200, moderation, 'policy'],
+  ];
+  for (const [name, overrides, status, payload, blocked] of cases) {
+    for (const streamed of [false, true]) {
+      await t.test(`${name} over ${streamed ? 'SSE' : 'JSON'}`, async (subtest) => {
+        let reply = () => Response.json(payload, { status });
+        const { env, ctx, call } = setup(subtest, () => reply());
+        const input = parseReviewRequest(body(overrides));
+
+        let failure;
+        if (streamed && status === 200) {
+          // The provider accepted the stream and answered with one JSON error body: an `error` event.
+          const response = await streamHostedReview(call, ACCOUNT, input, 'web');
+          assert.match(response.headers.get('content-type'), /^text\/event-stream/);
+          const events = parseEvents(await response.text());
+          assert.deepEqual(events.map((item) => item.event), ['error']);
+          failure = { message: events[0].data.error, code: events[0].data.code, extra: events[0].data };
+        } else {
+          const error = await rejection(streamed ? streamHostedReview(call, ACCOUNT, input, 'web') : runHostedReview(call, ACCOUNT, input, 'web'));
+          assert(error instanceof ApiError);
+          assert.equal(error.status, 502);
+          failure = error;
+        }
+        assert.equal(failure.code, 'provider_policy');
+        assert.equal(failure.extra.kind, 'policy');
+        assert.equal(failure.extra.blocked, blocked);
+        assert.match(failure.message, /^Provider blocked this request under .+; the API key is not the cause\. It was not counted against your allowance\.$/);
+        assert.doesNotMatch(failure.message, /rejected the API key/);
+        assert(!JSON.stringify(failure.extra).includes(KEY) && !failure.message.includes(KEY));
+
+        await ctx.settled();
+        assert.deepEqual(reviews(env), [{ status: 'failed', profile: 'solidity', channel: 'web' }]);
+        assert.deepEqual(funnelCounts(env.DB), { review_fail: 1, 'review_fail:provider_policy': 1 });
+
+        // The free account's one review of the day is still there.
+        reply = () => completion();
+        const next = await runHostedReview(call, ACCOUNT, parseReviewRequest(body()), 'web');
+        assert.equal(next.refused, false);
+        await ctx.settled();
+        assert.deepEqual(reviews(env).map((review) => review.status), ['failed', 'completed']);
+      });
+    }
+  }
+});
+
+test('a plain 403 from the provider is still a rejected key', async (t) => {
+  const { env, ctx, call } = setup(t, () => Response.json({ error: { code: 403, message: 'Forbidden', metadata: { provider_name: 'OpenAI' } } }, { status: 403 }));
+  const error = await rejection(runHostedReview(call, ACCOUNT, parseReviewRequest(body({ provider: 'openrouter', model: 'openai/gpt-6.1-sol' })), 'web'));
+  assert.equal(error.code, 'provider');
+  assert.equal(error.extra.kind, 'auth');
+  assert.match(error.message, /^Provider rejected the API key \(HTTP 403\)/);
+  await ctx.settled();
+  assert.deepEqual(funnelCounts(env.DB), { review_fail: 1, 'review_fail:provider_auth': 1 });
 });
 
 test('a key the provider rejects fails a streamed review before any event, as a plain error', async (t) => {
@@ -549,6 +767,13 @@ test('reviewFailure keeps provider messages and hides everything else', () => {
   assert.equal(hardLimit.code, 'provider');
   assert.match(hardLimit.message, /^Provider did not finish within 270 seconds/);
 
+  const policy = reviewFailure(new ProviderError('Provider blocked this request.', { status: 403, kind: 'policy', blocked: 'openai-cyber', detail: 'Flagged.' }));
+  assert.equal(policy.status, 502);
+  assert.equal(policy.code, 'provider_policy');
+  assert.deepEqual(policy.extra, { kind: 'policy', blocked: 'openai-cyber', detail: 'Flagged.' });
+  assert.equal(policy.message, 'Provider blocked this request. It was not counted against your allowance.');
+  assert.deepEqual(reviewFailure(new ProviderError('Provider blocked this request.', { kind: 'policy' })).extra, { kind: 'policy', blocked: 'policy' });
+
   const unknown = reviewFailure(new TypeError('secret internal detail'));
   assert.equal(unknown.status, 502);
   assert.equal(unknown.code, 'review_failed');
@@ -558,6 +783,7 @@ test('reviewFailure keeps provider messages and hides everything else', () => {
 test('failureReason names a failed review from a fixed set and never from the message', () => {
   assert.equal(failureReason(new ProviderError('Provider rate limit reached.', { status: 429, kind: 'rate' })), 'provider_rate');
   assert.equal(failureReason(new ProviderError('Provider has no credits left.', { status: 402, kind: 'credit' })), 'provider_credit');
+  assert.equal(failureReason(new ProviderError('Provider blocked this request.', { status: 403, kind: 'policy', blocked: 'policy' })), 'provider_policy');
   assert.equal(failureReason(new DOMException('The operation timed out.', 'TimeoutError')), 'single_answer_limit');
   assert.equal(failureReason(new DOMException('The operation was aborted.', 'AbortError')), 'client_gone');
   assert.equal(failureReason(new ProviderError('Provider failed.', { kind: 'server' }), true), 'client_gone', 'a client that left wins');

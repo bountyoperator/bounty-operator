@@ -93,7 +93,7 @@ each client: [bountyoperator.com/mcp](https://bountyoperator.com/mcp) and
 Python 3.10 or newer. No dependencies.
 
 ```bash
-pip install "git+https://github.com/bountyoperator/bounty-operator@v0.8.1"
+pip install "git+https://github.com/bountyoperator/bounty-operator@v0.8.2"
 bounty-kit agent-pack ./agent-pack.md --target "Example Protocol" --program "Example bounty"
 ```
 
@@ -227,7 +227,9 @@ node bench/bench.mjs verify --results web/public/bench/latest.json --archive web
 
 [2nd of 135 in Immunefi's Firelight competition](https://immunefi.com/audit-competition/audit-comp-firelight-1/leaderboard/),
 [8th of 65 in Quantus](https://immunefi.com/audit-competition/audit-comp-quantus/leaderboard/)
-and [15th of 186 in ENS, with 17 valid Criticals, the most on the board](https://immunefi.com/audit-competition/audit-competition-ens/leaderboard/).
+and [15th of 186 in ENS, with 17 valid Critical submissions, the most on the board](https://immunefi.com/audit-competition/audit-competition-ens/leaderboard/).
+
+ENS credits 23 valid submissions: 1 Chief and 22 duplicates, plus 1 separate Insight. 17 of the 23 are rated Critical, 1 High, 4 Medium and 1 Low.
 
 [Sherlock profile](https://audits.sherlock.xyz/watson/Tradi3) ·
 [Audit portfolio](https://github.com/krutftw/audit-portfolio)

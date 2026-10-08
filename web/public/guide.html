@@ -19,6 +19,7 @@
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Bounty Operator. Find the hole in your report before the triager does.">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:creator" content="@Tradi3_">
 <meta name="twitter:title" content="Bug bounty report guide | Bounty Operator">
 <meta name="twitter:description" content="Twelve checks to run and the evidence to attach before you submit a bug bounty report, with a worked example rewritten line by line.">
 <meta name="twitter:image" content="https://bountyoperator.com/social-v4.png">
@@ -33,7 +34,8 @@
 <link rel="stylesheet" href="/css/docs.css">
 <script type="module" src="/docs/handoff.mjs"></script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Bounty Operator","item":"https://bountyoperator.com/"},{"@type":"ListItem","position":2,"name":"Report guide","item":"https://bountyoperator.com/guide"}]}</script>
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Bug bounty report guide","description":"Twelve checks to run and the evidence to attach before you submit a bug bounty report, with a worked example rewritten line by line.","url":"https://bountyoperator.com/guide","mainEntityOfPage":"https://bountyoperator.com/guide","datePublished":"2026-10-07","dateModified":"2026-10-07","author":{"@type":"Organization","name":"Tradi3","url":"https://audits.sherlock.xyz/watson/Tradi3"},"publisher":{"@type":"Organization","name":"Bounty Operator","url":"https://bountyoperator.com/"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Bug bounty report guide","description":"Twelve checks to run and the evidence to attach before you submit a bug bounty report, with a worked example rewritten line by line.","url":"https://bountyoperator.com/guide","mainEntityOfPage":"https://bountyoperator.com/guide","datePublished":"2026-10-07","dateModified":"2026-10-09","author":{"@type":"Organization","name":"Tradi3","url":"https://audits.sherlock.xyz/watson/Tradi3"},"publisher":{"@type":"Organization","name":"Bounty Operator","url":"https://bountyoperator.com/"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"When the model refuses","acceptedAnswer":{"@type":"Answer","text":"Some providers screen security work before the model answers. Anthropic’s newest Claude models block most of it by default, and OpenAI’s newer models can return a cyber policy error. A report about an exploit reads the same to a filter whether you found the bug or plan to use it. Bounty Operator tells you when a provider blocked a review. A blocked review is never counted. Run it again on another model or provider. That works today and needs no approval. For fewer blocks on your own Anthropic account, apply to the Cyber Verification Program. Bug bounty hunters apply as individuals for Defense Access, on a paid plan, at portal.anthropic.com/programs. Anthropic aims to answer within seven business days. The programme has its own rules for API keys: read them before you use a granted key in any tool. On OpenAI, Trusted Access for Cyber grants Daybreak access. Individuals request it at chatgpt.com/cyber. An approval reduces blocks. It does not remove them."}}]}</script>
 </head>
 <body>
 <!--
@@ -51,7 +53,7 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
 <nav class="site-nav" aria-label="Main"><ul><li><a href="/#workspace">Review</a></li><li><a href="/benchmark">Benchmark</a></li><li><a href="/tools">Tools</a></li><li><a href="/guide" aria-current="page">Guide</a></li><li><a href="/pricing">Pricing</a></li></ul></nav>
 <div class="site-header__actions">
 <button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch colour theme"><span class="icon theme-toggle__icon" aria-hidden="true"></span></button>
-<a class="btn btn--secondary btn--sm" href="/#account">Account</a>
+<a class="btn btn--secondary btn--sm" href="/#account">Sign in</a>
 </div>
 </div>
 </header>
@@ -68,10 +70,10 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
 <div class="docs-body">
 <nav class="docs-toc" aria-label="On this page">
 <p class="meta">On this page</p>
-<ul><li><a href="#lands">What lands</a></li><li><a href="#example">Worked example</a></li><li><a href="#checks">The twelve checks</a></li><li><a href="#order">Order of work</a></li><li><a href="#evidence">Evidence to collect</a></li></ul>
+<ul><li><a href="#lands">What lands</a></li><li><a href="#example">Worked example</a></li><li><a href="#checks">The twelve checks</a></li><li><a href="#order">Order of work</a></li><li><a href="#evidence">Evidence to collect</a></li><li><a href="#model-refuses">When the model refuses</a></li></ul>
 </nav>
 <div class="docs-content">
-<div class="docs-record"><p>Twelve checks, distilled from 105 real case files across five platforms. The wins and the closures. Built by Tradi3: <a class="link link--external" href="https://immunefi.com/audit-competition/audit-comp-firelight-1/leaderboard/" target="_blank" rel="noopener noreferrer">2nd of 135 in Immunefi’s Firelight competition<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a>, <a class="link link--external" href="https://immunefi.com/audit-competition/audit-comp-quantus/leaderboard/" target="_blank" rel="noopener noreferrer">8th of 65 in Quantus<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a> and <a class="link link--external" href="https://immunefi.com/audit-competition/audit-competition-ens/leaderboard/" target="_blank" rel="noopener noreferrer">15th of 186 in ENS, with 17 valid Criticals, the most on the board<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a>.</p></div>
+<div class="docs-record"><p>Twelve checks, distilled from 105 real case files across five platforms. The wins and the closures. Built by Tradi3: <a class="link link--external" href="https://immunefi.com/audit-competition/audit-comp-firelight-1/leaderboard/" target="_blank" rel="noopener noreferrer">2nd of 135 in Immunefi’s Firelight competition<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a>, <a class="link link--external" href="https://immunefi.com/audit-competition/audit-comp-quantus/leaderboard/" target="_blank" rel="noopener noreferrer">8th of 65 in Quantus<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a> and <a class="link link--external" href="https://immunefi.com/audit-competition/audit-competition-ens/leaderboard/" target="_blank" rel="noopener noreferrer">15th of 186 in ENS, with 17 valid Critical submissions, the most on the board<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a>.</p></div>
 <section class="docs-section" aria-labelledby="lands">
 <h2 class="docs-section__title" id="lands">What a report that lands contains</h2>
 
@@ -441,6 +443,14 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
 <p>These decide outcomes, so gather them before you write a sentence. A missing one is a gap a triager finds for you.</p>
 </div>
 <ul class="checklist checklist--columns"><li><span class="icon icon--check" aria-hidden="true"></span><div><p>The programme’s impact list, and the row you selected</p></div></li><li><span class="icon icon--check" aria-hidden="true"></span><div><p>Exclusions and trusted roles</p></div></li><li><span class="icon icon--check" aria-hidden="true"></span><div><p>The severity scale, with thresholds and downgrade clauses</p></div></li><li><span class="icon icon--check" aria-hidden="true"></span><div><p>The asset, the revision your proof ran on, and the deployed revision</p></div></li><li><span class="icon icon--check" aria-hidden="true"></span><div><p>Known issues, audits and fix-review notes, team branches, and how deep your clone goes</p></div></li><li><span class="icon icon--check" aria-hidden="true"></span><div><p>Your own earlier reports on the programme</p></div></li><li><span class="icon icon--check" aria-hidden="true"></span><div><p>The actor behind each step</p></div></li><li><span class="icon icon--check" aria-hidden="true"></span><div><p>The measured loss</p></div></li><li><span class="icon icon--check" aria-hidden="true"></span><div><p>The proof run: command, commit, output, and anything mocked</p></div></li><li><span class="icon icon--check" aria-hidden="true"></span><div><p>Fee and duplicate rules, and the date you first reproduced it</p></div></li><li><span class="icon icon--check" aria-hidden="true"></span><div><p>The platform’s read-back of the stored submission</p></div></li></ul>
+</section><section class="docs-section" aria-labelledby="model-refuses">
+<h2 class="docs-section__title" id="model-refuses">When the model refuses</h2>
+<div class="prose"><p>Some providers screen security work before the model answers. Anthropic’s newest Claude models block most of it by default, and OpenAI’s newer models can return a cyber policy error. A report about an exploit reads the same to a filter whether you found the bug or plan to use it.</p>
+<p>Bounty Operator tells you when a provider blocked a review. A blocked review is never counted.</p>
+<p>Run it again on another model or provider. That works today and needs no approval.</p>
+<p>For fewer blocks on your own Anthropic account, apply to the <a href="https://support.claude.com/en/articles/14604842-cyber-verification-program" target="_blank" rel="noopener noreferrer">Cyber Verification Program</a>. Bug bounty hunters apply as individuals for Defense Access, on a paid plan, at <a href="https://portal.anthropic.com/programs" target="_blank" rel="noopener noreferrer">portal.anthropic.com/programs</a>. Anthropic aims to answer within seven business days. The programme has <a href="https://support.claude.com/en/articles/17202708-cyber-verification-program-security-requirements" target="_blank" rel="noopener noreferrer">its own rules for API keys</a>: read them before you use a granted key in any tool.</p>
+<p>On OpenAI, Trusted Access for Cyber grants Daybreak access. Individuals request it at <a href="https://chatgpt.com/cyber" target="_blank" rel="noopener noreferrer">chatgpt.com/cyber</a>.</p>
+<p>An approval reduces blocks. It does not remove them.</p></div>
 </section>
 </div>
 </div>
