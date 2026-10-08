@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.8.1 — 2026-10-08
+
+Site
+
+- Every stamp is now pressed with real ink. The voids, the mottle and the
+  pressure across each stamp's face come from scans of real 1980s
+  rubber-stamp imprints, published as CC0 on Wikimedia Commons, so each
+  verdict and severity reads as an inked impression on the home page, in a
+  review's result and on the social card.
+
 ## 0.8.0 — 2026-10-08
 
 Site

@@ -1,6 +1,6 @@
 {
   "name": "bounty-operator-mcp",
-  "version": "0.8.0",
+  "version": "0.8.1",
   "description": "MCP server for Bounty Operator: argue against a security finding or a draft report before you submit it.",
   "mcpName": "io.github.bountyoperator/bounty-operator",
   "type": "module",

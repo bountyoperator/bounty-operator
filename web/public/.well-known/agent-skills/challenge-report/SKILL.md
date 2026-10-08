@@ -4,7 +4,7 @@ description: "Checks a draft bug bounty report against the code it cites before 
 license: MIT
 metadata:
   author: "Tradi3"
-  version: "0.8.0"
+  version: "0.8.1"
   homepage: "https://bountyoperator.com"
   profile: "report"
   profile-sha256: "d277cf80d39e57b455a1c1bf9d55fa50d18e7842e24e9d65d95f22fca738cb89"

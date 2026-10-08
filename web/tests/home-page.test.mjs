@@ -236,6 +236,34 @@ test('every verdict and severity the site stamps has its pressed impression', as
   assert.doesNotMatch(css, /feTurbulence|--ink-grain/);
 });
 
+test('the stamps are pressed with real ink from the two CC0 scans, and no noise function', async () => {
+  const scripts = path.join(WEB_DIR, '..', 'scripts');
+  const sources = await readFile(path.join(scripts, 'ink', 'SOURCES.md'), 'utf8');
+  for (const [file, sha1] of [
+    ['Rubber_stamp_imprints_Czechia_GDR_1984.jpg', '29d54e0b6117ee1caafe54e4b6f5dc423abfc48d'],
+    ['Rubber_stamps_state_retail_stores_Czechia_1984.jpg', '78630cf9c2c707aa6fcba0da4dd5d2676037246a'],
+  ]) {
+    assert.ok(sources.includes(`https://commons.wikimedia.org/wiki/File:${file}`), file);
+    assert.ok(sources.includes(sha1), `${file} SHA-1`);
+  }
+  assert.match(sources, /CC0 1\.0/);
+  // The extractor checks the scans against the same hashes before it reads them.
+  const extractor = await readFile(path.join(scripts, 'extract-ink.py'), 'utf8');
+  assert.ok(extractor.includes('29d54e0b6117ee1caafe54e4b6f5dc423abfc48d') && extractor.includes('78630cf9c2c707aa6fcba0da4dd5d2676037246a'));
+  // The derived ink the builder reads: a 32 x 12 grid of 16px patches and twelve 192 x 64 pressure rows.
+  const png = async (file) => {
+    const bytes = await readFile(path.join(scripts, 'ink', file));
+    return { width: bytes.readUInt32BE(16), height: bytes.readUInt32BE(20) };
+  };
+  assert.deepEqual(await png('patches.png'), { width: 32 * 16, height: 12 * 16 });
+  assert.deepEqual(await png('pressure.png'), { width: 192, height: 12 * 64 });
+  // Every texture comes from that ink: the builder has no noise of its own.
+  const builder = await readFile(path.join(scripts, 'build-stamps.mjs'), 'utf8');
+  assert.doesNotMatch(builder, /makeNoise|fbm\(|feTurbulence|Math\.sin\(.*seed/);
+  assert.match(builder, /patches\.png/);
+  assert.match(builder, /pressure\.png/);
+});
+
 test('the five verdicts are listed with what each one means', () => {
   const section = main.slice(main.indexOf('id="verdicts-title"'), main.indexOf('id="workspace"'));
   for (const verdict of ['submit', 'rewrite-then-submit', 'prove-first', 'hold-duplicate', 'drop']) {
