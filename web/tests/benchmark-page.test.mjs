@@ -603,7 +603,9 @@ test('the leaderboard script builds no markup from strings, and the stylesheet u
   const page = readFileSync(path.join(BENCH_PAGES, 'index.mjs'), 'utf8');
   for (const key of ['recall', 'fools', 'challenge', 'failure', 'cost', 'time', 'effort']) {
     assert.ok(page.includes(`key: '${key}'`), key);
-    assert.ok(css.includes(`.lb[data-hide~="${key}"] [data-col="${key}"]`), key);
+    // Written at the weight of the stacked layout's own `display` rules (.table-wrap > .table.lb tbody tr.lb__row > *),
+    // or the picker hides nothing on a phone.
+    assert.ok(css.includes(`.table-wrap > .table.lb[data-hide~="${key}"] [data-col="${key}"]`), key);
   }
 });
 

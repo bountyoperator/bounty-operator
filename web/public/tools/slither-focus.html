@@ -32,10 +32,10 @@
 <script src="/theme.js"></script>
 <link rel="stylesheet" href="/css/base.css">
 <link rel="stylesheet" href="/css/tools.css">
-<link rel="modulepreload" href="/tools/slither-focus-core.mjs">
-<link rel="modulepreload" href="/tools/dom.mjs">
-<link rel="modulepreload" href="/tools/ping.mjs">
-<script type="module" src="/tools/slither-focus.mjs"></script>
+<link rel="modulepreload" href="/tools/slither-focus-core.mjs" fetchpriority="low">
+<link rel="modulepreload" href="/tools/dom.mjs" fetchpriority="low">
+<link rel="modulepreload" href="/tools/ping.mjs" fetchpriority="low">
+<script type="module" src="/tools/slither-focus.mjs" fetchpriority="low"></script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Bounty Operator","item":"https://bountyoperator.com/"},{"@type":"ListItem","position":2,"name":"Tools","item":"https://bountyoperator.com/tools"},{"@type":"ListItem","position":3,"name":"Slither triage queue","item":"https://bountyoperator.com/tools/slither-focus"}]}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Is the Slither output uploaded?","acceptedAnswer":{"@type":"Answer","text":"No. The file is parsed and filtered in this tab. After the page has loaded it makes one request: a counter that says the tool was used, with nothing of yours in it. Pressing “Triage this in the workbench” moves the queue to the workbench through this browser’s session storage. It leaves the browser only when you run a review there: through our server to the provider you chose."}},{"@type":"Question","name":"Why these 13 detectors?","acceptedAnswer":{"@type":"Answer","text":"Slither reports naming, style and gas detectors next to the ones that move funds. These 13 are the classes where a hit is worth reading line by line on a bounty target: value sent to a caller-chosen address, state written after an external call, ignored return values, controlled delegatecall."}},{"@type":"Question","name":"What does the tool decide?","acceptedAnswer":{"@type":"Answer","text":"Nothing about validity. It filters, ranks and formats. A detector hit is a lead: the scanner triage profile in the workbench groups the leads by root cause and gives each one a next check."}}]}</script>
 </head>

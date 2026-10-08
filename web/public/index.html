@@ -35,34 +35,34 @@
 <link rel="stylesheet" href="/css/workbench.css">
 <link rel="stylesheet" href="/css/runners.css">
 <link rel="stylesheet" href="/css/account.css">
-<link rel="modulepreload" href="/profiles.mjs">
-<link rel="modulepreload" href="/review-core.mjs">
-<link rel="modulepreload" href="/app/api.mjs">
-<link rel="modulepreload" href="/app/dossier.mjs">
-<link rel="modulepreload" href="/app/events.mjs">
-<link rel="modulepreload" href="/app/files.mjs">
-<link rel="modulepreload" href="/app/gauntlet.mjs">
-<link rel="modulepreload" href="/app/github-ui.mjs">
-<link rel="modulepreload" href="/app/history.mjs">
-<link rel="modulepreload" href="/app/panel.mjs">
-<link rel="modulepreload" href="/app/pasteback.mjs">
-<link rel="modulepreload" href="/app/providers-ui.mjs">
-<link rel="modulepreload" href="/app/results.mjs">
-<link rel="modulepreload" href="/app/run.mjs">
-<link rel="modulepreload" href="/app/source-pane.mjs">
-<link rel="modulepreload" href="/app/state.mjs">
-<link rel="modulepreload" href="/app/ui.mjs">
-<link rel="modulepreload" href="/app/workbench.mjs">
-<link rel="modulepreload" href="/app/billing-ui.mjs">
-<link rel="modulepreload" href="/app/passkey.mjs">
-<link rel="modulepreload" href="/app/portal.mjs">
-<link rel="modulepreload" href="/evidence.mjs">
-<link rel="modulepreload" href="/parse.mjs">
-<link rel="modulepreload" href="/providers.mjs">
-<link rel="modulepreload" href="/app/blocked.mjs">
-<link rel="modulepreload" href="/github.mjs">
-<script type="module" src="/app/main.mjs"></script>
-<script type="module" src="/app/account.mjs"></script>
+<link rel="modulepreload" href="/profiles.mjs" fetchpriority="low">
+<link rel="modulepreload" href="/review-core.mjs" fetchpriority="low">
+<link rel="modulepreload" href="/app/api.mjs" fetchpriority="low">
+<link rel="modulepreload" href="/app/dossier.mjs" fetchpriority="low">
+<link rel="modulepreload" href="/app/events.mjs" fetchpriority="low">
+<link rel="modulepreload" href="/app/files.mjs" fetchpriority="low">
+<link rel="modulepreload" href="/app/gauntlet.mjs" fetchpriority="low">
+<link rel="modulepreload" href="/app/github-ui.mjs" fetchpriority="low">
+<link rel="modulepreload" href="/app/history.mjs" fetchpriority="low">
+<link rel="modulepreload" href="/app/panel.mjs" fetchpriority="low">
+<link rel="modulepreload" href="/app/pasteback.mjs" fetchpriority="low">
+<link rel="modulepreload" href="/app/providers-ui.mjs" fetchpriority="low">
+<link rel="modulepreload" href="/app/results.mjs" fetchpriority="low">
+<link rel="modulepreload" href="/app/run.mjs" fetchpriority="low">
+<link rel="modulepreload" href="/app/source-pane.mjs" fetchpriority="low">
+<link rel="modulepreload" href="/app/state.mjs" fetchpriority="low">
+<link rel="modulepreload" href="/app/ui.mjs" fetchpriority="low">
+<link rel="modulepreload" href="/app/workbench.mjs" fetchpriority="low">
+<link rel="modulepreload" href="/app/billing-ui.mjs" fetchpriority="low">
+<link rel="modulepreload" href="/app/passkey.mjs" fetchpriority="low">
+<link rel="modulepreload" href="/app/portal.mjs" fetchpriority="low">
+<link rel="modulepreload" href="/evidence.mjs" fetchpriority="low">
+<link rel="modulepreload" href="/parse.mjs" fetchpriority="low">
+<link rel="modulepreload" href="/providers.mjs" fetchpriority="low">
+<link rel="modulepreload" href="/app/blocked.mjs" fetchpriority="low">
+<link rel="modulepreload" href="/github.mjs" fetchpriority="low">
+<script type="module" src="/app/main.mjs" fetchpriority="low"></script>
+<script type="module" src="/app/account.mjs" fetchpriority="low"></script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"Bounty Operator","url":"https://bountyoperator.com/","logo":"https://bountyoperator.com/icon-512.png","email":"support@bountyoperator.com","sameAs":["https://github.com/bountyoperator/bounty-operator"]}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Bounty Operator","url":"https://bountyoperator.com/","applicationCategory":"SecurityApplication","operatingSystem":"Web","description":"Pre-submission review for bug bounty reports and smart-contract findings. The AI argues against the finding. The hunter writes the report.","image":"https://bountyoperator.com/social-v4.png","creator":{"@type":"Organization","name":"Tradi3","url":"https://audits.sherlock.xyz/watson/Tradi3"},"offers":[{"@type":"Offer","name":"Free","price":"0","priceCurrency":"USD","description":"1 review a day, any review type. Unlimited copy-paste reviews in ChatGPT or Claude for code, Solidity and draft reports. Free tools, repo import and local history.","url":"https://bountyoperator.com/pricing"},{"@type":"Offer","name":"Operator","price":"10.00","priceCurrency":"USD","description":"Unlimited reviews, the Gauntlet, Panel review and 4 reviews at once.","url":"https://bountyoperator.com/pricing","priceSpecification":{"@type":"UnitPriceSpecification","price":"10.00","priceCurrency":"USD","billingDuration":"P1W","unitText":"week"}}]}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"I already pay for my model. Why pay for this?","acceptedAnswer":{"@type":"Answer","text":"Your provider charges for the model. The US$10 pays for Bounty Operator: no daily limit, the Gauntlet, Panel review and 4 reviews running at once. Model usage is not included. Pricing"}},{"@type":"Question","name":"Can I use my ChatGPT or Claude subscription?","acceptedAnswer":{"@type":"Answer","text":"Yes, for 3 review types: code security, Solidity and draft reports. Copy the prompt into your chat and paste the answer back here. The other review types need an API key. Model options"}},{"@type":"Question","name":"Where do my files go?","acceptedAnswer":{"@type":"Answer","text":"Your files and API key pass through our server to your provider. The server adds the review instructions and stores no files, prompts, keys or results. A copy-paste prompt stays in your browser until you copy it. Privacy details"}},{"@type":"Question","name":"Which models can I use?","acceptedAnswer":{"@type":"Answer","text":"Choose a model from OpenRouter, Anthropic, OpenAI, Google Gemini, xAI, DeepSeek, Mistral or Groq, on your own API key."}},{"@type":"Question","name":"How do I cancel or get help?","acceptedAnswer":{"@type":"Answer","text":"Cancel in the Stripe billing portal. Access continues until the end of your paid week. Contact support@bountyoperator.com for access problems or billing help. Refund terms"}}]}</script>

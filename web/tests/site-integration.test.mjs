@@ -98,7 +98,7 @@ test('every control that starts an account action sits on a page that loads the 
     const actions = [...markup.matchAll(/data-account-action="([^"]*)"/g)].map((match) => match[1]);
     controls += actions.length;
     for (const action of actions) assert.ok(handled.includes(action), `${file}: ${action}`);
-    if (actions.length) assert.match(markup, /<script type="module" src="\/app\/account\.mjs"><\/script>/, file);
+    if (actions.length) assert.match(markup, /<script type="module" src="\/app\/account\.mjs" fetchpriority="low"><\/script>/, file);
   }
   assert.ok(controls >= 2, 'the home page and the pricing page each carry a checkout button');
 });

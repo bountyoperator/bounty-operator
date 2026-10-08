@@ -283,7 +283,7 @@ test('the privacy policy says page views and named actions are counted in aggreg
 
 test('the MCP page counts a copied install command by name, and says which profiles each tool takes', async () => {
   const markup = rendered.get('/mcp');
-  assert.match(markup, /<script type="module" src="\/docs\/copy-ping\.mjs"><\/script>/);
+  assert.match(markup, /<script type="module" src="\/docs\/copy-ping\.mjs" fetchpriority="low"><\/script>/);
   assert.match(markup, /<section class="install"/, 'the block the counter listens on');
 
   const source = await readFile(path.join(PUBLIC_DIR, 'docs', 'copy-ping.mjs'), 'utf8');

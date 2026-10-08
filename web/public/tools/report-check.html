@@ -32,16 +32,16 @@
 <script src="/theme.js"></script>
 <link rel="stylesheet" href="/css/base.css">
 <link rel="stylesheet" href="/css/tools.css">
-<link rel="modulepreload" href="/tools/report-check-core.mjs">
-<link rel="modulepreload" href="/tools/dom.mjs">
-<link rel="modulepreload" href="/tools/ping.mjs">
-<link rel="modulepreload" href="/tools/report-evidence-core.mjs">
-<link rel="modulepreload" href="/review-core.mjs">
-<link rel="modulepreload" href="/tools/secret-check-core.mjs">
-<link rel="modulepreload" href="/profiles.mjs">
-<link rel="modulepreload" href="/evidence.mjs">
-<link rel="modulepreload" href="/parse.mjs">
-<script type="module" src="/tools/report-check.mjs"></script>
+<link rel="modulepreload" href="/tools/report-check-core.mjs" fetchpriority="low">
+<link rel="modulepreload" href="/tools/dom.mjs" fetchpriority="low">
+<link rel="modulepreload" href="/tools/ping.mjs" fetchpriority="low">
+<link rel="modulepreload" href="/tools/report-evidence-core.mjs" fetchpriority="low">
+<link rel="modulepreload" href="/review-core.mjs" fetchpriority="low">
+<link rel="modulepreload" href="/tools/secret-check-core.mjs" fetchpriority="low">
+<link rel="modulepreload" href="/profiles.mjs" fetchpriority="low">
+<link rel="modulepreload" href="/evidence.mjs" fetchpriority="low">
+<link rel="modulepreload" href="/parse.mjs" fetchpriority="low">
+<script type="module" src="/tools/report-check.mjs" fetchpriority="low"></script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Bounty Operator","item":"https://bountyoperator.com/"},{"@type":"ListItem","position":2,"name":"Tools","item":"https://bountyoperator.com/tools"},{"@type":"ListItem","position":3,"name":"Report check","item":"https://bountyoperator.com/tools/report-check"}]}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Where does my draft go?","acceptedAnswer":{"@type":"Answer","text":"Nowhere. The seventeen checks and the citation check are JavaScript that runs in this tab, and the page sends no request with your text or your files. After the page has loaded it makes one request: a counter that says the tool was used, with nothing of yours in it. Pressing “Run the full challenge on your model” moves the draft and its files to the workbench through this browser’s session storage. A model sees them only when you start a review there."}},{"@type":"Question","name":"What does 17 of 17 tell me?","acceptedAnswer":{"@type":"Answer","text":"That the draft contains the text these checks look for: a commit, a quoted impact row, one severity, an inline proof with its output, a prior-art reference or search result, and a line on AI use. The check does not verify comparison quality or duplicate status. The workbench challenge reviews the claims against the evidence you supply."}},{"@type":"Question","name":"How does the citation check work?","acceptedAnswer":{"@type":"Answer","text":"Attach the files your draft cites. Every citation such as src/Vault.sol:42-48, Vault.sol#L42 or input-1/src/Vault.sol:42 is matched to an attached file, and the cited lines open in place. A citation to a file you did not attach, a line past the end of the file, or a short name that matches two files is listed so you can fix it before a triager finds it. Links to websites are counted, never opened."}},{"@type":"Question","name":"What is the evidence packet?","acceptedAnswer":{"@type":"Answer","text":"One JSON file with the draft, the attached files and a SHA-256 checksum of each. Open it here later to carry on with the same files; a file that changed since it was saved is refused. It holds your full draft and files, so keep it private."}},{"@type":"Question","name":"Which report formats does it read?","acceptedAnswer":{"@type":"Answer","text":"Markdown and plain text. Immunefi, Cantina, Sherlock and HackerOne reports all carry these parts, under different headings. The checks look for the content, so the heading names do not matter."}}]}</script>
 </head>

@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.8.3 — 2026-10-09
+
+Site
+
+- The home page paints sooner on a slow connection. Its 28 module files now
+  load at low priority, after the stylesheets and the font; they were fetched
+  at high priority, alongside what the first paint needs. Measured on the
+  live site in a throttled Chrome (HTTP/2, 4x CPU slowdown, ten loads each
+  way, only this change differing), the median first paint moved from 4.9 s
+  to 3.1 s at Lighthouse's slow-4G settings and from 4.1 s to 3.6 s at 150 ms
+  and 1.6 Mbps. The workbench was ready 0.3 s later in the first case and
+  0.6 s sooner in the second. Every page that loads scripts gets the same
+  change.
+- On a phone, the column picker on /benchmark hides the columns you untick.
+  It changed nothing below 960 px.
+- Lighthouse 13.5 on the nine main pages, measured on 9 October 2026 before
+  these changes: 100 for accessibility, best practices and SEO on every page
+  on a phone and on a desktop, 99 or 100 for performance on a desktop, and 95
+  to 99 on a phone, with the home page at 87.
+
 ## 0.8.2 — 2026-10-09
 
 Reviews

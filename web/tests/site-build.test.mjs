@@ -178,8 +178,12 @@ test('renderPage emits the head contract and no markup the CSP would block', () 
   assert.equal([...markup.matchAll(/<meta name="theme-color"/g)].length, 2);
   assert.match(markup, /<script src="\/theme\.js"><\/script>/);
   assert.match(markup, /<link rel="stylesheet" href="\/css\/base\.css">\n<link rel="stylesheet" href="\/css\/tools\.css">/);
-  assert.match(markup, /<link rel="modulepreload" href="\/parse\.mjs">/);
-  assert.match(markup, /<script type="module" src="\/tools\/report-check\.mjs"><\/script>/);
+  // The page's modules load at low priority, so they do not compete with what the first paint needs.
+  assert.match(markup, /<link rel="modulepreload" href="\/parse\.mjs" fetchpriority="low">/);
+  assert.match(markup, /<script type="module" src="\/tools\/report-check\.mjs" fetchpriority="low"><\/script>/);
+  // What the first paint needs keeps the browser's own priority: the stylesheets, the theme script and the font.
+  for (const tag of markup.match(/<link rel="(?:stylesheet|preload)"[^>]*>|<script src="\/theme\.js"[^>]*>/g)) assert.doesNotMatch(tag, /fetchpriority/, tag);
+  assert.equal(markup.split('fetchpriority="low"').length - 1, markup.split('rel="modulepreload"').length - 1 + markup.split('<script type="module"').length - 1, 'only the modules carry it');
   assert.match(markup, /<a href="\/tools" aria-current="page">Tools<\/a>/);
   assert.match(markup, /<a href="\/benchmark">Benchmark<\/a>/);
   // One label for a signed-out visitor on every page: the link here, the button on the home page.
@@ -401,9 +405,15 @@ test('textOf leaves no tag behind when one tag is nested inside another', () => 
   ];
   for (const [markup, keeps] of cases) {
     const text = textOf(raw(markup));
-    assert.doesNotMatch(text, /<\/?[a-z]/i, markup);
+    assert.doesNotMatch(text, /</, markup);
     assert.match(text, keeps, markup);
   }
+  // An inline tag joins its text to the words around it; a tag whose name only starts like one is a word break.
+  assert.equal(textOf(raw('a<b>b</b>c<article>d</article>e<a-chip>f</a-chip>g<br>h<CODE>i</CODE>j')), 'abc d e f g hij');
+  // A tag that never closes takes the rest with it, so no "<" is left to open one.
+  assert.equal(textOf(raw('before <script src="x" after')), 'before');
+  assert.equal(textOf(raw('1 < 2 and 3 > 2')), '1 2');
   // Escaped text is not markup: it comes back as the characters the author wrote.
   assert.equal(textOf(html`${'a <script> b'}`), 'a <script> b');
+  assert.equal(textOf(html`${'1 < 2 and 3 > 2'}`), '1 < 2 and 3 > 2');
 });

@@ -277,14 +277,15 @@
   fill: var(--accent);
 }
 
-/* Columns the picker hides. */
-.lb[data-hide~="recall"] [data-col="recall"],
-.lb[data-hide~="fools"] [data-col="fools"],
-.lb[data-hide~="challenge"] [data-col="challenge"],
-.lb[data-hide~="failure"] [data-col="failure"],
-.lb[data-hide~="cost"] [data-col="cost"],
-.lb[data-hide~="time"] [data-col="time"],
-.lb[data-hide~="effort"] [data-col="effort"] {
+/* Columns the picker hides. The stacked layout below 60em sets `display` on
+   every cell of a row, so the rule carries the weight to win there too. */
+.table-wrap > .table.lb[data-hide~="recall"] [data-col="recall"],
+.table-wrap > .table.lb[data-hide~="fools"] [data-col="fools"],
+.table-wrap > .table.lb[data-hide~="challenge"] [data-col="challenge"],
+.table-wrap > .table.lb[data-hide~="failure"] [data-col="failure"],
+.table-wrap > .table.lb[data-hide~="cost"] [data-col="cost"],
+.table-wrap > .table.lb[data-hide~="time"] [data-col="time"],
+.table-wrap > .table.lb[data-hide~="effort"] [data-col="effort"] {
   display: none;
 }
 

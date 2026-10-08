@@ -201,6 +201,11 @@ function socialTags(page, canonical) {
 <meta name="twitter:image:alt" content="${alt}">`;
 }
 
+// The page's modules are fetched at low priority. A page is readable without
+// them, and a browser fetches a module at the priority of a blocking script:
+// on a slow connection the workbench's 28 files then compete with the
+// stylesheets and the font for the first paint. Preloading keeps them from
+// loading one level of imports at a time.
 function head(page, site) {
   const indexable = isIndexable(page);
   const canonical = indexable ? absoluteUrl(page.path) : null;
@@ -226,8 +231,8 @@ function head(page, site) {
 ${site.has(FONT_FILE) && html`<link rel="preload" href="${FONT_FILE}" as="font" type="font/woff2" crossorigin>
 `}<script src="/theme.js"></script>${styles.map((href) => html`
 <link rel="stylesheet" href="${href}">`)}${preloads.map((href) => html`
-<link rel="modulepreload" href="${href}">`)}${scripts.map((src) => html`
-<script type="module" src="${src}"></script>`)}${(page.jsonld ?? []).map((data) => html`
+<link rel="modulepreload" href="${href}" fetchpriority="low">`)}${scripts.map((src) => html`
+<script type="module" src="${src}" fetchpriority="low"></script>`)}${(page.jsonld ?? []).map((data) => html`
 ${jsonLdScript(data)}`)}
 </head>`;
 }

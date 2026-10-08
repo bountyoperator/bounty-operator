@@ -32,9 +32,9 @@
 <script src="/theme.js"></script>
 <link rel="stylesheet" href="/css/base.css">
 <link rel="stylesheet" href="/css/tools.css">
-<link rel="modulepreload" href="/tools/dom.mjs">
-<link rel="modulepreload" href="/tools/ping.mjs">
-<script type="module" src="/tools/acceptance-rates.mjs"></script>
+<link rel="modulepreload" href="/tools/dom.mjs" fetchpriority="low">
+<link rel="modulepreload" href="/tools/ping.mjs" fetchpriority="low">
+<script type="module" src="/tools/acceptance-rates.mjs" fetchpriority="low"></script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Bounty Operator","item":"https://bountyoperator.com/"},{"@type":"ListItem","position":2,"name":"Tools","item":"https://bountyoperator.com/tools"},{"@type":"ListItem","position":3,"name":"Acceptance rates","item":"https://bountyoperator.com/tools/acceptance-rates"}]}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"Dataset","name":"Acceptance rates by smart-contract bug class","description":"Accepted and judged counts for 12 smart-contract vulnerability classes across 10 audit contests and 1,032 judged findings.","url":"https://bountyoperator.com/tools/acceptance-rates","license":"https://creativecommons.org/publicdomain/zero/1.0/","isBasedOn":"https://github.com/holistis/bug-bounty-intelligence-mcp/blob/main/vulnerability-acceptance-rates.json","dateModified":"2026-07-21","variableMeasured":["acceptance rate","accepted findings","judged findings"],"publisher":{"@type":"Organization","name":"Bounty Operator","url":"https://bountyoperator.com/"}}</script>
 </head>

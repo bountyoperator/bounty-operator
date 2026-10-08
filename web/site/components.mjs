@@ -86,21 +86,35 @@ export function inline(text) {
   return parts.map((part, index) => (index % 2 === 1 ? html`<code>${part}</code>` : html`${part}`));
 }
 
+const INLINE_TAGS = new Set(['a', 'abbr', 'b', 'code', 'em', 'i', 'kbd', 'mark', 'small', 'span', 'strong', 'sub', 'sup', 'time']);
+
+/**
+ * Markup with every tag taken out, in one pass. An inline tag joins its text
+ * to the words around it ("`run_review`." reads "run_review."); any other tag
+ * is a word break. A "<" opens a tag that runs to the next ">", and a "<" with
+ * no ">" after it takes the rest of the text with it, so the result holds no
+ * "<" at all: nothing a removal leaves behind can join into a tag.
+ */
+function withoutTags(source) {
+  let out = '';
+  let at = 0;
+  while (at < source.length) {
+    const open = source.indexOf('<', at);
+    if (open === -1) return out + source.slice(at);
+    out += source.slice(at, open);
+    const close = source.indexOf('>', open + 1);
+    if (close === -1) return out;
+    const name = /^\/?([a-zA-Z][a-zA-Z0-9-]*)/.exec(source.slice(open + 1, close))?.[1].toLowerCase();
+    if (!name || !INLINE_TAGS.has(name)) out += ' ';
+    at = close + 1;
+  }
+  return out;
+}
+
 /** Plain text of a value, for JSON-LD and meta tags. */
 export function textOf(value) {
   const source = Array.isArray(value) ? value.map(render).join('') : render(value);
-  // An inline tag joins its text to the words around it ("`run_review`." reads "run_review.");
-  // any other tag is a word break. Removing one tag can join the pieces of another
-  // ("<sc<b>ript>" becomes "<script>"), so both passes repeat until nothing changes.
-  let text = source;
-  let before;
-  do {
-    before = text;
-    text = text
-      .replace(/<\/?(?:a|abbr|b|code|em|i|kbd|mark|small|span|strong|sub|sup|time)(?=[\s>/])[^>]*>/gi, '')
-      .replace(/<[^>]*>/g, ' ');
-  } while (text !== before);
-  return text
+  return withoutTags(source)
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>')
     .replace(/&quot;/g, '"')

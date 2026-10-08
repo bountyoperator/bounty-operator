@@ -32,14 +32,14 @@
 <script src="/theme.js"></script>
 <link rel="stylesheet" href="/css/base.css">
 <link rel="stylesheet" href="/css/tools.css">
-<link rel="modulepreload" href="/review-core.mjs">
-<link rel="modulepreload" href="/evidence.mjs">
-<link rel="modulepreload" href="/tools/verify-core.mjs">
-<link rel="modulepreload" href="/tools/dom.mjs">
-<link rel="modulepreload" href="/tools/ping.mjs">
-<link rel="modulepreload" href="/profiles.mjs">
-<link rel="modulepreload" href="/parse.mjs">
-<script type="module" src="/tools/verify.mjs"></script>
+<link rel="modulepreload" href="/review-core.mjs" fetchpriority="low">
+<link rel="modulepreload" href="/evidence.mjs" fetchpriority="low">
+<link rel="modulepreload" href="/tools/verify-core.mjs" fetchpriority="low">
+<link rel="modulepreload" href="/tools/dom.mjs" fetchpriority="low">
+<link rel="modulepreload" href="/tools/ping.mjs" fetchpriority="low">
+<link rel="modulepreload" href="/profiles.mjs" fetchpriority="low">
+<link rel="modulepreload" href="/parse.mjs" fetchpriority="low">
+<script type="module" src="/tools/verify.mjs" fetchpriority="low"></script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Bounty Operator","item":"https://bountyoperator.com/"},{"@type":"ListItem","position":2,"name":"Tools","item":"https://bountyoperator.com/tools"},{"@type":"ListItem","position":3,"name":"Packet verifier","item":"https://bountyoperator.com/tools/verify"}]}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Are my files uploaded?","acceptedAnswer":{"@type":"Answer","text":"No. The page reads each file with the browser’s file API and hashes it with Web Crypto. It makes no request with a file name, a hash or any content. After the page has loaded it makes one request: a counter that says the tool was used, with nothing of yours in it."}},{"@type":"Question","name":"What does a match prove?","acceptedAnswer":{"@type":"Answer","text":"That the bytes you hold are the bytes the review was run on, to the last character. It is a statement about the files. Whether the review’s conclusions hold is a separate question, answered by the code and the proof."}},{"@type":"Question","name":"Where does a packet come from?","acceptedAnswer":{"@type":"Answer","text":"The workbench writes one for every finished review: the verdict, the context you gave, the file list with a SHA-256 per file, and the review itself. A manifest is the same file list as JSON, as returned by the review API and the MCP server."}}]}</script>
 </head>

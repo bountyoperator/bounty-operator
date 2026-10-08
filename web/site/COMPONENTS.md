@@ -79,7 +79,7 @@ export default {
 | `nav` | no | Which header item is current: `workbench`, `method`, `tools`, `benchmark`, `guide`, `mcp`, `pricing`. |
 | `og` | no | `{ image, title, description, type, width, height, alt }`. `image` defaults to `/social-v4.png` (1200 × 630). |
 | `styles` | no | Root-relative stylesheets, loaded after `/css/base.css`. |
-| `scripts` | no | Root-relative module scripts. Their static imports are followed and emitted as `modulepreload` links. |
+| `scripts` | no | Root-relative module scripts. Their static imports are followed and emitted as `modulepreload` links. Scripts and preloads carry `fetchpriority="low"`: a page reads without them, so they load after the stylesheets and the font. |
 | `preload` | no | Extra `modulepreload` hrefs, or `false` to turn the automatic ones off. |
 | `jsonld` | no | Array of objects, each emitted as `<script type="application/ld+json">`. |
 | `bodyClass` | no | Class on `<body>`. |
