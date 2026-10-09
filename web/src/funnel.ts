@@ -38,6 +38,14 @@ const REFERRER_HOSTS: readonly (readonly [string, string])[] = [
   ['reddit.com', 'reddit'],
   ['bing.com', 'bing'],
   ['duckduckgo.com', 'duckduckgo'],
+  // Assistants that answer with links. gemini.google.com is listed before the
+  // rule that files every other Google host under google.
+  ['chatgpt.com', 'chatgpt'],
+  ['chat.openai.com', 'chatgpt'],
+  ['perplexity.ai', 'perplexity'],
+  ['claude.ai', 'claude'],
+  ['copilot.microsoft.com', 'copilot'],
+  ['gemini.google.com', 'gemini'],
   ['immunefi.com', 'immunefi'],
   ['cantina.xyz', 'cantina'],
   ['sherlock.xyz', 'sherlock'],

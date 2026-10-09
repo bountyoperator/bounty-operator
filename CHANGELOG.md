@@ -1,5 +1,48 @@
 # Changelog
 
+## 0.9.3 — 2026-10-09
+
+Reviews
+
+- Claude Sonnet 5.5 is the default model on OpenRouter. We ran the review the
+  product runs, one request, on pairs of the benchmark with seven models.
+  With the review method Sonnet 5.5 got the largest share of its pairs right,
+  and it is the model that ran all eight stages of the gauntlet without a
+  block. GPT-6.1 Sol, the default until now, is second in the list.
+- The gauntlet says when a model is known to stop. OpenAI's safeguards
+  blocked stage 4, the proof review, on GPT-6.1 Sol for all four drafts we
+  tried. The row says so before a run starts on that model.
+- When a provider blocks a gauntlet stage on an OpenRouter key, the notice
+  has a button that resumes that stage on a model from another vendor. The
+  finished stages are kept.
+- Blocks and credit errors are named for what they are. A request stopped by
+  a guardrail on an OpenRouter key, a credit hold on a new OpenRouter account
+  and a key that has used up its own limit each read as a rejected key or an
+  empty account before. An OpenAI cyber block passed on by OpenRouter is named
+  as OpenAI's. Anthropic's refusal to write out a model's reasoning has its
+  own notice, because another model does not get past it.
+- The wait after a rate limit is said once, not twice.
+- A GitHub import without a token reads the files from GitHub's file host,
+  so fifty files no longer use up the 60 API calls an hour GitHub gives a
+  visitor. A file kept in Git LFS is reported as a pointer, not imported as
+  one.
+
+MCP
+
+- `run_review` can return two more values of `blocked`: `guardrail` and
+  `anthropic-reasoning`.
+
+Site
+
+- The guide's "When the model refuses" entry says where blocks happen most
+  and what we measured.
+- /security says that with OpenRouter a review goes to OpenRouter and on to
+  the model host it picks.
+- The home page tells search engines the site's name. After a release the
+  pages that changed are sent to IndexNow. A visit that comes from ChatGPT,
+  Perplexity, Claude, Copilot or Gemini is counted under that name, and
+  /privacy lists them.
+
 ## 0.9.2 — 2026-10-09
 
 Site

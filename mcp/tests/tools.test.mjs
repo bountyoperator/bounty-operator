@@ -430,7 +430,7 @@ test('run_review declares and preserves a refused or blocked review, and says wh
   assert.deepEqual(described.outputSchema.properties.refused, { type: 'boolean', description: 'True when the model or the provider declined. The text is then not a review.' });
   assert.deepEqual(described.outputSchema.properties.blocked, {
     type: 'string',
-    description: 'Set when the provider blocked the review under its usage policy: anthropic-cyber, openai-cyber or policy. A blocked review is never counted.',
+    description: 'Set when the review was blocked: anthropic-cyber, anthropic-reasoning or openai-cyber (safeguards of that provider), guardrail (a guardrail on the key or its account) or policy (any other block under a usage policy). A blocked review is never counted.',
   });
   assert.match(described.description, /Uses one hosted review\. A review the provider blocks under its usage policy comes back with refused true and blocked naming the block, or fails with code provider_policy: neither is counted\. A model that declines in its own words comes back with refused true\. Refused text is not a review: do not present it as one and do not run the same model again\./);
 
@@ -488,7 +488,7 @@ test('run_review takes the model from BOUNTY_OPERATOR_MODEL, and asks for one wh
   const body = failure(await server({ fetch: none.fetch, env: HOSTED_ENV }).tool('run_review', { files, provider: 'openrouter' }));
   assert.equal(body.code, 'bad_model');
   assert.match(body.error, /pass model, or set BOUNTY_OPERATOR_MODEL/);
-  assert.match(body.error, /OpenRouter models: openai\/gpt-6\.1-sol,/);
+  assert.match(body.error, /OpenRouter models: anthropic\/claude-sonnet-5\.5, openai\/gpt-6\.1-sol,/);
   assert.equal(none.calls.length, 0);
 });
 

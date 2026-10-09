@@ -1166,7 +1166,7 @@ describe('providers', () => {
     ['No issues found in the supplied file.', false],
   ];
   const expected = {
-    openrouter: { url: 'https://openrouter.ai/api/v1/chat/completions', model: 'openai/gpt-6.1-sol', cap: 'max_tokens' },
+    openrouter: { url: 'https://openrouter.ai/api/v1/chat/completions', model: 'anthropic/claude-sonnet-5.5', cap: 'max_tokens' },
     anthropic: { url: 'https://api.anthropic.com/v1/messages', model: 'claude-opus-5-5', cap: 'max_tokens' },
     openai: { url: 'https://api.openai.com/v1/chat/completions', model: 'gpt-6.1-sol', cap: 'max_completion_tokens' },
     gemini: { url: 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', model: 'gemini-3.8-flash', cap: null },
@@ -1339,7 +1339,7 @@ describe('providers', () => {
 
   test('every provider lists current models, and OpenRouter only verified slugs', () => {
     assert.deepEqual(Object.fromEntries(PROVIDERS.map((entry) => [entry.id, entry.models.map((model) => model.id)])), {
-      openrouter: ['openai/gpt-6.1-sol', 'anthropic/claude-sonnet-5.5', 'deepseek/deepseek-v4.1-flash', 'anthropic/claude-opus-5.5', 'openai/gpt-6-astra', 'google/gemini-3.8-flash', 'x-ai/grok-4.7', 'z-ai/glm-5.3-flash', 'openai/gpt-6-luna'],
+      openrouter: ['anthropic/claude-sonnet-5.5', 'openai/gpt-6.1-sol', 'deepseek/deepseek-v4.1-flash', 'anthropic/claude-opus-5.5', 'openai/gpt-6-astra', 'google/gemini-3.8-flash', 'x-ai/grok-4.7', 'z-ai/glm-5.3-flash', 'openai/gpt-6-luna'],
       anthropic: ['claude-opus-5-5', 'claude-sonnet-5-5', 'claude-fable-5-1', 'claude-haiku-4-5'],
       openai: ['gpt-6.1-sol', 'gpt-6-astra', 'gpt-6-luna'],
       gemini: ['gemini-3.8-flash', 'gemini-3.1-pro-preview', 'gemini-3.5-flash-lite'],
@@ -1579,6 +1579,12 @@ describe('providers', () => {
       [refusal({ type: 'refusal', category: 'cyber', explanation: 'Blocked.' }), 'Blocked.', 'anthropic-cyber'],
       [refusal({ type: 'refusal', category: 'cyber' }), '', 'anthropic-cyber'],
       [refusal({ type: 'refusal', category: 'bio', explanation: 'Not this.' }), 'Not this.', 'policy'],
+      [refusal({ type: 'refusal', category: 'frontier_llm' }), '', 'policy'],
+      [refusal({ type: 'refusal', category: 'general_harms' }), '', 'policy'],
+      // Another model does not get past this one, so it has an id of its own.
+      [refusal({ type: 'refusal', category: 'reasoning_extraction', explanation: 'Asks for the reasoning.' }), 'Asks for the reasoning.', 'anthropic-reasoning'],
+      // A category that is not one of the list is the general block, whatever its name.
+      [refusal({ type: 'refusal', category: 'toString' }), '', 'policy'],
       [refusal({ type: 'refusal', category: null, explanation: 42 }), '', 'policy'],
       [refusal(null), '', 'policy'],
       // Text the model wrote before the refusal is kept; the explanation does not replace it.
@@ -1848,6 +1854,66 @@ describe('providers', () => {
       assert.ok(!error.message.includes(API_KEY), `HTTP ${status} leaked the key`);
       assert.ok(!error.message.includes('sk-abc'), `HTTP ${status} leaked a partial key`);
       assert.deepEqual([error.status, error.kind, error.code], [status, kind, 'provider']);
+    }
+  });
+
+  test('a guardrail block, an upstream cyber block and a credit hold are named by their cause', async () => {
+    const failure = (body, status, headers = {}) => withFetch(() => json(body, status, headers), () => providerReview({ provider: 'openrouter', model: 'openai/gpt-6.1-sol', apiKey: API_KEY, prepared: PREPARED })
+      .then(() => null, (reason) => reason));
+
+    // OpenRouter's documented guardrail body. It is not a rejected key and not a usage-policy block.
+    const guardrail = await failure({ error: { code: 403, message: 'Request blocked: prompt injection patterns detected', metadata: { patterns: ['ignore all previous instructions', `echo ${API_KEY}`, 'x'.repeat(200), 'a fourth pattern'] } } }, 403);
+    assert.deepEqual([guardrail.kind, guardrail.blocked, guardrail.status], ['policy', 'guardrail', 403]);
+    assert.equal(guardrail.message, 'Provider stopped this request at a guardrail set on the key or its account (HTTP 403), so no model saw it and no review was written.');
+    assert.equal(guardrail.detail, `Request blocked: prompt injection patterns detected Matched: "ignore all previous instructions", "echo [key]", "${'x'.repeat(80)}".`);
+    assert.doesNotMatch(guardrail.message, /rejected the API key|usage policy|the API key is not the cause/);
+    // The same body inside a 200, as a relay can send it.
+    await withFetch(() => json({ error: { code: 403, message: 'Request blocked', metadata: { patterns: ['system prompt'] } } }), async () => {
+      await assert.rejects(providerReview({ provider: 'openrouter', model: 'm', apiKey: API_KEY, prepared: PREPARED }), (error) => error.blocked === 'guardrail' && error.detail === 'Request blocked Matched: "system prompt".'
+        && error.message === 'Provider stopped this request at a guardrail set on the key or its account, so no model saw it and no review was written.');
+    });
+    // An empty or malformed list is not a guardrail: the 403 stays a rejected key.
+    for (const patterns of [[], [''], 'ignore', [42]]) {
+      const plain = await failure({ error: { code: 403, message: 'Forbidden', metadata: { patterns } } }, 403);
+      assert.deepEqual([plain.kind, plain.blocked], ['auth', undefined], JSON.stringify(patterns));
+    }
+    // A list on another status changes nothing.
+    assert.equal((await failure({ error: { code: 400, message: 'Bad', metadata: { patterns: ['x'] } } }, 400)).kind, 'request');
+
+    // The upstream provider's own code, passed on by the relay.
+    const upstream = (metadata) => failure({ error: { code: 403, message: 'Provider returned error', metadata } }, 403);
+    for (const metadata of [{ provider_code: 'cyber_policy' }, { provider_code: 'cyber_policy', provider_name: 'OpenAI', error_type: 'refusal' }, { provider_code: 'cyber_policy', provider_name: 'Azure' }]) {
+      const cyber = await upstream(metadata);
+      assert.deepEqual([cyber.kind, cyber.blocked], ['policy', 'openai-cyber'], JSON.stringify(metadata));
+      assert.equal(cyber.message, "Provider blocked this request under OpenAI's cyber usage policy (cyber_policy, HTTP 403), so no review was written; the API key is not the cause.");
+    }
+    // The code beside another provider's name is a block, and is not called OpenAI's.
+    assert.deepEqual([(await upstream({ provider_code: 'cyber_policy', provider_name: 'Some Host' })).blocked], ['policy']);
+    // Any other upstream code leaves the error what it was.
+    assert.equal((await upstream({ provider_code: 'insufficient_permissions' })).kind, 'auth');
+
+    // HTTP 402 says which credit limit refused the request.
+    const hold = { reason: 'in_flight_budget_exhausted', limit_source: 'openrouter_in_flight_budget', remedy_hint: 'Retry after your in-flight requests settle.' };
+    const held = await failure({ error: { code: 402, message: 'This request would exceed your available credits given your current in-flight requests.', metadata: hold } }, 402, { 'retry-after': '8' });
+    assert.deepEqual([held.kind, held.retryAfter, held.status], ['rate', 8, 402]);
+    assert.equal(held.message, 'Provider is holding credit for requests that are running or have just finished, so this one did not fit (HTTP 402). The OpenRouter account still has credit. Retry after 8 seconds.');
+    const heldNoHeader = await failure({ error: { code: 402, message: 'x', metadata: hold } }, 402);
+    assert.deepEqual([heldNoHeader.kind, heldNoHeader.retryAfter], ['rate', null]);
+    assert.match(heldNoHeader.message, /The OpenRouter account still has credit\. Run it again in a minute\.$/);
+    for (const failed of [held, heldNoHeader]) assert.ok(failed.message.startsWith('Provider '));
+
+    const credit = async (metadata) => failure({ error: { code: 402, message: `Insufficient credits for ${API_KEY}`, metadata } }, 402, { 'retry-after': '8' });
+    const keyLimit = await credit({ limit_source: 'openrouter_key_limit' });
+    assert.deepEqual([keyLimit.kind, keyLimit.retryAfter], ['credit', null]);
+    assert.equal(keyLimit.message, 'Provider key has used up its own credit limit (HTTP 402). Raise the limit on the key at OpenRouter or use another key, then run again.');
+    const tooLarge = await credit({ reason: 'weight_exceeds_budget', limit_source: 'openrouter_credits' });
+    assert.equal(tooLarge.message, 'Provider holds less credit for the account at one time than this request needs (HTTP 402), so running it again will not help. Add credit at OpenRouter, or send fewer files.');
+    const empty = await credit({ limit_source: 'openrouter_credits' });
+    assert.equal(empty.message, "Provider account's credit does not cover this request (HTTP 402). Add credit at OpenRouter, then run again.");
+    // A 402 that names no limit keeps the general sentence, with the provider's words and without the key.
+    for (const metadata of [undefined, {}, { limit_source: 'something_new' }]) {
+      const general = await credit(metadata);
+      assert.deepEqual([general.kind, general.message], ['credit', 'Provider account has no credit (HTTP 402). Add credit at OpenRouter, then run again. OpenRouter said: Insufficient credits for [key]']);
     }
   });
 
@@ -3975,38 +4041,94 @@ describe('github', () => {
 
   test('importGithubFiles keeps order, uses repo-relative names and bounds every file', async () => {
     const contents = { 'src/a.sol': 'contract A {}', 'src/dir/b c.sol': 'contract B {}', 'big.sol': 'x'.repeat(120001), 'logo.png': 'bad\0bytes' };
-    const respond = (url) => {
-      const path = decodeURIComponent(new URL(url).pathname.split('/contents/')[1]);
-      return new Response(contents[path]);
+    // The path a request names, whichever GitHub host it goes to.
+    const pathOf = (url) => {
+      const { hostname, pathname } = new URL(url);
+      return decodeURIComponent(hostname === 'raw.githubusercontent.com' ? pathname.split('/').slice(4).join('/') : pathname.split('/contents/')[1]);
     };
+    const respond = (url) => new Response(contents[pathOf(url)]);
 
     await withFetch(respond, async (calls) => {
       const files = await importGithubFiles({ owner: 'owner', repo: 'repo', sha, paths: ['src/dir/b c.sol', 'src/a.sol'] });
       assert.deepEqual(files, [{ name: 'src/dir/b c.sol', content: 'contract B {}' }, { name: 'src/a.sol', content: 'contract A {}' }]);
-      assert.equal(calls[0].url, `https://api.github.com/repos/owner/repo/contents/src/dir/b%20c.sol?ref=${sha}`);
+      // Without a token the bodies come from the file host, at the exact commit, and no API call is spent.
+      assert.deepEqual(calls.map((call) => call.url), [
+        `https://raw.githubusercontent.com/owner/repo/${sha}/src/dir/b%20c.sol`,
+        `https://raw.githubusercontent.com/owner/repo/${sha}/src/a.sol`,
+      ]);
       assert.ok(calls.every(({ init }) => init.credentials === 'omit' && init.redirect === 'error' && init.referrerPolicy === 'no-referrer'));
+      assert.ok(calls.every(({ init }) => init.headers === undefined), 'the file host is sent no header of ours');
 
       await assert.rejects(importGithubFiles({ owner: 'owner', repo: 'repo', sha, paths: ['big.sol'] }), /big\.sol is larger than 120 KB/);
       await assert.rejects(importGithubFiles({ owner: 'owner', repo: 'repo', sha, paths: ['logo.png'] }), /logo\.png is not UTF-8 text/);
     });
 
-    // GitHub answers a folder or a submodule path with a JSON listing, even for the raw media type.
-    await withFetch(() => json([{ name: 'a.sol', type: 'file' }]), async () => {
-      await assert.rejects(importGithubFiles({ owner: 'owner', repo: 'repo', sha, paths: ['src'] }), /^GithubError: src is a folder or a submodule, not a file\.$/);
+    // With a token every body comes from the API, so a private repository reads the same way.
+    await withFetch(respond, async (calls) => {
+      const files = await importGithubFiles({ owner: 'owner', repo: 'repo', sha, paths: ['src/a.sol'], token: 'ghs_token' });
+      assert.deepEqual(files, [{ name: 'src/a.sol', content: 'contract A {}' }]);
+      assert.deepEqual(calls.map((call) => call.url), [`https://api.github.com/repos/owner/repo/contents/src/a.sol?ref=${sha}`]);
+      assert.equal(calls[0].init.headers.Authorization, 'Bearer ghs_token');
     });
-    await withFetch((url) => (url.includes('/commits/') ? new Response(sha) : json({ type: 'submodule', name: 'forge-std' })), async () => {
+
+    // The file host answers a folder or a submodule with 404. The API is then asked, and it
+    // answers such a path with a JSON listing, even for the raw media type.
+    const folder = (url) => (new URL(url).hostname === 'raw.githubusercontent.com' ? new Response('404: Not Found', { status: 404 }) : json([{ name: 'a.sol', type: 'file' }]));
+    await withFetch(folder, async (calls) => {
+      await assert.rejects(importGithubFiles({ owner: 'owner', repo: 'repo', sha, paths: ['src'] }), /^GithubError: src is a folder or a submodule, not a file\.$/);
+      assert.deepEqual(calls.map((call) => new URL(call.url).hostname), ['raw.githubusercontent.com', 'api.github.com']);
+    });
+    await withFetch((url) => (url.includes('/commits/') ? new Response(sha) : new URL(url).hostname === 'raw.githubusercontent.com' ? new Response('404: Not Found', { status: 404 }) : json({ type: 'submodule', name: 'forge-std' })), async () => {
       await assert.rejects(importGithubFile('https://github.com/owner/repo/blob/main/lib/forge-std'), /lib\/forge-std is a folder or a submodule/);
     });
     // A file that is itself JSON comes back with the raw media type and is imported.
     const rawJson = () => new Response('{"a":1}', { headers: { 'content-type': 'application/vnd.github.raw+json; charset=utf-8' } });
     await withFetch(rawJson, async () => {
-      assert.deepEqual(await importGithubFiles({ owner: 'owner', repo: 'repo', sha, paths: ['foundry.json'] }), [{ name: 'foundry.json', content: '{"a":1}' }]);
+      assert.deepEqual(await importGithubFiles({ owner: 'owner', repo: 'repo', sha, paths: ['foundry.json'], token: 'ghs_token' }), [{ name: 'foundry.json', content: '{"a":1}' }]);
     });
 
     await withFetch(() => assert.fail('nothing may be sent'), async () => {
       await assert.rejects(importGithubFiles({ owner: 'owner', repo: 'repo', sha, paths: [] }), /between 1 and 50/);
       await assert.rejects(importGithubFiles({ owner: 'owner', repo: 'repo', sha, paths: ['../x'] }), /not a supported file name/);
       await assert.rejects(importGithubFiles({ owner: 'owner', repo: 'repo', sha: 'main', paths: ['a'] }), /Resolve the commit/);
+    });
+  });
+
+  test('an import of fifty files without a token spends no API call on file bodies', async () => {
+    const paths = Array.from({ length: 50 }, (_, index) => `src/File${index}.sol`);
+    await withFetch((url) => new Response(`// ${new URL(url).pathname.split('/').pop()}\n`), async (calls) => {
+      const files = await importGithubFiles({ owner: 'owner', repo: 'repo', sha, paths });
+      assert.equal(files.length, 50);
+      assert.equal(files[49].content, '// File49.sol\n');
+      assert.equal(calls.length, 50);
+      assert.ok(calls.every((call) => call.url.startsWith(`https://raw.githubusercontent.com/owner/repo/${sha}/src/File`)));
+      assert.equal(calls.filter((call) => new URL(call.url).hostname === 'api.github.com').length, 0);
+    });
+  });
+
+  test('when the file host cannot give a file, the API is asked and names the reason', async () => {
+    // Throttled or unreachable: the API still serves the file.
+    for (const down of [() => new Response('', { status: 429 }), () => { throw new TypeError('network'); }]) {
+      await withFetch((url) => (new URL(url).hostname === 'raw.githubusercontent.com' ? down() : new Response('contract A {}')), async (calls) => {
+        assert.deepEqual(await importGithubFiles({ owner: 'owner', repo: 'repo', sha, paths: ['src/a.sol'] }), [{ name: 'src/a.sol', content: 'contract A {}' }]);
+        assert.deepEqual(calls.map((call) => new URL(call.url).hostname), ['raw.githubusercontent.com', 'api.github.com']);
+      });
+    }
+    // Missing on both: the API's own message is the one shown.
+    await withFetch((url) => (new URL(url).hostname === 'raw.githubusercontent.com' ? new Response('404: Not Found', { status: 404 }) : json({ message: 'Not Found' }, 404)), async () => {
+      await assert.rejects(importGithubFiles({ owner: 'owner', repo: 'repo', sha, paths: ['gone.sol'] }), /no such repository, ref or file \(HTTP 404\)/);
+    });
+  });
+
+  test('a Git LFS pointer is reported as a pointer, not imported as the file', async () => {
+    const pointer = 'version https://git-lfs.github.com/spec/v1\noid sha256:4d7a214614ab2935c943f9e0ff69d22eadbb8f32b1258daaa5e2ca24d17e2393\nsize 12345\n';
+    await withFetch(() => new Response(pointer), async () => {
+      await assert.rejects(importGithubFiles({ owner: 'owner', repo: 'repo', sha, paths: ['data/model.bin'] }), /^GithubError: data\/model\.bin is kept in Git LFS: the repository holds a pointer, not the file\.$/);
+      await assert.rejects(importGithubFiles({ owner: 'owner', repo: 'repo', sha, paths: ['data/model.bin'], token: 'ghs_token' }), /kept in Git LFS/);
+    });
+    // A source file that merely mentions the spec is not a pointer.
+    await withFetch(() => new Response('// see version https://git-lfs.github.com/spec/v1\ncontract A {}'), async () => {
+      assert.equal((await importGithubFiles({ owner: 'owner', repo: 'repo', sha, paths: ['a.sol'] })).length, 1);
     });
   });
 

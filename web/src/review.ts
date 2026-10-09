@@ -44,7 +44,7 @@ export interface ReviewResult {
   model: string;
   truncated: boolean;
   refused: boolean;
-  /** The provider's policy block, when one was identified: 'anthropic-cyber', 'openai-cyber' or 'policy'. Never counted. */
+  /** The block, when one was identified: 'anthropic-cyber', 'anthropic-reasoning', 'openai-cyber', 'guardrail' or 'policy'. Never counted. */
   blocked?: string;
   /** Tokens the provider counted for this call. */
   usage: ProviderAnswer['usage'];
@@ -307,9 +307,12 @@ export function failureReason(error: unknown, clientGone = false): string {
 /**
  * Why a finished answer did not count: a provider policy block, a refusal, or
  * text cut short before COUNTED_AFTER_CHARS. A block has its own reason so
- * that how often providers block reviews can be measured.
+ * that how often providers block reviews can be measured. Anthropic's refusal
+ * to write out the model's reasoning is counted apart: it is the one block the
+ * wording of a request causes, so a method that trips it must be seen.
  */
 function answerReason(answer: { refused: boolean; blocked?: string }): string {
+  if (answer.blocked === 'anthropic-reasoning') return 'blocked_reasoning';
   if (answer.blocked) return 'blocked';
   return answer.refused ? 'refused' : 'cut_short';
 }

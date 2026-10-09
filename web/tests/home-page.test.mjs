@@ -49,7 +49,7 @@ test('the home page passes the generator checks and has one h1', () => {
   assert.deepEqual(errors, []);
   assert.deepEqual(warnings, []);
   assert.equal(home.path, '/');
-  assert.equal(home.title, 'Bounty Operator | Review your report before you submit');
+  assert.equal(home.title, 'Bounty Operator: pre-submission review for bug bounty reports');
   assert.match(textOf(main), /Find the hole in your report before the triager does\./);
   // The pen's ring is decoration inside the one h1: the words read as plain text.
   assert.equal(find('h1').length, 1);
@@ -149,12 +149,17 @@ test('every provider the engine supports is named', () => {
 
 test('structured data: organization, the two offers, and an FAQ that matches the visible text', () => {
   const types = home.jsonld.map((entry) => entry['@type']);
-  assert.deepEqual(types, ['Organization', 'SoftwareApplication', 'FAQPage']);
-  const offers = home.jsonld[1].offers.map((offer) => [offer.name, offer.price]);
+  assert.deepEqual(types, ['WebSite', 'Organization', 'SoftwareApplication', 'FAQPage']);
+  // The name a search engine prints for the site, with the spellings that mean the same site.
+  assert.deepEqual([home.jsonld[0].name, home.jsonld[0].alternateName, home.jsonld[0].url], ['Bounty Operator', ['BountyOperator', 'bountyoperator.com'], 'https://bountyoperator.com/']);
+  assert.deepEqual(home.jsonld[2].creator, { '@type': 'Person', name: 'Tradi3', url: 'https://audits.sherlock.xyz/watson/Tradi3' });
+  const offers = home.jsonld[2].offers.map((offer) => [offer.name, offer.price]);
   assert.deepEqual(offers, [['Free', '0'], ['Operator', '10.00']]);
 
-  const faq = home.jsonld[2].mainEntity;
+  const faq = home.jsonld[3].mainEntity;
   assert.equal(faq.length, 5);
+  // A link that follows the last sentence of an answer is not part of the answer a search engine quotes.
+  for (const entry of faq) assert.doesNotMatch(entry.acceptedAnswer.text, /(?:Pricing|Model options|Privacy details|Refund terms)$/, entry.name);
   assert.equal(faq[0].name, 'I already pay for my model. Why pay for this?');
   const visible = textOf(main.slice(main.indexOf('id="faq"')));
   for (const entry of faq) {

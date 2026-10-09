@@ -99,7 +99,7 @@
  * @property {string} model
  * @property {boolean} truncated        the answer was cut short: the output cap, or a provider that broke off mid-answer
  * @property {boolean} refused          the model or the provider declined. A short refusal is not counted; a long answer the model ended with one is
- * @property {'anthropic-cyber' | 'openai-cyber' | 'policy'} [blocked]   the provider blocked the review under its usage policy; never counted. See ./blocked.mjs
+ * @property {'anthropic-cyber' | 'anthropic-reasoning' | 'openai-cyber' | 'guardrail' | 'policy'} [blocked]   the provider blocked the review; never counted. See ./blocked.mjs
  * @property {{ input: number | null, output: number | null }} usage   provider token counts
  *
  * @typedef {{ event: string, data: string }} SseEvent

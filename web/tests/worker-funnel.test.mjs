@@ -21,6 +21,13 @@ test('referrerBucket names the sources on the list', () => {
     'https://google.com.au/search': 'google',
     'https://www.bing.com/search?q=x': 'bing',
     'https://duckduckgo.com/': 'duckduckgo',
+    'https://chatgpt.com/': 'chatgpt',
+    'https://chat.openai.com/c/1': 'chatgpt',
+    'https://www.perplexity.ai/search/x': 'perplexity',
+    'https://claude.ai/chat/1': 'claude',
+    'https://copilot.microsoft.com/': 'copilot',
+    // An assistant on a Google host is named before the rule for Google search.
+    'https://gemini.google.com/app': 'gemini',
     'https://immunefi.com/bug-bounty/': 'immunefi',
     'https://cantina.xyz/': 'cantina',
     'https://audits.sherlock.xyz/': 'sherlock',

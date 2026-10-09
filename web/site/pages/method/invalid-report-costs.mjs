@@ -167,7 +167,7 @@ ${ctaBand({
 
 export default {
   path: PATH,
-  title: 'What an invalid bug report costs | Bounty Operator',
+  title: 'What an invalid bug bounty report costs | Bounty Operator',
   description: 'What an invalid, N/A or spam bug bounty report costs on HackerOne, Bugcrowd, Intigriti, YesWeHack, Immunefi, Cantina and Sherlock, from their rules.',
   label: 'Invalid report costs',
   styles: STYLES,

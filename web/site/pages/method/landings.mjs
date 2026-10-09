@@ -324,7 +324,7 @@ const challengeHead = {
 
 const challenge = profileLanding({
   path: '/challenge-report',
-  title: 'Check a bug bounty report draft | Bounty Operator',
+  title: 'Check a bug bounty report before you submit | Bounty Operator',
   description:
     'Every claim in your draft marked confirmed, overstated, contradicted or unverifiable against the code, with the line that decides it. Runs on your own model.',
   profileId: 'report',

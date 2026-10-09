@@ -101,6 +101,21 @@ export function organizationLd() {
   };
 }
 
+/**
+ * The site itself. A search engine takes the name it prints above a result from
+ * this block on the home page, and the alternate names tell it that the one-word
+ * spelling and the domain mean the same site.
+ */
+export function websiteLd() {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: SITE.name,
+    alternateName: ['BountyOperator', 'bountyoperator.com'],
+    url: `${SITE.origin}/`,
+  };
+}
+
 /** The product with its two fixed offers: Free, and Operator at US$10 per week. */
 export function softwareApplicationLd() {
   return {
@@ -112,7 +127,7 @@ export function softwareApplicationLd() {
     operatingSystem: 'Web',
     description: SITE.summary,
     image: absoluteUrl(SITE.defaultImage),
-    creator: { '@type': 'Organization', name: SITE.builder.name, url: SITE.builder.url },
+    creator: { '@type': 'Person', name: SITE.builder.name, url: SITE.builder.url },
     offers: [
       {
         '@type': 'Offer',
@@ -142,6 +157,16 @@ export function softwareApplicationLd() {
 }
 
 /** faqPageLd([{ q, a }]) takes the same items as the faq() component. */
+/**
+ * An answer as plain text. An answer on the page may end with a link to the page
+ * that says more ("... Pricing"); read aloud or quoted by a search engine that
+ * label is a stray word, so a link that follows the last sentence is left out.
+ */
+function answerText(answer) {
+  const markup = html`${inline(answer)}`.toString().replace(/([.!?])\s*<a\b[^>]*>[^<]*<\/a>\s*$/, '$1');
+  return textOf(raw(markup));
+}
+
 export function faqPageLd(items) {
   return {
     '@context': 'https://schema.org',
@@ -149,7 +174,7 @@ export function faqPageLd(items) {
     mainEntity: items.map((item) => ({
       '@type': 'Question',
       name: textOf(item.q),
-      acceptedAnswer: { '@type': 'Answer', text: textOf(inline(item.a)) },
+      acceptedAnswer: { '@type': 'Answer', text: answerText(item.a) },
     })),
   };
 }

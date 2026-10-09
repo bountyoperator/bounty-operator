@@ -221,7 +221,7 @@ test('every install line is the one that works today', () => {
   }
   assert.match(pages.get('index.html'), /href="\/mcp"/, 'the home page links to the install instructions');
   assert.ok(release.includes(remote) && release.includes(local));
-  assert.ok(readme.includes('pip install "git+https://github.com/bountyoperator/bounty-operator@v0.9.2"'));
+  assert.ok(readme.includes('pip install "git+https://github.com/bountyoperator/bounty-operator@v0.9.3"'));
 });
 
 test('the error codes the documents list are codes the service raises', async () => {
@@ -242,7 +242,7 @@ test('the error codes the documents list are codes the service raises', async ()
   // provider_policy: a block is not a bad key and is never counted. The /mcp table and llms.txt say so.
   assert.match(mcp, /Your provider blocked the request under its usage policy\. The key is not the cause and the review is not counted\./);
   assert.match(mcp, /A review the provider blocks under its usage policy comes back with blocked set and is not counted\./);
-  assert.match(llms, /A review the provider blocks under its usage policy is not counted: the result carries `blocked` \(`anthropic-cyber`, `openai-cyber` or `policy`\) with `refused`, or the call fails with the code `provider_policy`\./);
+  assert.match(llms, /A review the provider blocks is not counted: the result carries `blocked` \(`anthropic-cyber`, `anthropic-reasoning`, `openai-cyber`, `guardrail` or `policy`\) with `refused`, or the call fails with the code `provider_policy`\./);
 
   // What the documents say about output_withheld is what the Worker does: the answer is stopped and the review counts.
   const review = await read('web', 'src', 'review.ts');

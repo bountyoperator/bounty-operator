@@ -74,6 +74,29 @@ export function deploySteps({ config = PRODUCTION_CONFIG, dryRun = false, outDir
   ];
 }
 
+/**
+ * The site paths of the pages among `files`, as git prints them: web/public/guide.html is
+ * /guide, and the home page is /. The 404 page has no address of its own.
+ *
+ * @param {string[]} files
+ * @returns {string[]}
+ */
+export function pagesOf(files) {
+  const paths = new Set();
+  for (const file of files) {
+    const match = /^web\/public\/(.+)\.html$/.exec(file.replace(/\\/g, '/'));
+    if (!match || match[1] === '404') continue;
+    paths.add(match[1] === 'index' ? '/' : `/${match[1]}`);
+  }
+  return [...paths].sort();
+}
+
+/** The pages whose built file changed in the commit being deployed. Empty when git cannot say. */
+function changedPages() {
+  const diff = spawnSync('git', ['diff', '--name-only', 'HEAD~1', 'HEAD', '--', 'web/public'], { cwd: ROOT, encoding: 'utf8' });
+  return diff.status === 0 ? pagesOf(diff.stdout.split(/\r?\n/).filter(Boolean)) : [];
+}
+
 function parseArguments(argv) {
   const options = { dryRun: false, config: PRODUCTION_CONFIG };
   for (let index = 0; index < argv.length; index += 1) {
@@ -116,7 +139,17 @@ function main(argv) {
     // The bundle holds the hosted method: it is built to prove that it builds, then removed.
     rmSync(outDir, { recursive: true, force: true });
     console.log('\nThe production bundle builds. Nothing was deployed.');
+    const changed = changedPages();
+    console.log(changed.length ? `After a deploy IndexNow would be told of ${changed.length} changed page(s): ${changed.join(' ')}` : 'No page changed in the last commit, so IndexNow would not be called.');
   } else {
+    // Tell the IndexNow search engines which pages this release changed. A failure here
+    // leaves the deploy as it is: the pages are live either way.
+    const changed = changedPages();
+    if (changed.length) {
+      console.log(`\nIndexNow: ${changed.length} changed page(s)`);
+      const ping = spawnSync(process.execPath, [join(ROOT, 'scripts', 'indexnow.mjs'), ...changed], { cwd: ROOT, stdio: 'inherit' });
+      if (ping.status !== 0) console.error('IndexNow did not take the list. The deploy stands. Send it later: node scripts/indexnow.mjs');
+    }
     console.log('\nDeployed. Now run: npm run verify:live -- --base-url https://bountyoperator.com');
   }
   return 0;

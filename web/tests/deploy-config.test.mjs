@@ -14,7 +14,7 @@ import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 
-import { PRODUCTION_CONFIG, TEMPLATE_CONFIG, configRefusal, deploySteps } from '../../scripts/deploy.mjs';
+import { PRODUCTION_CONFIG, TEMPLATE_CONFIG, configRefusal, deploySteps, pagesOf } from '../../scripts/deploy.mjs';
 
 const WEB_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const REPO_DIR = path.resolve(WEB_DIR, '..');
@@ -193,3 +193,16 @@ test(
     assert.deepEqual(shared(production), shared(template));
   },
 );
+
+test('after a deploy IndexNow is told of the pages that changed, by their site paths', () => {
+  assert.deepEqual(
+    pagesOf(['web/public/index.html', 'web/public/guide.html', 'web/public/tools/report-check.html', 'web/public/css/base.css', 'web/public/404.html', 'web\\public\\pricing.html', 'README.md', 'web/public/guide.html']),
+    ['/', '/guide', '/pricing', '/tools/report-check'],
+  );
+  assert.deepEqual(pagesOf([]), []);
+  // The step runs after Wrangler has deployed, and its failure does not fail the deploy.
+  const source = readFileSync(DEPLOY_SCRIPT, 'utf8');
+  assert.ok(source.indexOf("'scripts', 'indexnow.mjs'") > source.indexOf('const steps = deploySteps('));
+  assert.match(source, /if \(ping\.status !== 0\) console\.error\('IndexNow did not take the list\. The deploy stands\./);
+  assert.deepEqual(deploySteps().map((step) => step.name), ['hosted profiles', 'leak audit', 'page check', 'deploy'], 'the gates are unchanged');
+});

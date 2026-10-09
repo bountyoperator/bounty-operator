@@ -14,7 +14,7 @@ const POLICY = `${SITE.source}/blob/main/SECURITY.md`;
 const ADVISORY = `${SITE.source}/security/advisories/new`;
 
 const CSP =
-  "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self' https://api.github.com https://openrouter.ai; font-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'";
+  "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self' https://api.github.com https://raw.githubusercontent.com https://openrouter.ai; font-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'";
 
 const HEADERS = `Content-Security-Policy: ${CSP}
 Strict-Transport-Security: max-age=31536000; includeSubDomains
@@ -37,7 +37,7 @@ const FLOW = [
     title: 'Selects, checks, shows',
     points: [
       'You choose the files. The privacy check runs here, and the preview shows the request before it leaves the tab.',
-      'GitHub imports go straight to `api.github.com`.',
+      'GitHub imports go straight to `api.github.com` and to GitHub’s file host, `raw.githubusercontent.com`.',
       'Prompt export of a core profile ends here. Nothing is sent.',
     ],
   },
@@ -72,7 +72,7 @@ ${FLOW.map(
 </ol>
 <div class="prose">
 <p>The review engine is one set of modules. The browser, the Worker and the MCP server import the same files, and they are in the public repository with the three core profiles. The method of every other profile is not in the repository: the Worker adds it when a review runs.</p>
-<p>${inline('For a core profile the preview is the whole prompt your model receives. For a hosted profile it is the request: your focus, your context and the files, line by line. The Worker adds the method after that, and the provider you chose is the only other party that receives it. No page, download or API response returns it.')}</p>
+<p>${inline('For a core profile the preview is the whole prompt your model receives. For a hosted profile it is the request: your focus, your context and the files, line by line. The Worker adds the method after that and sends it to the provider you chose and to no one else. With OpenRouter that is OpenRouter and the model host it passes the call to. No page, download or API response returns it.')}</p>
 <p>${inline('A review started from a coding agent takes the same path: `run_review` sends the files and your provider key to the Worker, and steps 2 and 3 are unchanged.')}</p>
 </div>`;
 
@@ -125,7 +125,7 @@ ${codeBlock({ code: HEADERS, name: 'Response headers', numbers: false, wrap: tru
 </div>
 ${checklist([
   html`<p>${inline('Scripts and styles load from this origin only. There is no inline script, no inline style and no `eval`, so injected markup has nothing to run.')}</p>`,
-  html`<p>${inline('The browser can connect to three hosts: this one, `api.github.com` for imports and `openrouter.ai` for the OpenRouter connection.')}</p>`,
+  html`<p>${inline('The browser can connect to four hosts: this one, `api.github.com` and `raw.githubusercontent.com` for imports, and `openrouter.ai` for the OpenRouter connection.')}</p>`,
   html`<p>The site cannot be framed, and forms post to this origin only.</p>`,
   html`<p>${inline('Model output and pasted text are treated as untrusted. The app writes them with `textContent` and never parses them as markup. Downloaded packets have remote images and raw HTML neutralised.')}</p>`,
 ])}

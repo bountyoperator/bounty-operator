@@ -45,12 +45,12 @@ import { parseReview } from '../parse.mjs';
 import { GAUNTLET, reviewProfile } from '../profiles.mjs';
 import { LIMITS, checkInputs, describeFinding } from '../review-core.mjs';
 import { account, currentAccount, planOf, streamReview, subscribeAccount, track } from './api.mjs';
-import { blockOf, blockedCopy, blockedNotice } from './blocked.mjs';
+import { alternateAfter, blockOf, blockedCopy, blockedNotice } from './blocked.mjs';
 import {
   VERDICT_LABELS, gauntletResult, openExampleRun, panelFileName, stageFileName, stageLabel, stageRecord, stageStrip, stopsRun,
 } from './dossier.mjs';
 import { EVENTS } from './events.mjs';
-import { checkCredentials, credentials, markInvalid } from './providers-ui.mjs';
+import { checkCredentials, chooseModel, credentials, markInvalid } from './providers-ui.mjs';
 import { sectionKey } from './results.mjs';
 import { ensureSignedIn, failureFor, openAccount, upgrade } from './run.mjs';
 import { readSession, removeSession, workbench, writeSession } from './state.mjs';
@@ -64,6 +64,12 @@ const TOTAL = GAUNTLET.length;
 const PRICE = 'US$10 a week';
 const CELL_CHARS = 400;
 const MASK_PASSES = 4;
+// The one model measured to stop at the proof stage: on 9 October 2026 OpenAI's
+// cyber safeguards blocked stage 4 on GPT-6.1 Sol for every draft tested, at
+// its default effort, while Claude Sonnet 5.5 ran all eight stages. The row
+// says so before a run starts on that model, by either of its ids.
+const PROOF_STAGE_BLOCKED = /(?:^|\/)gpt-6\.1-sol$/;
+const PROOF_STAGE_NOTE = "OpenAI's safeguards stopped stage 4 on GPT-6.1 Sol in our own test; Claude Sonnet 5.5 ran all eight.";
 
 // ---------------------------------------------------------------------------
 // Pure helpers
@@ -564,7 +570,7 @@ function paint() {
   let label = 'Run the gauntlet';
   let alt = null;
   let hint = plan === 'operator'
-    ? 'Eight reviews on the model chosen above, one after another.'
+    ? `Eight reviews on the model chosen above, one after another.${PROOF_STAGE_BLOCKED.test(credentials().model) ? ` ${PROOF_STAGE_NOTE}` : ''}`
     : 'An Operator run. The example shows a whole one without an account.';
   if (example && run.status === 'idle') {
     label = exampleHasRun ? 'Show the gauntlet on this example' : 'Run the gauntlet';
@@ -616,6 +622,7 @@ function gateNote(stage) {
  * it (as an answer or as an error), or the model declined. Null for any other
  * stop. The earlier stages are kept, and the way on is another model: the same
  * request to the same model is blocked again, so it never says to ask again.
+ * A block another model does not get past names its own way on instead.
  *
  * @param {{ kind: string, blocked?: string, error?: unknown }} stop
  * @param {{ at: string, keptLine?: string }} where  `at` reads "stage 3, Prior art"
@@ -627,8 +634,8 @@ export function declinedStop(stop, { at, keptLine = '' }) {
     return {
       blocked: blocked.block,
       title: blocked.title,
-      context: `The run stopped at ${at}.${keptLine} Pick another model above, then resume.`,
-      status: `${blocked.title}: the gauntlet stopped at ${at}.${keptLine} Pick another model, then resume.`,
+      context: `The run stopped at ${at}.${keptLine} ${blocked.step ? `${blocked.step} Then resume.` : 'Pick another model above, then resume.'}`,
+      status: `${blocked.title}: the gauntlet stopped at ${at}.${keptLine} ${blocked.short || 'Pick another model'}, then resume.`,
     };
   }
   if (stop.kind !== 'refused') return null;
@@ -705,10 +712,28 @@ async function reportStop(stop, request, options) {
   }
   const declined = declinedStop(stop, { at, keptLine });
   if (declined) {
+    // One press puts a model of another vendor in the Model field and resumes at the stage that stopped.
+    const other = declined.blocked ? alternateAfter(declined.blocked, { provider: request.provider, model: request.model }) : null;
+    const extra = [];
+    if (other) {
+      extra.push(el('p', {}, button({
+        label: `Resume on ${other.label}`,
+        size: 'sm',
+        id: 'wb-gauntlet-switch',
+        onClick: () => {
+          chooseModel(other.id);
+          runGauntlet();
+        },
+      })));
+    } else if (declined.blocked && !blockedCopy(declined.blocked)?.step && request.provider !== 'openrouter') {
+      // A provider that serves its own models only: the same safeguards can stand behind each of them.
+      extra.push(el('p', { class: 'fine', text: 'If another model on this key is blocked too, connect OpenRouter above and resume there. The finished stages are kept.' }));
+    }
     showNote(declined.blocked
-      ? blockedNotice(stop.blocked || stop.error, { context: declined.context })
+      ? blockedNotice(stop.blocked || stop.error, { context: declined.context, extra })
       : notice('warn', declined.title, declined.context));
     say(declined.status, { tone: 'warn', hold: true });
+    qs('#wb-gauntlet-switch')?.focus();
     return;
   }
   if (stop.kind === 'format') {
@@ -929,7 +954,8 @@ export function initGauntlet() {
     }
     paint();
   });
-  workbench.select((state) => `${state.profile}|${state.mode}`, paint);
+  // The model is part of what the row says: one model is known to stop at the proof stage.
+  workbench.select((state) => `${state.profile}|${state.mode}|${state.provider}|${state.model}`, paint);
   view.select((state) => `${state.via}|${state.example}`, () => {
     showNote(null);
     refreshExample();

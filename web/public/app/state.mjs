@@ -71,7 +71,7 @@
  * @property {string} [model]
  * @property {boolean} [truncated]
  * @property {boolean} [refused]
- * @property {'anthropic-cyber' | 'openai-cyber' | 'policy'} [blocked]  the provider blocked the review under its usage policy; see ./blocked.mjs
+ * @property {'anthropic-cyber' | 'anthropic-reasoning' | 'openai-cyber' | 'guardrail' | 'policy'} [blocked]  the provider blocked the review; see ./blocked.mjs
  * @property {{ input: number | null, output: number | null }} [usage]
  * @property {'ai' | 'pasted' | 'example' | 'panel' | 'gauntlet'} [source]
  * @property {string} [timestamp]      ISO 8601

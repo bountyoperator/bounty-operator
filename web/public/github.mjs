@@ -5,6 +5,12 @@
 import { LIMITS, boundedBody, textBytes, validName } from './review-core.mjs';
 
 const API = 'https://api.github.com';
+// GitHub's file host. It serves a file at an exact commit with open CORS and outside the
+// API's rate limit, so reading file bodies here leaves a visitor without a token their 60
+// API calls an hour for the commit and the listing.
+const RAW = 'https://raw.githubusercontent.com';
+// A file kept in Git LFS is, in the repository, a short pointer that starts with this line.
+const LFS_POINTER = /^version https:\/\/git-lfs\.github\.com\/spec\/v1\b/;
 const API_VERSION = '2022-11-28';
 const TIMEOUT_MS = 20000;
 const CONCURRENT_FILES = 6;
@@ -291,10 +297,39 @@ export async function listGithubTree({ owner, repo, sha, token = '' }) {
   return files;
 }
 
-async function fetchFile({ owner, repo, sha, path, token }) {
-  let content;
+/**
+ * One file's text from the file host, or null when that host does not give it: a missing
+ * path, a folder, a throttled or failed request, bytes that are not text. The caller then
+ * asks the API, which names the reason.
+ */
+async function rawFile({ owner, repo, sha, path }) {
+  assertRepo(owner, repo);
+  let response;
   try {
-    content = await githubGet(`${repoPath({ owner, repo })}/contents/${encodePath(path)}?ref=${sha}`, {
+    response = await fetch(`${RAW}/${owner}/${repo}/${sha}/${encodePath(path)}`, {
+      credentials: 'omit',
+      redirect: 'error',
+      referrerPolicy: 'no-referrer',
+      signal: AbortSignal.timeout(TIMEOUT_MS),
+    });
+  } catch {
+    return null;
+  }
+  if (!response.ok) {
+    await response.body?.cancel().catch(() => {});
+    return null;
+  }
+  try {
+    return await boundedBody(response, BODY_LIMIT.file);
+  } catch (error) {
+    if (/size limit/.test(error.message)) throw new GithubError(`${path} is larger than 120 KB.`, { reason: 'too-large' });
+    return null;
+  }
+}
+
+async function apiFile({ owner, repo, sha, path, token }) {
+  try {
+    return await githubGet(`${repoPath({ owner, repo })}/contents/${encodePath(path)}?ref=${sha}`, {
       accept: 'application/vnd.github.raw+json',
       limit: BODY_LIMIT.file,
       token,
@@ -305,6 +340,15 @@ async function fetchFile({ owner, repo, sha, path, token }) {
     if (error.reason === 'too-large') throw new GithubError(`${path} is larger than 120 KB.`, { reason: 'too-large' });
     if (error.reason === 'unreadable') throw new GithubError(`${path} is not UTF-8 text.`, { reason: 'unreadable' });
     throw error;
+  }
+}
+
+async function fetchFile({ owner, repo, sha, path, token }) {
+  // With a token the API reads the file, private repositories included. Without one the file
+  // host does, and the API is asked only when that host gives nothing.
+  const content = (token ? null : await rawFile({ owner, repo, sha, path })) ?? (await apiFile({ owner, repo, sha, path, token }));
+  if (LFS_POINTER.test(content)) {
+    throw new GithubError(`${path} is kept in Git LFS: the repository holds a pointer, not the file.`, { reason: 'unreadable' });
   }
   try {
     textBytes(content);

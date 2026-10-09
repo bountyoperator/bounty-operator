@@ -136,7 +136,7 @@ test('the MCP package and its checksum list revalidate, and the package has a me
 test('the content security policy is the one in the spec', () => {
   assert.equal(
     CONTENT_SECURITY_POLICY,
-    "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self' https://api.github.com https://openrouter.ai; font-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'",
+    "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self' https://api.github.com https://raw.githubusercontent.com https://openrouter.ai; font-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'",
   );
   assert(!CONTENT_SECURITY_POLICY.includes('unsafe'));
 });

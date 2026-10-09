@@ -714,7 +714,7 @@ describe('rules', () => {
     for (const id of ['wb-row-gauntlet', 'wb-row-panel', 'wb-gauntlet-stages', 'wb-gauntlet-run', 'wb-gauntlet-cancel', 'wb-gauntlet-text', 'wb-panel-seats', 'wb-panel-run', 'wb-panel-live']) {
       assert.equal(ids.filter((entry) => entry === id).length, 1, id);
     }
-    const dynamic = new Set(['wb-gauntlet-alt', 'wb-panel-add', 'wb-panel-cancel', 'workspace', 'wb-result']);
+    const dynamic = new Set(['wb-gauntlet-alt', 'wb-gauntlet-switch', 'wb-panel-add', 'wb-panel-cancel', 'workspace', 'wb-result']);
     const missing = [];
     for (const name of RUNNER_MODULES) {
       const source = await readFile(new URL(name, APP_DIR), 'utf8');

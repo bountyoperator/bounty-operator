@@ -137,6 +137,25 @@ export function credentials() {
 }
 
 /**
+ * Puts a model id in the Model field of the provider in use, as if it had been
+ * typed there. Nothing happens on the copy-paste route, which calls no model.
+ *
+ * @param {string} modelId
+ */
+export function chooseModel(modelId) {
+  const id = activeProviderId();
+  if (id === EXPORT_PROVIDER || typeof modelId !== 'string' || !modelId.trim()) return;
+  models.set(id, modelId.trim());
+  const field = qs('#wb-model');
+  if (field) {
+    field.value = modelId.trim();
+    field.removeAttribute('aria-invalid');
+  }
+  paintModelHelp(id);
+  commit();
+}
+
+/**
  * The key this tab holds for a provider: the one typed under "My own API key",
  * or for OpenRouter the connected one. '' when there is none. The panel uses it
  * to seat models from several providers.

@@ -556,7 +556,7 @@ const body = docPage({
 
 export default {
   path: PATH,
-  title: 'MCP server for Claude Code, Codex, Cursor | Bounty Operator',
+  title: 'MCP server for bug bounty report review | Bounty Operator',
   label: 'MCP setup',
   description:
     'Copy-paste install for the Bounty Operator MCP server in Claude Code, Codex and Cursor, with its tools, three prompts and token setup.',

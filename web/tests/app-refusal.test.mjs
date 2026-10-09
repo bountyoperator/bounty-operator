@@ -5,9 +5,9 @@
 import assert from 'node:assert/strict';
 import { after, before, describe, test } from 'node:test';
 
-import { ANTHROPIC_CYBER_NOTICE } from '../public/providers.mjs';
+import { ANTHROPIC_CYBER_NOTICE, PROVIDERS } from '../public/providers.mjs';
 import { ApiError } from '../public/app/api.mjs';
-import { BLOCKS, REFUSES_GUIDE, blockOf, blockedCopy, pastedBlock } from '../public/app/blocked.mjs';
+import { BLOCKS, REFUSES_GUIDE, alternateAfter, blockOf, blockedCopy, pastedBlock } from '../public/app/blocked.mjs';
 import { agreementOf, agreementSection, panelBody, seatRecord, stageStrip } from '../public/app/dossier.mjs';
 import { declinedStop, stageEnd, stageNames, stopState } from '../public/app/gauntlet.mjs';
 import { historyRecord, outcomeMark, resultFrom } from '../public/app/history.mjs';
@@ -19,10 +19,24 @@ import { initialState, snapshot, workbench } from '../public/app/state.mjs';
 
 const TITLES = {
   'anthropic-cyber': "Anthropic's cyber safeguards blocked this review",
+  'anthropic-reasoning': 'Anthropic declined a request for the model to write out its reasoning',
   'openai-cyber': "OpenAI's cyber safeguards blocked this review",
+  guardrail: 'A guardrail on the key or its account blocked this review',
   policy: 'The provider blocked this review under its usage policy',
 };
-const BODY = 'It did not count against your allowance. Run it again on another model or provider: your files and draft go through unchanged.';
+const NEXT = 'Run it again on another model or provider: your files and draft go through unchanged.';
+const BODY = `It did not count against your allowance. ${NEXT}`;
+// The two blocks another model does not get past: each has a way on of its own.
+const OWN = {
+  guardrail: {
+    step: 'It reads the request before any model does, so another model on the same key is stopped too. Use a key with no such guardrail, or another provider.',
+    short: 'Use another key or provider',
+  },
+  'anthropic-reasoning': {
+    step: 'Anthropic does this when the request asks the model to show its reasoning or thinking. Take that wording out of the focus text, or run it on another provider.',
+    short: 'Use another provider',
+  },
+};
 const REVIEW = '# Review\nVerdict: no-blocking-issues\nMode: own-code\nCounts: critical=0 high=0 medium=0 hardening=0 checked-safe=0\nHeadline: Nothing blocks.\n';
 
 const RESULT = {
@@ -44,18 +58,20 @@ const policyError = (data = {}) => new ApiError('Provider blocked this request.'
 // ---------------------------------------------------------------------------
 
 describe('blocked.mjs', () => {
-  test('the three blocks, their titles, the next step and the guide link are fixed copy', () => {
-    assert.deepEqual([...BLOCKS], ['anthropic-cyber', 'openai-cyber', 'policy']);
+  test('the five blocks, their titles, the next step and the guide link are fixed copy', () => {
+    assert.deepEqual([...BLOCKS], ['anthropic-cyber', 'anthropic-reasoning', 'openai-cyber', 'guardrail', 'policy']);
     assert.deepEqual({ ...REFUSES_GUIDE }, { label: 'When the model refuses', href: '/guide#model-refuses' });
     for (const block of BLOCKS) {
       const copy = blockedCopy(block);
       assert.deepEqual(copy, {
         block,
         title: TITLES[block],
-        body: BODY,
+        body: `It did not count against your allowance. ${OWN[block]?.step ?? NEXT}`,
         said: '',
         line: `${TITLES[block]}. It did not count against your allowance.`,
         link: REFUSES_GUIDE,
+        step: OWN[block]?.step ?? '',
+        short: OWN[block]?.short ?? '',
       });
       // The same words from a result that carries the block.
       assert.deepEqual(blockedCopy({ ...RESULT, blocked: block }), copy);
@@ -65,6 +81,7 @@ describe('blocked.mjs', () => {
   test('a provider_policy error is a block: it names the one the server named, or the general one', () => {
     assert.equal(blockOf(policyError({ blocked: 'openai-cyber' })), 'openai-cyber');
     assert.equal(blockOf(policyError({ blocked: 'anthropic-cyber' })), 'anthropic-cyber');
+    assert.equal(blockOf(policyError({ blocked: 'guardrail' })), 'guardrail');
     assert.equal(blockOf(policyError()), 'policy');
     assert.equal(blockOf(policyError({ blocked: 'something-new' })), 'policy', 'an id this build does not know reads as the general block');
     const worded = blockedCopy(policyError({ blocked: 'openai-cyber', detail: `  This request was flagged. ${'x'.repeat(400)}` }));
@@ -90,6 +107,40 @@ describe('blocked.mjs', () => {
     const copy = blockedCopy('policy', { context: 'The run stopped at stage 3, Prior art. Pick another model above, then resume.' });
     assert.equal(copy.body, 'It did not count against your allowance. The run stopped at stage 3, Prior art. Pick another model above, then resume.');
     assert.doesNotMatch(copy.body, /Run it again/, 'one instruction, not two');
+  });
+
+  test('a guardrail and a reasoning refusal never say to pick another model', () => {
+    for (const block of Object.keys(OWN)) {
+      const copy = blockedCopy(policyError({ blocked: block, detail: 'Request blocked: prompt injection patterns detected Matched: "ignore all previous instructions".' }));
+      assert.doesNotMatch(copy.body, /another model or provider|Pick another model/);
+      assert.match(copy.body, /another provider.$/);
+      assert.equal(copy.said, 'Request blocked: prompt injection patterns detected Matched: "ignore all previous instructions".');
+    }
+    assert.match(blockedCopy('guardrail').body, /another model on the same key is stopped too/);
+    assert.match(blockedCopy('anthropic-reasoning').body, /Take that wording out of the focus text/);
+  });
+
+  test('after a block, a model of another vendor on the same key is offered, where there is one', () => {
+    const sonnet = { id: 'anthropic/claude-sonnet-5.5', label: 'Claude Sonnet 5.5' };
+    const deepseek = { id: 'deepseek/deepseek-v4.1-flash', label: 'DeepSeek V4.1 Flash' };
+    // OpenRouter reaches every vendor, so the offer is the first tested model that is not the blocked one's vendor.
+    assert.deepEqual(alternateAfter('openai-cyber', { provider: 'openrouter', model: 'openai/gpt-6.1-sol' }), sonnet);
+    assert.deepEqual(alternateAfter(policyError({ blocked: 'openai-cyber' }), { provider: 'openrouter', model: 'openai/gpt-6-luna' }), sonnet);
+    assert.deepEqual(alternateAfter({ ...RESULT, blocked: 'anthropic-cyber' }, { provider: 'openrouter', model: 'anthropic/claude-opus-5.5' }), deepseek);
+    assert.deepEqual(alternateAfter('policy', { provider: 'openrouter', model: 'moonshotai/kimi-k3' }), sonnet, 'a model id the user typed has a vendor too');
+    assert.deepEqual(alternateAfter('policy', { provider: 'openrouter', model: '' }), sonnet);
+    // A provider that serves its own models only has no other vendor to offer.
+    for (const provider of ['openai', 'anthropic', 'gemini', 'export', '', undefined]) {
+      assert.equal(alternateAfter('openai-cyber', { provider, model: 'gpt-6.1-sol' }), null, String(provider));
+    }
+    // Another model does not get past these two, and what is not a block gets no offer.
+    assert.equal(alternateAfter('guardrail', { provider: 'openrouter', model: 'openai/gpt-6.1-sol' }), null);
+    assert.equal(alternateAfter('anthropic-reasoning', { provider: 'openrouter', model: 'anthropic/claude-opus-5.5' }), null);
+    assert.equal(alternateAfter({ refused: true }, { provider: 'openrouter', model: 'openai/gpt-6.1-sol' }), null);
+    assert.equal(alternateAfter('openai-cyber'), null);
+    // Every model the offer can name is one the Model field lists.
+    const listed = PROVIDERS.find((entry) => entry.id === 'openrouter').models.map((entry) => entry.id);
+    for (const offer of [sonnet, deepseek]) assert.ok(listed.includes(offer.id), offer.id);
   });
 
   test('a reply pasted from a chat app gets the one step that applies there, and no allowance line', () => {
@@ -180,7 +231,7 @@ describe('the result view', () => {
       const [notice] = view.notices;
       assert.equal(notice.className, 'notice notice--warn');
       assert.equal(notice.dataset.blocked, block);
-      assert.equal(notice.textContent, `${TITLES[block]}${BODY}When the model refuses`);
+      assert.equal(notice.textContent, `${TITLES[block]}It did not count against your allowance. ${OWN[block]?.step ?? NEXT}When the model refuses`);
       // The way to the guide is a real link: in the tab order, opened beside the work.
       const link = descendants(notice).find((node) => node.tagName === 'a');
       assert.deepEqual(link.attributes, { href: '/guide#model-refuses', target: '_blank', rel: 'noopener noreferrer' });
@@ -506,8 +557,8 @@ describe('the gauntlet', () => {
         assert.deepEqual(said, {
           blocked: block,
           title: TITLES[block],
-          context: 'The run stopped at stage 3, Prior art. 2 finished stages are kept. Pick another model above, then resume.',
-          status: `${TITLES[block]}: the gauntlet stopped at stage 3, Prior art. 2 finished stages are kept. Pick another model, then resume.`,
+          context: `The run stopped at stage 3, Prior art. 2 finished stages are kept. ${OWN[block] ? `${OWN[block].step} Then resume.` : 'Pick another model above, then resume.'}`,
+          status: `${TITLES[block]}: the gauntlet stopped at stage 3, Prior art. 2 finished stages are kept. ${OWN[block]?.short ?? 'Pick another model'}, then resume.`,
         });
         // The notice the row shows is the shared one: not counted, then where the run stopped and the one way on.
         assert.equal(blockedCopy(stop.blocked || stop.error, { context: said.context }).body, `It did not count against your allowance. ${said.context}`);
@@ -628,7 +679,7 @@ describe('the panel', () => {
 
   test("a blocked seat's row names the block and the way on", () => {
     for (const block of BLOCKS) {
-      const line = `claude-opus-5-5: ${TITLES[block]}. It did not count against your allowance. Pick another model for this seat.`;
+      const line = `claude-opus-5-5: ${TITLES[block]}. It did not count against your allowance. ${OWN[block] ? `${OWN[block].short}.` : 'Pick another model for this seat.'}`;
       // A blocked answer (the seat throws `refused` carrying the block) and a block sent as an error.
       assert.equal(failureLine(seat, Object.assign(new Error('The model declined to answer.'), { code: 'refused', blocked: block }), 'key'), line);
       assert.equal(failureLine(seat, policyError({ blocked: block }), 'key'), line);

@@ -138,7 +138,7 @@ A run uses seven hosted reviews. Free covers one hosted review per UTC day, so a
 
 `run_review` runs any profile on a provider's model with your own API key and returns the review checked. It is the only way to run a hosted profile from an agent. It uses the same allowance as the website: one hosted review per UTC day on Free, any profile, and unlimited on Operator at US$10 per week.
 
-Three result fields say when the text is not a review. `truncated` is true when the provider cut the answer short. `refused` is true when the model or the provider declined. `blocked` is set when the provider blocked the review under its usage policy (`anthropic-cyber`, `openai-cyber` or `policy`); a blocked review is never counted. After a refusal or a block, do not call again with the same model: use another model or provider, or `prepare_review` for a core profile.
+Three result fields say when the text is not a review. `truncated` is true when the provider cut the answer short. `refused` is true when the model or the provider declined. `blocked` is set when the review was blocked: `anthropic-cyber`, `anthropic-reasoning` or `openai-cyber` for that provider's safeguards, `guardrail` for a guardrail on the key or its account, `policy` for any other block under a usage policy. A blocked review is never counted. After a refusal or a block, do not call again with the same model: use another model or provider, or `prepare_review` for a core profile.
 
 1. Sign in at [bountyoperator.com](https://bountyoperator.com/#account) and create a connection in the account panel. The token starts with `bok_` and is shown once.
 2. Start the server with the token and one provider key in its environment.
@@ -202,9 +202,9 @@ A failed call returns `isError` with one JSON object: `error`, a sentence the ag
 The tarball on the site is listed with its SHA-256 at `https://bountyoperator.com/dl/SHA256SUMS.txt`.
 
 ```bash
-curl -sO https://bountyoperator.com/dl/bounty-operator-mcp-0.9.2.tgz
+curl -sO https://bountyoperator.com/dl/bounty-operator-mcp-0.9.3.tgz
 curl -s https://bountyoperator.com/dl/SHA256SUMS.txt | sha256sum -c --ignore-missing
-npx -y file:$PWD/bounty-operator-mcp-0.9.2.tgz --version
+npx -y file:$PWD/bounty-operator-mcp-0.9.3.tgz --version
 ```
 
 Start a downloaded tarball with the `file:` prefix and its absolute path. npm reads a bare path as a command to run.

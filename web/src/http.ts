@@ -130,7 +130,7 @@ export const CONTENT_SECURITY_POLICY = [
   "script-src 'self'",
   "style-src 'self'",
   "img-src 'self' data:",
-  "connect-src 'self' https://api.github.com https://openrouter.ai",
+  "connect-src 'self' https://api.github.com https://raw.githubusercontent.com https://openrouter.ai",
   "font-src 'self'",
   "object-src 'none'",
   "base-uri 'none'",

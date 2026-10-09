@@ -56,6 +56,14 @@ const ANTHROPIC_FALLBACK_BETA = 'server-side-fallback-2026-07-01';
 // user is sent without it and runs at that model's own default.
 const ANTHROPIC_EFFORT = 'high';
 const ANTHROPIC_EFFORT_MODELS = new Set(['claude-opus-5-5', 'claude-sonnet-5-5', 'claude-fable-5-1']);
+// OpenRouter calls carry no reasoning setting: every model runs at its own
+// default effort. Asking GPT-6.1 Sol, GPT-6 Luna and Gemini 3.8 Flash for
+// `high` was measured on 9 October 2026 against their default of medium, with
+// bench/tools/product-lift.mjs. Sol got no more reviews right, took about 2.5
+// times as long and had 2 of 30 reviews blocked under OpenAI's cyber policy
+// where none of 48 was blocked at medium. Gemini spent a median of 37,000
+// reasoning tokens a review and failed more calls. Do not add it back without
+// a new measurement.
 // Stop reasons of the Messages API that mean the answer was cut short.
 const MESSAGES_CUT_OFF = ['max_tokens', 'model_context_window_exceeded'];
 // Finish reasons of a chat completion that mean the same: the output cap, or
@@ -66,10 +74,18 @@ const CHAT_CUT_OFF = ['length', 'error', 'insufficient_system_resource', 'aborte
 // A provider's policy block reaches the caller in one of three ways: a stop
 // reason, an error, or (Anthropic through a relay) a short notice written as
 // the answer with a normal stop. `blocked` names what was identified:
-//   'anthropic-cyber'  Anthropic's cyber safeguards
-//   'openai-cyber'     OpenAI's cyber_policy error
-//   'policy'           any other block under a provider's usage policy
+//   'anthropic-cyber'      Anthropic's cyber safeguards
+//   'anthropic-reasoning'  Anthropic's refusal to write out the model's own reasoning
+//   'openai-cyber'         OpenAI's cyber_policy error, direct or passed on by a relay
+//   'guardrail'            a guardrail set on the key or its account at OpenRouter
+//   'policy'               any other block under a provider's usage policy
 const POLICY_NOTICE_CHARS = 800;
+// Anthropic's refusal categories that have a block id of their own. The other
+// three (bio, frontier_llm, general_harms) and a null category are 'policy'.
+const REFUSAL_BLOCKS = Object.freeze({ cyber: 'anthropic-cyber', reasoning_extraction: 'anthropic-reasoning' });
+// How many of a guardrail's matched patterns are passed on, and how long each may be.
+const GUARDRAIL_PATTERNS = 3;
+const GUARDRAIL_PATTERN_CHARS = 80;
 /** The notice as Anthropic's models returned it in October 2026. Anthropic documents the wording as unstable. */
 export const ANTHROPIC_CYBER_NOTICE = "This request triggered restrictions on violative cyber content and was blocked under Anthropic's Usage Policy. To learn more, see https://platform.claude.com/docs/en/build-with-claude/refusals-and-fallback.";
 // Only this first sentence is matched: the rest of the notice varies.
@@ -134,10 +150,15 @@ export const PROVIDERS = Object.freeze([
     label: 'OpenRouter',
     keyLabel: 'OpenRouter API key',
     keyPrefixHint: 'sk-or-',
-    defaultModel: 'openai/gpt-6.1-sol',
+    // The default is the model the review method was measured to help most in
+    // one request, and the one that ran all eight gauntlet stages without a
+    // block (bench/tools/product-lift.mjs and the gauntlet run of 9 October
+    // 2026). GPT-6.1 Sol, the default until 0.9.3, had the proof stage of the
+    // gauntlet blocked under OpenAI's cyber policy on every draft tested.
+    defaultModel: 'anthropic/claude-sonnet-5.5',
     models: [
-      model('openai/gpt-6.1-sol', 'GPT-6.1 Sol', 'default'),
-      model('anthropic/claude-sonnet-5.5', 'Claude Sonnet 5.5'),
+      model('anthropic/claude-sonnet-5.5', 'Claude Sonnet 5.5', 'default'),
+      model('openai/gpt-6.1-sol', 'GPT-6.1 Sol'),
       model('deepseek/deepseek-v4.1-flash', 'DeepSeek V4.1 Flash', 'value'),
       model('anthropic/claude-opus-5.5', 'Claude Opus 5.5', 'flagship'),
       model('openai/gpt-6-astra', 'GPT-6 Astra', 'flagship'),
@@ -335,7 +356,7 @@ export class ProviderError extends Error {
     this.status = status;
     /** auth, policy, model, credit, rate, server, request, response, redirect, timeout or network. */
     this.kind = kind;
-    /** Set with kind `policy`: 'anthropic-cyber', 'openai-cyber' or 'policy'. @type {string | undefined} */
+    /** Set with kind `policy`: a block id from the list above policyBlock. @type {string | undefined} */
     this.blocked = blocked;
     /** The provider's own words about a policy block, with keys removed; '' when it gave none. */
     this.detail = detail;
@@ -592,8 +613,10 @@ function errorObject(payload) {
 /**
  * The policy block an error reports, or '' for any other error.
  *   - OpenAI: the error code `cyber_policy`, at any status.
- *   - OpenRouter: `metadata.error_type` "refusal" or "content_policy_violation",
- *     or a 403 that carries moderation metadata (`reasons`, `flagged_input`).
+ *   - OpenRouter: the upstream provider's code in `metadata.provider_code`;
+ *     `metadata.error_type` "refusal" or "content_policy_violation"; a 403 that
+ *     carries moderation metadata (`reasons`, `flagged_input`); or a 403 that
+ *     lists the `patterns` a guardrail matched.
  * A 401 or 403 with none of these is a rejected key and stays one.
  * `status` is the HTTP status; an error inside a 200 body carries its own in `code`.
  */
@@ -603,9 +626,17 @@ function policySignal(payload, status = 0) {
   if (error.code === 'cyber_policy') return 'openai-cyber';
 
   const metadata = error.metadata && typeof error.metadata === 'object' ? error.metadata : {};
+  // A relay passes the upstream code along. The code is OpenAI's; when the
+  // relay names another provider beside it, the block is not called OpenAI's.
+  if (metadata.provider_code === 'cyber_policy') {
+    const named = typeof metadata.provider_name === 'string' ? metadata.provider_name : '';
+    return !named || /openai|azure/i.test(named) ? 'openai-cyber' : 'policy';
+  }
+  const forbidden = (status || Number(error.code)) === 403;
+  // The request was stopped before any provider saw it.
+  if (forbidden && guardrailPatterns(payload).length > 0) return 'guardrail';
   const moderated = (Array.isArray(metadata.reasons) && metadata.reasons.length > 0)
     || (typeof metadata.flagged_input === 'string' && metadata.flagged_input !== '');
-  const forbidden = (status || Number(error.code)) === 403;
   if (!POLICY_ERROR_TYPES.includes(metadata.error_type) && !(forbidden && moderated)) return '';
 
   // A relay passes the upstream provider's own words along.
@@ -613,9 +644,32 @@ function policySignal(payload, status = 0) {
   return plainSentence(upstream).includes(ANTHROPIC_CYBER_OPENING) ? 'anthropic-cyber' : 'policy';
 }
 
+/** The patterns a guardrail says it matched, as short strings. Empty for any other error. */
+function guardrailPatterns(payload) {
+  const patterns = errorObject(payload)?.metadata?.patterns;
+  if (!Array.isArray(patterns)) return [];
+  return patterns
+    .filter((pattern) => typeof pattern === 'string' && pattern.trim() !== '')
+    .slice(0, GUARDRAIL_PATTERNS)
+    .map((pattern) => pattern.trim().slice(0, GUARDRAIL_PATTERN_CHARS));
+}
+
+/** The provider's words for a guardrail block, followed by what it matched. */
+function guardrailDetail(payload, detail, apiKey) {
+  const matched = guardrailPatterns(payload).map((pattern) => `"${redact(pattern, apiKey)}"`).join(', ');
+  return [detail, matched ? `Matched: ${matched}.` : ''].filter(Boolean).join(' ');
+}
+
 // A block that names no policy of its own is "its usage policy": a relay can
 // pass on an upstream provider's block, so the endpoint's name could be wrong.
 function policyFailure(blocked, { status = 0, detail = '' } = {}) {
+  if (blocked === 'guardrail') {
+    // The guardrail belongs to the key or its account, so the key is where to look.
+    return new ProviderError(
+      `Provider stopped this request at a guardrail set on the key or its account${status ? ` (HTTP ${status})` : ''}, so no model saw it and no review was written.`,
+      { status, kind: 'policy', blocked, detail },
+    );
+  }
   const policy = {
     'openai-cyber': "OpenAI's cyber usage policy",
     'anthropic-cyber': "Anthropic's Usage Policy on cyber content",
@@ -633,7 +687,7 @@ async function httpFailure(response, selected, request) {
   const { status } = response;
   const { detail, payload } = await errorDetail(response, request.apiKey);
   const blocked = policySignal(payload, status);
-  if (blocked) return policyFailure(blocked, { status, detail });
+  if (blocked) return policyFailure(blocked, { status, detail: blocked === 'guardrail' ? guardrailDetail(payload, detail, request.apiKey) : detail });
   const said = detail ? ` ${selected.label} said: ${detail}` : '';
   const retryHeader = Number(response.headers.get('retry-after'));
   const retryAfter = Number.isFinite(retryHeader) && retryHeader > 0 ? Math.ceil(retryHeader) : null;
@@ -647,6 +701,25 @@ async function httpFailure(response, selected, request) {
     return new ProviderError(`Provider does not have the model "${named}" (HTTP 404). Check the model identifier.${said}`, { status, kind: 'model' });
   }
   if (status === 402) {
+    // OpenRouter says which of its credit limits refused the request.
+    const metadata = errorObject(payload)?.metadata;
+    const source = metadata && typeof metadata === 'object' ? metadata.limit_source : undefined;
+    if (source === 'openrouter_in_flight_budget') {
+      // A hold on requests still running or just finished. It clears by itself.
+      const wait = retryAfter ? ` Retry after ${retryAfter} seconds.` : ' Run it again in a minute.';
+      return new ProviderError(`Provider is holding credit for requests that are running or have just finished, so this one did not fit (HTTP 402). The OpenRouter account still has credit.${wait}`, { status, kind: 'rate', retryAfter });
+    }
+    if (source === 'openrouter_key_limit') {
+      return new ProviderError('Provider key has used up its own credit limit (HTTP 402). Raise the limit on the key at OpenRouter or use another key, then run again.', { status, kind: 'credit' });
+    }
+    if (source === 'openrouter_credits') {
+      return new ProviderError(
+        metadata.reason === 'weight_exceeds_budget'
+          ? 'Provider holds less credit for the account at one time than this request needs (HTTP 402), so running it again will not help. Add credit at OpenRouter, or send fewer files.'
+          : "Provider account's credit does not cover this request (HTTP 402). Add credit at OpenRouter, then run again.",
+        { status, kind: 'credit' },
+      );
+    }
     return new ProviderError(`Provider account has no credit (HTTP 402). Add credit at ${selected.label}, then run again.${said}`, { status, kind: 'credit' });
   }
   if (status === 429) {
@@ -728,7 +801,7 @@ function messagesUsage(usage) {
 function inBandError(payload, request) {
   const detail = redact(messageFrom(payload), request.apiKey);
   const blocked = policySignal(payload);
-  if (blocked) return policyFailure(blocked, { detail });
+  if (blocked) return policyFailure(blocked, { detail: blocked === 'guardrail' ? guardrailDetail(payload, detail, request.apiKey) : detail });
   return new ProviderError(`Provider returned an error${detail ? `: ${detail}` : '.'}`, { kind: 'response' });
 }
 
@@ -766,7 +839,8 @@ function filteredChoice(choice) {
  */
 function messagesRefusal(details) {
   const explanation = typeof details?.explanation === 'string' ? details.explanation.trim().slice(0, EXPLANATION_CHARS) : '';
-  return { blocked: details?.category === 'cyber' ? 'anthropic-cyber' : 'policy', explanation };
+  const category = details?.category;
+  return { blocked: typeof category === 'string' && Object.hasOwn(REFUSAL_BLOCKS, category) ? REFUSAL_BLOCKS[category] : 'policy', explanation };
 }
 
 function readMessage(data, request) {

@@ -103,7 +103,8 @@ export function failureFor(error, via = 'key') {
         };
       }
       if (data.kind === 'model') return { message: text, tone: 'error', field: 'model' };
-      return { message: `${text}${wait(data.retryAfter)}`, tone: 'error', partial };
+      // The provider's sentence can carry the wait itself; it is said once.
+      return { message: /\bRetry after \d+ seconds\./.test(text) ? text : `${text}${wait(data.retryAfter)}`, tone: 'error', partial };
     }
     case 'rate_limited':
       return { message: `Too many requests from this address.${wait(data.retryAfter) || ' Try again in a minute.'}`, tone: 'warn' };

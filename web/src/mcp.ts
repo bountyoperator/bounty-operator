@@ -505,7 +505,7 @@ const TOOLS: readonly Tool[] = [
         referenceProblems: { type: 'array' },
         truncated: { type: 'boolean' },
         refused: { type: 'boolean', description: 'True when the model or the provider declined. The text is then not a review.' },
-        blocked: { type: 'string', description: 'Set when the provider blocked the review under its usage policy: anthropic-cyber, openai-cyber or policy. A blocked review is never counted.' },
+        blocked: { type: 'string', description: 'Set when the review was blocked: anthropic-cyber, anthropic-reasoning or openai-cyber (safeguards of that provider), guardrail (a guardrail on the key or its account) or policy (any other block under a usage policy). A blocked review is never counted.' },
       },
       required: ['review', 'manifest'],
     },

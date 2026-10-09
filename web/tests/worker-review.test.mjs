@@ -473,6 +473,8 @@ test('a blocked answer is never counted, whatever its length, on both response p
   const anthropic = { provider: 'anthropic', model: 'claude-opus-5-5' };
   const messageEvents = (...events) => events.map((event) => `event: ${event.type}\ndata: ${JSON.stringify(event)}\n\n`);
   const details = { type: 'refusal', category: 'cyber', explanation: 'Blocked by the cyber safeguards.' };
+  const reasoning = { type: 'refusal', category: 'reasoning_extraction', explanation: 'The request asks for the reasoning as text.' };
+  const explained = { 'anthropic-cyber': details.explanation, 'anthropic-reasoning': reasoning.explanation };
 
   for (const chars of [0, 1999, 2000, 25000]) {
     const text = 'Review text written before the block. '.repeat(700).slice(0, chars);
@@ -490,6 +492,15 @@ test('a blocked answer is never counted, whatever its length, on both response p
           { type: 'message_start', message: { model: 'claude-opus-5-5', usage: { input_tokens: 5, output_tokens: 0 } } },
           ...(text ? [{ type: 'content_block_delta', index: 0, delta: { type: 'text_delta', text } }] : []),
           { type: 'message_delta', delta: { stop_reason: 'refusal', stop_details: details }, usage: { output_tokens: 1 } },
+          { type: 'message_stop' },
+        )],
+      // The one refusal a prompt can cause: it is counted apart, so a hosted method that trips it shows up.
+      ['a Messages refusal (stop_reason, category reasoning_extraction)', anthropic, 'anthropic-reasoning',
+        { type: 'message', model: 'claude-opus-5-5', content: text ? [{ type: 'text', text }] : [], stop_reason: 'refusal', stop_details: reasoning, usage: { input_tokens: 5, output_tokens: 1 } },
+        messageEvents(
+          { type: 'message_start', message: { model: 'claude-opus-5-5', usage: { input_tokens: 5, output_tokens: 0 } } },
+          ...(text ? [{ type: 'content_block_delta', index: 0, delta: { type: 'text_delta', text } }] : []),
+          { type: 'message_delta', delta: { stop_reason: 'refusal', stop_details: reasoning }, usage: { output_tokens: 1 } },
           { type: 'message_stop' },
         )],
     ];
@@ -526,10 +537,10 @@ test('a blocked answer is never counted, whatever its length, on both response p
           assert.equal(result.refused, true);
           assert.equal(result.blocked, blocked);
           // The text the provider wrote before the block is shown; with none, its explanation is.
-          assert.equal(result.review, text || (blocked === 'anthropic-cyber' ? details.explanation : ''));
+          assert.equal(result.review, text || (explained[blocked] ?? ''));
           await ctx.settled();
           assert.equal(reviews(env)[0].status, 'failed', 'not counted');
-          assert.deepEqual(funnelCounts(env.DB), { review_fail: 1, 'review_fail:blocked': 1 });
+          assert.deepEqual(funnelCounts(env.DB), { review_fail: 1, [blocked === 'anthropic-reasoning' ? 'review_fail:blocked_reasoning' : 'review_fail:blocked']: 1 });
         });
       }
     }

@@ -30,7 +30,7 @@ import {
   verdictChip,
   verdictLabel,
 } from '../components.mjs';
-import { SITE, faqPageLd, organizationLd, softwareApplicationLd } from '../layout.mjs';
+import { SITE, faqPageLd, organizationLd, softwareApplicationLd, websiteLd } from '../layout.mjs';
 import { PROFILES } from '../../public/profiles.mjs';
 import { PROVIDERS } from '../../public/providers.mjs';
 import { reportSlip } from '../social/example.mjs';
@@ -255,17 +255,17 @@ const scripts = unique(['/app/main.mjs', ...lists(workbenchModule, 'scripts'), .
 
 export default {
   path: '/',
-  title: 'Bounty Operator | Review your report before you submit',
+  title: 'Bounty Operator: pre-submission review for bug bounty reports',
   description:
     'Review your bug bounty report against its supporting files. Get a verdict, source citations and next steps using your own AI model.',
   label: 'Bounty Operator',
   og: {
-    title: 'Check your report before you submit',
+    title: 'Find the hole in your report before the triager does',
     alt: 'Bounty Operator. A draft report claiming Critical, cut to Medium by a review that cites file and line.',
   },
   styles,
   scripts,
-  jsonld: [organizationLd(), softwareApplicationLd(), faqPageLd(FAQ_ITEMS)],
+  jsonld: [websiteLd(), organizationLd(), softwareApplicationLd(), faqPageLd(FAQ_ITEMS)],
   lastmod: LASTMOD,
   body,
   ...(overlays.length ? { overlays: html`${overlays}` } : {}),

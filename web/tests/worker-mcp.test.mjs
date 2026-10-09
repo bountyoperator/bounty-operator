@@ -498,7 +498,7 @@ test('run_review and the gauntlet prompt tell the agent what a refused or blocke
   assert.deepEqual(tool.outputSchema.properties.refused, { type: 'boolean', description: 'True when the model or the provider declined. The text is then not a review.' });
   assert.deepEqual(tool.outputSchema.properties.blocked, {
     type: 'string',
-    description: 'Set when the provider blocked the review under its usage policy: anthropic-cyber, openai-cyber or policy. A blocked review is never counted.',
+    description: 'Set when the review was blocked: anthropic-cyber, anthropic-reasoning or openai-cyber (safeguards of that provider), guardrail (a guardrail on the key or its account) or policy (any other block under a usage policy). A blocked review is never counted.',
   });
 
   const gauntlet = await promptText('gauntlet');

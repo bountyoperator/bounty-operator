@@ -37,7 +37,7 @@ const MAX_DOWNLOAD_BYTES = 16 * 1024 * 1024;
 // They are written out here so this script checks the site against a second
 // copy; web/tests/verify-live.test.mjs holds the two copies together.
 export const EXPECTED_CSP =
-  "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self' https://api.github.com https://openrouter.ai; font-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'";
+  "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self' https://api.github.com https://raw.githubusercontent.com https://openrouter.ai; font-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'";
 
 export const EXPECTED_HEADERS = Object.freeze({
   'content-security-policy': EXPECTED_CSP,

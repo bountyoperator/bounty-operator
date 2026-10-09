@@ -86,7 +86,7 @@ const counters = html`
 <p>Page views and named actions are counted in aggregate. We do the counting ourselves and keep one number per day for each of these:</p>
 <ul>
 <li>page views per path</li>
-<li>the referring site, from a fixed list</li>
+<li>the referring site, from a fixed list: search engines, X, GitHub, Hacker News, Reddit, the bounty platforms, and the assistants ChatGPT, Perplexity, Claude, Copilot and Gemini. Any other site counts as “other”</li>
 <li>sign-ups and sign-ins</li>
 <li>completed reviews per profile, and failed reviews</li>
 <li>daily-limit hits, checkouts started and subscriptions activated</li>
@@ -97,7 +97,7 @@ const counters = html`
 
 const thirdParties = html`
 <p>Cloudflare, which hosts the site, processes each request’s IP address and other request metadata to deliver it, under its own policies.</p>
-<p>${inline('A GitHub import goes from your browser straight to `api.github.com`, with the link you chose and your read-only token if you supply one. The token is held in tab memory. The imported files reach our server only when you run a hosted review.')}</p>
+<p>${inline('A GitHub import goes from your browser straight to `api.github.com`, with the link you chose and your read-only token if you supply one. Without a token the files themselves are read from `raw.githubusercontent.com`, GitHub’s file host, which is sent nothing but the file’s address. The token is held in tab memory. The imported files reach our server only when you run a hosted review.')}</p>
 <p>${inline('Connecting OpenRouter happens between your browser and `openrouter.ai`.')}</p>
 <p>${inline('The MCP server handles the file contents your agent passes to a tool. `list_profiles`, `prepare_review` and `build_packet` keep none of it. `run_review` is a hosted review and is recorded like one. Your agent’s own model provider receives tool results under its own terms.')}</p>
 <p>Connection tokens are shown once and stored as hashes. They expire after 90 days and you can revoke one in the account panel. Recovering an account, or signing out everywhere, revokes all of them.</p>`;

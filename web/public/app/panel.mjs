@@ -455,10 +455,10 @@ function declined(result) {
   return Object.assign(new Error('The model declined to answer.'), { code: 'refused', ...(blocked ? { blocked } : {}) });
 }
 
-/** One row's reason. A seat the provider blocked names the block and the way on: another model in that seat. */
+/** One row's reason. A seat the provider blocked names the block and the way on: another model in that seat, or the block's own step. */
 export function failureLine(seat, error, via) {
   const blocked = blockedCopy(error);
-  if (blocked) return `${seat.model}: ${blocked.line} Pick another model for this seat.`;
+  if (blocked) return `${seat.model}: ${blocked.line} ${blocked.short ? `${blocked.short}.` : 'Pick another model for this seat.'}`;
   if (error?.code === 'refused' || error?.code === 'format') return `${seat.model}: ${error.message}`;
   return `${seat.model}: ${failureFor(error, via).message}`;
 }
@@ -644,8 +644,8 @@ export async function runPanel(options = {}) {
     }
     const blocked = blockedCopy(failure);
     if (blocked) {
-      note(blockedNotice(failure, { context: `The cross-examination by ${judgeSeat.model} was blocked.${keptLine()} Let another model cross-examine.` }));
-      say(`${blocked.title}: the panel stopped at the cross-examination.${keptLine()} Let another model cross-examine.`, { tone: 'warn', hold: true });
+      note(blockedNotice(failure, { context: `The cross-examination by ${judgeSeat.model} was blocked.${keptLine()} ${blocked.step || 'Let another model cross-examine.'}` }));
+      say(`${blocked.title}: the panel stopped at the cross-examination.${keptLine()} ${blocked.short ? `${blocked.short}.` : 'Let another model cross-examine.'}`, { tone: 'warn', hold: true });
       return;
     }
     note(notice('error', 'The cross-examination did not finish', `${failureLine(judgeSeat, failure, via)}${keptLine()} Run it again, or let another model cross-examine.`));

@@ -77,7 +77,7 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
 <li class="flow__node">
 <p class="meta"><span class="flow__n">1</span>Your browser</p>
 <p class="flow__title">Selects, checks, shows</p>
-<ul class="flow__points"><li>You choose the files. The privacy check runs here, and the preview shows the request before it leaves the tab.</li><li>GitHub imports go straight to <code>api.github.com</code>.</li><li>Prompt export of a core profile ends here. Nothing is sent.</li></ul>
+<ul class="flow__points"><li>You choose the files. The privacy check runs here, and the preview shows the request before it leaves the tab.</li><li>GitHub imports go straight to <code>api.github.com</code> and to GitHub’s file host, <code>raw.githubusercontent.com</code>.</li><li>Prompt export of a core profile ends here. Nothing is sent.</li></ul>
 </li><li class="flow__node">
 <p class="meta"><span class="flow__n">2</span>Our Worker</p>
 <p class="flow__title">Verifies, adds the method, forgets</p>
@@ -90,7 +90,7 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
 </ol>
 <div class="prose">
 <p>The review engine is one set of modules. The browser, the Worker and the MCP server import the same files, and they are in the public repository with the three core profiles. The method of every other profile is not in the repository: the Worker adds it when a review runs.</p>
-<p>For a core profile the preview is the whole prompt your model receives. For a hosted profile it is the request: your focus, your context and the files, line by line. The Worker adds the method after that, and the provider you chose is the only other party that receives it. No page, download or API response returns it.</p>
+<p>For a core profile the preview is the whole prompt your model receives. For a hosted profile it is the request: your focus, your context and the files, line by line. The Worker adds the method after that and sends it to the provider you chose and to no one else. With OpenRouter that is OpenRouter and the model host it passes the call to. No page, download or API response returns it.</p>
 <p>A review started from a coding agent takes the same path: <code>run_review</code> sends the files and your provider key to the Worker, and steps 2 and 3 are unchanged.</p>
 </div>
 </section><section class="docs-section" aria-labelledby="stored">
@@ -131,7 +131,7 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
 <div class="prose">
 <p>The Worker sets these on every response, pages and API alike:</p>
 </div>
-<figure class="code code--wrap"><figcaption class="code__bar"><span class="code__name">Response headers</span><button class="code__copy" type="button" data-copy><span class="icon icon--copy" aria-hidden="true"></span><span data-copy-label>Copy</span></button></figcaption><pre class="code__pre" tabindex="0" role="region" aria-label="Source: Response headers"><code><span class="code__line">Content-Security-Policy: default-src &#39;self&#39;; script-src &#39;self&#39;; style-src &#39;self&#39;; img-src &#39;self&#39; data:; connect-src &#39;self&#39; https://api.github.com https://openrouter.ai; font-src &#39;self&#39;; object-src &#39;none&#39;; base-uri &#39;none&#39;; frame-ancestors &#39;none&#39;; form-action &#39;self&#39;
+<figure class="code code--wrap"><figcaption class="code__bar"><span class="code__name">Response headers</span><button class="code__copy" type="button" data-copy><span class="icon icon--copy" aria-hidden="true"></span><span data-copy-label>Copy</span></button></figcaption><pre class="code__pre" tabindex="0" role="region" aria-label="Source: Response headers"><code><span class="code__line">Content-Security-Policy: default-src &#39;self&#39;; script-src &#39;self&#39;; style-src &#39;self&#39;; img-src &#39;self&#39; data:; connect-src &#39;self&#39; https://api.github.com https://raw.githubusercontent.com https://openrouter.ai; font-src &#39;self&#39;; object-src &#39;none&#39;; base-uri &#39;none&#39;; frame-ancestors &#39;none&#39;; form-action &#39;self&#39;
 </span><span class="code__line">Strict-Transport-Security: max-age=31536000; includeSubDomains
 </span><span class="code__line">Cross-Origin-Opener-Policy: same-origin
 </span><span class="code__line">X-Content-Type-Options: nosniff
@@ -142,7 +142,7 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
 <div class="prose">
 <p>What the policy means in practice:</p>
 </div>
-<ul class="checklist"><li><span class="icon icon--check" aria-hidden="true"></span><div><p>Scripts and styles load from this origin only. There is no inline script, no inline style and no <code>eval</code>, so injected markup has nothing to run.</p></div></li><li><span class="icon icon--check" aria-hidden="true"></span><div><p>The browser can connect to three hosts: this one, <code>api.github.com</code> for imports and <code>openrouter.ai</code> for the OpenRouter connection.</p></div></li><li><span class="icon icon--check" aria-hidden="true"></span><div><p>The site cannot be framed, and forms post to this origin only.</p></div></li><li><span class="icon icon--check" aria-hidden="true"></span><div><p>Model output and pasted text are treated as untrusted. The app writes them with <code>textContent</code> and never parses them as markup. Downloaded packets have remote images and raw HTML neutralised.</p></div></li></ul>
+<ul class="checklist"><li><span class="icon icon--check" aria-hidden="true"></span><div><p>Scripts and styles load from this origin only. There is no inline script, no inline style and no <code>eval</code>, so injected markup has nothing to run.</p></div></li><li><span class="icon icon--check" aria-hidden="true"></span><div><p>The browser can connect to four hosts: this one, <code>api.github.com</code> and <code>raw.githubusercontent.com</code> for imports, and <code>openrouter.ai</code> for the OpenRouter connection.</p></div></li><li><span class="icon icon--check" aria-hidden="true"></span><div><p>The site cannot be framed, and forms post to this origin only.</p></div></li><li><span class="icon icon--check" aria-hidden="true"></span><div><p>Model output and pasted text are treated as untrusted. The app writes them with <code>textContent</code> and never parses them as markup. Downloaded packets have remote images and raw HTML neutralised.</p></div></li></ul>
 <div class="prose">
 <p>Check it yourself:</p>
 </div>

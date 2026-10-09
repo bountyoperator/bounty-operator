@@ -144,7 +144,7 @@ ${pageHero({
     lede: 'A hosted review has three stops.',
   })}
   ${flow}
-  <p class="fine flow__note">A GitHub import goes from your browser straight to api.github.com at a pinned commit. The repository is never uploaded to our server.</p>
+  <p class="fine flow__note">A GitHub import goes from your browser straight to GitHub (api.github.com and raw.githubusercontent.com) at a pinned commit. The repository is never uploaded to our server.</p>
 </section>
 
 <section class="section wrap" aria-labelledby="ways">
