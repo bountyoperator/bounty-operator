@@ -61,9 +61,11 @@ import { snapshot } from '../public/app/state.mjs';
 import {
   evidenceGroups,
   findingTarget,
+  landing,
   maskLine,
   profileGroups,
   promptFileName,
+  sayQuietly,
   stepStates,
   totals,
   warnSignature,
@@ -98,6 +100,62 @@ describe('steps', () => {
   test('the fragment and the store agree on the three steps', () => {
     assert.deepEqual(WORKBENCH_STEPS.map((step) => step.id), ['files', 'review', 'results']);
     assert.deepEqual(WORKBENCH_STEPS.map((step) => step.label), ['Load', 'Run', 'Result']);
+  });
+
+  test('a result lands just under the sticky bar, and from far away the page goes there at once', () => {
+    // 62px of bar and 12px of paper above the first line of the result, with the page already near it.
+    assert.deepEqual(landing({ top: 3006, covered: 62, gap: 12, scrollY: 2700, screen: 715 }), { top: 2932, jump: false });
+    // From the hero, more than four screens up: no scroll to watch.
+    assert.deepEqual(landing({ top: 3006, covered: 62, gap: 12, scrollY: 0, screen: 715 }), { top: 2932, jump: true });
+    // From far below it, the same.
+    assert.deepEqual(landing({ top: 3006, covered: 62, gap: 12, scrollY: 9000, screen: 715 }), { top: 2932, jump: true });
+    // A screen and a half is still scrolled. A pixel more is not.
+    assert.equal(landing({ top: 2000, covered: 0, gap: 0, scrollY: 800, screen: 800 }).jump, false);
+    assert.equal(landing({ top: 2001, covered: 0, gap: 0, scrollY: 800, screen: 800 }).jump, true);
+    // A phone on its side: the bar does not stick, so it covers nothing.
+    assert.deepEqual(landing({ top: 500, covered: 0, gap: 12, scrollY: 400, screen: 390 }), { top: 488, jump: false });
+    // The page never scrolls above its own top.
+    assert.equal(landing({ top: 40, covered: 62, gap: 12, scrollY: 0, screen: 715 }).top, 0);
+  });
+});
+
+describe('the quiet line', () => {
+  test('sayQuietly writes to the screen-reader region and leaves the visible status line alone', () => {
+    const region = (className) => ({
+      className,
+      attributes: {},
+      dataset: {},
+      textContent: '',
+      classList: { contains: (name) => className.split(' ').includes(name) },
+      setAttribute(name, value) { this.attributes[name] = value; },
+      replaceChildren() { this.textContent = ''; },
+    });
+    const quiet = region('visually-hidden');
+    const status = region('notice');
+    globalThis.document = {
+      querySelector: (selector) => (selector === '#wb-quiet' ? quiet : null),
+      getElementById: (id) => (id === 'wb-status' ? status : null),
+    };
+    try {
+      sayQuietly('Example loaded.');
+      assert.equal(quiet.textContent, 'Example loaded.');
+      assert.equal(quiet.attributes.role, 'status', 'polite: it never interrupts');
+      assert.equal(status.textContent, '', 'nothing is pinned over the result');
+      // An empty line clears it, and drops the timer that would have.
+      sayQuietly('');
+      assert.equal(quiet.textContent, '');
+    } finally {
+      delete globalThis.document;
+    }
+  });
+
+  test('an example says where it came from to screen readers, and pins nothing over its first line', async () => {
+    const main = await readFile(new URL('main.mjs', APP_DIR), 'utf8');
+    assert.match(main, /sayQuietly\(`Example loaded\.\$\{stored\}`\);/);
+    // The visible line keeps what the result does not print: a hand-written example, and files put aside.
+    assert.match(main, /stored \? '' : 'The example was written by hand: no model was called\.'/);
+    assert.match(main, /hadWork \? 'Your own files are put aside and come back when you leave the example\.' : ''/);
+    assert.doesNotMatch(main, /say\(`Example loaded|say\(hadWork/);
   });
 });
 
@@ -788,6 +846,8 @@ describe('workbench fragment', () => {
       assert.equal(ids.filter((entry) => entry === id).length, 1, id);
     }
     assert.match(markup, /id="wb-status" role="status"/);
+    // The quiet line: a second live region, for screen readers only, empty until something is said.
+    assert.match(markup, /<p class="visually-hidden" id="wb-quiet" role="status"><\/p>/);
     assert.match(markup, /aria-current="step"[^>]*id="wb-step-files"|id="wb-step-files"[^>]*aria-current="step"/);
   });
 
@@ -809,6 +869,16 @@ describe('workbench fragment', () => {
       }
     }
     assert.deepEqual(missing, []);
+  });
+
+  test('the head is its title and its three tools, with no line that says what the form is', () => {
+    const head = String(workbench()).match(/<header class="wb__head">[\s\S]*?<\/header>/)[0];
+    // The title stands alone: no lede under it, no paragraph of any kind.
+    assert.match(head, /<div class="wb__intro">\s*<h2 id="wb-title">[^<]+<\/h2>\s*<\/div>/);
+    assert.ok(!/<p\b/.test(head));
+    assert.deepEqual([...head.matchAll(/<button[^>]* id="([^"]+)"/g)].map((match) => match[1]), ['wb-example', 'wb-history-open', 'wb-clear']);
+    // The option that printed the line went with it.
+    assert.ok(!String(workbench({ lede: 'Choose a review and add your files.' })).includes('Choose a review'));
   });
 
   test('nothing inline: no style attribute, no handler, no script', () => {
@@ -867,6 +937,63 @@ describe('rules', () => {
     assert.deepEqual([...used].filter((name) => !defined.has(name)), []);
     // Nothing renders below 12px.
     assert.ok(!/font-size:\s*(?:0\.[0-6]\d*rem|[0-9]px|1[01]px)/.test(rules));
+  });
+
+  test('a result is brought to its first line, and the stylesheet says how much paper shows above it', async () => {
+    const source = await readFile(new URL('workbench.mjs', APP_DIR), 'utf8');
+    // The first line of a result: what was reviewed, by which model and when. The bar counts only while it sticks.
+    assert.match(source, /const target = qs\('#wb-result \.wb-result__bar'\);/);
+    assert.match(source, /getComputedStyle\(bar\)\.position === 'sticky' \? bar\.offsetHeight : 0/);
+    // The place is measured after the caller has written its status line.
+    assert.match(source, /requestAnimationFrame\(\(\) => \{\s*if \(workbench\.get\(\)\.step === 'results'\) showResult\(\);/);
+    // The result view draws that line first, ahead of any notice and of the verdict.
+    const results = await readFile(new URL('results.mjs', APP_DIR), 'utf8');
+    assert.match(results, /target\.append\(\s*el\('div', \{ class: 'wb-result__bar' \}/);
+    const css = (await readFile(new URL('../public/css/workbench.css', import.meta.url), 'utf8')).replace(/\/\*[\s\S]*?\*\//g, '');
+    assert.match(css, /\.wb-result__bar \{\s*scroll-margin-top: var\(--sp-12\);\s*\}/);
+  });
+
+  test('on a phone the five totals of a result print in two rows, none alone', async () => {
+    const css = (await readFile(new URL('../public/css/workbench.css', import.meta.url), 'utf8')).replace(/\/\*[\s\S]*?\*\//g, '');
+    assert.match(css, /@media \(max-width: 29\.99em\) \{\s*\.wb-result \.counts \{\s*display: grid;\s*grid-template-columns: repeat\(3, max-content\);\s*\}\s*\.wb-result \.counts li:nth-child\(5\) \{\s*grid-column: 2 \/ -1;\s*\}\s*\}/);
+    // The rule counts on five totals in this order: the three severities, Hardening, Checked safe.
+    const results = await readFile(new URL('results.mjs', APP_DIR), 'utf8');
+    assert.match(results, /const COUNT_LABELS = Object\.freeze\(\[\s*\['critical',[^\]]*\],\s*\['high',[^\]]*\],\s*\['medium',[^\]]*\],\s*\['hardening',[^\]]*\],\s*\['checkedSafe',[^\]]*\],\s*\]\);/);
+  });
+
+  test('on a phone the Files box does not ask for a drop', async () => {
+    const css = (await readFile(new URL('../public/css/workbench.css', import.meta.url), 'utf8')).replace(/\/\*[\s\S]*?\*\//g, '');
+    // A phone held upright, and a phone on its side: the height at which the bar stops sticking.
+    assert.match(css, /@media \(pointer: coarse\) and \(max-width: 43\.99em\), \(pointer: coarse\) and \(max-height: 30em\) \{\s*\.wb-drop__icon,\s*\.wb-drop__title \{\s*display: none;\s*\}\s*\}/);
+    assert.match(css, /@media \(max-height: 30em\) \{\s*\.wb__bar \{\s*position: static;/);
+    // The line stays in the markup, for every screen that can take a drop.
+    assert.match(String(workbench()), /<p class="wb-drop__title">[^<]+<\/p>/);
+  });
+
+  test('the Focus box grows to show its whole placeholder, up to a limit', async () => {
+    const css = (await readFile(new URL('../public/css/workbench.css', import.meta.url), 'utf8')).replace(/\/\*[\s\S]*?\*\//g, '');
+    // Only where the browser can size a field to its content: elsewhere the box keeps its three rows and its free resize.
+    assert.match(css, /@supports \(field-sizing: content\) \{\s*#wb-focus \{\s*max-height: 20rem;\s*field-sizing: content;\s*\}\s*\}/);
+    // The placeholder is the profile's standard request, set by the script: three rows is only where it starts.
+    assert.match(String(workbench()), /<textarea[^>]*id="wb-focus"[^>]*rows="3"/);
+  });
+
+  test('a dialog foot whose controls are all hidden is not printed', async () => {
+    const base = (await readFile(new URL('../public/css/base.css', import.meta.url), 'utf8')).replace(/\/\*[\s\S]*?\*\//g, '');
+    assert.match(base, /\.dialog__foot:not\(:has\(> :not\(\[hidden\]\)\)\) \{\s*display: none;\s*\}/);
+    // The two feet this empties: history with nothing saved, and the preview of a hosted request.
+    const history = await readFile(new URL('history.mjs', APP_DIR), 'utf8');
+    assert.match(history, /if \(control\) control\.hidden = records\.length === 0;/);
+    const source = await readFile(new URL('workbench.mjs', APP_DIR), 'utf8');
+    assert.match(source, /if \(control\) control\.hidden = built\.hosted;/);
+  });
+
+  test('from 960px the verdict of a result prints at the size its impression is drawn at', async () => {
+    const css = (await readFile(new URL('../public/css/workbench.css', import.meta.url), 'utf8')).replace(/\/\*[\s\S]*?\*\//g, '');
+    assert.match(css, /@media \(min-width: 60em\) \{\s*\.wb-result \.dossier \.verdict--lg \{\s*font-size: 1\.5rem;\s*\}\s*\}/);
+    // 1.5rem is 24px, the size the impression is drawn at, at twice the pixels: a 2x screen does not enlarge its ink.
+    const stamps = await readFile(new URL('../../scripts/build-stamps.mjs', import.meta.url), 'utf8');
+    assert.match(stamps, /const PROOF_FONT_PX = 24;\s*const PROOF_SCALE = 2;/);
   });
 
   test('on a phone a stacked table, a cited location and a landing stamp stay inside the page', async () => {

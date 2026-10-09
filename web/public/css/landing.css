@@ -42,15 +42,9 @@
   margin-bottom: var(--sp-32);
 }
 
-/* The measure of a page head is 22 characters of this cut, written in em
-   (22 x 0.516em): a ch is the width of the font in use, so a ch measure
-   changes when the webfont lands and the headline re-breaks. */
+/* 22 characters of the page-head cut, in em (22 x 0.512em), so the measure does not move when the webfont lands. */
 .lp-hero h1 {
-  max-width: 11.352em;
-  font-size: clamp(2.25rem, 1.2rem + 3.6vw, 4rem);
-  font-stretch: 76%;
-  font-weight: 860;
-  line-height: 0.98;
+  max-width: 11.26em;
 }
 
 /* Under the title: the Operator stamp, or the page's file line. */

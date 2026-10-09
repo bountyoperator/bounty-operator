@@ -145,6 +145,10 @@
   --swatch: var(--stock);
 }
 
+.swatch[data-token="observed"] {
+  --swatch: var(--observed);
+}
+
 .swatch[data-token="rule"] {
   --swatch: var(--rule);
 }

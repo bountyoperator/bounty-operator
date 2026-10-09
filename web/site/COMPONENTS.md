@@ -4,7 +4,7 @@ The design system for bountyoperator.com. Every page is generated from a module 
 
 See every component rendered: `node scripts/build-site.mjs --dev`, serve `web/public`, open `/_kit`.
 
-Direction: **Inspection office** (DESIGN.md at the repository root records the whole system). A finding goes through inspection before it goes to a triager, and the verdict comes back as a stamp. Forms print in black on white and canary stock, verdicts and severities are stamped in ink, code sits on carbon. Violet marks what was observed in the supplied files; ochre marks what is still unproven. Printed labels are Archivo condensed caps; mono is for code, paths and hashes only. Dark is the night shift: carbon indigo, pale print, canary for what you act on.
+Direction: **the marked report** (DESIGN.md at the repository root records the whole system). A finding goes through inspection before it goes to a triager, and the verdict comes back as a stamp. The page is black and its print is bone white; one hot ink, vermilion, is the pen and the action. The report is paper lying on the page, verdicts and severities are stamped in ink, code sits on near-black. Green marks what was observed in the supplied files; ochre marks what is still unproven. Headlines and figures are Archivo in wide heavy cuts, printed labels are Archivo condensed caps; mono is for code, paths and hashes only. There is one look: no theme to choose, and nothing follows the system's colour scheme.
 
 ## Contents
 
@@ -63,7 +63,7 @@ export default {
   body: html`
     <section class="section wrap">
       ${sectionHeading({ title: 'Report check', level: 1, lede: 'Find the claims with no line reference.' })}
-      ${button({ label: 'Open the workbench', href: '/#workspace', variant: 'primary' })}
+      ${button({ label: 'Start a free review', href: '/#workspace', variant: 'primary' })}
     </section>`,
 };
 ```
@@ -77,7 +77,7 @@ export default {
 | `description` | yes | 50 to 160 characters. |
 | `body` | yes | The result of `html\`…\``. Rendered inside `<main id="main">`. |
 | `nav` | no | Which header item is current: `workbench`, `method`, `tools`, `benchmark`, `guide`, `mcp`, `pricing`. |
-| `og` | no | `{ image, title, description, type, width, height, alt }`. `image` defaults to `/social-v4.png` (1200 × 630). |
+| `og` | no | `{ image, title, description, type, width, height, alt }`. `image` defaults to `/social-v5.png` (1200 × 630). |
 | `styles` | no | Root-relative stylesheets, loaded after `/css/base.css`. |
 | `scripts` | no | Root-relative module scripts. Their static imports are followed and emitted as `modulepreload` links. Scripts and preloads carry `fetchpriority="low"`: a page reads without them, so they load after the stylesheets and the font. |
 | `preload` | no | Extra `modulepreload` hrefs, or `false` to turn the automatic ones off. |
@@ -94,9 +94,9 @@ export default {
 
 A module may default-export an array of pages. A module with no default export is treated as a shared helper and skipped.
 
-What the layout adds: charset, viewport, title, description, canonical, `color-scheme`, two `theme-color` metas, Open Graph and Twitter tags (with `twitter:creator` set to the builder's handle; there is no `twitter:site`, the product has no X account), icons, manifest, `/theme.js`, stylesheets, preloads, scripts, JSON-LD, the skip link, the header and the footer.
+What the layout adds: charset, viewport, title, description, canonical, `color-scheme` (dark), one `theme-color` meta, Open Graph and Twitter tags (with `twitter:creator` set to the builder's handle; there is no `twitter:site`, the product has no X account), icons, manifest, `/theme.js`, stylesheets, preloads, `/field.mjs` and the page's scripts, JSON-LD, the skip link, the header and the footer.
 
-Header: brand, nav (Workbench `/#workspace`, Method `/method`, Tools `/tools`, Benchmark `/benchmark` only when that page exists, Guide `/guide`, MCP `/mcp`, Pricing), theme toggle, account control. Pricing links to `/#pricing` on the home page and to `/pricing` everywhere else. The account control is `<button id="account-button">` on `/` and a link to `/#account` everywhere else. Both read "Sign in" in the static markup; a page that loads `/app/account.mjs` relabels it "Account" for a signed-in visitor.
+Header: brand, nav (Review `/#workspace`, Benchmark `/benchmark` only when that page exists, Tools `/tools`, Guide `/guide`, Pricing), theme toggle, account control. Pricing links to `/#pricing` on the home page and to `/pricing` everywhere else. The account control is `<button id="account-button">` on `/` and a link to `/#account` everywhere else. Both read "Sign in" in the static markup; a page that loads `/app/account.mjs` relabels it "Account" for a signed-in visitor.
 
 Footer: Product, Tools, Resources and Legal columns. The Tools column lists the first six `/tools/*` pages. Method, gauntlet, panel review, templates, changelog, benchmark, security and licences links appear when those pages exist.
 
@@ -141,15 +141,16 @@ raw('<b>fixed markup</b>')                    // trusted markup only
 
 ## Tokens
 
-Defined in `base.css` section 1. Light is the default block. Dark applies through `prefers-color-scheme` and through `data-theme="dark"` on `<html>`; `.theme-dark` forces dark on one element (the site footer), `.theme-light` forces light (the report slip in the home hero). `.page-field` prints a page head on the field, full width, and `.on-stock` prints anything on canary in either theme (the Operator plan, the tools call-out).
+Defined in `base.css` section 1. `:root` and `.theme-dark` hold the one palette of the page. `.theme-light` is the paper palette, with the same token names, for a sheet lying on the page (the report slip in the home hero). `.page-field` puts a page head on the field, full width, and `.on-stock` prints anything on vermilion stock in black (the Operator plan, the tools call-out).
 
 | Group | Tokens |
 |---|---|
-| Paper | `--bg` page · `--surface` cards, inputs · `--surface-2` bars, office-use boxes · `--surface-3` selected segment |
-| Field and stock | `--field` page-head ground (canary by day, lifted carbon at night) · `--on-field` · `--on-field-muted` · `--field-rule` · `--stock` canary · `--on-stock` · `--on-stock-muted` |
+| Page | `--bg` page · `--surface` cards, inputs · `--surface-2` bars, office-use boxes · `--surface-3` selected segment, bar track |
+| Field and stock | `--field` page-head ground, the page's own black · `--on-field` · `--on-field-muted` · `--field-rule` · `--stock` vermilion · `--on-stock` · `--on-stock-muted` · `--copy` the second sheet under the slip |
 | Lines | `--rule` printed rules and frames · `--line` hairlines · `--line-strong` emphasis · `--line-control` control borders (3:1 on every surface) · `--rule-w` part rule width |
 | Ink | `--text` · `--muted` · `--placeholder` |
-| Violet, observed | `--accent` stamp ink: links, marks, observed · `--accent-hover` · `--accent-solid` primary button fill (black by day, canary at night) · `--accent-solid-hover` · `--on-accent` · `--focus` |
+| The hot ink | `--accent` links, line numbers, marks · `--accent-hover` · `--accent-solid` primary button fill (vermilion on the page, black on paper) · `--accent-solid-hover` · `--on-accent` · `--focus` · `--heat` the gradient of large figures and bars |
+| Green, observed | `--observed` what the code shows: confirmed, pass, proven, resolved |
 | Ochre, unproven | `--gap` · `--gap-bg` |
 | Severity | `--sev-crit` · `--sev-high` · `--sev-med` · `--sev-low` · `--sev-info` · `--sev-none` |
 | State | `--ok` · `--danger` |
@@ -226,6 +227,16 @@ button({ label: 'Copy reference', icon: 'copy', iconOnly: true }) // label becom
 <button class="btn btn--primary" type="button"><span class="btn__label">Run review</span><span class="icon icon--arrow-right" aria-hidden="true"></span></button>
 ```
 
+A link that opens the review form is labelled by where it goes. `web/tests/site-integration.test.mjs` holds the pages to it:
+
+- `Start a free review` opens the form plain, at `/#workspace`.
+- `Review my report` opens it on Challenge a draft report, at `/?profile=report#workspace`. The footer of every page carries this one.
+- A link that selects another review type keeps the verb of its page: `Review my contracts`, `Simulate the triager`.
+- A button that takes along what the visitor pasted names what it carries: `Challenge this draft`, `Review this proof`, `Triage this queue`.
+- `Review` in the header and `Review a report` in the footer are names of places.
+
+"Workbench" is the form's name in the code. Do not put it on a label.
+
 ### Link
 
 ```js
@@ -266,7 +277,7 @@ segmented({ name: 'mode', label: 'Mode', value: 'bounty', options: [{ value: 'bo
 
 ### Chips
 
-Stamps, not pills: an ink outline, ink letters in Archivo condensed caps. Base class `.chip`; the variant sets the ink. `.verdict--lg` is the rubber stamp (a double rule, a tilt with `--stamp-tilt`) and `severityChip(id, label, { stamp: true })` adds `.sev--stamp`, a severity stamped by hand. Both show a pressed impression: `scripts/build-stamps.mjs` renders the live box crisp (`.stamp--proof`), presses it with real ink from CC0 scans of 1980s rubber-stamp imprints (`scripts/ink/`, sources in `scripts/ink/SOURCES.md`) and writes `web/public/stamps/verdict-<id>.webp` and `sev-<id>.webp`; the box shows the chip colour through that file as a mask, so day and night share one asset, and keeps its words in the markup. Their geometry is in em, so one impression fits every size. Re-run the script when a label, the geometry or the font changes; `web/tests/home-page.test.mjs` checks every verdict and severity has its file and that the labels match the app's.
+Stamps, not pills: an ink outline, ink letters in Archivo condensed caps. Base class `.chip`; the variant sets the ink. `.verdict--lg` is the rubber stamp (a double rule, a tilt with `--stamp-tilt`) and `severityChip(id, label, { stamp: true })` adds `.sev--stamp`, a severity stamped by hand. Both show a pressed impression: `scripts/build-stamps.mjs` renders the live box crisp (`.stamp--proof`), presses it with real ink from CC0 scans of 1980s rubber-stamp imprints (`scripts/ink/`, sources in `scripts/ink/SOURCES.md`) and writes `web/public/stamps/verdict-<id>.webp` and `sev-<id>.webp`; the box shows the chip colour through that file as a mask, so the page and paper share one asset, and keeps its words in the markup. Their geometry is in em, so one impression fits every size. Re-run the script when a label, the geometry or the font changes; `web/tests/home-page.test.mjs` checks every verdict and severity has its file and that the labels match the app's.
 
 | Helper | Markup | Values |
 |---|---|---|
@@ -317,7 +328,7 @@ codeBlock({ code: 'forge test -vvv', numbers: false, copy: true })
 |---|---|
 | `name` | File name in the bar. Without it there is no bar and the copy button sits in the corner. |
 | `start` | Number of the first line. |
-| `highlight` | Lines marked violet (observed). Numbers or `[from, to]` pairs. |
+| `highlight` | Lines marked in the hot ink. Numbers or `[from, to]` pairs. |
 | `flag` | Lines marked ochre (unproven). |
 | `dim`, `dimOthers` | Recede context lines. |
 | `numbers: false` | No line numbers. |
@@ -397,7 +408,7 @@ Pass the same items to `faqPageLd(items)` for the structured data. A bare `<deta
 dialog({ id: 'account-dialog', title: 'Sign in', size: 'sm', body: html`…`, foot: html`…` })
 ```
 
-`dialog.dialog.dialog--sm|md|lg` (440 / 640 / 900px) > `header.dialog__head` (`.dialog__title`, `button.dialog__close[data-close-dialog]`) + `.dialog__body` + `footer.dialog__foot`. Open it with `showModal()`. The head stays in view while the body scrolls, the page behind does not scroll, and `closedby="any"` lets a backdrop tap close it. Put dialogs in the page's `overlays`.
+`dialog.dialog.dialog--sm|md|lg` (440 / 640 / 900px) > `header.dialog__head` (`.dialog__title`, `button.dialog__close[data-close-dialog]`) + `.dialog__body` + `footer.dialog__foot`. Open it with `showModal()`. The head stays in view while the body scrolls, the page behind does not scroll, and `closedby="any"` lets a backdrop tap close it. A foot whose controls are all `hidden` is not shown. Put dialogs in the page's `overlays`.
 
 ### Progress, meter, skeleton
 
@@ -427,7 +438,7 @@ Every page opens on the field: `pageHero()` (method and landing pages), `docHead
 
 ### Site header and footer
 
-Emitted by the layout. Classes: `.site-header`, `.site-header__inner`, `.brand` (`.brand__mark`, `.brand__name`), `.site-nav`, `.site-header__actions`, `.theme-toggle`, `.site-footer`, `.site-footer__grid`, `.site-footer__col`, `.site-footer__base`, `.site-footer__cta`. The current page's nav link is marked with canary. The footer is the carbon back sheet in both themes (`.theme-dark`) and closes every page with the promise and the Review my report action. Under 928px the nav becomes a second row that scrolls sideways; no link is hidden.
+Emitted by the layout. Classes: `.site-header`, `.site-header__inner`, `.brand` (`.brand__mark`, `.brand__name`), `.site-nav`, `.site-header__actions`, `.site-footer`, `.site-footer__grid`, `.site-footer__col`, `.site-footer__base`, `.site-footer__cta`, `.site-footer__mark`. The current page's nav link is filled with vermilion. The footer closes every page with the promise, the Review my report action and the name of the site across the window (`.site-footer__mark`, decoration, hidden from assistive technology). Under 928px the nav becomes a second row that scrolls sideways; no link is hidden.
 
 `brandMark()` returns the "b/" mark as inline SVG paths.
 
@@ -485,8 +496,8 @@ Rows (`data-rail`), in order, and what the label's ink says (the margin rule is 
 | `data-rail` | Label | Ink | Body |
 |---|---|---|---|
 | `impact` | Impact | grey | `<p>` |
-| `observed` | Observed | violet | `ol.steps` and the code excerpt |
-| `counter` | Counterargument | ochre when `data-status="open"`, violet when `resolved` | `p.rail__quote` then `p.rail__answer` (status chip + text) |
+| `observed` | Observed | green | `ol.steps` and the code excerpt |
+| `counter` | Counterargument | ochre when `data-status="open"`, green when `resolved` | `p.rail__quote` then `p.rail__answer` (status chip + text) |
 | `gap` | Evidence gap | ochre, dashed; grey when `data-status="none"` | `ul.gaps` |
 | `fix` | Fix | grey | `<p>` |
 | `test` | Test | grey | a code block |
@@ -500,12 +511,22 @@ Under 704px the label moves above its content and the margin rule moves to the c
 
 `/theme.js` is loaded on every page, blocking, in `<head>`. It:
 
-- applies the stored theme before first paint (`localStorage["bo-theme"]` = `light` | `dark`; absent = follow the system) by setting `data-theme` on `<html>`
-- toggles the theme from any `[data-theme-toggle]` and dispatches `themechange` on `document` with `detail.theme`
+- sets `data-js` on `<html>` before the first paint, so CSS can lay out what a script will arrange later
+- removes `localStorage["bo-theme"]`, a choice an earlier version of the site kept; nothing is stored now
 - copies a code block when its `[data-copy]` button is clicked, sets `data-copied` on the button for two seconds and swaps the `[data-copy-label]` text to "Copied"
 - closes the enclosing `<dialog>` when a `[data-close-dialog]` control is clicked
 
 Page scripts do not need to wire any of these.
+
+## The field, the pen and the figures
+
+- **The field.** The layout loads `/field.mjs` on every page. For each `.page-field` it builds `div.field` (hidden from assistive technology) with four layers: `canvas.field__text`, `canvas.field__shade`, any number of `i.field__strike` and `div.field__fade`. The text and the shade are drawn once; the shade drifts by a CSS transform and a strike is animated with the Web Animations API. Nothing is drawn per frame. With reduced motion the shade is still and two lines are already struck. A page needs only the class `.page-field` on its head.
+- **`pen(words)`, `penned(sentence, phrase)`** (components.mjs). `pen` wraps words in `span.pen` with the ring, an `svg.pen__ring` that is one stroke drawn once. `penned` circles one phrase of a sentence and returns the sentence as it is when the phrase is not in it. Rules in `home.css`.
+- **`verdictLabel(id)`** (components.mjs): the printed name of a verdict, for places that are not a chip.
+- **`.home-stats`**: a list of `a.home-stats__item`, each a figure (`.home-stats__n`, set in `--heat`) and a caption (`.home-stats__t`).
+- **`.verdict-run`**: `div.verdict-run[aria-hidden]` holding `.verdict-run__track` with every `.verdict-run__word[data-verdict]` printed twice, so the track loops by moving half its own width.
+- **`.bench-teaser__bar`**: an inline SVG, `viewBox="0 0 100 4"`, whose one `rect` covers the track from the score to 100. An SVG attribute, because the CSP refuses a style attribute.
+- **`.rise`**: a part that comes up into place as it enters the window, where the browser has scroll-driven animation. It is visible everywhere else. Do not put it on anything inside the workbench.
 
 ## Motion
 

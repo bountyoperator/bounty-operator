@@ -35,14 +35,10 @@
   }
 }
 
-/* 20 characters of the page-head cut, in em (20 x 0.516em), so the measure does not move when the webfont lands. */
+/* 20 characters of the page-head cut, in em (20 x 0.512em), so the measure does not move when the webfont lands. */
 .tpl-hero > h1 {
-  max-width: 10.32em;
+  max-width: 10.24em;
   margin-top: var(--sp-8);
-  font-size: clamp(2.25rem, 1.3rem + 3.2vw, 3.75rem);
-  font-stretch: 76%;
-  font-weight: 860;
-  line-height: 0.98;
 }
 
 .tpl-hero > .lede {

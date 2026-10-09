@@ -211,7 +211,7 @@ export function checkDraft({ id = 'draft', profile, focus, fileName, note, label
       label,
       for: id,
       control: textarea({ id, rows: 8, mono: true, placeholder, attrs: { spellcheck: 'false', 'data-handoff-input': true, 'aria-describedby': `${id}-help ${id}-state` } }),
-      help: 'The draft stays in this browser. It is sent only when you run a review in the workbench.',
+      help: 'The draft stays in this browser. It is sent only when you run a review.',
     })}
     <p class="tpl-check__state" id="${id}-state" aria-live="polite" data-handoff-state></p>
     ${notice({ tone: 'error', live: true, className: 'tpl-check__error' })}

@@ -21,7 +21,7 @@ const RELATED = {
   poc: { label: 'Proof review', href: workbenchLink('poc'), text: 'Whether the proof shows the impact or only the defect.' },
   severity: { label: 'Severity calibration', href: workbenchLink('severity'), text: 'One level, graded on the programme’s own table.' },
   scanner: { label: 'Scanner triage', href: workbenchLink('scanner'), text: 'Static-analysis output, grouped by root cause and ranked.' },
-  gauntlet: { label: 'Gauntlet', href: '/gauntlet', text: 'All eight stages in one run, with one verdict.' },
+  gauntlet: { label: 'Gauntlet', href: '/gauntlet', text: 'Eight stages on one finding, then a verdict.' },
   panel: { label: 'Panel review', href: '/panel-review', text: 'Two to four models, then a cross-examination pass.' },
 };
 
@@ -117,7 +117,8 @@ const solidity = profileLanding({
   profileId: 'solidity',
   profileName: 'Solidity review',
   hero: {
-    title: 'AI Solidity review on your own model',
+    meta: '',
+    title: 'Solidity review on\u00a0your own model',
     lede: 'Paste the contracts. Your model maps who can call what, compares sibling functions, checks every write site of each accounting invariant, and reports each way value or control is taken, with the lines that prove it and the strongest argument against it.',
     exampleLabel: 'Example output · invented contract',
     example: html`
@@ -171,7 +172,7 @@ const solidity = profileLanding({
     ],
   },
   returns: {
-    lede: 'One review in a fixed format, built to be checked against the source.',
+    lede: 'A review in a fixed format, built to be checked against the source.',
     items: [
       'A verdict and a one-sentence headline.',
       'A finding card per issue: severity, basis, location, impact and the path with concrete values.',
@@ -224,7 +225,7 @@ const solidity = profileLanding({
   cta: {
     button: 'Review my contracts',
     title: 'Run a Solidity review on your contracts',
-    lede: 'Your model, your key, a line reference for every claim.',
+    lede: 'It runs on your own model and key, and every claim comes with a line reference.',
   },
   related: [RELATED.poc, RELATED.report, RELATED.general, RELATED.panel, RELATED.gauntlet],
 });
@@ -406,9 +407,9 @@ const challenge = profileLanding({
     STORED_FAQ,
   ],
   cta: {
-    button: 'Challenge my report',
-    title: 'Find the hole in your report before the triager does',
-    lede: 'Paste the draft and the code. Read the claims table. Then decide.',
+    button: 'Review my report',
+    title: 'Run the challenge on your own draft',
+    lede: 'Paste the draft and the code, then read the claims table.',
   },
   related: [RELATED.triage, RELATED.priorArt, RELATED.poc, RELATED.gauntlet],
 });
@@ -609,7 +610,8 @@ const general = profileLanding({
   profileId: 'general',
   profileName: 'Code security review',
   hero: {
-    title: 'AI code security review that cites file and line',
+    meta: '',
+    title: 'Code security review that cites file and line',
     lede: 'Paste the handlers, routes and middleware. Your model reads them as an attacker who controls every input, traces each entry point from input to effect, and reports what the code proves, with the file and line for every claim.',
     exampleLabel: 'Example output · invented codebase',
     example: html`
@@ -653,7 +655,7 @@ const general = profileLanding({
     ],
   },
   returns: {
-    lede: 'One review in a fixed format, built to be checked against the source.',
+    lede: 'A review in a fixed format, built to be checked against the source.',
     items: [
       'A verdict: fix-before-deploy or no-blocking-issues for your own code, or one of the five bounty verdicts.',
       'A finding card per issue: severity, basis, file and line, impact and the path.',
@@ -697,7 +699,7 @@ const general = profileLanding({
   cta: {
     button: 'Review my code',
     title: 'Run a code security review on your own model',
-    lede: 'Every finding with its file, its line and the argument against it.',
+    lede: 'Every finding comes with its file and line, and the argument against it.',
   },
   related: [RELATED.solidity, RELATED.scanner, RELATED.report, RELATED.panel],
 });

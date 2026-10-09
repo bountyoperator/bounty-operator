@@ -39,7 +39,7 @@ import {
   timeUntil,
   toDate,
 } from '../public/app/ui.mjs';
-import { PROFILES } from '../public/profiles.mjs';
+import { PROFILES, reviewProfile } from '../public/profiles.mjs';
 import { PROVIDERS } from '../public/providers.mjs';
 import { LIMITS } from '../public/review-core.mjs';
 import { CLIENT_EVENTS as WORKER_EVENTS } from '../src/funnel.ts';
@@ -1112,7 +1112,10 @@ describe('store', () => {
     assert.deepEqual(Object.keys(state), ['files', 'focus', 'context', 'profile', 'mode', 'provider', 'model', 'step', 'result', 'busy']);
     assert.deepEqual(state.files, []);
     assert.deepEqual(state.context, { target: '', scope: '', version: '', proof: 'none', prior: 'unchecked', notes: '', rules: '' });
-    assert.equal(state.profile, 'general');
+    // The workbench opens on the draft-report review, a bounty review. The engine keeps its own default.
+    assert.equal(state.profile, 'report');
+    assert.equal(reviewProfile(state.profile).mode, 'bounty');
+    assert.equal(reviewProfile().id, 'general');
     assert.equal(state.mode, 'bounty');
     assert.equal(state.provider, PROVIDERS[0].id);
     assert.equal(state.step, 'files');
@@ -1389,6 +1392,17 @@ describe('stored workbench', () => {
     assert.equal(loadWorkbench(), null);
     storage.setItem(STORAGE_KEYS.workbench, '[]');
     assert.equal(loadWorkbench(), null);
+  });
+
+  test('a review type the tab stored is kept: the default is for a tab that stored none', () => {
+    useStorage(new FakeStorage());
+    assert.equal(loadWorkbench(), null, 'a first visit has nothing stored');
+    // A visitor who picked Code security review, or left it selected while adding a file, finds it again.
+    saveWorkbench({ ...initialState(), profile: 'general', files: [{ name: 'a.sol', content: 'x' }] });
+    assert.equal(loadWorkbench().profile, 'general');
+    // A stored value that is no listed profile still falls back to 'general'.
+    saveWorkbench({ ...initialState(), profile: 'verdict' });
+    assert.equal(loadWorkbench().profile, 'general');
   });
 
   test('the export choice and the legacy profile id are kept', () => {

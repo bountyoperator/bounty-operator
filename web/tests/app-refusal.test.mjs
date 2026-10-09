@@ -375,6 +375,46 @@ describe('the result view', () => {
     assert.equal(hashCell.children.length, 0);
   });
 
+  test('a draft review whose Path starts at a late step says whose numbers they are', () => {
+    const late = `${REVIEW}
+## F-1: stake() skips settlement
+Severity: medium
+Basis: proven-in-source
+Location: input-1/src/Vault.sol:10
+Impact: A late staker takes 3 ether of rewards.
+Path:
+6. Carol stakes 10 ether.
+7. Carol claims 3 ether she never earned.
+Gap: none
+Fix: Settle before the balance changes.
+Next: Add the test.
+`;
+    const manifest = [{ label: 'input-1/src/Vault.sol', bytes: 2048, lines: 60, sha256: 'ab'.repeat(32) }];
+    const answer = { ...RESULT, blocked: undefined, refused: false, manifest };
+    const draft = { id: 'report', name: 'Challenge a draft report' };
+    const observed = () => descendants(root).find((node) => node.dataset.rail === 'observed');
+    const notes = () => descendants(observed()).filter((node) => node.className === 'fine').map((node) => node.textContent);
+    const steps = () => descendants(observed()).find((node) => node.className === 'steps');
+
+    show({ ...answer, review: late, profile: draft });
+    assert.deepEqual(notes(), ['Numbered as in the draft.']);
+    assert.equal(steps().attributes.start, '6', 'the list keeps the numbers the review gave it');
+    assert.deepEqual(steps().children.map((node) => node.textContent), ['Carol stakes 10 ether.', 'Carol claims 3 ether she never earned.']);
+    // The line is read before the steps it explains.
+    const body = descendants(observed()).find((node) => node.tagName === 'dd');
+    assert.deepEqual(body.children.filter((node) => node instanceof Element).map((node) => node.className), ['fine', 'steps']);
+
+    // Another review type has no draft to follow: it keeps its numbers and says nothing.
+    show({ ...answer, review: late });
+    assert.deepEqual(notes(), []);
+    assert.equal(steps().attributes.start, '6');
+
+    // A draft review that starts at step 1 needs no line.
+    show({ ...answer, review: late.replace('6. Carol', '1. Carol').replace('7. Carol', '2. Carol'), profile: draft });
+    assert.deepEqual(notes(), []);
+    assert.equal(steps().attributes.start, undefined);
+  });
+
   test('a pasted notice says to paste the prompt into another model, with the guide link', () => {
     const view = show({ ...RESULT, source: 'pasted', provider: '' });
     assert.equal(view.notices.length, 1);

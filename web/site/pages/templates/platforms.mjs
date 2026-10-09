@@ -54,9 +54,9 @@ function platformPage(platform) {
           note: `Draft written from the ${platform.name} report template at bountyoperator.com${platform.path}. Platform rules checked ${CHECKED.label}.`,
           label: 'Your filled draft',
           placeholder: 'Paste the report with every placeholder replaced.',
-          primary: { label: 'Challenge it in the workbench', href: '/?profile=report#workspace' },
+          primary: { label: 'Challenge this draft', href: '/?profile=report#workspace' },
           secondary: { label: 'Run the report check', href: '/tools/report-check' },
-          intro: html`<p class="tpl-block__lede">Paste the report once every placeholder is replaced. The workbench opens with <a class="link" href="/challenge-report">Challenge a draft report</a> selected and argues against each claim: the impact row, the proof, the severity, the known issues. You decide what to rewrite.</p>`,
+          intro: html`<p class="tpl-block__lede">Paste the report once every placeholder is replaced. The button below opens a review with <a class="link" href="/challenge-report">Challenge a draft report</a> selected. It argues against each claim: the impact row, the proof, the severity, the known issues. You decide what to rewrite.</p>`,
         })}
       </section>
 

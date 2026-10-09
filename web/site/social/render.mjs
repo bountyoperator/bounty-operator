@@ -4,7 +4,7 @@
 //   node web/site/social/render.mjs
 //
 // Writes card.html next to this file (the HTML source of the image) and
-// renders it to web/public/social-v4.png at 1200 x 630. Needs a global
+// renders it to web/public/social-v5.png at 1200 x 630. Needs a global
 // Playwright with Chromium (`npm i -g playwright`), like scripts/build-icons.mjs.
 
 import { execSync } from 'node:child_process';
@@ -17,7 +17,7 @@ import { CARD, cardDocument } from './card.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const source = path.join(here, 'card.html');
-const output = path.resolve(here, '..', '..', 'public', 'social-v4.png');
+const output = path.resolve(here, '..', '..', 'public', 'social-v5.png');
 
 function loadPlaywright() {
   const globalRoot = execSync('npm root -g', { encoding: 'utf8' }).trim();
@@ -31,7 +31,7 @@ const { chromium } = loadPlaywright();
 // from disk may only use them when file access is allowed between files.
 const browser = await chromium.launch({ args: ['--allow-file-access-from-files'] });
 try {
-  const page = await browser.newPage({ viewport: CARD, deviceScaleFactor: 1, colorScheme: 'light' });
+  const page = await browser.newPage({ viewport: CARD, deviceScaleFactor: 1, colorScheme: 'dark', reducedMotion: 'reduce' });
   await page.goto(pathToFileURL(source).href, { waitUntil: 'load' });
   await page.screenshot({ path: output, clip: { x: 0, y: 0, ...CARD } });
 } finally {

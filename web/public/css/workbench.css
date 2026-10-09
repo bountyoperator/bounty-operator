@@ -38,6 +38,14 @@
   scroll-margin-top: 7.5rem;
 }
 
+/* A result lands on its first line: what was reviewed, by which model and
+   when. The script measures the bar (showResult in app/workbench.mjs); this
+   is the paper left showing between the bar and that line: the height of the
+   fade under the bar. */
+.wb-result__bar {
+  scroll-margin-top: var(--sp-12);
+}
+
 /* The workbench opens with a part rule, like every section of the page. */
 .wb__head {
   display: flex;
@@ -48,10 +56,6 @@
   margin-bottom: var(--sp-16);
   padding-top: var(--sp-16);
   border-top: var(--rule-w) solid var(--rule);
-}
-
-.wb__intro > * + * {
-  margin-top: var(--sp-8);
 }
 
 .wb__tools {
@@ -250,6 +254,16 @@
 
 .wb-hint {
   color: var(--gap);
+}
+
+/* The Focus box prints the review's standard request as its placeholder. It
+   grows to hold all of it, and then with what is typed, up to 20rem. A
+   browser that cannot size a field to its content keeps the three rows. */
+@supports (field-sizing: content) {
+  #wb-focus {
+    max-height: 20rem;
+    field-sizing: content;
+  }
 }
 
 /* ==========================================================================
@@ -477,6 +491,16 @@
 .wb-drop__actions {
   justify-content: center;
   margin-top: var(--sp-4);
+}
+
+/* On a phone files are chosen, not dropped. The box keeps its limits and its
+   two buttons there, and the arrow and the line that asks for a drop are not
+   printed. The second query is a phone on its side. */
+@media (pointer: coarse) and (max-width: 43.99em), (pointer: coarse) and (max-height: 30em) {
+  .wb-drop__icon,
+  .wb-drop__title {
+    display: none;
+  }
 }
 
 .wb-files {
@@ -857,6 +881,15 @@
   gap: var(--sp-12) var(--sp-24);
 }
 
+/* From 960px the verdict prints at 24px, the size its impression is drawn at
+   (scripts/build-stamps.mjs, at twice the pixels): the loudest mark on the
+   slip, and a 2x screen does not enlarge its ink. */
+@media (min-width: 60em) {
+  .wb-result .dossier .verdict--lg {
+    font-size: 1.5rem;
+  }
+}
+
 .wb-result__meta {
   display: flex;
   flex-wrap: wrap;
@@ -874,6 +907,20 @@
 
 .wb-result__model {
   overflow-wrap: anywhere;
+}
+
+/* On a phone the five totals do not fit one line, and the last was left on a
+   line of its own. They print in two rows: the three severities, then what
+   was hardened and what was checked. */
+@media (max-width: 29.99em) {
+  .wb-result .counts {
+    display: grid;
+    grid-template-columns: repeat(3, max-content);
+  }
+
+  .wb-result .counts li:nth-child(5) {
+    grid-column: 2 / -1;
+  }
 }
 
 .wb-result__actions {

@@ -121,7 +121,7 @@ export function readManifest(text) {
 export function parseManifest(text) {
   const source = readManifest(text);
   if (!source) {
-    throw new Error('No file hashes found. Use a packet saved from the workbench, or a manifest JSON with label and sha256 fields.');
+    throw new Error('No file hashes found. Use a packet saved from a review, or a manifest JSON with label and sha256 fields.');
   }
   return source;
 }

@@ -17,7 +17,7 @@ const QUESTIONS = [
   },
   {
     q: 'Where does a packet come from?',
-    a: 'The workbench writes one for every finished review: the verdict, the context you gave, the file list with a SHA-256 per file, and the review itself. A manifest is the same file list as JSON, as returned by the review API and the MCP server.',
+    a: 'Every finished review comes with one: the verdict, the context you gave, the file list with a SHA-256 per file, and the review itself. A manifest is the same file list as JSON, as returned by the review API and the MCP server.',
   },
 ];
 
@@ -82,7 +82,7 @@ ${panel}
 <h2 id="how">How the check works</h2>
 ${stepsStrip([
   { title: 'Read the file list', text: 'Every packet has a Files section: one row per file with its label, byte size, line count and SHA-256. A manifest JSON carries the same rows.' },
-  { title: 'Hash the files again', text: 'Each file you drop is read as UTF-8 text and hashed in this tab with Web Crypto, the same way the workbench hashed it.' },
+  { title: 'Hash the files again', text: 'Each file you drop is read as UTF-8 text and hashed in this tab with Web Crypto, the same way the review hashed it.' },
   { title: 'Compare row by row', text: 'Every listed file gets one result. Files you dropped that the packet does not list are named underneath.' },
 ])}
 </section>
@@ -114,8 +114,8 @@ ${faq(QUESTIONS, { className: 'tool-faq' })}
 
 ${nextAction({
   title: 'No packet yet',
-  text: 'Run a review in the workbench. The packet it saves carries the verdict, the evidence you gave and the hash of every file, ready to attach to a submission.',
-  primary: { label: 'Open the workbench', href: '/#workspace' },
+  text: 'Run a review and download its packet. It carries the verdict, the evidence you gave and the hash of every file, ready to attach to a submission.',
+  primary: { label: 'Start a free review', href: '/#workspace' },
   secondary: { label: 'Connect over MCP', href: '/mcp' },
 })}
 

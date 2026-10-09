@@ -6,15 +6,14 @@
 <title>Why bug bounty reports get rejected | Bounty Operator</title>
 <meta name="description" content="Why bug bounty reports get closed: twelve checks, the question each one asks, why reports die on it and the verdict it leads to. From 105 real case files.">
 <link rel="canonical" href="https://bountyoperator.com/method">
-<meta name="color-scheme" content="dark light">
-<meta name="theme-color" content="#17132e" media="(prefers-color-scheme: dark)">
-<meta name="theme-color" content="#fbfbf8" media="(prefers-color-scheme: light)">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#09090a">
 <meta property="og:type" content="article">
 <meta property="og:site_name" content="Bounty Operator">
 <meta property="og:title" content="The twelve checks that decide a bug bounty report">
 <meta property="og:description" content="Why bug bounty reports get closed: twelve checks, the question each one asks, why reports die on it and the verdict it leads to. From 105 real case files.">
 <meta property="og:url" content="https://bountyoperator.com/method">
-<meta property="og:image" content="https://bountyoperator.com/social-v4.png">
+<meta property="og:image" content="https://bountyoperator.com/social-v5.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Bounty Operator. Find the hole in your report before the triager does.">
@@ -22,7 +21,7 @@
 <meta name="twitter:creator" content="@Tradi3_">
 <meta name="twitter:title" content="The twelve checks that decide a bug bounty report">
 <meta name="twitter:description" content="Why bug bounty reports get closed: twelve checks, the question each one asks, why reports die on it and the verdict it leads to. From 105 real case files.">
-<meta name="twitter:image" content="https://bountyoperator.com/social-v4.png">
+<meta name="twitter:image" content="https://bountyoperator.com/social-v5.png">
 <meta name="twitter:image:alt" content="Bounty Operator. Find the hole in your report before the triager does.">
 <link rel="icon" href="/favicon.ico" sizes="48x48">
 <link rel="icon" href="/icon.svg" type="image/svg+xml">
@@ -32,17 +31,18 @@
 <script src="/theme.js"></script>
 <link rel="stylesheet" href="/css/base.css">
 <link rel="stylesheet" href="/css/landing.css">
+<script type="module" src="/field.mjs" fetchpriority="low"></script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Bounty Operator","item":"https://bountyoperator.com/"},{"@type":"ListItem","position":2,"name":"Method","item":"https://bountyoperator.com/method"}]}</script>
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","headline":"The twelve checks that decide a bug bounty report","description":"Why bug bounty reports get closed: twelve checks, the question each one asks, why reports die on it and the verdict it leads to. From 105 real case files.","url":"https://bountyoperator.com/method","mainEntityOfPage":"https://bountyoperator.com/method","datePublished":"2026-10-03","dateModified":"2026-10-03","author":{"@type":"Organization","name":"Tradi3","url":"https://audits.sherlock.xyz/watson/Tradi3"},"publisher":{"@type":"Organization","name":"Bounty Operator","url":"https://bountyoperator.com/","logo":{"@type":"ImageObject","url":"https://bountyoperator.com/icon-512.png"}},"image":"https://bountyoperator.com/social-v4.png"}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","headline":"The twelve checks that decide a bug bounty report","description":"Why bug bounty reports get closed: twelve checks, the question each one asks, why reports die on it and the verdict it leads to. From 105 real case files.","url":"https://bountyoperator.com/method","mainEntityOfPage":"https://bountyoperator.com/method","datePublished":"2026-10-03","dateModified":"2026-10-03","author":{"@type":"Organization","name":"Tradi3","url":"https://audits.sherlock.xyz/watson/Tradi3"},"publisher":{"@type":"Organization","name":"Bounty Operator","url":"https://bountyoperator.com/","logo":{"@type":"ImageObject","url":"https://bountyoperator.com/icon-512.png"}},"image":"https://bountyoperator.com/social-v5.png"}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"ItemList","name":"The twelve checks","numberOfItems":12,"itemListElement":[{"@type":"ListItem","position":1,"name":"Actor trace","description":"Who performs every step, and who supplies every decisive value?","url":"https://bountyoperator.com/method#check-1"},{"@type":"ListItem","position":2,"name":"Own-verdict reversal","description":"Which new evidence defeats each reason you recorded when you held this finding or lowered its severity?","url":"https://bountyoperator.com/method#check-2"},{"@type":"ListItem","position":3,"name":"Design intent and counterfactual","description":"Did the project mean this behaviour, and does the bug step add anything over the intended path?","url":"https://bountyoperator.com/method#check-3"},{"@type":"ListItem","position":4,"name":"Literal impact and exclusion fit","description":"Does an exclusion name this class, and does every clause of the impact row have an artefact behind it?","url":"https://bountyoperator.com/method#check-4"},{"@type":"ListItem","position":5,"name":"Asset and version binding","description":"Does the cited code exist in the scoped asset, at the revision that is deployed?","url":"https://bountyoperator.com/method#check-5"},{"@type":"ListItem","position":6,"name":"Prior-art sweep","description":"Does a known issue, an audit note, a branch or a pull request cover the same function and consequence, or carry the same fix?","url":"https://bountyoperator.com/method#check-6"},{"@type":"ListItem","position":7,"name":"Own-report family","description":"Stated with no file and no entry point, is the broken invariant one you have already reported on this programme?","url":"https://bountyoperator.com/method#check-7"},{"@type":"ListItem","position":8,"name":"Executed end-state proof","description":"Does the final assertion read the object the impact row names, on production code, with the command and its output in the report?","url":"https://bountyoperator.com/method#check-8"},{"@type":"ListItem","position":9,"name":"Production reachability","description":"Does every state the proof sets up have a route from live state by public calls?","url":"https://bountyoperator.com/method#check-9"},{"@type":"ListItem","position":10,"name":"Severity against the written scale","description":"Which row of the programme’s own scale does the proof assert, after every recovery action is applied?","url":"https://bountyoperator.com/method#check-10"},{"@type":"ListItem","position":11,"name":"Submission integrity","description":"Does what the platform stored match the draft: the proof field, the severity, the impact row?","url":"https://bountyoperator.com/method#check-11"},{"@type":"ListItem","position":12,"name":"Private-duplicate clock","description":"Small fix, old code, central path, checklist class: how long before someone else files it?","url":"https://bountyoperator.com/method#check-12"}]}</script>
 </head>
 <body>
 <!--
-THESIS: The verdict is a stamp on your draft. The site is the inspection a finding passes before a triager sees it, not the category's dark code-card hero.
-OWN-WORLD: Inspection paperwork. Canary and white stock, black print, violet stamp ink, carbon indigo for code and the night shift. Ruled fields, square corners, part rules, ledger tables. Archivo condensed caps for labels and stamps; mono only for code and typed entries.
+THESIS: The verdict is a stamp on your draft, and the red pen has been through it first. The site is the inspection a finding passes before a triager sees it.
+OWN-WORLD: A black page, bone-white print and one hot ink, vermilion: the red of a seal and of a marking pen. The report is a sheet of paper lying on the page. Behind each page head lie lines of a report and of its code; lights drift over them and the pen strikes a line now and then. Archivo: wide heavy cuts for headlines and figures, condensed caps for stamps and labels; mono only for code and typed entries.
 STORY: A hunter sees a Critical stamped down to Medium with the line that decides it, trusts that the review argues against them, and starts a review or opens the example.
-FIRST VIEWPORT: Full-bleed canary field. Left: condensed black headline, lede, black Review my report, ruled View example. Right: the paper slip, tilted, Critical struck, Medium and the violet verdict stamped on it. Proof line on the field's foot.
-FORM: Rubber-stamp verdicts and inspection forms, 6 of 7, seed b5682f59.
+FIRST VIEWPORT: The moving field on black. Left: the headline with "the hole" circled in pen, the lede, a vermilion Review my report, a ruled View example. Right: the paper slip, tilted, Critical struck, Medium and the verdict stamped on it, in the light of the ember. Under them the three results of the builder as figures, then the five verdicts running past.
+FORM: Rubber-stamp verdicts and a report marked in red pen, seed b5682f59.
 FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md
 -->
 <a class="skip-link" href="#main">Skip to content</a>
@@ -51,7 +51,6 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
 <a class="brand" href="/"><svg class="brand__mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect class="brand__tile" width="64" height="64" rx="9"/><path class="brand__glyph" d="M12.5 15h6.5v31.5h-6.5z"/><path class="brand__glyph" fill-rule="evenodd" d="M25.5 25a10.75 10.75 0 1 0 0 21.5a10.75 10.75 0 0 0 0-21.5zm0 6.25a4.5 4.5 0 1 1 0 9a4.5 4.5 0 0 1 0-9z"/><path class="brand__slash" d="M45.5 13h6.25l-8.6 37.5h-6.25z"/></svg><span class="brand__name">Bounty Operator</span></a>
 <nav class="site-nav" aria-label="Main"><ul><li><a href="/#workspace">Review</a></li><li><a href="/benchmark">Benchmark</a></li><li><a href="/tools">Tools</a></li><li><a href="/guide">Guide</a></li><li><a href="/pricing">Pricing</a></li></ul></nav>
 <div class="site-header__actions">
-<button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch colour theme"><span class="icon theme-toggle__icon" aria-hidden="true"></span></button>
 <a class="btn btn--secondary btn--sm" href="/#account">Sign in</a>
 </div>
 </div>
@@ -65,7 +64,7 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
     <div class="lp-hero__text">
       <h1>The twelve checks that decide a bug bounty report</h1>
       
-      <p class="lede">Twelve checks, distilled from 105 real case files across five platforms. The wins and the closures. Every check exists because real reports were closed for that reason. For each one: the question it asks, why reports die on it and the verdict it leads to.</p>
+      <p class="lede">Twelve checks from 105 real case files across five platforms, the paid ones and the closed ones. Every check exists because real reports were closed for that reason.</p>
       <div class="cluster lp-hero__actions"><a class="btn btn--primary btn--lg" href="/#workspace"><span class="btn__label">Start a free review</span><span class="icon icon--arrow-right" aria-hidden="true"></span></a><a class="btn btn--secondary btn--lg" href="#gauntlet"><span class="btn__label">Go to the gauntlet</span></a></div>
       <p class="fine lp-hero__note">Free: 1 review a day on your own model. No card.</p>
       <p class="proofline"><span class="icon icon--shield" aria-hidden="true"></span><span>Built by Tradi3: <a class="link link--external" href="https://immunefi.com/audit-competition/audit-comp-firelight-1/leaderboard/" target="_blank" rel="noopener noreferrer">2nd of 133 in Immunefi’s Firelight competition<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a>, <a class="link link--external" href="https://immunefi.com/audit-competition/audit-comp-quantus/leaderboard/" target="_blank" rel="noopener noreferrer">8th of 65 in Quantus<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a> and <a class="link link--external" href="https://immunefi.com/audit-competition/audit-competition-ens/leaderboard/" target="_blank" rel="noopener noreferrer">15th of 186 in ENS, with 17 valid Critical submissions, the most on the board<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a>.</span></p>
@@ -74,7 +73,7 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
 <div class="glance">
   <p class="meta">Every check leads to a decision</p>
   <dl class="verdicts"><div class="verdicts__row"><dt><span class="chip verdict" data-verdict="submit">Submit</span></dt><dd>Every decisive claim is backed by the supplied code and proof. File it.</dd></div><div class="verdicts__row"><dt><span class="chip verdict" data-verdict="rewrite-then-submit">Rewrite, then submit</span></dt><dd>The finding holds. The draft misstates its severity, impact, preconditions or fix.</dd></div><div class="verdicts__row"><dt><span class="chip verdict" data-verdict="prove-first">Prove first</span></dt><dd>The claimed impact is not demonstrated on the real path yet. One artefact is missing.</dd></div><div class="verdicts__row"><dt><span class="chip verdict" data-verdict="hold-duplicate">Hold: duplicate</span></dt><dd>A known issue, an audit note, a branch or your own earlier report has the same root cause or the same fix.</dd></div><div class="verdicts__row"><dt><span class="chip verdict" data-verdict="drop">Drop</span></dt><dd>The code contradicts the root cause, the behaviour is the design, or the rules exclude it.</dd></div></dl>
-  <p class="fine">The gauntlet returns exactly one of these, with one blocker and the cheapest action that removes it.</p>
+  <p class="fine">The gauntlet returns exactly one of these, with the blocker and the cheapest action that removes it.</p>
 </div></div>
   </div>
 </section>
@@ -365,10 +364,10 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
       <code class="stage__id">verdict</code>
       
     </div>
-    <p class="stage__decides">One decision.</p>
+    <p class="stage__decides">Which verdict the report gets.</p>
     <div class="stage__out">
       <span class="meta">Outputs</span>
-      <ul class="stage__outputs"><li>One of five verdicts</li><li>One blocker</li><li>The cheapest action that removes it</li><li>A filing deadline</li></ul>
+      <ul class="stage__outputs"><li>One of five verdicts</li><li>The blocker</li><li>The cheapest action that removes it</li><li>A filing deadline</li></ul>
     </div>
     
   </div>
@@ -379,7 +378,7 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
   <p class="example__bar"><span class="chip status" data-status="example">Example</span><span class="meta">What stage 8 hands you · invented protocol</span></p>
   <div class="example__body"><header class="dossier"><div class="dossier__verdict"><span class="meta">Verdict</span><span class="chip verdict verdict--lg" data-verdict="prove-first">Prove first</span></div><p class="dossier__headline">The seizure bug is in the code. The proof reads the return value of <code>liquidate</code> on a mock oracle; the impact row names the borrower’s collateral.</p><ul class="counts"><li data-sev="critical" data-zero><span class="counts__n">0</span><span class="counts__label">Critical</span></li><li data-sev="high"><span class="counts__n">1</span><span class="counts__label">High</span></li><li data-sev="medium" data-zero><span class="counts__n">0</span><span class="counts__label">Medium</span></li><li data-sev="hardening"><span class="counts__n">1</span><span class="counts__label">Hardening</span></li><li data-sev="checked-safe"><span class="counts__n">3</span><span class="counts__label">Checked safe</span></li></ul></header></div>
 </div>
-    <p class="fine">One decision, one blocker, the cheapest action that removes it and a filing deadline. <a class="link" href="/gauntlet">Read the full example dossier</a></p>
+    <p class="fine">One verdict, the blocker, the cheapest action that removes it and a filing deadline. <a class="link" href="/gauntlet">Read the full example dossier</a></p>
   </div>
 </section>
 
@@ -389,9 +388,9 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
     <div class="card"><div class="card__head"><h3 class="card__title">One review type at a time</h3><div class="card__meta"><span class="chip status" data-status="free">Free</span></div></div><div class="card__body"><div class="stack stack--12">
         <p>Pick the review type that matches the check you are on: scope, design intent, prior art, proof, severity, triager or report. Free: 1 review a day.</p>
         <ul class="ticks"><li><span class="icon icon--check" aria-hidden="true"></span><span>All 11 review types, on your own key</span></li><li><span class="icon icon--check" aria-hidden="true"></span><span>Code security, Solidity and draft-report reviews also work in ChatGPT or Claude: copy the prompt, paste the answer back</span></li><li><span class="icon icon--check" aria-hidden="true"></span><span>A downloadable review packet with a SHA-256 hash of every file</span></li></ul>
-      </div></div><div class="card__foot"><a class="btn btn--secondary" href="/#workspace"><span class="btn__label">Start a review</span><span class="icon icon--arrow-right" aria-hidden="true"></span></a></div></div>
+      </div></div><div class="card__foot"><a class="btn btn--secondary" href="/#workspace"><span class="btn__label">Start a free review</span><span class="icon icon--arrow-right" aria-hidden="true"></span></a></div></div>
     <div class="card card--accent"><div class="card__head"><h3 class="card__title">The full gauntlet</h3><div class="card__meta"><span class="chip status" data-status="operator">Operator · US$10/week</span></div></div><div class="card__body"><div class="stack stack--12">
-        <p>One run takes the draft through all eight stages and ends in one verdict. Each stage reads the output of the stages before it.</p>
+        <p>A run takes the draft through all eight stages and ends in one verdict. Each stage reads the output of the stages before it.</p>
         <ul class="ticks"><li><span class="icon icon--check" aria-hidden="true"></span><span>Unlimited reviews</span></li><li><span class="icon icon--check" aria-hidden="true"></span><span>The Gauntlet and Panel review</span></li><li><span class="icon icon--check" aria-hidden="true"></span><span>4 reviews running at once</span></li></ul>
       </div></div><div class="card__foot"><div class="cluster"><a class="btn btn--primary" href="/pricing"><span class="btn__label">See pricing</span><span class="icon icon--arrow-right" aria-hidden="true"></span></a><a class="btn btn--quiet" href="/gauntlet"><span class="btn__label">See a gauntlet run</span></a></div></div></div>
   </div>
@@ -422,6 +421,7 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
 <p><a href="mailto:support@bountyoperator.com">support@bountyoperator.com</a></p>
 </div>
 </div>
+<div class="site-footer__mark" aria-hidden="true">Bounty Operator</div>
 </footer>
 </body>
 </html>

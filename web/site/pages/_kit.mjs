@@ -193,7 +193,7 @@ function swatch(token, note) {
 const findingSection = kitSection(
   'finding',
   'Finding card',
-  'One file, two findings. The spine is violet where a row is backed by the supplied source and ochre where something is still unproven.',
+  'One file, two findings. The spine is green where a row is backed by the supplied source and ochre where something is still unproven.',
   html`
   <div class="stack stack--24">
     ${dossier({
@@ -618,21 +618,21 @@ const cardsSection = kitSection(
 const tokensSection = kitSection(
   'tokens',
   'Tokens',
-  'Every colour on the site is one of these. Canary is the stock a page head is printed on. Violet is stamp ink: observed, links, focus. Ochre is unproven.',
+  'Every colour on the site is one of these. Vermilion is the one hot ink: the action, links, the pen. Green is what the code shows. Ochre is unproven.',
   html`
   <div class="stack stack--24">
     ${demo(
       'Paper, stock and rules',
       html`<ul class="swatches">
         ${swatch('bg', 'Page')}${swatch('surface', 'Cards, inputs')}${swatch('surface-2', 'Bars, office-use boxes')}
-        ${swatch('field', 'Page head field')}${swatch('stock', 'Canary stock')}${swatch('rule', 'Printed rules')}
+        ${swatch('field', 'Page head field')}${swatch('stock', 'Vermilion stock')}${swatch('rule', 'Printed rules')}
         ${swatch('line', 'Hairlines')}${swatch('line-strong', 'Emphasis')}${swatch('line-control', 'Control borders')}
       </ul>`,
     )}
     ${demo(
-      'Ink, violet and ochre',
+      'Ink, vermilion, green and ochre',
       html`<ul class="swatches">
-        ${swatch('text', 'Body ink')}${swatch('muted', 'Secondary ink')}${swatch('accent', 'Observed, links')}
+        ${swatch('text', 'Body ink')}${swatch('muted', 'Secondary ink')}${swatch('accent', 'Links, the pen')}${swatch('observed', 'What the code shows')}
         ${swatch('accent-solid', 'Primary button')}${swatch('gap', 'Unproven')}${swatch('gap-bg', 'Unproven fill')}
       </ul>`,
     )}

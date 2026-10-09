@@ -91,6 +91,34 @@ test('a page that names a profile in a workbench link uses the name the workbenc
   assert.equal(reviewProfile('poc').name, 'Proof review');
 });
 
+test('a link that opens the review form is labelled by where it goes', () => {
+  // One label for one destination (web/site/COMPONENTS.md, Button). A plain link to the form reads
+  // "Start a free review". One that opens it on Challenge a draft report reads "Review my report",
+  // as the footer of every page does, unless it takes along what the visitor pasted or stands in a
+  // list of stages. The home page and /benchmark print controls of their own.
+  const PLAIN = ['Start a free review', 'Copy a prompt'];
+  const REPORT = ['Review my report', 'Challenge this draft', 'Run the full challenge on your model', 'Run this stage: Report'];
+  let links = 0;
+  for (const [file, markup] of pages) {
+    if (file === 'index.html' || file === 'benchmark.html') continue;
+    const main = markup.slice(markup.indexOf('<main'), markup.indexOf('</main>'));
+    for (const match of main.matchAll(/<a[^>]*href="(\/#workspace|\/\?profile=report#workspace)"[^>]*>([\s\S]*?)<\/a>/g)) {
+      links += 1;
+      const label = match[2].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').replace(/ :/g, ':').trim();
+      assert.ok((match[1] === '/#workspace' ? PLAIN : REPORT).includes(label), `${file}: "${label}" links to ${match[1]}`);
+    }
+    // No link or button names the form by the name it has in the code.
+    for (const match of main.matchAll(/<(a|button)\b[^>]*>([\s\S]*?)<\/\1>/g)) {
+      assert.doesNotMatch(match[2].replace(/<[^>]+>/g, ' '), /workbench/i, file);
+    }
+  }
+  assert.ok(links >= 20, `${links} links`);
+  // The footer's own two: the button and the name of the place.
+  const footer = pages.get('guide.html').slice(pages.get('guide.html').indexOf('<footer'));
+  assert.match(footer, /href="\/\?profile=report#workspace"[^>]*>\s*<span class="btn__label">Review my report<\/span>/);
+  assert.match(footer, /href="\/#workspace"[^>]*>Review a report<\/a>/);
+});
+
 test('every control that starts an account action sits on a page that loads the account script', () => {
   const handled = ['open', 'signin', 'checkout', 'billing'];
   let controls = 0;

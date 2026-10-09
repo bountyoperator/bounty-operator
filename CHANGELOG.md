@@ -1,5 +1,43 @@
 # Changelog
 
+## 0.9.0 — 2026-10-09
+
+Site
+
+- The site has a new look: a black page, bone-white type and one red ink.
+  There is one look now. The light and dark themes, and the switch between
+  them, are gone.
+- Behind the head of every page lie lines of a report and of its code. Lights
+  drift over them and a red pen strikes a line now and then. Nothing is drawn
+  again after the first time, so scrolling and typing never wait on it, and
+  it holds still when your system asks for less motion.
+- The home page opens on "Find the hole in your report before the triager
+  does." Under it the builder's three results are large figures, each a link
+  to its public leaderboard, and the five verdicts run past.
+- The home page no longer has the three-step strip or the "More ways to use
+  Bounty Operator" list. The header and the footer carry those links.
+- Each model on the home page's benchmark strip has a bar as long as its
+  score.
+- A link that opens the review form says where it goes: "Start a free review"
+  or "Review my report". 27 of the 35 pages are reworded.
+- A new icon, and a new picture for shared links.
+
+Reviews
+
+- "View example" stops on the first line of the result, with the verdict in
+  the same screen. It stopped above the result, on the heading of the form.
+- In a result, what the code confirms prints green, what it contradicts
+  prints red and what is unproven prints ochre.
+- The review form opens on "Challenge a draft report".
+- On a phone the five totals of a result sit in two rows: the three
+  severities, then Hardening and Checked safe.
+- A draft review that lists only the late steps of an attack says "Numbered
+  as in the draft." above them.
+- The Focus box grows with what you type, in browsers that can size a field
+  to its content.
+- On a phone the Files box drops the line that asks you to drag files in.
+- A dialog with nothing in its foot shows no empty strip there.
+
 ## 0.8.4 — 2026-10-09
 
 Reviews
@@ -32,55 +70,28 @@ Site
 
 Site
 
-- The home page paints sooner on a slow connection. Its 28 module files now
-  load at low priority, after the stylesheets and the font; they were fetched
-  at high priority, alongside what the first paint needs. Measured on the
-  live site in a throttled Chrome (HTTP/2, 4x CPU slowdown, ten loads each
-  way, only this change differing), the median first paint moved from 4.9 s
-  to 3.1 s at Lighthouse's slow-4G settings and from 4.1 s to 3.6 s at 150 ms
-  and 1.6 Mbps. The workbench was ready 0.3 s later in the first case and
-  0.6 s sooner in the second. Every page that loads scripts gets the same
+- The home page paints sooner on a slow connection. Its scripts now load
+  after the stylesheets and the font, and the median first paint went from
+  4.9 s to 3.1 s at Lighthouse's slow-4G settings. The review form was ready
+  0.3 s later at those settings. Every page that loads scripts gets the same
   change.
 - On a phone, the column picker on /benchmark hides the columns you untick.
-  It changed nothing below 960 px.
-- Lighthouse 13.5 on the nine main pages, measured on 9 October 2026 before
-  these changes: 100 for accessibility, best practices and SEO on every page
-  on a phone and on a desktop, 99 or 100 for performance on a desktop, and 95
-  to 99 on a phone, with the home page at 87.
 
 ## 0.8.2 — 2026-10-09
 
 Reviews
 
-- A review the provider blocks under its usage policy is recognised however
-  the block arrives: as a stop reason, as an error, or as a short notice
-  written in place of the answer. That covers Anthropic's cyber safeguards on
-  a direct key and through OpenRouter, and OpenAI's `cyber_policy` error. A
-  blocked review is never counted against your allowance.
-- A block the provider sends as an error is named as a block. It used to read
-  as a rejected API key.
-- The result names who blocked the review, says it did not count, and gives
-  the way on: run it again on another model or provider. It links to the new
-  guide entry. The status line says "Review done" only for a review.
-- A blocked or declined answer shows no export buttons: there is no review to
-  download. The reply stays on the page, and its files are listed as sent,
-  not as reviewed.
-- The Gauntlet stops at a blocked stage, keeps the stages that finished, and
-  asks for another model before you resume. It no longer says to ask the same
-  model again. The stage reads Blocked, or Declined when the model refused in
-  its own words. Failed is kept for a stage that broke.
-- Panel review names a blocked seat and asks for another model in it. When the
-  cross-examination is blocked, it asks for another model to cross-examine.
-- A reply pasted back from a chat app that is the provider's notice is shown
-  as a block, with the step that applies there: paste the same prompt into
-  another model. It used to read as a reply with no Verdict line.
-- Review history marks a saved answer that is not a review: Blocked or
-  Declined.
+- A review your provider blocks under its usage policy is named as a block
+  and is never counted against your allowance. That covers Anthropic's cyber
+  safeguards, on a direct key and through OpenRouter, and OpenAI's
+  `cyber_policy` error. A block sent as an error used to read as a rejected
+  API key.
+- The result says who blocked the review and what to do: run it again on
+  another model or provider. The Gauntlet stops at a blocked stage, keeps
+  the stages that finished and asks for another model. Panel review asks
+  for another model in a blocked seat.
 - MCP: `run_review` returns `blocked` (`anthropic-cyber`, `openai-cyber` or
-  `policy`) next to `refused`, or fails with the code `provider_policy`. The
-  gauntlet prompt on both servers and the gauntlet skill tell an agent not to
-  present a blocked answer as a review, to say it was not counted, and to
-  offer another model or provider instead of calling the same model again.
+  `policy`) next to `refused`, or fails with the code `provider_policy`.
 - On a phone, a result shows its verdict before the export buttons. Download
   packet stays in view and the four other exports open under More exports.
 - In an in-app browser (X, Facebook, Instagram, LinkedIn, TikTok) the sign-in
@@ -94,53 +105,29 @@ Benchmark
   with the profiles, once per input: too little to judge the product by. The
   results file keeps every published number of the 2026-10 release, and the
   published files are unchanged.
-- A note under "How it is kept honest": Anthropic's cyber safeguards blocked 5
-  answers in the 2026-10 release, 3 from Claude Fable 5.1 and 2 from Claude
-  Opus 5.5, all on the raw arm, the model alone. The benchmark account is not
-  in Anthropic's Cyber Verification Program, and the blocks count as misses
-  in that release.
-- From the next release on, the harness records a provider block as its own
-  outcome, `blocked`: the run is left out of the score and counted in its own
-  column, not marked as a miss. The 2026-10 release is not regraded.
+- Anthropic's cyber safeguards blocked 5 answers in the 2026-10 release, 3
+  from Claude Fable 5.1 and 2 from Claude Opus 5.5. The benchmark account is
+  not in Anthropic's Cyber Verification Program, and the blocks count as
+  misses in that release. /benchmark says so under "How it is kept honest".
+  From the next release on, a blocked run is left out of the score and
+  counted in its own column. The 2026-10 release is not regraded.
 
 Site
 
-- On a phone, the home page prints "Free: 1 review a day on your own model
-  key." directly under its two buttons.
 - The guide has a new entry, "When the model refuses", at
-  /guide#model-refuses: run the review on another model or provider, or apply
-  to Anthropic's Cyber Verification Program or OpenAI's Trusted Access for
-  Cyber.
-- Every page gives the ENS result as 17 valid Critical submissions, the most
-  of 186 researchers on that board. Some pages said "17 valid Criticals".
-- Page heads hold steadier while the display font loads. Until it arrives,
-  headings print in a fallback face sized to match it, and on a phone a
-  breadcrumb prints its section and page, which stay on one line when the
-  font lands. A headline or a breadcrumb could take an extra line for half a
-  second and push the page down. Measured with the font held back on every
-  page of the sitemap at ten widths from 320 to 1440 px, the largest layout
-  shift is 0.03.
-- /invalid-report-costs carries Bugcrowd's limits as changed on 8 October
-  2026: an account under 50% accuracy over the last 90 days is limited to 6
-  submissions a week for at least 7 days, a report closed N/A counts as a
-  rejection, and identity verification comes before any managed programme.
-- /compare was read again on 9 October 2026. It gives the hosted bounty
-  tool's monthly prices beside its lifetime price, and dates Immunefi's
-  statement that Studio is invite-only: 30 September 2026. On a phone the
-  last column of its first table no longer runs under the row label.
+  /guide#model-refuses.
 - /pricing and /your-model-your-key answer a Claude Max or Team subscriber:
   since October 2026 those plans include monthly credits for the Claude API,
   and a review on a key from the linked Console organization draws on them.
-- The header button reads "Sign in" on every page for a signed-out visitor.
-  It read "Account" on pages without the account script.
-- Link previews credit the builder's handle on X.
+- /invalid-report-costs carries Bugcrowd's limits as changed on 8 October
+  2026, and /compare was read again on 9 October 2026.
 - The Sherlock template links each rule where Sherlock keeps it today and
   marks the audit contest rules as the earlier rules: Sherlock has replaced
   audit contests with Audit Engine.
-- Breadcrumb links and the column tick boxes on /benchmark take a touch on
-  44 px. Inline code in fine print is 12 px. On a phone, the benchmark strip
-  on the home page no longer prints a "Cost / run" label over a column it
-  does not show, and the two template buttons each take a full row.
+- Every page gives the ENS result as 17 valid Critical submissions, the most
+  of 186 researchers on that board.
+- Page heads hold steadier while the display font loads, and the header
+  button reads "Sign in" on every page for a signed-out visitor.
 
 ## 0.8.1 — 2026-10-08
 
@@ -156,26 +143,13 @@ Site
 
 Site
 
-- A new design on every page. A review comes back the way an inspector's
-  stamp comes back on a form: pages print in black on white and canary
-  stock, verdicts and severities are stamped in ink, and code sits on
-  carbon. The dark theme is carbon indigo with canary for the action.
-- The home page opens on the example draft as a report slip: the severity
-  the draft claims is struck through, the severity the code supports is
-  stamped beside it, the line that decides it is printed with its number,
-  and the verdict is stamped and dated at the foot. On a phone the verdict
-  is in the first screen.
-- Every verdict and severity stamp is its own pressed impression, the same
-  on the home page, in a review's result and on the social card. The words
-  stay in the page for search and screen readers.
-- The home page lists the five verdicts a review can return, with what each
-  one means.
-- Every page head is printed on the field, and every page ends with the
-  promise and a Review my report button. The free tools open on a form head
-  with their number and name.
+- A new design on every page: black print on white and canary stock, with
+  verdicts and severities stamped in ink. The dark theme is carbon indigo.
+- The home page opens on the example draft, with the severity it claims
+  struck through and the verdict stamped at the foot. It also lists the five
+  verdicts a review can return.
 - Headings, labels and stamps are set in Archivo, served from this site
-  under the SIL Open Font License. /licenses carries the licence. Running
-  text still uses the fonts on your device, and no font service is called.
+  under the SIL Open Font License. No font service is called.
 - New icons and a new social card.
 
 ## 0.7.12 — 2026-10-08

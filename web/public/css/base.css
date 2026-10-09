@@ -133,9 +133,35 @@
 @font-face {
   font-family: "Archivo fallback";
   font-weight: 100 900;
-  font-stretch: 90% 125%;
+  font-stretch: 90% 94%;
   src: local("Arial Narrow Bold"), local("ArialNarrow-Bold");
-  size-adjust: 111%;
+  size-adjust: 110%;
+  ascent-override: 88%;
+  descent-override: 21%;
+  line-gap-override: 0%;
+}
+
+/* The regular width (small headings) is Arial Bold's own advance. */
+@font-face {
+  font-family: "Archivo fallback";
+  font-weight: 100 900;
+  font-stretch: 95% 102%;
+  src: local("Arial Bold"), local("Arial-BoldMT");
+  size-adjust: 100%;
+  ascent-override: 88%;
+  descent-override: 21%;
+  line-gap-override: 0%;
+}
+
+/* The wide heavy cuts (the hero, page heads, section heads, figures) are
+   within three percent of Arial Black: measured over the site's own headlines,
+   Archivo at 106% to 110% width advances 0.95 to 0.99 of it. */
+@font-face {
+  font-family: "Archivo fallback";
+  font-weight: 100 900;
+  font-stretch: 103% 125%;
+  src: local("Arial Black"), local("Arial-Black");
+  size-adjust: 97%;
   ascent-override: 88%;
   descent-override: 21%;
   line-gap-override: 0%;
@@ -148,7 +174,7 @@
 :root {
   /* Type. Archivo prints headings, labels, buttons and stamps. Running text
      uses the system face, so it renders before the font arrives. */
-  --font-display: "Archivo", "Archivo fallback", "Arial Narrow", system-ui, sans-serif;
+  --font-display: "Archivo", "Archivo fallback", system-ui, sans-serif;
   --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
   /* Cascadia Mono before Cascadia Code: Code turns != into a single glyph, and
      source under review has to read character for character. Mono is for code,
@@ -243,51 +269,134 @@
   --icon-check-ink: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2316161b' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E");
 }
 
-/* Light theme: the day office. .theme-light forces it on one element (the
-   report slip in the home hero is paper in both themes). */
+/* The page is black. Type is bone white, and one hot ink does the marking:
+   the vermilion of a seal and of a red pen. .theme-dark states the same
+   palette on one element. */
 :root,
+.theme-dark {
+  color-scheme: dark;
+
+  /* The page and what lies on it */
+  --bg: #09090a;
+  --surface: #121214;
+  --surface-2: #19191c;
+  --surface-3: #232327;
+  --line: #26262b; /* hairline */
+  --line-strong: #43434b;
+  --line-control: #7c7c86; /* 3:1 on every surface: form controls, secondary buttons */
+  --rule: #3a3a41; /* frames and part rules */
+
+  /* The field: what a page head is set on. The page itself, under the moving texture. */
+  --field: #09090a;
+  --on-field: #f4f1ea;
+  --on-field-muted: #a9a69e;
+  --field-rule: #26262b;
+  --stock: #ff4d2e; /* the hot ink as a ground: current step, highlighted plan */
+  --on-stock: #09090a;
+  --on-stock-muted: #3d0f04;
+  --copy: #2a2a2f; /* the second sheet under the slip */
+
+  /* Type */
+  --text: #f4f1ea;
+  --muted: #a9a69e;
+  --placeholder: #8b8982;
+
+  /* The hot ink: links, focus, what the review marked. */
+  --accent: #ff6a4d;
+  --accent-hover: #ff8f78;
+  /* The action you take prints solid. */
+  --accent-solid: #ff4d2e;
+  --accent-solid-hover: #ff6a4d;
+  --on-accent: #09090a;
+  --focus: #f4f1ea;
+  /* The heat a giant figure is set in: critical, high, medium. */
+  --heat: linear-gradient(100deg, #ff2d2d 0%, #ff5a1f 46%, #ffb224 100%);
+
+  /* Green: what the code shows. Ochre: unproven. Neither is the hot ink,
+     so a pass never reads as a mark against the draft. */
+  --observed: #6fd39b;
+  --gap: #f2c552;
+  --gap-bg: #f2c5521f;
+
+  /* Severity and state. Critical is a rose red, clear of the vermilion ink. */
+  --sev-crit: #ff5d7a;
+  --sev-high: #ff9d5c;
+  --sev-med: #f2c552;
+  --sev-low: #6fd39b;
+  --sev-info: #8fb2ff;
+  --sev-none: #a5a3ad;
+  --ok: #6fd39b;
+  --danger: #ff5d7a;
+
+  --chip-fill: 10%;
+  --chip-line: 100%;
+
+  /* Code */
+  --code-bg: #0e0e10;
+  --code-text: #ebe8e1;
+  --code-muted: #8a8880;
+  --code-line: #232327;
+  --code-hl: #ff6a4d;
+  --code-flag: #f2c552;
+  --code-ok: #6fd39b;
+
+  /* Brand mark: a tile of the hot ink, the b in black, the slash in bone */
+  --brand-tile: #ff4d2e;
+  --brand-ring: #ff4d2e;
+  --brand-glyph: #09090a;
+  --brand-slash: #f4f1ea;
+
+  /* Depth */
+  --shadow-card: none;
+  --shadow: 0 1px 1px #00000066, 0 12px 28px -14px #000000cc;
+  --shadow-pop: 0 2px 6px #00000080, 0 28px 64px -20px #000000e6;
+  --shadow-slip: 0 1px 2px #00000080, 0 30px 60px -18px #000000d9, 0 0 0 1px #ffffff0f;
+  --backdrop: #000000c7;
+
+  /* Theme-dependent images */
+  --check-image: var(--icon-check-ink);
+  --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a9a69e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+}
+
+/* Paper: a sheet lying on the black page (the report slip in the home hero,
+   the example beside a landing page). Black print, and the red pen. */
 .theme-light {
   color-scheme: light;
 
-  /* Paper and rules */
-  --bg: #fbfbf8; /* bond paper */
-  --surface: #ffffff;
-  --surface-2: #f1f0ea; /* the shaded box a form keeps for office use */
-  --surface-3: #ffffff; /* selected segment, current step */
-  --line: #dcdbd3; /* hairline */
-  --line-strong: #a9a8a0;
-  --line-control: #77777f; /* 3:1 on every surface: form controls, secondary buttons */
-  --rule: #16161b; /* printed rule: frames and part rules */
+  --bg: #f4f1ea;
+  --surface: #fbfaf6;
+  --surface-2: #ebe8df;
+  --surface-3: #ffffff;
+  --line: #d6d3c9;
+  --line-strong: #a5a299;
+  --line-control: #76746c;
+  --rule: #121214;
 
-  /* The field: the stock a page head is printed on. Canary by day. */
-  --field: #f9dc3f;
-  --on-field: #16161b;
-  --on-field-muted: #5b4a00;
-  --field-rule: #16161b;
-  --stock: #f9dc3f; /* canary, wherever it appears: current step, highlighted plan */
-  --on-stock: #16161b;
-  --on-stock-muted: #5b4a00;
-  --copy: #f2c4d0; /* the pink carbon copy under the slip */
+  --field: #f4f1ea;
+  --on-field: #121214;
+  --on-field-muted: #57554f;
+  --field-rule: #121214;
+  --stock: #ff4d2e;
+  --on-stock: #09090a;
+  --on-stock-muted: #3d0f04;
+  --copy: #2a2a2f;
 
-  /* Ink */
-  --text: #16161b;
-  --muted: #55555f;
-  --placeholder: #66666f;
+  --text: #121214;
+  --muted: #57554f;
+  --placeholder: #6b6962;
 
-  /* Violet: stamp ink. Links, focus and what the review observed. */
-  --accent: #4b2593;
-  --accent-hover: #32176a;
-  /* The action you take prints solid: black by day, canary at night. */
-  --accent-solid: #16161b;
-  --accent-solid-hover: #4b2593;
+  --accent: #c2280f;
+  --accent-hover: #981c08;
+  --accent-solid: #121214;
+  --accent-solid-hover: #c2280f;
   --on-accent: #ffffff;
-  --focus: #4b2593;
+  --focus: #c2280f;
+  --heat: linear-gradient(100deg, #d81f1f 0%, #e04a10 46%, #c98300 100%);
 
-  /* Ochre: unproven */
+  --observed: #1b6b3a;
   --gap: #855a00;
   --gap-bg: #fdf3c9;
 
-  /* Severity and state, as stamp inks */
   --sev-crit: #b0172f;
   --sev-high: #ad4508;
   --sev-med: #855a00;
@@ -297,185 +406,30 @@
   --ok: #1b6b3a;
   --danger: #b0172f;
 
-  /* Chips print like stamps: ink outline and ink letters, a trace of fill */
   --chip-fill: 6%;
   --chip-line: 100%;
 
-  /* Code prints on carbon in both themes */
-  --code-bg: #18142f;
-  --code-text: #eceaf6;
-  --code-muted: #9590bd;
-  --code-line: #2e2852;
-  --code-hl: #a88bff;
+  --code-bg: #0e0e10;
+  --code-text: #ebe8e1;
+  --code-muted: #8a8880;
+  --code-line: #232327;
+  --code-hl: #ff6a4d;
   --code-flag: #f2c552;
-  --code-ok: #73d39d;
+  --code-ok: #6fd39b;
 
-  /* Brand mark: a black stamp with a canary slash */
-  --brand-tile: #16161b;
-  --brand-ring: #16161b;
-  --brand-glyph: #ffffff;
-  --brand-slash: #f9dc3f;
+  --brand-tile: #ff4d2e;
+  --brand-ring: #ff4d2e;
+  --brand-glyph: #09090a;
+  --brand-slash: #f4f1ea;
 
-  /* Depth. Paper lies flat; only a loose sheet or a dialog lifts. */
   --shadow-card: none;
   --shadow: 0 1px 1px #16161b14, 0 10px 24px -14px #16161b47;
   --shadow-pop: 0 2px 4px #16161b1f, 0 28px 60px -20px #16161b66;
-  --shadow-slip: 0 1px 2px #16161b1f, 0 18px 36px -16px #16161b70;
+  --shadow-slip: 0 1px 2px #00000080, 0 30px 60px -18px #000000d9;
   --backdrop: #16161b8c;
 
-  /* Theme-dependent images */
-  --theme-icon: var(--icon-moon);
   --check-image: var(--icon-check-white);
-  --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2355555f' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
-}
-
-/* Dark theme: the night shift. The system preference, unless the visitor chose light. */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    color-scheme: dark;
-
-    --bg: #17132e;
-    --surface: #1e1939;
-    --surface-2: #262046;
-    --surface-3: #312a5a;
-    --line: #3a3363;
-    --line-strong: #544b85;
-    --line-control: #7e76b6;
-    --rule: #d9d6ee;
-
-    --field: #221c45;
-    --on-field: #efeef7;
-    --on-field-muted: #bcb7da;
-    --field-rule: #f7d84a;
-    --stock: #f7d84a;
-    --on-stock: #16161b;
-  --on-stock-muted: #5b4a00;
-  --copy: #c8a1af;
-
-    --text: #efeef7;
-    --muted: #aaa5c9;
-    --placeholder: #9a95bd;
-
-    --accent: #c9b3ff;
-    --accent-hover: #e2d6ff;
-    --accent-solid: #f7d84a;
-    --accent-solid-hover: #ffe874;
-    --on-accent: #16161b;
-    --focus: #f7d84a;
-
-    --gap: #f2c552;
-    --gap-bg: #f2c5521f;
-
-    --sev-crit: #ff8394;
-    --sev-high: #ffa067;
-    --sev-med: #f2c552;
-    --sev-low: #73d39d;
-    --sev-info: #9db6ff;
-    --sev-none: #a9a5c4;
-    --ok: #73d39d;
-    --danger: #ff8394;
-
-    --chip-fill: 10%;
-    --chip-line: 100%;
-
-    --code-bg: #110e24;
-    --code-text: #eceaf6;
-    --code-muted: #8f8ab8;
-    --code-line: #2a2449;
-    --code-hl: #a88bff;
-    --code-flag: #f2c552;
-  --code-ok: #73d39d;
-
-    --brand-tile: #f7d84a;
-    --brand-ring: #f7d84a;
-    --brand-glyph: #16161b;
-    --brand-slash: #4b2593;
-
-    --shadow-card: none;
-    --shadow: 0 1px 1px #0000004d, 0 12px 28px -14px #000000a6;
-    --shadow-pop: 0 2px 6px #00000059, 0 28px 64px -20px #000000cc;
-    --shadow-slip: 0 1px 2px #00000066, 0 22px 44px -16px #000000b3;
-    --backdrop: #0a0818c7;
-
-    --theme-icon: var(--icon-sun);
-    --check-image: var(--icon-check-ink);
-    --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23aaa5c9' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
-  }
-}
-
-/* Dark theme: chosen with the header toggle, or forced on one element with
-   .theme-dark (the site footer is carbon in both themes). Keep this block
-   identical to the one above; web/tests/site-build.test.mjs compares them. */
-:root[data-theme="dark"],
-.theme-dark {
-  color-scheme: dark;
-
-  --bg: #17132e;
-  --surface: #1e1939;
-  --surface-2: #262046;
-  --surface-3: #312a5a;
-  --line: #3a3363;
-  --line-strong: #544b85;
-  --line-control: #7e76b6;
-  --rule: #d9d6ee;
-
-  --field: #221c45;
-  --on-field: #efeef7;
-  --on-field-muted: #bcb7da;
-  --field-rule: #f7d84a;
-  --stock: #f7d84a;
-  --on-stock: #16161b;
-  --on-stock-muted: #5b4a00;
-  --copy: #c8a1af;
-
-  --text: #efeef7;
-  --muted: #aaa5c9;
-  --placeholder: #9a95bd;
-
-  --accent: #c9b3ff;
-  --accent-hover: #e2d6ff;
-  --accent-solid: #f7d84a;
-  --accent-solid-hover: #ffe874;
-  --on-accent: #16161b;
-  --focus: #f7d84a;
-
-  --gap: #f2c552;
-  --gap-bg: #f2c5521f;
-
-  --sev-crit: #ff8394;
-  --sev-high: #ffa067;
-  --sev-med: #f2c552;
-  --sev-low: #73d39d;
-  --sev-info: #9db6ff;
-  --sev-none: #a9a5c4;
-  --ok: #73d39d;
-  --danger: #ff8394;
-
-  --chip-fill: 10%;
-  --chip-line: 100%;
-
-  --code-bg: #110e24;
-  --code-text: #eceaf6;
-  --code-muted: #8f8ab8;
-  --code-line: #2a2449;
-  --code-hl: #a88bff;
-  --code-flag: #f2c552;
-  --code-ok: #73d39d;
-
-  --brand-tile: #f7d84a;
-  --brand-ring: #f7d84a;
-  --brand-glyph: #16161b;
-  --brand-slash: #4b2593;
-
-  --shadow-card: none;
-  --shadow: 0 1px 1px #0000004d, 0 12px 28px -14px #000000a6;
-  --shadow-pop: 0 2px 6px #00000059, 0 28px 64px -20px #000000cc;
-  --shadow-slip: 0 1px 2px #00000066, 0 22px 44px -16px #000000b3;
-  --backdrop: #0a0818c7;
-
-  --theme-icon: var(--icon-sun);
-  --check-image: var(--icon-check-ink);
-  --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23aaa5c9' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2357554f' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
 }
 
 .theme-dark,
@@ -606,32 +560,34 @@ h6,
 .h3,
 .h4 {
   font-family: var(--font-display);
-  font-stretch: 88%;
+  font-stretch: 100%;
   font-weight: 760;
   text-wrap: balance;
 }
 
 h1,
 .h1 {
-  font-size: clamp(2rem, 1.3rem + 2.8vw, 3.25rem);
+  font-size: clamp(2rem, 1.25rem + 3vw, 3.5rem);
+  font-stretch: 108%;
   font-weight: 820;
-  line-height: 1.02;
-  letter-spacing: -0.012em;
+  line-height: 1.03;
+  letter-spacing: -0.024em;
 }
 
 h2,
 .h2 {
-  font-size: clamp(1.625rem, 1.25rem + 1.5vw, 2.375rem);
-  font-weight: 800;
-  line-height: 1.06;
-  letter-spacing: -0.01em;
+  font-size: clamp(1.625rem, 1.2rem + 1.7vw, 2.5rem);
+  font-stretch: 106%;
+  font-weight: 810;
+  line-height: 1.07;
+  letter-spacing: -0.021em;
 }
 
 h3,
 .h3 {
   font-size: var(--fs-22);
   line-height: 1.18;
-  letter-spacing: -0.005em;
+  letter-spacing: -0.012em;
 }
 
 h4,
@@ -650,15 +606,14 @@ h6 {
   line-height: 1.4;
 }
 
-/* Hero headline: condensed black, 44px on a phone, 88px on a desktop. */
+/* Hero headline: a wide heavy cut, 38px on a phone, 72px on a desktop. */
 .display {
   font-family: var(--font-display);
-  font-size: clamp(2.75rem, 1.1rem + 6.4vw, var(--fs-88));
-  font-stretch: 72%;
-  font-weight: 860;
-  line-height: 0.93;
-  letter-spacing: -0.004em;
-  word-spacing: 0.05em;
+  font-size: clamp(2.375rem, 1.15rem + 4.9vw, 4.5rem);
+  font-stretch: 110%;
+  font-weight: 820;
+  line-height: 1.02;
+  letter-spacing: -0.022em;
   text-wrap: balance;
 }
 
@@ -1104,6 +1059,22 @@ pre {
   background: var(--accent-solid-hover);
 }
 
+.btn--primary {
+  transition:
+    background-color var(--t-fast),
+    border-color var(--t-fast),
+    box-shadow var(--t-panel);
+}
+
+:where(:root, .theme-dark) .btn--primary:hover:not(:disabled, [aria-disabled="true"]) {
+  box-shadow: 0 0.5rem 2rem -0.5rem color-mix(in srgb, var(--accent-solid) 70%, transparent);
+}
+
+.theme-light .btn--primary:hover,
+.on-stock .btn--primary:hover {
+  box-shadow: none;
+}
+
 /* The secondary box fills with ink under the pointer. */
 .btn--secondary {
   border-color: var(--rule);
@@ -1426,7 +1397,7 @@ pre {
 }
 
 .chip[data-tone="observed"] {
-  --chip: var(--accent);
+  --chip: var(--observed);
 }
 
 .chip[data-tone="unproven"] {
@@ -1611,7 +1582,10 @@ pre {
 }
 
 .status[data-status="proven"],
-.status[data-status="resolved"],
+.status[data-status="resolved"] {
+  --chip: var(--observed);
+}
+
 .status[data-status="running"],
 .status[data-status="operator"] {
   --chip: var(--accent);
@@ -1871,9 +1845,10 @@ button.ref:hover {
   color: var(--count, var(--text));
   font-family: var(--font-display);
   font-size: var(--fs-28);
-  font-stretch: 75%;
+  font-stretch: 104%;
   font-weight: 820;
   line-height: 1;
+  letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
 }
 
@@ -2267,8 +2242,8 @@ button.ref:hover {
 
 .rail[data-rail="observed"],
 .rail[data-rail="counter"][data-status="resolved"] {
-  --rail-color: var(--accent);
-  --rail-ink: var(--accent);
+  --rail-color: var(--observed);
+  --rail-ink: var(--observed);
 }
 
 .rail[data-rail="counter"],
@@ -3225,6 +3200,11 @@ button.ref:hover {
   background: var(--surface);
 }
 
+/* A foot with nothing to show is not printed: every control in it is hidden. */
+.dialog__foot:not(:has(> :not([hidden]))) {
+  display: none;
+}
+
 @media (max-width: 39.99em) {
   .dialog__head {
     padding-left: var(--sp-16);
@@ -3424,30 +3404,6 @@ button.ref:hover {
   gap: var(--sp-8);
 }
 
-.theme-toggle {
-  display: grid;
-  place-items: center;
-  width: var(--tap);
-  height: var(--tap);
-  border-radius: var(--r-ctl);
-  color: var(--muted);
-  transition:
-    background-color var(--t-fast),
-    color var(--t-fast);
-}
-
-.theme-toggle:hover {
-  background: color-mix(in srgb, var(--text) 8%, transparent);
-  color: var(--text);
-}
-
-/* Shows the theme the button switches to: a sun in the dark, a moon in the light. */
-.theme-toggle__icon {
-  --icon: var(--theme-icon);
-  width: 1.25rem;
-  height: 1.25rem;
-}
-
 /* Narrow screens: brand and actions on the first row, navigation on the
    second. Keep horizontal scrolling as a fallback for enlarged text. */
 @media (max-width: 57.99em) {
@@ -3520,16 +3476,49 @@ button.ref:hover {
 
 /* The promise, set like the line printed across the foot of a form. */
 .site-footer__promise {
-  /* 17 characters of this cut, in em (17 x 0.499em). */
-  max-width: 8.483em;
+  max-width: 11.5em;
   margin-top: var(--sp-16);
   color: var(--text);
   font-family: var(--font-display);
-  font-size: clamp(1.625rem, 1.2rem + 1.6vw, 2.375rem);
-  font-stretch: 74%;
-  font-weight: 840;
-  line-height: 1.02;
+  font-size: clamp(1.5rem, 1.15rem + 1.4vw, 2.125rem);
+  font-stretch: 106%;
+  font-weight: 810;
+  line-height: 1.06;
+  letter-spacing: -0.021em;
   text-wrap: balance;
+}
+
+/* The name across the foot of the page, in the heat of the ink, sinking into
+   the black. Decoration: the name is already printed above. */
+.site-footer {
+  overflow: clip;
+}
+
+.site-footer__mark {
+  margin: var(--sp-24) 0 -0.24em;
+  background: var(--heat);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  font-family: var(--font-display);
+  font-size: min(7.6vw, 12rem);
+  font-stretch: 125%;
+  font-weight: 880;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  text-align: center;
+  text-transform: uppercase;
+  white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
+  -webkit-mask-image: linear-gradient(to bottom, #000 18%, transparent 92%);
+  mask-image: linear-gradient(to bottom, #000 18%, transparent 92%);
+}
+
+@media (forced-colors: active), print {
+  .site-footer__mark {
+    display: none;
+  }
 }
 
 .site-footer__cta {
@@ -3735,12 +3724,12 @@ button.ref:hover {
   --line: color-mix(in srgb, var(--on-stock) 22%, transparent);
   --line-strong: color-mix(in srgb, var(--on-stock) 45%, transparent);
   --line-control: var(--on-stock);
-  --accent: #4b2593;
-  --accent-hover: #32176a;
-  --accent-solid: #16161b;
-  --accent-solid-hover: #4b2593;
-  --on-accent: #ffffff;
-  --focus: #16161b;
+  --accent: #09090a;
+  --accent-hover: #3d0f04;
+  --accent-solid: #09090a;
+  --accent-solid-hover: #2b0b03;
+  --on-accent: #f4f1ea;
+  --focus: #09090a;
   --check-image: var(--icon-check-white);
   background: var(--stock);
   color: var(--text);
@@ -3759,6 +3748,143 @@ button.ref:hover {
 .page-field .link:hover {
   color: var(--on-field);
   text-decoration-color: currentColor;
+}
+
+/* The moving field (/field.mjs): lines of a report and of its code, set small,
+   with lights drifting over them and the red pen striking a line now and
+   then. The script builds it, lays it across the window behind the head and
+   fades it in; without script the head is simply printed on black.
+
+   Four layers, none of them painted again after the first time: the text, a
+   shade over it with the lights cut out (it drifts by a transform, which the
+   browser animates off the main thread), the pen's strokes, and a fade that
+   lets the field sink into the page at its foot. Nothing here uses a mask or a
+   group opacity, so moving the shade costs the compositor one picture. */
+.page-field {
+  position: relative;
+  isolation: isolate;
+}
+
+.field {
+  position: absolute;
+  z-index: -2;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  contain: strict;
+  pointer-events: none;
+  visibility: hidden;
+}
+
+.field[data-ready] {
+  visibility: visible;
+}
+
+.field__text {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* Twice the field each way, so its drift never shows an edge. */
+.field__shade {
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+}
+
+/* Once round a wide loop, at one pace. */
+@keyframes field-drift {
+  0% {
+    transform: translate3d(0%, 0%, 0);
+  }
+
+  12.5% {
+    transform: translate3d(-3.5%, 8.5%, 0);
+  }
+
+  25% {
+    transform: translate3d(-12%, 12%, 0);
+  }
+
+  37.5% {
+    transform: translate3d(-20.5%, 8.5%, 0);
+  }
+
+  50% {
+    transform: translate3d(-24%, 0%, 0);
+  }
+
+  62.5% {
+    transform: translate3d(-20.5%, -8.5%, 0);
+  }
+
+  75% {
+    transform: translate3d(-12%, -12%, 0);
+  }
+
+  87.5% {
+    transform: translate3d(-3.5%, -8.5%, 0);
+  }
+
+  100% {
+    transform: translate3d(0%, 0%, 0);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .field__shade {
+    animation: field-drift 64s linear infinite;
+    will-change: transform;
+  }
+
+  .field[data-paused] .field__shade {
+    animation-play-state: paused;
+  }
+}
+
+.field__strike {
+  position: absolute;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--accent-solid);
+  opacity: 0.85;
+  transform-origin: 0 50%;
+}
+
+/* The foot of the field sinks into the page. On a phone the words of the head
+   lie over the whole field, so a wash keeps it quiet. */
+.field__fade {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background:
+    linear-gradient(to bottom, transparent 55%, var(--bg) 100%),
+    linear-gradient(#09090a8a, #09090a8a);
+}
+
+/* Side by side, the field is quiet behind the words on the left and full on
+   the right. */
+@media (min-width: 60em) {
+  .field__fade {
+    background:
+      linear-gradient(to bottom, transparent 55%, var(--bg) 100%),
+      linear-gradient(to right, #09090a9c 0, #09090a9c 38%, transparent 70%);
+  }
+}
+
+@media (forced-colors: active), print {
+  .field {
+    display: none;
+  }
 }
 
 /* Long-form pages: guide, MCP setup, privacy, terms. Plain elements inside
@@ -4081,6 +4207,7 @@ button.ref:hover {
     --bg: #ffffff !important;
     --surface: #ffffff !important;
     --surface-2: #f1f0ea !important;
+    --surface-3: #e6e5df !important;
     --line: #cfcec6 !important;
     --line-strong: #9c9b93 !important;
     --line-control: #6f6f77 !important;
@@ -4093,7 +4220,9 @@ button.ref:hover {
     --on-stock: #000000 !important;
     --text: #000000 !important;
     --muted: #44444c !important;
-    --accent: #3d1d7a !important;
+    --accent: #a61f0a !important;
+    --heat: linear-gradient(100deg, #9c1428, #933a06) !important;
+    --observed: #155a30 !important;
     --gap: #6e4a00 !important;
     --gap-bg: #fdf3c9 !important;
     --sev-crit: #9c1428 !important;
@@ -4109,7 +4238,7 @@ button.ref:hover {
     --code-text: #000000 !important;
     --code-muted: #5a5a62 !important;
     --code-line: #cfcec6 !important;
-    --code-hl: #3d1d7a !important;
+    --code-hl: #a61f0a !important;
     --code-flag: #8a5a00 !important;
     --shadow-card: none !important;
     --shadow: none !important;
@@ -4135,7 +4264,6 @@ button.ref:hover {
   .site-footer,
   .skip-link,
   .site-nav,
-  .theme-toggle,
   .btn,
   .code__copy,
   .dialog__close,
@@ -4210,5 +4338,30 @@ button.ref:hover {
     color: var(--muted);
     font-size: 0.85em;
     overflow-wrap: anywhere;
+  }
+}
+
+/* ==========================================================================
+   22. Rise on scroll
+   ========================================================================== */
+
+/* A part of the page comes up into place as it enters the window. Driven by
+   the scroll position itself, so there is no script and nothing waits on one:
+   a browser without scroll-driven animation, or a visitor who asked for less
+   motion, sees the page as printed. */
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 1.75rem, 0);
+  }
+}
+
+@media screen and (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .rise {
+      animation: rise-in linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 42%;
+    }
   }
 }

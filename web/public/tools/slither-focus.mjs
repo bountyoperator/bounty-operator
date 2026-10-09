@@ -219,6 +219,6 @@ handoffLink.addEventListener('click', (event) => {
     return;
   }
   if (!sendToWorkbench(workbenchHandoff(state.queue.markdown))) {
-    noticeBox.replaceChildren(notice('error', 'The queue could not be handed over.', 'This browser blocked session storage. Copy the Markdown and paste it into the workbench.'));
+    noticeBox.replaceChildren(notice('error', 'The queue could not be handed over.', 'This browser blocked session storage. Copy the Markdown, start a review and paste it there.'));
   }
 });

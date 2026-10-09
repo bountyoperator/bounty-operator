@@ -10,7 +10,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 import { buildSite, modulePreloads, outputFile, renderSite, scanTags, sitemapXml, validateMarkup } from '../../scripts/build-site.mjs';
 import { attrs, codeBlock, faq, findingCard, html, inline, raw, refChip, stackTable, textOf } from '../site/components.mjs';
-import { breadcrumbsLd, faqPageLd, renderPage, softwareApplicationLd } from '../site/layout.mjs';
+import { SITE, breadcrumbsLd, faqPageLd, renderPage, softwareApplicationLd } from '../site/layout.mjs';
 
 const WEB_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const COMPONENTS_URL = pathToFileURL(path.join(WEB_DIR, 'site', 'components.mjs')).href;
@@ -30,7 +30,7 @@ async function fixtureSite(pages, publicFiles = {}) {
     await writeFile(file, `import { html } from '${COMPONENTS_URL}';\n${source}\n`);
   }
   // Every page links to these from the shared head, header and footer.
-  const shared = ['index.html', 'guide.html', 'mcp.html', 'tools.html', 'privacy.html', 'terms.html', 'theme.js', 'favicon.ico', 'icon.svg', 'apple-touch-icon.png', 'site.webmanifest', 'css/base.css'];
+  const shared = ['index.html', 'guide.html', 'mcp.html', 'tools.html', 'privacy.html', 'terms.html', 'theme.js', 'field.mjs', 'favicon.ico', 'icon.svg', 'apple-touch-icon.png', 'site.webmanifest', 'css/base.css'];
   for (const name of [...shared, ...Object.keys(publicFiles)]) {
     const file = path.join(publicDir, name);
     await mkdir(path.dirname(file), { recursive: true });
@@ -168,15 +168,20 @@ test('renderPage emits the head contract and no markup the CSP would block', () 
   const markup = renderPage(page, site);
 
   assert.match(markup, /<link rel="canonical" href="https:\/\/bountyoperator\.com\/tools\/report-check">/);
-  assert.match(markup, /<meta property="og:image" content="https:\/\/bountyoperator\.com\/social-v4\.png">/);
+  assert.match(markup, /<meta property="og:image" content="https:\/\/bountyoperator\.com\/social-v5\.png">/);
   assert.match(markup, /<meta name="twitter:card" content="summary_large_image">/);
   // The builder's handle credits the card. The product has no X account, so there is no twitter:site.
   assert.equal([...markup.matchAll(/<meta name="twitter:creator" content="@Tradi3_">/g)].length, 1);
   assert.doesNotMatch(markup, /twitter:site/);
   assert.doesNotMatch(markup, /href="https?:\/\/(?:www\.)?(?:x|twitter)\.com/, 'no visible X link');
-  assert.match(markup, /<meta name="color-scheme" content="dark light">/);
-  assert.equal([...markup.matchAll(/<meta name="theme-color"/g)].length, 2);
+  // One look, the black page: one colour scheme and one theme colour, the page's own.
+  assert.match(markup, /<meta name="color-scheme" content="dark">/);
+  assert.equal([...markup.matchAll(/<meta name="theme-color" content="#09090a">/g)].length, 1);
+  assert.equal([...markup.matchAll(/<meta name="theme-color"/g)].length, 1);
+  assert.doesNotMatch(markup, /data-theme-toggle|theme-toggle/);
   assert.match(markup, /<script src="\/theme\.js"><\/script>/);
+  // The moving field is a module of its own, on every page, ahead of the page's scripts.
+  assert.ok(markup.indexOf('src="/field.mjs"') > 0 && markup.indexOf('src="/field.mjs"') < markup.indexOf('src="/tools/report-check.mjs"'));
   assert.match(markup, /<link rel="stylesheet" href="\/css\/base\.css">\n<link rel="stylesheet" href="\/css\/tools\.css">/);
   // The page's modules load at low priority, so they do not compete with what the first paint needs.
   assert.match(markup, /<link rel="modulepreload" href="\/parse\.mjs" fetchpriority="low">/);
@@ -324,15 +329,25 @@ test('modulePreloads follows static imports and ignores dynamic and bare ones', 
   }
 });
 
-test('the two dark token blocks in base.css are identical', async () => {
-  const css = await readFile(path.join(WEB_DIR, 'public', 'css', 'base.css'), 'utf8');
-  const declarations = (block) => block.split('\n').map((line) => line.trim()).filter((line) => line.startsWith('--') || line.startsWith('color-scheme'));
+test('base.css declares one palette for the page and a complete paper palette for the slip', async () => {
+  const css = (await readFile(path.join(WEB_DIR, 'public', 'css', 'base.css'), 'utf8')).replace(/\r\n/g, '\n');
+  const names = (block) => [...block.matchAll(/^\s*(--[a-z0-9-]+):/gm)].map((match) => match[1]).sort();
 
-  const fromMedia = css.match(/:root:not\(\[data-theme="light"\]\) \{([\s\S]*?)\n {2}\}/);
-  const fromAttribute = css.match(/:root\[data-theme="dark"\],\n\.theme-dark \{([\s\S]*?)\n\}/);
-  assert.ok(fromMedia && fromAttribute, 'both dark blocks are present');
-  assert.ok(declarations(fromMedia[1]).length > 30);
-  assert.deepEqual(declarations(fromAttribute[1]), declarations(fromMedia[1]));
+  const page = css.match(/\n:root,\n\.theme-dark \{([\s\S]*?)\n\}/);
+  const paper = css.match(/\n\.theme-light \{([\s\S]*?)\n\}/);
+  assert.ok(page && paper, 'both palettes are present');
+  assert.ok(names(page[1]).length > 50);
+  // Whatever lies on paper finds every colour it asks for.
+  assert.deepEqual(names(paper[1]), names(page[1]));
+  assert.match(page[1], /color-scheme: dark;/);
+  assert.match(page[1], /--bg: #09090a;/);
+  // The site has one look: nothing follows the system's scheme or a stored choice.
+  for (const name of ['base.css', 'home.css', 'workbench.css', 'benchmark.css', 'landing.css', 'docs.css', 'tools.css', 'templates.css', 'account.css', 'runners.css', 'kit.css']) {
+    const sheet = await readFile(path.join(WEB_DIR, 'public', 'css', name), 'utf8');
+    assert.doesNotMatch(sheet, /prefers-color-scheme|\[data-theme/, name);
+  }
+  // The theme colour in the head is the page's own.
+  assert.equal(SITE.themeColor.dark, '#09090a');
 });
 
 test('stackTable writes the column name into every cell after the first and takes two modifiers', () => {
@@ -416,4 +431,42 @@ test('textOf leaves no tag behind when one tag is nested inside another', () => 
   // Escaped text is not markup: it comes back as the characters the author wrote.
   assert.equal(textOf(html`${'a <script> b'}`), 'a <script> b');
   assert.equal(textOf(html`${'1 < 2 and 3 > 2'}`), '1 < 2 and 3 > 2');
+});
+
+test('the moving field draws nothing per frame, and holds still when less motion is asked for', async () => {
+  const source = await readFile(path.join(WEB_DIR, 'public', 'field.mjs'), 'utf8');
+  // No frame loop: the text and the shade are drawn once, and the browser moves the shade.
+  assert.doesNotMatch(source, /requestAnimationFrame|setInterval/);
+  assert.match(source, /for \(const host of document\.querySelectorAll\('\.page-field'\)\) field\(host\);/);
+  assert.match(source, /prefers-reduced-motion: reduce/);
+  assert.match(source, /root\.setAttribute\('aria-hidden', 'true'\)/);
+  // It reads nothing from the page and keeps nothing in the browser.
+  assert.doesNotMatch(source, /localStorage|sessionStorage|fetch\(|XMLHttpRequest|cookie/);
+
+  const css = (await readFile(path.join(WEB_DIR, 'public', 'css', 'base.css'), 'utf8')).replace(/\r\n/g, '\n');
+  const start = css.indexOf('/* The moving field (/field.mjs)');
+  const block = css.slice(start, css.indexOf('/* Long-form pages', start));
+  assert.ok(start > 0 && block.length > 500);
+  // The shade moves by a transform, and only when motion is welcome.
+  assert.match(block, /@media \(prefers-reduced-motion: no-preference\) \{\n  \.field__shade \{\n    animation: field-drift \d+s linear infinite;/);
+  const frames = block.slice(block.indexOf('@keyframes field-drift'), block.indexOf('@media (prefers-reduced-motion'));
+  const moved = [...frames.matchAll(/\n\s+([a-z-]+): /g)].map((match) => match[1]);
+  assert.ok(moved.length >= 5);
+  assert.deepEqual([...new Set(moved)], ['transform']);
+  // Nothing in the field uses a mask, a filter or a group opacity: a frame costs the compositor one picture.
+  const rules = block.replace(/\/\*[\s\S]*?\*\//g, '');
+  assert.doesNotMatch(rules, /mask|filter:|backdrop/);
+  assert.doesNotMatch(rules.slice(rules.indexOf('.field {'), rules.indexOf('}', rules.indexOf('.field {'))), /opacity/);
+  // No field on paper or in forced colours.
+  assert.match(block, /@media \(forced-colors: active\), print \{\n  \.field \{\n    display: none;/);
+});
+
+test('a part that rises on scroll is visible wherever the browser cannot drive it', async () => {
+  const css = (await readFile(path.join(WEB_DIR, 'public', 'css', 'base.css'), 'utf8')).replace(/\r\n/g, '\n');
+  // The hidden starting state exists only inside the keyframes, and the keyframes are used only
+  // under a scroll-driven timeline with motion welcome.
+  assert.match(css, /@media screen and \(prefers-reduced-motion: no-preference\) \{\n  @supports \(animation-timeline: view\(\)\) \{\n    \.rise \{\n      animation: rise-in linear both;\n      animation-timeline: view\(\);/);
+  assert.equal(css.split('animation: rise-in ').length - 1, 1);
+  assert.equal(css.split('@keyframes rise-in {').length - 1, 1);
+  assert.doesNotMatch(css, /\.rise \{[^}]*opacity: 0/);
 });

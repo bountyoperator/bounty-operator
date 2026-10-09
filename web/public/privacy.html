@@ -6,15 +6,14 @@
 <title>Privacy policy | Bounty Operator</title>
 <meta name="description" content="What Bounty Operator stores and never stores, the two cookies, what your browser keeps, what Stripe sees, and how to export or delete your account.">
 <link rel="canonical" href="https://bountyoperator.com/privacy">
-<meta name="color-scheme" content="dark light">
-<meta name="theme-color" content="#17132e" media="(prefers-color-scheme: dark)">
-<meta name="theme-color" content="#fbfbf8" media="(prefers-color-scheme: light)">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#09090a">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Bounty Operator">
 <meta property="og:title" content="Privacy policy | Bounty Operator">
 <meta property="og:description" content="What Bounty Operator stores and never stores, the two cookies, what your browser keeps, what Stripe sees, and how to export or delete your account.">
 <meta property="og:url" content="https://bountyoperator.com/privacy">
-<meta property="og:image" content="https://bountyoperator.com/social-v4.png">
+<meta property="og:image" content="https://bountyoperator.com/social-v5.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Bounty Operator. Find the hole in your report before the triager does.">
@@ -22,7 +21,7 @@
 <meta name="twitter:creator" content="@Tradi3_">
 <meta name="twitter:title" content="Privacy policy | Bounty Operator">
 <meta name="twitter:description" content="What Bounty Operator stores and never stores, the two cookies, what your browser keeps, what Stripe sees, and how to export or delete your account.">
-<meta name="twitter:image" content="https://bountyoperator.com/social-v4.png">
+<meta name="twitter:image" content="https://bountyoperator.com/social-v5.png">
 <meta name="twitter:image:alt" content="Bounty Operator. Find the hole in your report before the triager does.">
 <link rel="icon" href="/favicon.ico" sizes="48x48">
 <link rel="icon" href="/icon.svg" type="image/svg+xml">
@@ -32,15 +31,16 @@
 <script src="/theme.js"></script>
 <link rel="stylesheet" href="/css/base.css">
 <link rel="stylesheet" href="/css/docs.css">
+<script type="module" src="/field.mjs" fetchpriority="low"></script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Bounty Operator","item":"https://bountyoperator.com/"},{"@type":"ListItem","position":2,"name":"Privacy","item":"https://bountyoperator.com/privacy"}]}</script>
 </head>
 <body>
 <!--
-THESIS: The verdict is a stamp on your draft. The site is the inspection a finding passes before a triager sees it, not the category's dark code-card hero.
-OWN-WORLD: Inspection paperwork. Canary and white stock, black print, violet stamp ink, carbon indigo for code and the night shift. Ruled fields, square corners, part rules, ledger tables. Archivo condensed caps for labels and stamps; mono only for code and typed entries.
+THESIS: The verdict is a stamp on your draft, and the red pen has been through it first. The site is the inspection a finding passes before a triager sees it.
+OWN-WORLD: A black page, bone-white print and one hot ink, vermilion: the red of a seal and of a marking pen. The report is a sheet of paper lying on the page. Behind each page head lie lines of a report and of its code; lights drift over them and the pen strikes a line now and then. Archivo: wide heavy cuts for headlines and figures, condensed caps for stamps and labels; mono only for code and typed entries.
 STORY: A hunter sees a Critical stamped down to Medium with the line that decides it, trusts that the review argues against them, and starts a review or opens the example.
-FIRST VIEWPORT: Full-bleed canary field. Left: condensed black headline, lede, black Review my report, ruled View example. Right: the paper slip, tilted, Critical struck, Medium and the violet verdict stamped on it. Proof line on the field's foot.
-FORM: Rubber-stamp verdicts and inspection forms, 6 of 7, seed b5682f59.
+FIRST VIEWPORT: The moving field on black. Left: the headline with "the hole" circled in pen, the lede, a vermilion Review my report, a ruled View example. Right: the paper slip, tilted, Critical struck, Medium and the verdict stamped on it, in the light of the ember. Under them the three results of the builder as figures, then the five verdicts running past.
+FORM: Rubber-stamp verdicts and a report marked in red pen, seed b5682f59.
 FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md
 -->
 <a class="skip-link" href="#main">Skip to content</a>
@@ -49,7 +49,6 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
 <a class="brand" href="/"><svg class="brand__mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect class="brand__tile" width="64" height="64" rx="9"/><path class="brand__glyph" d="M12.5 15h6.5v31.5h-6.5z"/><path class="brand__glyph" fill-rule="evenodd" d="M25.5 25a10.75 10.75 0 1 0 0 21.5a10.75 10.75 0 0 0 0-21.5zm0 6.25a4.5 4.5 0 1 1 0 9a4.5 4.5 0 0 1 0-9z"/><path class="brand__slash" d="M45.5 13h6.25l-8.6 37.5h-6.25z"/></svg><span class="brand__name">Bounty Operator</span></a>
 <nav class="site-nav" aria-label="Main"><ul><li><a href="/#workspace">Review</a></li><li><a href="/benchmark">Benchmark</a></li><li><a href="/tools">Tools</a></li><li><a href="/guide">Guide</a></li><li><a href="/pricing">Pricing</a></li></ul></nav>
 <div class="site-header__actions">
-<button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch colour theme"><span class="icon theme-toggle__icon" aria-hidden="true"></span></button>
 <a class="btn btn--secondary btn--sm" href="/#account">Sign in</a>
 </div>
 </div>
@@ -102,7 +101,7 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
 </ul>
 <p>Both are <code>HttpOnly</code>, <code>Secure</code> and <code>SameSite=Lax</code>.</p>
 <p>The site’s scripts keep the following in your browser. None of it is a cookie, and our server never reads it. “This tab” is the tab’s session storage: closing the tab removes it. “This browser” is local storage, or the history database, and stays until you clear it.</p>
-<div class="table-wrap" tabindex="0" role="region" aria-label="What your browser keeps"><table class="table table--dense stack-table"><thead><tr><th scope="col">Name</th><th scope="col">Kept in</th><th scope="col">What it holds</th></tr></thead><tbody><tr><th scope="row"><code>bo-theme</code></th><td><span class="cell-label">Kept in</span>This browser</td><td><span class="cell-label">What it holds</span>The colour theme you picked, when it differs from your system’s.</td></tr><tr><th scope="row"><code>bo:history</code>, <code>bo-history</code></th><td><span class="cell-label">Kept in</span>This browser</td><td><span class="cell-label">What it holds</span>Review history, when you turn it on: the packet, manifest and text of each finished review, with its profile, model, verdict and time.</td></tr><tr><th scope="row"><code>bo:known</code></th><td><span class="cell-label">Kept in</span>This browser</td><td><span class="cell-label">What it holds</span>The value 1 once you have signed in here, so the sign-in dialog offers Sign in first. Deleting the account removes it.</td></tr><tr><th scope="row"><code>bo-bench-hidden</code></th><td><span class="cell-label">Kept in</span>This browser</td><td><span class="cell-label">What it holds</span>The leaderboard columns you hid on the benchmark page.</td></tr><tr><th scope="row"><code>bo:workbench</code></th><td><span class="cell-label">Kept in</span>This tab</td><td><span class="cell-label">What it holds</span>The files you loaded, your focus and context, the review type, provider and model you chose, the step you are on and the last result.</td></tr><tr><th scope="row"><code>bo:workbench:view</code>, <code>bo:workbench:stash</code></th><td><span class="cell-label">Kept in</span>This tab</td><td><span class="cell-label">What it holds</span>Whether an example is open, how the review runs, which provider’s key field is open and the privacy warnings you accepted; and your own work while an example is shown.</td></tr><tr><th scope="row"><code>bo:handoff</code></th><td><span class="cell-label">Kept in</span>This tab</td><td><span class="cell-label">What it holds</span>A draft or files a free tool, a template page or the guide passes to the workbench. The workbench removes it when it reads it.</td></tr><tr><th scope="row"><code>bo:openrouter:kept</code></th><td><span class="cell-label">Kept in</span>This tab</td><td><span class="cell-label">What it holds</span>Your OpenRouter key, only when you tick “Keep the key for this tab session” as you connect OpenRouter.</td></tr><tr><th scope="row"><code>bo:openrouter:pkce</code></th><td><span class="cell-label">Kept in</span>This tab</td><td><span class="cell-label">What it holds</span>The one-time code of an OpenRouter connection while it completes.</td></tr><tr><th scope="row"><code>bo:gauntlet:run</code></th><td><span class="cell-label">Kept in</span>This tab</td><td><span class="cell-label">What it holds</span>The answers of the Gauntlet stages that have finished, so a run picks up where it stopped. No key and no source file.</td></tr><tr><th scope="row"><code>bo:panel:seats</code>, <code>bo:panel:run</code></th><td><span class="cell-label">Kept in</span>This tab</td><td><span class="cell-label">What it holds</span>The providers and models of your Panel seats, and the reviews the Panel has finished. No key and no source file.</td></tr><tr><th scope="row"><code>bo:return</code></th><td><span class="cell-label">Kept in</span>This tab</td><td><span class="cell-label">What it holds</span>Where to put you back on the page after Stripe Checkout, for up to two hours.</td></tr></tbody></table></div>
+<div class="table-wrap" tabindex="0" role="region" aria-label="What your browser keeps"><table class="table table--dense stack-table"><thead><tr><th scope="col">Name</th><th scope="col">Kept in</th><th scope="col">What it holds</th></tr></thead><tbody><tr><th scope="row"><code>bo-theme</code></th><td><span class="cell-label">Kept in</span>This browser</td><td><span class="cell-label">What it holds</span>Nothing now. An earlier version of the site kept your colour theme here; the site removes it when a page loads.</td></tr><tr><th scope="row"><code>bo:history</code>, <code>bo-history</code></th><td><span class="cell-label">Kept in</span>This browser</td><td><span class="cell-label">What it holds</span>Review history, when you turn it on: the packet, manifest and text of each finished review, with its profile, model, verdict and time.</td></tr><tr><th scope="row"><code>bo:known</code></th><td><span class="cell-label">Kept in</span>This browser</td><td><span class="cell-label">What it holds</span>The value 1 once you have signed in here, so the sign-in dialog offers Sign in first. Deleting the account removes it.</td></tr><tr><th scope="row"><code>bo-bench-hidden</code></th><td><span class="cell-label">Kept in</span>This browser</td><td><span class="cell-label">What it holds</span>The leaderboard columns you hid on the benchmark page.</td></tr><tr><th scope="row"><code>bo:workbench</code></th><td><span class="cell-label">Kept in</span>This tab</td><td><span class="cell-label">What it holds</span>The files you loaded, your focus and context, the review type, provider and model you chose, the step you are on and the last result.</td></tr><tr><th scope="row"><code>bo:workbench:view</code>, <code>bo:workbench:stash</code></th><td><span class="cell-label">Kept in</span>This tab</td><td><span class="cell-label">What it holds</span>Whether an example is open, how the review runs, which provider’s key field is open and the privacy warnings you accepted; and your own work while an example is shown.</td></tr><tr><th scope="row"><code>bo:handoff</code></th><td><span class="cell-label">Kept in</span>This tab</td><td><span class="cell-label">What it holds</span>A draft or files a free tool, a template page or the guide passes to the workbench. The workbench removes it when it reads it.</td></tr><tr><th scope="row"><code>bo:openrouter:kept</code></th><td><span class="cell-label">Kept in</span>This tab</td><td><span class="cell-label">What it holds</span>Your OpenRouter key, only when you tick “Keep the key for this tab session” as you connect OpenRouter.</td></tr><tr><th scope="row"><code>bo:openrouter:pkce</code></th><td><span class="cell-label">Kept in</span>This tab</td><td><span class="cell-label">What it holds</span>The one-time code of an OpenRouter connection while it completes.</td></tr><tr><th scope="row"><code>bo:gauntlet:run</code></th><td><span class="cell-label">Kept in</span>This tab</td><td><span class="cell-label">What it holds</span>The answers of the Gauntlet stages that have finished, so a run picks up where it stopped. No key and no source file.</td></tr><tr><th scope="row"><code>bo:panel:seats</code>, <code>bo:panel:run</code></th><td><span class="cell-label">Kept in</span>This tab</td><td><span class="cell-label">What it holds</span>The providers and models of your Panel seats, and the reviews the Panel has finished. No key and no source file.</td></tr><tr><th scope="row"><code>bo:return</code></th><td><span class="cell-label">Kept in</span>This tab</td><td><span class="cell-label">What it holds</span>Where to put you back on the page after Stripe Checkout, for up to two hours.</td></tr></tbody></table></div>
 <p>History is optional and is saved only in this browser. It never includes source files, API keys or GitHub tokens, it is never sent to our server, and one button clears it. A GitHub token you type for an import is held in the tab’s memory and is not stored.</p></div>
 </section><section class="docs-section" aria-labelledby="usage">
 <h2 class="docs-section__title" id="usage">Usage records and abuse limits</h2>
@@ -170,6 +169,7 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
 <p><a href="mailto:support@bountyoperator.com">support@bountyoperator.com</a></p>
 </div>
 </div>
+<div class="site-footer__mark" aria-hidden="true">Bounty Operator</div>
 </footer>
 </body>
 </html>

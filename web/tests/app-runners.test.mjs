@@ -697,6 +697,19 @@ describe('rules', () => {
   const rows = String(workbench());
   const ids = [...rows.matchAll(/\sid="([^"]+)"/g)].map((match) => match[1]);
 
+  test('a stage and a panel review are drawn as their own review type', async () => {
+    // results.mjs decides by the profile whether a late-numbered Path follows a draft: the answer carries it.
+    const dossier = await readFile(new URL('dossier.mjs', APP_DIR), 'utf8');
+    assert.match(dossier, /const stageResult = \{ review: stage\.review, manifest: manifest\.slice\(0, baseCount \+ index\), profile: \{ id: stage\.profileId \} \};/);
+    assert.match(dossier, /const seatResult = \{ review: seat\.review, manifest: manifest\.slice\(0, baseCount\), profile: result\.reviewed \};/);
+    const results = await readFile(new URL('results.mjs', APP_DIR), 'utf8');
+    assert.match(results, /draft: result\.profile\?\.id === 'report'/);
+    // The bundled panel is a draft review: its first model review starts its Path at step 6.
+    const panel = await examplePanelResult(EXAMPLES.find((example) => example.panel));
+    assert.equal(panel.reviewed.id, 'report');
+    assert.equal(parseReview(panel.stages[0].review).findings[0].pathStart, 6);
+  });
+
   test('the fragment carries the two rows, and every id the runners look up exists once', async () => {
     for (const id of ['wb-row-gauntlet', 'wb-row-panel', 'wb-gauntlet-stages', 'wb-gauntlet-run', 'wb-gauntlet-cancel', 'wb-gauntlet-text', 'wb-panel-seats', 'wb-panel-run', 'wb-panel-live']) {
       assert.equal(ids.filter((entry) => entry === id).length, 1, id);

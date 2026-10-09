@@ -124,7 +124,7 @@ const ROWS = [
     cells(cell('Its own.'), cell('Studio Review: Immunefi.', 1), cell('Report Assistant: the HackerOne report form.', 4), cell('Submission Draft Agent: Intigriti, while you draft.', 13)),
   ],
   [
-    'Access and cost shape',
+    'Access and cost',
     cell('Open to anyone. Free: 1 review a day. Operator: US$10 per week, unlimited. Your provider bills model usage to your key.'),
     cell('Your chat subscription.'),
     cells(cell('A folder you install.', 5), cell('Model usage is billed by the plan your coding agent runs on.')),
@@ -248,7 +248,7 @@ const body = html`
 ${pageHero({
   trail: [{ label: 'Bounty Operator', href: '/' }, { label: 'Compare' }],
   title: 'Bounty Operator vs a chat app, a local audit skill and platform pre-checks',
-  lede: 'Four ways to check a finding before you file it, and seven tools that cover part of the same ground. The tables say what each one gives you: pinned inputs and hashes, method, counterargument, verdict, cost shape and privacy. Facts about other products are numbered, linked and dated.',
+  lede: 'Four ways to check a finding before you file it, and seven tools that cover part of the same ground. Every fact about another product has a dated source.',
   actions: html`${button({ label: 'Start a free review', href: workbenchLink(), variant: 'primary', size: 'lg', iconEnd: 'arrow-right' })}${button({ label: 'Read the method', href: '/method', size: 'lg' })}`,
 })}
 
@@ -286,13 +286,13 @@ ${pageHero({
   })}
   ${points(
     [
-      { title: 'A chat app', text: 'One question about one function, answered in a minute. The record is the conversation.' },
+      { title: 'A chat app', text: 'A question about one function, answered in a minute. The record is the conversation.' },
       { title: 'An open-source audit skill', text: 'A sweep of a repository from your coding agent. It produces candidates for you to verify.' },
       { title: 'A platform pre-check', text: 'A read of your draft on the platform that will triage it, where you have access to it.' },
       { title: 'A hunting kit or a finding filter', text: 'Recon, hunting and a first gate on what an agent found. What it keeps is a candidate.' },
       {
         title: 'Bounty Operator',
-        text: 'One candidate, argued against in a fixed order: scope, intent, prior art, proof, severity. Pinned inputs, one verdict, any platform. It also runs from a coding agent over MCP.',
+        text: 'One candidate at a time, argued against in a fixed order: scope, intent, prior art, proof, severity. The inputs are pinned and the answer is one verdict. It works with any platform and runs from a coding agent over MCP.',
       },
     ],
     { columns: 3 },
@@ -309,7 +309,7 @@ ${ctaBand({
   ${relatedLinks([
     { label: 'The twelve checks', href: '/method', text: 'The question each check asks, and why reports die on it.' },
     { label: 'Your model, your key', href: '/your-model-your-key', text: 'Where your code goes and what is stored.' },
-    { label: 'Gauntlet', href: '/gauntlet', text: 'One run, eight stages, one verdict.' },
+    { label: 'Gauntlet', href: '/gauntlet', text: 'Eight stages on one finding, then a verdict.' },
     { label: 'Invalid report costs', href: '/invalid-report-costs', text: 'What a closed report costs on each platform, from its rules.' },
   ])}
 </section>`;

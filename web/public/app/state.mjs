@@ -147,7 +147,9 @@ export function initialState(overrides = {}) {
     files: [],
     focus: '',
     context: emptyContext(),
-    profile: 'general',
+    // The page above the workbench is about a draft report, so that review is the one selected.
+    // The engine, the MCP server and POST /api/review keep their own default, 'general'.
+    profile: 'report',
     mode: 'bounty',
     provider: PROVIDERS[0].id,
     model: '',

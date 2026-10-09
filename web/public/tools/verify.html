@@ -6,15 +6,14 @@
 <title>Verify a review packet: SHA-256 check | Bounty Operator</title>
 <meta name="description" content="Drop a review packet or manifest with its source files and see match, mismatch or missing for every SHA-256. The hashing runs in your browser.">
 <link rel="canonical" href="https://bountyoperator.com/tools/verify">
-<meta name="color-scheme" content="dark light">
-<meta name="theme-color" content="#17132e" media="(prefers-color-scheme: dark)">
-<meta name="theme-color" content="#fbfbf8" media="(prefers-color-scheme: light)">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#09090a">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Bounty Operator">
 <meta property="og:title" content="Verify a review packet: SHA-256 check | Bounty Operator">
 <meta property="og:description" content="Drop a review packet or manifest with its source files and see match, mismatch or missing for every SHA-256. The hashing runs in your browser.">
 <meta property="og:url" content="https://bountyoperator.com/tools/verify">
-<meta property="og:image" content="https://bountyoperator.com/social-v4.png">
+<meta property="og:image" content="https://bountyoperator.com/social-v5.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Bounty Operator. Find the hole in your report before the triager does.">
@@ -22,7 +21,7 @@
 <meta name="twitter:creator" content="@Tradi3_">
 <meta name="twitter:title" content="Verify a review packet: SHA-256 check | Bounty Operator">
 <meta name="twitter:description" content="Drop a review packet or manifest with its source files and see match, mismatch or missing for every SHA-256. The hashing runs in your browser.">
-<meta name="twitter:image" content="https://bountyoperator.com/social-v4.png">
+<meta name="twitter:image" content="https://bountyoperator.com/social-v5.png">
 <meta name="twitter:image:alt" content="Bounty Operator. Find the hole in your report before the triager does.">
 <link rel="icon" href="/favicon.ico" sizes="48x48">
 <link rel="icon" href="/icon.svg" type="image/svg+xml">
@@ -39,17 +38,18 @@
 <link rel="modulepreload" href="/tools/ping.mjs" fetchpriority="low">
 <link rel="modulepreload" href="/profiles.mjs" fetchpriority="low">
 <link rel="modulepreload" href="/parse.mjs" fetchpriority="low">
+<script type="module" src="/field.mjs" fetchpriority="low"></script>
 <script type="module" src="/tools/verify.mjs" fetchpriority="low"></script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Bounty Operator","item":"https://bountyoperator.com/"},{"@type":"ListItem","position":2,"name":"Tools","item":"https://bountyoperator.com/tools"},{"@type":"ListItem","position":3,"name":"Packet verifier","item":"https://bountyoperator.com/tools/verify"}]}</script>
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Are my files uploaded?","acceptedAnswer":{"@type":"Answer","text":"No. The page reads each file with the browser’s file API and hashes it with Web Crypto. It makes no request with a file name, a hash or any content. After the page has loaded it makes one request: a counter that says the tool was used, with nothing of yours in it."}},{"@type":"Question","name":"What does a match prove?","acceptedAnswer":{"@type":"Answer","text":"That the bytes you hold are the bytes the review was run on, to the last character. It is a statement about the files. Whether the review’s conclusions hold is a separate question, answered by the code and the proof."}},{"@type":"Question","name":"Where does a packet come from?","acceptedAnswer":{"@type":"Answer","text":"The workbench writes one for every finished review: the verdict, the context you gave, the file list with a SHA-256 per file, and the review itself. A manifest is the same file list as JSON, as returned by the review API and the MCP server."}}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Are my files uploaded?","acceptedAnswer":{"@type":"Answer","text":"No. The page reads each file with the browser’s file API and hashes it with Web Crypto. It makes no request with a file name, a hash or any content. After the page has loaded it makes one request: a counter that says the tool was used, with nothing of yours in it."}},{"@type":"Question","name":"What does a match prove?","acceptedAnswer":{"@type":"Answer","text":"That the bytes you hold are the bytes the review was run on, to the last character. It is a statement about the files. Whether the review’s conclusions hold is a separate question, answered by the code and the proof."}},{"@type":"Question","name":"Where does a packet come from?","acceptedAnswer":{"@type":"Answer","text":"Every finished review comes with one: the verdict, the context you gave, the file list with a SHA-256 per file, and the review itself. A manifest is the same file list as JSON, as returned by the review API and the MCP server."}}]}</script>
 </head>
 <body>
 <!--
-THESIS: The verdict is a stamp on your draft. The site is the inspection a finding passes before a triager sees it, not the category's dark code-card hero.
-OWN-WORLD: Inspection paperwork. Canary and white stock, black print, violet stamp ink, carbon indigo for code and the night shift. Ruled fields, square corners, part rules, ledger tables. Archivo condensed caps for labels and stamps; mono only for code and typed entries.
+THESIS: The verdict is a stamp on your draft, and the red pen has been through it first. The site is the inspection a finding passes before a triager sees it.
+OWN-WORLD: A black page, bone-white print and one hot ink, vermilion: the red of a seal and of a marking pen. The report is a sheet of paper lying on the page. Behind each page head lie lines of a report and of its code; lights drift over them and the pen strikes a line now and then. Archivo: wide heavy cuts for headlines and figures, condensed caps for stamps and labels; mono only for code and typed entries.
 STORY: A hunter sees a Critical stamped down to Medium with the line that decides it, trusts that the review argues against them, and starts a review or opens the example.
-FIRST VIEWPORT: Full-bleed canary field. Left: condensed black headline, lede, black Review my report, ruled View example. Right: the paper slip, tilted, Critical struck, Medium and the violet verdict stamped on it. Proof line on the field's foot.
-FORM: Rubber-stamp verdicts and inspection forms, 6 of 7, seed b5682f59.
+FIRST VIEWPORT: The moving field on black. Left: the headline with "the hole" circled in pen, the lede, a vermilion Review my report, a ruled View example. Right: the paper slip, tilted, Critical struck, Medium and the verdict stamped on it, in the light of the ember. Under them the three results of the builder as figures, then the five verdicts running past.
+FORM: Rubber-stamp verdicts and a report marked in red pen, seed b5682f59.
 FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md
 -->
 <a class="skip-link" href="#main">Skip to content</a>
@@ -58,7 +58,6 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
 <a class="brand" href="/"><svg class="brand__mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect class="brand__tile" width="64" height="64" rx="9"/><path class="brand__glyph" d="M12.5 15h6.5v31.5h-6.5z"/><path class="brand__glyph" fill-rule="evenodd" d="M25.5 25a10.75 10.75 0 1 0 0 21.5a10.75 10.75 0 0 0 0-21.5zm0 6.25a4.5 4.5 0 1 1 0 9a4.5 4.5 0 0 1 0-9z"/><path class="brand__slash" d="M45.5 13h6.25l-8.6 37.5h-6.25z"/></svg><span class="brand__name">Bounty Operator</span></a>
 <nav class="site-nav" aria-label="Main"><ul><li><a href="/#workspace">Review</a></li><li><a href="/benchmark">Benchmark</a></li><li><a href="/tools" aria-current="page">Tools</a></li><li><a href="/guide">Guide</a></li><li><a href="/pricing">Pricing</a></li></ul></nav>
 <div class="site-header__actions">
-<button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch colour theme"><span class="icon theme-toggle__icon" aria-hidden="true"></span></button>
 <a class="btn btn--secondary btn--sm" href="/#account">Sign in</a>
 </div>
 </div>
@@ -120,7 +119,7 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
 
 <section class="section section--tight wrap" aria-labelledby="how">
 <h2 id="how">How the check works</h2>
-<ol class="tool-steps"><li><h3 class="tool-steps__title">Read the file list</h3><p>Every packet has a Files section: one row per file with its label, byte size, line count and SHA-256. A manifest JSON carries the same rows.</p></li><li><h3 class="tool-steps__title">Hash the files again</h3><p>Each file you drop is read as UTF-8 text and hashed in this tab with Web Crypto, the same way the workbench hashed it.</p></li><li><h3 class="tool-steps__title">Compare row by row</h3><p>Every listed file gets one result. Files you dropped that the packet does not list are named underneath.</p></li></ol>
+<ol class="tool-steps"><li><h3 class="tool-steps__title">Read the file list</h3><p>Every packet has a Files section: one row per file with its label, byte size, line count and SHA-256. A manifest JSON carries the same rows.</p></li><li><h3 class="tool-steps__title">Hash the files again</h3><p>Each file you drop is read as UTF-8 text and hashed in this tab with Web Crypto, the same way the review hashed it.</p></li><li><h3 class="tool-steps__title">Compare row by row</h3><p>Every listed file gets one result. Files you dropped that the packet does not list are named underneath.</p></li></ol>
 </section>
 
 <section class="section section--tight wrap" aria-labelledby="results">
@@ -153,17 +152,17 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
 
 <section class="section section--tight wrap wrap--narrow" aria-labelledby="questions">
 <h2 id="questions">Questions</h2>
-<div class="accordion tool-faq"><details class="accordion__item"><summary class="accordion__summary">Are my files uploaded?</summary><div class="accordion__body"><p>No. The page reads each file with the browser’s file API and hashes it with Web Crypto. It makes no request with a file name, a hash or any content. After the page has loaded it makes one request: a counter that says the tool was used, with nothing of yours in it.</p></div></details><details class="accordion__item"><summary class="accordion__summary">What does a match prove?</summary><div class="accordion__body"><p>That the bytes you hold are the bytes the review was run on, to the last character. It is a statement about the files. Whether the review’s conclusions hold is a separate question, answered by the code and the proof.</p></div></details><details class="accordion__item"><summary class="accordion__summary">Where does a packet come from?</summary><div class="accordion__body"><p>The workbench writes one for every finished review: the verdict, the context you gave, the file list with a SHA-256 per file, and the review itself. A manifest is the same file list as JSON, as returned by the review API and the MCP server.</p></div></details></div>
+<div class="accordion tool-faq"><details class="accordion__item"><summary class="accordion__summary">Are my files uploaded?</summary><div class="accordion__body"><p>No. The page reads each file with the browser’s file API and hashes it with Web Crypto. It makes no request with a file name, a hash or any content. After the page has loaded it makes one request: a counter that says the tool was used, with nothing of yours in it.</p></div></details><details class="accordion__item"><summary class="accordion__summary">What does a match prove?</summary><div class="accordion__body"><p>That the bytes you hold are the bytes the review was run on, to the last character. It is a statement about the files. Whether the review’s conclusions hold is a separate question, answered by the code and the proof.</p></div></details><details class="accordion__item"><summary class="accordion__summary">Where does a packet come from?</summary><div class="accordion__body"><p>Every finished review comes with one: the verdict, the context you gave, the file list with a SHA-256 per file, and the review itself. A manifest is the same file list as JSON, as returned by the review API and the MCP server.</p></div></details></div>
 </section>
 
 <section class="section section--tight wrap" aria-labelledby="next-action">
 <div class="tool-next on-stock">
 <div class="tool-next__text">
 <h2 class="h3" id="next-action">No packet yet</h2>
-<p>Run a review in the workbench. The packet it saves carries the verdict, the evidence you gave and the hash of every file, ready to attach to a submission.</p>
+<p>Run a review and download its packet. It carries the verdict, the evidence you gave and the hash of every file, ready to attach to a submission.</p>
 </div>
 <div class="cluster">
-<a class="btn btn--primary" href="/#workspace"><span class="btn__label">Open the workbench</span><span class="icon icon--arrow-right" aria-hidden="true"></span></a>
+<a class="btn btn--primary" href="/#workspace"><span class="btn__label">Start a free review</span><span class="icon icon--arrow-right" aria-hidden="true"></span></a>
 <a class="btn btn--secondary" href="/mcp"><span class="btn__label">Connect over MCP</span></a>
 </div>
 </div>
@@ -191,6 +190,7 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
 <p><a href="mailto:support@bountyoperator.com">support@bountyoperator.com</a></p>
 </div>
 </div>
+<div class="site-footer__mark" aria-hidden="true">Bounty Operator</div>
 </footer>
 </body>
 </html>

@@ -50,7 +50,10 @@ test('the home page passes the generator checks and has one h1', () => {
   assert.deepEqual(warnings, []);
   assert.equal(home.path, '/');
   assert.equal(home.title, 'Bounty Operator | Review your report before you submit');
-  assert.match(textOf(main), /Check your report before you submit\./);
+  assert.match(textOf(main), /Find the hole in your report before the triager does\./);
+  // The pen's ring is decoration inside the one h1: the words read as plain text.
+  assert.equal(find('h1').length, 1);
+  assert.match(main, /<h1 class="display home-hero__title" id="hero-title">Find <span class="pen">the hole<svg class="pen__ring"[^>]* aria-hidden="true" focusable="false">/);
 });
 
 test('the hooks other streams rely on are present exactly once', () => {
@@ -75,7 +78,9 @@ test('the hooks other streams rely on are present exactly once', () => {
 });
 
 test('the sections come in the order the brief sets', () => {
-  const order = ['id="hero-title"', 'class="home-proof fine"', 'id="how"', 'id="workspace"', 'id="bench-teaser-title"', 'id="free-tools"', 'id="pricing"', 'id="faq"'];
+  const order = ['id="hero-title"', 'class="home-proof"', 'class="home-stats"', 'class="verdict-run"', 'id="verdicts-title"', 'id="workspace"', 'id="bench-teaser-title"', 'id="pricing"', 'id="faq"'];
+  // The three-step strip and the "More ways" list are gone: the header and the footer carry those links.
+  assert.doesNotMatch(markup, /id="how"|id="free-tools"|home-steps|home-resources/);
   const positions = order.map((needle) => markup.indexOf(needle));
   assert.ok(positions.every((position) => position > 0), `missing: ${order.filter((_, index) => positions[index] < 0).join(', ')}`);
   assert.deepEqual([...positions].sort((a, b) => a - b), positions);
@@ -104,24 +109,22 @@ test('the proof strip links the three leaderboards and the method', async () => 
   assert.match(text, /8th of 65/);
 });
 
-test('the hero says what a review costs under its two buttons, and a phone shows it in the first screen', async () => {
+test('the hero says what a review costs under its two buttons, and a phone shows it before the slip', async () => {
   const hero = main.slice(main.indexOf('class="wrap home-hero"'), main.indexOf('class="home-hero__shot"'));
-  // Actions, the price line, the note, then the links: in that order in the markup.
-  const order = ['class="home-hero__actions"', '<p class="home-hero__free">Free: 1 review a day on your own model key.</p>', '<p class="home-hero__note">The example needs no account or API key.</p>', 'class="home-hero__links"'];
+  // The kicker, the headline, the lede, the actions, then the price line: in that order in the markup.
+  const order = ['class="home-hero__kicker"', 'id="hero-title"', 'class="lede home-hero__lede"', 'class="home-hero__actions"', '<p class="home-hero__free">Free: 1 review a day on your own model key. The example needs no account.</p>'];
   const positions = order.map((needle) => hero.indexOf(needle));
-  assert.ok(positions.every((position) => position > 0), `missing: ${order.filter((_, index) => positions[index] < 0).join(', ')}`);
+  assert.ok(positions.every((position) => position > 0), 'missing: ' + order.filter((_, index) => positions[index] < 0).join(', '));
   assert.deepEqual([...positions].sort((a, b) => a - b), positions);
-  assert.match(hero, /<a class="link" href="\/benchmark">See the model benchmark<\/a>/);
   assert.doesNotMatch(markup, /href="\/benchmark#/);
 
-  // Up to 480px the two lines sit with the actions, ahead of the slip; wider screens do not print the price line.
+  // On a phone the parts take their places by order: the price line sits with the actions, ahead of the slip.
   const css = (await readFile(path.join(WEB_DIR, 'public', 'css', 'home.css'), 'utf8')).replace(/\r\n/g, '\n');
-  assert.match(css, /\n\.home-hero__free \{\n  display: none;\n\}/);
-  const phone = css.slice(css.indexOf('@media (max-width: 30em) {'));
-  const block = phone.slice(0, phone.indexOf('\n}\n') + 2);
-  assert.match(block, /\.home-hero__free \{\n    display: block;\n    order: 3;/);
-  assert.match(block, /\.home-hero__note \{\n    order: 3;/);
+  assert.match(css, /\.home-hero__kicker \{\n  order: 0;/);
+  assert.match(css, /\.home-hero__title \{\n  order: 1;/);
+  assert.match(css, /\.home-hero__lede \{\n  order: 2;/);
   assert.match(css, /\.home-hero__actions \{\n  order: 3;/);
+  assert.match(css, /\.home-hero__free \{\n  order: 3;/);
   assert.match(css, /\.home-hero__shot \{\n  order: 4;/);
 });
 
@@ -306,15 +309,69 @@ test('the five verdicts are listed with what each one means', () => {
 test('the social card is a 1200 x 630 document drawn from the same example', async () => {
   assert.deepEqual(CARD, { width: 1200, height: 630 });
   const card = cardDocument();
-  assert.match(card, /<html lang="en" data-theme="light">/);
-  assert.match(card, /Find the hole in your report before the triager does\./);
+  assert.match(card, /<html lang="en">/);
+  assert.match(card, /<span class="pen">the hole<svg class="pen__ring"/);
+  assert.match(textOf(card), /Find the hole in your report before the triager does\./);
   assert.match(card, /class="home-shot home-shot--still"/);
   // The builder's results read as the builder's: one phrase, not a list of product facts.
   assert.match(textOf(card), /Built by Tradi3: most valid Criticals in ENS, 2nd of 133 in Firelight/);
   assert.match(textOf(card), /Operator: US\$10 a week/);
   assert.doesNotMatch(card, /\sstyle="/);
 
-  const png = await readFile(path.join(WEB_DIR, 'public', 'social-v4.png'));
+  const png = await readFile(path.join(WEB_DIR, 'public', 'social-v5.png'));
   assert.equal(png.readUInt32BE(16), CARD.width);
   assert.equal(png.readUInt32BE(20), CARD.height);
+});
+
+test('the verdict run is decoration: hidden from assistive technology, the five names printed twice', () => {
+  const start = markup.indexOf('<div class="verdict-run" aria-hidden="true">');
+  assert.ok(start > 0, 'the run is on the page');
+  const run = markup.slice(start, markup.indexOf('</div></div>', start));
+  for (const verdict of ['submit', 'rewrite-then-submit', 'prove-first', 'hold-duplicate', 'drop']) {
+    // Twice, so the track can loop: it moves by half its own width.
+    assert.equal(run.split('data-verdict="' + verdict + '"').length - 1, 2, verdict);
+  }
+  assert.match(run, />Rewrite, then submit</);
+  assert.doesNotMatch(run, /<a |<button/);
+});
+
+test('the three results are figures that link to their public leaderboards', () => {
+  const start = main.indexOf('<ul class="home-stats">');
+  assert.ok(start > 0, 'the figures are on the page');
+  const list = main.slice(start, main.indexOf('</ul>', start));
+  const items = [...list.matchAll(/<a class="home-stats__item" href="([^"]+)" target="_blank" rel="noopener noreferrer"><span class="home-stats__n">([^<]+)<\/span> <span class="home-stats__t">([^<]+)<\/span><\/a>/g)]
+    .map((match) => [new URL(match[1]).origin, new URL(match[1]).pathname, match[2]]);
+  assert.deepEqual(items, [
+    ['https://immunefi.com', '/audit-competition/audit-competition-ens/leaderboard/', '17'],
+    ['https://immunefi.com', '/audit-competition/audit-comp-firelight-1/leaderboard/', '2nd'],
+    ['https://immunefi.com', '/audit-competition/audit-comp-quantus/leaderboard/', '8th'],
+  ]);
+});
+
+test('each place on the benchmark strip carries a bar as long as its score', () => {
+  const start = markup.indexOf('class="bench-teaser__list"');
+  if (start < 0) return; // no published release: no strip
+  const list = markup.slice(start, markup.indexOf('</ol>', start));
+  const rows = [...list.matchAll(/<span class="bench-teaser__score num">([\d.]+)<span[\s\S]*?<svg class="bench-teaser__bar" viewBox="0 0 100 4" preserveAspectRatio="none" aria-hidden="true" focusable="false"><rect x="([\d.]+)" width="([\d.]+)" height="4"\/><\/svg>/g)];
+  assert.ok(rows.length >= 3);
+  assert.equal(rows.length, list.split('<li class="bench-teaser__row">').length - 1, 'every row has its bar');
+  for (const [, score, x, width] of rows) {
+    // The bar is as long as the score printed beside it, to that figure's own rounding.
+    assert.ok(Math.abs(Number(x) - Number(score)) <= 0.05, score + ' and ' + x);
+    assert.ok(Math.abs(Number(x) + Number(width) - 100) < 0.011, x + ' + ' + width);
+  }
+});
+
+test('every motion the home page adds runs only when motion is welcome', async () => {
+  const css = (await readFile(path.join(WEB_DIR, 'public', 'css', 'home.css'), 'utf8')).replace(/\r\n/g, '\n');
+  // The ember, the pen's ring and the run are each started inside a no-preference query.
+  assert.match(css, /@media \(prefers-reduced-motion: no-preference\) \{\n  \.home-top::before \{\n    animation: ember /);
+  assert.match(css, /@media \(prefers-reduced-motion: no-preference\) \{\n  \.pen__ring path \{\n    animation: pen-ring /);
+  assert.match(css, /@media \(prefers-reduced-motion: no-preference\) \{\n  \.verdict-run__track \{\n    animation: verdict-run /);
+  // Outside those queries no rule of the hero starts an animation.
+  const outside = css.replace(/@media \(prefers-reduced-motion: no-preference\) \{[\s\S]*?\n\}\n/g, '').replace(/@keyframes [\s\S]*?\n\}\n/g, '');
+  assert.doesNotMatch(outside, /\n\s+animation:/);
+  // Text set in the heat gradient or as an outline falls back to plain text in forced colours.
+  assert.match(css, /@media \(forced-colors: active\) \{\n  \.home-stats__n \{\n    background: none;\n    color: CanvasText;/);
+  assert.match(css, /@media \(forced-colors: active\) \{\n  \.verdict-run__word \{\n    color: CanvasText;/);
 });

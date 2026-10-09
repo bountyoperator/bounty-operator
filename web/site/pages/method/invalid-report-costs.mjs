@@ -125,7 +125,7 @@ ${pageHero({
   trail: [{ label: 'Bounty Operator', href: '/' }, { label: 'Invalid report costs' }],
   title: 'What an invalid report costs on each platform',
   lede: 'A report closed as invalid, N/A or spam can cost you reputation, credits, submission slots, a deposit or the account. The table gives each platform’s rule, from its own pages, with the date we read it.',
-  actions: html`${button({ label: 'Check a draft for free', href: '/tools/report-check', variant: 'primary', size: 'lg', iconEnd: 'arrow-right' })}${button({ label: 'Challenge it on your model', href: workbenchLink('report'), size: 'lg' })}`,
+  actions: html`${button({ label: 'Check a draft for free', href: '/tools/report-check', variant: 'primary', size: 'lg', iconEnd: 'arrow-right' })}${button({ label: 'Review my report', href: workbenchLink('report'), size: 'lg' })}`,
 })}
 
 <section class="section section--tight wrap" aria-labelledby="costs">

@@ -3,6 +3,7 @@
 
 import { button, html, icon, stackTable } from '../../components.mjs';
 import { absoluteUrl, breadcrumbsLd } from '../../layout.mjs';
+import { RECORD_CLAIM } from '../method/_shared.mjs';
 import { CHECKED, COMPARISON, PARTS, PLATFORMS } from './data.mjs';
 import { crumbs, plain } from './shared.mjs';
 
@@ -89,14 +90,14 @@ const body = html`
     <ol class="tpl-parts">
       ${PARTS.map(([name, text]) => html`<li><span class="tpl-parts__name">${name}</span><span class="tpl-parts__text">${text}</span></li>`)}
     </ol>
-    <p class="tpl-record">Twelve checks, distilled from 105 real case files across five platforms. The wins and the closures. Every check exists because real reports were closed for that reason, and the two added sections come from that record.</p>
+    <p class="tpl-record">${RECORD_CLAIM} Every check exists because real reports were closed for that reason, and the two added sections come from that record.</p>
   </section>
 
   <section class="tpl-block tpl-cta" aria-labelledby="next">
     <h2 id="next">Fill one in, then challenge it</h2>
-    <p class="tpl-block__lede">A template gives the report its shape. The workbench argues against what you wrote in it: the impact row, the proof, the severity, the prior art. Find the hole in your report before the triager does. <a class="link" href="/challenge-report">How the challenge works</a>.</p>
+    <p class="tpl-block__lede">A template gives the report its shape. A review argues against what you wrote in it: the impact row, the proof, the severity, the prior art. <a class="link" href="/challenge-report">How the challenge works</a>.</p>
     <div class="cluster">
-      ${button({ label: 'Challenge a draft report', href: '/?profile=report#workspace', variant: 'primary', iconEnd: 'arrow-right' })}
+      ${button({ label: 'Review my report', href: '/?profile=report#workspace', variant: 'primary', iconEnd: 'arrow-right' })}
       ${button({ label: 'Run the report check', href: '/tools/report-check' })}
     </div>
   </section>

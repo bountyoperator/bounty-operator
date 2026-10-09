@@ -16,7 +16,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { renderSite } from '../../scripts/build-site.mjs';
 import { GAUNTLET, PROFILES, reviewProfile } from '../public/profiles.mjs';
 import { SITE } from '../site/layout.mjs';
-import { CHECKS, CHECKS_RUN_LINE, STAGES, VERDICTS } from '../site/pages/method/_shared.mjs';
+import { CHECKS, CHECKS_RUN_LINE, RECORD_CLAIM, STAGES, VERDICTS } from '../site/pages/method/_shared.mjs';
 import { assertNoBannedNames } from './private-lists.mjs';
 
 const WEB_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -91,7 +91,15 @@ test('/method shows each check at that depth and says where the executable versi
   assert.equal(count(body, CHECKS_RUN_LINE), 1, 'one line under the checks');
   assert.match(markup, /class="checks__run">[\s\S]*?href="\/gauntlet"/);
   assert.ok(body.includes('What makes a report land'));
-  assert.ok(body.includes('Twelve checks, distilled from 105 real case files across five platforms. The wins and the closures.'));
+  // One wording for the record on every page that carries it.
+  assert.equal(RECORD_CLAIM, 'Twelve checks from 105 real case files across five platforms, the paid ones and the closed ones.');
+  for (const file of ['method.html', 'guide.html', 'templates.html']) assert.ok(text(file).includes(RECORD_CLAIM), file);
+  assert.ok(text('tools/report-check.html').includes('105 real case files across five platforms, the paid ones and the closed ones.'));
+  // The earlier wording is on no page. The changelog is history and may quote it.
+  for (const [file, markup] of pages) {
+    if (file === 'changelog.html') continue;
+    assert.equal(found(textOf(markup), /distilled from|The wins and the closures/), null, file);
+  }
 });
 
 test('no page carries a procedure for a check, a fail-condition list or the order in which verdicts win', () => {

@@ -255,7 +255,7 @@ test('no inline script, no inline style, and the only scripts are the page modul
     assert.equal(tags.filter((tag) => [...tag.attributes.keys()].some((key) => /^on/.test(key))).length, 0);
     const scripts = tags.filter((tag) => tag.name === 'script');
     for (const script of scripts) {
-      if (script.attributes.has('src')) assert.ok(['/theme.js', '/benchmark/leaderboard.mjs'].includes(script.attributes.get('src')), script.attributes.get('src'));
+      if (script.attributes.has('src')) assert.ok(['/theme.js', '/field.mjs', '/benchmark/leaderboard.mjs'].includes(script.attributes.get('src')), script.attributes.get('src'));
       else assert.equal(script.attributes.get('type'), 'application/ld+json');
     }
   }
@@ -475,7 +475,7 @@ test('no page source and no stylesheet links or styles the withheld sections', (
     assert.doesNotMatch(markup, /href="[^"]*#(?:comparison|lift)"/, file);
     assert.doesNotMatch(markup, /id="(?:comparison|lift)"/, file);
   }
-  assert.match(site.pages['index.html'], /<a class="link" href="\/benchmark">See the model benchmark<\/a>/);
+  assert.match(site.pages['index.html'], /<a class="bench-teaser__go link" href="\/benchmark">See the leaderboard</);
   assertNoComparison(site.pages['benchmark.html'], 'benchmark.html in the built site');
 });
 

@@ -32,7 +32,7 @@ if (missing.length || Object.keys(REASONS).length !== DEFAULT_CHECKS.length) {
 const QUESTIONS = [
   {
     q: 'Is the Slither output uploaded?',
-    a: `No. The file is parsed and filtered in this tab. ${COUNTER_LINE} Pressing “Triage this in the workbench” moves the queue to the workbench through this browser’s session storage. It leaves the browser only when you run a review there: through our server to the provider you chose.`,
+    a: `No. The file is parsed and filtered in this tab. ${COUNTER_LINE} Pressing “Triage this queue” opens a review with the queue loaded, through this browser’s session storage. It leaves the browser only when you run that review: through our server to the provider you chose.`,
   },
   {
     q: 'Why these 13 detectors?',
@@ -40,7 +40,7 @@ const QUESTIONS = [
   },
   {
     q: 'What does the tool decide?',
-    a: 'Nothing about validity. It filters, ranks and formats. A detector hit is a lead: the scanner triage profile in the workbench groups the leads by root cause and gives each one a next check.',
+    a: 'Nothing about validity. It filters, ranks and formats. A detector hit is a lead: a Scanner triage review groups the leads by root cause and gives each one a next check.',
   },
 ];
 
@@ -75,7 +75,7 @@ ${button({ label: 'Clear', id: 'slither-clear', variant: 'quiet' })}
 <div id="slither-table"></div>
 ${codeBlock({ code: '', name: 'slither-focus.md', numbers: false, copy: true, wrap: true, label: 'Triage queue as Markdown', className: 'tool-output' })}
 <div class="cluster tool-actions">
-${button({ label: 'Triage this in the workbench', href: '/?profile=scanner#workspace', id: 'slither-handoff', variant: 'primary', iconEnd: 'arrow-right' })}
+${button({ label: 'Triage this queue', href: '/?profile=scanner#workspace', id: 'slither-handoff', variant: 'primary', iconEnd: 'arrow-right' })}
 ${button({ label: 'Download .md', id: 'slither-download', icon: 'download' })}
 </div>
 </div>`,

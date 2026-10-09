@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-theme="light">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=1200">
@@ -10,10 +10,44 @@
 <link rel="stylesheet" href="social.css">
 </head>
 <body class="social">
-<main class="social-card page-field">
+<main class="social-card">
+<pre class="social-card__field" aria-hidden="true">    _updateGlobal();            _updateGlobal();            _updateGlobal();            _updateGlobal();            _updateGlobal();            _updateGlobal();            _updateGlobal();  
+       assertGt(stolen, 0);        assertGt(stolen, 0);        assertGt(stolen, 0);        assertGt(stolen, 0);        assertGt(stolen, 0);        assertGt(stolen, 0);        assertGt(stolen
+  earned = balance * (rewardPerToken() - paidPerToken[account])        earned = balance * (rewardPerToken() - paidPerToken[account])        earned = balance * (rewardPerToken() - paidPerToke
+             if (reward &gt; rewardReserve) revert ReserveShort();            if (reward &gt; rewardReserve) revert ReserveShort();            if (reward &gt; rewardReserve) revert ReserveShort();   
+    function stake(uint256 amount) external {        function stake(uint256 amount) external {        function stake(uint256 amount) external {        function stake(uint256 amount) external
+           ## Proof of concept        ## Proof of concept        ## Proof of concept        ## Proof of concept        ## Proof of concept        ## Proof of concept        ## Proof of conce
+      Theft of unclaimed yield        Theft of unclaimed yield        Theft of unclaimed yield        Theft of unclaimed yield        Theft of unclaimed yield        Theft of unclaimed yield
+ Verdict: rewrite-then-submit        Verdict: rewrite-then-submit        Verdict: rewrite-then-submit        Verdict: rewrite-then-submit        Verdict: rewrite-then-submit        Verdict: 
+        ## Recommended fix        ## Recommended fix        ## Recommended fix        ## Recommended fix        ## Recommended fix        ## Recommended fix        ## Recommended fix        
+       balanceOf[msg.sender] += amount;            balanceOf[msg.sender] += amount;            balanceOf[msg.sender] += amount;            balanceOf[msg.sender] += amount;            balance
+          C3 | overstated | rewards are capped at rewardReserve        C3 | overstated | rewards are capped at rewardReserve        C3 | overstated | rewards are capped at rewardReserve     
+     C4 | contradicted | input-1/src/TesseraStaking.sol:115        C4 | contradicted | input-1/src/TesseraStaking.sol:115        C4 | contradicted | input-1/src/TesseraStaking.sol:115       
+Already reported? docs/known-issues.md:13        Already reported? docs/known-issues.md:13        Already reported? docs/known-issues.md:13        Already reported? docs/known-issues.md:13  
+           if (amount == 0) revert ZeroAmount();            if (amount == 0) revert ZeroAmount();            if (amount == 0) revert ZeroAmount();            if (amount == 0) revert ZeroAmou
+  forge test --match-test test_reserveDrain -vv        forge test --match-test test_reserveDrain -vv        forge test --match-test test_reserveDrain -vv        forge test --match-test test_
+         N-1: exit() reverts when the reserve is short (known issue)        N-1: exit() reverts when the reserve is short (known issue)        N-1: exit() reverts when the reserve is short (
+    function claim() external nonReentrant {        function claim() external nonReentrant {        function claim() external nonReentrant {        function claim() external nonReentrant {  
+           Call _settle(msg.sender) before the balance changes        Call _settle(msg.sender) before the balance changes        Call _settle(msg.sender) before the balance changes        Ca
+      input-1/src/TesseraStaking.sol:87-94        input-1/src/TesseraStaking.sol:87-94        input-1/src/TesseraStaking.sol:87-94        input-1/src/TesseraStaking.sol:87-94        input-1/
+ ## Impact        ## Impact        ## Impact        ## Impact        ## Impact        ## Impact        ## Impact        ## Impact        
+        Impact in scope: Medium, theft of unclaimed rewards        Impact in scope: Medium, theft of unclaimed rewards        Impact in scope: Medium, theft of unclaimed rewards        Impac
+   vm.prank(attacker); staking.stake(1_166_666e18);        vm.prank(attacker); staking.stake(1_166_666e18);        vm.prank(attacker); staking.stake(1_166_666e18);        vm.prank(attacker);
+              _updateGlobal();            _updateGlobal();            _updateGlobal();            _updateGlobal();            _updateGlobal();            _updateGlobal();            _updateG
+     assertGt(stolen, 0);        assertGt(stolen, 0);        assertGt(stolen, 0);        assertGt(stolen, 0);        assertGt(stolen, 0);        assertGt(stolen, 0);        assertGt(stolen, 
+earned = balance * (rewardPerToken() - paidPerToken[account])        earned = balance * (rewardPerToken() - paidPerToken[account])        earned = balance * (rewardPerToken() - paidPerToken[
+           if (reward &gt; rewardReserve) revert ReserveShort();            if (reward &gt; rewardReserve) revert ReserveShort();            if (reward &gt; rewardReserve) revert ReserveShort();     
+  function stake(uint256 amount) external {        function stake(uint256 amount) external {        function stake(uint256 amount) external {        function stake(uint256 amount) external {
+         ## Proof of concept        ## Proof of concept        ## Proof of concept        ## Proof of concept        ## Proof of concept        ## Proof of concept        ## Proof of concept
+    Theft of unclaimed yield        Theft of unclaimed yield        Theft of unclaimed yield        Theft of unclaimed yield        Theft of unclaimed yield        Theft of unclaimed yield  
+           Verdict: rewrite-then-submit        Verdict: rewrite-then-submit        Verdict: rewrite-then-submit        Verdict: rewrite-then-submit        Verdict: rewrite-then-submit       
+      ## Recommended fix        ## Recommended fix        ## Recommended fix        ## Recommended fix        ## Recommended fix        ## Recommended fix        ## Recommended fix        ##
+     balanceOf[msg.sender] += amount;            balanceOf[msg.sender] += amount;            balanceOf[msg.sender] += amount;            balanceOf[msg.sender] += amount;            balanceOf
+        C3 | overstated | rewards are capped at rewardReserve        C3 | overstated | rewards are capped at rewardReserve        C3 | overstated | rewards are capped at rewardReserve       
+   C4 | contradicted | input-1/src/TesseraStaking.sol:115        C4 | contradicted | input-1/src/TesseraStaking.sol:115        C4 | contradicted | input-1/src/TesseraStaking.sol:115        C</pre>
 <div class="social-card__pitch">
 <p class="social-card__brand"><svg class="brand__mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect class="brand__tile" width="64" height="64" rx="9"/><path class="brand__glyph" d="M12.5 15h6.5v31.5h-6.5z"/><path class="brand__glyph" fill-rule="evenodd" d="M25.5 25a10.75 10.75 0 1 0 0 21.5a10.75 10.75 0 0 0 0-21.5zm0 6.25a4.5 4.5 0 1 1 0 9a4.5 4.5 0 0 1 0-9z"/><path class="brand__slash" d="M45.5 13h6.25l-8.6 37.5h-6.25z"/></svg><span>Bounty Operator</span></p>
-<h1 class="social-card__title">Find the hole in your report before the triager does.</h1>
+<h1 class="social-card__title">Find <span class="pen">the hole<svg class="pen__ring" viewBox="0 0 300 100" preserveAspectRatio="none" aria-hidden="true" focusable="false"><path pathLength="1000" d="M16 56C10 26 70 8 158 8c82 0 134 18 130 48-4 28-78 38-150 36C66 90 20 78 14 52 10 34 34 20 84 13"/></svg></span> in your report before the triager does.</h1>
 </div>
 <div class="social-card__shot">
 <figure class="home-shot home-shot--still">
@@ -35,7 +69,7 @@
 
 </figure>
 </div>
-<footer class="social-card__strip theme-dark">
+<footer class="social-card__strip">
 <p class="social-card__proof">Built by Tradi3: most valid Criticals in ENS, 2nd of 133 in Firelight</p>
 <p class="social-card__price"><span>Free: one review a day</span><span>Operator: US$10 a week</span></p>
 </footer>

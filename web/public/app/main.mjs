@@ -40,7 +40,7 @@ import { initRun } from './run.mjs';
 import { initSourcePane } from './source-pane.mjs';
 import { initialState, loadWorkbench, persistWorkbench, takeHandoff, workbench } from './state.mjs';
 import { formatDate, on, qs } from './ui.mjs';
-import { WORK_FIELDS, enterExample, initWorkbench, leaveExample, say, setStep, view } from './workbench.mjs';
+import { WORK_FIELDS, enterExample, initWorkbench, leaveExample, say, sayQuietly, setStep, view } from './workbench.mjs';
 
 // ---------------------------------------------------------------------------
 // The placeholder example
@@ -311,12 +311,17 @@ export async function loadExample(id = '') {
   enterExample({ ...example, files, profile: profile.id }, result);
   track(EVENTS.EXAMPLE_LOADED);
   // A bundled example carries a stored model answer; the placeholder is written by hand.
-  const origin = example.model
-    ? `The review is a stored answer from ${example.model}${formatDate(example.generatedAt) ? `, generated ${formatDate(example.generatedAt)}` : ''}.`
-    : 'It was written by hand: no model was called.';
-  say(hadWork
-    ? `Example loaded. ${origin} Your own files are put aside and come back when you leave it.`
-    : `Example loaded. ${origin}`, { tone: 'success' });
+  const stored = example.model
+    ? ` The review is a stored answer from ${example.model}${formatDate(example.generatedAt) ? `, generated ${formatDate(example.generatedAt)}` : ''}.`
+    : '';
+  // The result prints the model and the day on its first line, where the page lands, so that line is
+  // not pinned over it as well: a screen reader hears it. The status line keeps what the page prints
+  // nowhere else.
+  sayQuietly(`Example loaded.${stored}`);
+  say([
+    stored ? '' : 'The example was written by hand: no model was called.',
+    hadWork ? 'Your own files are put aside and come back when you leave the example.' : '',
+  ].filter(Boolean).join(' '), { tone: 'success' });
   return true;
 }
 

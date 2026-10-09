@@ -1,7 +1,7 @@
 @charset "UTF-8";
 
 /*
-  Bounty Operator: the social card (web/public/social-v4.png)
+  Bounty Operator: the social card (web/public/social-v5.png)
 
   Loaded after base.css and home.css by web/site/social/card.html, which is
   drawn at exactly 1200 x 630 and never served. Colours come from the base
@@ -13,21 +13,50 @@
   height: 630px;
   min-height: 0;
   overflow: hidden;
-  background: var(--field);
+  background: var(--bg);
 }
 
-/* The card is one sheet of field stock: no band needed beyond its own edges. */
 .social-card {
+  position: relative;
+  isolation: isolate;
   display: grid;
-  grid-template-columns: 540px minmax(0, 1fr);
-  grid-template-rows: minmax(0, 1fr) 76px;
-  column-gap: 48px;
+  grid-template-columns: 590px minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) 72px;
+  column-gap: 44px;
   width: 1200px;
   height: 630px;
-  padding: 44px 56px 0 60px;
+  padding: 44px 52px 0 60px;
   overflow: hidden;
-  border-image: none;
-  background: var(--field);
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* The ember behind the slip. */
+.social-card::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  top: -150px;
+  right: -210px;
+  width: 980px;
+  height: 820px;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, #ff4d2e66 0%, #ff5a1f29 46%, transparent 100%);
+}
+
+/* The field: report and code lines, quiet behind the words and clearer toward the slip. */
+.social-card__field {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  margin: 0;
+  overflow: hidden;
+  color: var(--text);
+  font: 11px / 19px var(--font-mono);
+  opacity: 0.15;
+  white-space: pre;
+  -webkit-mask-image: linear-gradient(to right, #00000033 0, #00000033 40%, #000 80%);
+  mask-image: linear-gradient(to right, #00000033 0, #00000033 40%, #000 80%);
 }
 
 .social-card__pitch {
@@ -40,33 +69,33 @@
   align-items: center;
   gap: 14px;
   font-family: var(--font-display);
-  font-size: 28px;
-  font-stretch: 86%;
-  font-weight: 820;
+  font-size: 27px;
+  font-stretch: 100%;
+  font-weight: 800;
+  letter-spacing: -0.015em;
 }
 
 .social-card__brand .brand__mark {
-  width: 48px;
-  height: 48px;
+  width: 46px;
+  height: 46px;
 }
 
 .social-card__title {
   margin-top: auto;
-  margin-bottom: 44px;
-  font-size: 84px;
-  font-stretch: 68%;
-  font-weight: 880;
-  line-height: 0.92;
-  letter-spacing: -0.004em;
-  word-spacing: 0.05em;
+  margin-bottom: 46px;
+  font-size: 61px;
+  font-stretch: 110%;
+  font-weight: 820;
+  line-height: 1.04;
+  letter-spacing: -0.022em;
   text-wrap: balance;
 }
 
-/* The slip lying on the field. The card keeps what decides it: the claim,
-   the stamps, the line and the verdict. */
+/* The slip lying on the black page. The card keeps what decides it: the
+   claim, the stamps, the line and the verdict. */
 .social-card__shot {
   align-self: center;
-  margin-bottom: 18px;
+  margin-bottom: 14px;
 }
 
 .social-card__shot .slip {
@@ -84,14 +113,15 @@
   align-items: center;
   justify-content: space-between;
   gap: 24px;
-  margin-inline: -60px -56px;
-  padding-inline: 60px 56px;
-  background: var(--bg);
+  margin-inline: -60px -52px;
+  padding-inline: 60px 52px;
+  border-top: 1px solid var(--line-strong);
+  background: #09090ae6;
   color: var(--text);
   font-family: var(--font-display);
   font-size: 19px;
-  font-stretch: 86%;
-  font-weight: 760;
+  font-stretch: 96%;
+  font-weight: 720;
 }
 
 .social-card__proof,
@@ -118,5 +148,5 @@
 }
 
 .social-card__price > span:last-child {
-  color: var(--stock);
+  color: var(--accent);
 }

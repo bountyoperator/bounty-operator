@@ -291,7 +291,7 @@ function resultPanel() {
  * The workbench section. Its title is an <h2>; the panel titles are <h3> and
  * the row labels <h4>, so it belongs directly under the page's <h1>.
  */
-export function workbench({ title = 'Run a review', lede = 'Choose a review and add your files.' } = {}) {
+export function workbench({ title = 'Run a review' } = {}) {
   const steps = WORKBENCH_STEPS.map((step, index) => ({
     label: step.label,
     state: index === 0 ? 'current' : 'todo',
@@ -302,7 +302,6 @@ export function workbench({ title = 'Run a review', lede = 'Choose a review and 
 <header class="wb__head">
 <div class="wb__intro">
 <h2 id="wb-title">${title}</h2>
-<p class="lede">${lede}</p>
 </div>
 <div class="wb__tools no-print">
 ${button({ label: 'Load the example', id: 'wb-example', variant: 'quiet', size: 'sm', icon: 'play', attrs: { 'data-example': '' } })}
@@ -314,6 +313,7 @@ ${button({ label: 'Clear', id: 'wb-clear', variant: 'quiet', size: 'sm', icon: '
 ${stepper({ label: 'Review steps', steps, className: 'wb__stepper' })}
 ${progress({ label: 'Review running', className: 'wb__progress' })}
 <div class="notice notice--info wb__status" id="wb-status" role="status"></div>
+<p class="visually-hidden" id="wb-quiet" role="status"></p>
 </div>
 ${loadPanel()}
 ${runPanel()}

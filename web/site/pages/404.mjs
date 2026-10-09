@@ -19,7 +19,7 @@ const body = html`
         html`
         <p>Three pages that exist:</p>
         <div class="cluster">
-          ${button({ label: 'Open the workbench', href: '/#workspace', variant: 'primary', iconEnd: 'arrow-right' })}
+          ${button({ label: 'Start a free review', href: '/#workspace', variant: 'primary', iconEnd: 'arrow-right' })}
           ${button({ label: 'Free tools', href: '/tools' })}
           ${button({ label: 'Report guide', href: '/guide' })}
         </div>`,
@@ -31,7 +31,7 @@ const body = html`
 export default {
   path: '/404',
   title: 'Page not found | Bounty Operator',
-  description: 'No page at this address. Open the workbench, the free tools or the report guide from here.',
+  description: 'No page at this address. Start a review, open the free tools or read the report guide from here.',
   robots: 'noindex',
   sitemap: false,
   body,

@@ -171,7 +171,7 @@ function wireHandoff(root) {
     if (bytes > FILE_LIMIT_BYTES) {
       showError(
         error,
-        `The draft is ${Math.ceil(bytes / 1000)} KB. The workbench takes files up to ${FILE_LIMIT_BYTES / 1000} KB.`,
+        `The draft is ${Math.ceil(bytes / 1000)} KB. A review takes files up to ${FILE_LIMIT_BYTES / 1000} KB.`,
         'Trim the pasted output to the lines that carry the result, then send it again.',
       );
       return;
@@ -188,7 +188,7 @@ function wireHandoff(root) {
       window.sessionStorage.setItem(HANDOFF_KEY, JSON.stringify(handoff));
     } catch {
       storageBlocked = true;
-      showError(error, 'This browser blocks session storage, so the draft cannot be handed over.', 'The draft is selected. Copy it, press the button again to open the workbench, and paste it there.');
+      showError(error, 'This browser blocks session storage, so the draft cannot be handed over.', 'The draft is selected. Copy it, press the button again and paste it into the review that opens.');
       input.select();
       return;
     }

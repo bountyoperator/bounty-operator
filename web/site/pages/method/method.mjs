@@ -117,14 +117,14 @@ const heroAside = html`
 <div class="glance">
   <p class="meta">Every check leads to a decision</p>
   ${verdictList()}
-  <p class="fine">The gauntlet returns exactly one of these, with one blocker and the cheapest action that removes it.</p>
+  <p class="fine">The gauntlet returns exactly one of these, with the blocker and the cheapest action that removes it.</p>
 </div>`;
 
 const body = html`
 ${pageHero({
   trail: [{ label: 'Bounty Operator', href: '/' }, { label: 'Method' }],
   title: TITLE,
-  lede: `${RECORD_CLAIM} Every check exists because real reports were closed for that reason. For each one: the question it asks, why reports die on it and the verdict it leads to.`,
+  lede: `${RECORD_CLAIM} Every check exists because real reports were closed for that reason.`,
   actions: html`${button({ label: 'Start a free review', href: workbenchLink(), variant: 'primary', size: 'lg', iconEnd: 'arrow-right' })}${button({ label: 'Go to the gauntlet', href: '#gauntlet', size: 'lg' })}`,
   note: 'Free: 1 review a day on your own model. No card.',
   after: proofLine(),
@@ -178,7 +178,7 @@ ${pageHero({
       label: 'What stage 8 hands you · invented protocol',
       body: dossier({ verdict: GAUNTLET_EXAMPLE.verdict, headline: GAUNTLET_EXAMPLE.headline, counts: GAUNTLET_EXAMPLE.counts }),
     })}
-    <p class="fine">One decision, one blocker, the cheapest action that removes it and a filing deadline. <a class="link" href="/gauntlet">Read the full example dossier</a></p>
+    <p class="fine">One verdict, the blocker, the cheapest action that removes it and a filing deadline. <a class="link" href="/gauntlet">Read the full example dossier</a></p>
   </div>
 </section>
 
@@ -200,14 +200,14 @@ ${pageHero({
           'A downloadable review packet with a SHA-256 hash of every file',
         ])}
       </div>`,
-      foot: html`${button({ label: 'Start a review', href: workbenchLink(), variant: 'secondary', iconEnd: 'arrow-right' })}`,
+      foot: html`${button({ label: 'Start a free review', href: workbenchLink(), variant: 'secondary', iconEnd: 'arrow-right' })}`,
     })}
     ${card({
       title: 'The full gauntlet',
       meta: statusChip('operator', 'Operator · US$10/week'),
       variant: 'accent',
       body: html`<div class="stack stack--12">
-        <p>One run takes the draft through all eight stages and ends in one verdict. Each stage reads the output of the stages before it.</p>
+        <p>A run takes the draft through all eight stages and ends in one verdict. Each stage reads the output of the stages before it.</p>
         ${tickList(['Unlimited reviews', 'The Gauntlet and Panel review', '4 reviews running at once'])}
       </div>`,
       foot: html`<div class="cluster">${button({ label: 'See pricing', href: '/pricing', variant: 'primary', iconEnd: 'arrow-right' })}${button({ label: 'See a gauntlet run', href: '/gauntlet', variant: 'quiet' })}</div>`,

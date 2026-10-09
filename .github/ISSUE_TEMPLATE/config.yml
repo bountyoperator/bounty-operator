@@ -1,6 +1,6 @@
 blank_issues_enabled: false
 contact_links:
-  - name: Open the workbench
+  - name: Go to bountyoperator.com
     url: https://bountyoperator.com/
     about: Run a review, read the guide, or reach account and billing support from the site.
   - name: Report a vulnerability in Bounty Operator

@@ -95,7 +95,7 @@ const STAGE_RESULTS = {
 
 const stageTable = stackTable({
   caption: 'Stages',
-  columns: [{ label: 'Stage' }, { label: 'Its verdict' }, { label: 'The one thing it decided' }],
+  columns: [{ label: 'Stage' }, { label: 'Its verdict' }, { label: 'What it decided' }],
   rows: STAGES.map((stage) => {
     const [verdict, decided] = STAGE_RESULTS[stage.id];
     return [html`<span class="stage-cell"><span class="stage-cell__n">${stage.n}</span>${stage.name}</span>`, verdictChip(verdict), inline(decided)];
@@ -110,7 +110,7 @@ const decision = kv(
     [
       'Cheapest action',
       inline(
-        'One fork test at the deployed revision: let the real feed move the price, liquidate with 1 unit of debt, assert the borrower’s collateral before and after, and run a control that repays in full.',
+        'A fork test at the deployed revision: let the real feed move the price, liquidate with 1 unit of debt, assert the borrower’s collateral before and after, and run a control that repays in full.',
       ),
     ],
     ['Severity to claim', 'High, on the programme scale supplied in Context.'],
@@ -170,7 +170,7 @@ const FAQ_ITEMS = [
   },
   {
     q: 'What happens when an early stage ends the report?',
-    a: 'The run stops there. If scope, design intent or prior art says drop or likely duplicate, the run stops before you spend time on a PoC, and the result opens on that verdict. One button runs the remaining stages anyway.',
+    a: 'The run stops there. If scope, design intent or prior art says drop or likely duplicate, the run stops before you spend time on a PoC, and the result opens on that verdict. A button runs the remaining stages anyway.',
   },
   {
     q: 'Does the gauntlet run code or touch the target?',
@@ -187,7 +187,7 @@ ${pageHero({
   trail: [{ label: 'Bounty Operator', href: '/' }, { label: 'Method', href: '/method' }, { label: 'Gauntlet' }],
   stamp: statusChip('operator'),
   title: 'Run one finding through eight stages and get a verdict',
-  lede: 'Give it your draft, your code and the program rules. You get one verdict (submit, rewrite then submit, prove first, hold as duplicate, or drop), the main thing blocking it, and the quickest fix.',
+  lede: 'Give it your draft, your code and the programme rules. You get one verdict (submit, rewrite then submit, prove first, hold as duplicate, or drop), the main thing blocking it, and the quickest fix.',
   actions: operatorActions({ secondary: button({ label: 'See the eight stages', href: '#stages', size: 'lg' }) }),
   note: 'US$10 per week. Runs on your own model and key.',
   after: proofLine(),
@@ -198,14 +198,10 @@ ${pageHero({
 <section class="section wrap" aria-labelledby="verdicts">
   <div class="split">
     <div>
-      ${sectionHeading({
-        title: 'The verdict is one of five',
-        id: 'verdicts',
-        lede: 'Each verdict tells you what to do next with the report.',
-      })}
+      ${sectionHeading({ title: 'The verdict is one of five', id: 'verdicts' })}
       ${tickList([
         'One verdict for the whole report.',
-        'One blocker: the single fact that stops submission today.',
+        'The main blocker: the fact that stops submission today.',
         'The cheapest action that removes the blocker, as something you run locally.',
         'A filing deadline, set by how exposed the finding is to a private duplicate.',
       ])}
@@ -292,7 +288,7 @@ ${pageHero({
         title: 'Finished stages are kept',
         text: 'A cancelled run, a provider error or a reload keeps every stage that finished. The run picks up at the stage that did not.',
       },
-      { title: 'One download', text: 'The result downloads as one file, with a SHA-256 hash of every file the run read.' },
+      { title: 'The result is one file', text: 'It downloads with a SHA-256 hash of every file the run read.' },
     ],
     { columns: 2 },
   )}
@@ -322,7 +318,7 @@ export default {
   path: PATH,
   title: 'Gauntlet: eight-stage report check | Bounty Operator',
   description:
-    'One run takes your draft through eight stages and returns one verdict, the main blocker and the quickest fix. Full example included.',
+    'A run takes your draft through eight stages and returns one verdict, the main blocker and the quickest fix. Full example included.',
   label: 'Gauntlet',
   styles: STYLES,
   jsonld: [breadcrumbsLd([{ name: 'Method', path: '/method' }, { name: 'Gauntlet', path: PATH }]), faqPageLd(FAQ_ITEMS)],

@@ -6,15 +6,14 @@
 <title>Slither triage queue: 13 detectors | Bounty Operator</title>
 <meta name="description" content="Drop Slither’s JSON output and get a ranked Markdown queue of the 13 detectors worth a manual pass, with file and line. Runs in your browser.">
 <link rel="canonical" href="https://bountyoperator.com/tools/slither-focus">
-<meta name="color-scheme" content="dark light">
-<meta name="theme-color" content="#17132e" media="(prefers-color-scheme: dark)">
-<meta name="theme-color" content="#fbfbf8" media="(prefers-color-scheme: light)">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#09090a">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Bounty Operator">
 <meta property="og:title" content="Slither triage queue: 13 detectors | Bounty Operator">
 <meta property="og:description" content="Drop Slither’s JSON output and get a ranked Markdown queue of the 13 detectors worth a manual pass, with file and line. Runs in your browser.">
 <meta property="og:url" content="https://bountyoperator.com/tools/slither-focus">
-<meta property="og:image" content="https://bountyoperator.com/social-v4.png">
+<meta property="og:image" content="https://bountyoperator.com/social-v5.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Bounty Operator. Find the hole in your report before the triager does.">
@@ -22,7 +21,7 @@
 <meta name="twitter:creator" content="@Tradi3_">
 <meta name="twitter:title" content="Slither triage queue: 13 detectors | Bounty Operator">
 <meta name="twitter:description" content="Drop Slither’s JSON output and get a ranked Markdown queue of the 13 detectors worth a manual pass, with file and line. Runs in your browser.">
-<meta name="twitter:image" content="https://bountyoperator.com/social-v4.png">
+<meta name="twitter:image" content="https://bountyoperator.com/social-v5.png">
 <meta name="twitter:image:alt" content="Bounty Operator. Find the hole in your report before the triager does.">
 <link rel="icon" href="/favicon.ico" sizes="48x48">
 <link rel="icon" href="/icon.svg" type="image/svg+xml">
@@ -35,17 +34,18 @@
 <link rel="modulepreload" href="/tools/slither-focus-core.mjs" fetchpriority="low">
 <link rel="modulepreload" href="/tools/dom.mjs" fetchpriority="low">
 <link rel="modulepreload" href="/tools/ping.mjs" fetchpriority="low">
+<script type="module" src="/field.mjs" fetchpriority="low"></script>
 <script type="module" src="/tools/slither-focus.mjs" fetchpriority="low"></script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Bounty Operator","item":"https://bountyoperator.com/"},{"@type":"ListItem","position":2,"name":"Tools","item":"https://bountyoperator.com/tools"},{"@type":"ListItem","position":3,"name":"Slither triage queue","item":"https://bountyoperator.com/tools/slither-focus"}]}</script>
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Is the Slither output uploaded?","acceptedAnswer":{"@type":"Answer","text":"No. The file is parsed and filtered in this tab. After the page has loaded it makes one request: a counter that says the tool was used, with nothing of yours in it. Pressing “Triage this in the workbench” moves the queue to the workbench through this browser’s session storage. It leaves the browser only when you run a review there: through our server to the provider you chose."}},{"@type":"Question","name":"Why these 13 detectors?","acceptedAnswer":{"@type":"Answer","text":"Slither reports naming, style and gas detectors next to the ones that move funds. These 13 are the classes where a hit is worth reading line by line on a bounty target: value sent to a caller-chosen address, state written after an external call, ignored return values, controlled delegatecall."}},{"@type":"Question","name":"What does the tool decide?","acceptedAnswer":{"@type":"Answer","text":"Nothing about validity. It filters, ranks and formats. A detector hit is a lead: the scanner triage profile in the workbench groups the leads by root cause and gives each one a next check."}}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Is the Slither output uploaded?","acceptedAnswer":{"@type":"Answer","text":"No. The file is parsed and filtered in this tab. After the page has loaded it makes one request: a counter that says the tool was used, with nothing of yours in it. Pressing “Triage this queue” opens a review with the queue loaded, through this browser’s session storage. It leaves the browser only when you run that review: through our server to the provider you chose."}},{"@type":"Question","name":"Why these 13 detectors?","acceptedAnswer":{"@type":"Answer","text":"Slither reports naming, style and gas detectors next to the ones that move funds. These 13 are the classes where a hit is worth reading line by line on a bounty target: value sent to a caller-chosen address, state written after an external call, ignored return values, controlled delegatecall."}},{"@type":"Question","name":"What does the tool decide?","acceptedAnswer":{"@type":"Answer","text":"Nothing about validity. It filters, ranks and formats. A detector hit is a lead: a Scanner triage review groups the leads by root cause and gives each one a next check."}}]}</script>
 </head>
 <body>
 <!--
-THESIS: The verdict is a stamp on your draft. The site is the inspection a finding passes before a triager sees it, not the category's dark code-card hero.
-OWN-WORLD: Inspection paperwork. Canary and white stock, black print, violet stamp ink, carbon indigo for code and the night shift. Ruled fields, square corners, part rules, ledger tables. Archivo condensed caps for labels and stamps; mono only for code and typed entries.
+THESIS: The verdict is a stamp on your draft, and the red pen has been through it first. The site is the inspection a finding passes before a triager sees it.
+OWN-WORLD: A black page, bone-white print and one hot ink, vermilion: the red of a seal and of a marking pen. The report is a sheet of paper lying on the page. Behind each page head lie lines of a report and of its code; lights drift over them and the pen strikes a line now and then. Archivo: wide heavy cuts for headlines and figures, condensed caps for stamps and labels; mono only for code and typed entries.
 STORY: A hunter sees a Critical stamped down to Medium with the line that decides it, trusts that the review argues against them, and starts a review or opens the example.
-FIRST VIEWPORT: Full-bleed canary field. Left: condensed black headline, lede, black Review my report, ruled View example. Right: the paper slip, tilted, Critical struck, Medium and the violet verdict stamped on it. Proof line on the field's foot.
-FORM: Rubber-stamp verdicts and inspection forms, 6 of 7, seed b5682f59.
+FIRST VIEWPORT: The moving field on black. Left: the headline with "the hole" circled in pen, the lede, a vermilion Review my report, a ruled View example. Right: the paper slip, tilted, Critical struck, Medium and the verdict stamped on it, in the light of the ember. Under them the three results of the builder as figures, then the five verdicts running past.
+FORM: Rubber-stamp verdicts and a report marked in red pen, seed b5682f59.
 FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md
 -->
 <a class="skip-link" href="#main">Skip to content</a>
@@ -54,7 +54,6 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
 <a class="brand" href="/"><svg class="brand__mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect class="brand__tile" width="64" height="64" rx="9"/><path class="brand__glyph" d="M12.5 15h6.5v31.5h-6.5z"/><path class="brand__glyph" fill-rule="evenodd" d="M25.5 25a10.75 10.75 0 1 0 0 21.5a10.75 10.75 0 0 0 0-21.5zm0 6.25a4.5 4.5 0 1 1 0 9a4.5 4.5 0 0 1 0-9z"/><path class="brand__slash" d="M45.5 13h6.25l-8.6 37.5h-6.25z"/></svg><span class="brand__name">Bounty Operator</span></a>
 <nav class="site-nav" aria-label="Main"><ul><li><a href="/#workspace">Review</a></li><li><a href="/benchmark">Benchmark</a></li><li><a href="/tools" aria-current="page">Tools</a></li><li><a href="/guide">Guide</a></li><li><a href="/pricing">Pricing</a></li></ul></nav>
 <div class="site-header__actions">
-<button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch colour theme"><span class="icon theme-toggle__icon" aria-hidden="true"></span></button>
 <a class="btn btn--secondary btn--sm" href="/#account">Sign in</a>
 </div>
 </div>
@@ -97,7 +96,7 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
 <figure class="code code--wrap tool-output"><figcaption class="code__bar"><span class="code__name">slither-focus.md</span><button class="code__copy" type="button" data-copy><span class="icon icon--copy" aria-hidden="true"></span><span data-copy-label>Copy</span></button></figcaption><pre class="code__pre" tabindex="0" role="region" aria-label="Triage queue as Markdown"><code><span class="code__line">
 </span></code></pre></figure>
 <div class="cluster tool-actions">
-<a class="btn btn--primary" href="/?profile=scanner#workspace" id="slither-handoff"><span class="btn__label">Triage this in the workbench</span><span class="icon icon--arrow-right" aria-hidden="true"></span></a>
+<a class="btn btn--primary" href="/?profile=scanner#workspace" id="slither-handoff"><span class="btn__label">Triage this queue</span><span class="icon icon--arrow-right" aria-hidden="true"></span></a>
 <button class="btn btn--secondary" type="button" id="slither-download"><span class="icon icon--download" aria-hidden="true"></span><span class="btn__label">Download .md</span></button>
 </div>
 </div></div>
@@ -131,7 +130,7 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
 
 <section class="section section--tight wrap wrap--narrow" aria-labelledby="questions">
 <h2 id="questions">Questions</h2>
-<div class="accordion tool-faq"><details class="accordion__item"><summary class="accordion__summary">Is the Slither output uploaded?</summary><div class="accordion__body"><p>No. The file is parsed and filtered in this tab. After the page has loaded it makes one request: a counter that says the tool was used, with nothing of yours in it. Pressing “Triage this in the workbench” moves the queue to the workbench through this browser’s session storage. It leaves the browser only when you run a review there: through our server to the provider you chose.</p></div></details><details class="accordion__item"><summary class="accordion__summary">Why these 13 detectors?</summary><div class="accordion__body"><p>Slither reports naming, style and gas detectors next to the ones that move funds. These 13 are the classes where a hit is worth reading line by line on a bounty target: value sent to a caller-chosen address, state written after an external call, ignored return values, controlled <code>delegatecall</code>.</p></div></details><details class="accordion__item"><summary class="accordion__summary">What does the tool decide?</summary><div class="accordion__body"><p>Nothing about validity. It filters, ranks and formats. A detector hit is a lead: the scanner triage profile in the workbench groups the leads by root cause and gives each one a next check.</p></div></details></div>
+<div class="accordion tool-faq"><details class="accordion__item"><summary class="accordion__summary">Is the Slither output uploaded?</summary><div class="accordion__body"><p>No. The file is parsed and filtered in this tab. After the page has loaded it makes one request: a counter that says the tool was used, with nothing of yours in it. Pressing “Triage this queue” opens a review with the queue loaded, through this browser’s session storage. It leaves the browser only when you run that review: through our server to the provider you chose.</p></div></details><details class="accordion__item"><summary class="accordion__summary">Why these 13 detectors?</summary><div class="accordion__body"><p>Slither reports naming, style and gas detectors next to the ones that move funds. These 13 are the classes where a hit is worth reading line by line on a bounty target: value sent to a caller-chosen address, state written after an external call, ignored return values, controlled <code>delegatecall</code>.</p></div></details><details class="accordion__item"><summary class="accordion__summary">What does the tool decide?</summary><div class="accordion__body"><p>Nothing about validity. It filters, ranks and formats. A detector hit is a lead: a Scanner triage review groups the leads by root cause and gives each one a next check.</p></div></details></div>
 </section>
 
 <section class="section section--tight wrap" aria-labelledby="next-action">
@@ -169,6 +168,7 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
 <p><a href="mailto:support@bountyoperator.com">support@bountyoperator.com</a></p>
 </div>
 </div>
+<div class="site-footer__mark" aria-hidden="true">Bounty Operator</div>
 </footer>
 </body>
 </html>

@@ -101,14 +101,14 @@ const body = docPage({
   head: {
     crumbs: [{ label: 'Bounty Operator', href: '/' }, { label: 'Changelog' }],
     title: 'Bounty Operator changelog',
-    lede: html`Every release, newest first, with its date. The current version is ${latest.version}.`,
+    lede: html`The current version is ${latest.version}.`,
     meta: html`${releases.length} releases · latest ${time(latest.date)}`,
   },
   sections,
   after: nextStep({
     title: 'Read the open-source code',
     text: 'The site, the review engine with its three core profiles, the free tools, the MCP server and the command-line kit are in one public repository. The gauntlet stages and the panel cross-examination run on the hosted service.',
-    actions: html`${button({ label: 'Open the workbench', href: '/#workspace', variant: 'primary', iconEnd: 'arrow-right' })}${button({ label: 'Source on GitHub', href: SITE.source, external: true, iconEnd: 'arrow-up-right' })}`,
+    actions: html`${button({ label: 'Start a free review', href: '/#workspace', variant: 'primary', iconEnd: 'arrow-right' })}${button({ label: 'Source on GitHub', href: SITE.source, external: true, iconEnd: 'arrow-up-right' })}`,
   }),
 });
 

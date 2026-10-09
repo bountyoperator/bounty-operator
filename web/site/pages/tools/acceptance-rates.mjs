@@ -173,7 +173,7 @@ ${ratesTable}
 ${nextAction({
   title: 'Find out which side of the rate your finding is on',
   text: 'The triager simulation reads your draft as the programme triager, ranks the three likeliest rejection reasons, quotes the sentence that triggers each and names the evidence that flips it.',
-  primary: { label: 'Run a triager simulation', href: '/?profile=triage#workspace' },
+  primary: { label: 'Simulate the triager', href: '/?profile=triage#workspace' },
   secondary: { label: 'How the simulation works', href: '/triager-simulation' },
 })}
 

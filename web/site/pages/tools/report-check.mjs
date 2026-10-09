@@ -20,11 +20,11 @@ const COUNT_TITLE = COUNT_WORD.charAt(0).toUpperCase() + COUNT_WORD.slice(1);
 const QUESTIONS = [
   {
     q: 'Where does my draft go?',
-    a: `Nowhere. The ${COUNT_WORD} checks and the citation check are JavaScript that runs in this tab, and the page sends no request with your text or your files. ${COUNTER_LINE} Pressing “Run the full challenge on your model” moves the draft and its files to the workbench through this browser’s session storage. A model sees them only when you start a review there.`,
+    a: `Nowhere. The ${COUNT_WORD} checks and the citation check are JavaScript that runs in this tab, and the page sends no request with your text or your files. ${COUNTER_LINE} Pressing “Run the full challenge on your model” opens a review with the draft and its files loaded, through this browser’s session storage. A model sees them only when you run that review.`,
   },
   {
     q: `What does ${COUNT} of ${COUNT} tell me?`,
-    a: 'That the draft contains the text these checks look for: a commit, a quoted impact row, one severity, an inline proof with its output, a prior-art reference or search result, and a line on AI use. The check does not verify comparison quality or duplicate status. The workbench challenge reviews the claims against the evidence you supply.',
+    a: 'That the draft contains the text these checks look for: a commit, a quoted impact row, one severity, an inline proof with its output, a prior-art reference or search result, and a line on AI use. The check does not verify comparison quality or duplicate status. The full challenge reviews the claims against the evidence you supply.',
   },
   {
     q: 'How does the citation check work?',
@@ -164,8 +164,8 @@ ${faq(QUESTIONS, { className: 'tool-faq' })}
 
 ${nextAction({
   title: 'The text is in order. Now test the claim.',
-  text: 'In the workbench your own model splits the draft into claims and marks each one confirmed, overstated, contradicted or unverifiable, with the line that decides it. The files you attached here go with the draft.',
-  primary: { label: 'Challenge a draft report', href: '/?profile=report#workspace' },
+  text: 'A review on your own model splits the draft into claims and marks each one confirmed, overstated, contradicted or unverifiable, with the line that decides it.',
+  primary: { label: 'Review my report', href: '/?profile=report#workspace' },
   secondary: { label: 'How the challenge works', href: '/challenge-report' },
 })}
 

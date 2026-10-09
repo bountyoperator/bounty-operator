@@ -4,14 +4,14 @@
 
 **Find the hole in your report before the triager does.**
 
-Bounty Operator is the pre-submission adversary for bug bounty hunters and
-smart-contract auditors. Give it the code and your draft finding. It argues
-against the finding the way a triager will, ties every claim to a file and line,
-and returns a verdict: `submit`, `rewrite-then-submit`, `prove-first`,
-`hold-duplicate` or `drop`. It runs on your own model in the browser, inside
-your AI client over MCP, or from the command line.
+Bounty Operator argues against your bug bounty report before you submit it.
+Give it the draft and the code it cites. It checks every claim against the
+code, the way a triager will, and you get one verdict: `submit`,
+`rewrite-then-submit`, `prove-first`, `hold-duplicate` or `drop`. It runs on
+your own model: in the browser, in your coding agent over MCP, or from the
+command line.
 
-### [Open the workbench → bountyoperator.com](https://bountyoperator.com/)
+### [Start a free review at bountyoperator.com](https://bountyoperator.com/)
 
 [![Release](https://img.shields.io/github/v/release/bountyoperator/bounty-operator?sort=semver)](https://github.com/bountyoperator/bounty-operator/releases)
 [![License](https://img.shields.io/github/license/bountyoperator/bounty-operator)](LICENSE)
@@ -27,7 +27,7 @@ your AI client over MCP, or from the command line.
 - **The triager's objection first.** Each finding carries its strongest
   counterargument, whether the source resolves it, and the one missing artifact
   that would settle it.
-- **Your model, your key, nothing stored.** OpenRouter, Anthropic, OpenAI,
+- **Your model and your key. Nothing is stored.** OpenRouter, Anthropic, OpenAI,
   Gemini, xAI, DeepSeek, Mistral or Groq with your own key. A hosted review
   passes your files and your key through bountyoperator.com to that provider.
   Source files, keys and review text are never stored.
@@ -93,7 +93,7 @@ each client: [bountyoperator.com/mcp](https://bountyoperator.com/mcp) and
 Python 3.10 or newer. No dependencies.
 
 ```bash
-pip install "git+https://github.com/bountyoperator/bounty-operator@v0.8.4"
+pip install "git+https://github.com/bountyoperator/bounty-operator@v0.9.0"
 bounty-kit agent-pack ./agent-pack.md --target "Example Protocol" --program "Example bounty"
 ```
 

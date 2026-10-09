@@ -146,7 +146,7 @@ const heroAside = exampleFrame({
 const STEPS = [
   {
     title: 'Pick two to four models',
-    text: 'Choose them from the models your OpenRouter key reaches. One key covers models from different labs, so the panel needs no second account. A model on another provider runs on that provider’s own key.',
+    text: 'Choose them from the models your OpenRouter key reaches. That key covers models from different labs, so the panel needs no second account. A model on another provider runs on that provider’s own key.',
   },
   {
     title: 'The reviews run in parallel',
@@ -154,10 +154,10 @@ const STEPS = [
   },
   {
     title: 'Cross-check',
-    text: 'One more hosted review, on the panel model you pick, reads the reviews next to the source and tests every finding against the lines it cites.',
+    text: 'A final hosted review, on the panel model you pick, reads the reviews next to the source and tests every finding against the lines it cites.',
   },
   {
-    title: 'One merged review',
+    title: 'The merged review',
     text: 'What survives comes back as one review, with a count of how many models reported each finding.',
   },
 ];
@@ -200,7 +200,7 @@ ${pageHero({
   ${sectionHeading({
     title: 'How it runs',
     id: 'how',
-    lede: 'Each model reviews the files separately. One more pass cross-checks them. Each review goes through our server to your provider. No file, key or review is stored.',
+    lede: 'Each model reviews the files separately, and a final pass cross-checks them. Each review goes through our server to your provider. No file, key or review is stored.',
   })}
   ${points(STEPS, { columns: 4 })}
 </section>
@@ -228,7 +228,7 @@ ${pageHero({
   ${sectionHeading({
     title: 'What you get',
     id: 'example',
-    lede: 'One review in the standard format, plus the agreement table. StreamVault is a staking contract invented for this page.',
+    lede: 'A review in the standard format, plus the agreement table. StreamVault is a staking contract invented for this page.',
   })}
   ${exampleFrame({
     label: 'Example panel review · invented contract · StreamVault',
@@ -254,7 +254,7 @@ ${pageHero({
       { title: 'Surviving findings', text: 'Each as a finding card: location, impact, path, the strongest counterargument, the evidence gap, the fix and a test.' },
       { title: 'Agreement', text: 'Every distinct finding with its k of n count, kept, unproven or dropped, the lines that settle it and the reviews that reported it.' },
       { title: 'Checked and safe', text: 'What the panel flagged and the code clears, each with the line that guards it.' },
-      { title: 'The packet', text: 'One download: the merged review, the models used and the SHA-256 manifest of every file the panel read.' },
+      { title: 'The packet', text: 'It downloads as one file: the merged review, the models used and the SHA-256 manifest of every file the panel read.' },
     ],
     { columns: 4 },
   )}
@@ -274,7 +274,7 @@ ${ctaBand({
 
 <section class="section section--tight wrap">
   ${relatedLinks([
-    { label: 'Gauntlet', href: '/gauntlet', text: 'One finding, eight stages, one verdict.' },
+    { label: 'Gauntlet', href: '/gauntlet', text: 'Eight stages on one finding, then a verdict.' },
     { label: 'Solidity review', href: '/solidity-review', text: 'The single-model review a panel fans out.' },
     { label: 'Pricing', href: '/pricing', text: 'Free and Operator, side by side.' },
   ])}

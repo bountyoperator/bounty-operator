@@ -549,8 +549,8 @@ const body = docPage({
   ],
   after: nextStep({
     title: 'Prefer a browser',
-    text: 'The workbench runs the same profiles with the same engine, and shows each finding as a card.',
-    actions: html`${button({ label: 'Open the workbench', href: '/#workspace', variant: 'primary', iconEnd: 'arrow-right' })}${button({ label: 'Read the report guide', href: '/guide' })}`,
+    text: 'The website runs the same profiles with the same engine, and shows each finding as a card.',
+    actions: html`${button({ label: 'Start a free review', href: '/#workspace', variant: 'primary', iconEnd: 'arrow-right' })}${button({ label: 'Read the report guide', href: '/guide' })}`,
   }),
 });
 

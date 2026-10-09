@@ -21,14 +21,47 @@
    ========================================================================== */
 
 .home-top {
-  padding-top: clamp(var(--sp-24), 2.8vw, var(--sp-48));
+  padding-top: clamp(var(--sp-32), 4.2vw, var(--sp-72));
+  /* The ember is wider than a phone. */
+  overflow-x: clip;
 }
 
-/* On a phone the page reads headline, lede, action, then the stamped slip,
-   so the verdict lands in the first screen; the note and the links follow
-   the slip. The text block steps aside (display: contents) and its parts
-   take their places. Up to 480px the price line and the note move up under
-   the actions, so the first screen says what a review costs. */
+/* The ember: the hot ink's light behind the slip. It breathes slowly; with
+   reduced motion it holds still. */
+.home-top::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  top: -4rem;
+  left: calc(50% - 12rem);
+  width: min(72rem, 190vw);
+  aspect-ratio: 1.2;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, #ff4d2e57 0%, #ff5a1f24 44%, transparent 100%);
+  pointer-events: none;
+}
+
+@keyframes ember {
+  from {
+    opacity: 0.72;
+    transform: translate3d(-2%, 2%, 0) scale(0.94);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(3%, -2%, 0) scale(1.06);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .home-top::before {
+    animation: ember 9s ease-in-out infinite alternate;
+  }
+}
+
+/* On a phone the page reads kicker, headline, lede, action, then the stamped
+   slip, so the verdict lands in the first screens. The text block steps aside
+   (display: contents) and its parts take their places. */
 .home-hero {
   display: flex;
   flex-direction: column;
@@ -41,12 +74,80 @@
   display: contents;
 }
 
-/* The measure is 11 characters of this cut, written in em (11 x 0.493em) so
-   the box is the same width before the font arrives and the lines do not
-   re-break when it lands. */
+/* What it is, in one printed line with the pen's dash before it. */
+.home-hero__kicker {
+  order: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-12);
+  margin-bottom: var(--sp-16);
+  color: var(--muted);
+  font-family: var(--font-display);
+  font-size: var(--fs-12);
+  font-stretch: 100%;
+  font-weight: 650;
+  line-height: 1.4;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.home-hero__kicker::before {
+  content: "";
+  flex: none;
+  width: 1.75rem;
+  height: 2px;
+  background: var(--accent-solid);
+}
+
 .home-hero__title {
   order: 1;
-  max-width: 5.423em;
+}
+
+/* The words the pen circles. The ring is one stroke, drawn once after the page
+   opens; without motion it is simply there. */
+.pen {
+  position: relative;
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.pen__ring {
+  position: absolute;
+  top: -0.1em;
+  left: -0.2em;
+  width: calc(100% + 0.4em);
+  height: calc(100% + 0.16em);
+  overflow: visible;
+  fill: none;
+  stroke: var(--accent-solid);
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1000;
+  max-width: none;
+  pointer-events: none;
+}
+
+@keyframes pen-ring {
+  from {
+    stroke-dashoffset: 1000;
+  }
+
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .pen__ring path {
+    animation: pen-ring 900ms cubic-bezier(0.6, 0, 0.2, 1) 500ms both;
+  }
+}
+
+.home-hero__lede {
+  order: 2;
+  max-width: 33rem;
+  margin-top: var(--sp-24);
 }
 
 .home-hero__actions {
@@ -57,75 +158,26 @@
   margin-top: var(--sp-24);
 }
 
+.home-hero__free {
+  order: 3;
+  margin-top: var(--sp-16);
+  color: var(--muted);
+  font-size: var(--fs-14);
+  line-height: 1.5;
+}
+
 .home-hero__shot {
   order: 4;
   min-width: 0;
-  margin-top: var(--sp-32);
-}
-
-.home-hero__lede {
-  order: 2;
-  max-width: 36rem;
-  margin-top: var(--sp-16);
-}
-
-.home-hero__note {
-  order: 5;
-  margin-top: var(--sp-12);
-  color: var(--muted);
-  font-size: var(--fs-13);
-}
-
-/* The price line: printed on a phone only, where the pricing section is far
-   below the first screen. Wider screens keep the hero as it was. */
-.home-hero__free {
-  display: none;
-}
-
-@media (max-width: 30em) {
-  .home-hero__free {
-    display: block;
-    order: 3;
-    margin-top: var(--sp-16);
-    font-size: var(--fs-14);
-    font-weight: 650;
-    line-height: 1.4;
-  }
-
-  .home-hero__note {
-    order: 3;
-    margin-top: var(--sp-4);
-  }
-
-  .home-hero__shot {
-    margin-top: var(--sp-24);
-  }
-}
-
-.home-hero__links {
-  order: 6;
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-8) var(--sp-24);
-  margin-top: var(--sp-8);
-  font-family: var(--font-display);
-  font-size: var(--fs-14);
-  font-stretch: 90%;
-  font-weight: 700;
-}
-
-.home-hero__links .link {
-  display: inline-flex;
-  align-items: center;
-  min-height: var(--tap);
+  margin-top: var(--sp-48);
 }
 
 /* From a tablet's width the text and the slip stand side by side. */
 @media (min-width: 60em) {
   .home-hero {
     display: grid;
-    grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
-    gap: var(--sp-72);
+    grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
+    gap: clamp(var(--sp-32), 4vw, var(--sp-72));
     align-items: center;
   }
 
@@ -133,8 +185,8 @@
     display: block;
   }
 
-  .home-hero__lede {
-    margin-top: var(--sp-24);
+  .home-hero__kicker {
+    margin-bottom: var(--sp-24);
   }
 
   .home-hero__actions {
@@ -146,15 +198,184 @@
   }
 }
 
-/* The proof line sits on the foot of the field, under a printed rule. */
+/* Who built it, and the three results that say why: figures in the heat of
+   the ink, each a link to the public leaderboard it comes from. */
 .home-proof {
-  margin-top: var(--sp-32);
-  padding-block: var(--sp-16) var(--sp-24);
+  margin-top: clamp(var(--sp-48), 6vw, 5.5rem);
+  padding-top: var(--sp-16);
   border-top: 1px solid var(--rule);
   color: var(--muted);
   font-size: var(--fs-14);
   line-height: 1.6;
+}
+
+.home-stats {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-24);
+  padding-block: var(--sp-24) clamp(var(--sp-32), 5vw, var(--sp-72));
+}
+
+.home-stats__item {
+  display: grid;
+  grid-template-columns: 7rem minmax(0, 1fr);
+  align-items: center;
+  gap: var(--sp-16);
+  color: var(--text);
+  text-decoration: none;
+}
+
+.home-stats__n {
+  background: var(--heat);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  font-family: var(--font-display);
+  font-size: 3rem;
+  font-stretch: 112%;
+  font-weight: 860;
+  line-height: 0.9;
+  letter-spacing: -0.035em;
+  font-variant-numeric: lining-nums;
+}
+
+.home-stats__t {
+  color: var(--muted);
+  font-size: var(--fs-14);
+  line-height: 1.5;
   text-wrap: pretty;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--muted) 45%, transparent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.22em;
+}
+
+.home-stats__item:hover .home-stats__t {
+  color: var(--text);
+  text-decoration-color: currentColor;
+}
+
+@media (min-width: 48em) {
+  .home-stats {
+    grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr) minmax(0, 1fr);
+    gap: var(--sp-32);
+  }
+
+  .home-stats__item {
+    grid-template-columns: minmax(0, 1fr);
+    align-content: start;
+    gap: var(--sp-12);
+  }
+
+  .home-stats__n {
+    font-size: clamp(4.5rem, 1.6rem + 6vw, 7.25rem);
+  }
+
+  .home-stats__t {
+    max-width: 30ch;
+    font-size: var(--fs-16);
+  }
+}
+
+@media (forced-colors: active) {
+  .home-stats__n {
+    background: none;
+    color: CanvasText;
+  }
+}
+
+/* The five verdicts, running past under the hero: outlined capitals, one
+   stamp-coloured mark between each. Decoration only; the section below says
+   what each one means. */
+.verdict-run {
+  overflow: clip;
+  border-block: 1px solid var(--line);
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 9%, #000 91%, transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0, #000 9%, #000 91%, transparent 100%);
+}
+
+.verdict-run__track {
+  display: flex;
+  width: max-content;
+  padding-block: var(--sp-16);
+}
+
+.verdict-run__word {
+  --mark: var(--muted);
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: clamp(var(--sp-24), 3vw, var(--sp-48));
+  padding-left: clamp(var(--sp-24), 3vw, var(--sp-48));
+  /* The outline is the stroke's outer half: the fill, in the page's own
+     black, covers the inner half and the joins inside each letter. */
+  color: var(--bg);
+  -webkit-text-stroke: 2px color-mix(in srgb, var(--text) 46%, transparent);
+  paint-order: stroke fill;
+  font-family: var(--font-display);
+  font-size: clamp(2.25rem, 1.2rem + 4.4vw, 4.75rem);
+  font-stretch: 118%;
+  font-weight: 840;
+  line-height: 1;
+  letter-spacing: 0.005em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.verdict-run__word::after {
+  content: "";
+  flex: none;
+  width: 0.32em;
+  height: 0.32em;
+  border-radius: 50%;
+  background: var(--mark);
+}
+
+.verdict-run__word[data-verdict="submit"] {
+  --mark: var(--ok);
+}
+
+.verdict-run__word[data-verdict="rewrite-then-submit"] {
+  --mark: var(--accent-solid);
+}
+
+.verdict-run__word[data-verdict="prove-first"] {
+  --mark: var(--gap);
+}
+
+.verdict-run__word[data-verdict="hold-duplicate"] {
+  --mark: var(--sev-none);
+}
+
+.verdict-run__word[data-verdict="drop"] {
+  --mark: var(--sev-crit);
+}
+
+@keyframes verdict-run {
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .verdict-run__track {
+    animation: verdict-run 52s linear infinite;
+  }
+}
+
+@media (forced-colors: active) {
+  .verdict-run__word {
+    color: CanvasText;
+    -webkit-text-stroke: 0;
+  }
+}
+
+/* Paper carries neither the ember nor the run. */
+@media print {
+  .home-top::before,
+  .verdict-run {
+    display: none;
+  }
 }
 
 /* The slip: the draft's header as typed, marked by the review. Paper in both
@@ -547,9 +768,8 @@
   margin-top: var(--sp-8);
 }
 
-/* 20 characters of the section cut, in em (20 x 0.562em). */
 .bench-teaser__title {
-  max-width: 11.24em;
+  max-width: 13em;
 }
 
 .bench-teaser__table {
@@ -586,10 +806,11 @@
 }
 
 .bench-teaser__rank {
+  color: var(--muted);
   font-family: var(--font-display);
   font-size: var(--fs-22);
-  font-stretch: 70%;
-  font-weight: 860;
+  font-stretch: 100%;
+  font-weight: 800;
   line-height: 1;
 }
 
@@ -604,9 +825,10 @@
 .bench-teaser__score {
   font-family: var(--font-display);
   font-size: var(--fs-22);
-  font-stretch: 75%;
+  font-stretch: 104%;
   font-weight: 820;
   line-height: 1;
+  letter-spacing: -0.02em;
   text-align: right;
 }
 
@@ -614,6 +836,18 @@
   color: var(--muted);
   font-size: var(--fs-14);
   text-align: right;
+}
+
+.bench-teaser__bar {
+  grid-column: 2 / -1;
+  width: 100%;
+  height: 0.25rem;
+  border-radius: 2px;
+  background: var(--heat);
+}
+
+.bench-teaser__bar rect {
+  fill: var(--surface-3);
 }
 
 .bench-teaser__go {
@@ -744,10 +978,11 @@
 
 .home-plan__amount {
   font-family: var(--font-display);
-  font-size: var(--fs-64);
-  font-stretch: 68%;
-  font-weight: 880;
-  line-height: 0.9;
+  font-size: 3.5rem;
+  font-stretch: 110%;
+  font-weight: 850;
+  line-height: 0.95;
+  letter-spacing: -0.03em;
   font-variant-numeric: tabular-nums;
 }
 
@@ -799,7 +1034,6 @@
   .home-plans {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: var(--sp-24);
-    max-width: 62rem;
   }
 
   .home-plan {

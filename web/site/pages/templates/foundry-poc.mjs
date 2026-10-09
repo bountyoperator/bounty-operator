@@ -155,7 +155,7 @@ const body = html`
   <header class="tpl-hero page-field">
     ${crumbs([{ label: 'Foundry PoC' }])}
     <h1>Foundry PoC template</h1>
-    <p class="lede">A fork-test scaffold for a bug bounty proof of concept: pinned block, named actors, concrete values, a control run, and a final assertion that reads the object the impact names. One file, one command, pasted output.</p>
+    <p class="lede">A fork-test scaffold for a bug bounty proof of concept: pinned block, named actors, concrete values, a control run, and a final assertion that reads the object the impact names. It is one file and runs with one command.</p>
     <div class="cluster tpl-actions">
       ${button({ label: 'Copy the scaffold', variant: 'primary', icon: 'copy', attrs: { 'data-template-copy': true } })}
       ${button({ label: `Download ${FILE}`, href: `/templates/${FILE}`, icon: 'download', attrs: { download: FILE } })}
@@ -239,8 +239,8 @@ const body = html`
           note: `Proof written from the Foundry PoC template at bountyoperator.com/templates/foundry-poc.`,
           label: 'Your test file, then its output',
           placeholder: 'Paste the filled test and the output of both runs.',
-          primary: { label: 'Review the proof in the workbench', href: '/?profile=poc#workspace' },
-          intro: html`<p class="tpl-block__lede">Paste the filled test and its output. The workbench opens with Proof review selected and goes through the test step by step: executed, mocked or narrated, and whether the end state is the one the impact row names.</p>`,
+          primary: { label: 'Review this proof', href: '/?profile=poc#workspace' },
+          intro: html`<p class="tpl-block__lede">Paste the filled test and its output. The button below opens a review with Proof review selected. It goes through the test step by step: executed, mocked or narrated, and whether the end state is the one the impact row names.</p>`,
         })}
       </section>
 

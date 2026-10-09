@@ -28,7 +28,7 @@ const immunefi = {
   h1: 'Immunefi bug report template',
   description:
     'Immunefi report template in Markdown: title rule, impact quoted from the programme list, runnable PoC with output, and the rules that get reports closed.',
-  lede: 'Ten sections in the order Immunefi asks for them, with the impact quoted from the programme and a proof of concept that runs on a local fork. Copy it, fill every placeholder, then send the draft to the workbench before the triager sees it.',
+  lede: 'Ten sections in the order Immunefi asks for them, with the impact quoted from the programme and a proof of concept that runs on a local fork. Copy it, fill every placeholder, then have the draft reviewed before the triager sees it.',
   card: 'Bug bounties and audit competitions. Impact is picked from the programme’s own list.',
   cardClosed: ['No runnable PoC where the programme requires one', 'An impact that is not on the programme’s list', 'Known issues and unfixed audit findings'],
   file: 'immunefi.md',

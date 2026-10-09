@@ -387,7 +387,7 @@ handoffLink.addEventListener('click', (event) => {
     return;
   }
   if (!sendToWorkbench(workbenchHandoff(draft.value, report, reportFiles(draft.value, evidence)))) {
-    byId('check-notice').replaceChildren(notice('error', 'The draft could not be handed over.', 'This browser blocked session storage. Copy the draft and paste it into the workbench.'));
+    byId('check-notice').replaceChildren(notice('error', 'The draft could not be handed over.', 'This browser blocked session storage. Copy the draft, start a review and paste it there.'));
   }
 });
 

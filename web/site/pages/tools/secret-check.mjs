@@ -19,8 +19,8 @@ const QUESTIONS = [
     a: 'The key, token and link formats in the table above. A password written in a sentence, or a token in a format of your own, has no pattern to match. Read the diff once before you push.',
   },
   {
-    q: 'Is this the same check the workbench runs?',
-    a: 'Yes. It is the scanner that runs before every review. A file that shows a Block here is refused there until the line is removed.',
+    q: 'Is this the same check a review runs?',
+    a: 'Yes. It is the scanner that runs before every review. A file that shows a Block here is refused until the line is removed.',
   },
 ];
 
@@ -50,7 +50,7 @@ ${button({ label: 'Clear', id: 'secret-clear', variant: 'quiet' })}
 <p class="tool-state" id="secret-clean"></p>
 <p class="tool-state" id="secret-skipped"></p>
 <div class="cluster tool-actions">
-${button({ label: 'Review this proof in the workbench', href: '/?profile=poc#workspace', id: 'secret-handoff', variant: 'primary', iconEnd: 'arrow-right' })}
+${button({ label: 'Review this proof', href: '/?profile=poc#workspace', id: 'secret-handoff', variant: 'primary', iconEnd: 'arrow-right' })}
 ${button({ label: 'Copy result as Markdown', id: 'secret-copy', icon: 'copy' })}
 </div>
 </div>`,
@@ -88,7 +88,7 @@ ${panel}
 <div class="split">
 <div class="tool-copy">
 <h2 id="levels">Block and warn</h2>
-<p>${block()} is key material, a credential file or a link that only you can open. Take the line out before the file leaves your machine, and rotate the key if it was ever pushed. The workbench refuses a review that contains one.</p>
+<p>${block()} is key material, a credential file or a link that only you can open. Take the line out before the file leaves your machine, and rotate the key if it was ever pushed. A review that contains one is refused.</p>
 <p>${warn()} is an email address or a public IP address. Some belong in a proof: a contact line, a public RPC host. Read each one and decide.</p>
 <p>The result names the kind and the line. It never prints the match.</p>
 </div>

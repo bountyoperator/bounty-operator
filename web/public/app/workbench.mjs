@@ -20,9 +20,10 @@
  *     view                             Store<{ example, via, keyProvider, ack, history }>   UI state beside the workbench store
  *   Steps and status
  *     initWorkbench()                  -> boolean   false when the page has no #workspace
- *     setStep(step, { scroll, focus }) show a step: scrolls the workbench into view and moves focus to the panel title
+ *     setStep(step, { scroll, focus }) show a step: scrolls it into view, a result to its first line, and moves focus to the panel title
  *     goTo(step)                       -> boolean   the guarded version the stepper uses
  *     say(message, { tone, error, action, hold })   the status line, with an optional button
+ *     sayQuietly(message)              the same kind of line for screen readers only, in #wb-quiet
  *     emit(name, detail)               dispatch a `wb:<name>` event on #workspace
  *     returnFocus(control)             focus the control that opened a dialog, for its onClose
  *   Input
@@ -45,6 +46,7 @@
  *     clearAll()                       a true reset, with Undo
  *   Pure helpers (tested)
  *     stepStates(state, viewState)     -> { files, review, results }  each 'done' | 'current' | 'todo'
+ *     landing({ top, covered, gap, scrollY, screen })  -> { top, jump }   where the page scrolls to for a result
  *     profileGroups(profiles)          -> [{ title, profiles }]
  *     evidenceGroups(profileId)        -> [{ title, fields }]
  *     warnSignature(coverage)          -> string
@@ -57,7 +59,7 @@
  *   wb:example  detail { id }   an example was loaded or left ('' when left)
  *
  * DOM this module owns: #workspace[data-step][data-busy], #wb-stepper buttons
- * [data-step-target], #wb-status, #wb-profiles, #wb-profile-detail, #wb-mode,
+ * [data-step-target], #wb-status, #wb-quiet, #wb-profiles, #wb-profile-detail, #wb-mode,
  * #wb-focus, #wb-evidence, #wb-privacy, #wb-preview, #wb-continue, #wb-clear,
  * #wb-summary and the preview dialog.
  */
@@ -80,6 +82,8 @@ const VIA = Object.freeze(['connect', 'key', 'export']);
 const STATUS_CLEAR_MS = 10000;
 const SCAN_DELAY_MS = 150;
 const FINDINGS_SHOWN = 12;
+// A result further away than this many screens is not scrolled to: the page goes there at once.
+const FAR_SCREENS = 1.5;
 
 // ---------------------------------------------------------------------------
 // View state: what the workbench shows that is not the work itself
@@ -143,6 +147,22 @@ export function stepStates(state, viewState = {}) {
     results: false,
   };
   return Object.fromEntries(STEPS.map((step) => [step, step === current ? 'current' : done[step] ? 'done' : 'todo']));
+}
+
+/**
+ * Where the page scrolls to so that a result sits just under the sticky bar,
+ * and whether it goes there at once. From further than FAR_SCREENS screens
+ * there is no scroll to watch: a long scroll ends after the stamp has landed,
+ * and a jump lets the visitor see it land.
+ *
+ * @param {{ top: number, covered: number, gap: number, scrollY: number, screen: number }} measured
+ *   `top` of the target in the document, the height the bar has `covered`, the `gap` to leave
+ *   under the bar, the page's `scrollY` and the height of the `screen`.
+ * @returns {{ top: number, jump: boolean }}
+ */
+export function landing({ top, covered, gap, scrollY, screen }) {
+  const to = Math.max(0, Math.round(top - covered - gap));
+  return { top: to, jump: Math.abs(to - scrollY) > FAR_SCREENS * screen };
 }
 
 /**
@@ -297,6 +317,7 @@ function pick(state, fields) {
 
 let root = null;
 let statusTimer = null;
+let quietTimer = null;
 
 /**
  * Dispatches `wb:<name>` on the workbench section.
@@ -347,6 +368,21 @@ export function say(message, { tone = 'info', error = false, hold = false, actio
   }
 }
 
+/**
+ * Says a line to screen readers only. It is written to #wb-quiet, a live
+ * region under the status line that is not shown. For news the page already
+ * prints where the reader lands, such as the model and the day of an example
+ * on the first line of its result. The visible status line is left as it is,
+ * and the line clears itself like one.
+ *
+ * @param {string} message  Empty clears it.
+ */
+export function sayQuietly(message) {
+  clearTimeout(quietTimer);
+  announce(message, { target: '#wb-quiet' });
+  quietTimer = message ? setTimeout(() => announce('', { target: '#wb-quiet' }), STATUS_CLEAR_MS) : null;
+}
+
 // ---------------------------------------------------------------------------
 // Steps
 // ---------------------------------------------------------------------------
@@ -385,10 +421,51 @@ function paintStep(step, previous) {
   paintStepper();
 }
 
+/** How far down the page a node is laid out. A panel still rising into place does not move it. */
+function layoutTop(node) {
+  let top = node.offsetTop;
+  // offsetTop is measured from the padding edge of the parent it is offset from, so that parent's top border is added.
+  for (let at = node.offsetParent; at; at = at.offsetParent) top += at.offsetTop + at.clientTop;
+  return top;
+}
+
 /**
- * Shows a step. The workbench scrolls into view and focus moves to the panel
- * title, so the next Tab lands in the panel and a screen reader says where
- * the user is.
+ * Brings a result into view: its first line (the review type, the model, the
+ * files and the date), just under the sticky bar, so the verdict follows with
+ * its label in sight. With no result on the page, the top of the workbench.
+ */
+function showResult() {
+  const target = qs('#wb-result .wb-result__bar');
+  if (!target) {
+    root.scrollIntoView({ block: 'start' });
+    return;
+  }
+  const bar = qs('.wb__bar', root);
+  const { top, jump } = landing({
+    top: layoutTop(target),
+    // A phone on its side lets the bar scroll away: it covers nothing then.
+    covered: bar && getComputedStyle(bar).position === 'sticky' ? bar.offsetHeight : 0,
+    // The stylesheet says how much paper shows between the bar and the result.
+    gap: Number.parseFloat(getComputedStyle(target).scrollMarginTop) || 0,
+    scrollY: window.scrollY,
+    screen: window.innerHeight,
+  });
+  // The stylesheet scrolls smoothly. A jump switches that off for this one call.
+  const page = document.documentElement;
+  if (jump) page.style.scrollBehavior = 'auto';
+  window.scrollTo(0, top);
+  if (jump) {
+    page.style.scrollBehavior = '';
+    // Nothing is left on the page's root element: not the property, not an empty attribute.
+    if (!page.getAttribute('style')) page.removeAttribute('style');
+  }
+}
+
+/**
+ * Shows a step. It scrolls into view and focus moves to the panel title, so
+ * the next Tab lands in the panel and a screen reader says where the user is.
+ * The Load and Run steps land on the top of the workbench. A result lands on
+ * its first line (showResult above).
  *
  * @param {'files' | 'review' | 'results'} step
  * @param {{ scroll?: boolean, focus?: boolean }} [options]
@@ -403,7 +480,15 @@ export function setStep(step, { scroll = true, focus = true } = {}) {
   if (previous === step) paintStep(step, previous);
 
   if (!root) return;
-  if (scroll) root.scrollIntoView({ block: 'start' });
+  if (scroll && step === 'results') {
+    // On the next frame: the caller writes its status line right after this call,
+    // and that line makes the sticky bar taller.
+    requestAnimationFrame(() => {
+      if (workbench.get().step === 'results') showResult();
+    });
+  } else if (scroll) {
+    root.scrollIntoView({ block: 'start' });
+  }
   if (focus) panel(step)?.querySelector('.wb__title')?.focus({ preventScroll: true });
   if (previous !== step) emit('step', { step, previous });
 }

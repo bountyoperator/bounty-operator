@@ -138,13 +138,13 @@ handoffLink.addEventListener('click', (event) => {
       'warn',
       state.scan.totals.blocking ? 'Remove the Block lines first.' : 'This set is larger than one review takes.',
       state.scan.totals.blocking
-        ? 'The workbench refuses a file that holds a key, a token or a private link.'
-        : 'A review takes up to 50 text files, 120 KB each, 240 KB and 20,000 lines together. Open the workbench and add the files that matter.',
+        ? 'A review refuses a file that holds a key, a token or a private link.'
+        : 'A review takes up to 50 text files, 120 KB each, 240 KB and 20,000 lines together. Start a review and add the files that matter.',
     ));
     noticeBox.scrollIntoView({ block: 'nearest' });
     return;
   }
   if (!sendToWorkbench(payload)) {
-    noticeBox.replaceChildren(notice('error', 'The files could not be handed over.', 'This browser blocked session storage. Open the workbench and add the files there.'));
+    noticeBox.replaceChildren(notice('error', 'The files could not be handed over.', 'This browser blocked session storage. Start a review and add the files there.'));
   }
 });

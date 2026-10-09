@@ -120,7 +120,7 @@ ${pageHero({
   trail: [{ label: 'Bounty Operator', href: '/' }, { label: 'Your model, your key' }],
   title: 'Your model, your key: where your code goes',
   lede: `A review runs on the model you choose, under your own API key: ${PROVIDER_SENTENCE}. Your files and your key pass through our server in memory. It adds the review method and sends the request to that provider. Bounty Operator stores no code, no prompts, no keys and no results.`,
-  actions: html`${button({ label: 'Start a review', href: workbenchLink(), variant: 'primary', size: 'lg', iconEnd: 'arrow-right' })}${button({ label: 'See the providers', href: '#providers', size: 'lg' })}`,
+  actions: html`${button({ label: 'Start a free review', href: workbenchLink(), variant: 'primary', size: 'lg', iconEnd: 'arrow-right' })}${button({ label: 'See the providers', href: '#providers', size: 'lg' })}`,
   note: 'No API key? Code security, Solidity and draft-report reviews also work in ChatGPT or Claude, with no daily limit.',
   aside: html`
     <div class="glance">
@@ -141,7 +141,7 @@ ${pageHero({
   ${sectionHeading({
     title: 'Where your code goes',
     id: 'path',
-    lede: 'A hosted review has three stops. Each one is listed with what it does to your files.',
+    lede: 'A hosted review has three stops.',
   })}
   ${flow}
   <p class="fine flow__note">A GitHub import goes from your browser straight to api.github.com at a pinned commit. The repository is never uploaded to our server.</p>
@@ -151,17 +151,17 @@ ${pageHero({
   ${sectionHeading({
     title: 'Three ways to run a review',
     id: 'ways',
-    lede: 'Same output format, same packet.',
+    lede: 'All three give the same output format and the same packet.',
   })}
   <div class="grid grid--3">
     ${card({
       title: 'Your API key',
       meta: icon('key'),
       body: html`<div class="stack stack--12">
-        <p>Paste a key from one of eight providers and run the review in the workbench. It goes through our server to your provider, and the answer streams into finding cards.</p>
+        <p>Paste a key from one of eight providers and run the review on this site. It goes through our server to your provider, and the answer streams into finding cards.</p>
         ${tickList(['All 11 review types, the Gauntlet and Panel review', 'Free: 1 review a day, any review type', 'Operator: unlimited, 4 at once', 'The key is used for that request only'])}
       </div>`,
-      foot: html`<a class="link" href="${workbenchLink()}">Start a review</a>`,
+      foot: html`<a class="link" href="${workbenchLink()}">Start a free review</a>`,
     })}
     ${card({
       title: 'Your ChatGPT or Claude chat',
@@ -193,9 +193,9 @@ ${pageHero({
     <div>
       ${sectionHeading({ title: 'Who holds the key', id: 'key', lede: 'You do.' })}
       <div class="prose">
-        <p>You create the key in your provider’s console and paste it into the workbench when you run a review. It travels with that request to our server, goes on to the provider’s endpoint, and is gone when the request ends.</p>
+        <p>You create the key in your provider’s console and paste it in when you run a review. It travels with that request to our server, goes on to the provider’s endpoint, and is gone when the request ends.</p>
         <p>Each provider is called at one fixed endpoint. A redirect is refused. An error message from the provider is shown to you with the key removed.</p>
-        <p>Model usage is billed by the provider to the account that owns the key. Operator is a flat US$10 per week for the hosted workbench and does not include model usage.</p>
+        <p>Model usage is billed by the provider to the account that owns the key. Operator is a flat US$10 per week for unlimited reviews and does not include model usage.</p>
       </div>
     </div>
     <div>
@@ -215,7 +215,7 @@ ${pageHero({
   ${sectionHeading({
     title: 'What is stored',
     id: 'stored',
-    lede: html`The full list is on the <a class="link" href="/privacy">privacy page</a>, and the <a class="link" href="/security">security page</a> shows how it is protected. This is the short version.`,
+    lede: html`The full list is on the <a class="link" href="/privacy">privacy page</a>, and the <a class="link" href="/security">security page</a> shows how it is protected.`,
   })}
   <div class="grid grid--2">
     ${card({
@@ -254,7 +254,7 @@ ${pageHero({
 ${ctaBand({
   title: 'Run it on the model you already pay for',
   lede: 'Paste a key, or export the prompt of a core profile to your chat app.',
-  actions: html`${button({ label: 'Start a review', href: workbenchLink(), variant: 'primary', size: 'lg', iconEnd: 'arrow-right' })}${button({ label: 'MCP setup', href: '/mcp', size: 'lg' })}`,
+  actions: html`${button({ label: 'Start a free review', href: workbenchLink(), variant: 'primary', size: 'lg', iconEnd: 'arrow-right' })}${button({ label: 'MCP setup', href: '/mcp', size: 'lg' })}`,
   note: 'Free: 1 review a day. No card.',
 })}
 

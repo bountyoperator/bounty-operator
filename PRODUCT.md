@@ -74,7 +74,7 @@ beats their current workflow.
   Works alongside Immunefi Studio's own MCP server.
 - Static site generated from `web/site` by `scripts/build-site.mjs`; a Cloudflare
   Worker serves it. Strict CSP: no inline styles or scripts, fonts and images
-  from self only. Dark and light themes.
+  from self only. One look: a black page.
 - Open-core: only the general, Solidity and report profiles are public. Gauntlet
   stage and panel instructions never appear in public pages or code.
 
@@ -123,6 +123,6 @@ beats their current workflow.
 
 ## Accessibility & Inclusion
 
-WCAG 2.2 AA contrast in both themes, 44 px touch targets, full keyboard paths
+WCAG 2.2 AA contrast on the page and on paper, 44 px touch targets, full keyboard paths
 through the workbench, visible focus, `prefers-reduced-motion` honoured, no text
 below 12 px, source code shown in a face that keeps every character distinct.

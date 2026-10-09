@@ -43,7 +43,7 @@ const account = html`
 // benchmark/leaderboard.mjs write it. A new key in a script means a new row here.
 const code = (...names) => html`${names.map((name, index) => html`${index ? ', ' : ''}<code>${name}</code>`)}`;
 export const BROWSER_STORAGE = [
-  { keys: ['bo-theme'], where: 'This browser', what: 'The colour theme you picked, when it differs from your system’s.' },
+  { keys: ['bo-theme'], where: 'This browser', what: 'Nothing now. An earlier version of the site kept your colour theme here; the site removes it when a page loads.' },
   { keys: ['bo:history', 'bo-history'], where: 'This browser', what: 'Review history, when you turn it on: the packet, manifest and text of each finished review, with its profile, model, verdict and time.' },
   { keys: ['bo:known'], where: 'This browser', what: 'The value 1 once you have signed in here, so the sign-in dialog offers Sign in first. Deleting the account removes it.' },
   { keys: ['bo-bench-hidden'], where: 'This browser', what: 'The leaderboard columns you hid on the benchmark page.' },

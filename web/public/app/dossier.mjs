@@ -663,7 +663,8 @@ function gauntletBody(result, shown) {
         verdict: stage.verdict,
         headline: stage.headline,
         build: () => {
-          const stageResult = { review: stage.review, manifest: manifest.slice(0, baseCount + index) };
+          // The profile travels with the answer, so a stage draws as that review type would alone.
+          const stageResult = { review: stage.review, manifest: manifest.slice(0, baseCount + index), profile: { id: stage.profileId } };
           const drawn = reviewNodes(stageResult, { files: files ? files.slice(0, baseCount + index) : null, idPrefix: `gd-s${index + 1}`, head: false, scope: `Stage ${index + 1}` });
           return [recordMeta(stage), ...drawn.nodes].filter(Boolean);
         },
@@ -753,7 +754,7 @@ export function panelBody(result, shown) {
         headline: seat.headline,
         build: () => {
           // Each model saw the user's files only.
-          const seatResult = { review: seat.review, manifest: manifest.slice(0, baseCount) };
+          const seatResult = { review: seat.review, manifest: manifest.slice(0, baseCount), profile: result.reviewed };
           const drawn = reviewNodes(seatResult, { files: files ? files.slice(0, baseCount) : null, idPrefix: `pn-s${seat.number}`, head: false, scope: `Review ${seat.number}` });
           return [recordMeta(seat), ...drawn.nodes].filter(Boolean);
         },

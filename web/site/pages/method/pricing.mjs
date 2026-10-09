@@ -93,7 +93,7 @@ ${pageHero({
         AGENT_TICK,
         'Free tools and GitHub import',
       ])}
-      <div class="plan__cta">${button({ label: 'Run today’s free review', href: workbenchLink(), variant: 'secondary', size: 'lg', block: true })}</div>
+      <div class="plan__cta">${button({ label: 'Start a free review', href: workbenchLink(), variant: 'secondary', size: 'lg', block: true })}</div>
     </article>
     <article class="plan plan--accent on-stock" aria-labelledby="plan-operator">
       <div class="plan__head">

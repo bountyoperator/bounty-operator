@@ -109,7 +109,7 @@ async function addFiles(entries, { expectManifest }) {
       state.sourceName = files[index].name;
       sources = files.filter((_, position) => position !== index);
     } else if (expectManifest) {
-      showNotice('error', 'No file hashes found in that file.', 'Use a packet saved from the workbench, or a manifest JSON with label and sha256 fields.');
+      showNotice('error', 'No file hashes found in that file.', 'Use a packet saved from a review, or a manifest JSON with label and sha256 fields.');
       return;
     }
   }

@@ -539,7 +539,10 @@ function findingCard(finding, context) {
 
   if (finding.impact) rows.push(rail('impact', 'Impact', el('p', {}, inline(finding.impact, context))));
   if (finding.path.length) {
-    rows.push(rail('observed', 'Observed', stepList(finding, context)));
+    // A draft review writes only the steps the draft gets wrong or leaves out, under the draft's own
+    // numbers. A list that starts at 6 says whose numbers they are, or it reads as five steps lost.
+    const late = context.draft && finding.pathStart > 1;
+    rows.push(rail('observed', 'Observed', [late ? el('p', { class: 'fine', text: 'Numbered as in the draft.' }) : null, stepList(finding, context)]));
   }
   if (finding.counterargument.objection) {
     const status = finding.counterargument.status === 'resolved' ? 'resolved' : 'open';
@@ -703,7 +706,7 @@ function manifestNode(result, { review = true } = {}) {
  */
 export function reviewNodes(result, { files = null, analysis = analyse(result), idPrefix = 'wb', head = true, skip = [], scope = '' } = {}) {
   const { parsed } = analysis;
-  const context = { ...analysis, files, manifest: result.manifest ?? [], idPrefix, scope, regions: new Map() };
+  const context = { ...analysis, files, manifest: result.manifest ?? [], idPrefix, scope, regions: new Map(), draft: result.profile?.id === 'report' };
   const nodes = [];
   if (!parsed.ok) {
     nodes.push(el('pre', { class: 'wb-raw', tabindex: '0', text: result.review }));

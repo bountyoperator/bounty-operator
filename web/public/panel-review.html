@@ -6,15 +6,14 @@
 <title>Panel review: multi-model AI review | Bounty Operator</title>
 <meta name="description" content="Run 2 to 4 models on the same code with your own key. A final cross-check keeps what the cited lines prove and shows how many models agreed.">
 <link rel="canonical" href="https://bountyoperator.com/panel-review">
-<meta name="color-scheme" content="dark light">
-<meta name="theme-color" content="#17132e" media="(prefers-color-scheme: dark)">
-<meta name="theme-color" content="#fbfbf8" media="(prefers-color-scheme: light)">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#09090a">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Bounty Operator">
 <meta property="og:title" content="Panel review: multi-model AI review | Bounty Operator">
 <meta property="og:description" content="Run 2 to 4 models on the same code with your own key. A final cross-check keeps what the cited lines prove and shows how many models agreed.">
 <meta property="og:url" content="https://bountyoperator.com/panel-review">
-<meta property="og:image" content="https://bountyoperator.com/social-v4.png">
+<meta property="og:image" content="https://bountyoperator.com/social-v5.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Bounty Operator. Find the hole in your report before the triager does.">
@@ -22,7 +21,7 @@
 <meta name="twitter:creator" content="@Tradi3_">
 <meta name="twitter:title" content="Panel review: multi-model AI review | Bounty Operator">
 <meta name="twitter:description" content="Run 2 to 4 models on the same code with your own key. A final cross-check keeps what the cited lines prove and shows how many models agreed.">
-<meta name="twitter:image" content="https://bountyoperator.com/social-v4.png">
+<meta name="twitter:image" content="https://bountyoperator.com/social-v5.png">
 <meta name="twitter:image:alt" content="Bounty Operator. Find the hole in your report before the triager does.">
 <link rel="icon" href="/favicon.ico" sizes="48x48">
 <link rel="icon" href="/icon.svg" type="image/svg+xml">
@@ -32,16 +31,17 @@
 <script src="/theme.js"></script>
 <link rel="stylesheet" href="/css/base.css">
 <link rel="stylesheet" href="/css/landing.css">
+<script type="module" src="/field.mjs" fetchpriority="low"></script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Bounty Operator","item":"https://bountyoperator.com/"},{"@type":"ListItem","position":2,"name":"Method","item":"https://bountyoperator.com/method"},{"@type":"ListItem","position":3,"name":"Panel review","item":"https://bountyoperator.com/panel-review"}]}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Which keys does a panel run on?","acceptedAnswer":{"@type":"Answer","text":"One OpenRouter key reaches models from several labs, so a panel of different models runs on a single key. A panel model on Anthropic, OpenAI, Google Gemini, xAI, DeepSeek, Mistral or Groq takes that provider’s own key."}},{"@type":"Question","name":"How many model calls is a panel?","acceptedAnswer":{"@type":"Answer","text":"One per panel model, plus one for the cross-examination pass. A panel of three is four hosted reviews. Each goes through our server to your provider and is billed to your key."}},{"@type":"Question","name":"Does a panel run on a chat subscription?","acceptedAnswer":{"@type":"Answer","text":"A panel runs hosted, on API keys. The cross-examination is a hosted profile: its method is added on our server and the pass has no prompt to copy."}},{"@type":"Question","name":"Does the majority decide?","acceptedAnswer":{"@type":"Answer","text":"No. Agreement is recorded as k of n and shown next to each finding. The cited lines decide. In the example on this page a finding one model reported is kept, and a finding all three reported is dropped."}},{"@type":"Question","name":"What does the free plan show?","acceptedAnswer":{"@type":"Answer","text":"The example on this page. Panel review runs on Operator at US$10 per week."}}]}</script>
 </head>
 <body>
 <!--
-THESIS: The verdict is a stamp on your draft. The site is the inspection a finding passes before a triager sees it, not the category's dark code-card hero.
-OWN-WORLD: Inspection paperwork. Canary and white stock, black print, violet stamp ink, carbon indigo for code and the night shift. Ruled fields, square corners, part rules, ledger tables. Archivo condensed caps for labels and stamps; mono only for code and typed entries.
+THESIS: The verdict is a stamp on your draft, and the red pen has been through it first. The site is the inspection a finding passes before a triager sees it.
+OWN-WORLD: A black page, bone-white print and one hot ink, vermilion: the red of a seal and of a marking pen. The report is a sheet of paper lying on the page. Behind each page head lie lines of a report and of its code; lights drift over them and the pen strikes a line now and then. Archivo: wide heavy cuts for headlines and figures, condensed caps for stamps and labels; mono only for code and typed entries.
 STORY: A hunter sees a Critical stamped down to Medium with the line that decides it, trusts that the review argues against them, and starts a review or opens the example.
-FIRST VIEWPORT: Full-bleed canary field. Left: condensed black headline, lede, black Review my report, ruled View example. Right: the paper slip, tilted, Critical struck, Medium and the violet verdict stamped on it. Proof line on the field's foot.
-FORM: Rubber-stamp verdicts and inspection forms, 6 of 7, seed b5682f59.
+FIRST VIEWPORT: The moving field on black. Left: the headline with "the hole" circled in pen, the lede, a vermilion Review my report, a ruled View example. Right: the paper slip, tilted, Critical struck, Medium and the verdict stamped on it, in the light of the ember. Under them the three results of the builder as figures, then the five verdicts running past.
+FORM: Rubber-stamp verdicts and a report marked in red pen, seed b5682f59.
 FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md
 -->
 <a class="skip-link" href="#main">Skip to content</a>
@@ -50,7 +50,6 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
 <a class="brand" href="/"><svg class="brand__mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect class="brand__tile" width="64" height="64" rx="9"/><path class="brand__glyph" d="M12.5 15h6.5v31.5h-6.5z"/><path class="brand__glyph" fill-rule="evenodd" d="M25.5 25a10.75 10.75 0 1 0 0 21.5a10.75 10.75 0 0 0 0-21.5zm0 6.25a4.5 4.5 0 1 1 0 9a4.5 4.5 0 0 1 0-9z"/><path class="brand__slash" d="M45.5 13h6.25l-8.6 37.5h-6.25z"/></svg><span class="brand__name">Bounty Operator</span></a>
 <nav class="site-nav" aria-label="Main"><ul><li><a href="/#workspace">Review</a></li><li><a href="/benchmark">Benchmark</a></li><li><a href="/tools">Tools</a></li><li><a href="/guide">Guide</a></li><li><a href="/pricing">Pricing</a></li></ul></nav>
 <div class="site-header__actions">
-<button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch colour theme"><span class="icon theme-toggle__icon" aria-hidden="true"></span></button>
 <a class="btn btn--secondary btn--sm" href="/#account">Sign in</a>
 </div>
 </div>
@@ -90,8 +89,8 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
 </section>
 
 <section class="section wrap" aria-labelledby="how">
-  <header class="section-head"><div class="section-head__text"><h2 id="how">How it runs</h2><p class="lede">Each model reviews the files separately. One more pass cross-checks them. Each review goes through our server to your provider. No file, key or review is stored.</p></div></header>
-  <ol class="points points--4"><li class="points__item"><h3 class="points__title">Pick two to four models</h3><p class="points__text">Choose them from the models your OpenRouter key reaches. One key covers models from different labs, so the panel needs no second account. A model on another provider runs on that provider’s own key.</p></li><li class="points__item"><h3 class="points__title">The reviews run in parallel</h3><p class="points__text">Each model runs the same profile on the same pinned files, as its own hosted review. Operator runs four hosted reviews at once.</p></li><li class="points__item"><h3 class="points__title">Cross-check</h3><p class="points__text">One more hosted review, on the panel model you pick, reads the reviews next to the source and tests every finding against the lines it cites.</p></li><li class="points__item"><h3 class="points__title">One merged review</h3><p class="points__text">What survives comes back as one review, with a count of how many models reported each finding.</p></li></ol>
+  <header class="section-head"><div class="section-head__text"><h2 id="how">How it runs</h2><p class="lede">Each model reviews the files separately, and a final pass cross-checks them. Each review goes through our server to your provider. No file, key or review is stored.</p></div></header>
+  <ol class="points points--4"><li class="points__item"><h3 class="points__title">Pick two to four models</h3><p class="points__text">Choose them from the models your OpenRouter key reaches. That key covers models from different labs, so the panel needs no second account. A model on another provider runs on that provider’s own key.</p></li><li class="points__item"><h3 class="points__title">The reviews run in parallel</h3><p class="points__text">Each model runs the same profile on the same pinned files, as its own hosted review. Operator runs four hosted reviews at once.</p></li><li class="points__item"><h3 class="points__title">Cross-check</h3><p class="points__text">A final hosted review, on the panel model you pick, reads the reviews next to the source and tests every finding against the lines it cites.</p></li><li class="points__item"><h3 class="points__title">The merged review</h3><p class="points__text">What survives comes back as one review, with a count of how many models reported each finding.</p></li></ol>
 </section>
 
 <section class="section wrap" aria-labelledby="rule">
@@ -106,7 +105,7 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
 </section>
 
 <section class="section wrap" aria-labelledby="example">
-  <header class="section-head"><div class="section-head__text"><h2 id="example">What you get</h2><p class="lede">One review in the standard format, plus the agreement table. StreamVault is a staking contract invented for this page.</p></div></header>
+  <header class="section-head"><div class="section-head__text"><h2 id="example">What you get</h2><p class="lede">A review in the standard format, plus the agreement table. StreamVault is a staking contract invented for this page.</p></div></header>
   
 <div class="example">
   <p class="example__bar"><span class="chip status" data-status="example">Example</span><span class="meta">Example panel review · invented contract · StreamVault</span></p>
@@ -133,7 +132,7 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
 
 <section class="section wrap" aria-labelledby="record">
   <header class="section-head"><div class="section-head__text"><h2 id="record">What is in the record</h2></div></header>
-  <ol class="points points--4"><li class="points__item"><h3 class="points__title">Surviving findings</h3><p class="points__text">Each as a finding card: location, impact, path, the strongest counterargument, the evidence gap, the fix and a test.</p></li><li class="points__item"><h3 class="points__title">Agreement</h3><p class="points__text">Every distinct finding with its k of n count, kept, unproven or dropped, the lines that settle it and the reviews that reported it.</p></li><li class="points__item"><h3 class="points__title">Checked and safe</h3><p class="points__text">What the panel flagged and the code clears, each with the line that guards it.</p></li><li class="points__item"><h3 class="points__title">The packet</h3><p class="points__text">One download: the merged review, the models used and the SHA-256 manifest of every file the panel read.</p></li></ol>
+  <ol class="points points--4"><li class="points__item"><h3 class="points__title">Surviving findings</h3><p class="points__text">Each as a finding card: location, impact, path, the strongest counterargument, the evidence gap, the fix and a test.</p></li><li class="points__item"><h3 class="points__title">Agreement</h3><p class="points__text">Every distinct finding with its k of n count, kept, unproven or dropped, the lines that settle it and the reviews that reported it.</p></li><li class="points__item"><h3 class="points__title">Checked and safe</h3><p class="points__text">What the panel flagged and the code clears, each with the line that guards it.</p></li><li class="points__item"><h3 class="points__title">The packet</h3><p class="points__text">It downloads as one file: the merged review, the models used and the SHA-256 manifest of every file the panel read.</p></li></ol>
 </section>
 
 <section class="section wrap wrap--narrow" aria-labelledby="faq">
@@ -159,7 +158,7 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
   
 <nav class="related" aria-label="Related">
   <p class="meta">Related</p>
-  <ul class="related__list"><li><a class="related__link" href="/gauntlet"><span class="related__label">Gauntlet<span class="icon icon--arrow-right" aria-hidden="true"></span></span><span class="related__text">One finding, eight stages, one verdict.</span></a></li><li><a class="related__link" href="/solidity-review"><span class="related__label">Solidity review<span class="icon icon--arrow-right" aria-hidden="true"></span></span><span class="related__text">The single-model review a panel fans out.</span></a></li><li><a class="related__link" href="/pricing"><span class="related__label">Pricing<span class="icon icon--arrow-right" aria-hidden="true"></span></span><span class="related__text">Free and Operator, side by side.</span></a></li></ul>
+  <ul class="related__list"><li><a class="related__link" href="/gauntlet"><span class="related__label">Gauntlet<span class="icon icon--arrow-right" aria-hidden="true"></span></span><span class="related__text">Eight stages on one finding, then a verdict.</span></a></li><li><a class="related__link" href="/solidity-review"><span class="related__label">Solidity review<span class="icon icon--arrow-right" aria-hidden="true"></span></span><span class="related__text">The single-model review a panel fans out.</span></a></li><li><a class="related__link" href="/pricing"><span class="related__label">Pricing<span class="icon icon--arrow-right" aria-hidden="true"></span></span><span class="related__text">Free and Operator, side by side.</span></a></li></ul>
 </nav>
 </section>
 </main>
@@ -180,6 +179,7 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
 <p><a href="mailto:support@bountyoperator.com">support@bountyoperator.com</a></p>
 </div>
 </div>
+<div class="site-footer__mark" aria-hidden="true">Bounty Operator</div>
 </footer>
 </body>
 </html>

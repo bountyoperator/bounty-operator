@@ -292,6 +292,27 @@ export function severityChip(severity, label, { stamp = false } = {}) {
   return html`<span class="${cx('chip', 'sev', stamp && 'sev--stamp')}" data-sev="${known}">${label ?? SEVERITIES[known]}</span>`;
 }
 
+/**
+ * Words circled by the red pen: one stroke, drawn once when the page opens
+ * (.pen in home.css). The ring is decoration; the words read as plain text.
+ */
+export function pen(words) {
+  return html`<span class="pen">${words}<svg class="pen__ring" viewBox="0 0 300 100" preserveAspectRatio="none" aria-hidden="true" focusable="false"><path pathLength="1000" d="M16 56C10 26 70 8 158 8c82 0 134 18 130 48-4 28-78 38-150 36C66 90 20 78 14 52 10 34 34 20 84 13"/></svg></span>`;
+}
+
+/** A sentence with one phrase of it circled. The sentence is returned as it is when the phrase is not in it. */
+export function penned(sentence, phrase) {
+  const at = sentence.indexOf(phrase);
+  if (at < 0) return html`${sentence}`;
+  return html`${sentence.slice(0, at)}${pen(phrase)}${sentence.slice(at + phrase.length)}`;
+}
+
+/** The printed name of a verdict. */
+export function verdictLabel(verdict) {
+  if (!Object.hasOwn(VERDICTS, verdict)) throw new Error(`Unknown verdict "${verdict}"`);
+  return VERDICTS[verdict];
+}
+
 export function verdictChip(verdict, { size = 'md', label } = {}) {
   if (!Object.hasOwn(VERDICTS, verdict)) throw new Error(`Unknown verdict "${verdict}"`);
   return html`<span class="${cx('chip', 'verdict', size === 'lg' && 'verdict--lg')}" data-verdict="${verdict}">${label ?? VERDICTS[verdict]}</span>`;

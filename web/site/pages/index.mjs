@@ -24,9 +24,11 @@ import {
   html,
   icon,
   isHtml,
+  penned,
   raw,
   sectionHeading,
   verdictChip,
+  verdictLabel,
 } from '../components.mjs';
 import { SITE, faqPageLd, organizationLd, softwareApplicationLd } from '../layout.mjs';
 import { PROFILES } from '../../public/profiles.mjs';
@@ -108,24 +110,29 @@ const hero = html`
 <div class="home-top page-field">
   <section class="wrap home-hero" aria-labelledby="hero-title">
     <div class="home-hero__text">
-      <h1 class="display home-hero__title" id="hero-title">Check your report before you submit.</h1>
-      <p class="lede home-hero__lede">Add your bug bounty draft and the files it cites. The review argues against the finding, checks every claim against the code and stamps one verdict, with the line that decides it.</p>
+      <p class="home-hero__kicker">Bug bounty report review</p>
+      <h1 class="display home-hero__title" id="hero-title">${penned(SITE.promise, 'the hole')}</h1>
+      <p class="lede home-hero__lede">Paste your draft and the code it cites. It argues against the finding and returns one verdict, with the file and line.</p>
       <div class="home-hero__actions">
         ${button({ label: 'Review my report', href: '/?profile=report#workspace', variant: 'primary', size: 'lg', iconEnd: 'arrow-right' })}
         ${button({ label: 'View example', href: '#workspace', variant: 'secondary', size: 'lg', attrs: { 'data-demo': true, 'data-example': '' } })}
       </div>
-      <p class="home-hero__free">Free: 1 review a day on your own model key.</p>
-      <p class="home-hero__note">The example needs no account or API key.</p>
-      <p class="home-hero__links">${BENCH_TEASER && html`<a class="link" href="/benchmark">See the model benchmark</a>`}<a class="link" href="/mcp">Use in your coding agent</a></p>
+      <p class="home-hero__free">Free: 1 review a day on your own model key. The example needs no account.</p>
     </div>
     <div class="home-hero__shot">
       ${reportSlip()}
     </div>
   </section>
   <div class="wrap">
-    <p class="home-proof fine">Built by Tradi3. <a class="link" href="${LEADERBOARDS.ens}" target="_blank" rel="noopener noreferrer">17 valid Critical submissions in Immunefi’s ENS competition, the most of 186 researchers</a> · <a class="link" href="${LEADERBOARDS.firelight}" target="_blank" rel="noopener noreferrer">2nd of 133 in Firelight</a> · <a class="link" href="${LEADERBOARDS.quantus}" target="_blank" rel="noopener noreferrer">8th of 65 in Quantus</a>.</p>
+    <p class="home-proof">Built by Tradi3. The results are on Immunefi’s public leaderboards.</p>
+    <ul class="home-stats">
+      <li><a class="home-stats__item" href="${LEADERBOARDS.ens}" target="_blank" rel="noopener noreferrer"><span class="home-stats__n">17</span> <span class="home-stats__t">valid Critical submissions in Immunefi’s ENS competition, the most of 186 researchers</span></a></li>
+      <li><a class="home-stats__item" href="${LEADERBOARDS.firelight}" target="_blank" rel="noopener noreferrer"><span class="home-stats__n">2nd</span> <span class="home-stats__t">of 133 in Firelight</span></a></li>
+      <li><a class="home-stats__item" href="${LEADERBOARDS.quantus}" target="_blank" rel="noopener noreferrer"><span class="home-stats__n">8th</span> <span class="home-stats__t">of 65 in Quantus</span></a></li>
+    </ul>
   </div>
-</div>`;
+</div>
+<div class="verdict-run" aria-hidden="true"><div class="verdict-run__track">${[0, 1].map(() => VERDICTS.map((verdict) => html`<span class="verdict-run__word" data-verdict="${verdict.id}">${verdictLabel(verdict.id)}</span>`))}</div></div>`;
 
 const STEPS = [
   { title: 'Add your files', text: 'Paste text, drop files or import from GitHub.' },
@@ -145,7 +152,7 @@ const howItWorks = html`
 const verdicts = html`
 <section class="section section--tight wrap" aria-labelledby="verdicts-title">
   ${sectionHeading({ title: 'Every review ends in one of five verdicts.', id: 'verdicts-title', lede: 'One decision, with the file and line behind it. The draft stays yours to rewrite.' })}
-  <ul class="home-verdicts">${VERDICTS.map((verdict) => html`
+  <ul class="home-verdicts rise">${VERDICTS.map((verdict) => html`
     <li class="home-verdicts__item">${verdictChip(verdict.id, { size: 'lg' })}<p class="home-verdicts__text">${verdict.meaning}</p></li>`
   )}</ul>
 </section>`;
@@ -167,7 +174,7 @@ const pricing = html`
   <div class="wrap">
     ${sectionHeading({ title: 'Free for 1 review a day. US$10 a week for unlimited.', id: 'pricing-title', lede: 'Your model provider bills model usage to your own key.' })}
     <div class="home-plans__note" data-checkout-note></div>
-    <div class="home-plans">
+    <div class="home-plans rise">
       <article class="home-plan" aria-labelledby="plan-free">
         <h3 class="home-plan__name" id="plan-free">Free</h3>
         <p class="home-plan__price"><span class="home-plan__amount">US$0</span></p>
@@ -229,11 +236,9 @@ const questions = html`
 
 const body = html`
 ${hero}
-${howItWorks}
 ${verdicts}
 ${workbenchSection()}
 ${BENCH_TEASER}
-${resources}
 ${pricing}
 ${questions}`;
 

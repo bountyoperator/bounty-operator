@@ -21,12 +21,12 @@ import { SITE } from '../web/site/layout.mjs';
 
 const PUBLIC_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'web', 'public');
 
-// The mark as the night-shift header prints it: a canary stamp, ink glyph,
-// violet slash. Canary reads on light and dark tab bars alike.
-const TILE = '#f7d84a';
-const TILE_RING = '#16161b';
-const GLYPH = '#16161b';
-const SLASH = '#4b2593';
+// The mark as the header prints it: a tile of the hot ink, the b in black, the
+// slash in bone. Vermilion reads on light and dark tab bars alike.
+const TILE = '#ff4d2e';
+const TILE_RING = '#ff4d2e';
+const GLYPH = '#09090a';
+const SLASH = '#f4f1ea';
 
 function markPaths() {
   return [
@@ -36,7 +36,7 @@ function markPaths() {
   ].join('');
 }
 
-/** The browser-tab icon: a canary tile with an ink ring, so the edge holds on light tab bars. */
+/** The browser-tab icon: the tile, with a ring in its own colour. */
 function tileSvg() {
   const radius = BRAND_MARK.tileRadius;
   return [

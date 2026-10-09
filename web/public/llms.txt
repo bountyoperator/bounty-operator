@@ -16,7 +16,7 @@ A hosted review sends the user's files and provider key through bountyoperator.c
 - [Gauntlet](https://bountyoperator.com/gauntlet): One run through eight stages (scope, provenance, prior art, proof, severity, triager, report, verdict) that ends in one verdict.
 - [Panel review](https://bountyoperator.com/panel-review): Two to four models review in parallel, then a cross-examination pass keeps what the cited lines prove.
 - [Your model, your key](https://bountyoperator.com/your-model-your-key): Where your code goes, who holds the API key and what is stored.
-- [Compare](https://bountyoperator.com/compare): Sourced tables against chat apps, open-source audit skills, platform pre-checks and four overlapping tools.
+- [Compare](https://bountyoperator.com/compare): Sourced tables against chat apps, open-source audit skills, platform pre-checks and seven overlapping tools.
 
 ## Review profiles
 

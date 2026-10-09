@@ -64,8 +64,8 @@ export const CLAUDE_CREDITS_FAQ = {
   a: html`<p>Since October 2026 those plans include monthly credits for the Claude API: US$100 on Max 5x, US$200 on Max 20x, and up to US$500 pooled on Team. Link a Claude Console organization in the billing settings on claude.ai, create an API key in it, and reviews on that key draw on those credits first. New subscribers can claim them after seven days on the plan. Free, Pro and Enterprise plans are not eligible. The terms are in ${link({ label: 'Anthropic’s article on the credits', href: 'https://support.claude.com/en/articles/17154008-monthly-api-credits-for-max-and-team-plans', external: true })}.</p><p>If Claude blocks a review, see <a class="link" href="/guide#model-refuses">When the model refuses</a>.</p>`,
 };
 
-/** The record claim, exactly as PUBLIC-METHOD.md allows it. */
-export const RECORD_CLAIM = 'Twelve checks, distilled from 105 real case files across five platforms. The wins and the closures.';
+/** The record claim, at the depth PUBLIC-METHOD.md allows: the count, the platforms, wins and closures. One wording on every page. */
+export const RECORD_CLAIM = 'Twelve checks from 105 real case files across five platforms, the paid ones and the closed ones.';
 
 // ---------------------------------------------------------------------------
 // The verdict vocabulary
@@ -253,8 +253,8 @@ export const STAGES = [
     n: 8,
     id: 'verdict',
     name: 'Verdict',
-    decides: 'One decision.',
-    outputs: ['One of five verdicts', 'One blocker', 'The cheapest action that removes it', 'A filing deadline'],
+    decides: 'Which verdict the report gets.',
+    outputs: ['One of five verdicts', 'The blocker', 'The cheapest action that removes it', 'A filing deadline'],
     checks: [],
   },
 ];

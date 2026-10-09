@@ -12,7 +12,7 @@ export const SITE = {
   promise: 'Find the hole in your report before the triager does.',
   summary:
     'Pre-submission review for bug bounty reports and smart-contract findings. The AI argues against the finding. The hunter writes the report.',
-  defaultImage: '/social-v4.png',
+  defaultImage: '/social-v5.png',
   source: 'https://github.com/bountyoperator/bounty-operator',
   support: 'support@bountyoperator.com',
   security: 'security@bountyoperator.com',
@@ -20,7 +20,7 @@ export const SITE = {
   // previews (twitter:creator). The product has no X account, so no twitter:site.
   builder: { name: 'Tradi3', url: 'https://audits.sherlock.xyz/watson/Tradi3', x: '@Tradi3_' },
   // Keep in step with --bg in web/public/css/base.css and with web/public/theme.js.
-  themeColor: { dark: '#17132e', light: '#fbfbf8' },
+  themeColor: { dark: '#09090a', light: '#09090a' },
 };
 
 /** The one webfont: Archivo, self-hosted. Preloaded so headings do not reflow when it lands. */
@@ -32,11 +32,11 @@ export const FONT_FILE = '/fonts/archivo-latin-wdth.woff2';
  * the system that was built from it.
  */
 export const DESIGN_CONTRACT = `<!--
-THESIS: The verdict is a stamp on your draft. The site is the inspection a finding passes before a triager sees it, not the category's dark code-card hero.
-OWN-WORLD: Inspection paperwork. Canary and white stock, black print, violet stamp ink, carbon indigo for code and the night shift. Ruled fields, square corners, part rules, ledger tables. Archivo condensed caps for labels and stamps; mono only for code and typed entries.
+THESIS: The verdict is a stamp on your draft, and the red pen has been through it first. The site is the inspection a finding passes before a triager sees it.
+OWN-WORLD: A black page, bone-white print and one hot ink, vermilion: the red of a seal and of a marking pen. The report is a sheet of paper lying on the page. Behind each page head lie lines of a report and of its code; lights drift over them and the pen strikes a line now and then. Archivo: wide heavy cuts for headlines and figures, condensed caps for stamps and labels; mono only for code and typed entries.
 STORY: A hunter sees a Critical stamped down to Medium with the line that decides it, trusts that the review argues against them, and starts a review or opens the example.
-FIRST VIEWPORT: Full-bleed canary field. Left: condensed black headline, lede, black Review my report, ruled View example. Right: the paper slip, tilted, Critical struck, Medium and the violet verdict stamped on it. Proof line on the field's foot.
-FORM: Rubber-stamp verdicts and inspection forms, 6 of 7, seed b5682f59.
+FIRST VIEWPORT: The moving field on black. Left: the headline with "the hole" circled in pen, the lede, a vermilion Review my report, a ruled View example. Right: the paper slip, tilted, Critical struck, Medium and the verdict stamped on it, in the light of the ember. Under them the three results of the builder as figures, then the five verdicts running past.
+FORM: Rubber-stamp verdicts and a report marked in red pen, seed b5682f59.
 FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md
 -->`;
 
@@ -211,7 +211,7 @@ function head(page, site) {
   const canonical = indexable ? absoluteUrl(page.path) : null;
   const robots = page.robots ?? (page.dev ? 'noindex, nofollow' : null);
   const styles = ['/css/base.css', ...(page.styles ?? [])];
-  const scripts = page.scripts ?? [];
+  const scripts = ['/field.mjs', ...(page.scripts ?? [])];
   const preloads = site.preloadsFor ? site.preloadsFor(page) : (page.preload ?? []);
 
   return html`<head>
@@ -221,9 +221,8 @@ function head(page, site) {
 <meta name="description" content="${page.description}">${canonical && html`
 <link rel="canonical" href="${canonical}">`}${robots && html`
 <meta name="robots" content="${robots}">`}
-<meta name="color-scheme" content="dark light">
-<meta name="theme-color" content="${SITE.themeColor.dark}" media="(prefers-color-scheme: dark)">
-<meta name="theme-color" content="${SITE.themeColor.light}" media="(prefers-color-scheme: light)">${socialTags(page, canonical)}
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="${SITE.themeColor.dark}">${socialTags(page, canonical)}
 <link rel="icon" href="/favicon.ico" sizes="48x48">
 <link rel="icon" href="/icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
@@ -261,7 +260,6 @@ function siteHeader(page, site) {
 <a class="brand" href="/">${brandMark()}<span class="brand__name">${SITE.name}</span></a>
 <nav class="site-nav" aria-label="Main"><ul>${items}</ul></nav>
 <div class="site-header__actions">
-<button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch colour theme"><span class="icon theme-toggle__icon" aria-hidden="true"></span></button>
 ${account}
 </div>
 </div>
@@ -316,6 +314,7 @@ ${footerColumn('Legal', [
 <p><a href="mailto:${SITE.support}">${SITE.support}</a></p>
 </div>
 </div>
+<div class="site-footer__mark" aria-hidden="true">Bounty Operator</div>
 </footer>`;
 }
 

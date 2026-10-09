@@ -9,7 +9,7 @@
 
 import { button, chip, codeBlock, disclosure, html, inline, link, verdictChip } from '../../components.mjs';
 import { SITE, absoluteUrl, breadcrumbsLd, faqPageLd } from '../../layout.mjs';
-import { CHECKS, checksRunLine } from '../method/_shared.mjs';
+import { CHECKS, RECORD_CLAIM, checksRunLine } from '../method/_shared.mjs';
 import { DOCS_STYLES, UPDATED, checklist, docPage, ext, nextStep } from './_shared.mjs';
 
 const PATH = '/guide';
@@ -229,8 +229,8 @@ ${disclosure({ summary: 'The rewritten report in full', hint: 'report.md', body:
 
 <div class="guide-try">
 <div class="guide-try__text">
-<p class="guide-try__title">Run the weak draft through the workbench</p>
-<p class="muted small">Loads HarborVault.sol and the first draft into the Challenge a draft report profile. You choose the model and supply the key, or export the prompt to your chat app.</p>
+<p class="guide-try__title">Run the weak draft yourself</p>
+<p class="muted small">Loads HarborVault.sol and the first draft with Challenge a draft report selected. You choose the model and supply the key, or export the prompt to your chat app.</p>
 </div>
 ${button({
   label: 'Challenge this draft',
@@ -299,7 +299,7 @@ const STAGES = [
   { name: 'Severity', profile: 'severity', question: 'What is the highest row of the programme’s own scale that the proof fully asserts, after every downgrade clause?' },
   { name: 'Triager', profile: 'triage', question: 'What is the one sentence that closes this report in ten minutes, and is it answered in the first paragraph?' },
   { name: 'Report', profile: 'report', question: 'Do the claims follow from the code, is the proof inline, do form and body agree, are the limits stated?' },
-  { name: 'Verdict', profile: null, question: 'One decision, one blocker, the cheapest action that removes it, and a filing deadline.' },
+  { name: 'Verdict', profile: null, question: 'One verdict, the blocker, the cheapest action that removes it and a filing deadline.' },
 ];
 
 const VERDICTS = ['submit', 'rewrite-then-submit', 'prove-first', 'hold-duplicate', 'drop'];
@@ -320,7 +320,7 @@ ${stage.profile && html`<a class="stages__link" href="/?profile=${stage.profile}
 )}
 </ol>
 <div class="prose">
-<p>Every stage but the last is a review profile in the workbench, run as a hosted review with your own model key. Free covers 1 hosted review a day, any review type, on this site or with <code>run_review</code> from a coding agent. The report stage is a core profile: as a copy-paste review in ChatGPT or Claude, or on your coding agent’s own model with <code>prepare_review</code>, it needs no account and is not counted. Operator runs all eight in order as one <a href="/gauntlet">Gauntlet</a> and ends with a single verdict:</p>
+<p>Every stage but the last is a review type you can run on its own, as a hosted review with your own model key. Free covers 1 hosted review a day, any review type, on this site or with <code>run_review</code> from a coding agent. The report stage is a core profile: as a copy-paste review in ChatGPT or Claude, or on your coding agent’s own model with <code>prepare_review</code>, it needs no account and is not counted. Operator runs all eight in order as one <a href="/gauntlet">Gauntlet</a> and ends with a single verdict:</p>
 </div>
 <p class="cluster cluster--tight guide-verdicts">${VERDICTS.map((verdict) => verdictChip(verdict))}</p>`;
 
@@ -376,13 +376,13 @@ const REFUSES = {
 // Page
 // ---------------------------------------------------------------------------
 
-const record = html`<p>Twelve checks, distilled from 105 real case files across five platforms. The wins and the closures. Built by Tradi3: ${link({ label: '2nd of 133 in Immunefi’s Firelight competition', href: FIRELIGHT, external: true })}, ${link({ label: '8th of 65 in Quantus', href: QUANTUS, external: true })} and ${link({ label: '15th of 186 in ENS, with 17 valid Critical submissions, the most on the board', href: ENS, external: true })}.</p>`;
+const record = html`<p>${RECORD_CLAIM} Built by Tradi3: ${link({ label: '2nd of 133 in Immunefi’s Firelight competition', href: FIRELIGHT, external: true })}, ${link({ label: '8th of 65 in Quantus', href: QUANTUS, external: true })} and ${link({ label: '15th of 186 in ENS, with 17 valid Critical submissions, the most on the board', href: ENS, external: true })}.</p>`;
 
 const body = docPage({
   head: {
     crumbs: [{ label: 'Bounty Operator', href: '/' }, { label: 'Report guide' }],
     title: TITLE,
-    lede: 'What to include, what to check and a worked example you can follow.',
+    lede: 'Seven things a report that lands has, and a weak draft rewritten line by line.',
     actions: html`${button({ label: 'Check a draft', href: '/tools/report-check', variant: 'primary', iconEnd: 'arrow-right' })}${button({ label: 'Report templates', href: '/templates' })}`,
   },
   before: html`<div class="docs-record">${record}</div>`,
@@ -396,9 +396,9 @@ const body = docPage({
     { id: 'model-refuses', title: REFUSES.q, body: REFUSES.a },
   ],
   after: nextStep({
-    title: 'Find the hole before the triager does',
-    text: 'Paste your draft into the report check, start from a platform template, or run a profile against your own files.',
-    actions: html`${button({ label: 'Open the workbench', href: '/#workspace', variant: 'primary', iconEnd: 'arrow-right' })}${button({ label: 'Report check', href: '/tools/report-check' })}${button({ label: 'Report templates', href: '/templates' })}`,
+    title: 'Now your own draft',
+    text: 'Paste your draft into the report check, start from a platform template, or run a review against your own files.',
+    actions: html`${button({ label: 'Review my report', href: '/?profile=report#workspace', variant: 'primary', iconEnd: 'arrow-right' })}${button({ label: 'Report check', href: '/tools/report-check' })}${button({ label: 'Report templates', href: '/templates' })}`,
   }),
 });
 
