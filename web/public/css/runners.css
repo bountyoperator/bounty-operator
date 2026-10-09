@@ -398,6 +398,13 @@ button.rn-pipe__stage:focus-visible {
   vertical-align: baseline;
 }
 
+/* On a touch screen they keep the height of their line (see workbench.css). */
+@media (pointer: coarse) {
+  :is(.gd__value, .gd__more) button.ref {
+    padding-block: 0.1875rem;
+  }
+}
+
 /* Stage and model reviews, each behind its own disclosure. */
 .gd-stages {
   display: grid;

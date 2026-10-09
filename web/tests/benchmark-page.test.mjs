@@ -20,9 +20,9 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { DEFAULT_SCORING, NOT_RUN_REASON, aggregate, modelFile } from '../../bench/lib/score.mjs';
 import { loadPages, scanTags, validateMarkup } from '../../scripts/build-site.mjs';
 import { renderPage } from '../site/layout.mjs';
-import { DEFAULT_DIR, PUBLISHED_DIR, buildView, findings, fmt, loadPublished, pairsRight } from '../site/pages/benchmark/_data.mjs';
+import { DEFAULT_DIR, PUBLISHED_DIR, buildView, findings, fmt, inWords, loadPublished, pairsRight, profileRuns } from '../site/pages/benchmark/_data.mjs';
 import { renderMethod, repoLink } from '../site/pages/benchmark/_markdown.mjs';
-import { benchmarkPages } from '../site/pages/benchmark/index.mjs';
+import { benchmarkPages, profileAnswer } from '../site/pages/benchmark/index.mjs';
 import { methodPages } from '../site/pages/benchmark/method.mjs';
 import { teaser } from '../site/pages/benchmark/_teaser.mjs';
 import { assertNoBannedNames } from './private-lists.mjs';
@@ -305,15 +305,32 @@ test('picks, the pair grid and the not-run list show the file’s values and not
   const { many, six, partial } = fixtures;
   const markup = render(many.page, many.dir, [many.page]);
   const text = textOf(markup);
-  // picks: every shown pick is in the file with that score and cost
+  // picks: each model on its own. Every shown pick is the release's rule applied here to the
+  // ranked arm of the file: the highest score on that task, equal scores to the cheaper run.
   const pickSection = textOf(markup.slice(markup.indexOf('id="picks"'), markup.indexOf('id="pairs"')));
+  const rankedArms = many.view.rows.map((row) => ({ slug: row.slug, open: row.open, arm: many.published.results.models.find((model) => model.slug === row.slug).arms.raw }));
+  const budgetLine = many.published.results.scoring.budget_usd_per_run;
+  assert.ok(many.view.picks.length > 0);
   for (const group of many.view.picks) {
+    const candidates = rankedArms.map((entry) => ({ ...entry, score: entry.arm.by_family[group.family], usd: entry.arm.usd_run_p50 ?? entry.arm.usd_run }));
+    const first = (list) => [...list].sort((x, y) => y.score - x.score || x.usd - y.usd || (x.slug < y.slug ? -1 : 1))[0];
+    const want = { best: first(candidates), budget: first(candidates.filter((entry) => entry.usd < budgetLine)), 'open-weight': first(candidates.filter((entry) => entry.open)) };
     for (const entry of group.entries) {
+      assert.equal(entry.arm, 'raw');
       assert.ok(pickSection.includes(entry.row.name));
       assert.ok(pickSection.includes(fmt.usd(entry.usd_run)));
-      assert.ok(many.published.results.picks.some((pick) => pick.model === entry.model && pick.score === entry.score && pick.usd_run === entry.usd_run));
+      for (const tier of entry.tiers) {
+        assert.equal(entry.model, want[tier].slug, `${group.family} ${tier}`);
+        assert.equal(entry.score, want[tier].score);
+        assert.equal(entry.usd_run, want[tier].usd);
+      }
     }
+    assert.deepEqual(group.entries.flatMap((entry) => entry.tiers).sort(), Object.keys(want).filter((tier) => want[tier]).sort(), `${group.family}: every tier that has a candidate is shown once`);
   }
+  // The file also lists picks made on a profile arm. None of them is on the page.
+  assert.ok(many.published.results.picks.some((pick) => pick.arm !== 'raw'), 'the fixture has profile-arm picks to leave out');
+  assert.doesNotMatch(pickSection, /with the [^.]{0,60} profile|raw arm/);
+  assert.match(pickSection, /Each model on its own\./);
   assert.match(markup, /href="\/\?profile=solidity#workspace"/);
   // pair grid: one row per ranked model, one cell per pair, right counts match the score
   for (const line of many.view.grid) {
@@ -372,6 +389,66 @@ test('the with/without comparison is withheld: no section, no lift table, no neg
   assert.match(textOf(body), /The profile arms, which add a Bounty Operator core profile, are in the results file: download it, the file keeps every published number\./);
   // A release that ran no profile arm says nothing about them.
   assert.doesNotMatch(textOf(String(fixtures.six.page.body)), /profile arms/);
+});
+
+test('the page says why it compares nothing, in counts from the results file and no score', () => {
+  // The counts: which models ran a profile, and on how many pairs each. A profile arm covers one
+  // task family, so a model's pairs are the sum over its profile arms.
+  const results = {
+    scoring: { headline_arm: 'raw' },
+    models: [
+      { slug: 'a/alone', arms: { raw: { pairs: 18 } } },
+      { slug: 'b/all', arms: { raw: { pairs: 18 }, report: { pairs: 6 }, solidity: { pairs: 10 }, general: { pairs: 2 } } },
+      { slug: 'c/one', arms: { raw: { pairs: 18 }, report: { pairs: 6 } } },
+      { slug: 'd/uncounted', arms: { raw: { pairs: 18 }, report: { pairs: null } } },
+    ],
+  };
+  assert.deepEqual(profileRuns(results), { models: 2, slugs: ['b/all', 'c/one'], minPairs: 6, maxPairs: 18 });
+  assert.equal(profileRuns({ models: [{ slug: 'a/alone', arms: { raw: { pairs: 18 } } }] }), null, 'a release that ran the ranked arm only');
+  // Another name for the ranked arm: that arm is the one left out.
+  assert.deepEqual(profileRuns({ scoring: { headline_arm: 'plain' }, models: [{ slug: 'b/all', arms: { plain: { pairs: 18 }, report: { pairs: 6 } } }] }), { models: 1, slugs: ['b/all'], minPairs: 6, maxPairs: 6 });
+
+  // The sentence, for each shape of a release.
+  const view = (models, { rows = models.map((model) => model.slug), pairs = 18, repeats = 1 } = {}) => ({ results: { scoring: { headline_arm: 'raw' }, models }, headline: 'raw', rows: rows.map((slug) => ({ slug })), pairs, repeats });
+  const full = { raw: { pairs: 18 }, report: { pairs: 6 }, solidity: { pairs: 10 }, general: { pairs: 2 } };
+  const head = 'This release does not answer that, and the page makes no claim. ';
+  const tail = ' That is too little to judge the product by. Every number from those runs is in the results file.';
+  const bare = [{ slug: 'x/1', arms: { raw: { pairs: 18 } } }, { slug: 'x/2', arms: { raw: { pairs: 18 } } }];
+  assert.equal(profileAnswer(view([{ slug: 'b/1', arms: full }, { slug: 'b/2', arms: full }, ...bare])), `${head}Two of the 4 ranked models also ran with the Bounty Operator profiles added, on all 18 pairs, once per input.${tail}`);
+  assert.equal(profileAnswer(view([{ slug: 'b/1', arms: full }, ...bare], { repeats: 3 })), `${head}One of the 3 ranked models also ran with the Bounty Operator profiles added, on all 18 pairs, 3 times per input.${tail}`);
+  assert.equal(profileAnswer(view([{ slug: 'b/1', arms: full }, { slug: 'c/1', arms: { raw: { pairs: 18 }, report: { pairs: 6 } } }])), `${head}Two of the 2 ranked models also ran with the Bounty Operator profiles added, on 6 to 18 pairs, once per input.${tail}`);
+  assert.equal(profileAnswer(view([{ slug: 'c/1', arms: { raw: { pairs: 18 }, report: { pairs: 1 } } }, ...bare])), `${head}One of the 3 ranked models also ran with the Bounty Operator profiles added, on 1 pair, once per input.${tail}`);
+  // A model that ran a profile and is not ranked: the count stands without "of the ranked".
+  assert.equal(profileAnswer(view([{ slug: 'b/1', arms: full }, { slug: 'b/2', arms: full }], { rows: ['b/1'] })), `${head}Two models also ran with the Bounty Operator profiles added, on all 18 pairs, once per input.${tail}`);
+  assert.equal(profileAnswer(view([{ slug: 'b/1', arms: full }, ...bare, { slug: 'n/1', arms: { raw: { pairs: 18 } } }], { rows: ['b/1', 'x/1', 'x/2'] })), `${head}One of the 3 ranked models also ran with the Bounty Operator profiles added, on all 18 pairs, once per input.${tail}`);
+  assert.equal(profileAnswer(view(bare)), null);
+
+  // The page: the whole answer, word for word, from counts taken here from the file.
+  const { many, six } = fixtures;
+  const file = many.published.results;
+  const withProfiles = file.models.filter((model) => Object.keys(model.arms).some((arm) => arm !== 'raw'));
+  const each = withProfiles.map((model) => Object.entries(model.arms).filter(([arm]) => arm !== 'raw').reduce((sum, [, arm]) => sum + arm.pairs, 0));
+  assert.equal(withProfiles.length, 2);
+  assert.deepEqual(each, [many.view.pairs, many.view.pairs], 'both ran every pair with a profile');
+  assert.ok(withProfiles.every((model) => many.view.rows.some((row) => row.slug === model.slug)));
+  const expected = `${head}Two of the ${many.view.rows.length} ranked models also ran with the Bounty Operator profiles added, on all ${many.view.pairs} pairs, ${many.view.repeats === 1 ? 'once per input' : `${many.view.repeats} times per input`}.${tail}`;
+  assert.equal(profileAnswer(many.view), expected);
+  const text = textOf(String(many.page.body));
+  const asked = 'Does Bounty Operator make a model score higher?';
+  const start = text.indexOf(asked);
+  assert.ok(start > 0, 'the question is asked');
+  const answer = text.slice(start + asked.length, text.indexOf('What does held mean?')).trim();
+  assert.equal(answer, expected);
+  // It states counts of models, pairs and runs, and no score, rate or difference.
+  assert.doesNotMatch(answer, /%|\bscore\b|\bpoints?\b|higher|lower|better|worse|cut off/);
+  // The same question and answer are in the structured data.
+  const faqLd = many.page.jsonld.find((entry) => entry['@type'] === 'FAQPage');
+  const question = faqLd.mainEntity.find((entry) => entry.name === asked);
+  assert.equal(question.acceptedAnswer.text, expected);
+  // A release with no profile arm asks no such question.
+  assert.doesNotMatch(textOf(String(six.page.body)), /score higher|also ran with the Bounty Operator profiles/);
+  assert.equal(profileRuns(six.published.results), null);
+  assert.equal(profileAnswer(six.view), null);
 });
 
 test('no page source and no stylesheet links or styles the withheld sections', () => {
@@ -659,6 +736,17 @@ test('the published release: five blocked answers on the page, no comparison, an
   const body = String(page.body);
   assertNoComparison(body, 'the published release');
   assert.ok(textOf(body).includes('Anthropic’s cyber safeguards blocked 5 answers in this release'));
+  // The answer and the picks of the published file, word for word and model by model.
+  const view = buildView(published);
+  assert.equal(profileAnswer(view), 'This release does not answer that, and the page makes no claim. Four of the 22 ranked models also ran with the Bounty Operator profiles added, on all 18 pairs, once per input. That is too little to judge the product by. Every number from those runs is in the results file.');
+  assert.deepEqual(view.picks.map((group) => [group.family, ...group.entries.map((entry) => `${entry.model} ${entry.arm} ${entry.tiers.join('+')} ${entry.score} ${entry.usd_run}`)]), [
+    ['find-sol', 'openai/gpt-6-luna raw best+budget 90 0.010876', 'moonshotai/kimi-k3 raw open-weight 80 0.214995'],
+    ['find-ts', 'z-ai/glm-5.3-flash raw best+budget+open-weight 100 0.013825'],
+    ['challenge', 'minimax/minimax-m3 raw best+budget+open-weight 100 0.034387'],
+  ]);
+  const picked = textOf(body.slice(body.indexOf('id="picks"'), body.indexOf('id="pairs"')));
+  assert.match(picked, /Median cost per run/);
+  assert.doesNotMatch(picked, /with the [^.]{0,60} profile|raw arm/);
   // Withheld, not removed: the file the page links keeps the profile arms it no longer shows.
   assert.ok(published.results.models.some((entry) => Object.keys(entry.lift ?? {}).length > 0));
 });

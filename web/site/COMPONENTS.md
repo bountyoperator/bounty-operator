@@ -31,7 +31,7 @@ Do:
 - Put page-specific rules in your own stylesheet (`css/home.css`, `css/workbench.css`, `css/tools.css`, …) and list it in the page's `styles`.
 - Write root-relative, extensionless links: `/guide`, `/tools/report-check`, `/#pricing`.
 - Keep every text size at 12px or more, in `rem`. Form controls are 16px under 768px (already handled by `.input`, `.select`, `.textarea`).
-- Keep touch targets at 44px. `.btn`, nav links, summaries, the dialog close button and checkbox rows already are.
+- Keep touch targets at 44px. `.btn`, nav links, summaries, the dialog close button and checkbox rows already are. The one exception is a `button.ref` inside running text: on a touch screen it keeps the height of its line (`workbench.css`, `runners.css`). A reference that stands alone keeps 44px.
 
 Do not:
 
@@ -377,7 +377,7 @@ stackTable({
 })
 ```
 
-A reference table that reads as a list on a narrow screen: one block per row, every cell after the first under its column name. It takes the options of `table()` and emits `table.table.stack-table` (`.stack-table--plain`, `.stack-table--wide`) with a `span.cell-label` in each cell after the first. The rules are in `base.css`; a page stylesheet only adds what is specific to its own table. A script that builds the same table in the browser writes the `span.cell-label` itself (see `/tools/slither-focus.mjs`).
+A reference table that reads as a list on a narrow screen: one block per row, every cell after the first under its column name. It takes the options of `table()` and emits `table.table.stack-table` (`.stack-table--plain`, `.stack-table--wide`) with a `span.cell-label` in each cell after the first. The rules are in `base.css`; a page stylesheet only adds what is specific to its own table. A script that builds the same table in the browser writes the `span.cell-label` itself (see `/tools/slither-focus.mjs`; for a review result `tableNode()` and `manifestNode()` in `/app/results.mjs` and `agreementSection()` in `/app/dossier.mjs`, which share `cellLabel()`).
 
 ### Disclosure and accordion
 

@@ -479,7 +479,7 @@ The home hero and the social card show the review as a slip. It is built by `rep
 - **Do** print verdicts and severities as stamps (an ink outline, ink letters, a trace of fill), give a large verdict its inked impression, and re-run `scripts/build-stamps.mjs` when a label, the stamp geometry or the font changes.
 - **Do** keep code on carbon indigo in both themes, with observed lines in violet and unproven lines in ochre.
 - **Do** put invented output in a dashed frame labelled Example.
-- **Do** keep every touch target at 44px, every text at 12px or more, and form controls at 16px under 768px.
+- **Do** keep every touch target at 44px, except a file reference inside a sentence, which keeps the height of its line (25px); keep every text at 12px or more, and form controls at 16px under 768px.
 - **Do** honour reduced motion: transitions and animations stop, the running bar becomes a solid line and skeletons go flat.
 
 ### Don't:

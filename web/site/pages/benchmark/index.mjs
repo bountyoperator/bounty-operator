@@ -22,8 +22,7 @@ import { readFileSync } from 'node:fs';
 import { attrs, button, chip, codeBlock, cx, faq, html, icon, inline, link, sectionHeading } from '../../components.mjs';
 import { SITE, absoluteUrl, breadcrumbsLd, faqPageLd } from '../../layout.mjs';
 import { pageHero, workbenchLink } from '../method/_shared.mjs';
-import { reviewProfile } from '../../../public/profiles.mjs';
-import { FAMILIES, METHOD_PATH, PAGE_PATH, SERVED, buildView, familyLabel, findings, fmt, listingOr, loadPublished, pairsRight } from './_data.mjs';
+import { FAMILIES, METHOD_PATH, PAGE_PATH, SERVED, buildView, familyLabel, findings, fmt, inWords, listingOr, loadPublished, pairsRight, profileRuns } from './_data.mjs';
 import { BLOB, methodSentence } from './_markdown.mjs';
 import { METHOD_SOURCE } from './method.mjs';
 
@@ -176,14 +175,13 @@ function picksSection(view) {
   const cards = view.picks.map((group) => {
     const family = FAMILIES[group.family];
     const entries = group.entries.map((entry) => {
-      const profile = entry.arm !== view.headline ? reviewProfile(entry.arm) : null;
       return html`<li class="pick">
   <p class="pick__tags">${entry.tiers.map((tier) => chip(tier === 'budget' && view.budget !== null ? `Under ${fmt.usd(view.budget)} a run` : TIER_LABEL[tier] ?? tier, { tone: tier === 'best' ? 'observed' : 'neutral' }))}</p>
   <p class="pick__name">${entry.row.name}</p>
-  <p class="pick__slug mono">${entry.row.slug}${profile ? html` with the ${profile.name} profile` : ' · raw arm'}</p>
+  <p class="pick__slug mono">${entry.row.slug}</p>
   <dl class="pick__nums">
     <div><dt class="meta">Score</dt><dd class="num">${fmt.score(entry.score)}${group.pairs !== null && html`<span class="pick__of">${pairsRight(entry.score, group.pairs)}</span>`}</dd></div>
-    <div><dt class="meta">Median cost across arm</dt><dd class="num">${show(fmt.usd(entry.usd_run))}</dd></div>
+    <div><dt class="meta">Median cost per run</dt><dd class="num">${show(fmt.usd(entry.usd_run))}</dd></div>
   </dl>
   ${family && link({ label: 'Open the workbench', href: workbenchLink(family.profile), className: 'pick__go' })}
 </li>`;
@@ -200,7 +198,7 @@ function picksSection(view) {
     lede: `The highest score on each kind of task, the best of the models under ${fmt.usd(view.budget) ?? 'the budget line'} a run, and the best open-weight model. Equal scores go to the cheaper run.`,
   })}
   <div class="picks">${cards}</div>
-  <p class="fine bench-note">Scores count only the pairs of that task. Costs are medians across every input in the selected arm, which can include other tasks. The workbench applies the matching core profile; raw scores do not measure that profile. Pick the model there.</p>
+  <p class="fine bench-note">Each model on its own. A score counts only the pairs of that task. A cost is the median over every input of the model’s run, other tasks included. The workbench adds its own profile to the model you pick there; these scores do not measure that profile.</p>
 </section>`;
 }
 
@@ -381,11 +379,34 @@ function notRunSection(view) {
 </section>`;
 }
 
+/**
+ * The answer to "Does Bounty Operator make a model score higher?": that the
+ * release does not say, with the reason in counts read from the file (the
+ * models that also ran with the profiles, their pairs, the runs per input).
+ * It states no score. Null when the release ran the ranked arm only.
+ */
+export function profileAnswer(view) {
+  const profile = profileRuns(view.results, view.headline);
+  if (!profile) return null;
+  const capital = (text) => text.charAt(0).toUpperCase() + text.slice(1);
+  const count = capital(inWords(profile.models));
+  const ranked = new Set(view.rows.map((row) => row.slug));
+  const models = profile.slugs.every((slug) => ranked.has(slug))
+    ? `${count} of the ${view.rows.length} ranked models`
+    : `${count} ${profile.models === 1 ? 'model' : 'models'}`;
+  const pairs = profile.minPairs !== profile.maxPairs
+    ? `${profile.minPairs} to ${profile.maxPairs} pairs`
+    : profile.minPairs === view.pairs ? `all ${view.pairs} pairs` : `${profile.minPairs} ${profile.minPairs === 1 ? 'pair' : 'pairs'}`;
+  const times = view.repeats === 1 ? 'once per input' : `${view.repeats} times per input`;
+  return `This release does not answer that, and the page makes no claim. ${models} also ran with the Bounty Operator profiles added, on ${pairs}, ${times}. That is too little to judge the product by. Every number from those runs is in the results file.`;
+}
+
 function faqItems(view) {
   const { results } = view;
   const commitments = Array.isArray(results.commitments) ? results.commitments.length : 0;
   // True when the release ran any arm besides the ranked one.
   const profileArms = results.models.some((model) => Object.keys(model.arms ?? {}).some((arm) => arm !== view.headline));
+  const scoreHigher = profileAnswer(view);
   const repeats = view.repeats === 1
     ? 'Every model answers every input once. The release’s credit covered one repeat for many models rather than three for a handful, so the score carries the noise of one run per input: the interval covers which pairs were drawn, not how a model varies between runs.'
     : `Every model answers every input ${view.repeats} times, and the score is the median of the repeats.`;
@@ -402,6 +423,7 @@ function faqItems(view) {
       q: 'Is the benchmark tuned to Bounty Operator?',
       a: `Bounty Operator is not a row. The ranked score comes from the raw arm, which sends no product text: the same system prompt, task and answer sheet to every model. ${profileArms ? 'The profile arms, which add a Bounty Operator core profile, are in the results file: download it, the file keeps every published number. ' : ''}Each pair started as a draft by a model of one of nine vendors. Sessions of Claude Opus 5.5, a ranked model, directed by the benchmark’s owner, then checked, repaired and proved every pair and wrote two of the hard pairs. Those two count as Anthropic-drafted, and the results file gives every model’s score without the pairs its own vendor drafted. Two ranked models, DeepSeek V4.1 Flash and GLM 5.3 Flash, ran the pilot on the find pairs of that time, and while nine pairs were written, drafts were sent to a few ranked models to see whether they could be decided both ways; the method names the models and the pairs whose design changed after such a check.`,
     },
+    ...(scoreHigher ? [{ q: 'Does Bounty Operator make a model score higher?', a: scoreHigher }] : []),
     {
       q: 'What does held mean?',
       a: `A held case’s files are not published. Before the first scored run each held case got a salted SHA-256 commitment${commitments ? ` (${fmt.count(commitments)} in this release)` : ''}; when a held case moves to the public set, its salt is published with it so the commitment can be checked. Held does not mean unseen by the model providers: a held case is sent to the providers that serve each model, as every prompt is.`,

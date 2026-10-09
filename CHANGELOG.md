@@ -1,5 +1,33 @@
 # Changelog
 
+## 0.8.4 — 2026-10-09
+
+Reviews
+
+- On a phone, the tables in a result read as a list: each claim with its
+  status, its location and the reasoning under it. They were cut off at the
+  edge of the screen. The files list and the panel's agreement table read the
+  same way, and a long hash or address wraps.
+- A file reference inside a sentence keeps the height of its line on a touch
+  screen.
+- On phones 360px wide or narrower, the numbered steps of a finding are no
+  longer cut at the edge of its card.
+
+Site
+
+- A page is no longer laid out wider than a phone screen while a verdict
+  stamp lands. It was: the home page on phones up to 380px wide, and an
+  opened result on phones up to 409px.
+- /benchmark answers "Does Bounty Operator make a model score higher?" The
+  2026-10 benchmark release does not say, and the answer gives the reason in
+  counts.
+- "Which model to use for what" on /benchmark picks each model on its own. It
+  listed two picks made with a profile added.
+- The Firelight result reads 2nd of 133, the last rank on that board. It read
+  135, which counted two disqualified rows.
+- The README screenshots show the current design.
+- The 0.8.2 entry below says why /benchmark compares nothing.
+
 ## 0.8.3 — 2026-10-09
 
 Site
@@ -61,10 +89,11 @@ Reviews
 
 Benchmark
 
-- The comparison with and without Bounty Operator is no longer shown on
-  /benchmark. The page ranks the models on their own. The results file keeps
-  every published number of the 2026-10 release, and the published files are
-  unchanged.
+- /benchmark ranks the models on their own and no longer compares a model
+  with and without Bounty Operator. Four of the 22 ranked models also ran
+  with the profiles, once per input: too little to judge the product by. The
+  results file keeps every published number of the 2026-10 release, and the
+  published files are unchanged.
 - A note under "How it is kept honest": Anthropic's cyber safeguards blocked 5
   answers in the 2026-10 release, 3 from Claude Fable 5.1 and 2 from Claude
   Opus 5.5, all on the raw arm, the model alone. The benchmark account is not

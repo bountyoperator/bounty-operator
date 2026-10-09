@@ -49,7 +49,7 @@ import { extractRefs, parseReview } from '../parse.mjs';
 import { GAUNTLET, reviewProfile } from '../profiles.mjs';
 import { PROVIDERS } from '../providers.mjs';
 import { manifestFor } from '../review-core.mjs';
-import { inlineNodes, onResultDrawn, registerResultBody, reviewNodes, sectionKey } from './results.mjs';
+import { cellLabel, inlineNodes, onResultDrawn, registerResultBody, reviewNodes, sectionKey } from './results.mjs';
 import { workbench } from './state.mjs';
 import { button, el, formatDate, formatElapsed, on, qs } from './ui.mjs';
 import { enterExample, say, setStep, view } from './workbench.mjs';
@@ -672,8 +672,43 @@ function gauntletBody(result, shown) {
   return nodes;
 }
 
+/**
+ * The Agreement table of a panel result: one row per finding the judge listed,
+ * with who reported it, what became of it and the reviews behind it. On a
+ * phone it reads as one block per row (.stack-table in base.css): every cell
+ * after the first carries its column name, and a cell with nothing to say
+ * stays empty so the stack skips it. Null when the judge listed no row.
+ *
+ * @param {ReturnType<typeof agreementOf>} rows
+ * @param {{ seats: { number: number, model: string }[], source: object }} context
+ */
+export function agreementSection(rows, { seats, source }) {
+  if (!rows.length) return null;
+  const seatButtons = (text) => {
+    const numbers = [...String(text).matchAll(/panel-(\d{1,2})-/g)].map((match) => Number(match[1])).filter((number) => seats.some((seat) => seat.number === number));
+    if (!numbers.length) return [text];
+    return [...new Set(numbers)].map((number) => {
+      const seat = seats.find((entry) => entry.number === number);
+      return el('button', { class: 'pn-seat', type: 'button', title: `Open the review by ${seat.model}`, dataset: { openReview: `pn-seat-${number}` } },
+        el('span', { class: 'pn-seat__n num', text: String(number) }), el('span', { class: 'pn-seat__model', text: seat.model }));
+    });
+  };
+  const said = (text) => String(text ?? '').trim() !== '';
+  return el('section', { class: 'wb-section', dataset: { section: 'agreement' } },
+    el('h4', { class: 'wb-section__title', text: 'Agreement' }),
+    el('div', { class: 'table-wrap', tabindex: '0', role: 'region', 'aria-label': 'Agreement' },
+      el('table', { class: 'table table--dense stack-table' },
+        el('thead', {}, el('tr', {}, ['Finding', 'Reported by', 'Result', 'Settled by', 'Reviews'].map((name) => el('th', { scope: 'col', text: name })))),
+        el('tbody', {}, rows.map((row) => el('tr', {},
+          el('th', { scope: 'row' }, inlineNodes(row.finding, source)),
+          row.k === null ? el('td', { class: 'num nowrap' }) : el('td', { class: 'num nowrap' }, cellLabel('Reported by'), `${row.k} of ${row.n}`),
+          el('td', {}, cellLabel('Result'), chip(row.status, AGREEMENT_TONES[row.status])),
+          said(row.settledBy) ? el('td', {}, cellLabel('Settled by'), inlineNodes(row.settledBy, source)) : el('td', {}),
+          said(row.reviewers) ? el('td', {}, cellLabel('Reviews'), el('span', { class: 'pn-seats' }, seatButtons(row.reviewers))) : el('td', {})))))));
+}
+
 /** The Findings tab of a panel result. */
-function panelBody(result, shown) {
+export function panelBody(result, shown) {
   const seats = Array.isArray(result.stages) ? result.stages : [];
   if (!seats.length) return null;
 
@@ -697,29 +732,7 @@ function panelBody(result, shown) {
       el('span', { class: 'chip pn-agree', dataset: { tone: row.k === row.n ? 'observed' : 'neutral' }, text: `${row.k} of ${row.n} models` }));
   });
 
-  const seatButtons = (text) => {
-    const numbers = [...String(text).matchAll(/panel-(\d{1,2})-/g)].map((match) => Number(match[1])).filter((number) => seats.some((seat) => seat.number === number));
-    if (!numbers.length) return [text];
-    return [...new Set(numbers)].map((number) => {
-      const seat = seats.find((entry) => entry.number === number);
-      return el('button', { class: 'pn-seat', type: 'button', title: `Open the review by ${seat.model}`, dataset: { openReview: `pn-seat-${number}` } },
-        el('span', { class: 'pn-seat__n num', text: String(number) }), el('span', { class: 'pn-seat__model', text: seat.model }));
-    });
-  };
-
-  const agreement = rows.length
-    ? el('section', { class: 'wb-section', dataset: { section: 'agreement' } },
-      el('h4', { class: 'wb-section__title', text: 'Agreement' }),
-      el('div', { class: 'table-wrap', tabindex: '0', role: 'region', 'aria-label': 'Agreement' },
-        el('table', { class: 'table table--dense' },
-          el('thead', {}, el('tr', {}, ['Finding', 'Reported by', 'Result', 'Settled by', 'Reviews'].map((name) => el('th', { scope: 'col', text: name })))),
-          el('tbody', {}, rows.map((row) => el('tr', {},
-            el('th', { scope: 'row' }, inlineNodes(row.finding, source)),
-            el('td', { class: 'num nowrap', text: row.k === null ? '' : `${row.k} of ${row.n}` }),
-            el('td', {}, chip(row.status, AGREEMENT_TONES[row.status])),
-            el('td', {}, inlineNodes(row.settledBy, source)),
-            el('td', {}, el('span', { class: 'pn-seats' }, seatButtons(row.reviewers)))))))))
-    : null;
+  const agreement = agreementSection(rows, { seats, source });
 
   const judge = [providerLabel(result.provider), result.model].filter(Boolean).join(' / ');
   return [

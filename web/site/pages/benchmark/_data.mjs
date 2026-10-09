@@ -231,15 +231,27 @@ export function buildView(published) {
     });
 
   // Picks: best, budget and open-weight per task family, merged where one model holds several.
+  // They are taken on the ranked arm by the release's own rule (bench/lib/score.mjs): the
+  // highest score on the pairs of that task, equal scores to the cheaper run. The results
+  // file also lists picks made on profile arms; the page compares nothing, so it shows none.
+  const budgetLine = results.scoring?.budget_usd_per_run ?? null;
+  const cheaperFirst = (x, y) => y.score - x.score || x.usd_run - y.usd_run || (x.model < y.model ? -1 : x.model > y.model ? 1 : 0);
   const picks = [];
   for (const family of orderFamilies(new Set((results.picks ?? []).map((pick) => pick.task)))) {
+    const candidates = rows
+      .map((row) => ({ task: family, model: row.slug, arm: headline, score: row.arm.by_family?.[family], usd_run: row.arm.usd_run_p50 ?? row.arm.usd_run, row }))
+      .filter((candidate) => typeof candidate.score === 'number' && typeof candidate.usd_run === 'number');
     const entries = [];
-    for (const pick of (results.picks ?? []).filter((p) => p.task === family)) {
-      const row = bySlug.get(pick.model);
-      if (!row || !complete(row.model, pick.arm)) continue;
-      const same = entries.find((entry) => entry.model === pick.model && entry.arm === pick.arm);
-      if (same) same.tiers.push(pick.tier);
-      else entries.push({ ...pick, tiers: [pick.tier], row });
+    for (const [tier, list] of [
+      ['best', candidates],
+      ['budget', budgetLine === null ? [] : candidates.filter((candidate) => candidate.usd_run < budgetLine)],
+      ['open-weight', candidates.filter((candidate) => candidate.row.open)],
+    ]) {
+      const [pick] = [...list].sort(cheaperFirst);
+      if (!pick) continue;
+      const same = entries.find((entry) => entry.model === pick.model);
+      if (same) same.tiers.push(tier);
+      else entries.push({ ...pick, tiers: [tier] });
     }
     if (entries.length) picks.push({ family, pairs: results.cases?.by_family?.[family] ?? null, entries });
   }
@@ -280,6 +292,26 @@ export function buildView(published) {
     biteSeverities: results.scoring?.bite_severities ?? ['medium', 'high', 'critical', 'unrated'],
     practice: published.practice ? practiceView(published.practice) : null,
   };
+}
+
+/**
+ * What a release ran besides the ranked arm, counted from the results file:
+ * which models, and on how many pairs each. A profile arm covers the pairs of
+ * one task family, so a model's pairs are the sum over its profile arms. The
+ * page states these counts where it says why it compares nothing.
+ *
+ * @returns {{ models: number, slugs: string[], minPairs: number, maxPairs: number } | null}
+ */
+export function profileRuns(results, headline = results.scoring?.headline_arm ?? 'raw') {
+  const perModel = results.models
+    .map((model) => ({
+      slug: model.slug,
+      pairs: Object.entries(model.arms ?? {}).filter(([name, arm]) => name !== headline && Number.isInteger(arm?.pairs)).map(([, arm]) => arm.pairs),
+    }))
+    .filter((entry) => entry.pairs.length);
+  if (!perModel.length) return null;
+  const each = perModel.map((entry) => entry.pairs.reduce((sum, pairs) => sum + pairs, 0));
+  return { models: perModel.length, slugs: perModel.map((entry) => entry.slug), minPairs: Math.min(...each), maxPairs: Math.max(...each) };
 }
 
 function practiceView(practice) {

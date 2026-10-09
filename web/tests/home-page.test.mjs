@@ -81,7 +81,7 @@ test('the sections come in the order the brief sets', () => {
   assert.deepEqual([...positions].sort((a, b) => a - b), positions);
 });
 
-test('the proof strip links the three leaderboards and the method', () => {
+test('the proof strip links the three leaderboards and the method', async () => {
   // Each link is parsed and compared whole: origin and path, not a substring of the href.
   const links = find('a').map((tag) => new URL(tag.attributes.get('href'), 'https://bountyoperator.com'));
   const linksTo = (origin, pathname) => links.some((url) => url.origin === origin && url.pathname === pathname && url.search === '' && url.hash === '');
@@ -94,7 +94,13 @@ test('the proof strip links the three leaderboards and the method', () => {
   // One wording for the ENS result on every short proof line.
   assert.match(text, /17 valid Critical submissions in Immunefi’s ENS competition, the most of 186 researchers/);
   assert.doesNotMatch(text, /including duplicates|Critical-rated|listed researchers/);
-  assert.match(text, /2nd of 135/);
+  assert.match(text, /2nd of 133/);
+  // The same count wherever the result is stated: 133 is the board's last rank (two more rows are disqualified).
+  for (const file of ['public/guide.html', 'public/method.html', 'public/gauntlet.html', 'public/pricing.html', 'public/llms.txt', '../README.md', '../docs/public-results.md']) {
+    const stated = await readFile(path.join(WEB_DIR, file), 'utf8');
+    assert.match(stated, /2nd of 133/, file);
+    assert.doesNotMatch(stated, /2nd of 135/, file);
+  }
   assert.match(text, /8th of 65/);
 });
 
@@ -304,7 +310,7 @@ test('the social card is a 1200 x 630 document drawn from the same example', asy
   assert.match(card, /Find the hole in your report before the triager does\./);
   assert.match(card, /class="home-shot home-shot--still"/);
   // The builder's results read as the builder's: one phrase, not a list of product facts.
-  assert.match(textOf(card), /Built by Tradi3: most valid Criticals in ENS, 2nd of 135 in Firelight/);
+  assert.match(textOf(card), /Built by Tradi3: most valid Criticals in ENS, 2nd of 133 in Firelight/);
   assert.match(textOf(card), /Operator: US\$10 a week/);
   assert.doesNotMatch(card, /\sstyle="/);
 

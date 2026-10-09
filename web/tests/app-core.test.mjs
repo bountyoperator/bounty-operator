@@ -869,6 +869,89 @@ describe('rules', () => {
     assert.ok(!/font-size:\s*(?:0\.[0-6]\d*rem|[0-9]px|1[01]px)/.test(rules));
   });
 
+  test('on a phone a stacked table, a cited location and a landing stamp stay inside the page', async () => {
+    const read = async (name) => (await readFile(new URL(`../public/css/${name}`, import.meta.url), 'utf8')).replace(/\/\*[\s\S]*?\*\//g, '');
+    const [css, base, runners, home] = await Promise.all(['workbench.css', 'base.css', 'runners.css', 'home.css'].map(read));
+    /** The body of the first block that opens with `open`, braces balanced. */
+    const block = (source, open) => {
+      const start = source.indexOf(open);
+      assert.ok(start >= 0, `no block opens with ${open}`);
+      let depth = 0;
+      for (let index = source.indexOf('{', start); index < source.length; index += 1) {
+        if (source[index] === '{') depth += 1;
+        else if (source[index] === '}' && (depth -= 1) === 0) return source.slice(source.indexOf('{', start) + 1, index);
+      }
+      throw new Error(`the block ${open} does not close`);
+    };
+    const count = (source, text) => source.split(text).length - 1;
+
+    // In a sentence a reference keeps the height of its line on a touch screen: 25px, not the 44px box.
+    const inText = ':is(.rail__body, .wb-list, .wb-prose, .table, .kv, .finding__title) button.ref';
+    assert.match(block(css, `@media (pointer: coarse) {\n  ${inText} {`), /^\s*:is\([^)]*\) button\.ref \{\s*padding-block: 0\.1875rem;\s*\}\s*$/);
+    assert.match(block(runners, '@media (pointer: coarse) {\n  :is(.gd__value, .gd__more) button.ref {'), /^\s*:is\(\.gd__value, \.gd__more\) button\.ref \{\s*padding-block: 0\.1875rem;\s*\}\s*$/);
+    // No stretched touch area: it lay over the lines above and below and over the next reference.
+    for (const [name, source] of [['workbench.css', css], ['runners.css', runners]]) assert.doesNotMatch(source, /\.ref::(?:before|after)/, name);
+    // A reference that stands alone in a list keeps the full 44px box.
+    assert.match(base, /@media \(pointer: coarse\) \{\s*a\.ref,\s*button\.ref \{\s*padding-block: 0\.8125rem;/);
+
+    // The files table: on a phone size and lines side by side, the hash in full below them.
+    const phone = block(css, '@media (max-width: 43.99em) {\n  .table-wrap > .table.wb-manifest tbody tr {');
+    assert.match(phone, /\.table-wrap > \.table\.wb-manifest tbody tr \{\s*display: grid;\s*grid-template-columns: repeat\(2, minmax\(0, 1fr\)\);/);
+    assert.match(phone, /\.table-wrap > \.table\.wb-manifest tbody tr > \* \{\s*margin-top: 0;\s*\}/);
+    assert.match(phone, /\.table-wrap > \.table\.wb-manifest tbody tr > :is\(th, \.wb-hash\) \{\s*grid-column: 1 \/ -1;\s*\}/);
+    assert.match(phone, /\.stack-table \.wb-hash \{\s*max-width: none;\s*white-space: normal;\s*\}/);
+    // Outside that block the table has no rule of its own, so on a wide screen it is a plain table.
+    assert.equal(count(css, 'wb-manifest'), 3);
+    // wb-files is the list of the Load step, a grid: the table must never carry that class.
+    assert.match(css, /\n\.wb-files \{\s*display: grid;/);
+    const results = await readFile(new URL('results.mjs', APP_DIR), 'utf8');
+    assert.doesNotMatch(results, /'[^']*\btable\b[^']*\bwb-files\b[^']*'/);
+
+    // The stacked table: labels shown, an empty cell out of the way, a hash or an address wrapped.
+    const stack = block(base, '@media (max-width: 43.99em) {\n  .table-wrap > .table.stack-table,');
+    assert.match(stack, /\.table-wrap > \.table\.stack-table tbody tr > \* \{[^}]*overflow-wrap: anywhere;[^}]*\}/);
+    assert.match(stack, /\.table-wrap > \.table\.stack-table tbody tr > td:empty \{\s*display: none;\s*\}/);
+    assert.match(stack, /\.stack-table \.cell-label \{\s*display: block;/);
+    assert.match(stack, /\.stack-table--plain \.cell-label \{\s*display: none;\s*\}/);
+    // On a wide screen an empty cell keeps its place in the row: the rule exists in the phone block only.
+    assert.equal(count(base, 'td:empty'), 1);
+
+    // A stamp lands from 1.55 times its size. Its card or field clips it, or a phone lays the page out too wide.
+    assert.match(base, /@keyframes stamp-land \{\s*0% \{[^}]*scale\(1\.55\)/);
+    assert.match(base, /\n\.dossier \{[^}]*\boverflow: clip;[^}]*\}/);
+    assert.match(home, /\n\.home-hero \{[^}]*\boverflow-x: clip;[^}]*\}/);
+  });
+
+  test('no later rule undoes the phone fixes: every stylesheet is read', async () => {
+    const dir = new URL('../public/css/', import.meta.url);
+    const names = (await readdir(dir)).filter((name) => name.endsWith('.css'));
+    const sheets = await Promise.all(names.map(async (name) => [name, (await readFile(new URL(name, dir), 'utf8')).replace(/\/\*[\s\S]*?\*\//g, '')]));
+    const all = sheets.map(([, css]) => css).join('\n');
+    const sheet = (name) => sheets.find(([entry]) => entry === name)[1];
+    // No stretched touch area on a reference, in any sheet, in either spelling.
+    for (const [name, css] of sheets) {
+      assert.doesNotMatch(css, /\.ref::(?:before|after)/, name);
+      assert.doesNotMatch(css, /\.ref\b[^{}]*\{[^{}]*&::(?:before|after)/, name);
+    }
+    // The 44px box is set once, for a reference that stands alone; nothing gives it back to one in a sentence.
+    assert.equal(all.split('padding-block: 0.8125rem').length - 1, 1);
+    // Every rule for the verdict card and for the hero keeps the clip.
+    for (const [selector, property] of [['.dossier', 'overflow'], ['.home-hero', 'overflow-x']]) {
+      const blocks = [...all.matchAll(new RegExp(`(?:^|[\\n,])\\s*\\${selector} \\{([^}]*)\\}`, 'g'))].map((match) => match[1]);
+      assert.ok(blocks.length > 0, selector);
+      assert.ok(blocks.some((block) => block.includes(`${property}: clip;`)), `${selector} clips`);
+      for (const block of blocks) assert.doesNotMatch(block, /\boverflow(?:-x|-y)?: (?!clip;)/, `${selector}: no other overflow`);
+    }
+    // A stacked cell always wraps a long value.
+    assert.doesNotMatch(all, /\.stack-table[^{}]*\{[^{}]*overflow-wrap: normal/);
+    // A headline, a list of steps, of gaps or of notes: a value that cannot break widens none of them.
+    assert.match(sheet('base.css'), /\n\.dossier__headline \{[^}]*overflow-wrap: anywhere;/);
+    assert.match(sheet('base.css'), /\n\.steps \{[^}]*grid-template-columns: minmax\(0, 1fr\);/);
+    assert.match(sheet('base.css'), /\n\.gaps \{[^}]*grid-template-columns: minmax\(0, 1fr\);/);
+    assert.match(sheet('base.css'), /\.rail__answer > \* \{\s*max-width: 100%;\s*\}/);
+    assert.match(sheet('workbench.css'), /\n\.wb-list \{[^}]*grid-template-columns: minmax\(0, 1fr\);/);
+  });
+
   test('the copy keeps the voice: no hedges, no borrowed names', async () => {
     const banned = /\b(?:simply|powerful|seamless|not a guarantee|can help|we cannot)\b|!['"`]\s*[,)]/i;
     const sources = [String(workbench()), String(workbenchDialogs())];

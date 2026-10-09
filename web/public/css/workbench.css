@@ -957,6 +957,7 @@
 
 .wb-list {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--sp-8);
   padding: var(--sp-12) var(--sp-16);
   border: 1px solid var(--line);
@@ -1014,6 +1015,29 @@
   white-space: nowrap;
 }
 
+/* Where the files table is stacked, size and lines sit side by side under the
+   file name, and the hash prints in full below them and wraps. */
+@media (max-width: 43.99em) {
+  .table-wrap > .table.wb-manifest tbody tr {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--sp-8) var(--sp-16);
+  }
+
+  .table-wrap > .table.wb-manifest tbody tr > * {
+    margin-top: 0;
+  }
+
+  .table-wrap > .table.wb-manifest tbody tr > :is(th, .wb-hash) {
+    grid-column: 1 / -1;
+  }
+
+  .stack-table .wb-hash {
+    max-width: none;
+    white-space: normal;
+  }
+}
+
 /* A cited location that is not in the supplied files. */
 .wb-ref--bad {
   align-items: center;
@@ -1035,6 +1059,14 @@
 /* Cited locations inside running text sit on the text baseline. */
 :is(.rail__body, .wb-list, .wb-prose, .table, .kv) .ref {
   vertical-align: baseline;
+}
+
+/* On a touch screen they keep the height of their line, 25px, in place of the
+   44px box of a reference that stands alone (the locations of a finding). */
+@media (pointer: coarse) {
+  :is(.rail__body, .wb-list, .wb-prose, .table, .kv, .finding__title) button.ref {
+    padding-block: 0.1875rem;
+  }
 }
 
 button.ref {

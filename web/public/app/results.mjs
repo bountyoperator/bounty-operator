@@ -19,6 +19,7 @@
  *     orderSections(sections)                  -> { lead, tail }   which sections go above the findings
  *     sectionShape(section)                    -> { kind: 'table' | 'list' | 'fields' | 'blocks', … }
  *     sectionColumns(title, width)             -> string[] | null
+ *     cellLabel(name)                          -> the column name inside a cell of a stacked table
  *     cellTone(text)                           -> 'observed' | 'unproven' | 'danger' | ''
  *     splitInline(text, labels)                -> [{ type: 'text' | 'code' | 'strong' | 'ref', … }]
  *     textBlocks(text)                         -> [{ type: 'p' | 'code', … }]
@@ -582,20 +583,30 @@ function dossier(parsed) {
       el('span', { class: 'counts__label', text: label })))));
 }
 
-function cell(text, context, first) {
+function cell(text, context, first, label) {
   const tone = cellTone(text);
   const content = tone ? chip(text.trim(), tone) : inline(text, context);
-  return first ? el('th', { scope: 'row' }, content) : el('td', {}, content);
+  if (first) return el('th', { scope: 'row' }, content);
+  // An empty cell stays empty, so it takes no room where the table is stacked.
+  return el('td', {}, label && text.trim() ? cellLabel(label) : null, content);
 }
 
+/** The column name inside a cell, shown where the table reads as one block per row. */
+export function cellLabel(name) {
+  return el('span', { class: 'cell-label', text: name });
+}
+
+// On a phone the table reads as one block per row, each cell under its column
+// name (.stack-table in base.css). A table without a header row stacks plain.
 function tableNode(title, shape, context) {
+  const columns = shape.columns;
   return el('div', { class: 'table-wrap', tabindex: '0', role: 'region', 'aria-label': regionName(title, context) },
-    el('table', { class: 'table table--dense' },
-      shape.columns ? el('thead', {}, el('tr', {}, shape.columns.map((name) => el('th', { scope: 'col', text: name })))) : null,
+    el('table', { class: ['table', 'table--dense', 'stack-table', !columns && 'stack-table--plain'] },
+      columns ? el('thead', {}, el('tr', {}, columns.map((name) => el('th', { scope: 'col', text: name })))) : null,
       el('tbody', {}, shape.rows.map((row) => (isNoteRow(row)
         // A line the model wrote under the table, with no cells: it runs the width of the table.
         ? el('tr', {}, el('td', { colspan: String(row.length) }, inline(row[0], context)))
-        : el('tr', {}, row.map((value, index) => cell(value, context, index === 0))))))));
+        : el('tr', {}, row.map((value, index) => cell(value, context, index === 0, columns?.[index]))))))));
 }
 
 /** A row that holds one cell of text in a table of several columns. */
@@ -665,7 +676,7 @@ function manifestNode(result, { review = true } = {}) {
   return el('section', { class: 'wb-section', dataset: { section: 'files' } },
     el('h4', { class: 'wb-section__title', text: title }),
     el('div', { class: 'table-wrap', tabindex: '0', role: 'region', 'aria-label': title },
-      el('table', { class: 'table table--dense' },
+      el('table', { class: 'table table--dense stack-table wb-manifest' },
         el('thead', {}, el('tr', {},
           el('th', { scope: 'col', text: 'File' }),
           el('th', { scope: 'col', class: 'num', text: 'Size' }),
@@ -673,9 +684,9 @@ function manifestNode(result, { review = true } = {}) {
           el('th', { scope: 'col', text: 'SHA-256' }))),
         el('tbody', {}, manifest.map((entry) => el('tr', {},
           el('th', { scope: 'row', class: 'mono', text: entry.label }),
-          el('td', { class: 'num', text: formatBytes(entry.bytes) }),
-          el('td', { class: 'num', text: Number.isFinite(entry.lines) ? entry.lines.toLocaleString('en-US') : '' }),
-          el('td', { class: 'mono wb-hash', title: entry.sha256, text: entry.sha256 })))))),
+          el('td', { class: 'num' }, cellLabel('Size'), formatBytes(entry.bytes)),
+          Number.isFinite(entry.lines) ? el('td', { class: 'num' }, cellLabel('Lines'), entry.lines.toLocaleString('en-US')) : el('td', { class: 'num' }),
+          entry.sha256 ? el('td', { class: 'mono wb-hash', title: entry.sha256 }, cellLabel('SHA-256'), entry.sha256) : el('td', { class: 'mono wb-hash' })))))),
     review ? el('p', { class: 'fine' }, 'Check any file against this list at ', el('a', { class: 'link', href: '/tools/verify', text: 'the verifier' }), '. It runs in the browser.') : null);
 }
 

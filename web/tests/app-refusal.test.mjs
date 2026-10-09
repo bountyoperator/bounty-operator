@@ -8,12 +8,12 @@ import { after, before, describe, test } from 'node:test';
 import { ANTHROPIC_CYBER_NOTICE } from '../public/providers.mjs';
 import { ApiError } from '../public/app/api.mjs';
 import { BLOCKS, REFUSES_GUIDE, blockOf, blockedCopy, pastedBlock } from '../public/app/blocked.mjs';
-import { stageStrip } from '../public/app/dossier.mjs';
+import { agreementOf, agreementSection, panelBody, seatRecord, stageStrip } from '../public/app/dossier.mjs';
 import { declinedStop, stageEnd, stageNames, stopState } from '../public/app/gauntlet.mjs';
 import { historyRecord, outcomeMark, resultFrom } from '../public/app/history.mjs';
 import { failureLine } from '../public/app/panel.mjs';
 import { pastedLine, pastedResult } from '../public/app/pasteback.mjs';
-import { initResults } from '../public/app/results.mjs';
+import { analyse, initResults } from '../public/app/results.mjs';
 import { failureFor, finishedLine } from '../public/app/run.mjs';
 import { initialState, snapshot, workbench } from '../public/app/state.mjs';
 
@@ -272,6 +272,107 @@ describe('the result view', () => {
     const view = show({ ...RESULT, manifest, blocked: undefined, refused: false, review: REVIEW });
     assert.equal(heading(), 'Files reviewed');
     assert.match(view.text, /Check any file against this list at the verifier/);
+  });
+
+  test('every table carries its column names, for the phone layout that reads one block per row', () => {
+    const review = `${REVIEW}
+## Claims
+- C1 | confirmed | input-1/src/Vault.sol:10-12 | stake() never settles.
+- A line the model wrote between the rows.
+- C2 | contradicted |  | The draft names no location for this one.
+
+## Left for later
+- alpha | beta
+`;
+    const manifest = [
+      { label: 'input-1/src/Vault.sol', bytes: 2048, lines: 60, sha256: 'ab'.repeat(32) },
+      { label: 'input-2/logo.png', bytes: 512, lines: null, sha256: 'cd'.repeat(32) },
+    ];
+    show({ ...RESULT, review, manifest, blocked: undefined, refused: false });
+    const tables = descendants(root).filter((node) => node.tagName === 'table');
+    const rowsOf = (table) => descendants(table).filter((node) => node.tagName === 'tr' && node.children.some((cell) => cell.tagName === 'td'));
+    // The column name is the first thing in its cell, ahead of the value.
+    const labelOf = (cell) => (cell.children[0] instanceof Element && cell.children[0].className === 'cell-label' ? cell.children[0].textContent : null);
+    const labelsIn = (cell) => descendants(cell).filter((node) => node.className === 'cell-label').length;
+    const headOf = (table) => descendants(table).filter((node) => node.tagName === 'th' && node.attributes.scope === 'col').map((node) => node.textContent);
+
+    const claims = tables.find((table) => headOf(table)[0] === 'Claim');
+    assert.equal(claims.className, 'table table--dense stack-table');
+    const [first, note, second] = rowsOf(claims);
+    assert.deepEqual(first.children.map((cell) => cell.tagName), ['th', 'td', 'td', 'td'], 'the first cell names the row');
+    assert.deepEqual(first.children.slice(1).map(labelOf), headOf(claims).slice(1));
+    assert.deepEqual(first.children.map(labelsIn), [0, 1, 1, 1]);
+    assert.equal(first.children[3].textContent, `${headOf(claims)[3]}stake() never settles.`);
+    // A line without cells runs the width of the table and carries no column name.
+    assert.equal(note.children.length, 1);
+    assert.equal(note.children[0].attributes.colspan, '4');
+    assert.equal(note.children[0].textContent, 'A line the model wrote between the rows.');
+    assert.equal(labelsIn(note.children[0]), 0);
+    // A cell the model left empty stays empty, so the stack skips it (td:empty in base.css).
+    assert.equal(second.children[2].textContent, '');
+    assert.equal(labelsIn(second.children[2]), 0);
+    assert.equal(second.children[2].children.filter((child) => child instanceof Element).length, 0, 'no element in it, so td:empty hides it');
+    assert.equal(labelOf(second.children[3]), headOf(claims)[3]);
+
+    // A table whose columns the format does not name has no header row: it stacks without labels.
+    const unnamed = tables.find((table) => table.textContent.includes('alpha'));
+    assert.equal(unnamed.className, 'table table--dense stack-table stack-table--plain');
+    assert.deepEqual(headOf(unnamed), []);
+    assert.deepEqual(rowsOf(unnamed)[0].children.map(labelsIn), [0, 0]);
+
+    // The files table has its own class: wb-files is the list of the Load step.
+    const files = tables.find((table) => headOf(table)[0] === 'File');
+    assert.equal(files.className, 'table table--dense stack-table wb-manifest');
+    const [source, image] = rowsOf(files);
+    assert.deepEqual(source.children.slice(1).map(labelOf), ['Size', 'Lines', 'SHA-256']);
+    assert.equal(source.children[3].textContent, `SHA-256${'ab'.repeat(32)}`);
+    assert.equal(image.children[2].textContent, '', 'a file with no line count leaves the cell empty');
+    assert.equal(image.children[2].children.length, 0);
+  });
+
+  test('the panel’s agreement table carries its column names, and a cell with nothing to say carries none', () => {
+    const review = `${REVIEW}
+## Agreement
+- Unsettled stake drains the reserve | 3/3 | kept | input-1/src/Vault.sol:12-14 | panel-1-a.md, panel-2-b.md
+- Principal can be stolen |  | dropped |  |
+- Fee recipient has no owner check | 2/3 | kept
+`;
+    const analysis = analyse({ ...RESULT, review, blocked: undefined, refused: false });
+    const rows = agreementOf(analysis.parsed);
+    assert.deepEqual(rows.map((row) => [row.k, row.status, row.settledBy !== '', row.reviewers !== '']), [[3, 'kept', true, true], [null, 'dropped', false, false], [2, 'kept', false, false]]);
+    const context = { seats: [{ number: 1, model: 'a/one' }, { number: 2, model: 'b/two' }], source: { analysis, files: null, manifest: [] } };
+    const section = agreementSection(rows, context);
+    assert.equal(section.dataset.section, 'agreement');
+    const table = descendants(section).find((node) => node.tagName === 'table');
+    assert.equal(table.className, 'table table--dense stack-table');
+    const names = descendants(table).filter((node) => node.tagName === 'th' && node.attributes.scope === 'col').map((node) => node.textContent);
+    assert.deepEqual(names, ['Finding', 'Reported by', 'Result', 'Settled by', 'Reviews']);
+    const labelOf = (cell) => (cell.children[0] instanceof Element && cell.children[0].className === 'cell-label' ? cell.children[0].textContent : null);
+    const body = descendants(table).filter((node) => node.tagName === 'tr' && node.children.some((cell) => cell.tagName === 'td'));
+    const [full, bare, short] = body.map((row) => row.children);
+    // A full row: every cell after the first under its own column name, the name first.
+    assert.deepEqual(full.map((cell) => cell.tagName), ['th', 'td', 'td', 'td', 'td']);
+    assert.deepEqual(full.map(labelOf), [null, 'Reported by', 'Result', 'Settled by', 'Reviews']);
+    assert.equal(full[1].textContent, 'Reported by3 of 3');
+    assert.deepEqual(descendants(full[4]).filter((node) => node.tagName === 'button').map((node) => node.dataset.openReview), ['pn-seat-1', 'pn-seat-2']);
+    // No count, no settling line, no reviews: those cells are empty and carry no name.
+    assert.deepEqual(bare.map(labelOf), [null, null, 'Result', null, null]);
+    assert.deepEqual([bare[1], bare[3], bare[4]].map((cell) => cell.children.length), [0, 0, 0]);
+    // A row of three cells: the two it lacks stay empty.
+    assert.deepEqual(short.map(labelOf), [null, 'Reported by', 'Result', null, null]);
+    assert.equal(short[1].textContent, 'Reported by2 of 3');
+    assert.deepEqual([short[3], short[4]].map((cell) => cell.children.length), [0, 0]);
+    // No rows, no section.
+    assert.equal(agreementSection([], context), null);
+    // The panel body draws the table, once, and leaves the section out of the review below it.
+    const drawn = panelBody({ ...RESULT, review, blocked: undefined, refused: false, source: 'panel', stages: [1, 2].map((number) => seatRecord({ number, model: context.seats[number - 1].model, review: REVIEW })), manifest: [] }, { analysis, files: null }).filter(Boolean);
+    const sections = drawn.flatMap((node) => [node, ...descendants(node)]).filter((node) => node.dataset?.section === 'agreement');
+    assert.equal(sections.length, 1);
+    // A file entry without a hash carries no label over nothing.
+    show({ ...RESULT, review: REVIEW, blocked: undefined, refused: false, manifest: [{ label: 'input-1/old.txt', bytes: 10, lines: 1, sha256: '' }] });
+    const stored = descendants(root).find((node) => node.tagName === 'table' && node.className.includes('wb-manifest'));
+    const hashCell = descendants(stored).filter((node) => node.tagName === 'td').at(-1);
+    assert.equal(hashCell.children.length, 0);
   });
 
   test('a pasted notice says to paste the prompt into another model, with the guide link', () => {

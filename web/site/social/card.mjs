@@ -26,7 +26,7 @@ export function cardDocument({ assets = '../../public' } = {}) {
 ${reportSlip({ caption: false, still: true })}
 </div>
 <footer class="social-card__strip theme-dark">
-<p class="social-card__proof">Built by Tradi3: most valid Criticals in ENS, 2nd of 135 in Firelight</p>
+<p class="social-card__proof">Built by Tradi3: most valid Criticals in ENS, 2nd of 133 in Firelight</p>
 <p class="social-card__price"><span>Free: one review a day</span><span>Operator: US$10 a week</span></p>
 </footer>
 </main>`;

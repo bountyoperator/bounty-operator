@@ -32,6 +32,9 @@
 .home-hero {
   display: flex;
   flex-direction: column;
+  /* The stamps on the slip land from 1.55 times their size: nothing of that
+     reaches past the field, or a narrow phone lays the page out too wide. */
+  overflow-x: clip;
 }
 
 .home-hero__text {

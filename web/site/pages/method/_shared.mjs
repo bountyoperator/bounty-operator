@@ -31,8 +31,10 @@ export function workbenchLink(profileId) {
 
 /**
  * Tradi3's results on Immunefi's public leaderboards, read on 8 October 2026
- * (ENS again on 9 October 2026): Firelight 2nd of 135; Quantus 8th of 65; ENS
- * 15th of 186. ENS credits 23 valid submissions: 1 Chief and 22 duplicates
+ * (ENS and Firelight again on 9 October 2026): Firelight 2nd of 133 (the last
+ * rank on the board; two more rows are disqualified entries and are not
+ * counted); Quantus 8th of 65; ENS 15th of 186. ENS credits 23 valid
+ * submissions: 1 Chief and 22 duplicates
  * (17 Critical, 1 High, 4 Medium, 1 Low), plus 1 separate Insight. 17 valid
  * Critical submissions is the most on that board; the next count is 14.
  *
@@ -295,7 +297,7 @@ ${after && html`      ${after}`}
 /** Tradi3's linked results. The only proof the site shows. */
 export function proofLine() {
   return html`<p class="proofline">${icon('shield')}<span>Built by Tradi3: ${link({
-    label: '2nd of 135 in Immunefi’s Firelight competition',
+    label: '2nd of 133 in Immunefi’s Firelight competition',
     href: LEADERBOARDS.firelight,
     external: true,
   })}, ${link({ label: '8th of 65 in Quantus', href: LEADERBOARDS.quantus, external: true })} and ${link({

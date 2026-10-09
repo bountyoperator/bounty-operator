@@ -199,7 +199,7 @@ first.
 ## README images
 
 `docs/assets/review.png` and `docs/assets/gauntlet.png` are captures of the
-bundled example in the workbench, 1600 px wide, dark theme. Regenerate them
+bundled example in the workbench, 1600 px wide, day theme. Regenerate them
 after a change to the result view:
 
 ```bash

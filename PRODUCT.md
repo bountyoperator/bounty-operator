@@ -91,8 +91,10 @@ beats their current workflow.
 
 ## Evidence on Hand
 
-- Leaderboards, read 2026-10-08 (ENS again 2026-10-09): 2nd of 135 in
-  Immunefi's Firelight competition; 8th of 65 in Quantus; 15th of 186 in ENS.
+- Leaderboards, read 2026-10-08 (ENS and Firelight again 2026-10-09): 2nd of
+  133 in Immunefi's Firelight competition (133 is the last rank; the board
+  lists two more rows as disqualified); 8th of 65 in Quantus; 15th of 186 in
+  ENS.
   ENS credits 23 valid submissions: 1 Chief and 22 duplicates, plus 1 separate
   Insight. 17 of the 23 are rated Critical (1 High, 4 Medium, 1 Low), the
   most Critical submissions on that board. Short proof lines say "17 valid

@@ -9,7 +9,7 @@
 //   review.png     the example review: the verdict, then each claim of the draft
 //   gauntlet.png   the example gauntlet dossier: verdict, blocker, the eight stages
 //
-// Both are 1600 px wide, in the dark theme. The example is a stored answer, so
+// Both are 1600 px wide, in the day theme. The example is a stored answer, so
 // nothing here needs the Worker, an account or a model key. Needs a global
 // Playwright with Chromium (`npm i -g playwright`), like scripts/build-icons.mjs.
 // Run `node scripts/build-site.mjs` first so the pages are current.
@@ -39,6 +39,8 @@ const TYPES = {
   '.json': 'application/json; charset=utf-8',
   '.svg': 'image/svg+xml',
   '.png': 'image/png',
+  '.webp': 'image/webp',
+  '.woff2': 'font/woff2',
   '.ico': 'image/x-icon',
   '.webmanifest': 'application/manifest+json',
 };
@@ -122,7 +124,9 @@ try {
   const context = await browser.newContext({
     viewport: { width: CSS_WIDTH, height: 1200 },
     deviceScaleFactor: IMAGE_WIDTH / CSS_WIDTH,
-    colorScheme: 'dark',
+    colorScheme: 'light',
+    // The times in the images are UTC, whatever the clock of the machine that captures them.
+    timezoneId: 'UTC',
     reducedMotion: 'reduce',
   });
   const page = await context.newPage();

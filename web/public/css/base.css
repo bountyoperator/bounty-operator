@@ -1802,6 +1802,9 @@ button.ref:hover {
 
 /* Dossier: the inspection slip at the top of a result. The verdict stamp, the
    headline and the counts, under a heavy head rule. */
+/* The verdict stamp lands from 1.55 times its size (stamp-land). The card
+   clips it: on a phone the enlarged frame reached past the screen, and the
+   page stayed wider than the screen after it. */
 .dossier {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -1812,6 +1815,7 @@ button.ref:hover {
   border-radius: var(--r-card);
   background: var(--surface);
   box-shadow: var(--shadow-card);
+  overflow: clip;
 }
 
 .dossier__verdict {
@@ -1828,6 +1832,8 @@ button.ref:hover {
   font-stretch: 92%;
   font-weight: 680;
   line-height: 1.35;
+  /* An address or a path in the headline breaks inside the card, which clips. */
+  overflow-wrap: anywhere;
   text-wrap: pretty;
 }
 
@@ -2289,6 +2295,7 @@ button.ref:hover {
 .steps {
   counter-reset: step;
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--sp-8);
 }
 
@@ -2334,6 +2341,7 @@ button.ref:hover {
 /* Evidence gaps: an unticked box per missing artifact. */
 .gaps {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--sp-8);
 }
 
@@ -2396,6 +2404,10 @@ button.ref:hover {
     grid-template-columns: minmax(0, 1fr);
     gap: var(--sp-8);
     justify-items: start;
+  }
+
+  .rail__answer > * {
+    max-width: 100%;
   }
 }
 
@@ -2876,11 +2888,17 @@ button.ref:hover {
     min-width: 0;
     padding: 0;
     border: 0;
+    overflow-wrap: anywhere;
     text-align: left;
   }
 
   .table-wrap > .table.stack-table tbody tr > * + * {
     margin-top: var(--sp-8);
+  }
+
+  /* An empty cell takes no room in the stack. */
+  .table-wrap > .table.stack-table tbody tr > td:empty {
+    display: none;
   }
 
   .stack-table .cell-label {
