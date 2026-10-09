@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.9.4 — 2026-10-09
+
+Site
+
+- /benchmark has a new table, "Right, wrong and not finished". It splits
+  every ranked model's inputs into those it answered right, those it
+  answered wrong and those it did not finish, with the reason. An unfinished
+  input scores as wrong, so a low rank can mean either, and the table tells
+  them apart: of 792 inputs, 646 were answered right, 85 wrong and 61 were
+  not finished.
+- The same section says why two models rank low without one wrong answer.
+  Claude Sonnet 5.5 lost 13 inputs, 11 cut off at the output limit and 2
+  timed out. That is the agent run at the highest effort; a review in the
+  workbench is one request, and Sonnet 5.5 is its default model on
+  OpenRouter.
+
 ## 0.9.3 — 2026-10-09
 
 Reviews

@@ -19,6 +19,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 import { DEFAULT_SCORING, NOT_RUN_REASON, aggregate, modelFile } from '../../bench/lib/score.mjs';
 import { loadPages, scanTags, validateMarkup } from '../../scripts/build-site.mjs';
+import { PROVIDERS } from '../public/providers.mjs';
 import { renderPage } from '../site/layout.mjs';
 import { DEFAULT_DIR, PUBLISHED_DIR, buildView, findings, fmt, inWords, loadPublished, pairsRight, profileRuns } from '../site/pages/benchmark/_data.mjs';
 import { renderMethod, repoLink } from '../site/pages/benchmark/_markdown.mjs';
@@ -749,4 +750,63 @@ test('the published release: five blocked answers on the page, no comparison, an
   assert.doesNotMatch(picked, /with the [^.]{0,60} profile|raw arm/);
   // Withheld, not removed: the file the page links keeps the profile arms it no longer shows.
   assert.ok(published.results.models.some((entry) => Object.keys(entry.lift ?? {}).length > 0));
+});
+
+test('right, wrong and not finished: every count is the outcome files’ count, and the three add up to the inputs', () => {
+  for (const [name, fixture] of Object.entries(fixtures)) {
+    const { view, published } = fixture;
+    assert.equal(view.splitComplete, true, name);
+    const section = String(fixture.page.body);
+    const start = section.indexOf('id="inputs"');
+    assert.ok(start > section.indexOf('id="pairs"') && start < section.indexOf('id="honest"'), `${name}: the section sits between the pair grid and the honesty cards`);
+    const text = textOf(section.slice(start, section.indexOf('id="honest"')));
+    const inputs = published.results.cases.inputs * (published.results.repeats ?? 1);
+    let right = 0;
+    let wrong = 0;
+    let failed = 0;
+    for (const line of view.split) {
+      // Recounted here from the per-model file, not taken from the view.
+      const outcomes = published.details.get(line.row.slug).filter((outcome) => outcome.arm === 'raw');
+      const want = { right: outcomes.filter((o) => o.status !== 'failed' && o.correct === true).length, wrong: outcomes.filter((o) => o.status !== 'failed' && o.correct !== true).length, failed: outcomes.filter((o) => o.status === 'failed').length };
+      assert.deepEqual({ right: line.right, wrong: line.wrong, failed: line.failed }, want, `${name} ${line.row.slug}`);
+      assert.equal(line.right + line.wrong + line.failed, inputs, `${name} ${line.row.slug}: the three add up`);
+      assert.equal(Object.values(line.kinds).reduce((sum, count) => sum + count, 0), line.failed);
+      assert.ok(text.includes(line.row.name));
+      right += line.right; wrong += line.wrong; failed += line.failed;
+    }
+    assert.equal(right + wrong + failed, inputs * view.rows.length);
+    assert.ok(text.includes(`Of ${fmt.count(inputs * view.rows.length)} inputs, ${fmt.count(right)} were answered right and ${fmt.count(wrong)} wrong.`), `${name}: the totals sentence`);
+    assert.ok(failed ? text.includes(`${fmt.count(failed)} were not finished:`) : text.includes('Every input was finished.'), name);
+    // A model that lost inputs only by not finishing them is named; no other model is.
+    for (const line of view.split) {
+      const named = section.includes(`data-unfinished="${line.row.slug}"`);
+      if (named) assert.ok(line.wrong === 0 && line.failed > 0, `${name} ${line.row.slug}`);
+    }
+    // The blocked-answers clause belongs to the one release whose blocks were read.
+    assert.ok(!text.includes('the blocked answers of this release'), `${name}: no clause on a fixture release`);
+  }
+  // Without every per-model file the section is left out, not half filled.
+  const { many } = fixtures;
+  const holed = { ...many.published, details: new Map([...many.published.details].map(([slug, outcomes], index) => [slug, index === 0 ? null : outcomes])) };
+  assert.equal(buildView(holed).splitComplete, false);
+  assert.ok(!String(benchmarkPages(holed)[0].body).includes('id="inputs"'));
+});
+
+test('the published release: 646 right, 85 wrong, 61 not finished, and why the two models with no wrong answer rank low', () => {
+  const published = loadPublished(DEFAULT_DIR);
+  if (!published || published.results.run_id !== '2026-10') return;
+  const view = buildView(published);
+  const sum = (key) => view.split.reduce((total, line) => total + line[key], 0);
+  assert.deepEqual([view.split.length, sum('inputs'), sum('right'), sum('wrong'), sum('failed')], [22, 792, 646, 85, 61]);
+  const body = String(benchmarkPages(published)[0].body);
+  const text = textOf(body.slice(body.indexOf('id="inputs"'), body.indexOf('id="honest"')));
+  assert.ok(text.includes('Of 792 inputs, 646 were answered right and 85 wrong. 61 were not finished: 21 timed out, 21 cut off at the output limit, 10 gave no readable answer sheet, 7 ended in a provider error and 2 came back empty. Five of the answers with no readable sheet are the blocked answers of this release.'));
+  assert.ok(text.includes('Claude Sonnet 5.5 answered no input wrong. The 13 it lost were not finished: 11 cut off at the output limit and 2 timed out.'));
+  assert.ok(text.includes('Gemini 3.1 Pro Preview answered no input wrong. The 13 it lost were not finished: 12 timed out and 1 ended in a provider error.'));
+  // The sentence about the workbench follows the provider list: it is said of its default model and of no other.
+  const workbenchDefault = PROVIDERS.find((entry) => entry.id === 'openrouter').defaultModel;
+  const said = [...body.matchAll(/data-unfinished="([^"]+)">(.*?)<\/p>/g)].filter((match) => match[2].includes('default model on OpenRouter')).map((match) => match[1]);
+  assert.deepEqual(said, view.split.some((line) => line.row.slug === workbenchDefault && line.wrong === 0 && line.failed > 0) ? [workbenchDefault] : []);
+  // The link in the totals sentence lands on the note it names.
+  assert.ok(body.includes('href="#blocked-answers"') && body.includes('id="blocked-answers"'));
 });

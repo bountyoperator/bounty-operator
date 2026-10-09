@@ -267,6 +267,27 @@ export function buildView(published) {
   });
   const gridComplete = grid.every((line) => line.cells.every(Boolean));
 
+  // Input by input, on the headline arm: right, wrong or no answer, the last under the
+  // file's own failure labels. A pair hides which of the three cost it; an input does not.
+  const perModelInputs = Number.isInteger(results.cases?.inputs) ? results.cases.inputs * repeats : null;
+  const split = rows.map((row) => {
+    const outcomes = (details.get(row.slug) ?? []).filter((outcome) => outcome.arm === headline);
+    const kinds = {};
+    let right = 0;
+    let wrong = 0;
+    let failed = 0;
+    for (const outcome of outcomes) {
+      if (outcome.status === 'failed') {
+        failed += 1;
+        const kind = typeof outcome.failure === 'string' && outcome.failure ? outcome.failure : 'other';
+        kinds[kind] = (kinds[kind] ?? 0) + 1;
+      } else if (outcome.correct === true) right += 1;
+      else wrong += 1;
+    }
+    return { row, inputs: outcomes.length, right, wrong, failed, kinds };
+  });
+  const splitComplete = split.length > 0 && perModelInputs !== null && split.every((line) => line.inputs === perModelInputs);
+
   const usdTotal = results.models.reduce((sum, model) => sum + (typeof model.usd_total === 'number' ? model.usd_total : 0), 0);
   const retries = results.models.filter((model) => Number.isInteger(model.infra_retries));
 
@@ -286,6 +307,8 @@ export function buildView(published) {
     pairList,
     grid,
     gridComplete,
+    split,
+    splitComplete,
     usdTotal,
     retries: retries.length ? retries.reduce((sum, model) => sum + model.infra_retries, 0) : null,
     budget: results.scoring?.budget_usd_per_run ?? null,

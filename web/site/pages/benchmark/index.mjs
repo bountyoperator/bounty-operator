@@ -10,8 +10,8 @@
 // condition does not hold, the sentence is left out. No case text exists in
 // the published files and none is described here.
 //
-// Sections: hero and facts, leaderboard, findings, picks, pair by pair, how it
-// is kept honest, check it yourself, not run, FAQ. The page ranks models on the
+// Sections: hero and facts, leaderboard, findings, picks, pair by pair, input by
+// input, how it is kept honest, check it yourself, not run, FAQ. The page ranks models on the
 // raw arm only. The profile arms of a release stay in its results file, which
 // is published and downloadable; the page shows no with/without comparison.
 // /benchmark/leaderboard.mjs adds column sorting and a column picker; the
@@ -19,10 +19,11 @@
 
 import { readFileSync } from 'node:fs';
 
-import { attrs, button, chip, codeBlock, cx, faq, html, icon, inline, link, sectionHeading } from '../../components.mjs';
+import { PROVIDERS } from '../../../public/providers.mjs';
+import { attrs, button, chip, codeBlock, cx, faq, html, icon, inline, link, sectionHeading, stackTable } from '../../components.mjs';
 import { SITE, absoluteUrl, breadcrumbsLd, faqPageLd } from '../../layout.mjs';
 import { pageHero, workbenchLink } from '../method/_shared.mjs';
-import { FAMILIES, METHOD_PATH, PAGE_PATH, SERVED, buildView, familyLabel, findings, fmt, inWords, listingOr, loadPublished, pairsRight, profileRuns } from './_data.mjs';
+import { FAMILIES, METHOD_PATH, PAGE_PATH, SERVED, buildView, familyLabel, findings, fmt, inWords, listing, listingOr, loadPublished, pairsRight, profileRuns } from './_data.mjs';
 import { BLOB, methodSentence } from './_markdown.mjs';
 import { METHOD_SOURCE } from './method.mjs';
 
@@ -237,9 +238,72 @@ function pairGrid(view, distribution) {
 </section>`;
 }
 
+/** The release whose five blocked answers were read one by one: the note about them is shown for it alone. */
+const isOriginalRelease = (results) => results.run_id === '2026-10' && results.harness_commit === '2aa1601b097aea7edc8711d88b4219bc900e8dc7';
+
+/** The file's failure labels in plain words. A label with no entry here is printed as it is stored. */
+const FAILURE_WORDS = {
+  truncated: 'cut off at the output limit',
+  timeout: 'timed out',
+  unparseable: 'gave no readable answer sheet',
+  error: 'ended in a provider error',
+  empty: 'came back empty',
+};
+/** Failure counts as words, most frequent first: "11 cut off at the output limit, 2 timed out". */
+const failureList = (kinds) =>
+  Object.entries(kinds)
+    .sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1))
+    .map(([kind, count]) => `${fmt.count(count)} ${FAILURE_WORDS[kind] ?? kind}`);
+
+/**
+ * Input by input: how many each ranked model answered right, answered wrong and
+ * did not finish. A pair is lost either way, so the leaderboard cannot tell a
+ * model that judges badly from one that runs out of room; this table can.
+ */
+function inputSplit(view) {
+  if (!view.splitComplete) return '';
+  const perModel = view.split[0].inputs;
+  const sum = (key) => view.split.reduce((total, line) => total + line[key], 0);
+  const failed = sum('failed');
+  const kinds = {};
+  for (const line of view.split) for (const [kind, count] of Object.entries(line.kinds)) kinds[kind] = (kinds[kind] ?? 0) + count;
+
+  // The original release stored its five blocked answers under the label for an unreadable sheet.
+  const blockedAmongThem = isOriginalRelease(view.results) && (kinds.unparseable ?? 0) >= 5;
+
+  // The models that lost inputs only by not finishing them, the most unfinished first.
+  const unfinishedOnly = view.split.filter((line) => line.wrong === 0 && line.failed > 0).sort((a, b) => b.failed - a.failed).slice(0, 3);
+  const workbenchDefault = PROVIDERS.find((entry) => entry.id === 'openrouter')?.defaultModel;
+  const notes = unfinishedOnly.map((line) => html`<p class="bench-note" data-unfinished="${line.row.slug}"><strong>${line.row.name}</strong> answered no input wrong. The ${fmt.count(line.failed)} it lost were not finished: ${listing(failureList(line.kinds))}.${line.row.slug === workbenchDefault ? ' It is the workbench’s default model on OpenRouter, where a review is one request and not an agent run at the highest effort.' : ''}</p>`);
+
+  const rows = view.split.map((line) => [
+    html`<span class="lb__name">${line.row.name}</span>`,
+    fmt.count(line.right),
+    fmt.count(line.wrong),
+    fmt.count(line.failed),
+    line.failed ? listing(failureList(line.kinds)) : NONE,
+  ]);
+
+  return html`<section class="section section--tight wrap" aria-labelledby="inputs">
+  ${sectionHeading({
+    title: 'Right, wrong and not finished',
+    id: 'inputs',
+    lede: `Every ranked model on each of its ${fmt.count(perModel)} inputs, on the raw arm. An input that ends with no readable answer scores as wrong, so a low rank can mean wrong answers or unfinished ones. This table tells them apart.`,
+  })}
+  <p class="bench-note" data-split-total>Of ${fmt.count(sum('inputs'))} inputs, ${fmt.count(sum('right'))} were answered right and ${fmt.count(sum('wrong'))} wrong.${failed ? ` ${fmt.count(failed)} were not finished: ${listing(failureList(kinds))}.` : ' Every input was finished.'}${blockedAmongThem && html` Five of the answers with no readable sheet are <a class="link" href="#blocked-answers">the blocked answers</a> of this release.`}</p>
+  ${notes}
+  ${stackTable({
+    label: 'Inputs each ranked model answered right, answered wrong and did not finish',
+    dense: true,
+    columns: [{ label: 'Model' }, { label: 'Right', align: 'end' }, { label: 'Wrong', align: 'end' }, { label: 'Not finished', align: 'end' }, { label: 'Why not finished' }],
+    rows,
+  })}
+</section>`;
+}
+
 function honestSection(view) {
   const { results } = view;
-  const originalRelease = results.run_id === '2026-10' && results.harness_commit === '2aa1601b097aea7edc8711d88b4219bc900e8dc7';
+  const originalRelease = isOriginalRelease(results);
   const commitments = Array.isArray(results.commitments) ? results.commitments.length : 0;
   const harness = typeof results.omp_version === 'string' ? results.omp_version.replace('/', ' ') : 'one pinned agent harness';
   const cards = [
@@ -507,6 +571,7 @@ ${pageHero({
 ${findingsSection(view)}
 ${picksSection(view)}
 ${pairGrid(view, distribution)}
+${inputSplit(view)}
 ${honestSection(view)}
 ${verifySection(view)}
 ${notRunSection(view)}

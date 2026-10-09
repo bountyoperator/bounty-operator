@@ -4,7 +4,7 @@ description: "Security review of any codebase that is not Solidity. Traces each 
 license: MIT
 metadata:
   author: "Tradi3"
-  version: "0.9.3"
+  version: "0.9.4"
   homepage: "https://bountyoperator.com"
   profile: "general"
   profile-sha256: "d698c5eeadebf78e0c02fb34030b03379d9ef9bb4d5e09c0ec2d3e59ff65f97c"

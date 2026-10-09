@@ -84,8 +84,10 @@
   margin-top: var(--sp-16);
 }
 
-/* The note that leads "How it is kept honest" stands clear of the cards under it. */
-.bench-note + .bench-honest {
+/* The note that leads "How it is kept honest" stands clear of the cards under it,
+   and the notes above the input table stand clear of the table. */
+.bench-note + .bench-honest,
+.bench-note + .table-wrap {
   margin-top: var(--sp-24);
 }
 
