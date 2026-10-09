@@ -448,7 +448,7 @@ test('the moving field draws nothing per frame, and holds still when less motion
   const block = css.slice(start, css.indexOf('/* Long-form pages', start));
   assert.ok(start > 0 && block.length > 500);
   // The shade moves by a transform, and only when motion is welcome.
-  assert.match(block, /@media \(prefers-reduced-motion: no-preference\) \{\n  \.field__shade \{\n    animation: field-drift \d+s linear infinite;/);
+  assert.match(block, /@media \(prefers-reduced-motion: no-preference\) \{\n  \.field-bg__shade \{\n    animation: field-drift \d+s linear infinite;/);
   const frames = block.slice(block.indexOf('@keyframes field-drift'), block.indexOf('@media (prefers-reduced-motion'));
   const moved = [...frames.matchAll(/\n\s+([a-z-]+): /g)].map((match) => match[1]);
   assert.ok(moved.length >= 5);
@@ -456,9 +456,10 @@ test('the moving field draws nothing per frame, and holds still when less motion
   // Nothing in the field uses a mask, a filter or a group opacity: a frame costs the compositor one picture.
   const rules = block.replace(/\/\*[\s\S]*?\*\//g, '');
   assert.doesNotMatch(rules, /mask|filter:|backdrop/);
-  assert.doesNotMatch(rules.slice(rules.indexOf('.field {'), rules.indexOf('}', rules.indexOf('.field {'))), /opacity/);
+  assert.ok(rules.includes('.field-bg {'));
+  assert.doesNotMatch(rules.slice(rules.indexOf('.field-bg {'), rules.indexOf('}', rules.indexOf('.field-bg {'))), /opacity/);
   // No field on paper or in forced colours.
-  assert.match(block, /@media \(forced-colors: active\), print \{\n  \.field \{\n    display: none;/);
+  assert.match(block, /@media \(forced-colors: active\), print \{\n  \.field-bg \{\n    display: none;/);
 });
 
 test('a part that rises on scroll is visible wherever the browser cannot drive it', async () => {
@@ -469,4 +470,52 @@ test('a part that rises on scroll is visible wherever the browser cannot drive i
   assert.equal(css.split('animation: rise-in ').length - 1, 1);
   assert.equal(css.split('@keyframes rise-in {').length - 1, 1);
   assert.doesNotMatch(css, /\.rise \{[^}]*opacity: 0/);
+});
+
+test('the moving field takes no class name that a page, a component or the app already uses', async () => {
+  // 0.9.0 named the field's root .field, the class of the form field wrapper, and its rules
+  // (absolute, hidden until built) hid the model, key and sign-in fields for 17 minutes.
+  const { readdir } = await import('node:fs/promises');
+  const source = await readFile(path.join(WEB_DIR, 'public', 'field.mjs'), 'utf8');
+  const made = [...source.matchAll(/\.className = '([^']+)'/g)].map((match) => match[1]);
+  assert.deepEqual(made.sort(), ['field-bg', 'field-bg__fade', 'field-bg__shade', 'field-bg__strike', 'field-bg__text']);
+
+  // Every class token in the built pages.
+  const used = new Set();
+  const walk = async (dir) => {
+    for (const entry of await readdir(dir, { withFileTypes: true })) {
+      const file = path.join(dir, entry.name);
+      if (entry.isDirectory()) await walk(file);
+      else if (entry.name.endsWith('.html')) {
+        for (const [, value] of (await readFile(file, 'utf8')).matchAll(/\sclass="([^"]*)"/g)) for (const name of value.split(/\s+/)) if (name) used.add(name);
+      }
+    }
+  };
+  await walk(path.join(WEB_DIR, 'public'));
+  assert.ok(used.has('field'), 'the form field wrapper is on a page');
+  assert.ok(used.has('page-field'));
+  for (const name of made) assert.ok(!used.has(name), name + ' is already a class in a built page');
+
+  // Every class the app scripts and the site's helpers write.
+  const scripts = [];
+  for (const dir of ['public/app', 'public/tools', 'public/benchmark', 'public/docs', 'public/templates', 'site', 'site/fragments']) {
+    for (const name of await readdir(path.join(WEB_DIR, dir))) if (name.endsWith('.mjs')) scripts.push(path.join(WEB_DIR, dir, name));
+  }
+  for (const file of scripts) {
+    const code = await readFile(file, 'utf8');
+    for (const name of made) assert.ok(!new RegExp('[\'"\\s.]' + name + '[\'"\\s]').test(code), name + ' appears in ' + path.relative(WEB_DIR, file));
+  }
+
+  // In base.css each of its selectors lives in the field's own block and nowhere else,
+  // and the form field wrapper keeps its one rule.
+  const css = (await readFile(path.join(WEB_DIR, 'public', 'css', 'base.css'), 'utf8')).replace(/\r\n/g, '\n');
+  const start = css.indexOf('/* The moving field (/field.mjs)');
+  const end = css.indexOf('/* Long-form pages', start);
+  const outside = css.slice(0, start) + css.slice(end);
+  assert.doesNotMatch(outside, /\.field-bg/);
+  assert.equal(css.split('\n.field {').length - 1, 1);
+  assert.doesNotMatch(css.slice(start, end), /\.field[ \[{,]/);
+  for (const name of ['home.css', 'workbench.css', 'account.css', 'tools.css', 'landing.css', 'docs.css', 'templates.css', 'benchmark.css', 'runners.css']) {
+    assert.doesNotMatch(await readFile(path.join(WEB_DIR, 'public', 'css', name), 'utf8'), /\.field-bg/, name);
+  }
 });

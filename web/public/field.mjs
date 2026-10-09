@@ -59,14 +59,14 @@ function seeded(seed) {
 
 function field(host) {
   const root = document.createElement('div');
-  root.className = 'field';
+  root.className = 'field-bg';
   root.setAttribute('aria-hidden', 'true');
   const text = document.createElement('canvas');
-  text.className = 'field__text';
+  text.className = 'field-bg__text';
   const shade = document.createElement('canvas');
-  shade.className = 'field__shade';
+  shade.className = 'field-bg__shade';
   const fade = document.createElement('div');
-  fade.className = 'field__fade';
+  fade.className = 'field-bg__fade';
   root.append(text, shade, fade);
   host.prepend(root);
 
@@ -155,7 +155,7 @@ function field(host) {
 
   function line(place) {
     const stroke = document.createElement('i');
-    stroke.className = 'field__strike';
+    stroke.className = 'field-bg__strike';
     stroke.style.left = `${place.left}px`;
     stroke.style.top = `${place.top}px`;
     stroke.style.width = `${place.length}px`;
@@ -183,7 +183,7 @@ function field(host) {
   }
 
   function clearStrikes() {
-    for (const stroke of root.querySelectorAll('.field__strike')) stroke.remove();
+    for (const stroke of root.querySelectorAll('.field-bg__strike')) stroke.remove();
   }
 
   function still() {

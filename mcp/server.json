@@ -3,7 +3,7 @@
   "name": "io.github.bountyoperator/bounty-operator",
   "title": "Bounty Operator",
   "description": "Argues against a security finding or a draft bug bounty report before you submit it.",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "websiteUrl": "https://bountyoperator.com/mcp",
   "repository": {
     "url": "https://github.com/bountyoperator/bounty-operator",
@@ -15,7 +15,7 @@
       "registryType": "npm",
       "registryBaseUrl": "https://registry.npmjs.org",
       "identifier": "bounty-operator-mcp",
-      "version": "0.9.0",
+      "version": "0.9.1",
       "runtimeHint": "npx",
       "transport": {
         "type": "stdio"

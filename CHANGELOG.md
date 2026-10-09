@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.9.1 — 2026-10-09
+
+Reviews
+
+- The model, API key and sign-in fields are back. In 0.9.0 the new background
+  was given the class name the form's fields already had, and its rules hid
+  them. 0.9.0 was live for 17 minutes before it was taken down.
+
 ## 0.9.0 — 2026-10-09
 
 Site

@@ -3765,7 +3765,7 @@ button.ref:hover {
   isolation: isolate;
 }
 
-.field {
+.field-bg {
   position: absolute;
   z-index: -2;
   top: 0;
@@ -3778,11 +3778,11 @@ button.ref:hover {
   visibility: hidden;
 }
 
-.field[data-ready] {
+.field-bg[data-ready] {
   visibility: visible;
 }
 
-.field__text {
+.field-bg__text {
   position: absolute;
   top: 0;
   left: 0;
@@ -3791,7 +3791,7 @@ button.ref:hover {
 }
 
 /* Twice the field each way, so its drift never shows an edge. */
-.field__shade {
+.field-bg__shade {
   position: absolute;
   top: -50%;
   left: -50%;
@@ -3839,17 +3839,17 @@ button.ref:hover {
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .field__shade {
+  .field-bg__shade {
     animation: field-drift 64s linear infinite;
     will-change: transform;
   }
 
-  .field[data-paused] .field__shade {
+  .field-bg[data-paused] .field-bg__shade {
     animation-play-state: paused;
   }
 }
 
-.field__strike {
+.field-bg__strike {
   position: absolute;
   height: 2px;
   border-radius: 1px;
@@ -3860,7 +3860,7 @@ button.ref:hover {
 
 /* The foot of the field sinks into the page. On a phone the words of the head
    lie over the whole field, so a wash keeps it quiet. */
-.field__fade {
+.field-bg__fade {
   position: absolute;
   top: 0;
   left: 0;
@@ -3874,7 +3874,7 @@ button.ref:hover {
 /* Side by side, the field is quiet behind the words on the left and full on
    the right. */
 @media (min-width: 60em) {
-  .field__fade {
+  .field-bg__fade {
     background:
       linear-gradient(to bottom, transparent 55%, var(--bg) 100%),
       linear-gradient(to right, #09090a9c 0, #09090a9c 38%, transparent 70%);
@@ -3882,7 +3882,7 @@ button.ref:hover {
 }
 
 @media (forced-colors: active), print {
-  .field {
+  .field-bg {
     display: none;
   }
 }
