@@ -14,6 +14,8 @@ export const SITE = {
     'Pre-submission review for bug bounty reports and smart-contract findings. The AI argues against the finding. The hunter writes the report.',
   defaultImage: '/social-v5.png',
   source: 'https://github.com/bountyoperator/bounty-operator',
+  // The forum: GitHub Discussions on the source repository. /support routes each kind of request.
+  forum: 'https://github.com/bountyoperator/bounty-operator/discussions',
   support: 'support@bountyoperator.com',
   security: 'security@bountyoperator.com',
   // The builder's public contest profile, and the builder's handle on X for link
@@ -323,6 +325,7 @@ ${footerColumn('Resources', [
     optional('/method', 'Review method'),
     optional('/templates', 'Report templates'),
     optional('/changelog', 'Changelog'),
+    optional('/support', 'Help and feedback'),
     { href: SITE.source, label: 'Source', external: true },
   ])}
 ${footerColumn('Legal', [

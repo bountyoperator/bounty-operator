@@ -57,6 +57,11 @@
   padding-top: var(--sp-32);
 }
 
+/* A lead of more than one block (a notice, then the facts) keeps them apart. */
+.docs-lead > * + * {
+  margin-top: var(--sp-24);
+}
+
 .docs-body {
   display: grid;
   grid-template-columns: minmax(0, 1fr);

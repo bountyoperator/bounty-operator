@@ -45,8 +45,9 @@ Remove secrets and other people's data from anything you attach.
 
 - Vulnerabilities in a bounty target you reviewed with the tool. Those go to
   that programme's own disclosure channel.
-- Review quality. A wrong or missed finding gets a normal issue with the input
-  that produced it.
+- Review quality. A wrong or missed finding gets a normal issue with an input
+  that reproduces it and is safe to publish: never an unreported finding or a
+  draft report.
 - Findings from an automated scanner with no demonstrated impact.
 
 ## Supported versions

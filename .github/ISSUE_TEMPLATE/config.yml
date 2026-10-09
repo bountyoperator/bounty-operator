@@ -1,8 +1,14 @@
 blank_issues_enabled: false
 contact_links:
-  - name: Go to bountyoperator.com
-    url: https://bountyoperator.com/
-    about: Run a review, read the guide, or reach account and billing support from the site.
+  - name: Ask a question
+    url: https://github.com/bountyoperator/bounty-operator/discussions/categories/q-a
+    about: How to do something, or why a review said what it said. An answer that settles it is marked.
+  - name: Suggest a change
+    url: https://github.com/bountyoperator/bounty-operator/discussions/categories/ideas
+    about: Something the product should do, or do differently. Others can vote on it.
+  - name: Account, payment or refund
+    url: https://bountyoperator.com/support#account
+    about: Private, by email. Do not post account or payment details here.
   - name: Report a vulnerability in Bounty Operator
     url: https://github.com/bountyoperator/bounty-operator/security/advisories/new
     about: Private report to the maintainers. You can also write to security@bountyoperator.com.  # bounty-kit: allow

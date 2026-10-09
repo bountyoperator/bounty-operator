@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.9.5 — 2026-10-09
+
+Site
+
+- There is a help page, /support, linked from the foot of every page and
+  from the billing view of your account. It sends each kind of request to
+  its place: a question to Q&A and an idea to Ideas on the forum, a bug to
+  the bug report form, an account or payment problem to email, and a
+  vulnerability in Bounty Operator to the private report form.
+- The forum is GitHub Discussions on the source repository. Anyone can read
+  it; posting needs a GitHub account. It is public, so the help page says
+  first what stays out of it: unreported findings, report drafts, API keys,
+  connection tokens and recovery codes.
+- The README, llms.txt and the issue chooser on GitHub point to the same
+  places.
+
 ## 0.9.4 — 2026-10-09
 
 Site

@@ -5,7 +5,8 @@ body:
   - type: markdown
     attributes:
       value: |
-        Keep secrets, private report links and target-specific PoCs out of this issue.
+        This tracker is public. Keep secrets, unreported findings, report drafts, private report links and target-specific PoCs out of this issue.
+        A question goes to [Q&A](https://github.com/bountyoperator/bounty-operator/discussions/categories/q-a) and an idea to [Ideas](https://github.com/bountyoperator/bounty-operator/discussions/categories/ideas).
         A security problem in Bounty Operator itself goes through the [security policy](https://github.com/bountyoperator/bounty-operator/security/policy).
   - type: dropdown
     id: surface
@@ -23,8 +24,8 @@ body:
     id: version
     attributes:
       label: Version
-      description: The output of `bounty-kit --version`, the MCP package version, or the version in the site footer.
-      placeholder: 0.7.0
+      description: The output of `bounty-kit --version`, the MCP package version, or the latest version on bountyoperator.com/changelog.
+      placeholder: 0.9.x
     validations:
       required: true
   - type: textarea

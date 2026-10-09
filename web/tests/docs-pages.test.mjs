@@ -10,11 +10,12 @@ import { fileURLToPath } from 'node:url';
 import { loadPages, scanTags, validateMarkup } from '../../scripts/build-site.mjs';
 import { renderPage } from '../site/layout.mjs';
 import { parseChangelog } from '../site/pages/docs/changelog.mjs';
+import { SUPPORT_LINKS } from '../site/pages/docs/support.mjs';
 import { assertNoBannedNames } from './private-lists.mjs';
 
 const WEB_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const PUBLIC_DIR = path.join(WEB_DIR, 'public');
-const EXPECTED_PATHS = ['/changelog', '/guide', '/licenses', '/mcp', '/privacy', '/security', '/terms'];
+const EXPECTED_PATHS = ['/changelog', '/guide', '/licenses', '/mcp', '/privacy', '/security', '/support', '/terms'];
 
 const site = { pages: [], has: () => true, preloadsFor: () => [] };
 const pages = (await loadPages(path.join(WEB_DIR, 'site', 'pages'))).filter((page) => page.source.startsWith('docs/'));
@@ -33,7 +34,7 @@ function textOf(markup) {
     .replace(/\s+/g, ' ');
 }
 
-test('the docs group builds its seven pages', () => {
+test('the docs group builds its eight pages', () => {
   assert.deepEqual([...rendered.keys()].sort(), EXPECTED_PATHS);
 });
 
@@ -452,4 +453,47 @@ test('the guide says what to do when the model refuses, at #model-refuses, with 
   assert.ok(text.includes(faq.mainEntity[0].acceptedAnswer.text), 'the answer in the structured data is the visible text');
   const article = blocks.find((block) => block['@type'] === 'TechArticle');
   assert.equal(article.dateModified, '2026-10-09');
+});
+
+test('the help page sends each kind of request to its place, and says first what stays out of public', async () => {
+  const markup = rendered.get('/support');
+  const main = markup.slice(markup.indexOf('<main'), markup.indexOf('</main>'));
+  const text = textOf(main);
+  const FORUM = 'https://github.com/bountyoperator/bounty-operator/discussions';
+  const SOURCE = 'https://github.com/bountyoperator/bounty-operator';
+  // The forum's categories by the names they have on GitHub: a renamed category breaks a link here first.
+  assert.deepEqual({ ...SUPPORT_LINKS }, {
+    forum: FORUM,
+    ask: `${FORUM}/categories/q-a`,
+    ideas: `${FORUM}/categories/ideas`,
+    wins: `${FORUM}/categories/wins`,
+    announcements: `${FORUM}/categories/announcements`,
+    bug: `${SOURCE}/issues/new?template=bug.yml`,
+    advisory: `${SOURCE}/security/advisories/new`,
+  });
+  for (const href of Object.values(SUPPORT_LINKS)) assert.ok(main.includes(`href="${href}"`), href);
+  // Account and payment questions are private: email, never the forum.
+  assert.ok(main.includes('href="mailto:support@bountyoperator.com"'));
+  assert.ok(main.includes('href="mailto:security@bountyoperator.com"'));
+  // What must stay out of public is said before the first link into the forum.
+  assert.ok(main.indexOf('The forum and the bug tracker are public') < main.indexOf(SUPPORT_LINKS.ask));
+  assert.match(text, /Never post an unreported finding, a report draft, an API key, a connection token or a recovery code\./);
+  assert.match(text, /We keep no files, prompts or results, so nobody here can look your review up\./);
+  // The form the page links exists in the repository, and the chooser offers the same places.
+  const repo = path.resolve(WEB_DIR, '..');
+  await readFile(path.join(repo, '.github', 'ISSUE_TEMPLATE', 'bug.yml'), 'utf8');
+  const chooser = await readFile(path.join(repo, '.github', 'ISSUE_TEMPLATE', 'config.yml'), 'utf8');
+  for (const href of [SUPPORT_LINKS.ask, SUPPORT_LINKS.ideas, SUPPORT_LINKS.advisory, 'https://bountyoperator.com/support#account']) assert.ok(chooser.includes(href), `issue chooser: ${href}`);
+  assert.ok(main.includes('id="account"'), 'the chooser links #account');
+  // The README and llms.txt point at the same places.
+  const readme = await readFile(path.join(repo, 'README.md'), 'utf8');
+  for (const href of [SUPPORT_LINKS.ask, SUPPORT_LINKS.ideas, SUPPORT_LINKS.bug, 'https://bountyoperator.com/support']) assert.ok(readme.includes(href), `README: ${href}`);
+  const llms = await readFile(path.join(PUBLIC_DIR, 'llms.txt'), 'utf8');
+  assert.ok(llms.includes('[Help and feedback](https://bountyoperator.com/support)') && llms.includes(FORUM));
+});
+
+test('every docs page links the help page from its footer', () => {
+  for (const [pagePath, markup] of rendered) {
+    assert.ok(markup.slice(markup.indexOf('<footer')).includes('href="/support"'), pagePath);
+  }
 });

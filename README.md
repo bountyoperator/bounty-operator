@@ -93,7 +93,7 @@ each client: [bountyoperator.com/mcp](https://bountyoperator.com/mcp) and
 Python 3.10 or newer. No dependencies.
 
 ```bash
-pip install "git+https://github.com/bountyoperator/bounty-operator@v0.9.4"
+pip install "git+https://github.com/bountyoperator/bounty-operator@v0.9.5"
 bounty-kit agent-pack ./agent-pack.md --target "Example Protocol" --program "Example bounty"
 ```
 
@@ -416,6 +416,16 @@ session, or pass it to `bounty-kit ai-review --prompt`.
 [`scripts/install-web3-security-references.sh`](scripts/install-web3-security-references.sh)
 clones nine public web3 security reference collections for an agent to search
 offline.
+
+## Help and feedback
+
+- A question: [Q&A](https://github.com/bountyoperator/bounty-operator/discussions/categories/q-a)
+- An idea: [Ideas](https://github.com/bountyoperator/bounty-operator/discussions/categories/ideas), where others can vote on it
+- A bug: [open a bug report](https://github.com/bountyoperator/bounty-operator/issues/new?template=bug.yml)
+- Your account or a payment: by email, see [bountyoperator.com/support](https://bountyoperator.com/support#account)
+- A vulnerability in Bounty Operator: the [security policy](SECURITY.md)
+
+The forum and the tracker are public. Keep unreported findings, report drafts and keys out of them.
 
 ## Docs
 

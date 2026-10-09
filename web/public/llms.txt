@@ -82,5 +82,7 @@ A hosted review sends the user's files and provider key through bountyoperator.c
 
 ## Contact
 
+- [Help and feedback](https://bountyoperator.com/support): Where each kind of request goes. Questions and ideas go to the public forum on GitHub Discussions, bugs to the issue form, account and payment questions to email.
+- Forum: https://github.com/bountyoperator/bounty-operator/discussions (public: no unreported findings, report drafts or keys)
 - Support: support@bountyoperator.com
 - Security: security@bountyoperator.com

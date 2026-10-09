@@ -1158,6 +1158,8 @@ function renderBilling() {
       { class: 'help' },
       el('a', { class: 'link', href: '/terms', target: '_blank', text: 'Terms' }),
       ' · ',
+      el('a', { class: 'link', href: '/support', target: '_blank', text: 'Help and feedback' }),
+      ' · ',
       el('a', { class: 'link', href: 'mailto:support@bountyoperator.com', text: 'support@bountyoperator.com' }),
     ),
   ];
