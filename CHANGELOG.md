@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.9.2 — 2026-10-09
+
+Site
+
+- The foot of every page has a button, Pause motion or Play motion. Motion is
+  on unless your system asks for less of it, and your own choice wins: if
+  Windows has "Animation effects" switched off, or a phone has Reduce Motion
+  on, the site opens still and Play motion starts it. The choice is kept in
+  your browser.
+- The README says what the MIT licence covers: the code in the repository,
+  not the hosted method and not the name.
+
 ## 0.9.1 — 2026-10-09
 
 Reviews

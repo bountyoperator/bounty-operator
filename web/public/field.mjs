@@ -7,7 +7,8 @@
 // are holes in a shade that lies over the text: a small picture, drawn once,
 // stretched, and moved by a CSS animation of its transform, which the browser
 // runs off the main thread. A pen strike is one short element animated the
-// same way. Scrolling and typing never wait on this file.
+// same way. Scrolling and typing never wait on this file. With the page's
+// motion off it shows one still picture.
 
 const LINES = [
   '## Summary',
@@ -46,7 +47,8 @@ const INK = 'rgba(244, 241, 234, 0.38)'; // the text under a light
 const SHADE = 'rgba(9, 9, 10, 0.87)'; // the page's black, over the text at rest
 const SHADE_WIDTH = 320; // the shade is a small picture, stretched: it is all soft edges
 const STRIKE_MS = 5200;
-const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
+// The page's motion switch (/theme.js): on unless the system asks for less or the visitor pressed Pause.
+const moving = () => document.documentElement.dataset.motion === 'on';
 
 // A small seeded generator: the same lights for the same size of field.
 function seeded(seed) {
@@ -187,8 +189,7 @@ function field(host) {
   }
 
   function still() {
-    // For a visitor who asked for less motion: the lights where they start,
-    // two lines already struck.
+    // With motion off: the lights where they start, two lines already struck.
     clearStrikes();
     const random = seeded(7);
     for (let tries = 0, made = 0; tries < 24 && made < 2; tries += 1) {
@@ -207,7 +208,7 @@ function field(host) {
   }
 
   function sync() {
-    const want = onScreen && !document.hidden && !reduced.matches;
+    const want = onScreen && !document.hidden && moving();
     root.toggleAttribute('data-paused', !want);
     if (want && !running) {
       running = true;
@@ -217,7 +218,7 @@ function field(host) {
       running = false;
       window.clearTimeout(timer);
     }
-    if (reduced.matches) still();
+    if (!moving()) still();
   }
 
   function layout() {
@@ -233,7 +234,7 @@ function field(host) {
     clearStrikes();
     drawText();
     drawShade();
-    if (reduced.matches) still();
+    if (!moving()) still();
   }
 
   let pending = 0;
@@ -248,7 +249,7 @@ function field(host) {
     sync();
   }).observe(host);
   document.addEventListener('visibilitychange', sync);
-  reduced.addEventListener('change', sync);
+  document.addEventListener('motionchange', sync);
 
   layout();
   root.dataset.ready = '';

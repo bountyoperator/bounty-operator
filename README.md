@@ -93,7 +93,7 @@ each client: [bountyoperator.com/mcp](https://bountyoperator.com/mcp) and
 Python 3.10 or newer. No dependencies.
 
 ```bash
-pip install "git+https://github.com/bountyoperator/bounty-operator@v0.9.1"
+pip install "git+https://github.com/bountyoperator/bounty-operator@v0.9.2"
 bounty-kit agent-pack ./agent-pack.md --target "Example Protocol" --program "Example bounty"
 ```
 
@@ -431,4 +431,6 @@ offline.
 
 ## License
 
-MIT.
+MIT, for everything in this repository. The method behind the hosted profiles, the
+gauntlet and the panel is not in the repository and is not licensed. The licence
+does not grant the name Bounty Operator or its mark.

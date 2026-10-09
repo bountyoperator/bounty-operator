@@ -311,6 +311,7 @@ ${footerColumn('Legal', [
 <div class="wrap">
 <div class="site-footer__base">
 <p>Built by <a href="${SITE.builder.url}" target="_blank" rel="noopener noreferrer">${SITE.builder.name}</a></p>
+<p><button class="motion-toggle" type="button" data-motion-toggle hidden>Pause motion</button></p>
 <p><a href="mailto:${SITE.support}">${SITE.support}</a></p>
 </div>
 </div>

@@ -512,6 +512,8 @@ Under 704px the label moves above its content and the margin rule moves to the c
 `/theme.js` is loaded on every page, blocking, in `<head>`. It:
 
 - sets `data-js` on `<html>` before the first paint, so CSS can lay out what a script will arrange later
+- sets `data-motion` on `<html>` before the first paint: `on` unless the system asks for less motion (`prefers-reduced-motion: reduce`), and a choice in `localStorage["bo-motion"]` (`on` | `off`) wins over the system. Every animation rule in the stylesheets is keyed on `:root[data-motion="on"]`
+- pauses or plays motion from any `[data-motion-toggle]` button (the layout puts one in the footer, hidden until the script labels it), keeps the choice only when it differs from the system, and dispatches `motionchange` on `document` with `detail.motion`
 - removes `localStorage["bo-theme"]`, a choice an earlier version of the site kept; nothing is stored now
 - copies a code block when its `[data-copy]` button is clicked, sets `data-copied` on the button for two seconds and swaps the `[data-copy-label]` text to "Copied"
 - closes the enclosing `<dialog>` when a `[data-close-dialog]` control is clicked
@@ -520,7 +522,7 @@ Page scripts do not need to wire any of these.
 
 ## The field, the pen and the figures
 
-- **The field.** The layout loads `/field.mjs` on every page. For each `.page-field` it builds `div.field-bg` (hidden from assistive technology) with four layers: `canvas.field-bg__text`, `canvas.field-bg__shade`, any number of `i.field-bg__strike` and `div.field-bg__fade`. The name is `field-bg` because `.field` is the form field wrapper. The text and the shade are drawn once; the shade drifts by a CSS transform and a strike is animated with the Web Animations API. Nothing is drawn per frame. With reduced motion the shade is still and two lines are already struck. A page needs only the class `.page-field` on its head.
+- **The field.** The layout loads `/field.mjs` on every page. For each `.page-field` it builds `div.field-bg` (hidden from assistive technology) with four layers: `canvas.field-bg__text`, `canvas.field-bg__shade`, any number of `i.field-bg__strike` and `div.field-bg__fade`. The name is `field-bg` because `.field` is the form field wrapper. The text and the shade are drawn once; the shade drifts by a CSS transform and a strike is animated with the Web Animations API. Nothing is drawn per frame. With the page's motion off the shade is still and two lines are already struck; it listens for `motionchange`. A page needs only the class `.page-field` on its head.
 - **`pen(words)`, `penned(sentence, phrase)`** (components.mjs). `pen` wraps words in `span.pen` with the ring, an `svg.pen__ring` that is one stroke drawn once. `penned` circles one phrase of a sentence and returns the sentence as it is when the phrase is not in it. Rules in `home.css`.
 - **`verdictLabel(id)`** (components.mjs): the printed name of a verdict, for places that are not a chip.
 - **`.home-stats`**: a list of `a.home-stats__item`, each a figure (`.home-stats__n`, set in `--heat`) and a caption (`.home-stats__t`).

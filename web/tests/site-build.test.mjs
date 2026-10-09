@@ -438,7 +438,10 @@ test('the moving field draws nothing per frame, and holds still when less motion
   // No frame loop: the text and the shade are drawn once, and the browser moves the shade.
   assert.doesNotMatch(source, /requestAnimationFrame|setInterval/);
   assert.match(source, /for \(const host of document\.querySelectorAll\('\.page-field'\)\) field\(host\);/);
-  assert.match(source, /prefers-reduced-motion: reduce/);
+  // It follows the page's motion switch, and hears when the switch is pressed.
+  assert.match(source, /document\.documentElement\.dataset\.motion === 'on'/);
+  assert.match(source, /document\.addEventListener\('motionchange', sync\)/);
+  assert.doesNotMatch(source, /prefers-reduced-motion/);
   assert.match(source, /root\.setAttribute\('aria-hidden', 'true'\)/);
   // It reads nothing from the page and keeps nothing in the browser.
   assert.doesNotMatch(source, /localStorage|sessionStorage|fetch\(|XMLHttpRequest|cookie/);
@@ -448,8 +451,8 @@ test('the moving field draws nothing per frame, and holds still when less motion
   const block = css.slice(start, css.indexOf('/* Long-form pages', start));
   assert.ok(start > 0 && block.length > 500);
   // The shade moves by a transform, and only when motion is welcome.
-  assert.match(block, /@media \(prefers-reduced-motion: no-preference\) \{\n  \.field-bg__shade \{\n    animation: field-drift \d+s linear infinite;/);
-  const frames = block.slice(block.indexOf('@keyframes field-drift'), block.indexOf('@media (prefers-reduced-motion'));
+  assert.match(block, /\n:root\[data-motion="on"\] \.field-bg__shade \{\n  animation: field-drift \d+s linear infinite;/);
+  const frames = block.slice(block.indexOf('@keyframes field-drift'), block.indexOf(':root[data-motion="on"] .field-bg__shade'));
   const moved = [...frames.matchAll(/\n\s+([a-z-]+): /g)].map((match) => match[1]);
   assert.ok(moved.length >= 5);
   assert.deepEqual([...new Set(moved)], ['transform']);
@@ -466,7 +469,7 @@ test('a part that rises on scroll is visible wherever the browser cannot drive i
   const css = (await readFile(path.join(WEB_DIR, 'public', 'css', 'base.css'), 'utf8')).replace(/\r\n/g, '\n');
   // The hidden starting state exists only inside the keyframes, and the keyframes are used only
   // under a scroll-driven timeline with motion welcome.
-  assert.match(css, /@media screen and \(prefers-reduced-motion: no-preference\) \{\n  @supports \(animation-timeline: view\(\)\) \{\n    \.rise \{\n      animation: rise-in linear both;\n      animation-timeline: view\(\);/);
+  assert.match(css, /@media screen \{\n  @supports \(animation-timeline: view\(\)\) \{\n    :root\[data-motion="on"\] \.rise \{\n      animation: rise-in linear both;\n      animation-timeline: view\(\);/);
   assert.equal(css.split('animation: rise-in ').length - 1, 1);
   assert.equal(css.split('@keyframes rise-in {').length - 1, 1);
   assert.doesNotMatch(css, /\.rise \{[^}]*opacity: 0/);
@@ -518,4 +521,118 @@ test('the moving field takes no class name that a page, a component or the app a
   for (const name of ['home.css', 'workbench.css', 'account.css', 'tools.css', 'landing.css', 'docs.css', 'templates.css', 'benchmark.css', 'runners.css']) {
     assert.doesNotMatch(await readFile(path.join(WEB_DIR, 'public', 'css', name), 'utf8'), /\.field-bg/, name);
   }
+});
+
+
+test('the motion switch: on unless the system asks for less, and the visitor\'s choice wins', async () => {
+  const vm = await import('node:vm');
+  const source = await readFile(path.join(WEB_DIR, 'public', 'theme.js'), 'utf8');
+
+  /** Runs theme.js in a page that asks for less motion or not, with or without a stored choice. */
+  const page = ({ less, stored = null, storage = true }) => {
+    const attributes = new Map();
+    const store = new Map(stored ? [['bo-motion', stored]] : []);
+    const listeners = new Map();
+    const events = [];
+    const button = { hidden: true, textContent: 'Pause motion', querySelector: () => null, closest: (selector) => (selector === '[data-motion-toggle]' ? button : null) };
+    const media = { matches: less, listeners: [], addEventListener(type, handler) { this.listeners.push(handler); } };
+    const document = {
+      documentElement: { setAttribute: (name, value) => attributes.set(name, value), getAttribute: (name) => attributes.get(name) ?? null },
+      querySelectorAll: (selector) => (selector === '[data-motion-toggle]' ? [button] : []),
+      querySelector: () => null,
+      addEventListener: (type, handler) => listeners.set(type, handler),
+      dispatchEvent: (event) => events.push(event.type + ':' + event.detail.motion),
+    };
+    const localStorage = storage
+      ? { getItem: (key) => store.get(key) ?? null, setItem: (key, value) => store.set(key, value), removeItem: (key) => store.delete(key) }
+      : { getItem() { throw new Error('blocked'); }, setItem() { throw new Error('blocked'); }, removeItem() { throw new Error('blocked'); } };
+    const window = { localStorage, matchMedia: () => media, addEventListener() {}, setTimeout };
+    class CustomEvent { constructor(type, init) { this.type = type; this.detail = init.detail; } }
+    vm.runInNewContext(source, { window, document, navigator: {}, CustomEvent });
+    return {
+      motion: () => attributes.get('data-motion'),
+      press: () => listeners.get('click')({ target: button }),
+      ready: () => listeners.get('DOMContentLoaded')(),
+      system: (value) => { media.matches = value; for (const handler of media.listeners) handler(); },
+      stored: () => store.get('bo-motion') ?? null,
+      button,
+      events,
+    };
+  };
+
+  // The attribute is set as the script runs, before anything is painted.
+  assert.equal(page({ less: false }).motion(), 'on');
+  assert.equal(page({ less: true }).motion(), 'off');
+  // A stored choice wins over the system, both ways.
+  assert.equal(page({ less: true, stored: 'on' }).motion(), 'on');
+  assert.equal(page({ less: false, stored: 'off' }).motion(), 'off');
+  // Anything else in the key is not a choice.
+  assert.equal(page({ less: false, stored: 'yes' }).motion(), 'on');
+
+  // A system that asks for less motion: the button offers to play, and pressing it plays and remembers.
+  const quiet = page({ less: true });
+  quiet.ready();
+  assert.equal(quiet.button.hidden, false);
+  assert.equal(quiet.button.textContent, 'Play motion');
+  quiet.press();
+  assert.equal(quiet.motion(), 'on');
+  assert.equal(quiet.stored(), 'on');
+  assert.equal(quiet.button.textContent, 'Pause motion');
+  assert.deepEqual(quiet.events, ['motionchange:on']);
+  // Pressing again goes back to what the system asks for, and keeps nothing.
+  quiet.press();
+  assert.equal(quiet.motion(), 'off');
+  assert.equal(quiet.stored(), null);
+  assert.deepEqual(quiet.events, ['motionchange:on', 'motionchange:off']);
+
+  // A system with motion: Pause stops it and is remembered.
+  const lively = page({ less: false });
+  lively.ready();
+  assert.equal(lively.button.textContent, 'Pause motion');
+  lively.press();
+  assert.equal(lively.motion(), 'off');
+  assert.equal(lively.stored(), 'off');
+
+  // With no choice stored the page follows a change of the system setting; with one, it does not.
+  const follows = page({ less: false });
+  follows.system(true);
+  assert.equal(follows.motion(), 'off');
+  const chosen = page({ less: false, stored: 'off' });
+  chosen.system(false);
+  assert.equal(chosen.motion(), 'off');
+
+  // Storage blocked: the page still follows the system, and a press still works for this page.
+  const blocked = page({ less: true, storage: false });
+  assert.equal(blocked.motion(), 'off');
+  blocked.press();
+  assert.equal(blocked.motion(), 'on');
+});
+
+test('every animation and transition of motion in the stylesheets waits for the motion switch', async () => {
+  const { readdir } = await import('node:fs/promises');
+  const dir = path.join(WEB_DIR, 'public', 'css');
+  // Working indicators say that something is happening; they stay, and are stilled by the rule below.
+  const INDICATORS = [/spinner/, /aria-busy/, /\.progress/, /\.skeleton/, /data-status="running"/, /\.code__copy/];
+  for (const name of (await readdir(dir)).filter((entry) => entry.endsWith('.css'))) {
+    const css = (await readFile(path.join(dir, name), 'utf8')).replace(/\r\n/g, '\n').replace(/\/\*[\s\S]*?\*\//g, '');
+    assert.doesNotMatch(css, /prefers-reduced-motion/, name + ' still asks the system directly');
+    const rules = css.replace(/@keyframes [^{]+\{(?:[^{}]*\{[^{}]*\})*[^{}]*\}/g, '');
+    for (const [, selector, body] of rules.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+      if (!/(?:^|[\s;])animation(?:-name)?:\s*(?!none)/.test(body)) continue;
+      const each = selector.trim();
+      if (each.startsWith('@')) continue;
+      if (INDICATORS.some((pattern) => pattern.test(each))) continue;
+      for (const part of each.split(/,(?![^(]*\))/)) assert.match(part.trim(), /^:root\[data-motion="on"\]/, name + ': ' + part.trim() + ' animates without the switch');
+    }
+  }
+  // With motion off every animation and transition is cut to nothing, whatever started it.
+  const base = (await readFile(path.join(dir, 'base.css'), 'utf8')).replace(/\r\n/g, '\n');
+  assert.match(base, /\n:root:not\(\[data-motion="on"\]\) \*,\n:root:not\(\[data-motion="on"\]\) \*::before,\n:root:not\(\[data-motion="on"\]\) \*::after \{\n  scroll-behavior: auto !important;\n  transition-duration: 0\.01ms !important;\n  animation-duration: 0\.01ms !important;\n  animation-iteration-count: 1 !important;\n\}/);
+});
+
+test('every page carries the motion button, hidden until the script labels it', () => {
+  const page = { path: '/x', title: 'X page | Bounty Operator', description: 'A description that is comfortably longer than the fifty character minimum.', body: html`<h1>X</h1>`};
+  const markup = renderPage(page, { has: () => false, pages: [page], preloadsFor: () => [] });
+  assert.equal([...markup.matchAll(/<button class="motion-toggle" type="button" data-motion-toggle hidden>Pause motion<\/button>/g)].length, 1);
+  assert.ok(markup.indexOf('data-motion-toggle') > markup.indexOf('class="site-footer'));
 });

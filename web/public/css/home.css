@@ -53,10 +53,8 @@
   }
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .home-top::before {
-    animation: ember 9s ease-in-out infinite alternate;
-  }
+:root[data-motion="on"] .home-top::before {
+  animation: ember 9s ease-in-out infinite alternate;
 }
 
 /* On a phone the page reads kicker, headline, lede, action, then the stamped
@@ -138,10 +136,8 @@
   }
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .pen__ring path {
-    animation: pen-ring 900ms cubic-bezier(0.6, 0, 0.2, 1) 500ms both;
-  }
+:root[data-motion="on"] .pen__ring path {
+  animation: pen-ring 900ms cubic-bezier(0.6, 0, 0.2, 1) 500ms both;
 }
 
 .home-hero__lede {
@@ -357,10 +353,8 @@
   }
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .verdict-run__track {
-    animation: verdict-run 52s linear infinite;
-  }
+:root[data-motion="on"] .verdict-run__track {
+  animation: verdict-run 52s linear infinite;
 }
 
 @media (forced-colors: active) {
@@ -632,18 +626,16 @@
   }
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .home-shot:not(.home-shot--still) .slip__claimed::after {
-    animation: slip-strike 260ms var(--ease-out) 380ms both;
-  }
+:root[data-motion="on"] .home-shot:not(.home-shot--still) .slip__claimed::after {
+  animation: slip-strike 260ms var(--ease-out) 380ms both;
+}
 
-  .home-shot:not(.home-shot--still) .slip__supported .sev--stamp {
-    animation: stamp-land var(--t-stamp) var(--ease-out) 660ms both;
-  }
+:root[data-motion="on"] .home-shot:not(.home-shot--still) .slip__supported .sev--stamp {
+  animation: stamp-land var(--t-stamp) var(--ease-out) 660ms both;
+}
 
-  .home-shot:not(.home-shot--still) .slip__stamp .verdict--lg {
-    animation: stamp-land 480ms var(--ease-out) 1000ms both;
-  }
+:root[data-motion="on"] .home-shot:not(.home-shot--still) .slip__stamp .verdict--lg {
+  animation: stamp-land 480ms var(--ease-out) 1000ms both;
 }
 
 /* ==========================================================================

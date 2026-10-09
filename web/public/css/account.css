@@ -877,12 +877,10 @@
   animation: spin 0.7s linear infinite;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .account-banner__spinner {
-    border-right-color: var(--tone);
-    opacity: 0.6;
-    animation: none;
-  }
+:root:not([data-motion="on"]) .account-banner__spinner {
+  border-right-color: var(--tone);
+  opacity: 0.6;
+  animation: none;
 }
 
 /* A cancelled checkout: one quiet line where the buy button is. */

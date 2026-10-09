@@ -221,7 +221,7 @@ One webfont, self-hosted: Archivo as a variable file, width 62 to 125 and weight
 
 ## Motion
 
-Everything that moves is cheap by construction, and all of it holds still when the visitor asks for less motion.
+Everything that moves is cheap by construction, and all of it runs only while the page's motion is on. `<html>` carries `data-motion="on"` or `"off"`, set by `theme.js` before the first paint: on unless the visitor's system asks for less motion, and the visitor's own choice wins over the system. The foot of every page has the button, Pause motion or Play motion. A choice that differs from the system is remembered in the browser.
 
 - **The field** (`web/public/field.mjs`, built in every `.page-field`). Four layers, none painted again after the first time. The text: 11px mono, rows 19px apart, drawn once to a canvas. The shade: the page's black at 87% with lights cut out of it, a picture 320px wide, stretched to twice the field and moved round one loop in 64s by a transform. The pen: a 2px vermilion line drawn left to right, held, then let go over 5.2s, a new one every 0.9 to 2.6s; side by side with a head's words it keeps to the right of them or to the top and foot of the field. The fade: the foot of the field sinks into the page, and a wash keeps the field quiet behind the words. There is no frame loop, no mask and no group opacity. Without script the head is printed on black.
 - **The pen's ring.** One SVG stroke around "the hole" in the home headline, drawn once in 900ms after 500ms (`pen()` and `penned()` in `web/site/components.mjs`).
@@ -234,7 +234,7 @@ Everything that moves is cheap by construction, and all of it holds still when t
 ### Named Rules
 **The Nothing Per Frame Rule.** A background is drawn once and moved by a transform or an opacity, which the browser animates off the main thread. Scrolling and typing never wait on decoration.
 
-**The Still State Rule.** Every motion starts inside `prefers-reduced-motion: no-preference` and has a still state that reads complete: the ring drawn, two lines struck, the stamps pressed.
+**The Still State Rule.** Every animation rule is keyed on `:root[data-motion="on"]`; no stylesheet asks the system directly. With motion off, `:root:not([data-motion="on"])` cuts every animation and transition to nothing, and each motion has a still state that reads complete: the ring drawn, two lines struck, the stamps pressed. Working indicators (a spinner, the running bar) are the only animations declared without the switch, and that rule stills them too.
 
 ## Layout
 
@@ -336,7 +336,7 @@ The home hero and the share image show the review as a slip, built by `reportSli
 - **Do** print verdicts and severities as stamps, and give a large verdict its inked impression.
 - **Do** put invented output in a dashed frame labelled Example.
 - **Do** keep every touch target at 44px, except a file reference inside a sentence, which keeps the height of its line (25px); keep every text at 12px or more, and form controls at 16px under 768px.
-- **Do** give every motion a still state, start it only under `prefers-reduced-motion: no-preference`, and move it by a transform or an opacity.
+- **Do** give every motion a still state, key it on `:root[data-motion="on"]`, and move it by a transform or an opacity.
 
 ### Don't:
 - **Don't** add a second hot colour, a second gradient, or a gradient on text that has to be read.

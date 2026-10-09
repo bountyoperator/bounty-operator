@@ -3590,6 +3590,25 @@ button.ref:hover {
   text-decoration-color: currentColor;
 }
 
+/* Pause motion / Play motion (/theme.js). Hidden until the script labels it:
+   without script nothing moves and there is nothing to pause. */
+.motion-toggle {
+  display: inline-flex;
+  align-items: center;
+  min-width: var(--tap);
+  min-height: var(--tap);
+  color: var(--text);
+  font: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--line-strong);
+  cursor: pointer;
+}
+
+.motion-toggle:hover {
+  color: var(--stock);
+  text-decoration-color: currentColor;
+}
+
 @media (pointer: coarse) {
   .site-footer__col a {
     min-width: var(--tap);
@@ -3838,15 +3857,13 @@ button.ref:hover {
   }
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .field-bg__shade {
-    animation: field-drift 64s linear infinite;
-    will-change: transform;
-  }
+:root[data-motion="on"] .field-bg__shade {
+  animation: field-drift 64s linear infinite;
+  will-change: transform;
+}
 
-  .field-bg[data-paused] .field-bg__shade {
-    animation-play-state: paused;
-  }
+:root[data-motion="on"] .field-bg[data-paused] .field-bg__shade {
+  animation-play-state: paused;
 }
 
 .field-bg__strike {
@@ -4069,128 +4086,124 @@ button.ref:hover {
   }
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  html {
-    scroll-behavior: smooth;
-  }
+:root[data-motion="on"] {
+  scroll-behavior: smooth;
+}
 
-  /* A step panel or result block entering. */
-  .panel-enter {
-    animation: rise var(--t-panel) var(--ease) both;
-  }
+/* A step panel or result block entering. */
+:root[data-motion="on"] .panel-enter {
+  animation: rise var(--t-panel) var(--ease) both;
+}
 
-  /* The stamp: on the hero slip, and on a verdict as a result arrives. */
-  .stamp-land,
-  .panel-enter .dossier .verdict--lg {
-    animation: stamp-land var(--t-stamp) var(--ease-out) both;
-    animation-delay: var(--stamp-delay, 120ms);
-  }
+/* The stamp: on the hero slip, and on a verdict as a result arrives. */
+:root[data-motion="on"] .stamp-land,
+:root[data-motion="on"] .panel-enter .dossier .verdict--lg {
+  animation: stamp-land var(--t-stamp) var(--ease-out) both;
+  animation-delay: var(--stamp-delay, 120ms);
+}
 
-  /* Children enter one after another: cards in a list, rows in a table. */
-  .stagger > * {
-    animation: rise var(--t-panel) var(--ease) both;
-    animation-delay: calc(var(--stagger) * var(--i, 0));
-  }
+/* Children enter one after another: cards in a list, rows in a table. */
+:root[data-motion="on"] .stagger > * {
+  animation: rise var(--t-panel) var(--ease) both;
+  animation-delay: calc(var(--stagger) * var(--i, 0));
+}
 
-  /* The finding card writes itself: each row rises while its spine segment draws down. */
-  .finding--reveal .rail {
-    animation: rise var(--t-panel) var(--ease) both;
-    animation-delay: calc(var(--stagger) * var(--i, 0) + 60ms);
-  }
+/* The finding card writes itself: each row rises while its spine segment draws down. */
+:root[data-motion="on"] .finding--reveal .rail {
+  animation: rise var(--t-panel) var(--ease) both;
+  animation-delay: calc(var(--stagger) * var(--i, 0) + 60ms);
+}
 
-  .finding--reveal .rail::before {
-    transform-origin: top;
-    animation: spine-draw 320ms var(--ease) both;
-    animation-delay: calc(var(--stagger) * var(--i, 0) + 120ms);
-  }
+:root[data-motion="on"] .finding--reveal .rail::before {
+  transform-origin: top;
+  animation: spine-draw 320ms var(--ease) both;
+  animation-delay: calc(var(--stagger) * var(--i, 0) + 120ms);
+}
 
-  :is(.stagger, .finding--reveal .finding__rows) > :nth-child(2) {
-    --i: 1;
-  }
+:root[data-motion="on"] :is(.stagger, .finding--reveal .finding__rows) > :nth-child(2) {
+  --i: 1;
+}
 
-  :is(.stagger, .finding--reveal .finding__rows) > :nth-child(3) {
-    --i: 2;
-  }
+:root[data-motion="on"] :is(.stagger, .finding--reveal .finding__rows) > :nth-child(3) {
+  --i: 2;
+}
 
-  :is(.stagger, .finding--reveal .finding__rows) > :nth-child(4) {
-    --i: 3;
-  }
+:root[data-motion="on"] :is(.stagger, .finding--reveal .finding__rows) > :nth-child(4) {
+  --i: 3;
+}
 
-  :is(.stagger, .finding--reveal .finding__rows) > :nth-child(5) {
-    --i: 4;
-  }
+:root[data-motion="on"] :is(.stagger, .finding--reveal .finding__rows) > :nth-child(5) {
+  --i: 4;
+}
 
-  :is(.stagger, .finding--reveal .finding__rows) > :nth-child(6) {
-    --i: 5;
-  }
+:root[data-motion="on"] :is(.stagger, .finding--reveal .finding__rows) > :nth-child(6) {
+  --i: 5;
+}
 
-  :is(.stagger, .finding--reveal .finding__rows) > :nth-child(7) {
-    --i: 6;
-  }
+:root[data-motion="on"] :is(.stagger, .finding--reveal .finding__rows) > :nth-child(7) {
+  --i: 6;
+}
 
-  :is(.stagger, .finding--reveal .finding__rows) > :nth-child(n + 8) {
-    --i: 7;
-  }
+:root[data-motion="on"] :is(.stagger, .finding--reveal .finding__rows) > :nth-child(n + 8) {
+  --i: 7;
+}
 
-  /* Dialog: fade and scale in, and out again when it closes. */
-  .dialog {
-    transition:
-      opacity var(--t-dialog) var(--ease),
-      transform var(--t-dialog) var(--ease),
-      overlay var(--t-dialog) allow-discrete,
-      display var(--t-dialog) allow-discrete;
-  }
+/* Dialog: fade and scale in, and out again when it closes. */
+:root[data-motion="on"] .dialog {
+  transition:
+    opacity var(--t-dialog) var(--ease),
+    transform var(--t-dialog) var(--ease),
+    overlay var(--t-dialog) allow-discrete,
+    display var(--t-dialog) allow-discrete;
+}
 
-  .dialog:not([open]) {
+:root[data-motion="on"] .dialog:not([open]) {
+  opacity: 0;
+  transform: scale(0.98);
+}
+
+@starting-style {
+  :root[data-motion="on"] .dialog[open] {
     opacity: 0;
     transform: scale(0.98);
   }
+}
 
-  @starting-style {
-    .dialog[open] {
-      opacity: 0;
-      transform: scale(0.98);
-    }
-  }
+:root[data-motion="on"] .dialog::backdrop {
+  transition:
+    opacity var(--t-dialog),
+    overlay var(--t-dialog) allow-discrete,
+    display var(--t-dialog) allow-discrete;
+}
 
-  .dialog::backdrop {
-    transition:
-      opacity var(--t-dialog),
-      overlay var(--t-dialog) allow-discrete,
-      display var(--t-dialog) allow-discrete;
-  }
+:root[data-motion="on"] .dialog:not([open])::backdrop {
+  opacity: 0;
+}
 
-  .dialog:not([open])::backdrop {
+@starting-style {
+  :root[data-motion="on"] .dialog[open]::backdrop {
     opacity: 0;
-  }
-
-  @starting-style {
-    .dialog[open]::backdrop {
-      opacity: 0;
-    }
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    scroll-behavior: auto !important;
-    transition-duration: 0.01ms !important;
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-  }
+:root:not([data-motion="on"]) *,
+:root:not([data-motion="on"]) *::before,
+:root:not([data-motion="on"]) *::after {
+  scroll-behavior: auto !important;
+  transition-duration: 0.01ms !important;
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+}
 
-  /* Without motion the running bar is a solid line and the skeleton is flat. */
-  .progress::before {
-    width: 100%;
-    animation: none;
-  }
+/* Without motion the running bar is a solid line and the skeleton is flat. */
+:root:not([data-motion="on"]) .progress::before {
+  width: 100%;
+  animation: none;
+}
 
-  .skeleton {
-    background: var(--surface-2);
-    animation: none;
-  }
+:root:not([data-motion="on"]) .skeleton {
+  background: var(--surface-2);
+  animation: none;
 }
 
 /* ==========================================================================
@@ -4356,9 +4369,9 @@ button.ref:hover {
   }
 }
 
-@media screen and (prefers-reduced-motion: no-preference) {
+@media screen {
   @supports (animation-timeline: view()) {
-    .rise {
+    :root[data-motion="on"] .rise {
       animation: rise-in linear both;
       animation-timeline: view();
       animation-range: entry 0% entry 42%;

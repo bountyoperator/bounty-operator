@@ -362,15 +362,21 @@ test('each place on the benchmark strip carries a bar as long as its score', () 
   }
 });
 
-test('every motion the home page adds runs only when motion is welcome', async () => {
+test('every motion the home page adds runs only while the page\'s motion is on', async () => {
   const css = (await readFile(path.join(WEB_DIR, 'public', 'css', 'home.css'), 'utf8')).replace(/\r\n/g, '\n');
-  // The ember, the pen's ring and the run are each started inside a no-preference query.
-  assert.match(css, /@media \(prefers-reduced-motion: no-preference\) \{\n  \.home-top::before \{\n    animation: ember /);
-  assert.match(css, /@media \(prefers-reduced-motion: no-preference\) \{\n  \.pen__ring path \{\n    animation: pen-ring /);
-  assert.match(css, /@media \(prefers-reduced-motion: no-preference\) \{\n  \.verdict-run__track \{\n    animation: verdict-run /);
-  // Outside those queries no rule of the hero starts an animation.
-  const outside = css.replace(/@media \(prefers-reduced-motion: no-preference\) \{[\s\S]*?\n\}\n/g, '').replace(/@keyframes [\s\S]*?\n\}\n/g, '');
-  assert.doesNotMatch(outside, /\n\s+animation:/);
+  // The ember, the pen's ring and the run are each keyed on the motion switch.
+  assert.match(css, /\n:root\[data-motion="on"\] \.home-top::before \{\n  animation: ember /);
+  assert.match(css, /\n:root\[data-motion="on"\] \.pen__ring path \{\n  animation: pen-ring /);
+  assert.match(css, /\n:root\[data-motion="on"\] \.verdict-run__track \{\n  animation: verdict-run /);
+  // No rule of the page starts an animation without it.
+  const rules = css.replace(/\/\*[\s\S]*?\*\//g, '').replace(/@keyframes [\s\S]*?\n\}\n/g, '');
+  let animated = 0;
+  for (const [, selector] of rules.matchAll(/\n([^{}\n][^{}]*?) \{[^{}]*\n\s+animation:/g)) {
+    animated += 1;
+    assert.match(selector.trim(), /^:root\[data-motion="on"\] /, selector);
+  }
+  assert.ok(animated >= 6, 'the ember, the ring, the three moments of the slip and the run');
+  assert.doesNotMatch(css, /prefers-reduced-motion/);
   // Text set in the heat gradient or as an outline falls back to plain text in forced colours.
   assert.match(css, /@media \(forced-colors: active\) \{\n  \.home-stats__n \{\n    background: none;\n    color: CanvasText;/);
   assert.match(css, /@media \(forced-colors: active\) \{\n  \.verdict-run__word \{\n    color: CanvasText;/);
