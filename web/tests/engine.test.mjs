@@ -379,13 +379,18 @@ describe('privacy scanner', () => {
     assert.throws(() => checkInputs([file(lines(12000), 'a.json'), file(lines(8001), 'b.json')]), /combined limit of 20,000 lines/);
 
     // The hosted path has 100 ms of CPU for the whole request: the largest
-    // accepted input of short lines must take a small part of it.
+    // accepted input of short lines must take a small part of it. The fastest
+    // of five runs is what the work costs; a single run also counts whatever
+    // else the machine was doing, and a shared CI runner once took 51 ms.
     const largest = [file('a;\n'.repeat(10000), 'a.txt'), file(lines(10000), 'b.txt')];
     checkInputs(largest);
-    const started = performance.now();
-    checkInputs(largest);
-    const elapsed = performance.now() - started;
-    assert.ok(elapsed < 40, `took ${elapsed.toFixed(1)} ms`);
+    let fastest = Infinity;
+    for (let run = 0; run < 5; run += 1) {
+      const started = performance.now();
+      checkInputs(largest);
+      fastest = Math.min(fastest, performance.now() - started);
+    }
+    assert.ok(fastest < 40, `took ${fastest.toFixed(1)} ms`);
   });
 
   test('a 120 KB pathological line scans in under 100 ms', () => {
