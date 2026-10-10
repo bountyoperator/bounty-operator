@@ -1,10 +1,12 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { CLIENT_EVENTS, count, countVisit, dayOf, isBot, pageviewEvent, refCodeBucket, referrerBucket, visitSource } from '../src/funnel.ts';
-import { SITE_ORIGIN, createContext, createEnv, funnelCounts } from './worker-helpers.mjs';
+import { CLIENT_EVENTS, count, countVisit, dayOf, isBot, isOwnCheck, mcpClient, pageviewEvent, refCodeBucket, referrerBucket, visitSource } from '../src/funnel.ts';
+import worker from '../src/worker.ts';
+import { BROWSER_AGENT, SITE_ORIGIN, createContext, createEnv, funnelCounts } from './worker-helpers.mjs';
+import { CHECK_AGENT } from '../../scripts/check-agent.mjs';
 
-const CHROME = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36';
+const CHROME = BROWSER_AGENT;
 
 test('referrerBucket names the sources on the list', () => {
   const cases = {
@@ -84,6 +86,43 @@ test('isBot filters crawlers, tools and empty agents', () => {
   assert.equal(isBot('Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1'), false);
   for (const agent of ['', null, 'curl/8.9.0', 'Googlebot/2.1 (+http://www.google.com/bot.html)', 'Twitterbot/1.0', 'python-requests/2.32', 'Slackbot-LinkExpanding 1.0', 'node']) {
     assert.equal(isBot(agent), true, String(agent));
+  }
+});
+
+test('a release check names itself and is never counted as a visitor', () => {
+  assert.match(CHECK_AGENT, /^bounty-operator-check\/\d+$/);
+  assert.equal(isOwnCheck(CHECK_AGENT), true);
+  assert.equal(isBot(CHECK_AGENT), true);
+  for (const agent of [CHROME, 'node', '', null, undefined, `Mozilla/5.0 ${CHECK_AGENT}`]) assert.equal(isOwnCheck(agent), false, String(agent));
+});
+
+test('mcpClient puts a session in one of a fixed few buckets', () => {
+  assert.equal(mcpClient(CHECK_AGENT), null, 'a release check is not counted at all');
+  for (const agent of ['mcpregistry-bot/0.1', 'UptimeRobot/2.0', 'SomeScanner/1.0', 'registry-probe']) assert.equal(mcpClient(agent), 'crawler', agent);
+  assert.equal(mcpClient('claude-code/2.1.296 (cli)'), 'claude');
+  assert.equal(mcpClient('Claude-User'), 'claude');
+  // Agents built on Node or Python are agents here, though the page counter calls them tools.
+  for (const agent of ['node', 'python-httpx/0.28.1', 'Go-http-client/2.0', '', null, undefined]) assert.equal(mcpClient(agent), 'other', String(agent));
+});
+
+test('a headless browser driving the page is not counted as someone using it', async () => {
+  const send = async (agent) => {
+    const env = createEnv();
+    const ctx = createContext();
+    const request = new Request(`${SITE_ORIGIN}/api/event`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Origin: SITE_ORIGIN, 'CF-Connecting-IP': '203.0.113.7', ...(agent ? { 'User-Agent': agent } : {}) },
+      body: JSON.stringify({ event: 'example_loaded' }),
+    });
+    const response = await worker.fetch(request, env, ctx);
+    await ctx.settled();
+    return { status: response.status, counts: funnelCounts(env.DB) };
+  };
+
+  assert.deepEqual(await send(CHROME), { status: 204, counts: { example_loaded: 1 } });
+  const headless = CHROME.replace('Chrome/', 'HeadlessChrome/');
+  for (const agent of [headless, CHECK_AGENT, 'node', null]) {
+    assert.deepEqual(await send(agent), { status: 204, counts: {} }, String(agent));
   }
 });
 

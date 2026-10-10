@@ -172,6 +172,9 @@ export function createPasskey(origin) {
   };
 }
 
+/** The name a desktop browser sends. Without one the Worker takes the caller for a script and counts none of its actions. */
+export const BROWSER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36';
+
 /** A browser stand-in for one user: keeps cookies and the CSRF token between calls. */
 export function createBrowser(origin) {
   const cookies = new Map();
@@ -189,6 +192,7 @@ export function createBrowser(origin) {
       const response = await fetch(origin + path, {
         method: isPost ? 'POST' : 'GET',
         headers: {
+          'User-Agent': BROWSER_AGENT,
           Cookie: [...cookies].map(([name, value]) => `${name}=${value}`).join('; '),
           ...(isPost ? { Origin: origin, 'Content-Type': 'application/json', 'X-CSRF-Token': csrf } : {}),
           ...headers,

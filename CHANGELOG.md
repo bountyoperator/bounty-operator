@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.9.6 — 2026-10-10
+
+Account and billing
+
+- The site now reads a subscription from Stripe itself when its paid week is
+  ending: from twelve hours before the end, at most once an hour, until the
+  next week is on record. Until now a renewal, a cancellation or a failed
+  payment reached your account only through the notice Stripe sends. Had
+  that notice been lost, a subscriber who paid for the next week would have
+  lost Operator six hours into it.
+
+Site and privacy
+
+- The counters of the MCP endpoint now hold agents only. Our own release
+  checks are not counted, a registry or a monitor that calls on a timer is
+  counted apart, and a session is counted under the kind of agent that
+  opened it: Claude, Codex, Cursor or "other". A headless browser that
+  drives a page is no longer counted as someone using it.
+- /privacy lists every counter the site keeps. The list had left out the MCP
+  endpoint's counters and eight of the named actions a page reports. A counter
+  is still a date, a name and a total, with no account, address or cookie in
+  it.
+
 ## 0.9.5 — 2026-10-09
 
 Site

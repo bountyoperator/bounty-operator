@@ -281,7 +281,7 @@ describe('tool browser modules', () => {
 
   test('the Worker counts the request the counter builds, once per name, and only from the site', async () => {
     const { default: worker } = await import('../src/worker.ts');
-    const { SITE_ORIGIN, createContext, createEnv, funnelCounts } = await import('./worker-helpers.mjs');
+    const { BROWSER_AGENT, SITE_ORIGIN, createContext, createEnv, funnelCounts } = await import('./worker-helpers.mjs');
     // A fresh copy of the module: the one imported above has already sent a name.
     const fresh = await import('../public/tools/ping.mjs?worker-contract');
 
@@ -300,9 +300,9 @@ describe('tool browser modules', () => {
 
     const env = createEnv();
     const ctx = createContext();
-    // The browser adds Origin to a same-origin POST; the page script cannot set or drop it.
+    // The browser adds Origin and its own name to a same-origin POST; the page script cannot set or drop either.
     const send = ({ url, init }, origin) =>
-      worker.fetch(new Request(`${SITE_ORIGIN}${url}`, { ...init, headers: { ...init.headers, ...(origin ? { Origin: origin } : {}) } }), env, ctx);
+      worker.fetch(new Request(`${SITE_ORIGIN}${url}`, { ...init, headers: { ...init.headers, 'User-Agent': BROWSER_AGENT, ...(origin ? { Origin: origin } : {}) } }), env, ctx);
 
     for (const call of calls) {
       const response = await send(call, SITE_ORIGIN);

@@ -15,7 +15,7 @@ import { clientStatus } from './account.ts';
 import { bearerAccount } from './auth.ts';
 import { VERSION, seconds } from './env.ts';
 import type { Call } from './env.ts';
-import { count } from './funnel.ts';
+import { count, mcpClient } from './funnel.ts';
 import { ApiError, errorBody, json } from './http.ts';
 import { usage } from './quota.mjs';
 import { clientKey, rateLimit } from './rate.ts';
@@ -967,14 +967,24 @@ function isToolCall(message: unknown): message is Json & { id: RpcId; params: Js
   return method === 'tools/call' && isRpcId(id) && Boolean(params) && typeof params === 'object' && !Array.isArray(params);
 }
 
-/** First-party counters for the endpoint: fixed names only, never content. */
+/**
+ * First-party counters for the endpoint: fixed names only, never content. A
+ * release check is left out, and a registry or a monitor is counted apart, so
+ * mcp_session and mcp_call:<tool> are agents at work.
+ */
 function countMessage(call: Call, message: unknown): void {
   if (!message || typeof message !== 'object' || Array.isArray(message)) return;
+  const client = mcpClient(call.request.headers.get('user-agent'));
+  if (client === null) return;
+
   const { method, params } = message as Json;
-  if (method === 'initialize') count(call.env, call.ctx, 'mcp_session');
-  else if (method === 'tools/call') {
+  if (method === 'initialize') {
+    if (client === 'crawler') count(call.env, call.ctx, 'mcp_crawler');
+    else count(call.env, call.ctx, 'mcp_session', `mcp_client:${client}`);
+  } else if (method === 'tools/call') {
     const name = (params as Json | undefined)?.name;
-    count(call.env, call.ctx, TOOL_NAMES.has(name) ? `mcp_call:${String(name)}` : 'mcp_call:unknown');
+    if (client === 'crawler') count(call.env, call.ctx, 'mcp_crawler_call');
+    else count(call.env, call.ctx, TOOL_NAMES.has(name) ? `mcp_call:${String(name)}` : 'mcp_call:unknown');
   }
 }
 

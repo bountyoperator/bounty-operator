@@ -19,8 +19,8 @@ test('npm pack, install into an empty folder, and a stdio handshake', { timeout:
 
   // --- pack -----------------------------------------------------------------
   const packed = await pack(join(directory, 'out'));
-  assert.equal(packed.filename, 'bounty-operator-mcp-0.9.5.tgz');
-  assert.equal(packed.version, '0.9.5');
+  assert.equal(packed.filename, 'bounty-operator-mcp-0.9.6.tgz');
+  assert.equal(packed.version, '0.9.6');
 
   const files = await verifyTarball(packed.bytes);
   const paths = [...files.keys()].sort();
@@ -65,7 +65,7 @@ test('npm pack, install into an empty folder, and a stdio handshake', { timeout:
   const viaNode = await handshake(process.execPath, [installed.bin], { cwd: work, calls });
 
   for (const session of [viaCommand, viaNode]) {
-    assert.deepEqual(session.initialize.serverInfo, { name: 'bounty-operator', title: 'Bounty Operator', version: '0.9.5' });
+    assert.deepEqual(session.initialize.serverInfo, { name: 'bounty-operator', title: 'Bounty Operator', version: '0.9.6' });
     assert.equal(session.initialize.protocolVersion, '2025-06-18');
     assert.deepEqual(session.tools.map((tool) => tool.name), TOOL_NAMES);
 

@@ -15,7 +15,7 @@ import worker from '../src/worker.ts';
 import {
   EXPECTED_CSP, EXPECTED_HEADERS, EXPECTED_HTML_CACHE, MCP_TOOLS, foreignScripts, headerProblems, parseSums, profilesProblems, sitemapLocations, titleOf, verifyLive,
 } from '../../scripts/verify-live.mjs';
-import { SITE_ORIGIN, createContext, createEnv } from './worker-helpers.mjs';
+import { SITE_ORIGIN, createContext, createEnv, funnelCounts } from './worker-helpers.mjs';
 
 const WEB_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const PUBLIC_DIR = path.join(WEB_DIR, 'public');
@@ -56,7 +56,7 @@ function siteFetch(change = null) {
     await ctx.settled();
     return change ? ((await change(new URL(url), response)) ?? response) : response;
   };
-  return { fetch, seen };
+  return { fetch, seen, env };
 }
 
 const failed = (results) => results.filter((result) => !result.ok).map((result) => result.name);
@@ -99,6 +99,20 @@ test('the site as this checkout builds it passes every check', async () => {
   assert.ok(pages.length >= 30);
   for (const page of pages) assert.ok(seen.includes(`GET ${page}`), page);
   assert.ok(seen.includes(`GET ${SITE_ORIGIN}/dl/bounty-operator-mcp.tgz`));
+});
+
+test('a run of the script is counted nowhere: no visit, no session, no tool call', async () => {
+  const { fetch, env } = siteFetch();
+  await verifyLive({ baseUrl: SITE_ORIGIN, alias: ALIAS, profiles: EDITION, version: VERSION, fetch });
+  assert.deepEqual(funnelCounts(env.DB), {});
+
+  // The same session from an agent is counted, so the empty table above is the script's name at work.
+  const ctx = createContext();
+  const initialize = { jsonrpc: '2.0', id: 1, method: 'initialize', params: { protocolVersion: '2025-06-18', capabilities: {}, clientInfo: { name: 'agent', version: '1' } } };
+  const request = new Request(`${SITE_ORIGIN}/api/mcp`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'User-Agent': 'claude-code/2.1.296 (cli)' }, body: JSON.stringify(initialize) });
+  assert.equal((await worker.fetch(request, env, ctx)).status, 200);
+  await ctx.settled();
+  assert.deepEqual(funnelCounts(env.DB), { 'mcp_client:claude': 1, mcp_session: 1 });
 });
 
 test('without --alias the redirect is not checked', async () => {

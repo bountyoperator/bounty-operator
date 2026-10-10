@@ -15,6 +15,18 @@ const CHECKOUT_SECONDS = 3600;
 const PRICE_CHECK_SECONDS = 600;
 /** A renewal invoice older than this that is still unpaid no longer carries access. */
 const RENEWAL_WINDOW_SECONDS = 86400;
+/**
+ * A subscription is read from Stripe again from this long before its stored
+ * end of access. The stored end holds the renewal grace, so the first read
+ * comes twelve hours before the paid period ends.
+ */
+const RESYNC_AHEAD_SECONDS = 18 * 3600;
+/** The least time between two such reads of one subscription. */
+const RESYNC_EVERY_SECONDS = 3600;
+/** Reads per scheduled run. One read is up to three calls to Stripe, and a run on the free Workers plan may make 50. */
+const RESYNC_BATCH = 4;
+/** A subscription that still cannot be read this long after its access ended is left alone. */
+const RESYNC_GIVE_UP_SECONDS = 7 * 86400;
 const APP_TAG = 'bounty-operator';
 
 /** Stripe statuses of a subscription that has ended and will not bill again. */
@@ -270,6 +282,40 @@ export async function syncSubscription(env: Env, ctx: ExecutionContext, subscrip
   const standing = subscriptionStanding(subscription, env.STRIPE_PRICE_ID, seconds());
   const settled = standing.kind === 'paid' && (await invoiceSettled(api, standing.invoiceId));
   await storeStanding(env, ctx, subscription.id, account.id, standing, settled);
+}
+
+/**
+ * Reads from Stripe the active subscriptions whose paid period is about to end
+ * or has ended, so a renewal, a cancellation or a failed payment reaches this
+ * database when its webhook did not. Without it a subscriber who paid for the
+ * next week would lose access six hours into it. Returns how many were read.
+ */
+export async function resyncEndingSubscriptions(env: Env, ctx: ExecutionContext, now: number): Promise<number> {
+  if (!billingReady(env)) return 0;
+  const due = await env.DB.prepare(
+    `SELECT id FROM subscriptions
+     WHERE status = 'active' AND paid_until < ? AND paid_until > ? AND updated_at < ?
+     ORDER BY updated_at LIMIT ?`,
+  )
+    .bind(now + RESYNC_AHEAD_SECONDS, now - RESYNC_GIVE_UP_SECONDS, now - RESYNC_EVERY_SECONDS, RESYNC_BATCH)
+    .all<{ id: string }>();
+
+  let read = 0;
+  for (const { id } of due.results) {
+    try {
+      await syncSubscription(env, ctx, id);
+      read += 1;
+    } catch (error) {
+      console.error('Subscription resync failed', billingLogFields(error));
+    }
+    // A read that failed or wrote nothing has still had its turn: the row waits
+    // like the others and cannot hold a place in every run.
+    await env.DB.prepare("UPDATE subscriptions SET updated_at = ? WHERE id = ? AND status = 'active' AND updated_at < ?")
+      .bind(now, id, now - RESYNC_EVERY_SECONDS)
+      .run()
+      .catch(() => {});
+  }
+  return read;
 }
 
 /**

@@ -12,6 +12,7 @@ import { ApiError } from '../src/http.ts';
 import { MCP_PROTOCOL_VERSIONS, handleMcpMessage, mcpEndpoint, serverCard, serverCardEndpoint } from '../src/mcp.ts';
 import { SITE_ORIGIN, addAccount, createCall, createContext, createEnv, funnelCounts } from './worker-helpers.mjs';
 import { assertNoBannedNames } from './private-lists.mjs';
+import { CHECK_AGENT } from '../../scripts/check-agent.mjs';
 
 const FILES = [{ name: 'src/Vault.sol', content: 'contract Vault {\n  function withdraw() external {}\n}\n' }];
 const REVIEW = [
@@ -625,6 +626,40 @@ test('tool-call counters use fixed names, never what the client sent', async () 
   assert.equal(counts['mcp_call:unknown'], 1);
   assert.equal(counts['mcp_call:prepare_review'], 1);
   assert.deepEqual(Object.keys(counts).filter((event) => event.startsWith('mcp_call:')).sort(), ['mcp_call:prepare_review', 'mcp_call:unknown']);
+});
+
+test('sessions and tool calls are counted for agents: a release check is left out and a registry is counted apart', async () => {
+  // Until 0.9.6 every tool call in the counters was one of our own: the leak
+  // audit calls 15 tools after each release, and the registry asks every hour.
+  const session = async (env, agent) => {
+    const headers = agent === null ? undefined : { 'User-Agent': agent };
+    await endpoint(env, request('initialize', { protocolVersion: '2025-11-25' }), headers);
+    await endpoint(env, request('tools/call', { name: 'list_profiles', arguments: {} }), headers);
+  };
+
+  const check = createEnv();
+  await session(check, CHECK_AGENT);
+  assert.deepEqual(funnelCounts(check.DB), {}, 'a release check');
+
+  const registry = createEnv();
+  await session(registry, 'mcpregistry-bot/0.1');
+  assert.deepEqual(funnelCounts(registry.DB), { mcp_crawler: 1, mcp_crawler_call: 1 });
+
+  const cases = { 'claude-code/2.1.296 (cli)': 'claude', 'claude-code/2.1.296 (sdk-cli)': 'claude', 'codex-cli/1.0': 'codex', 'Cursor/1.0': 'cursor', node: 'other', 'python-httpx/0.28.1': 'other' };
+  for (const [agent, family] of Object.entries(cases)) {
+    const env = createEnv();
+    await session(env, agent);
+    assert.deepEqual(funnelCounts(env.DB), { [`mcp_client:${family}`]: 1, mcp_session: 1, 'mcp_call:list_profiles': 1 }, agent);
+  }
+
+  const unnamed = createEnv();
+  await session(unnamed, null);
+  assert.deepEqual(funnelCounts(unnamed.DB), { 'mcp_client:other': 1, mcp_session: 1, 'mcp_call:list_profiles': 1 }, 'a client that sends no name is still an agent');
+
+  // The bucket is one of a fixed few, whatever the header holds.
+  const odd = createEnv();
+  await session(odd, 'drop table; <script> claude');
+  assert.deepEqual(Object.keys(funnelCounts(odd.DB)).sort(), ['mcp_call:list_profiles', 'mcp_client:claude', 'mcp_session']);
 });
 
 test('the account tool reads usage with a valid token and answers 401 without one', async () => {

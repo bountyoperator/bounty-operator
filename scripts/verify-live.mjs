@@ -27,6 +27,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 import { PROFILES } from '../web/public/profiles.mjs';
+import { asCheck } from './check-agent.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const TIMEOUT_MS = 30000;
@@ -188,7 +189,7 @@ export async function verifyLive({ baseUrl, alias = '', profiles = 'hosted', ver
     results.push({ name, ok: list.length === 0, detail: list.join('; ') });
   };
 
-  const get = (url, init = {}) => fetchImpl(url, { redirect: 'manual', signal: AbortSignal.timeout(TIMEOUT_MS), ...init });
+  const get = (url, init = {}) => fetchImpl(url, asCheck({ redirect: 'manual', signal: AbortSignal.timeout(TIMEOUT_MS), ...init }));
   /** Runs one check; a thrown error (no answer, a timeout) is that check's failure. */
   const check = async (name, run) => {
     try {

@@ -32,6 +32,8 @@ import { dirname, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { gunzipSync } from 'node:zlib';
 
+import { asCheck } from './check-agent.mjs';
+
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const PRIVATE_DIR = join(ROOT, 'web', 'private');
 const PRIVATE_MODULE = join(PRIVATE_DIR, 'operator-profiles.mjs');
@@ -226,7 +228,7 @@ export async function auditWorker(base, shingles) {
   async function check(label, path, init) {
     let text;
     try {
-      const response = await fetch(new URL(path, base), { redirect: 'manual', ...init });
+      const response = await fetch(new URL(path, base), asCheck({ redirect: 'manual', ...init }));
       text = await response.text();
     } catch (error) {
       failures.push({ where: `worker: ${label}`, profile: '-', line: 0, words: 0, text: '', note: `no answer (${error instanceof Error ? error.message : 'request failed'}), so it is unchecked` });

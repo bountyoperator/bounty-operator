@@ -6,9 +6,11 @@
 
 import { html, inline, stackTable } from '../../components.mjs';
 import { breadcrumbsLd } from '../../layout.mjs';
-import { DOCS_STYLES, UPDATED, docPage, facts, supportLink, time } from './_shared.mjs';
+import { DOCS_STYLES, docPage, facts, supportLink, time } from './_shared.mjs';
 
 const PATH = '/privacy';
+/** The day this page's own text last changed. */
+const PRIVACY_UPDATED = '2026-10-10';
 
 const glance = facts(
   [
@@ -88,9 +90,10 @@ const counters = html`
 <li>page views per path</li>
 <li>the referring site, from a fixed list: search engines, X, GitHub, Hacker News, Reddit, the bounty platforms, and the assistants ChatGPT, Perplexity, Claude, Copilot and Gemini. Any other site counts as “other”</li>
 <li>sign-ups and sign-ins</li>
-<li>completed reviews per profile, and failed reviews</li>
+<li>completed reviews per profile, failed reviews per kind of failure, and answers withheld per profile</li>
 <li>daily-limit hits, checkouts started and subscriptions activated</li>
-<li>named actions a page reports from a fixed list: an example loaded, a prompt exported, a packet saved, a free tool run, a template copied, an MCP command copied</li>
+<li>named actions a page reports from a fixed list: an example loaded, a prompt exported, a reply pasted, a packet saved, a repository imported, the sign-in opened, the upgrade button pressed, a gauntlet or a panel started and finished, a free tool run, a template copied, an MCP command copied</li>
+<li>on the MCP endpoint: sessions opened, tool calls per tool, and calls turned away at the limit. A session is counted under the kind of agent that opened it, from a fixed list: Claude, Codex, Cursor, or “other”. A registry or a monitor is counted apart</li>
 </ul>
 <p>A page reports an action by its name and sends nothing with it. On a free tool, a template page and the MCP page that counter is the only request your action causes: what you paste or drop there never leaves the browser.</p>
 <p>A counter holds a date, a name and a total. It holds no account identifier, no IP address and no cookie value. Counters older than 400 days are deleted.</p>`;
@@ -118,7 +121,7 @@ const body = docPage({
     crumbs: [{ label: 'Bounty Operator', href: '/' }, { label: 'Privacy' }],
     title: 'Privacy policy',
     lede: 'Built by Tradi3. Operated by Vaytric, which is responsible for the data described here. This page covers the hosted site at bountyoperator.com. The open-source command-line kit runs on your own machine.',
-    meta: html`Last updated ${time(UPDATED)}`,
+    meta: html`Last updated ${time(PRIVACY_UPDATED)}`,
   },
   before: glance,
   sections: [
@@ -142,6 +145,6 @@ export default {
     'What Bounty Operator stores and never stores, the two cookies, what your browser keeps, what Stripe sees, and how to export or delete your account.',
   styles: DOCS_STYLES,
   jsonld: [breadcrumbsLd([{ name: 'Privacy', path: PATH }])],
-  lastmod: UPDATED,
+  lastmod: PRIVACY_UPDATED,
   body,
 };

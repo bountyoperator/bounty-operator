@@ -278,10 +278,30 @@ test('llms.txt links only to canonical, extensionless pages on the site', async 
 test('the privacy policy says page views and named actions are counted in aggregate', () => {
   const privacy = textOf(rendered.get('/privacy'));
   assert.match(privacy, /Page views and named actions are counted in aggregate\./);
-  assert.match(privacy, /named actions a page reports from a fixed list: an example loaded, a prompt exported, a packet saved, a free tool run, a template copied, an MCP command copied/);
+  assert.match(privacy, /named actions a page reports from a fixed list: an example loaded, a prompt exported, a reply pasted, a packet saved, a repository imported, the sign-in opened, the upgrade button pressed, a gauntlet or a panel started and finished, a free tool run, a template copied, an MCP command copied/);
   assert.match(privacy, /A page reports an action by its name and sends nothing with it\./);
   assert.match(privacy, /what you paste or drop there never leaves the browser\./);
-  assert.match(privacy, /Last updated 7 October 2026/);
+  assert.match(privacy, /Last updated 10 October 2026/);
+});
+
+test('the privacy policy names every counter the Worker keeps', async () => {
+  const privacy = textOf(rendered.get('/privacy'));
+  const { CLIENT_EVENTS } = await import('../src/funnel.ts');
+  // Each named action the browser may report has its words in the list.
+  const words = {
+    example_loaded: 'an example loaded', prompt_exported: 'a prompt exported', reply_pasted: 'a reply pasted', packet_saved: 'a packet saved',
+    repo_imported: 'a repository imported', signin_opened: 'the sign-in opened', upgrade_clicked: 'the upgrade button pressed',
+    gauntlet_started: 'a gauntlet or a panel started and finished', gauntlet_finished: 'a gauntlet or a panel started and finished',
+    panel_started: 'a gauntlet or a panel started and finished', panel_finished: 'a gauntlet or a panel started and finished',
+    tool_report_check: 'a free tool run', tool_secret_check: 'a free tool run', tool_slither_focus: 'a free tool run', tool_verify: 'a free tool run',
+    tool_acceptance_rates: 'a free tool run', template_copied: 'a template copied', mcp_command_copied: 'an MCP command copied',
+  };
+  assert.deepEqual(Object.keys(words).sort(), [...CLIENT_EVENTS].sort(), 'a new named action needs its words on /privacy');
+  for (const phrase of new Set(Object.values(words))) assert.ok(privacy.includes(phrase), phrase);
+
+  assert.match(privacy, /completed reviews per profile, failed reviews per kind of failure, and answers withheld per profile/);
+  assert.match(privacy, /on the MCP endpoint: sessions opened, tool calls per tool, and calls turned away at the limit\. A session is counted under the kind of agent that opened it, from a fixed list: Claude, Codex, Cursor, or “other”\. A registry or a monitor is counted apart/);
+  assert.match(privacy, /A counter holds a date, a name and a total\. It holds no account identifier, no IP address and no cookie value\./);
 });
 
 test('the MCP page counts a copied install command by name, and says which profiles each tool takes', async () => {

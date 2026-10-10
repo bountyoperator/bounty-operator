@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // Prints page views, referrers and the sign-up to subscription funnel from the
-// funnel_daily table, for the last N days.
+// funnel_daily table, for the last N days, under a line that counts the
+// accounts and the paying subscribers there are now.
 //
 //   node scripts/stats.mjs            last 7 days, production database
 //   node scripts/stats.mjs 30         last 30 days
@@ -8,13 +9,16 @@
 //   node scripts/stats.mjs 7 --local --persist-to .local/dev-v070
 //
 // The table holds one number per UTC day and event name. It has no account id,
-// no address and no content, so this report cannot show a person.
+// no address and no content, and the line about now is two counts and a time,
+// so this report cannot show a person.
 
 import { spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+
+import { RENEWAL_GRACE_SECONDS } from '../web/src/quota.mjs';
 
 const DATABASE = 'bounty-operator-accounts';
 const PRODUCTION_CONFIG = 'wrangler.production.jsonc';
@@ -56,9 +60,8 @@ function wranglerEntry() {
   return join(dirname(manifestPath), bin);
 }
 
-function queryRows(options, firstDay) {
-  // firstDay is a date this script formatted itself; nothing typed by the user reaches the SQL.
-  const sql = `SELECT day, event, n FROM funnel_daily WHERE day >= '${firstDay}' ORDER BY day, event`;
+/** Runs one statement and returns its rows. Nothing typed by the user reaches the SQL: callers format every value themselves. */
+function query(options, sql) {
   const args = [wranglerEntry(), 'd1', 'execute', DATABASE, '--json', '--command', sql];
   if (options.local) {
     args.push('--local');
@@ -79,6 +82,28 @@ function queryRows(options, firstDay) {
   if (start === -1) throw new Error(`wrangler returned no JSON:\n${result.stdout.trim()}`);
   const [first] = JSON.parse(result.stdout.slice(start));
   return first.results;
+}
+
+function queryRows(options, firstDay) {
+  return query(options, `SELECT day, event, n FROM funnel_daily WHERE day >= '${firstDay}' ORDER BY day, event`);
+}
+
+/**
+ * What there is now, which the daily counters cannot say: sub_active counts
+ * activations, and one subscription was counted three times on 3 October.
+ */
+function queryStanding(options) {
+  const now = Math.floor(Date.now() / 1000);
+  const paying = `FROM subscriptions WHERE status = 'active' AND paid_until > ${now}`;
+  const [row] = query(options, `SELECT (SELECT COUNT(*) FROM accounts) AS accounts, (SELECT COUNT(*) ${paying}) AS paying, (SELECT MIN(paid_until) ${paying}) AS next_end`);
+  return row;
+}
+
+function standingLine({ accounts, paying, next_end: nextEnd }) {
+  const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
+  // The stored end holds the renewal grace; the paid period ends that much earlier.
+  const ends = nextEnd ? `, next paid period ends ${new Date((nextEnd - RENEWAL_GRACE_SECONDS) * 1000).toISOString().slice(0, 16).replace('T', ' ')} UTC` : '';
+  return `Now: ${plural(accounts, 'account')}, ${plural(paying, 'paying subscriber')}${ends}`;
 }
 
 /** Totals per event name over the whole window. */
@@ -116,7 +141,7 @@ function printTable(title, entries, note = () => '') {
   }
 }
 
-function report(rows, options, range) {
+function report(rows, options, range, standing) {
   const sums = totals(rows);
   const count = (event) => sums.get(event) ?? 0;
 
@@ -130,6 +155,7 @@ function report(rows, options, range) {
 
   const where = options.local ? 'local database' : 'production';
   console.log(`Bounty Operator, last ${options.days} days (${range.first} to ${range.last} UTC, ${where})`);
+  console.log(standingLine(standing));
 
   printTable(`Page views: ${pageviews}`, pages, (_name, n) => percent(n, pageviews));
   printTable(`Referrers: ${sum(referrers)}`, referrers, (_name, n) => percent(n, sum(referrers)));
@@ -162,11 +188,17 @@ function report(rows, options, range) {
   printTable(`Withheld answers: ${sum(withheldByProfile)}`, withheldByProfile);
 
   // Counted since 0.7.6: one mcp_session per initialize, one mcp_call:<tool> per tools/call.
+  // Since 0.9.6 these are agents only: a release check is not counted, a registry or a
+  // monitor is counted apart, and each session names its agent. Earlier days hold our own
+  // release checks too: 15 tool calls each, which was every tool call from 7 to 9 October.
   const mcpCalls = withPrefix(sums, 'mcp_call:');
-  printTable(`MCP: ${count('mcp_session')} sessions, ${sum(mcpCalls)} tool calls, ${count('mcp_limited')} limited`, mcpCalls, (_name, n) => percent(n, sum(mcpCalls)));
+  const mcpClients = withPrefix(sums, 'mcp_client:');
+  printTable(`MCP agents: ${count('mcp_session')} sessions, ${sum(mcpCalls)} tool calls, ${count('mcp_limited')} limited`, mcpCalls, (_name, n) => percent(n, sum(mcpCalls)));
+  printTable('MCP sessions by agent', mcpClients, (_name, n) => percent(n, sum(mcpClients)));
+  console.log(`\nMCP registries and monitors: ${count('mcp_crawler')} sessions, ${count('mcp_crawler_call')} tool calls`);
 
-  const known = (event) => /^(pv|ref|review_ok|review_fail|review_withheld|mcp_call):/.test(event)
-    || ['register', 'login', 'review_fail', 'quota_hit', 'checkout_created', 'sub_active', 'mcp_session', 'mcp_limited'].includes(event);
+  const known = (event) => /^(pv|ref|review_ok|review_fail|review_withheld|mcp_call|mcp_client):/.test(event)
+    || ['register', 'login', 'review_fail', 'quota_hit', 'checkout_created', 'sub_active', 'mcp_session', 'mcp_limited', 'mcp_crawler', 'mcp_crawler_call'].includes(event);
   const clientEvents = [...sums].filter(([event]) => !known(event)).sort((a, b) => b[1] - a[1]);
   printTable('Client events', clientEvents);
 
@@ -191,8 +223,9 @@ function main() {
   const options = parseArguments(process.argv.slice(2));
   const range = window(options.days);
   const rows = queryRows(options, range.first);
-  if (options.json) console.log(JSON.stringify({ ...range, rows }, null, 2));
-  else report(rows, options, range);
+  const standing = queryStanding(options);
+  if (options.json) console.log(JSON.stringify({ ...range, standing, rows }, null, 2));
+  else report(rows, options, range, standing);
 }
 
 try {

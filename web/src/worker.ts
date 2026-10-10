@@ -24,10 +24,19 @@ import {
   rotateRecovery,
 } from './auth.ts';
 import type { Session } from './auth.ts';
-import { billingFailure, billingLogFields, billingReady, createCheckout, createPortal, handleWebhook, reconcileCheckout } from './billing.ts';
+import {
+  billingFailure,
+  billingLogFields,
+  billingReady,
+  createCheckout,
+  createPortal,
+  handleWebhook,
+  reconcileCheckout,
+  resyncEndingSubscriptions,
+} from './billing.ts';
 import { VERSION, seconds } from './env.ts';
 import type { Call, Env } from './env.ts';
-import { CLIENT_EVENTS, count } from './funnel.ts';
+import { CLIENT_EVENTS, count, isBot } from './funnel.ts';
 import { METHOD_SOURCE, missingMethods } from './hosted.ts';
 import { ApiError, aliasRedirect, canonicalRedirect, compressPage, errorResponse, finalize, internalError, json, pageRedirect, readJson, redirectResponse } from './http.ts';
 import { mcpEndpoint, serverCardEndpoint } from './mcp.ts';
@@ -164,7 +173,8 @@ async function event({ env, ctx, request }: Call): Promise<Response> {
   if (typeof body.event !== 'string' || !CLIENT_EVENTS.has(body.event)) {
     throw new ApiError('Unknown event.', 400, 'bad_event');
   }
-  count(env, ctx, body.event);
+  // A headless browser driving the page is a test of it, not a person using it.
+  if (!isBot(request.headers.get('user-agent'))) count(env, ctx, body.event);
   return new Response(null, { status: 204 });
 }
 
@@ -316,11 +326,16 @@ export default {
     return compressPage(finalize(await serveAsset(call), 'static', url.pathname), request);
   },
 
-  async scheduled(controller: ScheduledController, env: Env): Promise<void> {
+  async scheduled(controller: ScheduledController, env: Env, ctx: ExecutionContext): Promise<void> {
     const now = seconds();
-    // Every run frees reviews whose Worker was stopped mid-call. The daily run also purges expired rows.
+    // Every run frees reviews whose Worker was stopped mid-call and reads again from
+    // Stripe the subscriptions whose paid period is ending. The daily run also purges expired rows.
     const reapedLeases = await reapStaleLeases(env.DB, now);
+    const resynced = await resyncEndingSubscriptions(env, ctx, now).catch((error: unknown) => {
+      console.error('Subscription resync failed', billingLogFields(error));
+      return 0;
+    });
     const purged = controller.cron === DAILY_CRON ? await purgeExpired(env, now) : {};
-    console.log('Scheduled cleanup', { cron: controller.cron, reapedLeases, ...purged });
+    console.log('Scheduled cleanup', { cron: controller.cron, reapedLeases, resynced, ...purged });
   },
 } satisfies ExportedHandler<Env>;

@@ -88,6 +88,18 @@ const GOOGLE_HOST = /(?:^|\.)google\.(?:[a-z]{2,3}|com?\.[a-z]{2})$/;
 
 const BOT_AGENT = /bot|crawl|spider|slurp|preview|scan|monitor|fetch|headless|lighthouse|curl|wget|python|http|java|ruby|go-http|node|axios|postman/i;
 
+// The name the release checks give themselves (scripts/check-agent.mjs). They
+// open the live site and call its MCP tools after every release, and none of
+// that is use.
+const OWN_CHECK_AGENT = /^bounty-operator-check\//;
+
+// Every MCP client is a program, so the page rule above would hide real agents
+// built on Node or Python. This one names only what connects on a timer.
+const MCP_CRAWLER_AGENT = /bot|crawl|spider|scan|monitor|registry|uptime|probe/i;
+
+// The agents the install commands on /mcp are written for. Anything else is `other`.
+const MCP_CLIENTS = ['claude', 'codex', 'cursor'] as const;
+
 const MAX_PATH_CHARS = 80;
 
 function matchesDomain(host: string, domain: string): boolean {
@@ -131,8 +143,26 @@ export function visitSource(url: URL, referer: string | null | undefined, siteOr
   return refCodeBucket(url.searchParams.get('ref')) ?? referrerBucket(referer, siteOrigin);
 }
 
+export function isOwnCheck(userAgent: string | null | undefined): boolean {
+  return OWN_CHECK_AGENT.test(userAgent ?? '');
+}
+
 export function isBot(userAgent: string | null | undefined): boolean {
-  return !userAgent || BOT_AGENT.test(userAgent);
+  return !userAgent || BOT_AGENT.test(userAgent) || isOwnCheck(userAgent);
+}
+
+/**
+ * Who opened a session on the MCP endpoint: `crawler` for a registry or a
+ * monitor, the agent's family when it is one the site documents, `other` for
+ * the rest, or null for a release check, which is not counted at all. Only
+ * this bucket is counted; the header itself is never stored.
+ */
+export function mcpClient(userAgent: string | null | undefined): string | null {
+  const agent = userAgent ?? '';
+  if (isOwnCheck(agent)) return null;
+  if (MCP_CRAWLER_AGENT.test(agent)) return 'crawler';
+  const lower = agent.toLowerCase();
+  return MCP_CLIENTS.find((family) => lower.includes(family)) ?? 'other';
 }
 
 /** The pageview event for a path, or null for a path too long to be a page. */

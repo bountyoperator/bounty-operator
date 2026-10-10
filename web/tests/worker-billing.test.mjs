@@ -7,12 +7,14 @@ import {
   billingReady,
   hasLiveSubscription,
   paidUntilFor,
+  resyncEndingSubscriptions,
   settledCents,
   storeStanding,
   subscriptionStanding,
 } from '../src/billing.ts';
 import { ApiError } from '../src/http.ts';
 import { RENEWAL_GRACE_SECONDS } from '../src/quota.mjs';
+import worker from '../src/worker.ts';
 import { addAccount, addSubscription, createContext, createDatabase, createEnv, funnelCounts } from './worker-helpers.mjs';
 
 const PRICE = 'price_operator';
@@ -298,4 +300,204 @@ test('a lapsed subscription loses access under its Stripe status', async () => {
 
   await store(env, { kind: 'lapsed', status: 'past_due' });
   assert.deepEqual(stored(env), { status: 'past_due', paid_until: 0 });
+});
+
+// ---------------------------------------------------------------------------
+// The scheduled read of subscriptions whose paid period is ending
+// ---------------------------------------------------------------------------
+
+const LIVE = { BILLING_MODE: 'live', STRIPE_SECRET_KEY: 'rk_live_FAKE_LOCAL_ONLY', STRIPE_PRICE_ID: PRICE, STRIPE_WEBHOOK_SECRET: 'whsec_x' };
+const HOUR = 3600;
+const NEXT_END = PERIOD_END + 7 * 86400;
+
+/** An account with a Stripe customer and one active subscription that is paid until `paidUntil`. */
+function subscriber(env, { id = 'sub_1', account = 'account-1', customer = 'cus_1', paidUntil, updatedAt = 1 }) {
+  addAccount(env.DB, account);
+  env.DB.sqlite.prepare('UPDATE accounts SET stripe_customer = ? WHERE id = ?').run(customer, account);
+  addSubscription(env.DB, { id, account, paidUntil });
+  env.DB.sqlite.prepare('UPDATE subscriptions SET updated_at = ? WHERE id = ?').run(updatedAt, id);
+}
+
+/**
+ * Answers Stripe for the subscriptions in `subscriptions` (by id), with one
+ * settled charge behind every paid invoice, and refuses every other host.
+ * Returns the ids of the subscriptions that were asked for, in order.
+ */
+function stubStripeSubscriptions(t, subscriptions) {
+  const original = globalThis.fetch;
+  const asked = [];
+  const missing = { error: { type: 'invalid_request_error', code: 'resource_missing', message: 'No such subscription' } };
+  globalThis.fetch = async (input) => {
+    const url = new URL(typeof input === 'string' ? input : input.url);
+    if (url.host !== 'api.stripe.com') throw new Error(`unexpected host ${url.host}`);
+    const found = /^\/v1\/subscriptions\/([^/]+)$/.exec(url.pathname);
+    if (found) {
+      asked.push(found[1]);
+      const body = subscriptions[found[1]];
+      return body ? Response.json({ object: 'subscription', ...body }) : Response.json(missing, { status: 404 });
+    }
+    if (url.pathname === '/v1/invoice_payments') {
+      return Response.json({ object: 'list', has_more: false, url: '/v1/invoice_payments', data: [{ amount_paid: 1000, payment: { type: 'charge', charge: 'ch_1' } }] });
+    }
+    if (url.pathname === '/v1/charges/ch_1') {
+      return Response.json({ id: 'ch_1', object: 'charge', paid: true, refunded: false, disputed: false, currency: 'usd', amount: 1000, amount_refunded: 0 });
+    }
+    throw new Error(`unexpected Stripe call ${url.pathname}`);
+  };
+  t.after(() => { globalThis.fetch = original; });
+  return asked;
+}
+
+async function resync(env, now = NOW) {
+  const ctx = createContext();
+  const read = await resyncEndingSubscriptions(env, ctx, now);
+  await ctx.settled();
+  return read;
+}
+
+const updatedAt = (env, id = 'sub_1') => env.DB.sqlite.prepare('SELECT updated_at FROM subscriptions WHERE id = ?').get(id).updated_at;
+
+test('a renewal whose webhook never arrived is read from Stripe, and the next week is stored', async (t) => {
+  const env = createEnv(LIVE);
+  // The paid period ended an hour ago: five hours of grace are left.
+  subscriber(env, { paidUntil: NOW + 5 * HOUR });
+  const renewed = subscription({ latest_invoice: invoice({ id: 'in_2' }), items: { data: [{ quantity: 1, current_period_end: NEXT_END, price: operatorPrice() }] } });
+  const asked = stubStripeSubscriptions(t, { sub_1: renewed });
+
+  assert.equal(await resync(env), 1);
+  assert.deepEqual(asked, ['sub_1']);
+  assert.deepEqual(stored(env), { status: 'active', paid_until: NEXT_END + RENEWAL_GRACE_SECONDS });
+  assert.deepEqual(funnelCounts(env.DB), {}, 'a renewal is not a new subscriber');
+});
+
+test('a subscription cancelled at Stripe without a webhook loses its access at the next read', async (t) => {
+  const env = createEnv(LIVE);
+  subscriber(env, { paidUntil: NOW + 5 * HOUR });
+  stubStripeSubscriptions(t, { sub_1: subscription({ status: 'canceled' }) });
+
+  assert.equal(await resync(env), 1);
+  assert.deepEqual(stored(env), { status: 'canceled', paid_until: 0 });
+});
+
+test('the read starts twelve hours before the paid period ends, and not earlier', async (t) => {
+  const env = createEnv(LIVE);
+  // Stored end = period end + six hours of grace.
+  subscriber(env, { paidUntil: NOW + 18 * HOUR + 60 });
+  const asked = stubStripeSubscriptions(t, { sub_1: subscription() });
+
+  assert.equal(await resync(env), 0);
+  assert.deepEqual(asked, [], 'more than twelve hours of the period are left');
+
+  assert.equal(await resync(env, NOW + 120), 1);
+  assert.deepEqual(asked, ['sub_1']);
+});
+
+test('a subscription is read at most once an hour', async (t) => {
+  const env = createEnv(LIVE);
+  subscriber(env, { paidUntil: NOW + 5 * HOUR, updatedAt: NOW - HOUR + 60 });
+  const asked = stubStripeSubscriptions(t, { sub_1: subscription() });
+
+  assert.equal(await resync(env), 0);
+  assert.equal(await resync(env, NOW + 120), 1);
+  assert.deepEqual(asked, ['sub_1']);
+});
+
+test('a read that fails changes nothing, takes its turn, and does not stop the reads after it', async (t) => {
+  const env = createEnv(LIVE);
+  subscriber(env, { id: 'sub_gone', account: 'account-1', customer: 'cus_1', paidUntil: NOW + 5 * HOUR, updatedAt: 1 });
+  subscriber(env, { id: 'sub_2', account: 'account-2', customer: 'cus_2', paidUntil: NOW + 5 * HOUR, updatedAt: 2 });
+  const renewed = subscription({ id: 'sub_2', customer: 'cus_2', items: { data: [{ quantity: 1, current_period_end: NEXT_END, price: operatorPrice() }] } });
+  const asked = stubStripeSubscriptions(t, { sub_2: renewed });
+  const logged = t.mock.method(console, 'error', () => {});
+
+  assert.equal(await resync(env), 1, 'only the read that worked is counted');
+  assert.deepEqual(asked, ['sub_gone', 'sub_2']);
+  assert.deepEqual(stored(env, 'sub_gone'), { status: 'active', paid_until: NOW + 5 * HOUR }, 'access is never taken away on a failed read');
+  assert.deepEqual(stored(env, 'sub_2'), { status: 'active', paid_until: NEXT_END + RENEWAL_GRACE_SECONDS });
+  assert.equal(logged.mock.callCount(), 1);
+  const [line, fields] = logged.mock.calls[0].arguments;
+  assert.equal(line, 'Subscription resync failed');
+  assert.deepEqual([fields.type, fields.code], ['StripeInvalidRequestError', 'resource_missing'], 'the log names the failure and holds no id');
+
+  assert.equal(updatedAt(env, 'sub_gone'), NOW, 'the failed row waits an hour like the others');
+  assert.equal(await resync(env, NOW + 60), 0);
+  assert.equal(asked.length, 2, 'Stripe is not asked again within the hour');
+});
+
+test('one run reads four subscriptions, the longest unread first', async (t) => {
+  const env = createEnv(LIVE);
+  const subscriptions = {};
+  for (let index = 1; index <= 6; index += 1) {
+    const id = `sub_${index}`;
+    // sub_6 was read longest ago, sub_1 most recently.
+    subscriber(env, { id, account: `account-${index}`, customer: `cus_${index}`, paidUntil: NOW + 5 * HOUR, updatedAt: 100 - index });
+    subscriptions[id] = subscription({ id, customer: `cus_${index}` });
+  }
+  const asked = stubStripeSubscriptions(t, subscriptions);
+
+  assert.equal(await resync(env), 4);
+  assert.deepEqual(asked, ['sub_6', 'sub_5', 'sub_4', 'sub_3']);
+  assert.equal(await resync(env), 2, 'the next run takes the rest');
+  assert.deepEqual(asked.slice(4), ['sub_2', 'sub_1']);
+});
+
+test('a subscription that is not active, or whose access ended more than a week ago, is left alone', async (t) => {
+  const env = createEnv(LIVE);
+  subscriber(env, { id: 'sub_old', account: 'account-1', customer: 'cus_1', paidUntil: NOW - 8 * 86400 });
+  subscriber(env, { id: 'sub_due', account: 'account-2', customer: 'cus_2', paidUntil: NOW + 5 * HOUR });
+  env.DB.sqlite.prepare("UPDATE subscriptions SET status = 'past_due' WHERE id = 'sub_due'").run();
+  const asked = stubStripeSubscriptions(t, {});
+
+  assert.equal(await resync(env), 0);
+  assert.deepEqual(asked, []);
+});
+
+test('without live billing nothing is read', async (t) => {
+  const env = createEnv();
+  subscriber(env, { paidUntil: NOW + 5 * HOUR });
+  const asked = stubStripeSubscriptions(t, { sub_1: subscription() });
+
+  assert.equal(await resync(env), 0);
+  assert.deepEqual(asked, []);
+  assert.deepEqual(stored(env), { status: 'active', paid_until: NOW + 5 * HOUR });
+});
+
+const EVERY_15_MINUTES = '*/15 * * * *';
+const DAILY = '17 3 * * *';
+
+test('every scheduled run reads the ending subscriptions and logs how many', async (t) => {
+  const env = createEnv(LIVE);
+  // A scheduled run goes by the clock.
+  const now = Math.floor(Date.now() / 1000);
+  const nextEnd = now + 7 * 86400;
+  subscriber(env, { paidUntil: now + 5 * HOUR });
+  stubStripeSubscriptions(t, { sub_1: subscription({ items: { data: [{ quantity: 1, current_period_end: nextEnd, price: operatorPrice() }] } }) });
+  const logged = t.mock.method(console, 'log', () => {});
+
+  const ctx = createContext();
+  await worker.scheduled({ cron: EVERY_15_MINUTES }, env, ctx);
+  await ctx.settled();
+
+  assert.deepEqual(stored(env), { status: 'active', paid_until: nextEnd + RENEWAL_GRACE_SECONDS });
+  assert.deepEqual(logged.mock.calls[0].arguments, ['Scheduled cleanup', { cron: EVERY_15_MINUTES, reapedLeases: 0, resynced: 1 }]);
+});
+
+test('a read of subscriptions that cannot start does not stop the daily purge', async (t) => {
+  const env = createEnv(LIVE);
+  const prepare = env.DB.prepare;
+  env.DB.prepare = (sql) => {
+    if (sql.includes('FROM subscriptions')) throw new Error('database away');
+    return prepare(sql);
+  };
+  const logged = t.mock.method(console, 'log', () => {});
+  const failed = t.mock.method(console, 'error', () => {});
+
+  await worker.scheduled({ cron: DAILY }, env, createContext());
+
+  const [line, fields] = logged.mock.calls[0].arguments;
+  assert.equal(line, 'Scheduled cleanup');
+  assert.equal(fields.resynced, 0);
+  assert.equal(fields.stripeEvents, 0, 'the purge ran and reported');
+  assert.equal(failed.mock.callCount(), 1);
+  assert.equal(failed.mock.calls[0].arguments[0], 'Subscription resync failed');
 });
