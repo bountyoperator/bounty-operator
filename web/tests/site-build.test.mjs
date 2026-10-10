@@ -195,7 +195,7 @@ test('renderPage emits the head contract and no markup the CSP would block', () 
   assert.match(markup, /<a class="btn btn--secondary btn--sm" href="\/#account">Sign in<\/a>/);
   assert.doesNotMatch(markup, /id="account-button"/);
   assert.match(markup, /support@bountyoperator\.com/);
-  assert.match(markup, /Built by <a href="https:\/\/audits\.sherlock\.xyz\/watson\/Tradi3"/);
+  assert.match(markup, /Built by <a href="https:\/\/immunefi\.com\/profile\/Tradi3\/"/);
   assert.doesNotMatch(markup, /Q <\/script>/);
 
   const { errors } = validateMarkup(markup, () => true);

@@ -11,6 +11,7 @@ import { fileURLToPath } from 'node:url';
 import { scanTags, validateMarkup } from '../../scripts/build-site.mjs';
 import { renderPage } from '../site/layout.mjs';
 import home from '../site/pages/index.mjs';
+import { IMMUNEFI } from '../site/pages/method/_shared.mjs';
 import { CARD, cardDocument } from '../site/social/card.mjs';
 import { EXAMPLE } from '../site/social/example.mjs';
 import { EXAMPLES } from '../public/example.mjs';
@@ -105,8 +106,18 @@ test('the proof strip links the three leaderboards and the method', async () => 
     const stated = await readFile(path.join(WEB_DIR, file), 'utf8');
     assert.match(stated, /2nd of 133/, file);
     assert.doesNotMatch(stated, /2nd of 135/, file);
+    // The all-time rank moves from day to day: wherever it is printed, the profile it was read
+    // from is linked and the day it was read stands beside the number.
+    assert.ok(stated.includes(IMMUNEFI.profile), `${file}: the Immunefi profile is linked`);
+    const mentions = [...stated.matchAll(new RegExp(`\\b${IMMUNEFI.rank}\\b`, 'g'))];
+    assert.ok(mentions.length >= 1, `${file}: the all-time rank is stated`);
+    for (const mention of mentions) {
+      assert.ok(stated.slice(mention.index, mention.index + 160).includes(IMMUNEFI.readOn), `${file}: the rank is given with the day it was read`);
+    }
   }
   assert.match(text, /8th of 65/);
+  assert.ok(linksTo('https://immunefi.com', '/profile/Tradi3/'), 'no link to the Immunefi profile');
+  assert.match(text, new RegExp(`${IMMUNEFI.badge} on Immunefi\\s*: ${IMMUNEFI.rank} on its all-time leaderboard on ${IMMUNEFI.readOn}\\.`));
 });
 
 test('the hero says what a review costs under its two buttons, and a phone shows it before the slip', async () => {
@@ -152,7 +163,12 @@ test('structured data: organization, the two offers, and an FAQ that matches the
   assert.deepEqual(types, ['WebSite', 'Organization', 'SoftwareApplication', 'FAQPage']);
   // The name a search engine prints for the site, with the spellings that mean the same site.
   assert.deepEqual([home.jsonld[0].name, home.jsonld[0].alternateName, home.jsonld[0].url], ['Bounty Operator', ['BountyOperator', 'bountyoperator.com'], 'https://bountyoperator.com/']);
-  assert.deepEqual(home.jsonld[2].creator, { '@type': 'Person', name: 'Tradi3', url: 'https://audits.sherlock.xyz/watson/Tradi3' });
+  assert.deepEqual(home.jsonld[2].creator, {
+    '@type': 'Person',
+    name: 'Tradi3',
+    url: 'https://immunefi.com/profile/Tradi3/',
+    sameAs: ['https://audits.sherlock.xyz/watson/Tradi3', 'https://x.com/Tradi3_'],
+  });
   const offers = home.jsonld[2].offers.map((offer) => [offer.name, offer.price]);
   assert.deepEqual(offers, [['Free', '0'], ['Operator', '10.00']]);
 

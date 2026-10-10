@@ -51,6 +51,27 @@ export const LEADERBOARDS = {
 };
 
 /**
+ * Tradi3's public Immunefi profile, read in a browser on 10 October 2026
+ * (Immunefi's bot check stops a script): the badge reads "Top Ranked", the
+ * all-time rank is 77th with a whitehat score of 24, and the profile counts
+ * 28 audit-competition reports: 17 Critical, 4 High, 5 Medium, 1 Low and
+ * 1 Insight.
+ *
+ * The rank is recomputed daily, so every sentence that gives it gives the day
+ * it was read. Re-read the profile before changing `rank` or `badge`, and
+ * change `readOn` with them.
+ */
+export const IMMUNEFI = {
+  profile: 'https://immunefi.com/profile/Tradi3/',
+  badge: 'Top Ranked',
+  rank: '77th',
+  readOn: '10 October 2026',
+};
+
+/** "77th on Immunefi's all-time leaderboard on 10 October 2026": the one wording of the rank. */
+export const ALL_TIME_RANK = `${IMMUNEFI.rank} on Immunefi’s all-time leaderboard on ${IMMUNEFI.readOn}`;
+
+/**
  * The FAQ entry for a Claude Max or Team subscriber, on /pricing and
  * /your-model-your-key. Every figure is from Anthropic's help article
  * "Monthly API credits for Max and Team plans", dated 7 October 2026 and read
@@ -295,10 +316,10 @@ ${after && html`      ${after}`}
 </section>`;
 }
 
-/** Tradi3's linked results. The only proof the site shows. */
+/** Tradi3's linked rank and results. The only proof the site shows. */
 export function proofLine() {
-  return html`<p class="proofline">${icon('shield')}<span>Built by Tradi3: ${link({
-    label: '2nd of 133 in Immunefi’s Firelight competition',
+  return html`<p class="proofline">${icon('shield')}<span>Built by Tradi3, ${link({ label: ALL_TIME_RANK, href: IMMUNEFI.profile, external: true })}: ${link({
+    label: '2nd of 133 in the Firelight competition',
     href: LEADERBOARDS.firelight,
     external: true,
   })}, ${link({ label: '8th of 65 in Quantus', href: LEADERBOARDS.quantus, external: true })} and ${link({

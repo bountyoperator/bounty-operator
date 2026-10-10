@@ -24,6 +24,7 @@ import {
   html,
   icon,
   isHtml,
+  link,
   penned,
   raw,
   sectionHeading,
@@ -34,7 +35,7 @@ import { SITE, faqPageLd, organizationLd, softwareApplicationLd, websiteLd } fro
 import { PROFILES } from '../../public/profiles.mjs';
 import { PROVIDERS } from '../../public/providers.mjs';
 import { reportSlip } from '../social/example.mjs';
-import { LEADERBOARDS, VERDICTS } from './method/_shared.mjs';
+import { IMMUNEFI, LEADERBOARDS, VERDICTS } from './method/_shared.mjs';
 import { BENCH_TEASER } from './benchmark/_teaser.mjs';
 import { AGENT_TICK, CHAT_TICK, RENEWAL, WHY_PAY } from '../plans.mjs';
 
@@ -124,7 +125,7 @@ const hero = html`
     </div>
   </section>
   <div class="wrap">
-    <p class="home-proof">Built by Tradi3. The results are on Immunefi’s public leaderboards.</p>
+    <p class="home-proof">Built by Tradi3, ${link({ label: `${IMMUNEFI.badge} on Immunefi`, href: IMMUNEFI.profile, external: true })}: ${IMMUNEFI.rank} on its all-time leaderboard on ${IMMUNEFI.readOn}.</p>
     <ul class="home-stats">
       <li><a class="home-stats__item" href="${LEADERBOARDS.ens}" target="_blank" rel="noopener noreferrer"><span class="home-stats__n">17</span> <span class="home-stats__t">valid Critical submissions in Immunefi’s ENS competition, the most of 186 researchers</span></a></li>
       <li><a class="home-stats__item" href="${LEADERBOARDS.firelight}" target="_blank" rel="noopener noreferrer"><span class="home-stats__n">2nd</span> <span class="home-stats__t">of 133 in Firelight</span></a></li>

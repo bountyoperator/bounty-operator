@@ -18,9 +18,15 @@ export const SITE = {
   forum: 'https://github.com/bountyoperator/bounty-operator/discussions',
   support: 'support@bountyoperator.com',
   security: 'security@bountyoperator.com',
-  // The builder's public contest profile, and the builder's handle on X for link
-  // previews (twitter:creator). The product has no X account, so no twitter:site.
-  builder: { name: 'Tradi3', url: 'https://audits.sherlock.xyz/watson/Tradi3', x: '@Tradi3_' },
+  // The builder's public Immunefi profile, the other places the same name
+  // publishes, and the handle on X for link previews (twitter:creator). The
+  // product has no X account, so no twitter:site.
+  builder: {
+    name: 'Tradi3',
+    url: 'https://immunefi.com/profile/Tradi3/',
+    sameAs: ['https://audits.sherlock.xyz/watson/Tradi3', 'https://x.com/Tradi3_'],
+    x: '@Tradi3_',
+  },
   // Keep in step with --bg in web/public/css/base.css and with web/public/theme.js.
   themeColor: { dark: '#09090a', light: '#09090a' },
 };
@@ -129,7 +135,7 @@ export function softwareApplicationLd() {
     operatingSystem: 'Web',
     description: SITE.summary,
     image: absoluteUrl(SITE.defaultImage),
-    creator: { '@type': 'Person', name: SITE.builder.name, url: SITE.builder.url },
+    creator: { '@type': 'Person', name: SITE.builder.name, url: SITE.builder.url, sameAs: SITE.builder.sameAs },
     offers: [
       {
         '@type': 'Offer',

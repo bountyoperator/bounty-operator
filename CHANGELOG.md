@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.9.10 — 2026-10-10
+
+Site
+
+- The proof lines give the builder's place on Immunefi's all-time
+  leaderboard, with the day it was read: 77th on 10 October 2026. Each one
+  links the public profile, which Immunefi marks Top Ranked. The rank is
+  recomputed daily, so the day stays beside the number.
+- "Built by Tradi3" at the foot of every page links that profile.
+
 ## 0.9.9 — 2026-10-10
 
 Site

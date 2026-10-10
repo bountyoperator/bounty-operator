@@ -9,7 +9,7 @@
 
 import { button, chip, closingBand, codeBlock, disclosure, html, inline, link, verdictChip } from '../../components.mjs';
 import { SITE, absoluteUrl, breadcrumbsLd, faqPageLd } from '../../layout.mjs';
-import { CHECKS, RECORD_CLAIM, checksRunLine } from '../method/_shared.mjs';
+import { ALL_TIME_RANK, CHECKS, IMMUNEFI, RECORD_CLAIM, checksRunLine } from '../method/_shared.mjs';
 import { DOCS_STYLES, UPDATED, checklist, docPage, ext } from './_shared.mjs';
 
 const PATH = '/guide';
@@ -377,7 +377,7 @@ const REFUSES = {
 // Page
 // ---------------------------------------------------------------------------
 
-const record = html`<p>${RECORD_CLAIM} Built by Tradi3: ${link({ label: '2nd of 133 in Immunefi’s Firelight competition', href: FIRELIGHT, external: true })}, ${link({ label: '8th of 65 in Quantus', href: QUANTUS, external: true })} and ${link({ label: '15th of 186 in ENS, with 17 valid Critical submissions, the most on the board', href: ENS, external: true })}.</p>`;
+const record = html`<p>${RECORD_CLAIM} Built by Tradi3, ${link({ label: ALL_TIME_RANK, href: IMMUNEFI.profile, external: true })}: ${link({ label: '2nd of 133 in the Firelight competition', href: FIRELIGHT, external: true })}, ${link({ label: '8th of 65 in Quantus', href: QUANTUS, external: true })} and ${link({ label: '15th of 186 in ENS, with 17 valid Critical submissions, the most on the board', href: ENS, external: true })}.</p>`;
 
 const body = docPage({
   head: {

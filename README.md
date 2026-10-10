@@ -93,7 +93,7 @@ each client: [bountyoperator.com/mcp](https://bountyoperator.com/mcp) and
 Python 3.10 or newer. No dependencies.
 
 ```bash
-pip install "git+https://github.com/bountyoperator/bounty-operator@v0.9.9"
+pip install "git+https://github.com/bountyoperator/bounty-operator@v0.9.10"
 bounty-kit agent-pack ./agent-pack.md --target "Example Protocol" --program "Example bounty"
 ```
 
@@ -224,6 +224,8 @@ node bench/bench.mjs verify --results web/public/bench/latest.json --archive web
 **Free:** 1 review a day, any review type. **Operator: US$10/week** for unlimited reviews, the Gauntlet, Panel review and 4 reviews at once. The CLI, the core profiles' prompt export and MCP prepare, and the free tools cost nothing.
 
 ## Built by Tradi3
+
+[77th on Immunefi's all-time leaderboard on 10 October 2026](https://immunefi.com/profile/Tradi3/), where the profile is marked Top Ranked.
 
 [2nd of 133 in Immunefi's Firelight competition](https://immunefi.com/audit-competition/audit-comp-firelight-1/leaderboard/),
 [8th of 65 in Quantus](https://immunefi.com/audit-competition/audit-comp-quantus/leaderboard/)
