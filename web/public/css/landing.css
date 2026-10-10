@@ -19,32 +19,22 @@
    9. Your model, your key: data path, providers
   10. Compare: table and sources
   11. Pricing
-  12. Call-to-action band
-  13. Tables on a phone, links on a touch screen
+  12. Tables on a phone, links on a touch screen
 */
 
 /* ==========================================================================
    1. Page hero
    ========================================================================== */
 
-/* The head is printed on the field (.page-field in base.css). */
+/* The page opens on the shared head (.page-head in base.css). Here: what
+   follows it, and the second column a landing page may put beside its text. */
 .lp-hero {
   margin-bottom: var(--sp-48);
-  padding-block: var(--sp-48);
 }
 
 .pricing-page .lp-hero,
 .benchmark-page .lp-hero {
   margin-bottom: var(--sp-24);
-}
-
-.lp-hero .breadcrumbs {
-  margin-bottom: var(--sp-32);
-}
-
-/* 22 characters of the page-head cut, in em (22 x 0.512em), so the measure does not move when the webfont lands. */
-.lp-hero h1 {
-  max-width: 11.26em;
 }
 
 /* Under the title: the Operator stamp, or the page's file line. */
@@ -66,39 +56,11 @@
   max-width: 46rem;
 }
 
-.lp-hero__text > * + * {
-  margin-top: var(--sp-16);
-}
-
-.lp-hero__text > .lede {
-  margin-top: var(--sp-24);
-}
-
-.lp-hero__text > .lp-hero__actions {
-  margin-top: var(--sp-32);
-}
-
 .lp-hero__aside {
   min-width: 0;
 }
 
-/* On a phone the two actions share the row width, one above the other. */
-@media (max-width: 29.99em) {
-  .lp-hero__actions > .btn {
-    flex: 1 1 100%;
-  }
-}
-
 @media (min-width: 64em) {
-  .lp-hero {
-    padding-block: var(--sp-72);
-  }
-
-  .pricing-page .lp-hero,
-  .benchmark-page .lp-hero {
-    padding-bottom: var(--sp-48);
-  }
-
   .lp-hero--split .lp-hero__grid {
     grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
     gap: var(--sp-48);
@@ -124,7 +86,7 @@
 }
 
 .lp-hero__text > .proofline {
-  margin-top: var(--sp-32);
+  margin-top: var(--sp-16);
 }
 
 .proofline > .icon {
@@ -1380,7 +1342,7 @@
   box-shadow: var(--shadow-card);
 }
 
-/* The Operator plan is printed on canary stock (.on-stock). */
+/* The Operator plan is printed on vermilion stock (.on-stock). */
 .plan--accent {
   border-color: var(--rule);
 }
@@ -1489,47 +1451,7 @@
 }
 
 /* ==========================================================================
-   12. Call-to-action band
-   ========================================================================== */
-
-.cta-band {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: var(--sp-24);
-  padding: var(--sp-24);
-  border: 1px solid var(--line-strong);
-  border-radius: var(--r-hero);
-  background: var(--surface-2);
-}
-
-/* 24 characters of the section cut, in em (24 x 0.562em). */
-.cta-band__title {
-  max-width: 13.488em;
-}
-
-.cta-band__lede {
-  max-width: 48ch;
-  margin-top: var(--sp-12);
-  color: var(--muted);
-}
-
-.cta-band__actions {
-  display: grid;
-  gap: var(--sp-12);
-  align-content: center;
-}
-
-@media (min-width: 60em) {
-  .cta-band {
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: center;
-    gap: var(--sp-48);
-    padding: var(--sp-48);
-  }
-}
-
-/* ==========================================================================
-   13. Tables on a phone, links on a touch screen
+   12. Tables on a phone, links on a touch screen
    ========================================================================== */
 
 /* The tables stack on a phone (.stack-table in base.css). The note under a
@@ -1551,7 +1473,6 @@
 }
 
 @media print {
-  .cta-band,
   .related,
   .pipeline {
     display: none;

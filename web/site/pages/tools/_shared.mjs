@@ -3,7 +3,7 @@
 //
 // Styles: /css/tools.css. Browser modules: /tools/*.mjs.
 
-import { attrs, breadcrumbs, button, cx, html, icon } from '../../components.mjs';
+import { attrs, breadcrumbs, closingBand, cx, html, icon } from '../../components.mjs';
 import { breadcrumbsLd } from '../../layout.mjs';
 import { CHECKS as REPORT_CHECKS } from '../../../public/tools/report-check-core.mjs';
 
@@ -89,7 +89,7 @@ export function localLine() {
 /** Breadcrumbs, the one h1, the lede and the local line. */
 export function toolHead({ path, lede }) {
   const entry = tool(path);
-  return html`<header class="tool-head page-field">
+  return html`<header class="page-head page-field tool-head">
 ${breadcrumbs([HOME_CRUMB, { label: 'Tools', href: '/tools' }, { label: entry.name }])}
 <h1>${entry.heading}</h1>
 <p class="lede">${lede}</p>
@@ -143,18 +143,9 @@ export function relatedTools(path) {
 </section>`;
 }
 
-/** The closing action: one sentence, one primary button, one quiet link. */
+/** The closing action of a tool page: one sentence, the review it leads to and one more link. */
 export function nextAction({ title, text, primary, secondary }) {
-  return html`<section class="section section--tight wrap" aria-labelledby="next-action">
-<div class="tool-next on-stock">
-<div class="tool-next__text">
-<h2 class="h3" id="next-action">${title}</h2>
-<p>${text}</p>
-</div>
-<div class="cluster">
-${button({ ...primary, variant: 'primary', iconEnd: 'arrow-right' })}
-${secondary && button({ ...secondary, variant: 'secondary' })}
-</div>
-</div>
-</section>`;
+  return html`<div class="section section--tight wrap">
+${closingBand({ title, text, actions: [primary, secondary].filter(Boolean) })}
+</div>`;
 }

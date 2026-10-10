@@ -404,7 +404,7 @@ test('the pages DESIGN owns render without errors', async () => {
   const own = errors.filter((message) => /^(404|_kit)\.mjs/.test(message));
   assert.deepEqual(own, []);
   if (errors.length === 0) {
-    assert.match(outputs.get('404.html'), /<h1 class="finding__title" id="not-found-title">No page at this address\.<\/h1>/);
+    assert.match(outputs.get('404.html'), /<header class="page-head page-field">\s*<h1>No page at this address\.<\/h1>/);
     assert.match(outputs.get('_kit.html'), /data-rail="observed"/);
   }
 });

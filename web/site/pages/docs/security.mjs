@@ -5,9 +5,9 @@
 // The header block below must stay identical to what the Worker sends.
 
 import { LIMITS } from '../../../public/review-core.mjs';
-import { button, codeBlock, html, icon, inline, kv } from '../../components.mjs';
+import { button, closingBand, codeBlock, html, icon, inline, kv } from '../../components.mjs';
 import { SITE, breadcrumbsLd } from '../../layout.mjs';
-import { DOCS_STYLES, UPDATED, checklist, docPage, ext, facts, nextStep, securityLink, time } from './_shared.mjs';
+import { DOCS_STYLES, UPDATED, checklist, docPage, ext, facts, securityLink, time } from './_shared.mjs';
 
 const PATH = '/security';
 const POLICY = `${SITE.source}/blob/main/SECURITY.md`;
@@ -237,7 +237,7 @@ const body = docPage({
     title: 'Security at Bounty Operator',
     lede: 'Where your code and keys go during a review, what is stored, which headers are in force, and how to report a vulnerability.',
     meta: html`Last updated ${time(UPDATED)}`,
-    actions: html`${button({ label: 'Report a vulnerability', href: '#report', variant: 'primary', icon: 'shield' })}${button({ label: 'Read the source', href: SITE.source, external: true, iconEnd: 'arrow-up-right' })}`,
+    actions: html`${button({ label: 'Report a vulnerability', href: '#report', variant: 'primary', size: 'lg', icon: 'shield' })}${button({ label: 'Read the source', href: SITE.source, size: 'lg', external: true, iconEnd: 'arrow-up-right' })}`,
   },
   sections: [
     { id: 'data-flow', title: 'Data flow: browser, Worker, provider', label: 'Data flow', body: flow, prose: false },
@@ -248,10 +248,13 @@ const body = docPage({
     { id: 'report', title: 'Report a vulnerability', body: report, prose: false },
     { id: 'source', title: 'Source', body: source },
   ],
-  after: nextStep({
+  after: closingBand({
     title: 'Read what we keep, line by line',
     text: 'The privacy policy lists every stored field and its retention time.',
-    actions: html`${button({ label: 'Privacy policy', href: '/privacy', variant: 'primary' })}${button({ label: 'Terms', href: '/terms' })}`,
+    actions: [
+      { label: 'Privacy policy', href: '/privacy' },
+      { label: 'Terms', href: '/terms' },
+    ],
   }),
 });
 

@@ -302,7 +302,10 @@ ${pageHero({
 ${ctaBand({
   title: 'Put your next finding through it',
   lede: 'Free: 1 review a day, on your own model and key.',
-  actions: html`${button({ label: 'Start a free review', href: workbenchLink(), variant: 'primary', size: 'lg', iconEnd: 'arrow-right' })}${button({ label: 'See pricing', href: '/pricing', size: 'lg' })}`,
+  actions: [
+    { label: 'Start a free review', href: workbenchLink() },
+    { label: 'See pricing', href: '/pricing' },
+  ],
 })}
 
 <section class="section section--tight wrap">

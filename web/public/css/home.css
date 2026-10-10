@@ -472,7 +472,7 @@
   text-wrap: pretty;
 }
 
-/* Critical, struck through with a pen: one stroke in violet ink, drawn once
+/* Critical, struck through with a pen: one stroke in the accent ink, drawn once
    (/stamps/strike.svg, a mask, so it takes the ink colour). */
 .slip__claimed {
   position: relative;
@@ -926,7 +926,7 @@
    7. Pricing
    ========================================================================== */
 
-/* The fee schedule: two plans side by side. Operator is printed on canary. */
+/* The fee schedule: two plans side by side. Operator is printed on vermilion stock. */
 .home-plans {
   display: grid;
   grid-template-columns: minmax(0, 1fr);

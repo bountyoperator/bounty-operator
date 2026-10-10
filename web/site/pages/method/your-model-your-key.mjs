@@ -258,7 +258,10 @@ ${pageHero({
 ${ctaBand({
   title: 'Run it on the model you already pay for',
   lede: 'Paste a key, or export the prompt of a core profile to your chat app.',
-  actions: html`${button({ label: 'Start a free review', href: workbenchLink(), variant: 'primary', size: 'lg', iconEnd: 'arrow-right' })}${button({ label: 'MCP setup', href: '/mcp', size: 'lg' })}`,
+  actions: [
+    { label: 'Start a free review', href: workbenchLink() },
+    { label: 'MCP setup', href: '/mcp' },
+  ],
   note: 'Free: 1 review a day. No card.',
 })}
 

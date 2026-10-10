@@ -554,7 +554,7 @@ ${pageHero({
   meta: `Paydirt · release ${view.release}`,
   title: 'AI model benchmark',
   lede: `${view.rows.length} models on ${view.pairs} held pairs: which one finds the planted bug, leaves the fixed code alone and catches an overclaimed report, and what a run costs.`,
-  actions: html`${button({ label: 'See the model leaderboard', href: '#board', variant: 'primary', iconEnd: 'arrow-right' })}${button({ label: 'Read the method', href: METHOD_PATH })}`,
+  actions: html`${button({ label: 'See the model leaderboard', href: '#board', variant: 'primary', size: 'lg', iconEnd: 'arrow-right' })}${button({ label: 'Read the method', href: METHOD_PATH, size: 'lg' })}`,
 })}
 
 <section class="section section--tight wrap" aria-label="Test setup">

@@ -7,8 +7,8 @@
   Everything here is scoped to a class and built from the tokens in base.css.
   No colour is defined in this file.
 
-    1. Page frame        .docs, .docs-head, .docs-lead, .docs-body, .docs-toc, .docs-section
-    2. Shared blocks     .facts, .checklist, .docs-record, .docs-next
+    1. Page frame        .docs, .docs-lead, .docs-body, .docs-toc, .docs-section
+    2. Shared blocks     .facts, .checklist, .docs-record
     3. Guide             .ba, .guide-try, .checks, .stages
     4. MCP               .install, .tool-list, .token-split
     5. Security          .flow, .ledger-split, .report-box
@@ -20,36 +20,16 @@
    1. Page frame
    ========================================================================== */
 
-/* The head is printed on the field (.page-field in base.css) and opens the page. */
-.docs-head {
-  display: grid;
-  gap: var(--sp-16);
-  padding-block: var(--sp-32) var(--sp-48);
+/* The page opens on the shared head (.page-head in base.css) and ends a tight
+   section above the footer, as every page does. */
+.docs {
+  padding-bottom: var(--sp-32);
 }
 
 @media (min-width: 48em) {
-  .docs-head {
-    padding-top: var(--sp-48);
+  .docs {
+    padding-bottom: var(--sp-48);
   }
-}
-
-/* 24 characters of the page-head cut, in em (24 x 0.512em), so the measure does not move when the webfont lands. */
-.docs-head h1 {
-  max-width: 12.29em;
-}
-
-.docs-head .lede {
-  max-width: 44rem;
-}
-
-.docs-head .lede a {
-  color: inherit;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 0.18em;
-}
-
-.docs-head__actions {
-  margin-top: var(--sp-8);
 }
 
 /* A full-width block between the head and the indexed body: the MCP install tabs. */
@@ -261,33 +241,9 @@
   color: var(--text);
 }
 
-/* The closing band: one sentence and the next actions. */
-.docs-next {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--sp-24);
+/* The closing band (.closing-band in base.css) stands a section below the body. */
+.docs > .closing-band {
   margin-top: var(--sp-72);
-  padding: var(--sp-24);
-  border: 1px solid var(--line);
-  border-radius: var(--r-card);
-  background: var(--surface);
-  box-shadow: var(--shadow-card);
-}
-
-.docs-next__text {
-  max-width: 34rem;
-}
-
-.docs-next__text > * + * {
-  margin-top: var(--sp-8);
-}
-
-@media (min-width: 48em) {
-  .docs-next {
-    padding: var(--sp-32);
-  }
 }
 
 /* The plan comparison in the terms: three short columns that fit a 320px
@@ -992,7 +948,6 @@
 
 @media print {
   .docs-toc,
-  .docs-next,
   .guide-try {
     display: none;
   }

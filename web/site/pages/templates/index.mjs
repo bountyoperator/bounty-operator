@@ -1,7 +1,7 @@
 // /templates — the hub: four platform templates, the Foundry scaffold, and what
 // each platform's judges close reports for.
 
-import { button, html, icon, stackTable } from '../../components.mjs';
+import { button, closingBand, html, icon, stackTable } from '../../components.mjs';
 import { absoluteUrl, breadcrumbsLd } from '../../layout.mjs';
 import { RECORD_CLAIM } from '../method/_shared.mjs';
 import { CHECKED, COMPARISON, PARTS, PLATFORMS } from './data.mjs';
@@ -63,7 +63,7 @@ const comparison = stackTable({
 
 const body = html`
 <div class="wrap tpl-page">
-  <header class="tpl-hero page-field">
+  <header class="page-head page-field">
     ${crumbs([])}
     <h1>Bug bounty report templates</h1>
     <p class="lede">Four report templates built from what each platform publishes about submissions and judging, and one Foundry scaffold for the proof. Every page lists what that platform’s judges close reports for, with the source.</p>
@@ -93,14 +93,14 @@ const body = html`
     <p class="tpl-record">${RECORD_CLAIM} Every check exists because real reports were closed for that reason, and the two added sections come from that record.</p>
   </section>
 
-  <section class="tpl-block tpl-cta" aria-labelledby="next">
-    <h2 id="next">Fill one in, then challenge it</h2>
-    <p class="tpl-block__lede">A template gives the report its shape. A review argues against what you wrote in it: the impact row, the proof, the severity, the prior art. <a class="link" href="/challenge-report">How the challenge works</a>.</p>
-    <div class="cluster">
-      ${button({ label: 'Review my report', href: '/?profile=report#workspace', variant: 'primary', iconEnd: 'arrow-right' })}
-      ${button({ label: 'Run the report check', href: '/tools/report-check' })}
-    </div>
-  </section>
+  ${closingBand({
+    title: 'Fill one in, then challenge it',
+    text: html`A template gives the report its shape. A review argues against what you wrote in it: the impact row, the proof, the severity, the prior art. <a class="link" href="/challenge-report">How the challenge works</a>.`,
+    actions: [
+      { label: 'Review my report', href: '/?profile=report#workspace' },
+      { label: 'Run the report check', href: '/tools/report-check' },
+    ],
+  })}
 </div>`;
 
 export default {

@@ -19,9 +19,9 @@
 import { GAUNTLET, PROFILES, reviewProfile } from '../../../public/profiles.mjs';
 import { PROVIDERS } from '../../../public/providers.mjs';
 import { LIMITS } from '../../../public/review-core.mjs';
-import { button, chip, codeBlock, disclosure, faq, html, inline, table, tabs } from '../../components.mjs';
+import { button, chip, closingBand, codeBlock, disclosure, faq, html, inline, table, tabs } from '../../components.mjs';
 import { breadcrumbsLd, faqPageLd } from '../../layout.mjs';
-import { DOCS_STYLES, docPage, facts, nextStep } from './_shared.mjs';
+import { DOCS_STYLES, docPage, facts } from './_shared.mjs';
 import { NOT_COUNTED } from '../../plans.mjs';
 
 const PATH = '/mcp';
@@ -551,10 +551,13 @@ const body = docPage({
     { id: 'errors', title: 'When a call fails', label: 'Failed calls', body: errors, prose: false },
     { id: 'faq', title: 'Questions', body: faq(FAQ), prose: false },
   ],
-  after: nextStep({
+  after: closingBand({
     title: 'Prefer a browser',
     text: 'The website runs the same profiles with the same engine, and shows each finding as a card.',
-    actions: html`${button({ label: 'Start a free review', href: '/#workspace', variant: 'primary', iconEnd: 'arrow-right' })}${button({ label: 'Read the report guide', href: '/guide' })}`,
+    actions: [
+      { label: 'Start a free review', href: '/#workspace' },
+      { label: 'Read the report guide', href: '/guide' },
+    ],
   }),
 });
 

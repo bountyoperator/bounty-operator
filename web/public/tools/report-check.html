@@ -67,7 +67,7 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
 <main id="main" tabindex="-1">
 
 <section class="section section--tight wrap">
-<header class="tool-head page-field">
+<header class="page-head page-field tool-head">
 <nav class="breadcrumbs" aria-label="Breadcrumb"><ol><li><a href="/">Bounty Operator</a></li><li><a href="/tools">Tools</a></li><li aria-current="page">Report check</li></ol></nav>
 <h1>Bug bounty report check</h1>
 <p class="lede">Paste a draft and attach the files it cites. Seventeen checks answer at once: what is on the page, what is missing, which sentence a triager will quote back at you, and which citation points at nothing.</p>
@@ -171,18 +171,12 @@ Severity: High
 <div class="accordion tool-faq"><details class="accordion__item"><summary class="accordion__summary">Where does my draft go?</summary><div class="accordion__body"><p>Nowhere. The seventeen checks and the citation check are JavaScript that runs in this tab, and the page sends no request with your text or your files. After the page has loaded it makes one request: a counter that says the tool was used, with nothing of yours in it. Pressing “Run the full challenge on your model” opens a review with the draft and its files loaded, through this browser’s session storage. A model sees them only when you run that review.</p></div></details><details class="accordion__item"><summary class="accordion__summary">What does 17 of 17 tell me?</summary><div class="accordion__body"><p>That the draft contains the text these checks look for: a commit, a quoted impact row, one severity, an inline proof with its output, a prior-art reference or search result, and a line on AI use. The check does not verify comparison quality or duplicate status. The full challenge reviews the claims against the evidence you supply.</p></div></details><details class="accordion__item"><summary class="accordion__summary">How does the citation check work?</summary><div class="accordion__body"><p>Attach the files your draft cites. Every citation such as src/Vault.sol:42-48, Vault.sol#L42 or input-1/src/Vault.sol:42 is matched to an attached file, and the cited lines open in place. A citation to a file you did not attach, a line past the end of the file, or a short name that matches two files is listed so you can fix it before a triager finds it. Links to websites are counted, never opened.</p></div></details><details class="accordion__item"><summary class="accordion__summary">What is the evidence packet?</summary><div class="accordion__body"><p>One JSON file with the draft, the attached files and a SHA-256 checksum of each. Open it here later to carry on with the same files; a file that changed since it was saved is refused. It holds your full draft and files, so keep it private.</p></div></details><details class="accordion__item"><summary class="accordion__summary">Which report formats does it read?</summary><div class="accordion__body"><p>Markdown and plain text. Immunefi, Cantina, Sherlock and HackerOne reports all carry these parts, under different headings. The checks look for the content, so the heading names do not matter.</p></div></details></div>
 </section>
 
-<section class="section section--tight wrap" aria-labelledby="next-action">
-<div class="tool-next on-stock">
-<div class="tool-next__text">
-<h2 class="h3" id="next-action">The text is in order. Now test the claim.</h2>
-<p>A review on your own model splits the draft into claims and marks each one confirmed, overstated, contradicted or unverifiable, with the line that decides it.</p>
-</div>
-<div class="cluster">
-<a class="btn btn--primary" href="/?profile=report#workspace"><span class="btn__label">Review my report</span><span class="icon icon--arrow-right" aria-hidden="true"></span></a>
-<a class="btn btn--secondary" href="/challenge-report"><span class="btn__label">How the challenge works</span></a>
-</div>
-</div>
+<div class="section section--tight wrap">
+<section class="closing-band" aria-labelledby="next-step">
+<div class="closing-band__text"><h2 class="closing-band__title" id="next-step">The text is in order. Now test the claim.</h2><p class="closing-band__lede">A review on your own model splits the draft into claims and marks each one confirmed, overstated, contradicted or unverifiable, with the line that decides it.</p></div>
+<div class="closing-band__actions"><div class="cluster"><a class="btn btn--primary btn--lg" href="/?profile=report#workspace"><span class="btn__label">Review my report</span><span class="icon icon--arrow-right" aria-hidden="true"></span></a><a class="btn btn--secondary btn--lg" href="/challenge-report"><span class="btn__label">How the challenge works</span></a></div></div>
 </section>
+</div>
 
 <section class="section section--tight wrap" aria-labelledby="more-tools">
 <h2 class="h3" id="more-tools">More free tools</h2>

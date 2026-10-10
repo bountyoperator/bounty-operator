@@ -10,6 +10,7 @@ import {
   card,
   checkbox,
   chip,
+  closingBand,
   codeBlock,
   dialog,
   disclosure,
@@ -160,6 +161,7 @@ const SECTIONS = [
   ['accordion', 'Accordion'],
   ['dialog', 'Dialog'],
   ['cards', 'Cards'],
+  ['closing', 'Closing band'],
   ['tokens', 'Tokens'],
   ['type', 'Type'],
   ['icons', 'Icons'],
@@ -615,6 +617,22 @@ const cardsSection = kitSection(
   </div>`,
 );
 
+const closingSection = kitSection(
+  'closing',
+  'Closing band',
+  'The last word of a page before the footer. Every page that ends on a call to action ends on this band; it builds its own boxes.',
+  closingBand({
+    title: 'Now your own draft',
+    text: 'Paste your draft into the report check, start from a platform template, or run a review against your own files.',
+    actions: [
+      { label: 'Review my report', href: '/?profile=report#workspace' },
+      { label: 'Report guide', href: '/guide' },
+    ],
+    note: FREE_LINE,
+    id: 'closing-demo',
+  }),
+);
+
 const tokensSection = kitSection(
   'tokens',
   'Tokens',
@@ -727,6 +745,7 @@ const body = html`
     ${accordionSection}
     ${dialogSection}
     ${cardsSection}
+    ${closingSection}
     ${tokensSection}
     ${typeSection}
     ${iconsSection}

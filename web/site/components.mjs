@@ -598,6 +598,30 @@ export function breadcrumbs(trail) {
   return html`<nav class="breadcrumbs" aria-label="Breadcrumb"><ol>${items}</ol></nav>`;
 }
 
+/**
+ * The closing band: the last word of a page before the footer. One sentence,
+ * the next actions and an optional fine line under them. Every page that ends
+ * on a call to action ends on this one, so the band builds its own boxes: the
+ * first action is the solid one and every box is the large size.
+ *
+ * closingBand({
+ *   title: 'Now your own draft',
+ *   text: 'Paste your draft into the report check, or run a review.',
+ *   actions: [{ label: 'Review my report', href: '/#workspace' }, { label: 'Report guide', href: '/guide' }],
+ *   note: 'Free: 1 review a day.',
+ * })
+ */
+export function closingBand({ title, text, actions = [], note, id = 'next-step' } = {}) {
+  if (!title || actions.length === 0) throw new Error('closingBand() needs a title and at least one action.');
+  const boxes = actions.map((action, index) =>
+    button(index === 0 ? { iconEnd: 'arrow-right', ...action, variant: 'primary', size: 'lg' } : { ...action, variant: 'secondary', size: 'lg' }),
+  );
+  return html`<section class="closing-band" aria-labelledby="${id}">
+<div class="closing-band__text"><h2 class="closing-band__title" id="${id}">${title}</h2>${text && html`<p class="closing-band__lede">${text}</p>`}</div>
+<div class="closing-band__actions"><div class="cluster">${boxes}</div>${note && html`<p class="fine">${note}</p>`}</div>
+</section>`;
+}
+
 // ---------------------------------------------------------------------------
 // Forms
 // ---------------------------------------------------------------------------

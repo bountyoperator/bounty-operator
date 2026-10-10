@@ -328,7 +328,7 @@ button.rn-pipe__stage:focus-visible {
 }
 
 /* The margin rule of a fact: one neutral line. How the fact stands is in the
-   ink of its label: ochre for what blocks, violet for what to do. */
+   ink of its label: ochre for what blocks, the accent for what to do. */
 .gd__fact::before {
   content: "";
   position: absolute;

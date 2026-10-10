@@ -68,8 +68,8 @@ describe('tool pages', () => {
       assert.doesNotMatch(visibleText(markup), /nothing is uploaded|nothing leaves/i, 'the old line is gone');
       assert.equal(page.jsonld[0]['@type'], 'BreadcrumbList');
       for (const script of page.scripts ?? []) assert.ok(isFile(path.join(PUBLIC_DIR, script)), `${script} exists`);
-      // A page always ends in an action that leads to the workbench.
-      assert.match(mainOf(markup), /class="btn btn--primary" href="\/(?:\?profile=[a-z-]+)?#workspace"/);
+      // A page always ends in an action that leads to the workbench: the solid box of its closing band.
+      assert.match(mainOf(markup), /<section class="closing-band"[\s\S]*?class="btn btn--primary btn--lg" href="\/(?:\?profile=[a-z-]+)?#workspace"/);
     });
   }
 

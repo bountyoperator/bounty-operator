@@ -302,7 +302,10 @@ ${pageHero({
 ${ctaBand({
   title: 'Run the gauntlet before the triager does',
   lede: OPERATOR_LINE,
-  actions: html`${button({ label: 'Get Operator', href: '/pricing', variant: 'primary', size: 'lg', iconEnd: 'arrow-right' })}${button({ label: 'Read the method', href: '/method', size: 'lg' })}`,
+  actions: [
+    { label: 'Get Operator', href: '/pricing' },
+    { label: 'Read the method', href: '/method' },
+  ],
   note: RENEWAL,
 })}
 

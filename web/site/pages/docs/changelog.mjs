@@ -12,9 +12,9 @@
 
 import { readFileSync } from 'node:fs';
 
-import { button, chip, html, inline } from '../../components.mjs';
+import { chip, closingBand, html, inline } from '../../components.mjs';
 import { SITE, breadcrumbsLd } from '../../layout.mjs';
-import { DOCS_STYLES, docPage, nextStep, time } from './_shared.mjs';
+import { DOCS_STYLES, docPage, time } from './_shared.mjs';
 
 const PATH = '/changelog';
 const SOURCE = new URL('../../../../CHANGELOG.md', import.meta.url);
@@ -105,10 +105,13 @@ const body = docPage({
     meta: html`${releases.length} releases · latest ${time(latest.date)}`,
   },
   sections,
-  after: nextStep({
+  after: closingBand({
     title: 'Read the open-source code',
     text: 'The site, the review engine with its three core profiles, the free tools, the MCP server and the command-line kit are in one public repository. The gauntlet stages and the panel cross-examination run on the hosted service.',
-    actions: html`${button({ label: 'Start a free review', href: '/#workspace', variant: 'primary', iconEnd: 'arrow-right' })}${button({ label: 'Source on GitHub', href: SITE.source, external: true, iconEnd: 'arrow-up-right' })}`,
+    actions: [
+      { label: 'Start a free review', href: '/#workspace' },
+      { label: 'Source on GitHub', href: SITE.source, external: true, iconEnd: 'arrow-up-right' },
+    ],
   }),
 });
 

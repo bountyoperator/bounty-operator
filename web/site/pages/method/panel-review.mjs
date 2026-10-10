@@ -268,7 +268,10 @@ ${pageHero({
 ${ctaBand({
   title: 'Put a panel on your next finding',
   lede: OPERATOR_LINE,
-  actions: html`${button({ label: 'Get Operator', href: '/pricing', variant: 'primary', size: 'lg', iconEnd: 'arrow-right' })}${button({ label: 'Your model, your key', href: '/your-model-your-key', size: 'lg' })}`,
+  actions: [
+    { label: 'Get Operator', href: '/pricing' },
+    { label: 'Your model, your key', href: '/your-model-your-key' },
+  ],
   note: RENEWAL,
 })}
 

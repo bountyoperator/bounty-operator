@@ -12,7 +12,7 @@ function platformPage(platform) {
 
   const body = html`
 <div class="wrap tpl-page">
-  <header class="tpl-hero page-field">
+  <header class="page-head page-field">
     ${crumbs([{ label: platform.name }])}
     <h1>${platform.h1}</h1>
     <p class="lede">${platform.lede}</p>

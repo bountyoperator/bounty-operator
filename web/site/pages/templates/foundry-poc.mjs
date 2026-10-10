@@ -152,13 +152,13 @@ const SOURCES = [
 
 const body = html`
 <div class="wrap tpl-page">
-  <header class="tpl-hero page-field">
+  <header class="page-head page-field">
     ${crumbs([{ label: 'Foundry PoC' }])}
     <h1>Foundry PoC template</h1>
     <p class="lede">A fork-test scaffold for a bug bounty proof of concept: pinned block, named actors, concrete values, a control run, and a final assertion that reads the object the impact names. It is one file and runs with one command.</p>
-    <div class="cluster tpl-actions">
-      ${button({ label: 'Copy the scaffold', variant: 'primary', icon: 'copy', attrs: { 'data-template-copy': true } })}
-      ${button({ label: `Download ${FILE}`, href: `/templates/${FILE}`, icon: 'download', attrs: { download: FILE } })}
+    <div class="cluster page-head__actions">
+      ${button({ label: 'Copy the scaffold', variant: 'primary', size: 'lg', icon: 'copy', attrs: { 'data-template-copy': true } })}
+      ${button({ label: `Download ${FILE}`, href: `/templates/${FILE}`, size: 'lg', icon: 'download', attrs: { download: FILE } })}
       <span class="tpl-actions__status" role="status" data-template-status></span>
     </div>
     <p class="meta">Compiled and run with forge 1.7.1, forge-std 1.9.5 · checked ${CHECKED.label}</p>

@@ -41,12 +41,12 @@ export function ext(label, href) {
  * and action row.
  */
 export function docHead({ crumbs, title, lede, meta, actions }) {
-  return html`<header class="docs-head page-field">
+  return html`<header class="page-head page-field">
 ${breadcrumbs(crumbs)}
 <h1>${title}</h1>
 ${lede && html`<p class="lede">${lede}</p>`}
-${meta && html`<p class="meta docs-head__meta">${meta}</p>`}
-${actions && html`<div class="cluster docs-head__actions">${actions}</div>`}
+${meta && html`<p class="meta">${meta}</p>`}
+${actions && html`<div class="cluster page-head__actions">${actions}</div>`}
 </header>`;
 }
 
@@ -103,17 +103,6 @@ export function facts(items, { className } = {}) {
 /** A list with a tick in front of every item. Items are html or strings. */
 export function checklist(items, { className } = {}) {
   return html`<ul class="${cx('checklist', className)}">${items.map((item) => html`<li>${icon('check')}<div>${item}</div></li>`)}</ul>`;
-}
-
-/**
- * The closing band: one sentence and the next actions.
- * nextStep({ title, text, actions: html })
- */
-export function nextStep({ title, text, actions, id = 'next-step' }) {
-  return html`<aside class="docs-next" aria-labelledby="${id}">
-<div class="docs-next__text"><h2 class="h3" id="${id}">${title}</h2>${text && html`<p class="muted">${text}</p>`}</div>
-<div class="cluster">${actions}</div>
-</aside>`;
 }
 
 /** A heading element with an id, for sub-sections inside a section body. */

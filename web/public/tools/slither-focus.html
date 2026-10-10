@@ -61,7 +61,7 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
 <main id="main" tabindex="-1">
 
 <section class="section section--tight wrap">
-<header class="tool-head page-field">
+<header class="page-head page-field tool-head">
 <nav class="breadcrumbs" aria-label="Breadcrumb"><ol><li><a href="/">Bounty Operator</a></li><li><a href="/tools">Tools</a></li><li aria-current="page">Slither triage queue</li></ol></nav>
 <h1>Slither triage queue</h1>
 <p class="lede">Slither prints every detector it has, naming and style included. Drop the JSON and get the 13 detectors worth a manual pass, ranked by impact and confidence, with file and line.</p>
@@ -133,18 +133,12 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
 <div class="accordion tool-faq"><details class="accordion__item"><summary class="accordion__summary">Is the Slither output uploaded?</summary><div class="accordion__body"><p>No. The file is parsed and filtered in this tab. After the page has loaded it makes one request: a counter that says the tool was used, with nothing of yours in it. Pressing “Triage this queue” opens a review with the queue loaded, through this browser’s session storage. It leaves the browser only when you run that review: through our server to the provider you chose.</p></div></details><details class="accordion__item"><summary class="accordion__summary">Why these 13 detectors?</summary><div class="accordion__body"><p>Slither reports naming, style and gas detectors next to the ones that move funds. These 13 are the classes where a hit is worth reading line by line on a bounty target: value sent to a caller-chosen address, state written after an external call, ignored return values, controlled <code>delegatecall</code>.</p></div></details><details class="accordion__item"><summary class="accordion__summary">What does the tool decide?</summary><div class="accordion__body"><p>Nothing about validity. It filters, ranks and formats. A detector hit is a lead: a Scanner triage review groups the leads by root cause and gives each one a next check.</p></div></details></div>
 </section>
 
-<section class="section section--tight wrap" aria-labelledby="next-action">
-<div class="tool-next on-stock">
-<div class="tool-next__text">
-<h2 class="h3" id="next-action">A queue is a list of leads</h2>
-<p>Scanner triage groups the leads by root cause, ranks them by what each could cost, and gives every queued lead one next check.</p>
-</div>
-<div class="cluster">
-<a class="btn btn--primary" href="/?profile=scanner#workspace"><span class="btn__label">Open scanner triage</span><span class="icon icon--arrow-right" aria-hidden="true"></span></a>
-<a class="btn btn--secondary" href="/solidity-review"><span class="btn__label">Solidity review</span></a>
-</div>
-</div>
+<div class="section section--tight wrap">
+<section class="closing-band" aria-labelledby="next-step">
+<div class="closing-band__text"><h2 class="closing-band__title" id="next-step">A queue is a list of leads</h2><p class="closing-band__lede">Scanner triage groups the leads by root cause, ranks them by what each could cost, and gives every queued lead one next check.</p></div>
+<div class="closing-band__actions"><div class="cluster"><a class="btn btn--primary btn--lg" href="/?profile=scanner#workspace"><span class="btn__label">Open scanner triage</span><span class="icon icon--arrow-right" aria-hidden="true"></span></a><a class="btn btn--secondary btn--lg" href="/solidity-review"><span class="btn__label">Solidity review</span></a></div></div>
 </section>
+</div>
 
 <section class="section section--tight wrap" aria-labelledby="more-tools">
 <h2 class="h3" id="more-tools">More free tools</h2>

@@ -1,5 +1,35 @@
 # Changelog
 
+## 0.9.9 — 2026-10-10
+
+Site
+
+- Every page now opens the same way. The heading starts at the same height
+  on every page: 48px under the header rule, 32px on a phone, and one line
+  lower on a page that shows its trail. The landing pages, the benchmark
+  and the pricing page started theirs further down, and the template pages
+  a few pixels further than the tools and the guide.
+- The lede stands the same distance under the heading on every page and
+  keeps one line length. The buttons in a page head are the large size on
+  every page; on a phone they share the row width, one above the other.
+  The guide, the security, support, benchmark and template pages had the
+  smaller size.
+- The page for an address that does not exist opens on the moving field
+  like every other page. It was a card in the middle of a black page.
+- A page that ends on a call to action ends on one closing panel. The tool
+  pages printed theirs on solid vermilion, the guide and the other
+  reference pages used a smaller panel and the templates hub a third. All
+  of them are now the panel the landing pages use, with the same buttons.
+- Every page ends the same distance above the footer. The reference pages
+  ended closer to it and the template pages further.
+- A few headings break better for it: "What an invalid report costs on
+  each platform" takes two lines, not three.
+
+Payment
+
+- The payment page at Stripe takes the site's paper and its black box. It
+  still had the pale blue ground and the blue button of an earlier design.
+
 ## 0.9.8 — 2026-10-10
 
 Reviews

@@ -18,46 +18,19 @@
    1. Page frame
    ========================================================================== */
 
+/* The page opens on the shared head (.page-head in base.css) and ends a tight
+   section above the footer, as every page does. */
 .tpl-page {
-  padding-bottom: var(--sp-72);
-}
-
-/* The head is printed on the field (.page-field in base.css) and opens the page. */
-.tpl-hero {
-  display: grid;
-  gap: var(--sp-16);
-  padding-block: var(--sp-32) var(--sp-48);
+  padding-bottom: var(--sp-32);
 }
 
 @media (min-width: 48em) {
-  .tpl-hero {
-    padding-top: var(--sp-48);
+  .tpl-page {
+    padding-bottom: var(--sp-48);
   }
 }
 
-/* 20 characters of the page-head cut, in em (20 x 0.512em), so the measure does not move when the webfont lands. */
-.tpl-hero > h1 {
-  max-width: 10.24em;
-  margin-top: var(--sp-8);
-}
-
-.tpl-hero > .lede {
-  max-width: 64ch;
-}
-
-.tpl-actions {
-  margin-top: var(--sp-8);
-}
-
-/* On a phone the two actions share the row width, one above the other, as on
-   the landing pages. Side by side they fit at some widths and not at others,
-   and at the edge the row re-broke when the webfont landed. */
-@media (max-width: 29.99em) {
-  .tpl-actions > .btn {
-    flex: 1 1 100%;
-  }
-}
-
+/* "Copied", next to the two actions of the head. */
 .tpl-actions__status {
   color: var(--muted);
   font-size: var(--fs-13);
@@ -719,31 +692,9 @@
   line-height: 1.6;
 }
 
-.tpl-cta {
-  margin-top: var(--sp-48);
-  padding: var(--sp-24);
-  border: 1px solid var(--line);
-  border-radius: var(--r-card);
-  background: var(--surface);
-  box-shadow: var(--shadow-card);
-}
-
-.tpl-page > .tpl-cta {
-  padding-top: var(--sp-24);
-}
-
-.tpl-cta > .cluster {
-  margin-top: var(--sp-24);
-}
-
-@media (min-width: 48em) {
-  .tpl-cta {
-    padding: var(--sp-32);
-  }
-
-  .tpl-page > .tpl-cta {
-    padding-top: var(--sp-32);
-  }
+/* The hub ends on the closing band (.closing-band in base.css), a section below the last block. */
+.tpl-page > .closing-band {
+  margin-top: var(--sp-72);
 }
 
 /* ==========================================================================

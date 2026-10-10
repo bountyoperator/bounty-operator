@@ -129,9 +129,9 @@ export function originChip(origin) {
 
 /** The two action buttons under a page heading. */
 export function templateActions({ copyLabel = 'Copy as Markdown', file, download, downloadLabel = 'Download .md' }) {
-  return html`<div class="cluster tpl-actions">
-    ${button({ label: copyLabel, variant: 'primary', icon: 'copy', attrs: { 'data-template-copy': true } })}
-    ${button({ label: downloadLabel, href: `/templates/${file}`, icon: 'download', attrs: { download } })}
+  return html`<div class="cluster page-head__actions">
+    ${button({ label: copyLabel, variant: 'primary', size: 'lg', icon: 'copy', attrs: { 'data-template-copy': true } })}
+    ${button({ label: downloadLabel, href: `/templates/${file}`, size: 'lg', icon: 'download', attrs: { download } })}
     <span class="tpl-actions__status" role="status" data-template-status></span>
   </div>`;
 }

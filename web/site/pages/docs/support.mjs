@@ -11,9 +11,9 @@
 // was answered once is found by search. The category slugs below are the ones
 // the repository has; a test checks that every link here is one of them.
 
-import { button, html, notice } from '../../components.mjs';
+import { button, closingBand, html, notice } from '../../components.mjs';
 import { SITE, breadcrumbsLd } from '../../layout.mjs';
-import { DOCS_STYLES, docPage, ext, facts, nextStep, securityLink, supportLink, time } from './_shared.mjs';
+import { DOCS_STYLES, docPage, ext, facts, securityLink, supportLink, time } from './_shared.mjs';
 
 const PATH = '/support';
 /** The day this page last changed. */
@@ -69,7 +69,7 @@ const body = docPage({
     title: 'Help and feedback',
     lede: 'Ask a question, suggest a change, report a bug or reach us in private. Each has its own place.',
     meta: html`Last updated ${time(SUPPORT_UPDATED)}`,
-    actions: html`${button({ label: 'Open the forum', href: SUPPORT_LINKS.forum, variant: 'primary', external: true, iconEnd: 'arrow-up-right' })}${button({ label: 'Email support', href: `mailto:${SITE.support}` })}`,
+    actions: html`${button({ label: 'Open the forum', href: SUPPORT_LINKS.forum, variant: 'primary', size: 'lg', external: true, iconEnd: 'arrow-up-right' })}${button({ label: 'Email support', href: `mailto:${SITE.support}`, size: 'lg' })}`,
   },
   lead,
   sections: [
@@ -80,10 +80,13 @@ const body = docPage({
     { id: 'security', title: 'A vulnerability in Bounty Operator', label: 'Vulnerabilities', body: security },
     { id: 'wins', title: 'Share a win', body: wins },
   ],
-  after: nextStep({
+  after: closingBand({
     title: 'Not sure the report is ready?',
     text: 'The guide covers what a triager checks first, and the review argues against your draft before one does.',
-    actions: html`${button({ label: 'Review my report', href: '/?profile=report#workspace', variant: 'primary', iconEnd: 'arrow-right' })}${button({ label: 'Report guide', href: '/guide' })}`,
+    actions: [
+      { label: 'Review my report', href: '/?profile=report#workspace' },
+      { label: 'Report guide', href: '/guide' },
+    ],
   }),
 });
 

@@ -13,34 +13,16 @@
    6. Result summary, hashes, hits
    7. Acceptance rates
    8. Copy blocks: steps, phrases, ticks, tables
-   9. Next action and related tools
+   9. Related tools
 */
 
 /* ==========================================================================
    1. Page head
    ========================================================================== */
 
-/* The head is printed on the field (.page-field in base.css) and opens the page. */
+/* The page opens on the shared head (.page-head in base.css); the tool starts a step under it. */
 .tool-head {
-  display: grid;
-  gap: var(--sp-16);
   margin-bottom: var(--sp-32);
-  padding-block: var(--sp-32) var(--sp-48);
-}
-
-@media (min-width: 48em) {
-  .tool-head {
-    padding-top: var(--sp-48);
-  }
-}
-
-/* 24 characters of the page-head cut, in em (24 x 0.512em), so the measure does not move when the webfont lands. */
-.tool-head h1 {
-  max-width: 12.29em;
-}
-
-.tool-head .lede {
-  max-width: 64ch;
 }
 
 /* "Runs in your browser. Nothing is uploaded." */
@@ -1235,33 +1217,10 @@
 }
 
 /* ==========================================================================
-   9. Next action and related tools
+   9. Related tools
    ========================================================================== */
 
-.tool-next {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--sp-16) var(--sp-32);
-  padding: var(--sp-24);
-  border: 1px solid var(--rule);
-  border-radius: var(--r-card);
-  box-shadow: var(--shadow-card);
-}
-
-.tool-next__text {
-  flex: 1 1 22rem;
-  max-width: 44rem;
-}
-
-.tool-next__text > p {
-  margin-top: var(--sp-8);
-  color: var(--muted);
-  font-size: var(--fs-14);
-  line-height: 1.6;
-}
-
+/* A tool page ends on the closing band (.closing-band in base.css), then the other tools. */
 .tool-related {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
@@ -1308,8 +1267,7 @@
 @media print {
   .drop,
   .tool-actions,
-  .tool-related,
-  .tool-next {
+  .tool-related {
     display: none !important;
   }
 }

@@ -82,7 +82,10 @@ ${more && html`
 ${ctaBand({
   title: cta.title,
   lede: cta.lede,
-  actions: html`${open()}${button({ label: 'Read the method', href: '/method', size: 'lg' })}`,
+  actions: [
+    { label: cta.button, href: workbenchLink(profileId) },
+    { label: 'Read the method', href: '/method' },
+  ],
   note: 'Free: 1 review a day. Operator: unlimited, US$10 per week.',
 })}
 

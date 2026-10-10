@@ -154,7 +154,10 @@ ${pageHero({
 ${ctaBand({
   title: 'Check the draft before the triager does',
   lede: 'The report check runs in your browser and sends nothing. The challenge runs on your own model and key. Free: 1 review a day.',
-  actions: html`${button({ label: 'Check a draft for free', href: '/tools/report-check', variant: 'primary', size: 'lg', iconEnd: 'arrow-right' })}${button({ label: 'See pricing', href: '/pricing', size: 'lg' })}`,
+  actions: [
+    { label: 'Check a draft for free', href: '/tools/report-check' },
+    { label: 'See pricing', href: '/pricing' },
+  ],
 })}
 
 <section class="section section--tight wrap">

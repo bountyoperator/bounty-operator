@@ -5,9 +5,9 @@
 
 import { readFileSync } from 'node:fs';
 
-import { button, html } from '../../components.mjs';
+import { button, closingBand, html } from '../../components.mjs';
 import { breadcrumbsLd } from '../../layout.mjs';
-import { DOCS_STYLES, docPage, nextStep } from '../docs/_shared.mjs';
+import { DOCS_STYLES, docPage } from '../docs/_shared.mjs';
 import { METHOD_PATH, PAGE_PATH, loadPublished } from './_data.mjs';
 import { BLOB, renderMethod } from './_markdown.mjs';
 
@@ -27,14 +27,14 @@ export function methodPages(published) {
       crumbs: [{ label: 'Bounty Operator', href: '/' }, { label: 'Benchmark', href: PAGE_PATH }, { label: 'Method' }],
       title: 'Paydirt method',
       lede: html`How the cases are built and held, how an answer is scored and how every run is isolated. This is <a href="${BLOB}/bench/METHOD.md" target="_blank" rel="noopener noreferrer">bench/METHOD.md</a> from the repository, as it stood for release ${release}.`,
-      actions: html`${button({ label: 'Back to the leaderboard', href: PAGE_PATH, icon: 'arrow-left' })}${button({ label: 'Check the numbers', href: `${PAGE_PATH}#verify`, variant: 'quiet', iconEnd: 'arrow-right' })}`,
+      actions: html`${button({ label: 'Back to the leaderboard', href: PAGE_PATH, size: 'lg', icon: 'arrow-left' })}${button({ label: 'Check the numbers', href: `${PAGE_PATH}#verify`, variant: 'quiet', size: 'lg', iconEnd: 'arrow-right' })}`,
     },
     before: html`<div class="prose">${method.intro}</div>`,
     sections: method.sections.map((section) => ({ id: section.id, title: section.title, body: section.body })),
-    after: nextStep({
+    after: closingBand({
       title: 'See what it measured',
       text: `The leaderboard of release ${release}: every score with its interval, the cost of a run and the outcome of every model on every pair.`,
-      actions: html`${button({ label: 'Open the leaderboard', href: PAGE_PATH, variant: 'primary', iconEnd: 'arrow-right' })}`,
+      actions: [{ label: 'Open the leaderboard', href: PAGE_PATH }],
     }),
   })}</div>`;
 

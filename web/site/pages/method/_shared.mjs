@@ -12,6 +12,7 @@ import {
   breadcrumbs,
   button,
   chip,
+  closingBand,
   cx,
   html,
   icon,
@@ -278,15 +279,15 @@ export const GAUNTLET_EXAMPLE = {
  */
 export function pageHero({ trail, stamp, meta, title, lede, actions, note, aside, after, stickyText = false } = {}) {
   return html`
-<section class="${cx('lp-hero', 'wrap', 'page-field', aside && 'lp-hero--split')}">
+<section class="${cx('page-head', 'page-field', 'lp-hero', 'wrap', aside && 'lp-hero--split')}">
   ${breadcrumbs(trail)}
   <div class="lp-hero__grid">
-    <div class="${cx('lp-hero__text', stickyText && 'lp-hero__text--sticky')}">
+    <div class="${cx('page-head__text', 'lp-hero__text', stickyText && 'lp-hero__text--sticky')}">
       <h1>${title}</h1>
       ${(stamp || meta) && html`<p class="lp-hero__meta">${stamp}${meta && html`<span class="meta">${meta}</span>`}</p>`}
       <p class="lede">${lede}</p>
-      ${actions && html`<div class="cluster lp-hero__actions">${actions}</div>`}
-      ${note && html`<p class="fine lp-hero__note">${note}</p>`}
+      ${actions && html`<div class="cluster page-head__actions">${actions}</div>`}
+      ${note && html`<p class="fine">${note}</p>`}
 ${after && html`      ${after}`}
     </div>
     ${aside && html`<div class="lp-hero__aside">${aside}</div>`}
@@ -389,21 +390,15 @@ export function stageList({ detail, checkBase = '/method', className } = {}) {
   return html`<ol class="${cx('stages', className)}">${items}</ol>`;
 }
 
-/** The closing call to action of a page. */
-export function ctaBand({ title, lede, actions, note, id } = {}) {
+/**
+ * The closing call to action of a page: the shared band, in a section of its own.
+ * actions: [{ label, href }], the first one solid.
+ */
+export function ctaBand({ title, lede, actions, note } = {}) {
   return html`
-<section class="section wrap">
-  <div class="cta-band"${attrs({ id })}>
-    <div class="cta-band__text">
-      <h2 class="cta-band__title">${title}</h2>
-      ${lede && html`<p class="cta-band__lede">${lede}</p>`}
-    </div>
-    <div class="cta-band__actions">
-      <div class="cluster">${actions}</div>
-      ${note && html`<p class="fine">${note}</p>`}
-    </div>
-  </div>
-</section>`;
+<div class="section wrap">
+  ${closingBand({ title, text: lede, actions, note })}
+</div>`;
 }
 
 /** The two standard buttons of a paid feature page. */

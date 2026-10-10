@@ -7,10 +7,10 @@
 // invented for this page. Its contract and test were compiled and run with
 // Foundry; the output shown is that run.
 
-import { button, chip, codeBlock, disclosure, html, inline, link, verdictChip } from '../../components.mjs';
+import { button, chip, closingBand, codeBlock, disclosure, html, inline, link, verdictChip } from '../../components.mjs';
 import { SITE, absoluteUrl, breadcrumbsLd, faqPageLd } from '../../layout.mjs';
 import { CHECKS, RECORD_CLAIM, checksRunLine } from '../method/_shared.mjs';
-import { DOCS_STYLES, UPDATED, checklist, docPage, ext, nextStep } from './_shared.mjs';
+import { DOCS_STYLES, UPDATED, checklist, docPage, ext } from './_shared.mjs';
 
 const PATH = '/guide';
 const TITLE = 'Bug bounty report guide';
@@ -384,7 +384,7 @@ const body = docPage({
     crumbs: [{ label: 'Bounty Operator', href: '/' }, { label: 'Report guide' }],
     title: TITLE,
     lede: 'Seven things a report that lands has, and a weak draft rewritten line by line.',
-    actions: html`${button({ label: 'Check a draft', href: '/tools/report-check', variant: 'primary', iconEnd: 'arrow-right' })}${button({ label: 'Report templates', href: '/templates' })}`,
+    actions: html`${button({ label: 'Check a draft', href: '/tools/report-check', variant: 'primary', size: 'lg', iconEnd: 'arrow-right' })}${button({ label: 'Report templates', href: '/templates', size: 'lg' })}`,
   },
   before: html`<div class="docs-record">${record}</div>`,
   sections: [
@@ -396,10 +396,14 @@ const body = docPage({
     // A section, not a folded answer: a visitor sent here by a blocked review reads it without opening anything.
     { id: 'model-refuses', title: REFUSES.q, body: REFUSES.a },
   ],
-  after: nextStep({
+  after: closingBand({
     title: 'Now your own draft',
     text: 'Paste your draft into the report check, start from a platform template, or run a review against your own files.',
-    actions: html`${button({ label: 'Review my report', href: '/?profile=report#workspace', variant: 'primary', iconEnd: 'arrow-right' })}${button({ label: 'Report check', href: '/tools/report-check' })}${button({ label: 'Report templates', href: '/templates' })}`,
+    actions: [
+      { label: 'Review my report', href: '/?profile=report#workspace' },
+      { label: 'Report check', href: '/tools/report-check' },
+      { label: 'Report templates', href: '/templates' },
+    ],
   }),
 });
 

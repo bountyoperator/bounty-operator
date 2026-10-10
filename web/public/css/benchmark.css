@@ -52,24 +52,7 @@
   }
 }
 
-/* The hero text column is 46rem; the facts run the full width of the page. */
-.lp-hero__text > .bench-facts {
-  margin-top: var(--sp-32);
-}
-
-.lp-hero:has(.bench-facts) {
-  padding-bottom: var(--sp-24);
-}
-
 @media (min-width: 64em) {
-  .lp-hero__text:has(> .bench-facts) {
-    max-width: none;
-  }
-
-  .lp-hero__text:has(> .bench-facts) > :is(h1, .lede) {
-    max-width: 46rem;
-  }
-
   .bench-facts {
     grid-template-columns: repeat(6, minmax(0, 1fr));
   }
@@ -1113,8 +1096,4 @@
   margin-top: var(--sp-8);
   padding-left: 1.5rem;
   list-style-type: lower-alpha;
-}
-
-.method-doc .docs-head__actions {
-  margin-top: var(--sp-24);
 }

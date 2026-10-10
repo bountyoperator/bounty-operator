@@ -3,7 +3,7 @@
   "name": "io.github.bountyoperator/bounty-operator",
   "title": "Bounty Operator",
   "description": "Argues against a security finding or a draft bug bounty report before you submit it.",
-  "version": "0.9.8",
+  "version": "0.9.9",
   "websiteUrl": "https://bountyoperator.com/mcp",
   "repository": {
     "url": "https://github.com/bountyoperator/bounty-operator",

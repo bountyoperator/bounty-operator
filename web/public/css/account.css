@@ -42,8 +42,8 @@
   display: none;
 }
 
-/* On a phone the header has one row for the brand, the theme toggle and this
-   control. The word gives way to a person icon; the plan chip stays. */
+/* On a phone the header has one row for the brand and this control. The word
+   gives way to a person icon; the plan chip stays. */
 @media (max-width: 30em) {
   .account-control:has(.chip) {
     padding-inline: var(--sp-8);
@@ -285,8 +285,7 @@
   background: color-mix(in srgb, var(--text) 6%, transparent);
 }
 
-/* The current section: full ink, a raised fill and the blue mark of the ledger. */
-/* The open tab is marked with canary, like the current page in the header. */
+/* The open tab is marked on vermilion stock, like the current page in the header. */
 .portal__tab[aria-selected="true"] {
   background: var(--stock);
   color: var(--on-stock);
@@ -679,7 +678,7 @@
   user-select: all;
 }
 
-/* The copy button sits on the code surface, so it takes the code colours in both themes. */
+/* The copy button sits on the code surface, so it takes the code colours. */
 .secret__token .btn {
   border-color: var(--code-line);
   background: color-mix(in srgb, var(--code-text) 8%, transparent);

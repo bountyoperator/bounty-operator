@@ -242,6 +242,8 @@ The page is a stack of forms in one centred column. The wrap holds 75rem of cont
 
 Every page opens on the field: the page head stands over the moving field, which spans the window and starts directly under the header rule, while the head's content keeps to the wrap.
 
+Every page but the home page opens on the same head: the trail on a page two levels down, the h1, the lede, then the page's own line or its actions in the large box. Its rhythm is set once: 48px of field above the head (32 on a phone) and 48 below, 16 between parts, 24 above the lede and above the actions. The heading therefore starts at the same height on every page. A page that ends on a call to action ends on one closing band: a raised panel with a sentence in the section cut, a line under it and the large boxes, the first one solid. Every page ends the same distance above the footer.
+
 On the home page the first viewport is that field. From 960px it holds two columns (1.08fr of text and 0.92fr of slip): the kicker, the headline with its ring, the lede, the solid Review my report box and the ruled View example box, and one line that says what a review costs. The tilted paper slip stands on the right. Under them come one line of proof and the three results as figures, each a link to its public leaderboard, then the verdict run. On a phone the order is kicker, headline, lede, actions, price line, slip.
 
 Forms are ledgers. The finding card and the workbench sheet print a 9.75rem caption margin, one 1px rule and the content to its right, and under 704px the caption moves above its content. Grids of cells are ruled by 1px gaps over the hairline ground inside a 1px frame, like the rack of verdict stamps.
@@ -254,6 +256,8 @@ Print is black on white whatever the screen shows: deeper inks, flat cards and p
 **The Part Rule.** A 2px printed rule opens every section, heads every ledger and table, and underlines the site header, the dialog head and the slip's head; a 1px hairline divides inside. Nothing sits above a heading but that rule. The home hero alone carries a kicker, one line that names the kind of tool.
 
 **The Field Opens The Page Rule.** Every page head stands on the field, full width, directly under the header rule.
+
+**The One Head Rule.** The page head and the closing band are each built and styled in one place. A page places what follows its head and what stands above its band; it never restates either, and never prints the band on vermilion.
 
 ## Elevation & Depth
 

@@ -65,7 +65,7 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
 <main id="main" tabindex="-1">
 
 <section class="section section--tight wrap">
-<header class="tool-head page-field">
+<header class="page-head page-field tool-head">
 <nav class="breadcrumbs" aria-label="Breadcrumb"><ol><li><a href="/">Bounty Operator</a></li><li><a href="/tools">Tools</a></li><li aria-current="page">Packet verifier</li></ol></nav>
 <h1>Verify a review packet</h1>
 <p class="lede">A review packet lists every file it covered with a SHA-256. Drop the packet and the files, and see whether what you hold is what was reviewed.</p>
@@ -155,18 +155,12 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
 <div class="accordion tool-faq"><details class="accordion__item"><summary class="accordion__summary">Are my files uploaded?</summary><div class="accordion__body"><p>No. The page reads each file with the browser’s file API and hashes it with Web Crypto. It makes no request with a file name, a hash or any content. After the page has loaded it makes one request: a counter that says the tool was used, with nothing of yours in it.</p></div></details><details class="accordion__item"><summary class="accordion__summary">What does a match prove?</summary><div class="accordion__body"><p>That the bytes you hold are the bytes the review was run on, to the last character. It is a statement about the files. Whether the review’s conclusions hold is a separate question, answered by the code and the proof.</p></div></details><details class="accordion__item"><summary class="accordion__summary">Where does a packet come from?</summary><div class="accordion__body"><p>Every finished review comes with one: the verdict, the context you gave, the file list with a SHA-256 per file, and the review itself. A manifest is the same file list as JSON, as returned by the review API and the MCP server.</p></div></details></div>
 </section>
 
-<section class="section section--tight wrap" aria-labelledby="next-action">
-<div class="tool-next on-stock">
-<div class="tool-next__text">
-<h2 class="h3" id="next-action">No packet yet</h2>
-<p>Run a review and download its packet. It carries the verdict, the evidence you gave and the hash of every file, ready to attach to a submission.</p>
-</div>
-<div class="cluster">
-<a class="btn btn--primary" href="/#workspace"><span class="btn__label">Start a free review</span><span class="icon icon--arrow-right" aria-hidden="true"></span></a>
-<a class="btn btn--secondary" href="/mcp"><span class="btn__label">Connect over MCP</span></a>
-</div>
-</div>
+<div class="section section--tight wrap">
+<section class="closing-band" aria-labelledby="next-step">
+<div class="closing-band__text"><h2 class="closing-band__title" id="next-step">No packet yet</h2><p class="closing-band__lede">Run a review and download its packet. It carries the verdict, the evidence you gave and the hash of every file, ready to attach to a submission.</p></div>
+<div class="closing-band__actions"><div class="cluster"><a class="btn btn--primary btn--lg" href="/#workspace"><span class="btn__label">Start a free review</span><span class="icon icon--arrow-right" aria-hidden="true"></span></a><a class="btn btn--secondary btn--lg" href="/mcp"><span class="btn__label">Connect over MCP</span></a></div></div>
 </section>
+</div>
 
 <section class="section section--tight wrap" aria-labelledby="more-tools">
 <h2 class="h3" id="more-tools">More free tools</h2>

@@ -96,7 +96,7 @@ A module may default-export an array of pages. A module with no default export i
 
 What the layout adds: charset, viewport, title, description, canonical, `color-scheme` (dark), one `theme-color` meta, Open Graph and Twitter tags (with `twitter:creator` set to the builder's handle; there is no `twitter:site`, the product has no X account), icons, manifest, `/theme.js`, stylesheets, preloads, `/field.mjs` and the page's scripts, JSON-LD, the skip link, the header and the footer.
 
-Header: brand, nav (Review `/#workspace`, Benchmark `/benchmark` only when that page exists, Tools `/tools`, Guide `/guide`, Pricing), theme toggle, account control. Pricing links to `/#pricing` on the home page and to `/pricing` everywhere else. The account control is `<button id="account-button">` on `/` and a link to `/#account` everywhere else. Both read "Sign in" in the static markup; a page that loads `/app/account.mjs` relabels it "Account" for a signed-in visitor.
+Header: brand, nav (Review `/#workspace`, Benchmark `/benchmark` only when that page exists, Tools `/tools`, Guide `/guide`, Pricing), account control. Pricing links to `/#pricing` on the home page and to `/pricing` everywhere else. The account control is `<button id="account-button">` on `/` and a link to `/#account` everywhere else. Both read "Sign in" in the static markup; a page that loads `/app/account.mjs` relabels it "Account" for a signed-in visitor.
 
 Footer: Product, Tools, Resources and Legal columns. The Tools column lists the first six `/tools/*` pages. Method, gauntlet, panel review, templates, changelog, benchmark, security and licences links appear when those pages exist.
 
@@ -141,7 +141,7 @@ raw('<b>fixed markup</b>')                    // trusted markup only
 
 ## Tokens
 
-Defined in `base.css` section 1. `:root` and `.theme-dark` hold the one palette of the page. `.theme-light` is the paper palette, with the same token names, for a sheet lying on the page (the report slip in the home hero). `.page-field` puts a page head on the field, full width, and `.on-stock` prints anything on vermilion stock in black (the Operator plan, the tools call-out).
+Defined in `base.css` section 1. `:root` and `.theme-dark` hold the one palette of the page. `.theme-light` is the paper palette, with the same token names, for a sheet lying on the page (the report slip in the home hero). `.page-field` puts a page head on the field, full width, and `.on-stock` prints anything on vermilion stock in black (the Operator plan).
 
 | Group | Tokens |
 |---|---|
@@ -434,7 +434,28 @@ breadcrumbs([{ label: 'Tools', href: '/tools' }, { label: 'Report check' }])
 
 ### Page head on the field
 
-Every page opens on the field: `pageHero()` (method and landing pages), `docHead()`, `toolHead()` and the template heads carry `.page-field`, which prints a full-width band in `--field` behind the head and switches its ink to `--on-field`. A `.section` whose first child is a page field gives up its top padding, so the band starts under the header rule. `pageHero({ stamp, meta })` prints an Operator stamp or a file line under the title; there is no eyebrow.
+Every page opens on the field: `pageHero()` (method and landing pages), `docHead()`, `toolHead()`, the template heads and the 404 page carry `.page-field`, which prints a full-width band in `--field` behind the head and switches its ink to `--on-field`. A `.section` whose first child is a page field gives up its top padding, so the band starts under the header rule. `pageHero({ stamp, meta })` prints an Operator stamp or a file line under the title; there is no eyebrow.
+
+Every one of them but the home page is the same head, `.page-head`: the trail, the one `h1` with no class of its own, the `.lede`, then what the page adds (a `.meta` line, the actions, a `.fine` note). Its rhythm is in `base.css` and nowhere else: 48px of field above it (32px under 768px) and 48px below, 16px between parts, 24px above the lede and above the actions, a measure of 24 characters for the `h1` and `64ch` for the lede. So the heading starts at the same height on every page, 48px under the header rule, or one trail lower on a page two levels down.
+
+- Actions go in `div.cluster.page-head__actions`, and every box in it is `size: 'lg'`. Under 480px the boxes share the row width, one above the other.
+- A head with a second column (`pageHero({ aside })`) puts its text in `.page-head__text`, which keeps the same rhythm.
+- A page stylesheet places what follows the head (`.tool-head` and `.lp-hero` set a bottom margin and nothing else). It does not set padding, a gap or a measure on the head, and `web/tests/page-frame.test.mjs` fails if one does.
+
+### Closing band
+
+```js
+closingBand({
+  title: 'Now your own draft',
+  text: 'Paste your draft into the report check, or run a review.',
+  actions: [{ label: 'Review my report', href: '/#workspace' }, { label: 'Report guide', href: '/guide' }],
+  note: 'Free: 1 review a day.',
+})
+```
+
+`section.closing-band` > `.closing-band__text` (`h2.closing-band__title`, `p.closing-band__lede`) + `.closing-band__actions` (`.cluster`, an optional `.fine` line). The last word of a page before the footer: a raised panel on `--surface-2` with the sentence in the section cut and one to three actions. The band builds its own boxes, so they cannot differ from page to page: the first is the solid one with an arrow, the rest are outlined, all are the large size, and under 480px they share the row width. Two columns from 960px. It is never printed on vermilion; the solid box is the only vermilion in it.
+
+Every page that ends on a call to action ends on this band: the landing pages through `ctaBand()`, the tool pages through `nextAction()`, the guide, MCP, security, support and changelog pages and the templates hub directly. A page stylesheet may set the band's top margin and nothing else.
 
 ### Site header and footer
 
@@ -444,7 +465,7 @@ Emitted by the layout. Classes: `.site-header`, `.site-header__inner`, `.brand` 
 
 ## The finding card
 
-The signature component of the results view. It appears there, in the examples, the 404 page and the kit. The home hero and the social card show the report slip instead (`reportSlip()` in `web/site/social/example.mjs`): the example draft's own header lines with the claimed severity struck, the supported one stamped and the verdict stamped in the box the form keeps for it.
+The signature component of the results view. It appears there, in the examples and the kit. The home hero and the social card show the report slip instead (`reportSlip()` in `web/site/social/example.mjs`): the example draft's own header lines with the claimed severity struck, the supported one stamped and the verdict stamped in the box the form keeps for it.
 
 ```js
 findingCard(finding, {
@@ -503,7 +524,7 @@ Rows (`data-rail`), in order, and what the label's ink says (the margin rule is 
 | `test` | Test | grey | a code block |
 | `next` | Next | grey | `p.rail__next` (arrow icon + text) |
 
-`rail(kind, body, { label, status })` builds one row for a custom card, as the 404 page does. A list of cards goes in `.findings`.
+`rail(kind, body, { label, status })` builds one row for a custom card. A list of cards goes in `.findings`.
 
 Under 704px the label moves above its content and the margin rule moves to the card's inner margin.
 

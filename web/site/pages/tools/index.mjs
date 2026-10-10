@@ -1,8 +1,8 @@
 // /tools: the hub that lists the free tools with one-line outcomes.
 
-import { breadcrumbs, button, html, icon } from '../../components.mjs';
+import { breadcrumbs, html, icon } from '../../components.mjs';
 import { absoluteUrl, breadcrumbsLd } from '../../layout.mjs';
-import { HOME_CRUMB, LASTMOD, LOCAL_LINE, TOOLS, TOOL_STYLES, localLine } from './_shared.mjs';
+import { HOME_CRUMB, LASTMOD, LOCAL_LINE, TOOLS, TOOL_STYLES, localLine, nextAction } from './_shared.mjs';
 
 
 const rows = TOOLS.map((entry, index) => html`<li class="tool-row">
@@ -29,7 +29,7 @@ const itemListLd = {
 
 const body = html`
 <section class="section section--tight wrap">
-<header class="tool-head page-field">
+<header class="page-head page-field tool-head">
 ${breadcrumbs([HOME_CRUMB, { label: 'Tools' }])}
 <h1>Free bug bounty tools</h1>
 <p class="lede">Five tools. No account or API key needed.</p>
@@ -39,18 +39,12 @@ ${localLine()}
 <ol class="tool-rows">${rows}</ol>
 </section>
 
-<section class="section section--tight wrap" aria-labelledby="next-action">
-<div class="tool-next on-stock">
-<div class="tool-next__text">
-<h2 class="h3" id="next-action">Want an AI review?</h2>
-<p>Add your draft and supporting files. Get a verdict and next steps.</p>
-</div>
-<div class="cluster">
-${button({ label: 'Review my report', href: '/?profile=report#workspace', variant: 'primary', iconEnd: 'arrow-right' })}
-${button({ label: 'Report guide', href: '/guide' })}
-</div>
-</div>
-</section>`;
+${nextAction({
+  title: 'Want an AI review?',
+  text: 'Add your draft and supporting files. Get a verdict and next steps.',
+  primary: { label: 'Review my report', href: '/?profile=report#workspace' },
+  secondary: { label: 'Report guide', href: '/guide' },
+})}`;
 
 export default {
   path: '/tools',

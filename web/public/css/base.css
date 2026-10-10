@@ -4,11 +4,11 @@
   Bounty Operator: base stylesheet
 
   "Inspection office". A finding goes through inspection before it goes to a
-  triager, and the verdict comes back as a stamp. Forms print in black on
-  white and canary stock, verdicts and severities are stamped in ink, code
-  sits on carbon. Corners are square, fields are ruled, every printed label is
-  set in condensed caps. Dark is the night shift: carbon indigo, pale print,
-  canary for what you act on. Every colour, size and radius used anywhere on
+  triager, and the verdict comes back as a stamp. The page is black with bone
+  print and one vermilion ink for what you act on; verdicts and severities are
+  stamped in ink, code sits on carbon, and a paper sheet (.theme-light) may
+  lie on the page. Corners are square, fields are ruled, every printed label
+  is set in condensed caps. Every colour, size and radius used anywhere on
   the site comes from the tokens in section 1.
 
   Reference with examples: web/site/COMPONENTS.md
@@ -1013,7 +1013,8 @@ pre {
    ========================================================================== */
 
 /* Buttons print like the boxes at the foot of a form: square, ruled, set in
-   Archivo. The primary action is solid ink: black by day, canary at night. */
+   Archivo. The primary action is solid ink: vermilion on the page, black on
+   a paper sheet and on vermilion stock. */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -2025,7 +2026,7 @@ button.ref:hover {
   }
 }
 
-/* Violet line: observed. Ochre line: unproven. */
+/* Vermilion line: observed. Ochre line: unproven. */
 .code__line.is-hl {
   background: color-mix(in srgb, var(--code-hl) 18%, var(--code-bg));
 }
@@ -2066,7 +2067,7 @@ button.ref:hover {
   in the left margin, one neutral margin rule, the content to its right. The
   ink of a row's label says how well the row is supported.
 
-    violet label        observed in the supplied files, or an objection resolved
+    green label         observed in the supplied files, or an objection resolved
     ochre label         unproven: an open objection
     ochre, dashed rule  an evidence gap: something not supplied or not run
     grey label          neutral rows: impact, fix, test, next
@@ -2510,7 +2511,7 @@ button.ref:hover {
   font-variant-numeric: tabular-nums;
 }
 
-/* Stepper: the parts of the form in a ruled strip. The current part is canary. */
+/* Stepper: the parts of the form in a ruled strip. The current part is on vermilion stock. */
 .stepper ol {
   display: flex;
   margin: 0;
@@ -2611,7 +2612,7 @@ button.ref:hover {
 }
 
 /* Segmented control: a radio group for two to four exclusive choices, printed
-   as a row of option boxes. The chosen box is canary. */
+   as a row of option boxes. The chosen box is on vermilion stock. */
 .segmented {
   display: inline-flex;
   max-width: 100%;
@@ -3391,7 +3392,7 @@ button.ref:hover {
   background: color-mix(in srgb, var(--text) 8%, transparent);
 }
 
-/* The current page is marked with canary, the way a clerk highlights a line. */
+/* The current page is marked on vermilion stock, the way a clerk highlights a line. */
 .site-nav a[aria-current="page"] {
   background: var(--stock);
   color: var(--on-stock);
@@ -3455,7 +3456,7 @@ button.ref:hover {
   }
 }
 
-/* The footer is the carbon back sheet in both themes: layout.mjs gives it .theme-dark. */
+/* The footer is the black back sheet: layout.mjs gives it .theme-dark. */
 .site-footer {
   margin-top: var(--sp-72);
   background: var(--bg);
@@ -3715,9 +3716,10 @@ button.ref:hover {
   color: var(--text);
 }
 
-/* The page head: printed on the field, canary by day and lifted carbon at
-   night. The band runs the full width of the window while its content keeps
-   to the wrap; border-image paints outside the box without adding scroll. */
+/* The page head is printed on the field: the page's own black, with the
+   moving field behind it. The band runs the full width of the window while
+   its content keeps to the wrap; border-image paints outside the box without
+   adding scroll. */
 .page-field {
   --text: var(--on-field);
   --muted: var(--on-field-muted);
@@ -3733,8 +3735,101 @@ button.ref:hover {
   padding-top: 0;
 }
 
-/* Anything printed on canary stock, in either theme: ink, violet links, a
-   black primary box. The highlighted plan and the canary current step use it. */
+/* One head for every page but the home page: the trail, the one h1, the lede,
+   then what the page adds (a file line, actions, a note). The rhythm is set
+   here and nowhere else, so the heading starts at the same height on every
+   page: a step between parts, and a step and a half above the lede and above
+   the actions. A page stylesheet places what follows the head; it does not
+   restate the head. */
+.page-head,
+.page-head__text {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-16);
+}
+
+.page-head {
+  padding-block: var(--sp-32) var(--sp-48);
+}
+
+@media (min-width: 48em) {
+  .page-head {
+    padding-top: var(--sp-48);
+  }
+}
+
+/* 24 characters of the page-head cut, in em (24 x 0.512em), so the measure does not move when the webfont lands. */
+.page-head h1 {
+  max-width: 12.29em;
+}
+
+.page-head .lede {
+  max-width: 64ch;
+  margin-top: var(--sp-8);
+}
+
+.page-head .lede a {
+  color: inherit;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+}
+
+.page-head__actions {
+  margin-top: var(--sp-8);
+}
+
+/* On a phone the actions of the head, and of the closing band, share the row
+   width, one above the other. Side by side they fit at some widths and not at
+   others, and at the edge the row re-broke when the webfont landed. */
+@media (max-width: 29.99em) {
+  .page-head__actions > .btn,
+  .closing-band__actions > .cluster > .btn {
+    flex: 1 1 100%;
+  }
+}
+
+/* The closing band: the last word of a page before the footer. One sentence
+   and the next actions on a raised panel; the primary action is the only
+   vermilion in it. Every page that ends on a call to action ends on this
+   one. A page stylesheet places it; it does not restyle it. */
+.closing-band {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-24);
+  padding: var(--sp-24);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-hero);
+  background: var(--surface-2);
+}
+
+/* 24 characters of the section cut, in em (24 x 0.562em). */
+.closing-band__title {
+  max-width: 13.488em;
+}
+
+.closing-band__lede {
+  max-width: 48ch;
+  margin-top: var(--sp-12);
+  color: var(--muted);
+}
+
+.closing-band__actions {
+  display: grid;
+  gap: var(--sp-12);
+  align-content: center;
+}
+
+@media (min-width: 60em) {
+  .closing-band {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: var(--sp-48);
+    padding: var(--sp-48);
+  }
+}
+
+/* Anything printed on vermilion stock: black ink, black links, a black
+   primary box. The highlighted plan uses it. */
 .on-stock {
   --bg: var(--stock);
   --text: var(--on-stock);
@@ -4278,6 +4373,7 @@ button.ref:hover {
   .skip-link,
   .site-nav,
   .btn,
+  .closing-band,
   .code__copy,
   .dialog__close,
   .progress,
