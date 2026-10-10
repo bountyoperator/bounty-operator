@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.9.8 — 2026-10-10
+
+Reviews
+
+- OpenRouter sets a review's whole output allowance against the account's
+  credit before a model runs. An account holding less than that was refused,
+  though a review seldom uses the allowance. The review now goes once more
+  with the allowance the account can pay for, when that is at least 16,000
+  tokens. Below that, the message gives both numbers: what the review may
+  use and what the credit covers.
+- A model identifier OpenRouter does not know is now shown at the Model
+  field, like any other unknown model.
+
+MCP
+
+- The official MCP Registry lists the remote endpoint as
+  `io.github.bountyoperator/bounty-operator`. The entry is published from
+  the source repository by a workflow that signs in as the repository.
+
 ## 0.9.7 — 2026-10-10
 
 Reviews

@@ -404,10 +404,12 @@ function assertPrepared(prepared) {
   if (!valid) throw new ProviderError('Provider request needs a prepared review.', { kind: 'request' });
 }
 
-function buildRequest(providerId, { model: modelId, apiKey, prepared }, { stream, fallbacks, effort }) {
+function buildRequest(providerId, { model: modelId, apiKey, prepared }, { stream, fallbacks, effort, tokens = null }) {
   const wire = WIRE[providerId];
   const [system, user] = prepared.messages;
   const headers = { 'Content-Type': 'application/json' };
+  // `tokens` is a smaller output allowance than the usual one: see the retry in send().
+  const limit = tokens ?? outputTokenLimit(providerId, modelId, { stream });
   let body;
 
   if (wire.style === 'messages') {
@@ -415,7 +417,7 @@ function buildRequest(providerId, { model: modelId, apiKey, prepared }, { stream
     headers['anthropic-version'] = ANTHROPIC_VERSION;
     body = {
       model: modelId,
-      max_tokens: outputTokenLimit(providerId, modelId, { stream }),
+      max_tokens: limit,
       system: system.content,
       messages: [{ role: 'user', content: user.content }],
     };
@@ -428,7 +430,7 @@ function buildRequest(providerId, { model: modelId, apiKey, prepared }, { stream
     headers.Authorization = `Bearer ${apiKey}`;
     Object.assign(headers, wire.headers);
     body = { model: modelId, messages: prepared.messages, ...wire.body };
-    if (wire.tokenParam) body[wire.tokenParam] = outputTokenLimit(providerId, modelId, { stream });
+    if (wire.tokenParam) body[wire.tokenParam] = limit;
     if (stream && wire.streamUsage) body.stream_options = { include_usage: true };
   }
   if (stream) body.stream = true;
@@ -769,6 +771,18 @@ async function httpFailure(response, selected, request) {
       return new ProviderError('Provider key has used up its own credit limit (HTTP 402). Raise the limit on the key at OpenRouter or use another key, then run again.', { status, kind: 'credit' });
     }
     if (source === 'openrouter_credits') {
+      // OpenRouter sets the whole output allowance against the account before a model runs, and
+      // says how many of those tokens the credit would pay for. send() tries once more with that.
+      const afford = metadata.reason === 'weight_exceeds_budget' ? null : /requested up to (\d+) tokens, but can only afford (\d+)\b/.exec(detail);
+      if (afford) {
+        const [asked, affordable] = [Number(afford[1]), Number(afford[2])];
+        const short = new ProviderError(
+          `Provider account's credit covers ${affordable.toLocaleString('en-US')} of the ${asked.toLocaleString('en-US')} output tokens this review may use (HTTP 402). Add credit at OpenRouter, or pick a cheaper model.`,
+          { status, kind: 'credit' },
+        );
+        short.affordable = affordable;
+        return short;
+      }
       return new ProviderError(
         metadata.reason === 'weight_exceeds_budget'
           ? 'Provider holds less credit for the account at one time than this request needs (HTTP 402), so running it again will not help. Add credit at OpenRouter, or send fewer files.'
@@ -797,6 +811,11 @@ async function httpFailure(response, selected, request) {
   }
   if (status >= 500) {
     return new ProviderError(`Provider had a server error (HTTP ${status}). Run the review again in a minute.${said}`, { status, kind: 'server' });
+  }
+  // OpenRouter answers 400, not 404, for a model it does not know.
+  if (status === 400 && /\bis not a valid model ID\b/i.test(detail)) {
+    const named = redact(request.model, request.apiKey);
+    return new ProviderError(`Provider does not have the model "${named}" (HTTP 400). Check the model identifier.`, { status, kind: 'model' });
   }
   return new ProviderError(`Provider rejected the request (HTTP ${status})${detail ? `: ${detail}` : '.'}`, { status, kind: 'request' });
 }
@@ -832,6 +851,15 @@ async function send(providerId, request, { stream }) {
       if (!rejected) throw failure;
       options[rejected.name] = false;
       response = await attempt(options);
+    }
+    // OpenRouter refuses a request when the account's credit would not pay for the whole output
+    // allowance, though a review seldom uses it all, and says what the credit does cover. The
+    // request goes once more with that allowance when it is at least the standard one. The
+    // refused call generated nothing.
+    if (response.status === 402 && providerId === 'openrouter') {
+      const failure = await httpFailure(response, selected, request);
+      if (!(failure.affordable >= OUTPUT_TOKENS)) throw failure;
+      response = await attempt({ ...options, tokens: failure.affordable });
     }
     if (!response.ok) throw await httpFailure(response, selected, request);
     return { response, deadline };

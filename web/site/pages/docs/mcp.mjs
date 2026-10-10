@@ -523,6 +523,10 @@ const FAQ = [
     q: 'Which clients work?',
     a: 'Any client that speaks MCP over Streamable HTTP or stdio. This page has the commands for Claude Code, Codex and Cursor.',
   },
+  {
+    q: 'Is the server in the MCP Registry?',
+    a: 'Yes. The official MCP Registry lists the remote endpoint as `io.github.bountyoperator/bounty-operator`. The entry is published from the source repository by a GitHub workflow that signs in as the repository, so the name on the registry and the code on GitHub have one owner.',
+  },
 ];
 
 // ---------------------------------------------------------------------------

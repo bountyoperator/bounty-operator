@@ -1961,6 +1961,16 @@ describe('providers', () => {
       assert.match(missing.message, /^Provider does not have the model "vendor\/gone" \(HTTP 404\)\. Check the model identifier\./);
     }
 
+    // A model OpenRouter does not know is a 400 there, and it belongs at the Model field like any unknown model.
+    const unknown = await failure({ error: { message: 'no-such-vendor/no-such-model is not a valid model ID', code: 400 } }, 400, { model: 'no-such-vendor/no-such-model' });
+    assert.deepEqual([unknown.kind, unknown.status], ['model', 400]);
+    assert.equal(unknown.message, 'Provider does not have the model "no-such-vendor/no-such-model" (HTTP 400). Check the model identifier.');
+    const pastedKey = await failure({ error: { message: `${API_KEY} is not a valid model ID`, code: 400 } }, 400, { model: API_KEY });
+    assert.equal(pastedKey.message, 'Provider does not have the model "[key]" (HTTP 400). Check the model identifier.');
+    // Any other 400 keeps the provider's words.
+    const other = await failure({ error: { message: 'max_tokens is too large', code: 400 } }, 400);
+    assert.deepEqual([other.kind, other.message], ['request', 'Provider rejected the request (HTTP 400): max_tokens is too large']);
+
     // HTTP 429 from the model's host, on the allowance every OpenRouter user shares.
     const shared = (extra = {}, headers = {}) => failure({
       error: {
@@ -2006,6 +2016,52 @@ describe('providers', () => {
     const fast = await quota({ message: 'Rate limit reached for requests', type: 'requests', code: 'rate_limit_exceeded' });
     assert.deepEqual([fast.kind, fast.retryAfter], ['rate', 12]);
     assert.match(fast.message, /^Provider rate limit reached, or the account has no credit \(HTTP 429\)\. Retry after 12 seconds\. OpenAI said: Rate limit reached for requests$/);
+  });
+
+  test('a review the account cannot fully cover goes once more with the output allowance it can afford', async () => {
+    // OpenRouter's own words on 10 October 2026, with the key's address shortened.
+    const refusal = (asked, affordable) => ({
+      error: {
+        message: `This request requires more credits, or fewer max_tokens. You requested up to ${asked} tokens, but can only afford ${affordable}. To increase, visit https://openrouter.ai/workspaces/default/keys/abc and adjust the key's total limit`,
+        code: 402,
+        metadata: { limit_source: 'openrouter_credits', remedy_hint: 'Add credits, or lower max_tokens / prompt size to fit your remaining balance.', provider_name: null },
+      },
+    });
+    // A model that gets the long allowance without a stream, so the first request asks for 64,000.
+    const run = (answers, { provider = 'openrouter', model = 'google/gemini-3.8-flash' } = {}) => withFetch(
+      (_url, _init, call) => answers[Math.min(call, answers.length) - 1](),
+      (calls) => providerReview({ provider, model, apiKey: API_KEY, prepared: PREPARED }).then((result) => ({ result, calls }), (error) => ({ error, calls })),
+    );
+
+    // Enough for a review: the second request asks for what the account can pay for, and the review comes back.
+    const covered = await run([() => json(refusal(64000, 59627), 402), () => json(chatAnswer())]);
+    assert.equal(covered.error, undefined);
+    assert.equal(covered.result.text, '# Review\nVerdict: submit');
+    assert.deepEqual(covered.calls.map((call) => call.body.max_tokens), [64000, 59627]);
+    assert.deepEqual(covered.calls.map((call) => call.body.model), ['google/gemini-3.8-flash', 'google/gemini-3.8-flash']);
+
+    // Exactly the standard allowance still runs; one token less does not, and the message gives both numbers.
+    const edge = await run([() => json(refusal(64000, 16000), 402), () => json(chatAnswer())]);
+    assert.deepEqual(edge.calls.map((call) => call.body.max_tokens), [64000, 16000]);
+    const short = await run([() => json(refusal(64000, 15999), 402), () => json(chatAnswer())]);
+    assert.equal(short.calls.length, 1, 'too little for a review: nothing is sent again');
+    assert.deepEqual([short.error.kind, short.error.status], ['credit', 402]);
+    assert.equal(short.error.message, "Provider account's credit covers 15,999 of the 64,000 output tokens this review may use (HTTP 402). Add credit at OpenRouter, or pick a cheaper model.");
+
+    // It is tried once. A second refusal is the answer.
+    const twice = await run([() => json(refusal(64000, 59627), 402), () => json(refusal(59627, 41000), 402), () => json(chatAnswer())]);
+    assert.equal(twice.calls.length, 2);
+    assert.equal(twice.error.message, "Provider account's credit covers 41,000 of the 59,627 output tokens this review may use (HTTP 402). Add credit at OpenRouter, or pick a cheaper model.");
+
+    // Any other 402 is not sent again: a key at its limit, a budget one request cannot fit, another provider.
+    const keyLimit = await run([() => json({ error: { code: 402, message: 'Key limit exceeded', metadata: { limit_source: 'openrouter_key_limit' } } }, 402), () => json(chatAnswer())]);
+    assert.equal(keyLimit.calls.length, 1);
+    const tooLarge = await run([() => json({ error: { ...refusal(64000, 59627).error, metadata: { limit_source: 'openrouter_credits', reason: 'weight_exceeds_budget' } } }, 402), () => json(chatAnswer())]);
+    assert.equal(tooLarge.calls.length, 1);
+    assert.match(tooLarge.error.message, /^Provider holds less credit for the account at one time/);
+    const elsewhere = await run([() => json(refusal(64000, 59627), 402), () => json(chatAnswer())], { provider: 'openai', model: 'gpt-6.1-sol' });
+    assert.equal(elsewhere.calls.length, 1);
+    assert.equal(elsewhere.error.kind, 'credit');
   });
 
   test('a key pasted into the model field does not come back in the 404 message', async () => {
