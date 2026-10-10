@@ -102,6 +102,15 @@ test('the package is publishable: one version, a bin with a shebang, a whitelist
   assert.equal(lock.packages[''].dependencies, undefined);
 });
 
+test('the registry copy is server.json without the npm package, which the registry would look for and not find', async () => {
+  // mcp/server.registry.json is what .github/workflows/publish-mcp.yml sends to the official MCP Registry.
+  const copy = await readJson('server.registry.json');
+  const { packages, ...remoteOnly } = registry;
+  assert.ok(Array.isArray(packages));
+  assert.deepEqual(copy, remoteOnly);
+  assert.deepEqual(copy.remotes.map((remote) => [remote.type, remote.url]), [['streamable-http', 'https://bountyoperator.com/api/mcp']]);
+});
+
 test('server.json fits the registry schema and matches the package', () => {
   assert.equal(registry.$schema, 'https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json');
   assert.equal(registry.name, 'io.github.bountyoperator/bounty-operator');

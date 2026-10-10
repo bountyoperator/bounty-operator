@@ -1,0 +1,38 @@
+# Publishes mcp/server.registry.json (the remote endpoint only) to the official MCP Registry.
+# Runs only when someone presses "Run workflow": nothing is published by a push or a tag.
+# Sign-in is GitHub's own OIDC token for this repository, so there is no secret to store;
+# it grants the io.github.bountyoperator/* namespace because the repository belongs to that owner.
+# The registry takes each version once: run this after a release has changed the version in the file.
+name: Publish to MCP Registry
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      id-token: write # the registry reads the OIDC token; nothing else is granted
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+
+      # The checksum is the one GitHub lists for the release file. A file that differs is not run.
+      - name: Install mcp-publisher v1.8.1
+        run: |
+          curl -fsSL -o mcp-publisher.tar.gz "https://github.com/modelcontextprotocol/registry/releases/download/v1.8.1/mcp-publisher_linux_amd64.tar.gz"
+          echo "a06c9096dcb9727c13555b6be26c7effa707b01f06a4c561ba7a3635443cf2cc  mcp-publisher.tar.gz" | sha256sum --check
+          tar xzf mcp-publisher.tar.gz mcp-publisher
+
+      - name: Validate the manifest
+        run: ./mcp-publisher validate mcp/server.registry.json
+
+      - name: Sign in to the MCP Registry
+        run: ./mcp-publisher login github-oidc
+
+      - name: Publish the server
+        run: ./mcp-publisher publish mcp/server.registry.json

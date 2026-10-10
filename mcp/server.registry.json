@@ -1,0 +1,42 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.bountyoperator/bounty-operator",
+  "title": "Bounty Operator",
+  "description": "Argues against a security finding or a draft bug bounty report before you submit it.",
+  "version": "0.9.7",
+  "websiteUrl": "https://bountyoperator.com/mcp",
+  "repository": {
+    "url": "https://github.com/bountyoperator/bounty-operator",
+    "source": "github",
+    "subfolder": "mcp"
+  },
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://bountyoperator.com/api/mcp",
+      "headers": [
+        {
+          "name": "Authorization",
+          "description": "Connection token from the account panel at bountyoperator.com. The account and run_review tools use it; every other tool works with none.",
+          "value": "Bearer {token}",
+          "isRequired": false,
+          "isSecret": true,
+          "variables": {
+            "token": {
+              "description": "Connection token, starting with bok_.",
+              "format": "string",
+              "isSecret": true
+            }
+          }
+        },
+        {
+          "name": "X-Provider-Key",
+          "description": "API key of the model provider that run_review calls.",
+          "format": "string",
+          "isRequired": false,
+          "isSecret": true
+        }
+      ]
+    }
+  ]
+}

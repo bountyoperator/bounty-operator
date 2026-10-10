@@ -34,6 +34,7 @@ class VersionTests(unittest.TestCase):
             ("mcp/package.json", lambda data: data["version"]),
             ("mcp/server.json", lambda data: data["version"]),
             ("mcp/server.json#package", lambda data: data["packages"][0]["version"]),
+            ("mcp/server.registry.json", lambda data: data["version"]),
             ("web/package.json", lambda data: data["version"]),
         ]:
             path = ROOT / relative.split("#")[0]
