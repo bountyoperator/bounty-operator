@@ -15,6 +15,8 @@ import { assertNoBannedNames } from './private-lists.mjs';
 
 const WEB_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const PUBLIC_DIR = path.join(WEB_DIR, 'public');
+/** A link as it stands in Markdown, YAML or plain text: up to the first space, bracket or quote. */
+const LINK = /https?:\/\/[^\s)\]>"']+/g;
 const EXPECTED_PATHS = ['/changelog', '/guide', '/licenses', '/mcp', '/privacy', '/security', '/support', '/terms'];
 
 const site = { pages: [], has: () => true, preloadsFor: () => [] };
@@ -483,13 +485,16 @@ test('the help page sends each kind of request to its place, and says first what
   const repo = path.resolve(WEB_DIR, '..');
   await readFile(path.join(repo, '.github', 'ISSUE_TEMPLATE', 'bug.yml'), 'utf8');
   const chooser = await readFile(path.join(repo, '.github', 'ISSUE_TEMPLATE', 'config.yml'), 'utf8');
-  for (const href of [SUPPORT_LINKS.ask, SUPPORT_LINKS.ideas, SUPPORT_LINKS.advisory, 'https://bountyoperator.com/support#account']) assert.ok(chooser.includes(href), `issue chooser: ${href}`);
+  // Links are pulled out of each file and compared whole, never by substring.
+  const linksIn = (source) => new Set(source.match(LINK) ?? []);
+  for (const href of [SUPPORT_LINKS.ask, SUPPORT_LINKS.ideas, SUPPORT_LINKS.advisory, 'https://bountyoperator.com/support#account']) assert.ok(linksIn(chooser).has(href), `issue chooser: ${href}`);
   assert.ok(main.includes('id="account"'), 'the chooser links #account');
   // The README and llms.txt point at the same places.
   const readme = await readFile(path.join(repo, 'README.md'), 'utf8');
-  for (const href of [SUPPORT_LINKS.ask, SUPPORT_LINKS.ideas, SUPPORT_LINKS.bug, 'https://bountyoperator.com/support']) assert.ok(readme.includes(href), `README: ${href}`);
+  for (const href of [SUPPORT_LINKS.ask, SUPPORT_LINKS.ideas, SUPPORT_LINKS.bug, 'https://bountyoperator.com/support#account']) assert.ok(linksIn(readme).has(href), `README: ${href}`);
   const llms = await readFile(path.join(PUBLIC_DIR, 'llms.txt'), 'utf8');
-  assert.ok(llms.includes('[Help and feedback](https://bountyoperator.com/support)') && llms.includes(FORUM));
+  assert.ok(llms.includes('- [Help and feedback]('), 'llms.txt names the help page');
+  for (const href of ['https://bountyoperator.com/support', SUPPORT_LINKS.forum]) assert.ok(linksIn(llms).has(href), `llms.txt: ${href}`);
 });
 
 test('every docs page links the help page from its footer', () => {
