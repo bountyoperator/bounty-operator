@@ -102,7 +102,8 @@ export function failureFor(error, via = 'key') {
           field: keyField,
         };
       }
-      if (data.kind === 'model') return { message: text, tone: 'error', field: 'model' };
+      // A model the provider does not have, or one it has no host for under the account's settings: the Model field is where to act.
+      if (data.kind === 'model' || data.kind === 'routing') return { message: text, tone: 'error', field: 'model' };
       // The provider's sentence can carry the wait itself; it is said once.
       return { message: /\bRetry after \d+ seconds\./.test(text) ? text : `${text}${wait(data.retryAfter)}`, tone: 'error', partial };
     }

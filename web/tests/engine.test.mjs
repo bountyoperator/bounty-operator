@@ -1917,6 +1917,97 @@ describe('providers', () => {
     }
   });
 
+  test('a model with no host the account allows is not called a wrong identifier, and a shared allowance is not called the key', async () => {
+    // The bodies are the ones OpenRouter answered with on 10 October 2026, shortened where they list hosts.
+    const failure = (body, status, { headers = {}, provider = 'openrouter', model = 'vendor/model:free' } = {}) =>
+      withFetch(() => json(body, status, headers), () => providerReview({ provider, model, apiKey: API_KEY, prepared: PREPARED }).then(() => null, (reason) => reason));
+
+    // A free model whose hosts may train on requests, on an account that rules that out.
+    const trains = await failure({
+      error: {
+        message: '0 endpoints out of 1 requested are available matching your guardrail restrictions and data policy. We removed them for the following reasons (an endpoint may have matched multiple reasons):\nFree model training violation (account settings): 1 endpoint excluded; configurable at https://openrouter.ai/settings/privacy',
+        code: 404,
+        metadata: {
+          input_endpoint_count: 1,
+          ineligibility_reasons: [{ reason: 'free-model-training-violation-by-account', endpoint_count: 1, configure_url: 'https://openrouter.ai/settings/privacy' }],
+          routing_funnel: [{ step: 'Initial Endpoints', endpoint_count: 1 }],
+          failed_routing_step: 'Filter by Guardrails',
+        },
+      },
+    }, 404);
+    assert.deepEqual([trains.kind, trains.status, trains.blocked], ['routing', 404, undefined]);
+    assert.equal(trains.message, "Provider has no host for this model that the account's privacy settings allow (HTTP 404). The hosts of this free model may train on what they are sent, and the settings of the OpenRouter account rule that out. Pick a model that is not free.");
+
+    const stop = (step, message = 'No endpoints found.') => failure({ error: { message, code: 404, metadata: { routing_funnel: [], failed_routing_step: step } } }, 404, { model: 'deepseek/deepseek-v4.1-flash' });
+    const policy = await stop('Filter by Data Policy', 'No endpoints found matching your data policy (Zero data retention). Configure: https://openrouter.ai/settings/privacy');
+    assert.equal(policy.message, "Provider has no host for this model that the account's data policy allows (HTTP 404). Pick another model, or change the policy in the OpenRouter account's settings.");
+    const hosts = await stop('Filter by Allowed Providers', 'No allowed providers are available for the selected model. Providers serving deepseek/deepseek-v4.1-flash-20260910: relace, open-inference, morph');
+    assert.equal(hosts.message, "Provider has no host for this model among those the account or the key allows (HTTP 404). Pick another model, or allow one of its hosts in the OpenRouter account's settings.");
+    const guard = await stop('Filter by Guardrails');
+    assert.equal(guard.message, "Provider has no host for this model that the account's guardrails and privacy settings allow (HTTP 404). Pick another model, or change them in the OpenRouter account's settings.");
+    // A step this code has not met keeps the provider's words, and is still not a wrong identifier.
+    const unmet = await stop('Filter by Something New', `Nothing left for ${API_KEY}.`);
+    assert.equal(unmet.message, 'Provider found no host it may use for this model (HTTP 404): the settings of the OpenRouter account or the key ruled every one out. Pick another model. OpenRouter said: Nothing left for [key].');
+    for (const error of [trains, policy, hosts, guard, unmet]) {
+      assert.equal(error.kind, 'routing');
+      assert.ok(error.message.startsWith('Provider '));
+      assert.ok(!error.message.includes('Check the model identifier'));
+    }
+
+    // A 404 that names no routing step is a model the provider does not have, as before.
+    for (const metadata of [undefined, {}, { failed_routing_step: '' }, { failed_routing_step: 7 }, { ineligibility_reasons: [{ reason: 'free-model-training-violation-by-account' }] }]) {
+      const missing = await failure({ error: { message: 'No such model', code: 404, metadata } }, 404, { model: 'vendor/gone' });
+      assert.equal(missing.kind, 'model', JSON.stringify(metadata));
+      assert.match(missing.message, /^Provider does not have the model "vendor\/gone" \(HTTP 404\)\. Check the model identifier\./);
+    }
+
+    // HTTP 429 from the model's host, on the allowance every OpenRouter user shares.
+    const shared = (extra = {}, headers = {}) => failure({
+      error: {
+        message: 'Provider returned error',
+        code: 429,
+        metadata: {
+          raw: 'google/gemma-4-31b-it:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations',
+          provider_name: 'Google AI Studio',
+          is_byok: false,
+          provider_error_code: '429',
+          limit_source: 'upstream_provider_shared_pool',
+          remedy_hint: 'Retry shortly, add your own provider key, or route to another provider.',
+          ...extra,
+        },
+      },
+    }, 429, { headers });
+    const pool = await shared();
+    assert.deepEqual([pool.kind, pool.retryAfter, pool.status], ['rate', null, 429]);
+    assert.equal(pool.message, "Provider's host for this model, Google AI Studio, is rate limiting the allowance that every OpenRouter user shares (HTTP 429). The key and its credit are not the cause. Run it again shortly, or pick another model.");
+    const timed = await shared({}, { 'retry-after': '20' });
+    assert.deepEqual([timed.kind, timed.retryAfter], ['rate', 20]);
+    assert.match(timed.message, /The key and its credit are not the cause\. Retry after 20 seconds\.$/);
+    // The host's name is the relay's text: anything that is not plainly a name is left out.
+    for (const name of [undefined, '', 7, '<script>alert(1)</script>', 'x'.repeat(41), `Host ${API_KEY}`, API_KEY, 'sk-or-v1-abcdef0123456789']) {
+      const unnamed = await shared({ provider_name: name });
+      assert.match(unnamed.message, /^Provider's host for this model is rate limiting the allowance/, String(name));
+      assert.ok(!unnamed.message.includes(API_KEY));
+      assert.ok(!unnamed.message.includes('sk-or-v1'));
+    }
+
+    // OpenAI answers 429 for an account that is out of credit too. That one is not a wait.
+    const quota = (error) => failure({ error }, 429, { headers: { 'retry-after': '12' }, provider: 'openai', model: 'gpt-6.1-sol' });
+    for (const error of [
+      { message: 'You exceeded your current quota, please check your plan and billing details.', type: 'insufficient_quota', code: 'insufficient_quota' },
+      { message: 'You exceeded your current quota, please check your plan and billing details.' },
+      { message: 'Quota.', code: 'insufficient_quota' },
+    ]) {
+      const spent = await quota(error);
+      assert.deepEqual([spent.kind, spent.retryAfter], ['credit', null], JSON.stringify(error));
+      assert.equal(spent.message, 'Provider account is out of credit or at its spending limit (HTTP 429). Add credit or raise the limit at OpenAI, then run again.');
+    }
+    // Requests sent too fast stay a wait.
+    const fast = await quota({ message: 'Rate limit reached for requests', type: 'requests', code: 'rate_limit_exceeded' });
+    assert.deepEqual([fast.kind, fast.retryAfter], ['rate', 12]);
+    assert.match(fast.message, /^Provider rate limit reached, or the account has no credit \(HTTP 429\)\. Retry after 12 seconds\. OpenAI said: Rate limit reached for requests$/);
+  });
+
   test('a key pasted into the model field does not come back in the 404 message', async () => {
     const pasted = `sk-proj-${'Q7w8'.repeat(10)}`;
     const error = await withFetch(() => json({ error: { message: 'model not found' } }, 404), () => providerReview({ provider: 'openai', model: pasted, apiKey: API_KEY, prepared: PREPARED })

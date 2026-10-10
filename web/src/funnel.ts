@@ -102,6 +102,9 @@ const MCP_CLIENTS = ['claude', 'codex', 'cursor'] as const;
 
 const MAX_PATH_CHARS = 80;
 
+/** Each day's total of page views that a browser asked for as a page. */
+export const BROWSER_VIEW = 'browser_view';
+
 function matchesDomain(host: string, domain: string): boolean {
   return host === domain || host.endsWith(`.${domain}`);
 }
@@ -209,5 +212,9 @@ export function countVisit(env: Env, ctx: ExecutionContext, request: Request, ur
   const pageview = pageviewEvent(url.pathname);
   if (!pageview) return;
   const source = visitSource(url, request.headers.get('referer'), env.SITE_ORIGIN);
-  count(env, ctx, ...(source ? [pageview, `ref:${source}`] : [pageview]));
+  // A browser going to a page says so in two headers that a script fetching the
+  // address does not send, whatever name the script gives itself. The page
+  // views above hold both; this total holds the browsers.
+  const navigated = destination === 'document' && request.headers.get('sec-fetch-mode') === 'navigate';
+  count(env, ctx, pageview, ...(source ? [`ref:${source}`] : []), ...(navigated ? [BROWSER_VIEW] : []));
 }

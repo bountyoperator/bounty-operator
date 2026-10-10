@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { CLIENT_EVENTS, count, countVisit, dayOf, isBot, isOwnCheck, mcpClient, pageviewEvent, refCodeBucket, referrerBucket, visitSource } from '../src/funnel.ts';
+import { BROWSER_VIEW, CLIENT_EVENTS, count, countVisit, dayOf, isBot, isOwnCheck, mcpClient, pageviewEvent, refCodeBucket, referrerBucket, visitSource } from '../src/funnel.ts';
 import worker from '../src/worker.ts';
 import { BROWSER_AGENT, SITE_ORIGIN, createContext, createEnv, funnelCounts } from './worker-helpers.mjs';
 import { CHECK_AGENT } from '../../scripts/check-agent.mjs';
@@ -166,6 +166,26 @@ test('countVisit skips everything that is not a person loading a page', async ()
   assert.deepEqual(await countedFor(visit('/guide', { 'Sec-Fetch-Dest': 'iframe' })), {});
   assert.deepEqual(await countedFor(visit('/guide', { 'Sec-Purpose': 'prefetch' })), {});
   assert.deepEqual(await countedFor(visit('/guide', {}, 'HEAD')), {});
+});
+
+test('a page a browser navigated to is counted in a total of its own', async () => {
+  const navigation = { 'Sec-Fetch-Dest': 'document', 'Sec-Fetch-Mode': 'navigate' };
+  assert.equal(BROWSER_VIEW, 'browser_view');
+  assert.deepEqual(await countedFor(visit('/guide', navigation)), { browser_view: 1, 'pv:/guide': 1 });
+  assert.deepEqual(await countedFor(visit('/?ref=x', navigation)), { browser_view: 1, 'pv:/': 1, 'ref:x': 1 });
+  assert.deepEqual(await countedFor(visit('/guide', navigation), htmlResponse(304)), { browser_view: 1, 'pv:/guide': 1 });
+
+  // A script that gives itself a browser's name sends neither header, or only one: a page view, and no more.
+  assert.deepEqual(await countedFor(visit('/guide')), { 'pv:/guide': 1 });
+  assert.deepEqual(await countedFor(visit('/guide', { 'Sec-Fetch-Dest': 'document' })), { 'pv:/guide': 1 });
+  assert.deepEqual(await countedFor(visit('/guide', { 'Sec-Fetch-Mode': 'navigate' })), { 'pv:/guide': 1 });
+  assert.deepEqual(await countedFor(visit('/guide', { 'Sec-Fetch-Dest': 'document', 'Sec-Fetch-Mode': 'cors' })), { 'pv:/guide': 1 });
+
+  // What is not a page view at all is not a browser's either.
+  assert.deepEqual(await countedFor(visit('/guide', { ...navigation, 'User-Agent': 'Googlebot/2.1' })), {});
+  assert.deepEqual(await countedFor(visit('/guide', { ...navigation, 'User-Agent': CHECK_AGENT })), {});
+  assert.deepEqual(await countedFor(visit('/guide', { ...navigation, 'Sec-Purpose': 'prefetch' })), {});
+  assert.deepEqual(await countedFor(visit('/missing', navigation), htmlResponse(404)), {});
 });
 
 test('count adds up per day and never rejects', async () => {

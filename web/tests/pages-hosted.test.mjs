@@ -221,7 +221,7 @@ test('every install line is the one that works today', () => {
   }
   assert.match(pages.get('index.html'), /href="\/mcp"/, 'the home page links to the install instructions');
   assert.ok(release.includes(remote) && release.includes(local));
-  assert.ok(readme.includes('pip install "git+https://github.com/bountyoperator/bounty-operator@v0.9.6"'));
+  assert.ok(readme.includes('pip install "git+https://github.com/bountyoperator/bounty-operator@v0.9.7"'));
 });
 
 test('the error codes the documents list are codes the service raises', async () => {

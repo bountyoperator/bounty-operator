@@ -683,6 +683,59 @@ function policyFailure(blocked, { status = 0, detail = '' } = {}) {
   );
 }
 
+// The step at which OpenRouter's routing ran out of hosts, as `metadata.failed_routing_step`
+// names it, and what the account had ruled out there. Read from its own answers on 10 October 2026.
+const ROUTING_STOPS = Object.freeze({
+  'Filter by Guardrails': Object.freeze({ allowed: "that the account's guardrails and privacy settings allow", change: 'change them in' }),
+  'Filter by Data Policy': Object.freeze({ allowed: "that the account's data policy allows", change: 'change the policy in' }),
+  'Filter by Allowed Providers': Object.freeze({ allowed: 'among those the account or the key allows', change: 'allow one of its hosts in' }),
+});
+// The reason a host of a free model is ruled out when the account does not let its requests be trained on.
+const TRAINS_ON_REQUESTS = 'free-model-training-violation-by-account';
+const UPSTREAM_SHARED_POOL = 'upstream_provider_shared_pool';
+
+/**
+ * Why a relay's routing left no host for a model that exists, or null for any
+ * other error. OpenRouter answers 404 for this and 400 for a model it does not
+ * know, so its 404 is never a wrong identifier.
+ */
+function routingStop(payload) {
+  const metadata = errorObject(payload)?.metadata;
+  const step = metadata && typeof metadata === 'object' ? metadata.failed_routing_step : undefined;
+  if (typeof step !== 'string' || step === '') return null;
+  const reasons = Array.isArray(metadata.ineligibility_reasons) ? metadata.ineligibility_reasons : [];
+  return { step, trains: reasons.some((entry) => entry && entry.reason === TRAINS_ON_REQUESTS) };
+}
+
+function routingFailure(stop, { status, label, said }) {
+  if (stop.trains) {
+    // Changing the setting is not offered: a host that trains on requests is no place for an unreported finding.
+    return new ProviderError(
+      `Provider has no host for this model that the account's privacy settings allow (HTTP ${status}). The hosts of this free model may train on what they are sent, and the settings of the ${label} account rule that out. Pick a model that is not free.`,
+      { status, kind: 'routing' },
+    );
+  }
+  if (Object.hasOwn(ROUTING_STOPS, stop.step)) {
+    const { allowed, change } = ROUTING_STOPS[stop.step];
+    return new ProviderError(`Provider has no host for this model ${allowed} (HTTP ${status}). Pick another model, or ${change} the ${label} account's settings.`, { status, kind: 'routing' });
+  }
+  return new ProviderError(`Provider found no host it may use for this model (HTTP ${status}): the settings of the ${label} account or the key ruled every one out. Pick another model.${said}`, { status, kind: 'routing' });
+}
+
+/** A host's name as a relay passes it along, or '' when it is not plainly a name. A key never comes back in it. */
+function hostName(value, apiKey) {
+  const name = typeof value === 'string' ? redact(value, apiKey) : '';
+  return /^[A-Za-z0-9][A-Za-z0-9 .&-]{0,39}$/.test(name) ? name : '';
+}
+
+/** OpenAI answers 429 both for requests sent too fast and for an account that is out of credit. This is the second. */
+function quotaSpent(payload) {
+  const error = errorObject(payload);
+  if (!error) return false;
+  if (error.code === 'insufficient_quota' || error.type === 'insufficient_quota') return true;
+  return typeof error.message === 'string' && error.message.startsWith('You exceeded your current quota');
+}
+
 async function httpFailure(response, selected, request) {
   const { status } = response;
   const { detail, payload } = await errorDetail(response, request.apiKey);
@@ -696,6 +749,9 @@ async function httpFailure(response, selected, request) {
     return new ProviderError(`Provider rejected the API key (HTTP ${status}). Check that the key belongs to ${selected.label} and is still active.${said}`, { status, kind: 'auth' });
   }
   if (status === 404) {
+    // The model is known and the account's own settings leave no host for it.
+    const stop = routingStop(payload);
+    if (stop) return routingFailure(stop, { status, label: selected.label, said });
     // A key pasted into the model field must not come back in the message.
     const named = redact(request.model, request.apiKey);
     return new ProviderError(`Provider does not have the model "${named}" (HTTP 404). Check the model identifier.${said}`, { status, kind: 'model' });
@@ -723,6 +779,19 @@ async function httpFailure(response, selected, request) {
     return new ProviderError(`Provider account has no credit (HTTP 402). Add credit at ${selected.label}, then run again.${said}`, { status, kind: 'credit' });
   }
   if (status === 429) {
+    const metadata = errorObject(payload)?.metadata;
+    if (metadata && typeof metadata === 'object' && metadata.limit_source === UPSTREAM_SHARED_POOL) {
+      // The model's host is limiting the allowance all of the relay's users draw on. Nothing about this key changes it.
+      const host = hostName(metadata.provider_name, request.apiKey);
+      const next = retryAfter ? ` Retry after ${retryAfter} seconds.` : ' Run it again shortly, or pick another model.';
+      return new ProviderError(
+        `Provider's host for this model${host ? `, ${host},` : ''} is rate limiting the allowance that every ${selected.label} user shares (HTTP 429). The key and its credit are not the cause.${next}`,
+        { status, kind: 'rate', retryAfter },
+      );
+    }
+    if (quotaSpent(payload)) {
+      return new ProviderError(`Provider account is out of credit or at its spending limit (HTTP 429). Add credit or raise the limit at ${selected.label}, then run again.`, { status, kind: 'credit' });
+    }
     const wait = retryAfter ? ` Retry after ${retryAfter} seconds.` : '';
     return new ProviderError(`Provider rate limit reached, or the account has no credit (HTTP 429).${wait}${said}`, { status, kind: 'rate', retryAfter });
   }

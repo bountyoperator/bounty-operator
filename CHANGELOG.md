@@ -1,5 +1,30 @@
 # Changelog
 
+## 0.9.7 — 2026-10-10
+
+Reviews
+
+- OpenRouter answers 404 when a model exists and the account's own settings
+  leave it no host: its privacy settings, its data policy or its list of
+  allowed hosts. The workbench read every 404 as a wrong model identifier.
+  It now says which setting ruled the hosts out. For a free model whose
+  hosts may train on what they are sent, on an account that does not allow
+  that, it says to pick a model that is not free.
+- A free model on OpenRouter runs on a request allowance its host shares
+  among all of OpenRouter's users. When that allowance is used up the
+  answer is HTTP 429, and the message now names the host and says that the
+  key and its credit are not the cause.
+- OpenAI answers 429 for an account that is out of credit as well as for
+  requests sent too fast. The two are now told apart: the first is not a
+  wait.
+
+Site and privacy
+
+- /your-model-your-key answers "Can I run it on a free model?".
+- The site keeps a daily total of the page views a browser navigated to,
+  read from two headers a browser sends when it opens a page. No page
+  sends anything new. /privacy lists it.
+
 ## 0.9.6 — 2026-10-10
 
 Account and billing

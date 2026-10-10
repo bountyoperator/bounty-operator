@@ -157,7 +157,8 @@ function report(rows, options, range, standing) {
   console.log(`Bounty Operator, last ${options.days} days (${range.first} to ${range.last} UTC, ${where})`);
   console.log(standingLine(standing));
 
-  printTable(`Page views: ${pageviews}`, pages, (_name, n) => percent(n, pageviews));
+  // Counted since 0.9.7: the page views a browser asked for as a page. The rest are scripts under a browser's name.
+  printTable(`Page views: ${pageviews}, of which a browser navigated to ${count('browser_view')} (counted since 0.9.7)`, pages, (_name, n) => percent(n, pageviews));
   printTable(`Referrers: ${sum(referrers)}`, referrers, (_name, n) => percent(n, sum(referrers)));
 
   const registers = count('register');
@@ -198,7 +199,7 @@ function report(rows, options, range, standing) {
   console.log(`\nMCP registries and monitors: ${count('mcp_crawler')} sessions, ${count('mcp_crawler_call')} tool calls`);
 
   const known = (event) => /^(pv|ref|review_ok|review_fail|review_withheld|mcp_call|mcp_client):/.test(event)
-    || ['register', 'login', 'review_fail', 'quota_hit', 'checkout_created', 'sub_active', 'mcp_session', 'mcp_limited', 'mcp_crawler', 'mcp_crawler_call'].includes(event);
+    || ['register', 'login', 'review_fail', 'quota_hit', 'checkout_created', 'sub_active', 'mcp_session', 'mcp_limited', 'mcp_crawler', 'mcp_crawler_call', 'browser_view'].includes(event);
   const clientEvents = [...sums].filter(([event]) => !known(event)).sort((a, b) => b[1] - a[1]);
   printTable('Client events', clientEvents);
 

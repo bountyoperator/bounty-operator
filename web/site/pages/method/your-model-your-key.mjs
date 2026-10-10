@@ -110,6 +110,10 @@ const FAQ_ITEMS = [
     a: 'The provider processes the request under its own terms and retention settings. Read them for the key you use, and run a review only on material you are allowed to share with that provider.',
   },
   {
+    q: 'Can I run it on a free model?',
+    a: 'On OpenRouter you can: type the model’s identifier in the Model field. Think twice with a finding nobody has reported. Some free models are served only by hosts that may train on what they are sent. OpenRouter lets an account rule those hosts out in its privacy settings, and a request to such a model then fails: the workbench says the account’s settings left no host for it. Leave that setting as it is and pick a model that is not free. A free model also runs on a request allowance its host shares among all of OpenRouter’s users, and a review fails while that allowance is used up.',
+  },
+  {
     q: 'Which key does Panel review use?',
     a: 'One OpenRouter key covers a whole panel: it reaches models from several labs, so two to four different models review the same files. A panel model on another provider takes that provider’s own key.',
   },
