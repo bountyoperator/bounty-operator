@@ -23,6 +23,7 @@ import { button, chip, closingBand, codeBlock, disclosure, faq, html, inline, ta
 import { breadcrumbsLd, faqPageLd } from '../../layout.mjs';
 import { DOCS_STYLES, docPage, facts } from './_shared.mjs';
 import { NOT_COUNTED } from '../../plans.mjs';
+import { walkthrough } from '../../walkthroughs.mjs';
 
 const PATH = '/mcp';
 const SERVER = 'bounty-operator';
@@ -541,6 +542,7 @@ const body = docPage({
   },
   lead: install,
   sections: [
+    { id: 'mcp-walkthrough', title: 'Watch the MCP workflow in 75 seconds.', label: 'Video walkthrough', body: walkthrough('mcp', 'mcp-walkthrough'), prose: false },
     { id: 'tools', title: 'The tools it exposes', label: 'Tools', body: tools, prose: false },
     { id: 'hosted', title: 'Core and hosted profiles', body: hosted, prose: false },
     { id: 'prompts', title: 'Three slash commands', label: 'Slash commands', body: prompts, prose: false },
@@ -567,10 +569,10 @@ export default {
   label: 'MCP setup',
   description:
     'Copy-paste install for the Bounty Operator MCP server in Claude Code, Codex and Cursor, with its tools, three prompts and token setup.',
-  styles: DOCS_STYLES,
+  styles: [...DOCS_STYLES, '/css/walkthrough.css'],
   scripts: ['/docs/tabs.mjs', '/docs/copy-ping.mjs'],
   jsonld: [breadcrumbsLd([{ name: 'MCP server', path: PATH }]), faqPageLd(FAQ)],
   // The day this page's own text last changed, not the legal pages' date.
-  lastmod: '2026-10-09',
+  lastmod: '2026-10-11',
   body,
 };

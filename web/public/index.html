@@ -31,6 +31,7 @@
 <script src="/theme.js"></script>
 <link rel="stylesheet" href="/css/base.css">
 <link rel="stylesheet" href="/css/home.css">
+<link rel="stylesheet" href="/css/walkthrough.css">
 <link rel="stylesheet" href="/css/workbench.css">
 <link rel="stylesheet" href="/css/runners.css">
 <link rel="stylesheet" href="/css/account.css">
@@ -99,6 +100,7 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
       <div class="home-hero__actions">
         <a class="btn btn--primary btn--lg" href="/?profile=report#workspace"><span class="btn__label">Review my report</span><span class="icon icon--arrow-right" aria-hidden="true"></span></a>
         <a class="btn btn--secondary btn--lg" href="#workspace" data-demo data-example=""><span class="btn__label">View example</span></a>
+        <a class="link" href="#product-video">Watch 54-second tour</a>
       </div>
       <p class="home-hero__free">Free: 1 review a day on your own model key. The example needs no account.</p>
     </div>
@@ -133,6 +135,25 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
   </div>
 </div>
 <div class="verdict-run" aria-hidden="true"><div class="verdict-run__track"><span class="verdict-run__word" data-verdict="submit">Submit</span><span class="verdict-run__word" data-verdict="rewrite-then-submit">Rewrite, then submit</span><span class="verdict-run__word" data-verdict="prove-first">Prove first</span><span class="verdict-run__word" data-verdict="hold-duplicate">Hold: duplicate</span><span class="verdict-run__word" data-verdict="drop">Drop</span><span class="verdict-run__word" data-verdict="submit">Submit</span><span class="verdict-run__word" data-verdict="rewrite-then-submit">Rewrite, then submit</span><span class="verdict-run__word" data-verdict="prove-first">Prove first</span><span class="verdict-run__word" data-verdict="hold-duplicate">Hold: duplicate</span><span class="verdict-run__word" data-verdict="drop">Drop</span></div></div>
+<section class="section section--tight wrap" id="product-video" aria-labelledby="product-video-title">
+  <header class="section-head"><div class="section-head__text"><h2 id="product-video-title">See a report review in 54 seconds.</h2><p class="lede">Follow the saved example from the draft to the cited code and downloadable packet.</p></div></header>
+  <figure class="walkthrough">
+<video class="walkthrough__video" controls playsinline preload="none" width="1920" height="1080" poster="/videos/product-tour.jpg" aria-label="Bounty Operator product walkthrough" aria-describedby="product-video-note">
+  <source src="/videos/product-tour.mp4" type="video/mp4">
+  <track kind="captions" src="/videos/product-tour.vtt" srclang="en" label="English">
+  <a href="/videos/product-tour.mp4">Download the Bounty Operator product walkthrough as an MP4.</a>
+</video>
+<figcaption class="walkthrough__note" id="product-video-note">54 seconds, no sound. Actual screens from the saved public example. Tessera Staking is an invented protocol. <a class="link" href="/videos/product-tour.mp4" download>Download video</a></figcaption>
+<details class="walkthrough__transcript">
+  <summary>Read the transcript</summary>
+  <div class="prose" aria-labelledby="product-video-title">
+
+    <ol><li><strong>00:00</strong> See what needs fixing before you submit. The tour opens the public Bounty Operator example.</li><li><strong>00:04</strong> Add your evidence: the draft report, source code, proof and known issues. The example contains four files.</li><li><strong>00:12</strong> Choose your review route: your own API key or a chat subscription. This tour loads the saved example rather than running another model review.</li><li><strong>00:18</strong> Read the verdict: rewrite, then submit. The reward-theft finding is supported, but the Critical impact claim is not.</li><li><strong>00:27</strong> Inspect the claim table. The review marks overstated claims and links its objections to the supplied file and line.</li><li><strong>00:35</strong> Open the cited source. Line 115 of TesseraStaking.sol rejects a payout above rewardReserve, limiting this payout to the reward reserve.</li><li><strong>00:43</strong> Download the review packet to keep the verdict, source citations and SHA-256 file manifest together.</li><li><strong>00:50</strong> Try the public example at bountyoperator.com and follow the evidence yourself.</li></ol>
+  </div>
+</details>
+</figure>
+  <p class="fine">Working in a coding agent? <a class="link" href="/mcp#mcp-walkthrough">Watch the MCP walkthrough</a>.</p>
+</section>
 
 <section class="section section--tight wrap" aria-labelledby="verdicts-title">
   <header class="section-head"><div class="section-head__text"><h2 id="verdicts-title">Every review ends in one of five verdicts.</h2><p class="lede">One decision, with the file and line behind it. The draft stays yours to rewrite.</p></div></header>

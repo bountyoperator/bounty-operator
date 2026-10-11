@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.9.12 — 2026-10-11
+
+Walkthroughs
+
+- A 54-second product tour follows the saved public example from its
+  input files to the verdict, source citation and downloadable packet.
+- A 75-second MCP walkthrough shows the Codex setup command, a report
+  review using the agent's own model, and recorded prepare_review and
+  build_packet responses from the public example.
+- Both videos have native controls, captions and a text transcript.
+  Playback starts on request; the videos use no third-party player.
+- Video assets support byte-range requests so the native player can seek.
+
 ## 0.9.11 — 2026-10-11
 
 Report check

@@ -1,0 +1,40 @@
+.walkthrough {
+  margin: var(--sp-24) 0 0;
+  min-width: 0;
+}
+
+.walkthrough__video {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  background: #09090a;
+  border: 1px solid var(--line-strong);
+}
+
+.walkthrough__note {
+  margin-top: var(--sp-12);
+  color: var(--muted);
+  font-size: var(--fs-14);
+  line-height: 1.6;
+}
+
+.walkthrough__transcript {
+  margin-top: var(--sp-16);
+  border-block: 1px solid var(--line);
+  padding-block: var(--sp-16);
+}
+
+.walkthrough__transcript summary {
+  cursor: pointer;
+  font-weight: 650;
+}
+
+.walkthrough__transcript .prose {
+  margin-top: var(--sp-24);
+}
+
+.walkthrough__transcript pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

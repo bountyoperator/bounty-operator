@@ -3,6 +3,7 @@
 
 import type { Call } from './env.ts';
 import { countVisit } from './funnel.ts';
+import { videoRange } from './video-range.ts';
 
 /** Serves a file from the assets directory, or the 404 page when there is none. */
 export async function serveAsset({ env, ctx, request, url }: Call): Promise<Response> {
@@ -13,7 +14,7 @@ export async function serveAsset({ env, ctx, request, url }: Call): Promise<Resp
     });
   }
 
-  const asset = await env.ASSETS.fetch(request);
+  const asset = videoRange(await env.ASSETS.fetch(request), request, url.pathname);
   // The not-found page asked for by its own address is still a not-found answer.
   const response = url.pathname === '/404' && asset.status === 200 ? new Response(asset.body, { status: 404, headers: asset.headers }) : asset;
   countVisit(env, ctx, request, url, response);

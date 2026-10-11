@@ -31,6 +31,7 @@
 <script src="/theme.js"></script>
 <link rel="stylesheet" href="/css/base.css">
 <link rel="stylesheet" href="/css/docs.css">
+<link rel="stylesheet" href="/css/walkthrough.css">
 <link rel="modulepreload" href="/tools/ping.mjs" fetchpriority="low">
 <script type="module" src="/field.mjs" fetchpriority="low"></script>
 <script type="module" src="/docs/tabs.mjs" fetchpriority="low"></script>
@@ -206,11 +207,28 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
 <div class="docs-body">
 <nav class="docs-toc" aria-label="On this page">
 <p class="meta">On this page</p>
-<ul><li><a href="#tools">Tools</a></li><li><a href="#hosted">Core and hosted profiles</a></li><li><a href="#prompts">Slash commands</a></li><li><a href="#skills">Skills and plugin</a></li><li><a href="#immunefi">Immunefi Studio</a></li><li><a href="#token">Account token</a></li><li><a href="#permissions">Permissions</a></li><li><a href="#errors">Failed calls</a></li><li><a href="#faq">Questions</a></li></ul>
+<ul><li><a href="#mcp-walkthrough">Video walkthrough</a></li><li><a href="#tools">Tools</a></li><li><a href="#hosted">Core and hosted profiles</a></li><li><a href="#prompts">Slash commands</a></li><li><a href="#skills">Skills and plugin</a></li><li><a href="#immunefi">Immunefi Studio</a></li><li><a href="#token">Account token</a></li><li><a href="#permissions">Permissions</a></li><li><a href="#errors">Failed calls</a></li><li><a href="#faq">Questions</a></li></ul>
 </nav>
 <div class="docs-content">
 
-<section class="docs-section" aria-labelledby="tools">
+<section class="docs-section" aria-labelledby="mcp-walkthrough">
+<h2 class="docs-section__title" id="mcp-walkthrough">Watch the MCP workflow in 75 seconds.</h2>
+<figure class="walkthrough">
+<video class="walkthrough__video" controls playsinline preload="none" width="1920" height="1080" poster="/videos/mcp-walkthrough.jpg" aria-label="Bounty Operator MCP walkthrough" aria-describedby="mcp-video-note">
+  <source src="/videos/mcp-walkthrough.mp4" type="video/mp4">
+  <track kind="captions" src="/videos/mcp-walkthrough.vtt" srclang="en" label="English">
+  <a href="/videos/mcp-walkthrough.mp4">Download the Bounty Operator MCP walkthrough as an MP4.</a>
+</video>
+<figcaption class="walkthrough__note" id="mcp-video-note">75 seconds, no sound. Recorded MCP calls with the public, invented Tessera Staking example. Your agent’s normal model costs apply. <a class="link" href="/videos/mcp-walkthrough.mp4" download>Download video</a></figcaption>
+<details class="walkthrough__transcript">
+  <summary>Read the transcript</summary>
+  <div class="prose" aria-labelledby="mcp-walkthrough">
+<p>Codex setup command:</p><pre><code>codex mcp add bounty-operator --url https://bountyoperator.com/api/mcp</code></pre>
+    <ol><li><strong>00:00</strong> Keep the review in your coding agent: connect the endpoint, challenge a draft, then keep the evidence packet.</li><li><strong>00:06</strong> For Codex, add the remote endpoint with the terminal command below. No local server package is needed. Core report reviews require no Bounty Operator account or provider key.</li><li><strong>00:17</strong> Ask your agent: Use bounty-operator to challenge draft-report.md against src/TesseraStaking.sol and the supplied proof and programme rules. Answer the prepared request, then build the packet. The example sends four public files and programme context. The remote endpoint receives the file text your agent sends.</li><li><strong>00:28</strong> prepare_review returns a privacy check, file hashes and the review request. Your agent’s own model answers that request. The captured response prepared four files with no privacy findings. The screen shows one manifest entry: TesseraStaking.sol, 5,704 bytes and 152 lines, with its SHA-256 hash.</li><li><strong>00:40</strong> The Codex review says rewrite, then submit: reward theft is supported; principal theft and permanent principal lock are not. It cites TesseraStaking.sol lines 110–118. claim() rejects a payout above rewardReserve. The synthetic programme rules classify theft of unclaimed rewards as Medium. This capture reviewed the source; it did not rerun the supplied test.</li><li><strong>00:53</strong> build_packet checks citation locations and creates a Markdown packet. The captured result has ok: true, verdict: rewrite-then-submit and an empty referenceProblems list. It retains the four-file manifest and SHA-256 hashes. Valid citation locations do not by themselves prove a vulnerability.</li><li><strong>01:07</strong> Keep your workflow and the evidence. This core review uses your agent’s own model, with no Bounty Operator account. Your agent’s normal model costs apply. Hosted reviews are a separate route. Setup is at bountyoperator.com/mcp.</li></ol>
+  </div>
+</details>
+</figure>
+</section><section class="docs-section" aria-labelledby="tools">
 <h2 class="docs-section__title" id="tools">The tools it exposes</h2>
 
 <div class="prose">

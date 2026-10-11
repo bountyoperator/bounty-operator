@@ -38,8 +38,9 @@ import { reportSlip } from '../social/example.mjs';
 import { IMMUNEFI, LEADERBOARDS, VERDICTS } from './method/_shared.mjs';
 import { BENCH_TEASER } from './benchmark/_teaser.mjs';
 import { AGENT_TICK, CHAT_TICK, RENEWAL, WHY_PAY } from '../plans.mjs';
+import { walkthrough } from '../walkthroughs.mjs';
 
-const LASTMOD = '2026-10-09';
+const LASTMOD = '2026-10-11';
 const DEV_BUILD = process.argv.includes('--dev');
 
 // ---------------------------------------------------------------------------
@@ -117,6 +118,7 @@ const hero = html`
       <div class="home-hero__actions">
         ${button({ label: 'Review my report', href: '/?profile=report#workspace', variant: 'primary', size: 'lg', iconEnd: 'arrow-right' })}
         ${button({ label: 'View example', href: '#workspace', variant: 'secondary', size: 'lg', attrs: { 'data-demo': true, 'data-example': '' } })}
+        <a class="link" href="#product-video">Watch 54-second tour</a>
       </div>
       <p class="home-hero__free">Free: 1 review a day on your own model key. The example needs no account.</p>
     </div>
@@ -237,6 +239,11 @@ const questions = html`
 
 const body = html`
 ${hero}
+<section class="section section--tight wrap" id="product-video" aria-labelledby="product-video-title">
+  ${sectionHeading({ title: 'See a report review in 54 seconds.', id: 'product-video-title', lede: 'Follow the saved example from the draft to the cited code and downloadable packet.' })}
+  ${walkthrough('product', 'product-video-title')}
+  <p class="fine">Working in a coding agent? <a class="link" href="/mcp#mcp-walkthrough">Watch the MCP walkthrough</a>.</p>
+</section>
 ${verdicts}
 ${workbenchSection()}
 ${BENCH_TEASER}
@@ -248,6 +255,7 @@ ${questions}`;
 const unique = (items) => [...new Set(items)];
 const styles = unique([
   '/css/home.css',
+  '/css/walkthrough.css',
   ...lists(workbenchModule, 'styles'),
   ...lists(accountModule, 'styles'),
   ...(publicFile('/css/workbench.css') ? ['/css/workbench.css'] : []),
