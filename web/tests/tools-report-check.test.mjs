@@ -399,7 +399,7 @@ describe('report check', () => {
     assert.ok(lines.includes('- [x] Title states mechanism and consequence'));
     assert.ok(lines.includes('- [ ] Severity stated once and consistent (flagged): Severity is given as two levels on one line.'));
     assert.ok(lines.includes('  - L3: `Severity: Medium or High`'));
-    assert.ok(lines.includes('  - Fix: State one severity, at the row the body argues, and remove every other level.'));
+    assert.ok(lines.includes('  - Fix: State one severity at the row the body argues, and check the number and chosen metrics when a CVSS score differs from its vector.'));
     assert.ok(lines.includes('- [ ] Pinned revision (missing): No commit hash found.'));
     assert.equal(lines.filter((line) => /^- \[[ x]\] /.test(line)).length, CHECKS.length);
     // A backtick in a quoted line cannot break out of its code span.

@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.9.11 — 2026-10-11
+
+Report check
+
+- The severity check compares an explicit CVSS 3.1 base vector with a
+  labelled score on the same line and flags mismatches, missing metrics
+  and repeated metrics. It runs locally and uses FIRST's scoring formula.
+- CVSS stays optional. Metric choices, other CVSS versions, Temporal and
+  Environmental scores, and ambiguous score/vector pairs need manual review.
+  The checker does not infer a programme severity or change the draft.
+
 ## 0.9.10 — 2026-10-10
 
 Site

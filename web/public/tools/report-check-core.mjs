@@ -7,6 +7,7 @@
 
 import { splitLines } from '../review-core.mjs';
 import { scanFile } from './secret-check-core.mjs';
+import { inspectCvss } from './cvss31-core.mjs';
 
 /**
  * @typedef {'pass' | 'missing' | 'flagged'} Status
@@ -103,8 +104,8 @@ export const CHECKS = Object.freeze([
     id: 'severity',
     label: 'Severity stated once and consistent',
     source: 'Severity against the written scale',
-    test: 'One severity level. A range, or two different levels, is flagged.',
-    fix: 'State one severity, at the row the body argues, and remove every other level.',
+    test: 'One severity level. A range or conflicting levels are flagged. An explicit CVSS 3.1 base vector is checked against a labelled score on the same line; metric choices are not verified.',
+    fix: 'State one severity at the row the body argues, and check the number and chosen metrics when a CVSS score differs from its vector.',
   },
   {
     id: 'roles',
@@ -448,7 +449,11 @@ function checkSeverity(lines) {
     }
   }
 
-  if (!statements.length) return result('missing', 'No severity statement found.');
+  const cvss = inspectCvss(lines);
+  if (cvss.issues.length) {
+    return result('flagged', 'CVSS vector or score needs correction; this check does not choose severity.', cvss.issues);
+  }
+  if (!statements.length) return result('missing', 'No severity statement found.', cvss.notes);
 
   const ranges = statements.filter((statement) => new Set(statement.levels).size > 1);
   if (ranges.length) {
@@ -462,7 +467,8 @@ function checkSeverity(lines) {
       statements.map((statement) => quoteOf(statement.line, statement.levels[0])),
     );
   }
-  return result('pass', `Severity stated: ${levels[0]}.`, [quoteOf(statements[0].line)]);
+  const comparison = cvss.checked ? ' Supplied CVSS 3.1 Base score matches its vector; metric choices are not verified.' : '';
+  return result('pass', `Severity stated: ${levels[0]}.${comparison}`, [...cvss.notes, quoteOf(statements[0].line)]);
 }
 
 // ---------------------------------------------------------------------------

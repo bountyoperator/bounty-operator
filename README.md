@@ -93,7 +93,7 @@ each client: [bountyoperator.com/mcp](https://bountyoperator.com/mcp) and
 Python 3.10 or newer. No dependencies.
 
 ```bash
-pip install "git+https://github.com/bountyoperator/bounty-operator@v0.9.10"
+pip install "git+https://github.com/bountyoperator/bounty-operator@v0.9.11"
 bounty-kit agent-pack ./agent-pack.md --target "Example Protocol" --program "Example bounty"
 ```
 
@@ -156,7 +156,7 @@ the same check on your own machine.
 
 | Tool | What it does | CLI |
 | --- | --- | --- |
-| [Report check](https://bountyoperator.com/tools/report-check) | Seventeen checks on a pasted draft: pinned commit, quoted impact row, inline proof, trusted roles, testing on a live network, AI-use disclosure, placeholders and leftover secrets. | |
+| [Report check](https://bountyoperator.com/tools/report-check) | Seventeen checks on a pasted draft, including pinned commit, inline proof, CVSS 3.1 score/vector consistency, AI-use disclosure and leftover secrets. | |
 | [Packet verifier](https://bountyoperator.com/tools/verify) | Recomputes the SHA-256 manifest of a review packet against your files. | |
 | [Secret check](https://bountyoperator.com/tools/secret-check) | Scans a PoC or gist for keys, wallet keys and private report links before you publish it. | `bounty-kit sanitize` |
 | [Acceptance rates](https://bountyoperator.com/tools/acceptance-rates) | Accepted and judged counts by bug class across 1,032 findings from 10 public Sherlock contests. | `bounty-kit pattern-stats` |

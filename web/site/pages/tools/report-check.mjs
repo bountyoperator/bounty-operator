@@ -38,6 +38,10 @@ const QUESTIONS = [
     q: 'Which report formats does it read?',
     a: 'Markdown and plain text. Immunefi, Cantina, Sherlock and HackerOne reports all carry these parts, under different headings. The checks look for the content, so the heading names do not matter.',
   },
+  {
+    q: 'Does it check CVSS scores?',
+    a: 'The severity check compares an explicit CVSS:3.1 base vector with a labelled score on the same line, for example “CVSS score: 9.8 (CVSS:3.1/…)” or “CVSS:3.1/… = 9.8”. It uses FIRST’s CVSS 3.1 formula. It checks the arithmetic, not whether the metrics describe the finding. A report does not need CVSS. Other versions and Temporal or Environmental scores are left for manual review.',
+  },
 ];
 
 // Before a draft is pasted the list shows every check, not yet run.
@@ -132,6 +136,7 @@ ${panel}
 <p class="lede">Each result is one of three states. <strong>Pass</strong>: the expected text is on the page, with the line that carries it. <strong>Missing</strong>: no matching evidence is stated, or the draft says the check was not done. <strong>Flagged</strong>: a line was found that a triager closes on, quoted so you can fix it.</p>
 </div>
 ${checkTable}
+<p class="muted">CVSS arithmetic follows <a class="link" href="https://www.first.org/cvss/v3.1/specification-document">FIRST’s CVSS 3.1 specification</a>; the check does not validate the chosen metrics.</p>
 </section>
 
 <section class="section section--tight wrap" aria-labelledby="phrases-heading">
@@ -181,6 +186,6 @@ export default {
   styles: TOOL_STYLES,
   scripts: ['/tools/report-check.mjs'],
   jsonld: [toolCrumbsLd(PATH), faqPageLd(QUESTIONS)],
-  lastmod: '2026-10-07',
+  lastmod: '2026-10-11',
   body,
 };
