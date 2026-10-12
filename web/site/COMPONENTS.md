@@ -543,7 +543,7 @@ Page scripts do not need to wire any of these.
 
 ## The field and the figures
 
-- **The field.** The layout loads `/field.mjs` on every page. For each `.page-field` it builds `div.field-bg` (hidden from assistive technology) with four layers: `canvas.field-bg__text`, `canvas.field-bg__shade`, any number of `i.field-bg__strike` and `div.field-bg__fade`. The name is `field-bg` because `.field` is the form field wrapper. The text and the shade are drawn once; the shade drifts by a CSS transform and a strike is animated with the Web Animations API. Nothing is drawn per frame. With the page's motion off the shade is still and two lines are already struck; it listens for `motionchange`. A page needs only the class `.page-field` on its head.
+- **The page heading.** `.page-field` supplies the shared charcoal surface. The legacy `/field.mjs` canvas renderer is retained for compatibility but is not loaded by the layout. Keep decorative code and animated marks out of page headings.
 - **`verdictLabel(id)`** (components.mjs): the printed name of a verdict, for places that are not a chip.
 - **`.home-stats`**: a list of `a.home-stats__item`, each a figure (`.home-stats__n`, set in the text colour) and a caption (`.home-stats__t`).
 - **`.bench-teaser__bar`**: an inline SVG, `viewBox="0 0 100 4"`, whose one `rect` covers the track from the score to 100. An SVG attribute, because the CSP refuses a style attribute.

@@ -28,6 +28,8 @@ motion tied to an interaction. Do not add hand-drawn circles, decorative
 tickers, floating paper stacks or animated glows around him. Give the mascot
 room; keep supporting figures quieter than the product promise. The footer
 uses the shared mark and useful navigation, without a second giant wordmark.
+Supporting page headings use the same plain charcoal background; decorative
+code and random red marks do not sit behind their text.
 
 ## Assets and provenance
 

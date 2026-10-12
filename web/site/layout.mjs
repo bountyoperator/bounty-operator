@@ -245,7 +245,7 @@ function head(page, site) {
   const canonical = indexable ? absoluteUrl(page.path) : null;
   const robots = page.robots ?? (page.dev ? 'noindex, nofollow' : null);
   const styles = ['/css/base.css', ...(page.styles ?? [])];
-  const scripts = ['/field.mjs', ...(page.scripts ?? [])];
+  const scripts = page.scripts ?? [];
   const preloads = site.preloadsFor ? site.preloadsFor(page) : (page.preload ?? []);
 
   return html`<head>

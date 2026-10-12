@@ -180,8 +180,8 @@ test('renderPage emits the head contract and no markup the CSP would block', () 
   assert.equal([...markup.matchAll(/<meta name="theme-color"/g)].length, 1);
   assert.doesNotMatch(markup, /data-theme-toggle|theme-toggle/);
   assert.match(markup, /<script src="\/theme\.js"><\/script>/);
-  // The moving field is a module of its own, on every page, ahead of the page's scripts.
-  assert.ok(markup.indexOf('src="/field.mjs"') > 0 && markup.indexOf('src="/field.mjs"') < markup.indexOf('src="/tools/report-check.mjs"'));
+  // Shared headings stay quiet; only the page's functional modules are loaded.
+  assert.doesNotMatch(markup, /src="\/field\.mjs"/);
   assert.match(markup, /<link rel="stylesheet" href="\/css\/base\.css">\n<link rel="stylesheet" href="\/css\/tools\.css">/);
   // The page's modules load at low priority, so they do not compete with what the first paint needs.
   assert.match(markup, /<link rel="modulepreload" href="\/parse\.mjs" fetchpriority="low">/);
