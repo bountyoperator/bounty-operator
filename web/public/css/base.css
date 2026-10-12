@@ -3,13 +3,10 @@
 /*
   Bounty Operator: base stylesheet
 
-  "Inspection office". A finding goes through inspection before it goes to a
-  triager, and the verdict comes back as a stamp. The page is black with bone
-  print and one vermilion ink for what you act on; verdicts and severities are
-  stamped in ink, code sits on carbon, and a paper sheet (.theme-light) may
-  lie on the page. Corners are square, fields are ruled, every printed label
-  is set in condensed caps. Every colour, size and radius used anywhere on
-  the site comes from the tokens in section 1.
+  Spec's inspection desk. Charcoal, cream and coral match the mascot film;
+  the blue jacket supplies the supporting colour. Verdicts keep their own
+  semantic inks, source sits on carbon, and evidence is printed on paper.
+  The character brings the personality; forms and review results stay clear.
 
   Reference with examples: web/site/COMPONENTS.md
 
@@ -172,6 +169,11 @@
    ========================================================================== */
 
 :root {
+  /* Spec's film palette. These also define the original mascot and icon. */
+  --spec-cream: #f6e7cc;
+  --spec-coral: #f16343;
+  --spec-ink: #18232d;
+  --spec-blue: #284b73;
   /* Type. Archivo prints headings, labels, buttons and stamps. Running text
      uses the system face, so it renders before the font arrives. */
   --font-display: "Archivo", "Archivo fallback", system-ui, sans-serif;
@@ -269,44 +271,43 @@
   --icon-check-ink: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2316161b' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E");
 }
 
-/* The page is black. Type is bone white, and one hot ink does the marking:
-   the vermilion of a seal and of a red pen. .theme-dark states the same
-   palette on one element. */
+/* The film's charcoal and cream, with a brighter coral for small link text.
+   .theme-dark states the same palette on one element. */
 :root,
 .theme-dark {
   color-scheme: dark;
 
   /* The page and what lies on it */
-  --bg: #09090a;
-  --surface: #121214;
-  --surface-2: #19191c;
-  --surface-3: #232327;
-  --line: #26262b; /* hairline */
-  --line-strong: #43434b;
-  --line-control: #7c7c86; /* 3:1 on every surface: form controls, secondary buttons */
-  --rule: #3a3a41; /* frames and part rules */
+  --bg: #18232d;
+  --surface: #202d38;
+  --surface-2: #273642;
+  --surface-3: #30424e;
+  --line: #344550; /* hairline */
+  --line-strong: #52616c;
+  --line-control: #98a3ad; /* at least 3:1 on every surface */
+  --rule: #52616c; /* frames and part rules */
 
   /* The field: what a page head is set on. The page itself, under the moving texture. */
-  --field: #09090a;
-  --on-field: #f4f1ea;
-  --on-field-muted: #a9a69e;
-  --field-rule: #26262b;
-  --stock: #ff4d2e; /* the hot ink as a ground: current step, highlighted plan */
+  --field: #18232d;
+  --on-field: #f6e7cc;
+  --on-field-muted: #bcc3c4;
+  --field-rule: #344550;
+  --stock: #f16343; /* Spec's shell: current step, highlighted plan */
   --on-stock: #09090a;
   --on-stock-muted: #3d0f04;
   --copy: #2a2a2f; /* the second sheet under the slip */
 
   /* Type */
-  --text: #f4f1ea;
-  --muted: #a9a69e;
-  --placeholder: #8b8982;
+  --text: #f6e7cc;
+  --muted: #bcc3c4;
+  --placeholder: #aab4bb;
 
   /* The hot ink: links, focus, what the review marked. */
-  --accent: #ff6a4d;
-  --accent-hover: #ff8f78;
+  --accent: #ff987f;
+  --accent-hover: #ffb5a2;
   /* The action you take prints solid. */
-  --accent-solid: #ff4d2e;
-  --accent-solid-hover: #ff6a4d;
+  --accent-solid: #f16343;
+  --accent-solid-hover: #ff8063;
   --on-accent: #09090a;
   --focus: #f4f1ea;
   /* The heat a giant figure is set in: critical, high, medium. */
@@ -319,14 +320,14 @@
   --gap-bg: #f2c5521f;
 
   /* Severity and state. Critical is a rose red, clear of the vermilion ink. */
-  --sev-crit: #ff5d7a;
+  --sev-crit: #ff8498;
   --sev-high: #ff9d5c;
   --sev-med: #f2c552;
   --sev-low: #6fd39b;
   --sev-info: #8fb2ff;
   --sev-none: #a5a3ad;
   --ok: #6fd39b;
-  --danger: #ff5d7a;
+  --danger: #ff8498;
 
   --chip-fill: 10%;
   --chip-line: 100%;
@@ -341,10 +342,10 @@
   --code-ok: #6fd39b;
 
   /* Brand mark: a tile of the hot ink, the b in black, the slash in bone */
-  --brand-tile: #ff4d2e;
-  --brand-ring: #ff4d2e;
-  --brand-glyph: #09090a;
-  --brand-slash: #f4f1ea;
+  --brand-tile: #f6e7cc;
+  --brand-ring: #f6e7cc;
+  --brand-glyph: #18232d;
+  --brand-slash: #f6e7cc;
 
   /* Depth */
   --shadow-card: none;
@@ -376,7 +377,7 @@
   --on-field: #121214;
   --on-field-muted: #57554f;
   --field-rule: #121214;
-  --stock: #ff4d2e;
+  --stock: #f16343;
   --on-stock: #09090a;
   --on-stock-muted: #3d0f04;
   --copy: #2a2a2f;
@@ -417,10 +418,10 @@
   --code-flag: #f2c552;
   --code-ok: #6fd39b;
 
-  --brand-tile: #ff4d2e;
-  --brand-ring: #ff4d2e;
-  --brand-glyph: #09090a;
-  --brand-slash: #f4f1ea;
+  --brand-tile: #f6e7cc;
+  --brand-ring: #f6e7cc;
+  --brand-glyph: #18232d;
+  --brand-slash: #f6e7cc;
 
   --shadow-card: none;
   --shadow: 0 1px 1px #16161b14, 0 10px 24px -14px #16161b47;
@@ -3340,6 +3341,13 @@ button.ref:hover {
   flex: none;
   width: 2rem;
   height: 2rem;
+}
+
+.site-footer__mascot {
+  margin-top: var(--sp-16);
+  color: var(--accent);
+  font-family: var(--font-display);
+  font-weight: 700;
 }
 
 .brand__tile {

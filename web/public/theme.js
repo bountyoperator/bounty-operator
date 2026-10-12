@@ -2,7 +2,7 @@
 // forbids inline script), so [data-js] and [data-motion] are on <html> before
 // the first paint.
 //
-// The site has one look, the black page, so there is no theme to choose. A
+// The site has one look, the charcoal page, so there is no theme to choose. A
 // choice kept by an earlier version of the site (localStorage "bo-theme") is
 // removed here.
 //

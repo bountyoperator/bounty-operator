@@ -20,9 +20,9 @@
   position: relative;
   isolation: isolate;
   display: grid;
-  grid-template-columns: 590px minmax(0, 1fr);
+  grid-template-columns: 568px minmax(0, 1fr);
   grid-template-rows: minmax(0, 1fr) 72px;
-  column-gap: 44px;
+  column-gap: 38px;
   width: 1200px;
   height: 630px;
   padding: 44px 52px 0 60px;
@@ -41,7 +41,7 @@
   width: 980px;
   height: 820px;
   border-radius: 50%;
-  background: radial-gradient(closest-side, #ff4d2e66 0%, #ff5a1f29 46%, transparent 100%);
+  background: none;
 }
 
 /* The field: report and code lines, quiet behind the words and clearer toward the slip. */
@@ -82,8 +82,8 @@
 
 .social-card__title {
   margin-top: auto;
-  margin-bottom: 46px;
-  font-size: 61px;
+  margin-bottom: 20px;
+  font-size: 57px;
   font-stretch: 110%;
   font-weight: 820;
   line-height: 1.04;
@@ -95,7 +95,22 @@
    claim, the stamps, the line and the verdict. */
 .social-card__shot {
   align-self: center;
-  margin-bottom: 14px;
+  margin-bottom: 0;
+  overflow: hidden;
+  border-radius: 24px 24px 24px 6px;
+}
+
+.social-card__shot img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.social-card__lede {
+  margin-bottom: 35px;
+  color: var(--muted);
+  font-size: 20px;
+  line-height: 1.5;
 }
 
 .social-card__shot .slip {
@@ -116,7 +131,7 @@
   margin-inline: -60px -52px;
   padding-inline: 60px 52px;
   border-top: 1px solid var(--line-strong);
-  background: #09090ae6;
+  background: var(--bg);
   color: var(--text);
   font-family: var(--font-display);
   font-size: 19px;

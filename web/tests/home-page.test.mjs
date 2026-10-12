@@ -243,10 +243,10 @@ test('the hero shows the bundled example the workbench opens, as the parser read
   assert.match(lines[location.start - 1], /function stake\(/);
 });
 
-test('the hero shows the example as a paper slip on the field, labelled as an example', () => {
-  const hero = main.slice(0, main.indexOf('id="how"'));
-  assert.match(hero, /<div class="home-top page-field">/);
-  assert.match(hero, /<figure class="home-shot">\n<div class="slip theme-light">/);
+test('Spec introduces the saved example, which stays labelled and tied to its evidence', () => {
+  const hero = main.slice(0, main.indexOf('id="verdicts-title"'));
+  assert.match(hero, /<div class="home-top">/);
+  assert.match(hero, /<figure class="home-shot home-shot--still">\n<div class="slip theme-light">/);
   assert.match(hero, /data-status="example"/);
   assert.match(textOf(hero), /Saved example\. Tessera Staking is an invented protocol\./);
   assert.match(textOf(hero), /TesseraStaking\.sol/);
@@ -327,19 +327,18 @@ test('the five verdicts are listed with what each one means', () => {
   assert.match(textOf(section), /Every review ends in one of five verdicts\./);
 });
 
-test('the social card is a 1200 x 630 document drawn from the same example', async () => {
+test('the social card is a 1200 x 630 document using the shared Spec identity', async () => {
   assert.deepEqual(CARD, { width: 1200, height: 630 });
   const card = cardDocument();
   assert.match(card, /<html lang="en">/);
   assert.match(card, /<span class="pen">the hole<svg class="pen__ring"/);
   assert.match(textOf(card), /Find the hole in your report before the triager does\./);
-  assert.match(card, /class="home-shot home-shot--still"/);
-  // The builder's results read as the builder's: one phrase, not a list of product facts.
-  assert.match(textOf(card), /Built by Tradi3: most valid Criticals in ENS, 2nd of 133 in Firelight/);
-  assert.match(textOf(card), /Operator: US\$10 a week/);
+  assert.match(card, /brand\/spec-960\.webp/);
+  assert.match(textOf(card), /Spec\. A bug with standards\./);
+  assert.match(textOf(card), /bountyoperator\.com/);
   assert.doesNotMatch(card, /\sstyle="/);
 
-  const png = await readFile(path.join(WEB_DIR, 'public', 'social-v5.png'));
+  const png = await readFile(path.join(WEB_DIR, 'public', 'social-spec-v1.png'));
   assert.equal(png.readUInt32BE(16), CARD.width);
   assert.equal(png.readUInt32BE(20), CARD.height);
 });

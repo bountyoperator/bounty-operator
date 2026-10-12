@@ -1,6 +1,18 @@
 import { html } from './components.mjs';
 
 const CLIPS = {
+  spec: {
+    file: 'spec-intro',
+    label: 'Meet Spec: a bug with standards',
+    square: true,
+    note: '20 seconds, with narration and captions. The review uses the public, invented Tessera Staking example.',
+    transcript: [
+      ['00:00', 'Critical? Spec has questions.'],
+      ['00:04', 'Bounty Operator checks your bug report against the code and proof before you submit.'],
+      ['00:11', 'In this example, rewards are affected. Principal is untouched.'],
+      ['00:16', 'Try the public example at bounty operator dot com.'],
+    ],
+  },
   product: {
     file: 'product-tour',
     label: 'Bounty Operator product walkthrough',
@@ -38,10 +50,10 @@ export function walkthrough(kind, headingId) {
   if (!clip) throw new Error(`Unknown walkthrough: ${kind}`);
   const base = `/videos/${clip.file}`;
   return html`<figure class="walkthrough">
-<video class="walkthrough__video" controls playsinline preload="none" width="1920" height="1080" poster="${base}.jpg" aria-label="${clip.label}" aria-describedby="${kind}-video-note">
+<video class="walkthrough__video${clip.square ? ' walkthrough__video--square' : ''}" controls playsinline preload="none" width="${clip.square ? 1080 : 1920}" height="1080" poster="${base}.jpg" aria-label="${clip.label}" aria-describedby="${kind}-video-note">
   <source src="${base}.mp4" type="video/mp4">
   <track kind="captions" src="${base}.vtt" srclang="en" label="English">
-  <a href="${base}.mp4">Download the ${clip.label} as an MP4.</a>
+  <a href="${base}.mp4">Download video: ${clip.label}.</a>
 </video>
 <figcaption class="walkthrough__note" id="${kind}-video-note">${clip.note} <a class="link" href="${base}.mp4" download>Download video</a></figcaption>
 <details class="walkthrough__transcript">

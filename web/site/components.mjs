@@ -136,19 +136,25 @@ function slug(text) {
 // ---------------------------------------------------------------------------
 
 /**
- * The "b/" mark as outlined paths on a 64 x 64 grid. scripts/build-icons.mjs
- * draws icon.svg and the PNG icons from the same geometry.
+ * Spec at icon size: coral shell, sceptical eyes, bent antennae and blue jacket.
+ * The header and scripts/build-icons.mjs share this geometry and palette.
  */
 export const BRAND_MARK = {
   viewBox: '0 0 64 64',
-  tileRadius: 9,
-  stem: 'M12.5 15h6.5v31.5h-6.5z',
-  bowl: 'M25.5 25a10.75 10.75 0 1 0 0 21.5a10.75 10.75 0 0 0 0-21.5zm0 6.25a4.5 4.5 0 1 1 0 9a4.5 4.5 0 0 1 0-9z',
-  slash: 'M45.5 13h6.25l-8.6 37.5h-6.25z',
+  tileRadius: 14,
+  cream: '#f6e7cc',
+  coral: '#f16343',
+  ink: '#18232d',
+  blue: '#284b73',
 };
 
+/** Trusted, code-native vector artwork; used unchanged by every icon renderer. */
+export function specMarkPaths() {
+  return html`<path d="M23 19 20 9 14 7M40 19 44 8 50 10" fill="none" stroke="${BRAND_MARK.ink}" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 37c0-15 7-22 20-22s20 7 20 22v20H12Z" fill="${BRAND_MARK.coral}"/><path d="M32 16v12" fill="none" stroke="${BRAND_MARK.ink}" stroke-width="2"/><rect x="17" y="29" width="30" height="21" rx="9" fill="${BRAND_MARK.ink}"/><path d="M21 37h10c0 10-10 10-10 0Zm12 0h10c0 10-10 10-10 0Z" fill="${BRAND_MARK.cream}"/><path d="m20 33 10 1m4-1 8-3" fill="none" stroke="${BRAND_MARK.cream}" stroke-width="2.3" stroke-linecap="round"/><circle cx="27" cy="38" r="2.3" fill="${BRAND_MARK.ink}"/><circle cx="39" cy="38" r="2.3" fill="${BRAND_MARK.ink}"/><path d="m12 48 12 4v8H10Zm40 0-12 4v8h14Z" fill="${BRAND_MARK.blue}"/>`;
+}
+
 export function brandMark() {
-  return html`<svg class="brand__mark" viewBox="${BRAND_MARK.viewBox}" aria-hidden="true" focusable="false"><rect class="brand__tile" width="64" height="64" rx="${BRAND_MARK.tileRadius}"/><path class="brand__glyph" d="${BRAND_MARK.stem}"/><path class="brand__glyph" fill-rule="evenodd" d="${BRAND_MARK.bowl}"/><path class="brand__slash" d="${BRAND_MARK.slash}"/></svg>`;
+  return html`<svg class="brand__mark" viewBox="${BRAND_MARK.viewBox}" aria-hidden="true" focusable="false"><rect width="64" height="64" rx="${BRAND_MARK.tileRadius}" fill="${BRAND_MARK.cream}"/>${specMarkPaths()}</svg>`;
 }
 
 /** Names with a matching `.icon--<name>` rule in base.css. */

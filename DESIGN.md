@@ -1,45 +1,45 @@
 ---
 name: Bounty Operator
-description: "A black page, bone-white print and one hot ink. The report is paper lying on the page, the red pen has been through it, and the verdict is stamped on it."
+description: "Spec, a bug with standards. Charcoal, cream, coral and a blue work jacket connect the film, website and shared mark. Evidence stays readable on paper."
 colors:
   # The page: the one palette of the site (:root and .theme-dark)
-  bg: "#09090a"
-  surface: "#121214"
-  surface-2: "#19191c"
-  surface-3: "#232327"
-  line: "#26262b"
-  line-strong: "#43434b"
-  line-control: "#7c7c86"
-  rule: "#3a3a41"
-  text: "#f4f1ea"
-  muted: "#a9a69e"
-  placeholder: "#8b8982"
-  field: "#09090a"
-  on-field: "#f4f1ea"
-  on-field-muted: "#a9a69e"
-  field-rule: "#26262b"
-  stock: "#ff4d2e"
+  bg: "#18232d"
+  surface: "#202d38"
+  surface-2: "#273642"
+  surface-3: "#30424e"
+  line: "#344550"
+  line-strong: "#52616c"
+  line-control: "#98a3ad"
+  rule: "#52616c"
+  text: "#f6e7cc"
+  muted: "#bcc3c4"
+  placeholder: "#aab4bb"
+  field: "#18232d"
+  on-field: "#f6e7cc"
+  on-field-muted: "#bcc3c4"
+  field-rule: "#344550"
+  stock: "#f16343"
   on-stock: "#09090a"
   on-stock-muted: "#3d0f04"
   copy: "#2a2a2f"
-  accent: "#ff6a4d"
-  accent-hover: "#ff8f78"
-  accent-solid: "#ff4d2e"
-  accent-solid-hover: "#ff6a4d"
+  accent: "#ff987f"
+  accent-hover: "#ffb5a2"
+  accent-solid: "#f16343"
+  accent-solid-hover: "#ff8063"
   on-accent: "#09090a"
   focus: "#f4f1ea"
   heat: "linear-gradient(100deg, #ff2d2d 0%, #ff5a1f 46%, #ffb224 100%)"
   observed: "#6fd39b"
   gap: "#f2c552"
   gap-bg: "#f2c5521f"
-  sev-crit: "#ff5d7a"
+  sev-crit: "#ff8498"
   sev-high: "#ff9d5c"
   sev-med: "#f2c552"
   sev-low: "#6fd39b"
   sev-info: "#8fb2ff"
   sev-none: "#a5a3ad"
   ok: "#6fd39b"
-  danger: "#ff5d7a"
+  danger: "#ff8498"
   code-bg: "#0e0e10"
   code-text: "#ebe8e1"
   code-muted: "#8a8880"
@@ -47,9 +47,9 @@ colors:
   code-hl: "#ff6a4d"
   code-flag: "#f2c552"
   code-ok: "#6fd39b"
-  brand-tile: "#ff4d2e"
-  brand-glyph: "#09090a"
-  brand-slash: "#f4f1ea"
+  brand-tile: "#f6e7cc"
+  brand-glyph: "#18232d"
+  brand-slash: "#f6e7cc"
   # Paper: a sheet lying on the page (.theme-light). Only the tokens whose value differs.
   bg-paper: "#f4f1ea"
   surface-paper: "#fbfaf6"
@@ -160,40 +160,40 @@ motion:
 
 ## Overview
 
-A finding goes through inspection before a triager sees it. The site shows that inspection: a report lying on a black page, marked by a red pen, with the verdict stamped on it.
+Spec is a bug with standards. The original clay character introduces Bounty Operator's habit of questioning a claim and following the code and proof before submission. The homepage and social preview use his approved portrait; the shared header, footer and browser icons use a small vector interpretation of the same character.
 
-The page is black and its print is bone white. One hot ink does all the marking: vermilion, the red of a seal and of a marking pen. It is the action button, the links, the ring around two words of the headline, the strike through a line. The report is paper: a bright sheet lying on the page, in black print, with real stamp ink on it.
+The film's charcoal ink, cream paper, coral shell and blue jacket define the palette. Archivo is shared with the film. The character carries the personality while the report, citations, verdicts and review controls stay factual and readable. See [Spec's brand guide](docs/spec-brand.md) for the artwork, provenance and rebuild paths.
 
-Behind the head of every page lie lines of a draft report and of the code it cites, set small. Lights drift over them and now and then the pen strikes a line. Under the home hero the builder's three results stand as large figures in the heat of the ink, and the five verdicts run past.
+The home hero gives the product promise and review actions room beside Spec. His 20-second film appears beside the saved, explicitly invented example it demonstrates, with native controls, captions and a transcript. The detailed 54-second product tour remains available. Supporting pages retain their source-code field; the workbench keeps its existing interaction and evidence flow.
 
 There is one look. Nothing follows the system's colour scheme, and there is no theme to choose.
 
 ## Colors
 
-Every colour is a token in `web/public/css/base.css` section 1. `:root` and `.theme-dark` hold the palette of the page. `.theme-light` holds the paper palette, with the same 57 token names, for a sheet lying on the page: the report slip in the home hero and beside a landing page.
+Every colour is a token in `web/public/css/base.css` section 1. `:root` and `.theme-dark` hold the page palette. `.theme-light` holds the matching paper tokens used by the saved example and landing pages. The four `--spec-*` tokens define the shared mascot colours independently of semantic severity colours.
 
 ### The page
-- **Page Black** (`#09090a`): the page, the field and the footer.
-- **Surfaces** (`#121214`, `#19191c`, `#232327`): cards and inputs, bars and office-use boxes, and the track of a bar.
-- **Bone** (`#f4f1ea`): all running print, headings and the focus ring. **Muted Bone** (`#a9a69e`) is secondary print.
-- **Rules** (`#3a3a41` frames and part rules, `#26262b` hairlines, `#43434b` emphasis, `#7c7c86` control borders, 3:1 on every surface).
+- **Charcoal** (`#18232d`): the page, the field and the footer.
+- **Surfaces** (`#202d38`, `#273642`, `#30424e`): cards, inputs and supporting panels.
+- **Cream** (`#f6e7cc`): running print and headings. **Muted** (`#bcc3c4`) is secondary print.
+- **Rules** (`#52616c` frames, `#344550` hairlines, `#98a3ad` control borders). Controls remain at least 3:1 against the surfaces.
 
 ### The hot ink
-- **Vermilion** (`#ff4d2e`): the solid action, the brand tile, the pen's ring and strokes, the current step and the highlighted plan (`--stock`, with black print on it).
-- **Vermilion, for print** (`#ff6a4d`, hover `#ff8f78`): links, file line numbers, a marked line of code.
+- **Coral** (`#f16343`): primary actions, the pen's ring, the current step and the highlighted plan. The Spec mark sits on cream.
+- **Coral for small text** (`#ff987f`, hover `#ffb5a2`): links with sufficient contrast against the charcoal surfaces.
 - **Heat** (`linear-gradient(100deg, #ff2d2d, #ff5a1f 46%, #ffb224)`): the ground of the large figures, the bars of the benchmark strip and the name across the foot of the page. It is never the colour of a sentence.
 
 ### Standing
 - **Observed Green** (`#6fd39b`): what the code shows. Confirmed, pass, proven, resolved.
 - **Ochre** (`#f2c552`): unproven. Overstated, not supplied, an open objection.
-- **Rose Red** (`#ff5d7a`): critical, contradicted, failed. It is a different red from the ink, so a mark of the pen never reads as an error.
-- **Severity:** critical `#ff5d7a`, high `#ff9d5c`, medium `#f2c552`, low `#6fd39b`, info `#8fb2ff`, unrated `#a5a3ad`.
+- **Rose Red** (`#ff8498`): critical, contradicted, failed. It stays distinct from the coral action colour.
+- **Severity:** critical `#ff8498`, high `#ff9d5c`, medium `#f2c552`, low `#6fd39b`, info `#8fb2ff`, unrated `#a5a3ad`.
 
 ### Paper
 Paper is `#fbfaf6` on `#f4f1ea`, printed in `#121214`, with the pen in `#c2280f`. On paper the solid action is black with white letters, and observed, unproven and critical print in `#1b6b3a`, `#855a00` and `#b0172f`.
 
 ### Named Rules
-**The One Ink Rule.** Vermilion is the only hot colour of the interface, and it means the pen or the action. Green, ochre and rose red carry standing and nothing else.
+**The One Action Colour Rule.** Coral marks the pen or the action. Green, ochre and rose red carry review meaning, not mascot decoration.
 
 **The Heat Is For Figures Rule.** The gradient sets figures and bars. Text that must be read is bone or muted bone.
 
@@ -306,7 +306,7 @@ A surface box with a 1px control border (3:1 on every surface), 2px corners, 44p
 ### Navigation
 - **Header:** the brand at left, nav and account control at right, a rule under it.
 - **Links:** 44px targets. The current page is filled with vermilion and printed in black.
-- **Brand mark:** a vermilion tile, the b in black, the slash in bone. `scripts/build-icons.mjs` draws the icons from the same paths.
+- **Brand mark:** Spec's bent antennae, sceptical eyes, coral shell and blue jacket on a cream tile. `scripts/build-icons.mjs` draws the icons from the same paths as the header.
 - **Footer:** the promise, the primary action, vermilion column titles in condensed caps, and the name across the foot.
 - **Tabs, stepper, segmented control:** the open tab joins the sheet under it. The current step of the stepper and the chosen segment are vermilion with black print; done steps carry a solid marker.
 
@@ -323,7 +323,7 @@ A sheet laid over the page: a 1px frame, 3px corners and the pop shadow over the
 The result as an inspection form: a file bar, a head with the finding's id, severity and status chips, its title and its file references, then ledger rows with condensed-caps captions in a 9.75rem margin. A row's standing prints in its caption's ink: Observed is green; Counterargument is ochre while open and green when resolved; Evidence gap is ochre with its margin rule dashed. Path steps are numbered 01, 02. A draft review that lists only late steps keeps the draft's numbers under one line, "Numbered as in the draft." The full markup is in `web/site/COMPONENTS.md` under "The finding card".
 
 ### Report Slip
-The home hero and the share image show the review as a slip, built by `reportSlip()` in `web/site/social/example.mjs`. It is paper (`.theme-light`), tilted -1.25° over its second sheet (`--copy`). On it: the draft's typed title in mono, the claimed severity struck through with one pen stroke, the severity the code supports hand-stamped beside it, the review's headline, the deciding source line under its reference, and the verdict stamped at the foot beside the date and the model. On a phone the slip leads with the claim, the two stamps and the verdict.
+The saved example beside Spec's film is built by `reportSlip()` in `web/site/social/example.mjs`. It is paper (`.theme-light`), tilted -1.25° over its second sheet (`--copy`). On it: the draft's typed title in mono, the claimed severity struck through with one pen stroke, the supported severity, the review's headline, the cited source and the verdict beside its date and model. On a phone the slip leads with the claim, stamps and verdict. The homepage hero and share image now use Spec's original portrait.
 
 ### Figures, bars and the run
 - **The three results** (`.home-stats`): a figure in the heat over a muted caption, the whole item a link to the leaderboard it comes from.

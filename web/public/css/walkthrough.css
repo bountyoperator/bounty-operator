@@ -19,6 +19,11 @@
   line-height: 1.6;
 }
 
+.walkthrough__video--square {
+  aspect-ratio: 1;
+  border-radius: 1rem;
+}
+
 .walkthrough__transcript {
   margin-top: var(--sp-16);
   border-block: 1px solid var(--line);

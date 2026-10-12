@@ -1,39 +1,30 @@
 #!/usr/bin/env node
-// Draws the site icons from the "b/" mark in web/site/components.mjs.
+// Draws the site icons from Spec in web/site/components.mjs.
 //
 //   node scripts/build-icons.mjs
 //
 // Writes into web/public: icon.svg, favicon.ico (16, 32, 48), apple-touch-icon.png
 // (180), icon-192.png, icon-512.png and site.webmanifest.
 //
-// A maintainer tool, not part of the site build. It rasterises with Playwright,
-// which is not a dependency of this repo: install it globally (npm i -g playwright)
-// or locally before running. Re-run it only when the mark changes.
+// A maintainer tool, not part of the site build. Uses the existing web sharp
+// installation to rasterise the shared SVG. Re-run only when the mark changes.
 
-import { execSync } from 'node:child_process';
 import { writeFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { BRAND_MARK } from '../web/site/components.mjs';
+import { BRAND_MARK, specMarkPaths } from '../web/site/components.mjs';
 import { SITE } from '../web/site/layout.mjs';
 
 const PUBLIC_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'web', 'public');
 
-// The mark as the header prints it: a tile of the hot ink, the b in black, the
-// slash in bone. Vermilion reads on light and dark tab bars alike.
-const TILE = '#ff4d2e';
-const TILE_RING = '#ff4d2e';
-const GLYPH = '#09090a';
-const SLASH = '#f4f1ea';
+const TILE = BRAND_MARK.cream;
+const TILE_RING = BRAND_MARK.cream;
+const sharp = createRequire(path.join(PUBLIC_DIR, '..', 'package.json'))('sharp');
 
 function markPaths() {
-  return [
-    `<path fill="${GLYPH}" d="${BRAND_MARK.stem}"/>`,
-    `<path fill="${GLYPH}" fill-rule="evenodd" d="${BRAND_MARK.bowl}"/>`,
-    `<path fill="${SLASH}" d="${BRAND_MARK.slash}"/>`,
-  ].join('');
+  return String(specMarkPaths());
 }
 
 /** The browser-tab icon: the tile, with a ring in its own colour. */
@@ -62,23 +53,8 @@ function fullBleedSvg(scale) {
   ].join('');
 }
 
-function loadPlaywright() {
-  const localRequire = createRequire(import.meta.url);
-  try {
-    return localRequire('playwright');
-  } catch {
-    const globalRoot = execSync('npm root -g', { encoding: 'utf8' }).trim();
-    return createRequire(`${globalRoot}${path.sep}`)('playwright');
-  }
-}
-
-async function rasterise(browser, svg, size) {
-  const page = await browser.newPage({ viewport: { width: size, height: size }, deviceScaleFactor: 1 });
-  const encoded = Buffer.from(svg).toString('base64');
-  await page.goto(`data:image/svg+xml;base64,${encoded}`);
-  const png = await page.screenshot({ omitBackground: true, clip: { x: 0, y: 0, width: size, height: size } });
-  await page.close();
-  return png;
+async function rasterise(svg, size) {
+  return sharp(Buffer.from(svg)).resize(size, size).png().toBuffer();
 }
 
 /** Pack PNG images into one .ico file (PNG-in-ICO, readable by every current browser). */
@@ -106,6 +82,7 @@ function packIco(images) {
 }
 
 function webManifest() {
+  const iconPath = (file) => `${file}?v=${SITE.iconVersion}`;
   const manifest = {
     name: SITE.name,
     short_name: 'Operator',
@@ -116,37 +93,31 @@ function webManifest() {
     background_color: SITE.themeColor.dark,
     theme_color: SITE.themeColor.dark,
     icons: [
-      { src: '/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
-      { src: '/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
-      { src: '/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'maskable' },
-      { src: '/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
-      { src: '/icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
+      { src: iconPath('/icon-192.png'), sizes: '192x192', type: 'image/png', purpose: 'any' },
+      { src: iconPath('/icon-512.png'), sizes: '512x512', type: 'image/png', purpose: 'any' },
+      { src: iconPath('/icon-192.png'), sizes: '192x192', type: 'image/png', purpose: 'maskable' },
+      { src: iconPath('/icon-512.png'), sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+      { src: iconPath('/icon.svg'), sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
     ],
   };
   return `${JSON.stringify(manifest, null, 2)}\n`;
 }
 
 async function main() {
-  const { chromium } = loadPlaywright();
-  const browser = await chromium.launch();
   const write = (name, data) => writeFile(path.join(PUBLIC_DIR, name), data);
 
-  try {
-    const tile = tileSvg();
-    await write('icon.svg', `${tile}\n`);
+  const tile = tileSvg();
+  await write('icon.svg', `${tile}\n`);
 
-    const icoSizes = [16, 32, 48];
-    const icoImages = [];
-    for (const size of icoSizes) icoImages.push({ size, png: await rasterise(browser, tile, size) });
-    await write('favicon.ico', packIco(icoImages));
+  const icoSizes = [16, 32, 48];
+  const icoImages = [];
+  for (const size of icoSizes) icoImages.push({ size, png: await rasterise(tile, size) });
+  await write('favicon.ico', packIco(icoImages));
 
-    await write('apple-touch-icon.png', await rasterise(browser, fullBleedSvg(0.92), 180));
-    await write('icon-192.png', await rasterise(browser, fullBleedSvg(0.82), 192));
-    await write('icon-512.png', await rasterise(browser, fullBleedSvg(0.82), 512));
-    await write('site.webmanifest', webManifest());
-  } finally {
-    await browser.close();
-  }
+  await write('apple-touch-icon.png', await rasterise(fullBleedSvg(0.82), 180));
+  await write('icon-192.png', await rasterise(fullBleedSvg(0.82), 192));
+  await write('icon-512.png', await rasterise(fullBleedSvg(0.82), 512));
+  await write('site.webmanifest', webManifest());
   console.log('Wrote icon.svg, favicon.ico, apple-touch-icon.png, icon-192.png, icon-512.png, site.webmanifest');
 }
 

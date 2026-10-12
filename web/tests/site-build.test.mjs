@@ -168,7 +168,7 @@ test('renderPage emits the head contract and no markup the CSP would block', () 
   const markup = renderPage(page, site);
 
   assert.match(markup, /<link rel="canonical" href="https:\/\/bountyoperator\.com\/tools\/report-check">/);
-  assert.match(markup, /<meta property="og:image" content="https:\/\/bountyoperator\.com\/social-v5\.png">/);
+  assert.match(markup, /<meta property="og:image" content="https:\/\/bountyoperator\.com\/social-spec-v1\.png">/);
   assert.match(markup, /<meta name="twitter:card" content="summary_large_image">/);
   // The builder's handle credits the card. The product has no X account, so there is no twitter:site.
   assert.equal([...markup.matchAll(/<meta name="twitter:creator" content="@Tradi3_">/g)].length, 1);
@@ -176,7 +176,7 @@ test('renderPage emits the head contract and no markup the CSP would block', () 
   assert.doesNotMatch(markup, /href="https?:\/\/(?:www\.)?(?:x|twitter)\.com/, 'no visible X link');
   // One look, the black page: one colour scheme and one theme colour, the page's own.
   assert.match(markup, /<meta name="color-scheme" content="dark">/);
-  assert.equal([...markup.matchAll(/<meta name="theme-color" content="#09090a">/g)].length, 1);
+  assert.equal([...markup.matchAll(/<meta name="theme-color" content="#18232d">/g)].length, 1);
   assert.equal([...markup.matchAll(/<meta name="theme-color"/g)].length, 1);
   assert.doesNotMatch(markup, /data-theme-toggle|theme-toggle/);
   assert.match(markup, /<script src="\/theme\.js"><\/script>/);
@@ -340,14 +340,14 @@ test('base.css declares one palette for the page and a complete paper palette fo
   // Whatever lies on paper finds every colour it asks for.
   assert.deepEqual(names(paper[1]), names(page[1]));
   assert.match(page[1], /color-scheme: dark;/);
-  assert.match(page[1], /--bg: #09090a;/);
+  assert.match(page[1], /--bg: #18232d;/);
   // The site has one look: nothing follows the system's scheme or a stored choice.
   for (const name of ['base.css', 'home.css', 'workbench.css', 'benchmark.css', 'landing.css', 'docs.css', 'tools.css', 'templates.css', 'account.css', 'runners.css', 'kit.css']) {
     const sheet = await readFile(path.join(WEB_DIR, 'public', 'css', name), 'utf8');
     assert.doesNotMatch(sheet, /prefers-color-scheme|\[data-theme/, name);
   }
   // The theme colour in the head is the page's own.
-  assert.equal(SITE.themeColor.dark, '#09090a');
+  assert.equal(SITE.themeColor.dark, '#18232d');
 });
 
 test('stackTable writes the column name into every cell after the first and takes two modifiers', () => {

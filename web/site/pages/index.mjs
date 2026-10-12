@@ -40,7 +40,7 @@ import { BENCH_TEASER } from './benchmark/_teaser.mjs';
 import { AGENT_TICK, CHAT_TICK, RENEWAL, WHY_PAY } from '../plans.mjs';
 import { walkthrough } from '../walkthroughs.mjs';
 
-const LASTMOD = '2026-10-11';
+const LASTMOD = '2026-10-12';
 const DEV_BUILD = process.argv.includes('--dev');
 
 // ---------------------------------------------------------------------------
@@ -109,21 +109,24 @@ const PROVIDER_SENTENCE = `${PROVIDER_NAMES.slice(0, -1).join(', ')} or ${PROVID
 // ---------------------------------------------------------------------------
 
 const hero = html`
-<div class="home-top page-field">
+<div class="home-top">
   <section class="wrap home-hero" aria-labelledby="hero-title">
     <div class="home-hero__text">
       <p class="home-hero__kicker">Bug bounty report review</p>
       <h1 class="display home-hero__title" id="hero-title">${penned(SITE.promise, 'the hole')}</h1>
-      <p class="lede home-hero__lede">Paste your draft and the code it cites. It argues against the finding and returns one verdict, with the file and line.</p>
+      <p class="lede home-hero__lede">Bounty Operator checks your bug report against the code and proof before you submit. Get one verdict, with the file and line behind it.</p>
       <div class="home-hero__actions">
         ${button({ label: 'Review my report', href: '/?profile=report#workspace', variant: 'primary', size: 'lg', iconEnd: 'arrow-right' })}
         ${button({ label: 'View example', href: '#workspace', variant: 'secondary', size: 'lg', attrs: { 'data-demo': true, 'data-example': '' } })}
-        <a class="link" href="#product-video">Watch 54-second tour</a>
+        <a class="link home-hero__film" href="#meet-spec">${icon('play')} Watch Spec in 20 seconds</a>
       </div>
       <p class="home-hero__free">Free: 1 review a day on your own model key. The example needs no account.</p>
     </div>
     <div class="home-hero__shot">
-      ${reportSlip()}
+      <figure class="spec-portrait">
+        <img src="/brand/spec-960.webp" srcset="/brand/spec-640.webp 640w, /brand/spec-960.webp 960w" sizes="(min-width: 60em) 42vw, (min-width: 40em) 30rem, 90vw" width="960" height="960" fetchpriority="high" alt="Spec, a sceptical coral bug in a blue work jacket, holding a magnifying glass.">
+        <figcaption><strong>Meet Spec.</strong><span>A bug with standards.</span></figcaption>
+      </figure>
     </div>
   </section>
   <div class="wrap">
@@ -136,6 +139,18 @@ const hero = html`
   </div>
 </div>
 <div class="verdict-run" aria-hidden="true"><div class="verdict-run__track">${[0, 1].map(() => VERDICTS.map((verdict) => html`<span class="verdict-run__word" data-verdict="${verdict.id}">${verdictLabel(verdict.id)}</span>`))}</div></div>`;
+
+const meetSpec = html`
+<section class="section wrap" id="meet-spec" aria-labelledby="spec-title">
+  ${sectionHeading({ title: 'Critical? Spec has questions.', id: 'spec-title', lede: 'Our bug with standards has one rule: the claim has to match the proof. Watch the film, then inspect the saved review.' })}
+  <div class="spec-example">
+    ${walkthrough('spec', 'spec-title')}
+    <div class="spec-example__report">
+      ${reportSlip({ still: true })}
+      <p class="spec-example__link"><a class="link" href="/?start=example#workspace">Inspect the public example ${icon('arrow-right')}</a></p>
+    </div>
+  </div>
+</section>`;
 
 const STEPS = [
   { title: 'Add your files', text: 'Paste text, drop files or import from GitHub.' },
@@ -239,12 +254,13 @@ const questions = html`
 
 const body = html`
 ${hero}
+${meetSpec}
+${verdicts}
 <section class="section section--tight wrap" id="product-video" aria-labelledby="product-video-title">
   ${sectionHeading({ title: 'See a report review in 54 seconds.', id: 'product-video-title', lede: 'Follow the saved example from the draft to the cited code and downloadable packet.' })}
   ${walkthrough('product', 'product-video-title')}
   <p class="fine">Working in a coding agent? <a class="link" href="/mcp#mcp-walkthrough">Watch the MCP walkthrough</a>.</p>
 </section>
-${verdicts}
 ${workbenchSection()}
 ${BENCH_TEASER}
 ${pricing}
@@ -270,7 +286,7 @@ export default {
   label: 'Bounty Operator',
   og: {
     title: 'Find the hole in your report before the triager does',
-    alt: 'Bounty Operator. A draft report claiming Critical, cut to Medium by a review that cites file and line.',
+    alt: 'Bounty Operator. Find the hole in your report before the triager does. Spec, a coral bug with a magnifying glass: a bug with standards.',
   },
   styles,
   scripts,

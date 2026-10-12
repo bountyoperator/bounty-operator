@@ -12,7 +12,8 @@ export const SITE = {
   promise: 'Find the hole in your report before the triager does.',
   summary:
     'Pre-submission review for bug bounty reports and smart-contract findings. The AI argues against the finding. The hunter writes the report.',
-  defaultImage: '/social-v5.png',
+  defaultImage: '/social-spec-v1.png',
+  iconVersion: 'spec-v1',
   source: 'https://github.com/bountyoperator/bounty-operator',
   // The forum: GitHub Discussions on the source repository. /support routes each kind of request.
   forum: 'https://github.com/bountyoperator/bounty-operator/discussions',
@@ -28,7 +29,7 @@ export const SITE = {
     x: '@Tradi3_',
   },
   // Keep in step with --bg in web/public/css/base.css and with web/public/theme.js.
-  themeColor: { dark: '#09090a', light: '#09090a' },
+  themeColor: { dark: '#18232d', light: '#18232d' },
 };
 
 /** The one webfont: Archivo, self-hosted. Preloaded so headings do not reflow when it lands. */
@@ -40,12 +41,12 @@ export const FONT_FILE = '/fonts/archivo-latin-wdth.woff2';
  * the system that was built from it.
  */
 export const DESIGN_CONTRACT = `<!--
-THESIS: The verdict is a stamp on your draft, and the red pen has been through it first. The site is the inspection a finding passes before a triager sees it.
-OWN-WORLD: A black page, bone-white print and one hot ink, vermilion: the red of a seal and of a marking pen. The report is a sheet of paper lying on the page. Behind each page head lie lines of a report and of its code; lights drift over them and the pen strikes a line now and then. Archivo: wide heavy cuts for headlines and figures, condensed caps for stamps and labels; mono only for code and typed entries.
-STORY: A hunter sees a Critical stamped down to Medium with the line that decides it, trusts that the review argues against them, and starts a review or opens the example.
-FIRST VIEWPORT: The moving field on black. Left: the headline with "the hole" circled in pen, the lede, a vermilion Review my report, a ruled View example. Right: the paper slip, tilted, Critical struck, Medium and the verdict stamped on it, in the light of the ember. Under them the three results of the builder as figures, then the five verdicts running past.
-FORM: Rubber-stamp verdicts and a report marked in red pen, seed b5682f59.
-FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md
+THESIS: Spec is a bug with standards. Every claim has to stand up to the code and proof before a report is submitted.
+OWN-WORLD: The film's coral shell, cream paper, charcoal ink and blue work jacket. Archivo carries both film and site; mono is reserved for code and typed evidence. Spec brings the personality; the review stays clear and factual.
+STORY: Meet Spec, see an inflated Critical claim meet the evidence, then open the saved example or review your own report.
+FIRST VIEWPORT: The product promise and review actions beside the original Spec portrait. Below: the narrated film and its actual, clearly labelled invented example.
+FORM: Original clay mascot, a small vector Spec mark, readable report sheets and verdict stamps.
+FINISH: Responsive layout, native video controls, captions, reduced motion and verified source citations. See DESIGN.md and docs/spec-brand.md.
 -->`;
 
 /**
@@ -103,7 +104,7 @@ export function organizationLd() {
     '@type': 'Organization',
     name: SITE.name,
     url: `${SITE.origin}/`,
-    logo: absoluteUrl('/icon-512.png'),
+    logo: absoluteUrl(`/icon-512.png?v=${SITE.iconVersion}`),
     email: SITE.support,
     sameAs: [SITE.source],
   };
@@ -214,7 +215,7 @@ function socialTags(page, canonical) {
   const usesDefaultImage = !og.image;
   const width = og.width ?? (usesDefaultImage ? 1200 : null);
   const height = og.height ?? (usesDefaultImage ? 630 : null);
-  const alt = og.alt ?? `${SITE.name}. ${SITE.promise}`;
+  const alt = og.alt ?? `${SITE.name}. ${SITE.promise} Spec, our coral bug mascot, holds a magnifying glass.`;
 
   return html`
 <meta property="og:type" content="${og.type ?? 'website'}">
@@ -256,10 +257,10 @@ function head(page, site) {
 <meta name="robots" content="${robots}">`}
 <meta name="color-scheme" content="dark">
 <meta name="theme-color" content="${SITE.themeColor.dark}">${socialTags(page, canonical)}
-<link rel="icon" href="/favicon.ico" sizes="48x48">
-<link rel="icon" href="/icon.svg" type="image/svg+xml">
-<link rel="apple-touch-icon" href="/apple-touch-icon.png">
-<link rel="manifest" href="/site.webmanifest">
+<link rel="icon" href="/favicon.ico?v=${SITE.iconVersion}" sizes="48x48">
+<link rel="icon" href="/icon.svg?v=${SITE.iconVersion}" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png?v=${SITE.iconVersion}">
+<link rel="manifest" href="/site.webmanifest?v=${SITE.iconVersion}">
 ${site.has(FONT_FILE) && html`<link rel="preload" href="${FONT_FILE}" as="font" type="font/woff2" crossorigin>
 `}<script src="/theme.js"></script>${styles.map((href) => html`
 <link rel="stylesheet" href="${href}">`)}${preloads.map((href) => html`
@@ -315,6 +316,7 @@ function siteFooter(page, site) {
 <div class="wrap site-footer__grid">
 <div class="site-footer__brand">
 <a class="brand" href="/">${brandMark()}<span class="brand__name">${SITE.name}</span></a>
+<p class="site-footer__mascot">A bug with standards.</p>
 <p class="site-footer__promise">${SITE.promise}</p>
 <p class="site-footer__cta">${button({ label: 'Review my report', href: '/?profile=report#workspace', variant: 'primary', iconEnd: 'arrow-right' })}</p>
 </div>

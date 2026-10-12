@@ -21,6 +21,8 @@
    ========================================================================== */
 
 .home-top {
+  position: relative;
+  isolation: isolate;
   padding-top: clamp(var(--sp-32), 4.2vw, var(--sp-72));
   /* The ember is wider than a phone. */
   overflow-x: clip;
@@ -37,7 +39,7 @@
   width: min(72rem, 190vw);
   aspect-ratio: 1.2;
   border-radius: 50%;
-  background: radial-gradient(closest-side, #ff4d2e57 0%, #ff5a1f24 44%, transparent 100%);
+  background: radial-gradient(closest-side, #284b7340 0%, #284b7320 44%, transparent 100%);
   pointer-events: none;
 }
 
@@ -166,6 +168,90 @@
   order: 4;
   min-width: 0;
   margin-top: var(--sp-48);
+}
+
+/* The original film portrait stays intact. Only responsive encodings differ. */
+.spec-portrait {
+  position: relative;
+  max-width: 30rem;
+  margin: 0 auto;
+  overflow: hidden;
+  border-radius: 1.5rem 1.5rem 1.5rem 0.375rem;
+  background: var(--spec-cream);
+  color: var(--spec-ink);
+}
+
+.spec-portrait img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.spec-portrait figcaption {
+  position: absolute;
+  right: 1.5rem;
+  bottom: 1.125rem;
+  left: 1.5rem;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: var(--fs-14);
+}
+
+.spec-portrait strong {
+  font-family: var(--font-display);
+  font-size: var(--fs-22);
+  font-weight: 800;
+}
+
+.home-hero__film {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-8);
+  min-height: var(--tap);
+}
+
+.spec-example {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+  gap: var(--sp-48);
+}
+
+.spec-example > .walkthrough {
+  margin-top: 0;
+}
+
+.spec-example__report {
+  min-width: 0;
+  padding: 0.5rem 0.875rem 0 0.25rem;
+}
+
+.spec-example__link {
+  margin-top: var(--sp-24);
+}
+
+.spec-example__link a {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-8);
+  min-height: var(--tap);
+}
+
+@media (min-width: 48em) {
+  .spec-example {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: clamp(var(--sp-32), 5vw, var(--sp-72));
+  }
+}
+
+@media (max-width: 29.99em) {
+  .spec-portrait figcaption {
+    right: 1rem;
+    left: 1rem;
+    font-size: var(--fs-12);
+  }
 }
 
 /* From a tablet's width the text and the slip stand side by side. */
