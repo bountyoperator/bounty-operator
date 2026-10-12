@@ -1036,7 +1036,7 @@ function renderSecurity() {
           : [
               confirmable(`passkey-${passkey.id}`, {
                 trigger: { label: 'Remove', size: 'sm', id: `passkey-remove-${index + 1}`, attrs: { 'aria-label': `Remove passkey ${index + 1}` } },
-                prompt: 'Removing it signs out every other browser on this account.',
+                prompt: 'Removing it signs out every other browser and revokes every AI connection on this account.',
                 confirm: 'Remove passkey',
                 keep: 'Keep',
                 run: (control) => removePasskey(control, passkey),
@@ -1152,7 +1152,7 @@ function renderBilling() {
     subscribed
       ? section('Card, invoices and cancellation', 'Stripe holds the card and every invoice. Cancelling is done there too.')
       : null,
-    section('What Operator includes', null, planTable()),
+    section('What Operator includes', 'Model usage is billed separately by your provider.', planTable()),
     el(
       'p',
       { class: 'help' },

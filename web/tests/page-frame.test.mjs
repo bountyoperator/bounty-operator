@@ -173,13 +173,13 @@ test('one head rule sets where the heading starts, at both widths', async () => 
 
 // The one page of the visit the site does not draw: Stripe's. It takes two colours from us,
 // and they were left on the palette of an earlier design once already.
-test('the payment page is printed in the paper palette of the site', async () => {
+test('the payment page uses the site brand cream and charcoal', async () => {
   const { 'base.css': base } = await sheets();
   const billing = await readFile(path.resolve(CSS_DIR, '..', '..', 'src', 'billing.ts'), 'utf8');
   const colours = /branding_settings: \{ display_name: 'Bounty Operator', background_color: '(#[0-9a-f]{6})', button_color: '(#[0-9a-f]{6})' \}/.exec(billing);
   assert.ok(colours, 'the Checkout session sets its two colours');
-  const paper = /\n\.theme-light \{([^}]*)\}/.exec(base)[1];
-  const token = (name) => new RegExp(`--${name}: (#[0-9a-f]{6});`).exec(paper)?.[1];
-  assert.equal(colours[1], token('bg'), 'the ground is the paper');
-  assert.equal(colours[2], token('accent-solid'), 'the box is the solid action on paper');
+  const brand = /:root\s*\{([^}]*)\}/.exec(base)[1];
+  const token = (name) => new RegExp(`--${name}: (#[0-9a-f]{6});`).exec(brand)?.[1];
+  assert.equal(colours[1], token('spec-cream'), 'the ground is the brand cream');
+  assert.equal(colours[2], token('spec-ink'), 'the action is the brand charcoal');
 });

@@ -44,7 +44,7 @@ async function client(path, token, body, { status = 200, code, headers = {} } = 
 async function mcp(method, params, headers = {}) {
   const response = await fetch(`${origin}/api/mcp`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', Accept: 'application/json, text/event-stream', ...headers },
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json', ...headers },
     body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params }),
   });
   return { status: response.status, headers: response.headers, body: await response.json() };
@@ -71,7 +71,7 @@ try {
   assert.equal(alicePortal.account.hasSubscription, false);
 
   // --- Connection tokens ---------------------------------------------------
-  const aliceToken = await alice.call('/api/connections/create', { label: 'Local check A' });
+  let aliceToken = await alice.call('/api/connections/create', { label: 'Local check A' });
   const bobToken = await bob.call('/api/connections/create', { label: 'Local check B' });
   assert.match(aliceToken.token, /^bok_[A-Za-z0-9_-]{43}$/);
   await alice.call('/api/connections/create', { label: 'Bad CSRF' }, { status: 403, code: 'csrf', headers: { 'X-CSRF-Token': 'invalid' } });
@@ -110,12 +110,13 @@ try {
   const addOptions = await alice.call('/api/auth/add/options', {});
   await alice.call('/api/auth/add/verify', secondPasskey.register(addOptions));
 
-  // Removing a passkey signs out the account's other sessions.
+  // Removing a passkey signs out other sessions and revokes connection tokens.
   const aliceOtherDevice = createBrowser(origin);
   await aliceOtherDevice.signIn(firstPasskey);
   await aliceOtherDevice.call('/api/portal');
   await alice.call('/api/passkeys/remove', { id: firstPasskey.id });
   await aliceOtherDevice.call('/api/portal', undefined, { status: 401, code: 'signin' });
+  await client('/api/client/account', aliceToken.token, undefined, { status: 401, code: 'token' });
   await alice.call('/api/portal');
   await alice.call('/api/passkeys/remove', { id: secondPasskey.id }, { status: 400, code: 'last_passkey' });
 
@@ -134,6 +135,7 @@ try {
   const confirmed = await alice.signIn(secondPasskey);
   assert.equal(confirmed.csrf, csrf);
   assert.equal(db.prepare('SELECT COUNT(*) AS total FROM sessions WHERE account_id = ?').get(alicePortal.account.id).total, 1);
+  aliceToken = await alice.call('/api/connections/create', { label: 'Local check after passkey removal' });
 
   // --- Hosted reviews: validation comes before the allowance ----------------
   const files = [{ name: 'src/Owned.sol', content: 'contract Example {}\n' }];

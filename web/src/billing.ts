@@ -423,9 +423,9 @@ export async function createCheckout(env: Env, ctx: ExecutionContext, accountId:
       metadata: { app: APP_TAG, account_id: accountId },
       subscription_data: { metadata: { app: APP_TAG, account_id: accountId } },
       expires_at: expiresAt,
-      // Stripe's page is a sheet of the site's paper: the bone ground and the black box of
-      // .theme-light in base.css. Stripe sets the ink on each itself.
-      branding_settings: { display_name: 'Bounty Operator', background_color: '#f4f1ea', button_color: '#121214' },
+      // Carry the site's cream and charcoal brand colours into hosted checkout.
+      // Stripe chooses the contrasting text colour on each.
+      branding_settings: { display_name: 'Bounty Operator', background_color: '#f6e7cc', button_color: '#18232d' },
       custom_text: {
         submit: {
           message: `US$10 every week until cancelled. By subscribing, you agree to the [Bounty Operator terms](${origin}/terms). AI provider usage is billed separately.`,

@@ -285,14 +285,15 @@
   background: color-mix(in srgb, var(--text) 6%, transparent);
 }
 
-/* The open tab is marked on vermilion stock, like the current page in the header. */
+/* Keep navigation quieter than the primary action, with a clear selected edge. */
 .portal__tab[aria-selected="true"] {
-  background: var(--stock);
-  color: var(--on-stock);
+  background: color-mix(in srgb, var(--text) 6%, transparent);
+  color: var(--text);
+  box-shadow: inset 3px 0 0 var(--accent);
 }
 
 .portal__tab[aria-selected="true"] .icon {
-  color: var(--on-stock);
+  color: currentColor;
 }
 
 .portal__main {
@@ -368,6 +369,22 @@
   .portal__main {
     padding: var(--sp-16);
     padding-bottom: calc(var(--sp-32) + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+/* Keep every section visible on narrow phones, including the selected tab. */
+@media (max-width: 30em) {
+  .portal__tabs {
+    flex-wrap: wrap;
+    padding-block: var(--sp-4);
+    overflow: visible;
+  }
+
+  .portal__tab {
+    flex: 1 1 calc((100% - 2 * var(--sp-4)) / 3);
+    justify-content: center;
+    min-width: 0;
+    padding-inline: var(--sp-4);
   }
 }
 
@@ -451,10 +468,9 @@
 .stat__value {
   font-family: var(--font-display);
   font-size: var(--fs-22);
-  font-stretch: 74%;
-  font-weight: 840;
+  font-stretch: 100%;
+  font-weight: 700;
   line-height: 1.15;
-  font-variant-numeric: tabular-nums;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
 }
@@ -779,9 +795,9 @@
   color: var(--muted);
 }
 
-/* The Operator column carries the blue of the plan chip. */
+/* The Operator column uses the same quiet surface as the public plan cards. */
 .plan-table :is(thead th:last-child, td[data-plan="operator"]) {
-  background: color-mix(in srgb, var(--accent) 9%, var(--surface));
+  background: var(--surface-2);
   color: var(--text);
 }
 
@@ -797,6 +813,27 @@
   width: 1.125rem;
   height: 1.125rem;
   color: var(--ok);
+}
+
+@media (max-width: 30em) {
+  .plan-table {
+    table-layout: fixed;
+    font-size: var(--fs-13);
+  }
+
+  .plan-table :is(th, td) {
+    padding: var(--sp-12) var(--sp-8);
+    overflow-wrap: anywhere;
+  }
+
+  .plan-table thead th:first-child {
+    width: 44%;
+  }
+
+  .plan-table td {
+    width: 28%;
+    min-width: 0;
+  }
 }
 
 /* ==========================================================================
