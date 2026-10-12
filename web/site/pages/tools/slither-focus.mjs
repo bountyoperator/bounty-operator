@@ -75,7 +75,7 @@ ${button({ label: 'Clear', id: 'slither-clear', variant: 'quiet' })}
 <div id="slither-table"></div>
 ${codeBlock({ code: '', name: 'slither-focus.md', numbers: false, copy: true, wrap: true, label: 'Triage queue as Markdown', className: 'tool-output' })}
 <div class="cluster tool-actions">
-${button({ label: 'Triage this queue', href: '/?profile=scanner#workspace', id: 'slither-handoff', variant: 'primary', iconEnd: 'arrow-right' })}
+${button({ label: 'Triage this queue', href: '/?profile=scanner#workspace', id: 'slither-handoff', variant: 'primary' })}
 ${button({ label: 'Download .md', id: 'slither-download', icon: 'download' })}
 </div>
 </div>`,

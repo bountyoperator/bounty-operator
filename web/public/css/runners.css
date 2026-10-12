@@ -352,12 +352,12 @@ button.rn-pipe__stage:focus-visible {
 .gd__label {
   color: var(--muted);
   font-family: var(--font-display);
-  font-size: var(--fs-12);
-  font-stretch: 85%;
-  font-weight: 720;
+  font-size: var(--fs-13);
+  font-stretch: 100%;
+  font-weight: 650;
   line-height: 1.5;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .gd__value {

@@ -424,7 +424,7 @@ export function ctaBand({ title, lede, actions, note } = {}) {
 
 /** The two standard buttons of a paid feature page. */
 export function operatorActions({ secondary } = {}) {
-  return html`${button({ label: 'Get Operator', href: '/pricing', variant: 'primary', size: 'lg', iconEnd: 'arrow-right' })}${secondary}`;
+  return html`${button({ label: 'Get Operator', href: '/pricing', variant: 'primary', size: 'lg' })}${secondary}`;
 }
 
 /** A plain labelled chip used where no verdict word applies. */

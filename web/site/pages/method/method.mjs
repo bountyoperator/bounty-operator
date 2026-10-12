@@ -29,7 +29,7 @@ import {
 } from './_shared.mjs';
 
 const PATH = '/method';
-const TITLE = 'The twelve checks that decide a bug bounty report';
+const TITLE = 'The twelve checks behind each verdict';
 
 // ---------------------------------------------------------------------------
 // The twelve checks (the data is CHECKS in _shared.mjs)
@@ -125,7 +125,7 @@ ${pageHero({
   trail: [{ label: 'Bounty Operator', href: '/' }, { label: 'Method' }],
   title: TITLE,
   lede: `${RECORD_CLAIM} Every check exists because real reports were closed for that reason.`,
-  actions: html`${button({ label: 'Start a free review', href: workbenchLink(), variant: 'primary', size: 'lg', iconEnd: 'arrow-right' })}${button({ label: 'Go to the gauntlet', href: '#gauntlet', size: 'lg' })}`,
+  actions: html`${button({ label: 'Start a free review', href: workbenchLink(), variant: 'primary', size: 'lg' })}${button({ label: 'Go to the gauntlet', href: '#gauntlet', size: 'lg' })}`,
   note: 'Free: 1 review a day on your own model. No card.',
   after: proofLine(),
   aside: heroAside,
@@ -200,7 +200,7 @@ ${pageHero({
           'A downloadable review packet with a SHA-256 hash of every file',
         ])}
       </div>`,
-      foot: html`${button({ label: 'Start a free review', href: workbenchLink(), variant: 'secondary', iconEnd: 'arrow-right' })}`,
+      foot: html`${button({ label: 'Start a free review', href: workbenchLink(), variant: 'secondary' })}`,
     })}
     ${card({
       title: 'The full gauntlet',
@@ -210,7 +210,7 @@ ${pageHero({
         <p>A run takes the draft through all eight stages and ends in one verdict. Each stage reads the output of the stages before it.</p>
         ${tickList(['Unlimited reviews', 'The Gauntlet and Panel review', '4 reviews running at once'])}
       </div>`,
-      foot: html`<div class="cluster">${button({ label: 'See pricing', href: '/pricing', variant: 'primary', iconEnd: 'arrow-right' })}${button({ label: 'See a gauntlet run', href: '/gauntlet', variant: 'quiet' })}</div>`,
+      foot: html`<div class="cluster">${button({ label: 'See pricing', href: '/pricing', variant: 'primary' })}${button({ label: 'See a gauntlet run', href: '/gauntlet', variant: 'quiet' })}</div>`,
     })}
   </div>
 </section>

@@ -77,8 +77,8 @@ ${button({ label: 'Clear', id: 'check-clear', variant: 'quiet' })}
 <p class="fine">Source, test output or logs. Each <code>file:line</code> in the draft is checked against them. Up to 49 text files, 120 KB each, 240 KB with the draft.</p>
 ${dropZone({ id: 'evidence-drop', title: 'Choose files or drop them here', hint: 'They stay in this tab.', folder: true })}
 <details class="disclosure">
-<summary>Paste a file instead</summary>
-<div class="report-evidence-paste">
+<summary class="disclosure__summary">Paste a file instead</summary>
+<div class="disclosure__body report-evidence-paste">
 ${field({ label: 'File name', for: 'evidence-name', control: html`<input class="input mono" id="evidence-name" type="text" placeholder="forge-output.txt" autocomplete="off" spellcheck="false" maxlength="240">` })}
 ${field({ label: 'Content', for: 'evidence-content', control: textarea({ id: 'evidence-content', rows: 5, mono: true, attrs: { spellcheck: 'false', autocomplete: 'off' } }) })}
 ${button({ label: 'Add file', id: 'evidence-add', variant: 'secondary', icon: 'plus' })}
@@ -92,12 +92,12 @@ ${button({ label: 'Add file', id: 'evidence-add', variant: 'secondary', icon: 'p
 <div class="tool-split__out">
 <h2 class="visually-hidden">Result</h2>
 <div class="score" id="score" role="status">
-<p class="score__line"><span class="score__n" id="score-n">0</span><span id="score-text">of ${CHECKS.length} checks pass</span></p>
+<p class="score__line"><span class="score__n" id="score-n" hidden></span><span id="score-text">No report checked yet</span></p>
 <ol class="tally" id="tally" aria-hidden="true">${CHECKS.map(() => html`<li></li>`)}</ol>
 <p class="score__note" id="score-note">Paste a draft, or load the example, to see each check with the line it found.</p>
 </div>
 <div class="cluster tool-actions">
-${button({ label: 'Run the full challenge on your model', href: '/?profile=report#workspace', id: 'check-handoff', variant: 'primary', iconEnd: 'arrow-right' })}
+${button({ label: 'Run the full challenge on your model', href: '/?profile=report#workspace', id: 'check-handoff', variant: 'primary' })}
 ${button({ label: 'Copy checklist as Markdown', id: 'check-copy', icon: 'copy', disabled: true })}
 ${button({ label: 'Save evidence packet', id: 'check-save', variant: 'quiet', icon: 'download', disabled: true })}
 </div>

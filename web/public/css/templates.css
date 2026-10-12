@@ -43,13 +43,16 @@
   padding-top: var(--sp-32);
 }
 
-/* The index is a sticky column on wide screens. Narrow screens read the page in order. */
+/* Match the guide: wrapping section links on phones, a sticky column on desktop. */
 .tpl-toc {
-  display: none;
+  padding-bottom: var(--sp-16);
+  border-bottom: 1px solid var(--line);
 }
 
 .tpl-toc ul {
-  display: grid;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--sp-24);
   margin-top: var(--sp-8);
   padding: 0;
   list-style: none;
@@ -58,7 +61,7 @@
 .tpl-toc a {
   display: flex;
   align-items: center;
-  min-height: 2rem;
+  min-height: var(--tap);
   color: var(--muted);
   font-size: var(--fs-14);
   text-decoration: none;
@@ -80,6 +83,13 @@
     top: var(--sp-24);
     display: block;
     align-self: start;
+    padding-bottom: 0;
+    border-bottom: 0;
+  }
+
+  .tpl-toc ul {
+    display: grid;
+    gap: 0;
   }
 }
 
@@ -183,8 +193,8 @@
 
 .tpl__tag {
   margin-left: auto;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 /* One row per report section: the label in the margin, a spine, the content. */
@@ -511,12 +521,12 @@
 .tpl-card__meta {
   color: var(--muted);
   font-family: var(--font-display);
-  font-size: var(--fs-12);
-  font-stretch: 85%;
-  font-weight: 720;
+  font-size: var(--fs-13);
+  font-stretch: 100%;
+  font-weight: 650;
   line-height: 1.5;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .tpl-card__about {

@@ -34,8 +34,8 @@
 */
 
 /* Archivo (Omnibus-Type, SIL Open Font License 1.1, /fonts/ARCHIVO-OFL.txt).
-   One variable file: weight 100 to 900, width 62% to 125%. Condensed heavy
-   cuts are the stamp lettering; semi-condensed cuts print headings and labels.
+   One variable file: weight 100 to 900, width 62% to 125%. The homepage uses
+   a wide display cut; supporting headings and labels use normal width.
    The URL is relative so the social card renders from disk too. */
 @font-face {
   font-family: "Archivo";
@@ -174,7 +174,7 @@
   --spec-coral: #f16343;
   --spec-ink: #18232d;
   --spec-blue: #284b73;
-  /* Type. Archivo prints headings, labels, buttons and stamps. Running text
+  /* Type. Archivo prints headings, labels, buttons and badges. Running text
      uses the system face, so it renders before the font arrives. */
   --font-display: "Archivo", "Archivo fallback", system-ui, sans-serif;
   --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
@@ -206,14 +206,14 @@
   --sp-72: 4.5rem;
   --sp-112: 7rem;
 
-  /* Radii. Forms are square; a rubber stamp is the only soft corner. */
-  --r-chip: 2px;
-  --r-ctl: 2px;
-  --r-card: 2px;
-  --r-hero: 3px;
+  /* Small badges, comfortable controls, and gently rounded panels. */
+  --r-chip: 4px;
+  --r-ctl: 6px;
+  --r-card: 10px;
+  --r-hero: 12px;
 
   /* Rules. A hairline divides; a part rule opens a section. */
-  --rule-w: 2px;
+  --rule-w: 1px;
 
   /* Layout */
   --wrap: 75rem;
@@ -329,14 +329,14 @@
   --ok: #6fd39b;
   --danger: #ff899b;
 
-  --chip-fill: 10%;
+  --chip-fill: 0%;
   --chip-line: 100%;
 
   /* Code */
-  --code-bg: #0e0e10;
+  --code-bg: #111b24;
   --code-text: #ebe8e1;
-  --code-muted: #8a8880;
-  --code-line: #232327;
+  --code-muted: #aab4bb;
+  --code-line: #30424e;
   --code-hl: #ff6a4d;
   --code-flag: #f2c552;
   --code-ok: #6fd39b;
@@ -349,9 +349,9 @@
 
   /* Depth */
   --shadow-card: none;
-  --shadow: 0 1px 1px #00000066, 0 12px 28px -14px #000000cc;
+  --shadow: none;
   --shadow-pop: 0 2px 6px #00000080, 0 28px 64px -20px #000000e6;
-  --shadow-slip: 0 1px 2px #00000080, 0 30px 60px -18px #000000d9, 0 0 0 1px #ffffff0f;
+  --shadow-slip: none;
   --backdrop: #000000c7;
 
   /* Theme-dependent images */
@@ -407,13 +407,13 @@
   --ok: #1b6b3a;
   --danger: #b0172f;
 
-  --chip-fill: 6%;
+  --chip-fill: 0%;
   --chip-line: 100%;
 
-  --code-bg: #0e0e10;
+  --code-bg: #111b24;
   --code-text: #ebe8e1;
-  --code-muted: #8a8880;
-  --code-line: #232327;
+  --code-muted: #aab4bb;
+  --code-line: #30424e;
   --code-hl: #ff6a4d;
   --code-flag: #f2c552;
   --code-ok: #6fd39b;
@@ -424,9 +424,9 @@
   --brand-slash: #f6e7cc;
 
   --shadow-card: none;
-  --shadow: 0 1px 1px #16161b14, 0 10px 24px -14px #16161b47;
+  --shadow: none;
   --shadow-pop: 0 2px 4px #16161b1f, 0 28px 60px -20px #16161b66;
-  --shadow-slip: 0 1px 2px #00000080, 0 30px 60px -18px #000000d9;
+  --shadow-slip: none;
   --backdrop: #16161b8c;
 
   --check-image: var(--icon-check-white);
@@ -548,8 +548,8 @@ main:focus {
    3. Typography
    ========================================================================== */
 
-/* .h1 to .h4 give any element the look of that heading level. Headings print
-   in Archivo, semi-condensed and heavy, like the title lines of a form. */
+/* .h1 to .h4 give any element the look of that heading level. Supporting
+   headings use normal-width Archivo; .display supplies the homepage cut. */
 h1,
 h2,
 h3,
@@ -568,19 +568,19 @@ h6,
 
 h1,
 .h1 {
-  font-size: clamp(2rem, 1.25rem + 3vw, 3.5rem);
-  font-stretch: 108%;
-  font-weight: 820;
-  line-height: 1.03;
+  font-size: clamp(2rem, 1.4rem + 2vw, 2.75rem);
+  font-stretch: 100%;
+  font-weight: 760;
+  line-height: 1.12;
   letter-spacing: -0.024em;
 }
 
 h2,
 .h2 {
-  font-size: clamp(1.625rem, 1.2rem + 1.7vw, 2.5rem);
-  font-stretch: 106%;
-  font-weight: 810;
-  line-height: 1.07;
+  font-size: clamp(1.5rem, 1.1rem + 1.3vw, 2rem);
+  font-stretch: 100%;
+  font-weight: 740;
+  line-height: 1.2;
   letter-spacing: -0.021em;
 }
 
@@ -626,16 +626,16 @@ h6 {
   text-wrap: pretty;
 }
 
-/* Printed captions: labels, column heads, step numbers. Condensed caps, never
-   mono. Nothing of this kind sits above a heading. */
+/* Sentence-case captions: labels, column heads and step numbers. Reserve
+   mono for code and paths. */
 .meta {
   font-family: var(--font-display);
-  font-size: var(--fs-12);
-  font-stretch: 85%;
-  font-weight: 680;
+  font-size: var(--fs-13);
+  font-stretch: 100%;
+  font-weight: 650;
   line-height: 1.4;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
+  letter-spacing: 0;
+  text-transform: none;
   color: var(--muted);
 }
 
@@ -1061,22 +1061,6 @@ pre {
   background: var(--accent-solid-hover);
 }
 
-.btn--primary {
-  transition:
-    background-color var(--t-fast),
-    border-color var(--t-fast),
-    box-shadow var(--t-panel);
-}
-
-:where(:root, .theme-dark) .btn--primary:hover:not(:disabled, [aria-disabled="true"]) {
-  box-shadow: 0 0.5rem 2rem -0.5rem color-mix(in srgb, var(--accent-solid) 70%, transparent);
-}
-
-.theme-light .btn--primary:hover,
-.on-stock .btn--primary:hover {
-  box-shadow: none;
-}
-
 /* The secondary box fills with ink under the pointer. */
 .btn--secondary {
   border-color: var(--rule);
@@ -1370,7 +1354,7 @@ pre {
    8. Chips: severity, verdict, status, ref, hash
    ========================================================================== */
 
-/* Stamps, not pills. Ink outline, ink letters, condensed caps. --chip sets the ink. */
+/* Compact, sentence-case status labels. --chip sets the semantic colour. */
 .chip {
   --chip: var(--sev-none);
   display: inline-flex;
@@ -1383,12 +1367,12 @@ pre {
   background: color-mix(in srgb, var(--chip) var(--chip-fill), transparent);
   color: var(--chip);
   font-family: var(--font-display);
-  font-size: var(--fs-12);
-  font-stretch: 78%;
-  font-weight: 780;
+  font-size: var(--fs-13);
+  font-stretch: 100%;
+  font-weight: 650;
   line-height: 1;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  letter-spacing: 0;
+  text-transform: none;
   white-space: nowrap;
   vertical-align: middle;
 }
@@ -1442,48 +1426,36 @@ pre {
   background: transparent;
 }
 
-/* Verdict: the decision, stamped. */
+/* The verdict is a readable decision label, using the same semantic colours as the results. */
 .verdict {
   padding-inline: 0.5rem;
-  font-weight: 830;
+  font-weight: 700;
 }
 
-/* The large verdict is a rubber stamp: a double rule, condensed black caps,
-   a slight tilt. Its geometry is in em, so one inked impression fits it at
-   every size: scripts/build-stamps.mjs renders this box crisp (.stamp--proof),
-   presses it once and writes /stamps/verdict-<id>.webp, and the live box
-   shows its ink colour through that impression (the rules after the verdict
-   colours below). The words stay in the markup for search, selection and
-   screen readers. */
+/* Use live text at every size; no tilted or distressed image masks. */
 .verdict--lg {
-  --stamp-tilt: -2deg;
-  min-height: 2.6em;
-  padding: 0.2em 0.9em;
-  gap: 0.45em;
-  border-width: 0.15em;
-  border-radius: 0.28em;
-  outline: 0.06em solid var(--chip);
-  outline-offset: -0.36em;
+  min-height: 2.25em;
+  padding: 0.375em 0.75em;
+  border-width: 1px;
+  border-radius: var(--r-ctl);
   font-size: var(--fs-18);
-  font-stretch: 68%;
-  font-weight: 860;
-  letter-spacing: 0.1em;
-  transform: rotate(var(--stamp-tilt));
+  font-stretch: 100%;
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: 0;
+  white-space: normal;
 }
 
-/* A severity stamped by hand (the slip's Medium). Same treatment:
-   /stamps/sev-<severity>.webp. */
+/* The example's supported severity uses the same clear badge. */
 .sev--stamp {
-  --stamp-tilt: -3deg;
   min-height: 2.1em;
   padding: 0 0.7em;
-  border-width: 0.14em;
-  border-radius: 0.2em;
+  border-width: 1px;
+  border-radius: var(--r-chip);
   font-size: var(--fs-14);
-  font-stretch: 72%;
-  font-weight: 860;
-  letter-spacing: 0.08em;
-  transform: rotate(var(--stamp-tilt));
+  font-stretch: 100%;
+  font-weight: 700;
+  letter-spacing: 0;
 }
 
 .verdict[data-verdict="submit"],
@@ -1511,67 +1483,6 @@ pre {
 
 .verdict[data-verdict="fix-before-deploy"] {
   --chip: var(--sev-high);
-}
-
-/* The inked impressions. The box keeps its size and its words; the ink is
-   the chip colour seen through the impression, so night and day share one
-   asset. A verdict or severity without an impression stays a crisp chip. */
-.chip.verdict--lg:is([data-verdict="submit"], [data-verdict="rewrite-then-submit"], [data-verdict="prove-first"], [data-verdict="hold-duplicate"], [data-verdict="drop"], [data-verdict="fix-before-deploy"], [data-verdict="no-blocking-issues"]):not(.stamp--proof),
-.chip.sev--stamp:is([data-sev="critical"], [data-sev="high"], [data-sev="medium"], [data-sev="low"], [data-sev="info"]):not(.stamp--proof) {
-  border-color: transparent;
-  outline-color: transparent;
-  background: var(--chip);
-  color: transparent;
-  -webkit-mask: var(--stamp) center / 100% 100% no-repeat;
-  mask: var(--stamp) center / 100% 100% no-repeat;
-}
-
-.verdict--lg[data-verdict="submit"] {
-  --stamp: url("../stamps/verdict-submit.webp");
-}
-
-.verdict--lg[data-verdict="rewrite-then-submit"] {
-  --stamp: url("../stamps/verdict-rewrite-then-submit.webp");
-}
-
-.verdict--lg[data-verdict="prove-first"] {
-  --stamp: url("../stamps/verdict-prove-first.webp");
-}
-
-.verdict--lg[data-verdict="hold-duplicate"] {
-  --stamp: url("../stamps/verdict-hold-duplicate.webp");
-}
-
-.verdict--lg[data-verdict="drop"] {
-  --stamp: url("../stamps/verdict-drop.webp");
-}
-
-.verdict--lg[data-verdict="fix-before-deploy"] {
-  --stamp: url("../stamps/verdict-fix-before-deploy.webp");
-}
-
-.verdict--lg[data-verdict="no-blocking-issues"] {
-  --stamp: url("../stamps/verdict-no-blocking-issues.webp");
-}
-
-.sev--stamp[data-sev="critical"] {
-  --stamp: url("../stamps/sev-critical.webp");
-}
-
-.sev--stamp[data-sev="high"] {
-  --stamp: url("../stamps/sev-high.webp");
-}
-
-.sev--stamp[data-sev="medium"] {
-  --stamp: url("../stamps/sev-medium.webp");
-}
-
-.sev--stamp[data-sev="low"] {
-  --stamp: url("../stamps/sev-low.webp");
-}
-
-.sev--stamp[data-sev="info"] {
-  --stamp: url("../stamps/sev-info.webp");
 }
 
 /* Status: a round dot leads the label. */
@@ -1675,10 +1586,10 @@ button.ref:hover {
   margin-right: var(--sp-8);
   color: var(--muted);
   font-family: var(--font-display);
-  font-stretch: 85%;
-  font-weight: 680;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
+  font-stretch: 100%;
+  font-weight: 650;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 /* ==========================================================================
@@ -1764,23 +1675,20 @@ button.ref:hover {
 .kv dt {
   color: var(--muted);
   font-family: var(--font-display);
-  font-size: var(--fs-12);
-  font-stretch: 85%;
-  font-weight: 680;
+  font-size: var(--fs-13);
+  font-stretch: 100%;
+  font-weight: 650;
   line-height: 1.5;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .kv dd {
   overflow-wrap: anywhere;
 }
 
-/* Dossier: the inspection slip at the top of a result. The verdict stamp, the
-   headline and the counts, under a heavy head rule. */
-/* The verdict stamp lands from 1.55 times its size (stamp-land). The card
-   clips it: on a phone the enlarged frame reached past the screen, and the
-   page stayed wider than the screen after it. */
+/* Dossier: the verdict, headline and counts at the top of a result. Keep
+   content within the card on narrow screens. */
 .dossier {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -1857,12 +1765,12 @@ button.ref:hover {
 .counts__label {
   color: var(--muted);
   font-family: var(--font-display);
-  font-size: var(--fs-12);
-  font-stretch: 85%;
-  font-weight: 680;
+  font-size: var(--fs-13);
+  font-stretch: 100%;
+  font-weight: 650;
   line-height: 1.4;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .counts [data-sev="critical"] {
@@ -2111,11 +2019,11 @@ button.ref:hover {
 .finding__form {
   color: var(--text);
   font-family: var(--font-display);
-  font-size: var(--fs-12);
-  font-stretch: 85%;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-size: var(--fs-13);
+  font-stretch: 100%;
+  font-weight: 650;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .finding__file {
@@ -2133,10 +2041,10 @@ button.ref:hover {
 .finding__tag {
   margin-left: auto;
   font-family: var(--font-display);
-  font-stretch: 85%;
-  font-weight: 680;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
+  font-stretch: 100%;
+  font-weight: 650;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .finding__head {
@@ -2225,12 +2133,12 @@ button.ref:hover {
   padding: var(--sp-16) var(--sp-16) var(--sp-16) var(--sp-24);
   color: var(--rail-ink);
   font-family: var(--font-display);
-  font-size: var(--fs-12);
-  font-stretch: 85%;
-  font-weight: 720;
+  font-size: var(--fs-13);
+  font-stretch: 100%;
+  font-weight: 650;
   line-height: 1.65;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .rail__body {
@@ -2725,12 +2633,12 @@ button.ref:hover {
   background: var(--surface-2);
   color: var(--muted);
   font-family: var(--font-display);
-  font-size: var(--fs-12);
-  font-stretch: 85%;
-  font-weight: 680;
+  font-size: var(--fs-13);
+  font-stretch: 100%;
+  font-weight: 650;
   line-height: 1.5;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
+  letter-spacing: 0;
+  text-transform: none;
   white-space: nowrap;
   vertical-align: middle;
 }
@@ -2883,12 +2791,12 @@ button.ref:hover {
     margin-bottom: 0.125rem;
     color: var(--muted);
     font-family: var(--font-display);
-    font-size: var(--fs-12);
-    font-stretch: 85%;
-    font-weight: 680;
+    font-size: var(--fs-13);
+    font-stretch: 100%;
+    font-weight: 650;
     line-height: 1.5;
-    letter-spacing: 0.07em;
-    text-transform: uppercase;
+    letter-spacing: 0;
+    text-transform: none;
   }
 
   .stack-table--plain .cell-label {
@@ -2954,12 +2862,12 @@ button.ref:hover {
     margin-bottom: 0.125rem;
     color: var(--muted);
     font-family: var(--font-display);
-    font-size: var(--fs-12);
-    font-stretch: 85%;
-    font-weight: 680;
+    font-size: var(--fs-13);
+    font-stretch: 100%;
+    font-weight: 650;
     line-height: 1.5;
-    letter-spacing: 0.07em;
-    text-transform: uppercase;
+    letter-spacing: 0;
+    text-transform: none;
   }
 
   .stack-table--wide.stack-table--plain .cell-label {
@@ -3400,11 +3308,12 @@ button.ref:hover {
   background: color-mix(in srgb, var(--text) 8%, transparent);
 }
 
-/* The current page is marked on vermilion stock, the way a clerk highlights a line. */
+/* Location is quieter than an action: a coloured label and underline. */
 .site-nav a[aria-current="page"] {
-  background: var(--stock);
-  color: var(--on-stock);
-  font-weight: 760;
+  border-radius: 0;
+  color: var(--accent);
+  box-shadow: inset 0 -2px 0 var(--accent);
+  font-weight: 700;
 }
 
 .site-header__actions {
@@ -3505,12 +3414,12 @@ button.ref:hover {
   margin-bottom: var(--sp-8);
   color: var(--stock);
   font-family: var(--font-display);
-  font-size: var(--fs-12);
-  font-stretch: 85%;
-  font-weight: 720;
+  font-size: var(--fs-13);
+  font-stretch: 100%;
+  font-weight: 650;
   line-height: 1.5;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .site-footer__col ul {
@@ -3641,11 +3550,11 @@ button.ref:hover {
   list-style: none;
   color: var(--muted);
   font-family: var(--font-display);
-  font-size: var(--fs-12);
-  font-stretch: 85%;
-  font-weight: 680;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
+  font-size: var(--fs-13);
+  font-stretch: 100%;
+  font-weight: 650;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .breadcrumbs li + li::before {
@@ -3724,7 +3633,7 @@ button.ref:hover {
 }
 
 .page-head {
-  padding-block: var(--sp-32) var(--sp-48);
+  padding-block: var(--sp-32) var(--sp-24);
 }
 
 @media (min-width: 48em) {
@@ -3733,9 +3642,9 @@ button.ref:hover {
   }
 }
 
-/* 24 characters of the page-head cut, in em (24 x 0.512em), so the measure does not move when the webfont lands. */
+/* Supporting pages leave room for their content; the home page owns the display cut. */
 .page-head h1 {
-  max-width: 12.29em;
+  max-width: 18em;
 }
 
 .page-head .lede {
@@ -4089,9 +3998,8 @@ button.ref:hover {
 /*
   Colour and border changes run 120ms. Panels fade and rise 6px over 180ms.
   A dialog enters from 98% scale over 160ms. Lists of cards stagger by 40ms.
-  One authored moment: the stamp. A verdict lands the way a rubber stamp
-  does, large and light, then pressed flat at its tilt in 420ms. The finding
-  card's spine draws itself row by row under it.
+  The finding card's spine draws itself row by row. Verdict text and reading
+  content remain still.
 */
 
 @keyframes rise {
@@ -4101,22 +4009,6 @@ button.ref:hover {
   }
 }
 
-@keyframes stamp-land {
-  0% {
-    opacity: 0;
-    transform: rotate(var(--stamp-tilt, 0deg)) scale(1.55);
-  }
-
-  55% {
-    opacity: 1;
-    transform: rotate(var(--stamp-tilt, 0deg)) scale(0.96);
-  }
-
-  100% {
-    opacity: 1;
-    transform: rotate(var(--stamp-tilt, 0deg)) scale(1);
-  }
-}
 
 @keyframes spine-draw {
   from {
@@ -4165,12 +4057,7 @@ button.ref:hover {
   animation: rise var(--t-panel) var(--ease) both;
 }
 
-/* The stamp: on the hero slip, and on a verdict as a result arrives. */
-:root[data-motion="on"] .stamp-land,
-:root[data-motion="on"] .panel-enter .dossier .verdict--lg {
-  animation: stamp-land var(--t-stamp) var(--ease-out) both;
-  animation-delay: var(--stamp-delay, 120ms);
-}
+
 
 /* Children enter one after another: cards in a list, rows in a table. */
 :root[data-motion="on"] .stagger > * {
@@ -4422,30 +4309,5 @@ button.ref:hover {
     color: var(--muted);
     font-size: 0.85em;
     overflow-wrap: anywhere;
-  }
-}
-
-/* ==========================================================================
-   22. Rise on scroll
-   ========================================================================== */
-
-/* A part of the page comes up into place as it enters the window. Driven by
-   the scroll position itself, so there is no script and nothing waits on one:
-   a browser without scroll-driven animation, or a visitor who asked for less
-   motion, sees the page as printed. */
-@keyframes rise-in {
-  from {
-    opacity: 0;
-    transform: translate3d(0, 1.75rem, 0);
-  }
-}
-
-@media screen {
-  @supports (animation-timeline: view()) {
-    :root[data-motion="on"] .rise {
-      animation: rise-in linear both;
-      animation-timeline: view();
-      animation-range: entry 0% entry 42%;
-    }
   }
 }

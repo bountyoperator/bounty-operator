@@ -247,9 +247,9 @@ const sourceList = html`
 const body = html`
 ${pageHero({
   trail: [{ label: 'Bounty Operator', href: '/' }, { label: 'Compare' }],
-  title: 'Bounty Operator vs a chat app, a local audit skill and platform pre-checks',
+  title: 'Compare your review options',
   lede: 'Four ways to check a finding before you file it, and seven tools that cover part of the same ground. Every fact about another product has a dated source.',
-  actions: html`${button({ label: 'Start a free review', href: workbenchLink(), variant: 'primary', size: 'lg', iconEnd: 'arrow-right' })}${button({ label: 'Read the method', href: '/method', size: 'lg' })}`,
+  actions: html`${button({ label: 'Start a free review', href: workbenchLink(), variant: 'primary', size: 'lg' })}${button({ label: 'Read the method', href: '/method', size: 'lg' })}`,
 })}
 
 <section class="section section--tight wrap" aria-labelledby="table">

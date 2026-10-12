@@ -465,13 +465,9 @@ test('the moving field draws nothing per frame, and holds still when less motion
   assert.match(block, /@media \(forced-colors: active\), print \{\n  \.field-bg \{\n    display: none;/);
 });
 
-test('a part that rises on scroll is visible wherever the browser cannot drive it', async () => {
+test('supporting page content is visible without a scroll-triggered entrance', async () => {
   const css = (await readFile(path.join(WEB_DIR, 'public', 'css', 'base.css'), 'utf8')).replace(/\r\n/g, '\n');
-  // The hidden starting state exists only inside the keyframes, and the keyframes are used only
-  // under a scroll-driven timeline with motion welcome.
-  assert.match(css, /@media screen \{\n  @supports \(animation-timeline: view\(\)\) \{\n    :root\[data-motion="on"\] \.rise \{\n      animation: rise-in linear both;\n      animation-timeline: view\(\);/);
-  assert.equal(css.split('animation: rise-in ').length - 1, 1);
-  assert.equal(css.split('@keyframes rise-in {').length - 1, 1);
+  assert.doesNotMatch(css, /animation: rise-in|@keyframes rise-in/);
   assert.doesNotMatch(css, /\.rise \{[^}]*opacity: 0/);
 });
 

@@ -305,10 +305,10 @@
 .slip__form {
   font-family: var(--font-display);
   font-size: var(--fs-14);
-  font-stretch: 72%;
-  font-weight: 860;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  font-stretch: 100%;
+  font-weight: 650;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .slip__fields {
@@ -336,11 +336,11 @@
 .slip__field dt {
   color: var(--muted);
   font-family: var(--font-display);
-  font-size: var(--fs-12);
-  font-stretch: 85%;
-  font-weight: 700;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
+  font-size: var(--fs-13);
+  font-stretch: 100%;
+  font-weight: 650;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .slip__field dd {
@@ -383,7 +383,7 @@
   mask: url("../stamps/strike.svg") center / 100% 100% no-repeat;
 }
 
-/* Medium, stamped beside it: its impression is /stamps/sev-medium.webp. */
+/* The supported severity is a live-text badge beside the original claim. */
 .slip__supported .sev--stamp {
   font-size: var(--fs-14);
 }
@@ -405,8 +405,7 @@
   line-height: 1.5;
 }
 
-/* The verdict box: the shaded box a form keeps for the inspector, stamped
-   and dated. */
+/* The verdict box keeps the decision and date together. */
 .slip__field--verdict {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
@@ -432,9 +431,7 @@
 }
 
 .slip__stamp .verdict--lg {
-  --stamp-tilt: 0deg;
-  font-size: 1.5rem;
-  mix-blend-mode: multiply;
+  font-size: var(--fs-18);
 }
 
 /* The dater: when the stored review was written, and by which model. */
@@ -455,7 +452,7 @@
   font-size: var(--fs-13);
 }
 
-/* On a phone the slip leads with what decides it: the claim, the stamps and
+/* On a phone the slip leads with what decides it: the claim, the severity and
    the verdict, then the review and the line. The typed title is the draft's
    own and stays in the markup. */
 @media (max-width: 39.99em) {
@@ -496,11 +493,11 @@
   }
 
   .slip__stamp .verdict--lg {
-    font-size: 1.25rem;
+    font-size: var(--fs-16);
   }
 }
 
-/* The one authored moment: the pen strike, then Medium, then the verdict. */
+/* The pen strike is the saved example's only animated mark. */
 @keyframes slip-strike {
   from {
     clip-path: inset(0 100% 0 0);
@@ -513,14 +510,6 @@
 
 :root[data-motion="on"] .home-shot:not(.home-shot--still) .slip__claimed::after {
   animation: slip-strike 260ms var(--ease-out) 380ms both;
-}
-
-:root[data-motion="on"] .home-shot:not(.home-shot--still) .slip__supported .sev--stamp {
-  animation: stamp-land var(--t-stamp) var(--ease-out) 660ms both;
-}
-
-:root[data-motion="on"] .home-shot:not(.home-shot--still) .slip__stamp .verdict--lg {
-  animation: stamp-land 480ms var(--ease-out) 1000ms both;
 }
 
 /* ==========================================================================
@@ -811,7 +800,7 @@
    7. Pricing
    ========================================================================== */
 
-/* The fee schedule: two plans side by side. Operator is printed on vermilion stock. */
+/* Match the plans on /pricing: neutral panels, with coral reserved for the action. */
 .home-plans {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -832,18 +821,18 @@
   background: var(--surface);
 }
 
-.home-plan.on-stock {
-  background: var(--stock);
+.home-plan--operator {
+  border-color: var(--accent);
 }
 
 .home-plan__name {
   padding-bottom: var(--sp-12);
   border-bottom: var(--rule-w) solid var(--rule);
   font-size: var(--fs-22);
-  font-stretch: 80%;
-  font-weight: 860;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font-stretch: 100%;
+  font-weight: 650;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .home-plan__price {
@@ -855,10 +844,10 @@
 
 .home-plan__amount {
   font-family: var(--font-display);
-  font-size: 3.5rem;
-  font-stretch: 110%;
-  font-weight: 850;
-  line-height: 0.95;
+  font-size: var(--fs-40);
+  font-stretch: 100%;
+  font-weight: 650;
+  line-height: 1.1;
   letter-spacing: -0.03em;
   font-variant-numeric: tabular-nums;
 }

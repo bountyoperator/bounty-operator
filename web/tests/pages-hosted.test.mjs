@@ -286,7 +286,7 @@ test('the data flow of a hosted review is stated the way the Worker runs it', as
   assert.match(security, /For a hosted profile it is the request: your focus, your context and the files, line by line\./);
 
   const own = text('your-model-your-key.html');
-  assert.match(own, /Your files and your key pass through our server in memory\. It adds the review method and sends the request to that provider\. Bounty Operator stores no code, no prompts, no keys and no results\./);
+  assert.match(own, /Your files and key pass through our server in memory to that provider\. Bounty Operator stores no code, prompts, keys or results\./);
   assert.match(own, /Receives your files, your request and your API key\./);
   assert.match(own, /Adds the review method of the profile you picked and sends the request, with your key, to one fixed endpoint of the provider you chose\./);
   assert.match(own, /Streams the review back\. Writes none of it to the database or to logs\./);

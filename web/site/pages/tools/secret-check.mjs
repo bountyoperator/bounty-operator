@@ -50,7 +50,7 @@ ${button({ label: 'Clear', id: 'secret-clear', variant: 'quiet' })}
 <p class="tool-state" id="secret-clean"></p>
 <p class="tool-state" id="secret-skipped"></p>
 <div class="cluster tool-actions">
-${button({ label: 'Review this proof', href: '/?profile=poc#workspace', id: 'secret-handoff', variant: 'primary', iconEnd: 'arrow-right' })}
+${button({ label: 'Review this proof', href: '/?profile=poc#workspace', id: 'secret-handoff', variant: 'primary' })}
 ${button({ label: 'Copy result as Markdown', id: 'secret-copy', icon: 'copy' })}
 </div>
 </div>`,

@@ -216,7 +216,7 @@ export function checkDraft({ id = 'draft', profile, focus, fileName, note, label
     <p class="tpl-check__state" id="${id}-state" aria-live="polite" data-handoff-state></p>
     ${notice({ tone: 'error', live: true, className: 'tpl-check__error' })}
     <div class="cluster">
-      ${button({ label: primary.label, href: primary.href, variant: 'primary', iconEnd: 'arrow-right', attrs: { 'data-handoff-go': true } })}
+      ${button({ label: primary.label, href: primary.href, variant: 'primary', attrs: { 'data-handoff-go': true } })}
       ${secondary && button({ label: secondary.label, href: secondary.href })}
     </div>
   </div>`;

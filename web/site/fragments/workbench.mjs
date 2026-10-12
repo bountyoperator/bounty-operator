@@ -129,7 +129,7 @@ ${field({
   const check = html`<div class="wb-privacy" id="wb-privacy" tabindex="-1"></div>
 <div class="wb-actions">
 ${button({ label: 'Preview the prompt', id: 'wb-preview', icon: 'eye' })}
-${button({ label: 'Continue', id: 'wb-continue', variant: 'primary', iconEnd: 'arrow-right' })}
+${button({ label: 'Continue', id: 'wb-continue', variant: 'primary' })}
 </div>`;
 
   return html`<div class="wb__panel" id="wb-panel-files" data-panel="files" role="group" aria-labelledby="wb-files-title">
@@ -194,7 +194,7 @@ ${button({ label: 'Forget key', id: 'wb-key-forget', variant: 'quiet' })}
   const run = html`<div class="wb-run-warn" id="wb-run-warn"></div>
 <div class="wb-upgrade" id="wb-upgrade" hidden></div>
 <div class="wb-actions" id="wb-run-actions">
-${button({ label: 'Run review', id: 'wb-run', variant: 'primary', iconEnd: 'arrow-right' })}
+${button({ label: 'Run review', id: 'wb-run', variant: 'primary' })}
 <p class="fine wb-quota" id="wb-quota"></p>
 </div>
 <div class="wb-live" id="wb-live" hidden>
@@ -262,7 +262,7 @@ ${field({
   })}
 </div>
 <div class="wb-actions">
-${button({ label: 'Build the result', id: 'wb-reply-build', variant: 'primary', iconEnd: 'arrow-right' })}
+${button({ label: 'Build the result', id: 'wb-reply-build', variant: 'primary' })}
 </div>`;
 
   return html`<div class="wb__panel" id="wb-panel-review" data-panel="review" role="group" aria-labelledby="wb-review-title" hidden>

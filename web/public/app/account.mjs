@@ -398,7 +398,9 @@ function capabilityNotice() {
 
 function renderEntry() {
   view = 'entry';
-  const returning = isKnown();
+  // An explicit account or billing visit means sign in, even on a new browser.
+  // Starting a first review or upgrade still introduces account creation.
+  const returning = isKnown() || reason === 'account' || reason === 'billing';
   signIn.title.textContent = returning ? 'Sign in' : 'Create your account';
   signIn.close.hidden = false;
 

@@ -35,7 +35,7 @@ function needsList(items) {
  */
 export function profileLanding({ path, title, description, label, profileId, profileName, hero, checks, checksButton = 'What it checks', paste, returns, more, faqItems, related, cta }) {
   const open = (size = 'lg') =>
-    button({ label: cta.button, href: workbenchLink(profileId), variant: 'primary', size, iconEnd: 'arrow-right' });
+    button({ label: cta.button, href: workbenchLink(profileId), variant: 'primary', size });
 
   const body = html`
 ${pageHero({

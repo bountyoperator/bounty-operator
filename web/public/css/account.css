@@ -435,12 +435,12 @@
 .stat__label {
   color: var(--muted);
   font-family: var(--font-display);
-  font-size: var(--fs-12);
-  font-stretch: 85%;
-  font-weight: 720;
+  font-size: var(--fs-13);
+  font-stretch: 100%;
+  font-weight: 650;
   line-height: 1.4;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .stat__body {
@@ -749,12 +749,12 @@
   background: var(--surface-2);
   color: var(--muted);
   font-family: var(--font-display);
-  font-size: var(--fs-12);
-  font-stretch: 85%;
-  font-weight: 720;
+  font-size: var(--fs-13);
+  font-stretch: 100%;
+  font-weight: 650;
   line-height: 1.5;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .plan-table tbody th {

@@ -13,9 +13,6 @@ import { CLAUDE_CREDITS_FAQ, STYLES, ctaBand, pageHero, relatedLinks, tickList, 
 
 const PATH = '/your-model-your-key';
 
-const PROVIDER_NAMES = PROVIDERS.map((provider) => provider.label);
-const PROVIDER_SENTENCE = `${PROVIDER_NAMES.slice(0, -1).join(', ')} or ${PROVIDER_NAMES.at(-1)}`;
-
 // ---------------------------------------------------------------------------
 // The data path
 // ---------------------------------------------------------------------------
@@ -122,9 +119,9 @@ const FAQ_ITEMS = [
 const body = html`
 ${pageHero({
   trail: [{ label: 'Bounty Operator', href: '/' }, { label: 'Your model, your key' }],
-  title: 'Your model, your key: where your code goes',
-  lede: `A review runs on the model you choose, under your own API key: ${PROVIDER_SENTENCE}. Your files and your key pass through our server in memory. It adds the review method and sends the request to that provider. Bounty Operator stores no code, no prompts, no keys and no results.`,
-  actions: html`${button({ label: 'Start a free review', href: workbenchLink(), variant: 'primary', size: 'lg', iconEnd: 'arrow-right' })}${button({ label: 'See the providers', href: '#providers', size: 'lg' })}`,
+  title: 'Where your code and key go',
+  lede: 'Use the model you choose with your own API key. Your files and key pass through our server in memory to that provider. Bounty Operator stores no code, prompts, keys or results.',
+  actions: html`${button({ label: 'Start a free review', href: workbenchLink(), variant: 'primary', size: 'lg' })}${button({ label: 'See the providers', href: '#providers', size: 'lg' })}`,
   note: 'No API key? Code security, Solidity and draft-report reviews also work in ChatGPT or Claude, with no daily limit.',
   aside: html`
     <div class="glance">

@@ -31,6 +31,13 @@ uses the shared mark and useful navigation, without a second giant wordmark.
 Supporting page headings use the same plain charcoal background; decorative
 code and random red marks do not sit behind their text.
 
+Carry that restraint through the whole product: 32–44px page headings,
+sentence-case labels, readable verdict text, neutral pricing panels and one
+consistent set of rounded corners. Badges use transparent fills to retain
+contrast. Keep the active navigation understated, empty results explicit,
+and section links available on phones. Check populated tools and source
+dialogs at 320px as well as the page introduction.
+
 ## Assets and provenance
 
 The original portrait was created for Bounty Operator on 12 October 2026,

@@ -988,15 +988,7 @@ describe('rules', () => {
     assert.match(source, /if \(control\) control\.hidden = built\.hosted;/);
   });
 
-  test('from 960px the verdict of a result prints at the size its impression is drawn at', async () => {
-    const css = (await readFile(new URL('../public/css/workbench.css', import.meta.url), 'utf8')).replace(/\/\*[\s\S]*?\*\//g, '');
-    assert.match(css, /@media \(min-width: 60em\) \{\s*\.wb-result \.dossier \.verdict--lg \{\s*font-size: 1\.5rem;\s*\}\s*\}/);
-    // 1.5rem is 24px, the size the impression is drawn at, at twice the pixels: a 2x screen does not enlarge its ink.
-    const stamps = await readFile(new URL('../../scripts/build-stamps.mjs', import.meta.url), 'utf8');
-    assert.match(stamps, /const PROOF_FONT_PX = 24;\s*const PROOF_SCALE = 2;/);
-  });
-
-  test('on a phone a stacked table, a cited location and a landing stamp stay inside the page', async () => {
+  test('on a phone a stacked table, a cited location and a verdict stay inside the page', async () => {
     const read = async (name) => (await readFile(new URL(`../public/css/${name}`, import.meta.url), 'utf8')).replace(/\/\*[\s\S]*?\*\//g, '');
     const [css, base, runners, home] = await Promise.all(['workbench.css', 'base.css', 'runners.css', 'home.css'].map(read));
     /** The body of the first block that opens with `open`, braces balanced. */
@@ -1043,8 +1035,8 @@ describe('rules', () => {
     // On a wide screen an empty cell keeps its place in the row: the rule exists in the phone block only.
     assert.equal(count(base, 'td:empty'), 1);
 
-    // A stamp lands from 1.55 times its size. Its card or field clips it, or a phone lays the page out too wide.
-    assert.match(base, /@keyframes stamp-land \{\s*0% \{[^}]*scale\(1\.55\)/);
+    // Verdict text can wrap, and its container never widens the page.
+    assert.match(base, /\.verdict--lg \{[^}]*white-space: normal;/);
     assert.match(base, /\n\.dossier \{[^}]*\boverflow: clip;[^}]*\}/);
     assert.match(home, /\n\.home-hero \{[^}]*\boverflow-x: clip;[^}]*\}/);
   });

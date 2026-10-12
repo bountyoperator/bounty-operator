@@ -236,7 +236,6 @@ ${button({
   label: 'Challenge this draft',
   href: '/?profile=report#workspace',
   variant: 'primary',
-  iconEnd: 'arrow-right',
   attrs: { 'data-handoff': 'guide-example' },
 })}
 </div>`;
@@ -384,7 +383,7 @@ const body = docPage({
     crumbs: [{ label: 'Bounty Operator', href: '/' }, { label: 'Report guide' }],
     title: TITLE,
     lede: 'Seven things a report that lands has, and a weak draft rewritten line by line.',
-    actions: html`${button({ label: 'Check a draft', href: '/tools/report-check', variant: 'primary', size: 'lg', iconEnd: 'arrow-right' })}${button({ label: 'Report templates', href: '/templates', size: 'lg' })}`,
+    actions: html`${button({ label: 'Check a draft', href: '/tools/report-check', variant: 'primary', size: 'lg' })}${button({ label: 'Report templates', href: '/templates', size: 'lg' })}`,
   },
   before: html`<div class="docs-record">${record}</div>`,
   sections: [

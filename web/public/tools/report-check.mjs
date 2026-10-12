@@ -264,8 +264,9 @@ function render() {
     else squares[index]?.setAttribute('data-status', check.status);
   });
 
-  scoreNumber.textContent = String(report.passed);
-  scoreText.textContent = `of ${report.total} checks pass`;
+  scoreNumber.hidden = report.empty;
+  scoreNumber.textContent = report.empty ? '' : String(report.passed);
+  scoreText.textContent = report.empty ? 'No report checked yet' : `of ${report.total} checks pass`;
   score.toggleAttribute('data-ready', !report.empty);
   copyButton.disabled = report.empty;
   saveButton.disabled = report.empty;

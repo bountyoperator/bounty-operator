@@ -127,7 +127,7 @@ test('closingBand builds its own boxes: the first solid, all of them large', () 
   const [first, second] = buttons(band);
   assert.deepEqual(first, ['btn', 'btn--primary', 'btn--lg']);
   assert.deepEqual(second, ['btn', 'btn--secondary', 'btn--lg']);
-  assert.match(band, /<a class="btn btn--primary btn--lg" href="\/#workspace">.*icon--arrow-right/);
+  assert.match(band, /<a class="btn btn--primary btn--lg" href="\/#workspace">/);
   assert.match(band, /<p class="closing-band__lede">Run a review\.<\/p>/);
   assert.match(band, /<p class="fine">Free: 1 review a day\.<\/p>/);
   assert.throws(() => closingBand({ title: 'No actions' }), /at least one action/);
@@ -138,8 +138,8 @@ test('the head and the closing band are styled in base.css and nowhere else', as
   const all = await sheets();
   const base = all['base.css'];
   assert.match(base, /\n\.page-head,\n\.page-head__text \{[^}]*gap: var\(--sp-16\);/);
-  assert.match(base, /\n\.page-head \{\s*padding-block: var\(--sp-32\) var\(--sp-48\);\s*\}/);
-  assert.match(base, /\n\.page-head h1 \{\s*max-width: 12\.29em;\s*\}/);
+  assert.match(base, /\n\.page-head \{\s*padding-block: var\(--sp-32\) var\(--sp-24\);\s*\}/);
+  assert.match(base, /\n\.page-head h1 \{\s*max-width: 18em;\s*\}/);
   assert.match(base, /\n\.closing-band \{[^}]*background: var\(--surface-2\);/);
 
   for (const [name, css] of Object.entries(all)) {

@@ -189,7 +189,7 @@ const body = html`
 ${pageHero({
   trail: [{ label: 'Bounty Operator', href: '/' }, { label: 'Method', href: '/method' }, { label: 'Panel review' }],
   stamp: statusChip('operator'),
-  title: 'Run 2 to 4 models on the same code, then cross-check their findings',
+  title: 'Cross-check a finding with 2 to 4 models',
   lede: 'Each model reviews the same files on your own key. A final pass checks every finding against the lines it cites, keeps what the code proves and shows how many models reported it.',
   actions: operatorActions({ secondary: button({ label: 'How it runs', href: '#how', size: 'lg' }) }),
   note: 'US$10 per week. One OpenRouter key covers the whole panel. Model usage is billed by your provider to your key.',

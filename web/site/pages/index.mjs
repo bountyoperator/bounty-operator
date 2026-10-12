@@ -197,7 +197,7 @@ const pricing = html`
         ${ticks([`1 review a day, any of the ${PROFILE_TOTAL} review types`, CHAT_TICK, AGENT_TICK])}
         <div class="home-plan__cta">${button({ label: 'Start a free review', href: '#workspace', size: 'lg', block: true })}</div>
       </article>
-      <article class="home-plan home-plan--operator on-stock" aria-labelledby="plan-operator">
+      <article class="home-plan home-plan--operator" aria-labelledby="plan-operator">
         <h3 class="home-plan__name" id="plan-operator">Operator</h3>
         <p class="home-plan__price"><span class="home-plan__amount">US$10</span><span class="home-plan__per">per week</span></p>
         <p class="home-plan__for">Everything in Free, plus:</p>

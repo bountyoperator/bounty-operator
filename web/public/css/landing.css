@@ -29,12 +29,12 @@
 /* The page opens on the shared head (.page-head in base.css). Here: what
    follows it, and the second column a landing page may put beside its text. */
 .lp-hero {
-  margin-bottom: var(--sp-48);
+  margin-bottom: 0;
 }
 
 .pricing-page .lp-hero,
 .benchmark-page .lp-hero {
-  margin-bottom: var(--sp-24);
+  margin-bottom: 0;
 }
 
 /* Under the title: the Operator stamp, or the page's file line. */
@@ -279,12 +279,12 @@
   margin-left: var(--sp-8);
   color: var(--muted);
   font-family: var(--font-display);
-  font-size: var(--fs-12);
-  font-stretch: 85%;
-  font-weight: 720;
+  font-size: var(--fs-13);
+  font-stretch: 100%;
+  font-weight: 650;
   line-height: 1.4;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .needs__note {
@@ -486,12 +486,12 @@
     background: var(--surface-2);
     color: var(--muted);
     font-family: var(--font-display);
-    font-size: var(--fs-12);
-    font-stretch: 85%;
-    font-weight: 720;
+    font-size: var(--fs-13);
+    font-stretch: 100%;
+    font-weight: 650;
     line-height: 1.5;
-    letter-spacing: 0.07em;
-    text-transform: uppercase;
+    letter-spacing: 0;
+    text-transform: none;
   }
 
   .closures__head + .closures__row {
@@ -940,12 +940,12 @@
 .panel-seats__n {
   color: var(--muted);
   font-family: var(--font-display);
-  font-size: var(--fs-12);
-  font-stretch: 85%;
-  font-weight: 720;
+  font-size: var(--fs-13);
+  font-stretch: 100%;
+  font-weight: 650;
   line-height: 1.4;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 /* How many reviewers reported a finding: 2/3 and a dot per reviewer. */
@@ -1166,8 +1166,12 @@
    ========================================================================== */
 
 /* On a phone one option is readable at a time and the row label stays in view. */
+.table-wrap:has(> .compare) {
+  container-type: inline-size;
+}
+
 .table.compare :is(th, td):not(.num) {
-  min-width: max(11rem, calc(100vw - 2 * var(--gutter) - 9.5rem - 2px));
+  min-width: max(11rem, calc(100cqw - 9.5rem));
   padding-inline: var(--sp-12);
 }
 
@@ -1190,7 +1194,23 @@
    beside the label and its first letters sit under it at the end of the scroll. */
 @media (max-width: 63.99em) {
   .table.compare tbody td:last-child:not(.num) {
-    min-width: max(11rem, calc(100vw - 2 * var(--gutter) - 9.5rem - 2px));
+    min-width: max(11rem, calc(100cqw - 9.5rem));
+  }
+}
+
+/* Leave a complete text column beside the label even at 320px. */
+@media (max-width: 29.99em) {
+  .table.compare :is(th, td):not(.num),
+  .table.compare tbody td:last-child:not(.num) {
+    width: calc(100cqw - 6rem);
+    min-width: calc(100cqw - 6rem);
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .table.compare tr > :first-child:not(.num) {
+    width: 6rem;
+    min-width: 6rem;
   }
 }
 
@@ -1207,12 +1227,12 @@
 .compare tbody th {
   color: var(--muted);
   font-family: var(--font-display);
-  font-size: var(--fs-12);
-  font-stretch: 85%;
-  font-weight: 720;
+  font-size: var(--fs-13);
+  font-stretch: 100%;
+  font-weight: 650;
   line-height: 1.5;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 @media (min-width: 64em) {
@@ -1342,13 +1362,9 @@
   box-shadow: var(--shadow-card);
 }
 
-/* The Operator plan is printed on vermilion stock (.on-stock). */
+/* Distinguish the paid plan without turning the whole panel into a button. */
 .plan--accent {
-  border-color: var(--rule);
-}
-
-.plan.on-stock {
-  background: var(--stock);
+  border-color: var(--accent);
 }
 
 .plan__head {
@@ -1369,6 +1385,7 @@
 }
 
 .plan__amount {
+  font-family: var(--font-display);
   font-size: var(--fs-40);
   font-weight: 650;
   line-height: 1.1;

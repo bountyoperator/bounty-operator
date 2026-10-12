@@ -186,8 +186,8 @@ const body = html`
 ${pageHero({
   trail: [{ label: 'Bounty Operator', href: '/' }, { label: 'Method', href: '/method' }, { label: 'Gauntlet' }],
   stamp: statusChip('operator'),
-  title: 'Run one finding through eight stages and get a verdict',
-  lede: 'Give it your draft, your code and the programme rules. You get one verdict (submit, rewrite then submit, prove first, hold as duplicate, or drop), the main thing blocking it, and the quickest fix.',
+  title: 'Eight stages. One verdict.',
+  lede: 'Give it your draft, code and programme rules. Get a verdict, the main blocker and the quickest fix.',
   actions: operatorActions({ secondary: button({ label: 'See the eight stages', href: '#stages', size: 'lg' }) }),
   note: 'US$10 per week. Runs on your own model and key.',
   after: proofLine(),

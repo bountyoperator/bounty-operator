@@ -144,6 +144,7 @@ ${toolHead({
 <li><span class="rates-facts__n">${ROWS.length}</span><span class="meta">bug classes</span></li>
 </ul>
 
+<p class="fine rates-hint">Scroll the table sideways for accepted counts and copy controls.</p>
 ${ratesTable}
 
 <p class="tool-table__foot" id="method">Source: Sherlock audit-contest judging repositories on public GitHub, compiled in ${link({ label: 'vulnerability-acceptance-rates.json', href: DATASET.upstream, external: true })} (${link({ label: 'methodology', href: DATASET.methodology_url, external: true })}), licence CC0, snapshot of ${SNAPSHOT}. Only contests whose accepted and invalid counts reconcile with Sherlock’s published results are included. Tags are assigned by keyword and a finding can carry more than one, so the rows overlap.</p>

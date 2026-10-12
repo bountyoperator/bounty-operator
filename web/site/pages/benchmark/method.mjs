@@ -27,7 +27,7 @@ export function methodPages(published) {
       crumbs: [{ label: 'Bounty Operator', href: '/' }, { label: 'Benchmark', href: PAGE_PATH }, { label: 'Method' }],
       title: 'Paydirt method',
       lede: html`How the cases are built and held, how an answer is scored and how every run is isolated. This is <a href="${BLOB}/bench/METHOD.md" target="_blank" rel="noopener noreferrer">bench/METHOD.md</a> from the repository, as it stood for release ${release}.`,
-      actions: html`${button({ label: 'Back to the leaderboard', href: PAGE_PATH, size: 'lg', icon: 'arrow-left' })}${button({ label: 'Check the numbers', href: `${PAGE_PATH}#verify`, variant: 'quiet', size: 'lg', iconEnd: 'arrow-right' })}`,
+      actions: html`${button({ label: 'Back to the leaderboard', href: PAGE_PATH, size: 'lg', icon: 'arrow-left' })}${button({ label: 'Check the numbers', href: `${PAGE_PATH}#verify`, variant: 'quiet', size: 'lg' })}`,
     },
     before: html`<div class="prose">${method.intro}</div>`,
     sections: method.sections.map((section) => ({ id: section.id, title: section.title, body: section.body })),

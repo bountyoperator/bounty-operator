@@ -12,7 +12,7 @@ import { breadcrumbsLd, faqPageLd, softwareApplicationLd } from '../../layout.mj
 import { ACCOUNT_SCRIPTS, ACCOUNT_STYLES, accountDialog } from '../../fragments/account-dialog.mjs';
 import { PROFILES } from '../../../public/profiles.mjs';
 import { AGENT_TICK, CHAT_TICK, COUNTED, FREE_LINE, NOT_COUNTED, RENEWAL, RESET_LINE, WHY_PAY } from '../../plans.mjs';
-import { CLAUDE_CREDITS_FAQ, STYLES, pageHero, proofLine, relatedLinks, tickList, workbenchLink } from './_shared.mjs';
+import { CLAUDE_CREDITS_FAQ, STYLES, pageHero, relatedLinks, tickList, workbenchLink } from './_shared.mjs';
 
 const PATH = '/pricing';
 
@@ -72,9 +72,8 @@ const FAQ_ITEMS = [
 const body = html`
 ${pageHero({
   trail: [{ label: 'Bounty Operator', href: '/' }, { label: 'Pricing' }],
-  title: 'Free for 1 review a day. US$10 a week for unlimited.',
-  lede: 'You bring the model: your own API key, or your ChatGPT or Claude chat. Your provider bills model usage.',
-  after: proofLine(),
+  title: 'Free, or US$10 a week.',
+  lede: 'Start with one free review a day. Upgrade for unlimited reviews, the gauntlet and model panels. Model usage is billed separately by your provider.',
 })}
 
 <section class="section section--tight wrap" aria-labelledby="plans">
@@ -95,7 +94,7 @@ ${pageHero({
       ])}
       <div class="plan__cta">${button({ label: 'Start a free review', href: workbenchLink(), variant: 'secondary', size: 'lg', block: true })}</div>
     </article>
-    <article class="plan plan--accent on-stock" aria-labelledby="plan-operator">
+    <article class="plan plan--accent" aria-labelledby="plan-operator">
       <div class="plan__head">
         <h3 class="plan__name" id="plan-operator">Operator</h3>
       </div>
@@ -108,7 +107,7 @@ ${pageHero({
         '4 reviews running at once',
         'Everything in Free',
       ])}
-      <div class="plan__cta">${button({ label: 'Get Operator', variant: 'primary', size: 'lg', block: true, iconEnd: 'arrow-right', id: 'upgrade', attrs: { 'data-account-action': 'checkout' } })}</div>
+      <div class="plan__cta">${button({ label: 'Get Operator', variant: 'primary', size: 'lg', block: true, id: 'upgrade', attrs: { 'data-account-action': 'checkout' } })}</div>
     </article>
   </div>
   <p class="fine plans__terms">${RENEWAL}</p>

@@ -101,7 +101,7 @@ test('the proof strip links the three leaderboards and the method', async () => 
   assert.doesNotMatch(text, /including duplicates|Critical-rated|listed researchers/);
   assert.match(text, /2nd of 133/);
   // The same count wherever the result is stated: 133 is the board's last rank (two more rows are disqualified).
-  for (const file of ['public/guide.html', 'public/method.html', 'public/gauntlet.html', 'public/pricing.html', 'public/llms.txt', '../README.md', '../docs/public-results.md']) {
+  for (const file of ['public/guide.html', 'public/method.html', 'public/gauntlet.html', 'public/llms.txt', '../README.md', '../docs/public-results.md']) {
     const stated = await readFile(path.join(WEB_DIR, file), 'utf8');
     assert.match(stated, /2nd of 133/, file);
     assert.doesNotMatch(stated, /2nd of 135/, file);
@@ -267,7 +267,7 @@ test('Spec introduces the saved example, which stays labelled and tied to its ev
   assert.doesNotMatch(hero, /class="eyebrow"|class="breadcrumbs"/);
 });
 
-test('every verdict and severity the site stamps has its pressed impression', async () => {
+test('legacy verdict assets remain available without masking live verdict text', async () => {
   const { VERDICT_STAMPS, SEVERITY_STAMPS } = await import('../../scripts/build-stamps.mjs');
   const { VERDICT_LABELS } = await import('../public/app/dossier.mjs');
   const css = await readFile(path.join(WEB_DIR, 'public', 'css', 'base.css'), 'utf8');
@@ -277,13 +277,13 @@ test('every verdict and severity the site stamps has its pressed impression', as
     const file = `verdict-${id}.webp`;
     const bytes = await readFile(path.join(WEB_DIR, 'public', 'stamps', file));
     assert.equal(bytes.toString('latin1', 8, 12), 'WEBP', file);
-    assert.ok(css.includes(`url("../stamps/${file}")`), `base.css uses ${file}`);
+    assert.ok(!css.includes(`url("../stamps/${file}")`), `live verdicts do not depend on ${file}`);
   }
   for (const [id] of SEVERITY_STAMPS) {
     const file = `sev-${id}.webp`;
     const bytes = await readFile(path.join(WEB_DIR, 'public', 'stamps', file));
     assert.equal(bytes.toString('latin1', 8, 12), 'WEBP', file);
-    assert.ok(css.includes(`url("../stamps/${file}")`), `base.css uses ${file}`);
+    assert.ok(!css.includes(`url("../stamps/${file}")`), `live severity text does not depend on ${file}`);
   }
   assert.match(await readFile(path.join(WEB_DIR, 'public', 'stamps', 'strike.svg'), 'utf8'), /^<svg xmlns="http:\/\/www\.w3\.org\/2000\/svg"/);
   // No repeated noise tile stands in for ink.
@@ -377,7 +377,7 @@ test('every motion the home page adds runs only while the page\'s motion is on',
     animated += 1;
     assert.match(selector.trim(), /^:root\[data-motion="on"\] /, selector);
   }
-  assert.ok(animated >= 3, 'the three review marks on the slip');
+  assert.equal(animated, 1, 'only the review strike remains animated');
   assert.doesNotMatch(css, /prefers-reduced-motion/);
   // The supporting figures remain legible in forced colours.
   assert.match(css, /@media \(forced-colors: active\) \{\n  \.home-stats__n \{\n    background: none;\n    color: CanvasText;/);

@@ -4,7 +4,7 @@ The design system for bountyoperator.com. Every page is generated from a module 
 
 See every component rendered: `node scripts/build-site.mjs --dev`, serve `web/public`, open `/_kit`.
 
-Direction: **the marked report** (DESIGN.md at the repository root records the whole system). A finding goes through inspection before it goes to a triager, and the verdict comes back as a stamp. The page is black and its print is bone white; one hot ink, vermilion, is the pen and the action. The report is paper lying on the page, verdicts and severities are stamped in ink, code sits on near-black. Green marks what was observed in the supplied files; ochre marks what is still unproven. Headlines and figures are Archivo in wide heavy cuts, printed labels are Archivo condensed caps; mono is for code, paths and hashes only. There is one look: no theme to choose, and nothing follows the system's colour scheme.
+Direction: **Spec, a bug with standards.** The character supplies personality; the report and controls supply clear evidence. The palette is charcoal, cream, coral and jacket blue. Archivo headings and sentence-case labels sit beside system body text; mono is for code, paths and hashes. Verdicts use live text without distressed masks, tilt or stamping motion. See DESIGN.md for the shared rules. There is one appearance, independent of the system colour scheme.
 
 ## Contents
 
@@ -141,15 +141,15 @@ raw('<b>fixed markup</b>')                    // trusted markup only
 
 ## Tokens
 
-Defined in `base.css` section 1. `:root` and `.theme-dark` hold the one palette of the page. `.theme-light` is the paper palette, with the same token names, for a sheet lying on the page (the report slip in the home hero). `.page-field` puts a page head on the field, full width, and `.on-stock` prints anything on vermilion stock in black (the Operator plan).
+Defined in `base.css` section 1. `:root` and `.theme-dark` hold the page palette. `.theme-light` supplies matching paper tokens for the saved example. `.page-field` is the plain charcoal heading area. `.on-stock` remains available for content on coral; pricing panels use neutral surfaces.
 
 | Group | Tokens |
 |---|---|
 | Page | `--bg` page · `--surface` cards, inputs · `--surface-2` bars, office-use boxes · `--surface-3` selected segment, bar track |
-| Field and stock | `--field` page-head ground, the page's own black · `--on-field` · `--on-field-muted` · `--field-rule` · `--stock` vermilion · `--on-stock` · `--on-stock-muted` · `--copy` the second sheet under the slip |
+| Field and stock | `--field` page-head ground, the page's own black · `--on-field` · `--on-field-muted` · `--field-rule` · `--stock` vermilion · `--on-stock` · `--on-stock-muted` · `--copy` a retained compatibility token |
 | Lines | `--rule` printed rules and frames · `--line` hairlines · `--line-strong` emphasis · `--line-control` control borders (3:1 on every surface) · `--rule-w` part rule width |
 | Ink | `--text` · `--muted` · `--placeholder` |
-| The hot ink | `--accent` links, line numbers, marks · `--accent-hover` · `--accent-solid` primary button fill (vermilion on the page, black on paper) · `--accent-solid-hover` · `--on-accent` · `--focus` · `--heat` the gradient of large figures and bars |
+| The hot ink | `--accent` links, line numbers, marks · `--accent-hover` · `--accent-solid` primary button fill (vermilion on the page, black on paper) · `--accent-solid-hover` · `--on-accent` · `--focus` · `--heat` the gradient of benchmark bars |
 | Green, observed | `--observed` what the code shows: confirmed, pass, proven, resolved |
 | Ochre, unproven | `--gap` · `--gap-bg` |
 | Severity | `--sev-crit` · `--sev-high` · `--sev-med` · `--sev-low` · `--sev-info` · `--sev-none` |
@@ -157,13 +157,12 @@ Defined in `base.css` section 1. `:root` and `.theme-dark` hold the one palette 
 | Chips | `--chip-fill` · `--chip-line` (tint percentages) |
 | Code | `--code-bg` · `--code-text` · `--code-muted` · `--code-line` · `--code-hl` · `--code-flag` · `--code-ok` (copied) |
 | Brand mark | `--brand-tile` · `--brand-ring` · `--brand-glyph` · `--brand-slash` |
-| Depth | `--shadow-card` (none: paper lies flat) · `--shadow` · `--shadow-pop` · `--shadow-slip` a loose sheet · `--backdrop` |
-| Stamps | `--stamp` the impression a stamp shows its ink through (set per verdict and severity) · `--stamp-tilt` · `--copy` the pink carbon copy |
+| Depth | `--shadow-card`, `--shadow` and `--shadow-slip` are none; `--shadow-pop` and `--backdrop` belong to dialogs. |
 | Type | `--font-display` Archivo · `--font-sans` system · `--font-mono` · `--fs-12` `--fs-13` `--fs-14` `--fs-16` `--fs-18` `--fs-22` `--fs-28` `--fs-40` `--fs-64` `--fs-88` |
 | Space | `--sp-4` `--sp-8` `--sp-12` `--sp-16` `--sp-24` `--sp-32` `--sp-48` `--sp-72` `--sp-112` |
-| Radius | `--r-chip` 2px · `--r-ctl` 2px · `--r-card` 2px · `--r-hero` 3px. A stamp's corners are in em (0.28em, 0.2em), so they scale with its impression. |
+| Radius | `--r-chip` 4px · `--r-ctl` 6px · `--r-card` 10px · `--r-hero` 12px. |
 | Layout | `--wrap` 75rem · `--gutter` · `--tap` 44px |
-| Motion | `--ease` · `--ease-out` · `--t-fast` 120ms · `--t-panel` 180ms · `--t-dialog` 160ms · `--t-stamp` 420ms · `--stagger` 40ms |
+| Motion | `--ease` · `--ease-out` · `--t-fast` 120ms · `--t-panel` 180ms · `--t-dialog` 160ms · `--stagger` 40ms. |
 
 Changing a dark value means changing it in both dark blocks. `web/tests/site-build.test.mjs` fails when they differ.
 
@@ -193,14 +192,14 @@ Plain `h1` to `h6` are styled. `.h1` to `.h4` give any element that look.
 
 | Class | Use |
 |---|---|
-| `.display` | Hero headline. Archivo condensed black, 44px on a phone, 88px on a desktop. |
+| `.display` | Homepage headline: Archivo, width 110%, 38–72px, weight 820. |
 | `.lede` | Intro paragraph, 18px, muted. |
-| `.meta` | Archivo condensed caps, 12px, muted: printed labels and counters. |
+| `.meta` | Sentence-case Archivo, normal width, 13px, weight 650, muted. |
 | `.muted` `.small` `.fine` | Secondary ink · 14px · 13px muted. |
 | `.mono` `.num` `.nowrap` | Mono family, for code, paths, hashes and typed entries · tabular figures · no wrapping. |
 | `.prose` | Wrapper for long-form pages. Plain `h2`, `p`, `ul`, `ol`, `blockquote`, `a`, `code`, `kbd`, `table`, `hr`, `img` inside it are styled. |
 
-Headings print in Archivo, semi-condensed and heavy. Nothing sits above a heading: no eyebrow, no kicker. A section opens with a part rule (`.section-head`).
+Supporting headings use normal-width Archivo: page titles 32–44px and section headings 24–32px. Keep the stronger display treatment for the homepage promise.
 
 Until Archivo arrives, its text prints in `"Archivo fallback"`: Arial Narrow Bold from the visitor's machine, declared in `base.css` as one `@font-face` per band of `font-stretch`, each with the `size-adjust` that brings a line close to Archivo's width. The match is close, not exact: a line that fits by a pixel or two can still re-break when the font lands. Two rules keep that rare:
 
@@ -277,7 +276,7 @@ segmented({ name: 'mode', label: 'Mode', value: 'bounty', options: [{ value: 'bo
 
 ### Chips
 
-Stamps, not pills: an ink outline, ink letters in Archivo condensed caps. Base class `.chip`; the variant sets the ink. `.verdict--lg` is the rubber stamp (a double rule, a tilt with `--stamp-tilt`) and `severityChip(id, label, { stamp: true })` adds `.sev--stamp`, a severity stamped by hand. Both show a pressed impression: `scripts/build-stamps.mjs` renders the live box crisp (`.stamp--proof`), presses it with real ink from CC0 scans of 1980s rubber-stamp imprints (`scripts/ink/`, sources in `scripts/ink/SOURCES.md`) and writes `web/public/stamps/verdict-<id>.webp` and `sev-<id>.webp`; the box shows the chip colour through that file as a mask, so the page and paper share one asset, and keeps its words in the markup. Their geometry is in em, so one impression fits every size. Re-run the script when a label, the geometry or the font changes; `web/tests/home-page.test.mjs` checks every verdict and severity has its file and that the labels match the app's.
+Badges use sentence-case live text, a semantic outline and transparent fill. `.verdict--lg` is an 18px decision label with a single border and natural wrapping. `severityChip(id, label, { stamp: true })` retains its compatible class name but renders a readable 14px badge. Legacy stamp assets and their builder remain in the repository; active CSS does not use their image masks.
 
 | Helper | Markup | Values |
 |---|---|---|
@@ -436,7 +435,7 @@ breadcrumbs([{ label: 'Tools', href: '/tools' }, { label: 'Report check' }])
 
 Every page opens on the field: `pageHero()` (method and landing pages), `docHead()`, `toolHead()`, the template heads and the 404 page carry `.page-field`, which prints a full-width band in `--field` behind the head and switches its ink to `--on-field`. A `.section` whose first child is a page field gives up its top padding, so the band starts under the header rule. `pageHero({ stamp, meta })` prints an Operator stamp or a file line under the title; there is no eyebrow.
 
-Every one of them but the home page is the same head, `.page-head`: the trail, the one `h1` with no class of its own, the `.lede`, then what the page adds (a `.meta` line, the actions, a `.fine` note). Its rhythm is in `base.css` and nowhere else: 48px of field above it (32px under 768px) and 48px below, 16px between parts, 24px above the lede and above the actions, a measure of 24 characters for the `h1` and `64ch` for the lede. So the heading starts at the same height on every page, 48px under the header rule, or one trail lower on a page two levels down.
+Every page except the homepage uses `.page-head`: the trail, one h1, the lede, then metadata or actions. Shared spacing is 48px above (32px under 768px), 24px below, 16px between parts and 24px above the lede and actions. The h1 has an 18em maximum measure and the lede 64ch.
 
 - Actions go in `div.cluster.page-head__actions`, and every box in it is `size: 'lg'`. Under 480px the boxes share the row width, one above the other.
 - A head with a second column (`pageHero({ aside })`) puts its text in `.page-head__text`, which keeps the same rhythm.
@@ -465,7 +464,7 @@ Emitted by the layout. Classes: `.site-header`, `.site-header__inner`, `.brand` 
 
 ## The finding card
 
-The signature component of the results view. It appears there, in the examples and the kit. The home hero and the social card show the report slip instead (`reportSlip()` in `web/site/social/example.mjs`): the example draft's own header lines with the claimed severity struck, the supported one stamped and the verdict stamped in the box the form keeps for it.
+The finding card is shared by results, examples and the component kit. Beside the homepage film, `reportSlip()` presents a flat saved report with the claimed severity struck through, its supported severity and the review verdict.
 
 ```js
 findingCard(finding, {
@@ -547,7 +546,7 @@ Page scripts do not need to wire any of these.
 - **`verdictLabel(id)`** (components.mjs): the printed name of a verdict, for places that are not a chip.
 - **`.home-stats`**: a list of `a.home-stats__item`, each a figure (`.home-stats__n`, set in the text colour) and a caption (`.home-stats__t`).
 - **`.bench-teaser__bar`**: an inline SVG, `viewBox="0 0 100 4"`, whose one `rect` covers the track from the score to 100. An SVG attribute, because the CSP refuses a style attribute.
-- **`.rise`**: a part that comes up into place as it enters the window, where the browser has scroll-driven animation. It is visible everywhere else. Do not put it on anything inside the workbench.
+- **`.rise`**: a legacy structural class with no entrance effect. Reading content is visible immediately.
 
 ## Motion
 
@@ -556,9 +555,8 @@ Page scripts do not need to wire any of these.
 | `.panel-enter` | A step panel or result block fades in and rises 6px over 180ms. |
 | `.stagger` | Children enter one after another, 40ms apart (first eight). |
 | `.finding--reveal` | The finding card's rows rise while its spine draws down. |
-| `.stamp-land` | The one authored moment: a stamp lands large and light, then presses flat at its tilt in 420ms. A verdict in a result that enters with `.panel-enter` lands the same way, and the home slip runs strike, Medium, verdict in sequence. |
 
-Colour and border transitions run 120ms. Dialogs fade and scale from 98% over 160ms. Everything is off under `prefers-reduced-motion: reduce`: the running bar becomes a solid line and skeletons go flat.
+Colour and border transitions run 120ms. Dialogs fade and scale from 98% over 160ms. The shared motion preference turns these effects off, follows reduced-motion settings by default and keeps a complete still state. The running bar becomes a solid line and skeletons go flat.
 
 ## Building the same markup from script
 

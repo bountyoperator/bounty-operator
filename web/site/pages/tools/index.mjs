@@ -5,8 +5,7 @@ import { absoluteUrl, breadcrumbsLd } from '../../layout.mjs';
 import { HOME_CRUMB, LASTMOD, LOCAL_LINE, TOOLS, TOOL_STYLES, localLine, nextAction } from './_shared.mjs';
 
 
-const rows = TOOLS.map((entry, index) => html`<li class="tool-row">
-<span class="tool-row__n" aria-hidden="true">${String(index + 1).padStart(2, '0')}</span>
+const rows = TOOLS.map((entry) => html`<li class="tool-row">
 <div class="tool-row__main">
 <h2 class="tool-row__title"><a class="tool-row__link" href="${entry.path}">${entry.name}</a></h2>
 <p class="tool-row__text">${entry.outcome}</p>
@@ -36,7 +35,7 @@ ${breadcrumbs([HOME_CRUMB, { label: 'Tools' }])}
 ${localLine()}
 </header>
 
-<ol class="tool-rows">${rows}</ol>
+<ul class="tool-rows">${rows}</ul>
 </section>
 
 ${nextAction({

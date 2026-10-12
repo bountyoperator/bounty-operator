@@ -182,7 +182,7 @@ const BUTTON_SIZES = ['sm', 'md', 'lg'];
 
 /**
  * A button, or a link styled as one when `href` is given.
- * button({ label: 'Run review', variant: 'primary', iconEnd: 'arrow-right' })
+ * button({ label: 'Run review', variant: 'primary' })
  */
 export function button({
   label,
@@ -605,7 +605,7 @@ export function breadcrumbs(trail) {
 export function closingBand({ title, text, actions = [], note, id = 'next-step' } = {}) {
   if (!title || actions.length === 0) throw new Error('closingBand() needs a title and at least one action.');
   const boxes = actions.map((action, index) =>
-    button(index === 0 ? { iconEnd: 'arrow-right', ...action, variant: 'primary', size: 'lg' } : { ...action, variant: 'secondary', size: 'lg' }),
+    button(index === 0 ? { ...action, variant: 'primary', size: 'lg' } : { ...action, variant: 'secondary', size: 'lg' }),
   );
   return html`<section class="closing-band" aria-labelledby="${id}">
 <div class="closing-band__text"><h2 class="closing-band__title" id="${id}">${title}</h2>${text && html`<p class="closing-band__lede">${text}</p>`}</div>

@@ -33,7 +33,7 @@ function platformCard(platform) {
       ${platform.cardClosed.map((reason) => html`<li>${icon('x')}<span>${reason}</span></li>`)}
     </ul>
     <div class="tpl-card__foot">
-      ${button({ label: openLabel(platform.name), href: platform.path, iconEnd: 'arrow-right', block: true })}
+      ${button({ label: openLabel(platform.name), href: platform.path, block: true })}
     </div>
   </article>`;
 }
@@ -48,7 +48,7 @@ const foundryCard = html`<article class="tpl-card tpl-card--wide">
     ${FOUNDRY.points.map((point) => html`<li>${icon('check')}<span>${point}</span></li>`)}
   </ul>
   <div class="tpl-card__foot">
-    ${button({ label: openLabel(FOUNDRY.name), href: FOUNDRY.path, iconEnd: 'arrow-right', block: true })}
+    ${button({ label: openLabel(FOUNDRY.name), href: FOUNDRY.path, block: true })}
   </div>
 </article>`;
 

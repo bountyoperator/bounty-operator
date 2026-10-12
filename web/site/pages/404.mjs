@@ -8,7 +8,7 @@ const body = html`
     <h1>No page at this address.</h1>
     <p class="lede">The server answered 404. The link is out of date or the address has a typo.</p>
     <div class="cluster page-head__actions">
-      ${button({ label: 'Start a free review', href: '/#workspace', variant: 'primary', size: 'lg', iconEnd: 'arrow-right' })}
+      ${button({ label: 'Start a free review', href: '/#workspace', variant: 'primary', size: 'lg' })}
       ${button({ label: 'Free tools', href: '/tools', size: 'lg' })}
       ${button({ label: 'Report guide', href: '/guide', size: 'lg' })}
     </div>

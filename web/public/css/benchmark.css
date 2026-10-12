@@ -215,12 +215,12 @@
   padding-block: var(--sp-8);
   background: var(--surface-2);
   font-family: var(--font-display);
-  font-size: var(--fs-12);
-  font-stretch: 85%;
-  font-weight: 720;
+  font-size: var(--fs-13);
+  font-stretch: 100%;
+  font-weight: 650;
   line-height: 1.4;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .lb__tier:hover {
@@ -318,12 +318,12 @@
     flex-basis: 100%;
     color: var(--muted);
     font-family: var(--font-display);
-    font-size: var(--fs-12);
-    font-stretch: 85%;
-    font-weight: 720;
+    font-size: var(--fs-13);
+    font-stretch: 100%;
+    font-weight: 650;
     line-height: 1.4;
-    letter-spacing: 0.07em;
-    text-transform: uppercase;
+    letter-spacing: 0;
+    text-transform: none;
     content: "Sort by";
     content: "Sort by" / "";
   }
@@ -448,12 +448,12 @@
     margin-bottom: 0.125rem;
     color: var(--muted);
     font-family: var(--font-display);
-    font-size: var(--fs-12);
-    font-stretch: 85%;
-    font-weight: 720;
+    font-size: var(--fs-13);
+    font-stretch: 100%;
+    font-weight: 650;
     line-height: 1.4;
-    letter-spacing: 0.07em;
-    text-transform: uppercase;
+    letter-spacing: 0;
+    text-transform: none;
   }
 
   .lb .lb__model {
@@ -726,7 +726,7 @@
 .pg__families th {
   padding-top: var(--sp-8);
   border-left: 1px solid var(--line);
-  text-transform: uppercase;
+  text-transform: none;
 }
 
 .pg__corner {

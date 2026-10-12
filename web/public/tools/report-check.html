@@ -74,7 +74,7 @@ FINISH: Responsive layout, native video controls, captions, reduced motion and v
 <p class="tool-local"><span class="icon icon--lock" aria-hidden="true"></span><span>Your content never leaves the browser.</span></p>
 </header>
 <div class="tool-panel report-check" id="report-check">
-<div class="tool-panel__bar"><span class="tool-panel__form">Form 01</span><span class="tool-panel__name">Report check</span><span class="tool-panel__tag">Local · 17 checks + citations</span></div>
+<div class="tool-panel__bar"><span class="tool-panel__name">Report check</span><span class="tool-panel__tag">Local · 17 checks + citations</span></div>
 <div class="tool-panel__body">
 <div class="tool-split">
 <div class="tool-split__in">
@@ -99,8 +99,8 @@ Severity: High
 <label class="drop__folder" for="evidence-drop-folder"><span class="icon icon--file" aria-hidden="true"></span><span>Choose a folder</span><input class="drop__input" type="file" id="evidence-drop-folder" webkitdirectory multiple></label>
 </div>
 <details class="disclosure">
-<summary>Paste a file instead</summary>
-<div class="report-evidence-paste">
+<summary class="disclosure__summary">Paste a file instead</summary>
+<div class="disclosure__body report-evidence-paste">
 <div class="field"><label class="label" for="evidence-name">File name</label><input class="input mono" id="evidence-name" type="text" placeholder="forge-output.txt" autocomplete="off" spellcheck="false" maxlength="240"></div>
 <div class="field"><label class="label" for="evidence-content">Content</label><textarea class="textarea mono" id="evidence-content" name="evidence-content" rows="5" spellcheck="false" autocomplete="off"></textarea></div>
 <button class="btn btn--secondary" type="button" id="evidence-add"><span class="icon icon--plus" aria-hidden="true"></span><span class="btn__label">Add file</span></button>
@@ -114,12 +114,12 @@ Severity: High
 <div class="tool-split__out">
 <h2 class="visually-hidden">Result</h2>
 <div class="score" id="score" role="status">
-<p class="score__line"><span class="score__n" id="score-n">0</span><span id="score-text">of 17 checks pass</span></p>
+<p class="score__line"><span class="score__n" id="score-n" hidden></span><span id="score-text">No report checked yet</span></p>
 <ol class="tally" id="tally" aria-hidden="true"><li></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li></ol>
 <p class="score__note" id="score-note">Paste a draft, or load the example, to see each check with the line it found.</p>
 </div>
 <div class="cluster tool-actions">
-<a class="btn btn--primary" href="/?profile=report#workspace" id="check-handoff"><span class="btn__label">Run the full challenge on your model</span><span class="icon icon--arrow-right" aria-hidden="true"></span></a>
+<a class="btn btn--primary" href="/?profile=report#workspace" id="check-handoff"><span class="btn__label">Run the full challenge on your model</span></a>
 <button class="btn btn--secondary" type="button" id="check-copy" disabled><span class="icon icon--copy" aria-hidden="true"></span><span class="btn__label">Copy checklist as Markdown</span></button>
 <button class="btn btn--quiet" type="button" id="check-save" disabled><span class="icon icon--download" aria-hidden="true"></span><span class="btn__label">Save evidence packet</span></button>
 </div>
@@ -175,7 +175,7 @@ Severity: High
 <div class="section section--tight wrap">
 <section class="closing-band" aria-labelledby="next-step">
 <div class="closing-band__text"><h2 class="closing-band__title" id="next-step">The text is in order. Now test the claim.</h2><p class="closing-band__lede">A review on your own model splits the draft into claims and marks each one confirmed, overstated, contradicted or unverifiable, with the line that decides it.</p></div>
-<div class="closing-band__actions"><div class="cluster"><a class="btn btn--primary btn--lg" href="/?profile=report#workspace"><span class="btn__label">Review my report</span><span class="icon icon--arrow-right" aria-hidden="true"></span></a><a class="btn btn--secondary btn--lg" href="/challenge-report"><span class="btn__label">How the challenge works</span></a></div></div>
+<div class="closing-band__actions"><div class="cluster"><a class="btn btn--primary btn--lg" href="/?profile=report#workspace"><span class="btn__label">Review my report</span></a><a class="btn btn--secondary btn--lg" href="/challenge-report"><span class="btn__label">How the challenge works</span></a></div></div>
 </section>
 </div>
 

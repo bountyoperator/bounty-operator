@@ -40,10 +40,10 @@ colors:
   sev-none: "#b3b1bc"
   ok: "#6fd39b"
   danger: "#ff899b"
-  code-bg: "#0e0e10"
+  code-bg: "#111b24"
   code-text: "#ebe8e1"
-  code-muted: "#8a8880"
-  code-line: "#232327"
+  code-muted: "#aab4bb"
+  code-line: "#30424e"
   code-hl: "#ff6a4d"
   code-flag: "#f2c552"
   code-ok: "#6fd39b"
@@ -82,18 +82,18 @@ typography:
     fontVariation: "'wdth' 110"
   headline-page:
     fontFamily: "Archivo, 'Archivo fallback', system-ui, sans-serif"
-    fontSize: "clamp(2rem, 1.25rem + 3vw, 3.5rem)"
-    fontWeight: 820
-    lineHeight: 1.03
+    fontSize: "clamp(2rem, 1.4rem + 2vw, 2.75rem)"
+    fontWeight: 760
+    lineHeight: 1.12
     letterSpacing: "-0.024em"
-    fontVariation: "'wdth' 108"
+    fontVariation: "'wdth' 100"
   headline-section:
     fontFamily: "Archivo, 'Archivo fallback', system-ui, sans-serif"
-    fontSize: "clamp(1.625rem, 1.2rem + 1.7vw, 2.5rem)"
-    fontWeight: 810
-    lineHeight: 1.07
+    fontSize: "clamp(1.5rem, 1.1rem + 1.3vw, 2rem)"
+    fontWeight: 740
+    lineHeight: 1.2
     letterSpacing: "-0.021em"
-    fontVariation: "'wdth' 106"
+    fontVariation: "'wdth' 100"
   title:
     fontFamily: "Archivo, 'Archivo fallback', system-ui, sans-serif"
     fontSize: "1.375rem"
@@ -113,31 +113,31 @@ typography:
     lineHeight: 1.55
   label:
     fontFamily: "Archivo, 'Archivo fallback', system-ui, sans-serif"
-    fontSize: "0.75rem"
-    fontWeight: 680
+    fontSize: "0.8125rem"
+    fontWeight: 650
     lineHeight: 1.4
-    letterSpacing: "0.07em"
-    fontVariation: "'wdth' 85"
+    letterSpacing: "0"
+    fontVariation: "'wdth' 100"
   button:
     fontFamily: "Archivo, 'Archivo fallback', system-ui, sans-serif"
     fontSize: "0.9375rem"
     fontWeight: 700
     fontVariation: "'wdth' 90"
-  stamp:
+  verdict:
     fontFamily: "Archivo, 'Archivo fallback', system-ui, sans-serif"
     fontSize: "1.125rem"
-    fontWeight: 860
-    letterSpacing: "0.1em"
-    fontVariation: "'wdth' 68"
+    fontWeight: 700
+    letterSpacing: "0"
+    fontVariation: "'wdth' 100"
   code:
     fontFamily: "ui-monospace, 'SF Mono', 'Cascadia Mono', 'Cascadia Code', Menlo, Consolas, monospace"
     fontSize: "0.8125rem"
     lineHeight: 1.7
 rounded:
-  chip: "2px"
-  control: "2px"
-  card: "2px"
-  hero: "3px"
+  chip: "4px"
+  control: "6px"
+  card: "10px"
+  hero: "12px"
 spacing:
   base: "4px"
   steps: "4, 8, 12, 16, 24, 32, 48, 72, 112"
@@ -149,8 +149,6 @@ motion:
   fast: "120ms"
   panel: "180ms"
   dialog: "160ms"
-  stamp: "420ms"
-  field-drift: "64s linear, one loop"
 ---
 
 # Design System: Bounty Operator
@@ -176,7 +174,7 @@ Every colour is a token in `web/public/css/base.css` section 1. `:root` and `.th
 - **Rules** (`#52616c` frames, `#344550` hairlines, `#98a3ad` control borders). Controls remain at least 3:1 against the surfaces.
 
 ### The hot ink
-- **Coral** (`#f16343`): primary actions, the current step and the highlighted plan. The Spec mark sits on cream.
+- **Coral** (`#f16343`): primary actions and the current review step. The paid plan uses a coral border on a neutral panel. The Spec mark sits on cream.
 - **Coral for small text** (`#ff987f`, hover `#ffb5a2`): links with sufficient contrast against the charcoal surfaces.
 - **Heat** (`linear-gradient(100deg, #ff2d2d, #ff5a1f 46%, #ffb224)`): the bars of the benchmark strip. It is never the colour of a sentence.
 
@@ -192,7 +190,7 @@ Paper is `#fbfaf6` on `#f4f1ea`, printed in `#121214`, with the pen in `#c2280f`
 ### Named Rules
 **The One Action Colour Rule.** Coral marks actions and relevant review annotations. Green, ochre and rose red carry review meaning, not mascot decoration.
 
-**The Heat Is For Figures Rule.** The gradient sets figures and bars. Text that must be read is bone or muted bone.
+**The Heat Is For Bars Rule.** The gradient is confined to benchmark bars. Figures and text remain cream or muted cream.
 
 ## Typography
 
@@ -200,19 +198,18 @@ One webfont, self-hosted: Archivo as a variable file, width 62 to 125 and weight
 
 ### Hierarchy
 - **Display** (820, `clamp(2.375rem, 1.15rem + 4.9vw, 4.5rem)`, width 110%, -0.022em, line 1.02): the home headline.
-- **Page head** (820, `clamp(2rem, 1.25rem + 3vw, 3.5rem)`, width 108%, -0.024em): every h1.
-- **Section head** (810, `clamp(1.625rem, 1.2rem + 1.7vw, 2.5rem)`, width 106%, -0.021em): every h2.
+- **Page head** (760, 32–44px, width 100%, line 1.12): supporting-page h1s.
+- **Section head** (740, 24–32px, width 100%, line 1.2): h2s.
 - **Title** (760, 22px, width 100%): h3, card and finding titles.
-- **Figure** (850 to 880, width 104% to 125%, about -0.03em): the three supporting results (48px on a phone, up to 64px), a plan's price (56px), a result's counts (28px).
-- **Verdict run** (840, width 118%, capitals, up to 76px): an outline 2px wide, with the page's black as fill.
+- **Figure:** supporting results remain subordinate to the headline; plan prices are 40px at weight 650, tool scores 40px at weight 700, and compact statistics 28px at weight 700.
 - **Body** (system sans, 16px, line 1.6) and **Lede** (18px, line 1.55, muted bone).
-- **Label** (680, 12px, width 85%, 0.07em, capitals): margin captions, column heads, breadcrumbs.
+- **Label** (650, 13px, width 100%, sentence case): margin captions, column heads and breadcrumbs.
 - **Button** (700, 15px, width 90%).
-- **Stamp** (860, 18px, 0.1em, capitals, width 68%): the rubber-stamp verdict. At the head of a result it prints at 24px from 960px, the size its impression is drawn at. The hand-stamped severity is 14px at width 72% and 0.08em.
+- **Verdict** (700, 18px, width 100%, sentence case): a readable decision label with a single outline. Supporting severity badges use 14px live text.
 - **Code** (mono, 13px, line 1.7, ligatures off).
 
 ### Named Rules
-**The Wide And Narrow Rule.** Wide heavy cuts are for headlines and figures. Condensed cuts are for what is stamped or printed small: stamps, chips and labels. Nothing between is used for display.
+**The Reading Hierarchy Rule.** The homepage promise has the strongest display treatment. Supporting headings and labels use normal-width type, so navigation, form controls and evidence remain easy to scan.
 
 **The Font Does Not Move The Page Rule.** Until Archivo arrives, a headline prints in a local face sized to the same advance: Arial Narrow Bold for the condensed bands, Arial Bold for the regular width, Arial Black for the wide cuts. Measures that depend on a cut are written in em.
 
@@ -220,24 +217,24 @@ One webfont, self-hosted: Archivo as a variable file, width 62 to 125 and weight
 
 Everything that moves is cheap by construction, and all of it runs only while the page's motion is on. `<html>` carries `data-motion="on"` or `"off"`, set by `theme.js` before the first paint: on unless the visitor's system asks for less motion, and the visitor's own choice wins over the system. The foot of every page has the button, Pause motion or Play motion. A choice that differs from the system is remembered in the browser.
 
-- **Stamps.** A stamp lands large and light (from 155% and transparent), overshoots to 96% just past halfway and presses flat at its tilt in 420ms on the out-ease. A verdict at the head of an arriving result lands the same way. The page stops on the first line of that result, just under the stepper, and the verdict follows in the same screen. On the home slip the pen strike draws across in 260ms (starting at 380ms), Medium lands at 660ms and the verdict lands over 480ms at 1000ms.
-- **Rise on scroll.** A part with `.rise` comes up 28px into place as it enters the window, driven by the scroll position where the browser has scroll-driven animation. Elsewhere it is simply visible.
-- **The action.** The primary button glows in its own ink under the pointer. Colour and border change in 120ms and a pressed button sinks 1px.
+- **Feedback.** Step panels, dialogs and newly rendered findings retain brief entrance transitions. Progress indicators show work in progress. The example's strike through the overclaimed severity may draw in, but badges stay still.
+- **Reading.** Sections are visible immediately. There are no scroll-driven entrances, landing stamps or animated heading backgrounds.
+- **Controls.** Colour and border change in 120ms and a pressed button sinks 1px. Primary buttons do not glow.
 
 ### Named Rules
 **The Nothing Per Frame Rule.** A background is drawn once and moved by a transform or an opacity, which the browser animates off the main thread. Scrolling and typing never wait on decoration.
 
-**The Still State Rule.** Every animation rule is keyed on `:root[data-motion="on"]`; no stylesheet asks the system directly. With motion off, `:root:not([data-motion="on"])` cuts every animation and transition to nothing, and each motion has a still state that reads complete: two lines struck, the stamps pressed. Working indicators (a spinner, the running bar) are the only animations declared without the switch, and that rule stills them too.
+**The Still State Rule.** Every decorative animation rule is keyed on `:root[data-motion="on"]`; no stylesheet asks the system directly. With motion off, `:root:not([data-motion="on"])` removes animations and transitions. Content remains complete and readable. Working indicators also have a still state.
 
 ## Layout
 
 The page is a stack of forms in one centred column. The wrap holds 75rem of content inside a fluid gutter; long-form pages narrow it to 46rem and wide views open it to 86rem. Spacing steps on a 4px base (4, 8, 12, 16, 24, 32, 48, 72, 112).
 
-Every page opens on the field: the page head stands over the moving field, which spans the window and starts directly under the header rule, while the head's content keeps to the wrap.
+Supporting pages open on a plain charcoal heading area directly under the header. The content keeps to the shared wrap.
 
-Every page but the home page opens on the same head: the trail on a page two levels down, the h1, the lede, then the page's own line or its actions in the large box. Its rhythm is set once: 48px above the head (32 on a phone) and 48 below, 16 between parts, 24 above the lede and above the actions. The heading therefore starts at the same height on every page. A page that ends on a call to action ends on one closing band: a raised panel with a sentence in the section cut, a line under it and the large boxes, the first one solid. Every page ends the same distance above the footer.
+Every page but the home page uses the same head: the trail on a page two levels down, the h1, the lede, then the page's own line or actions. Its rhythm is set once: 48px above (32 on a phone), 24px below, 16px between parts, and 24px above the lede and actions. Headings use an 18em maximum measure. Closing calls to action use a flat panel, a section heading and the shared buttons.
 
-On the home page the first viewport is that field. From 960px it holds two columns (1.08fr of text and 0.92fr of slip): the kicker, the headline with its ring, the lede, the solid Review my report box and the ruled View example box, and one line that says what a review costs. The tilted paper slip stands on the right. Under them come one line of proof and the three results as figures, each a link to its public leaderboard, then the verdict run. On a phone the order is kicker, headline, lede, actions, price line, slip.
+The home page pairs the product promise and review actions with Spec's portrait. The film and flat saved report follow it. On a phone, the introduction and actions precede the portrait. Decorative headline rings, floating paper stacks and the verdict ticker are retired.
 
 Forms are ledgers. The finding card and the workbench sheet print a 9.75rem caption margin, one 1px rule and the content to its right, and under 704px the caption moves above its content. Grids of cells are ruled by 1px gaps over the hairline ground inside a 1px frame, like the rack of verdict stamps.
 
@@ -246,7 +243,7 @@ The header keeps the brand at left and the nav and account control at right. Und
 Print is black on white whatever the screen shows: deeper inks, flat cards and panels, no header, footer, field or buttons, code wrapped.
 
 ### Named Rules
-**The Part Rule.** A 2px printed rule opens every section, heads every ledger and table, and underlines the site header, the dialog head and the slip's head; a 1px hairline divides inside. Nothing sits above a heading but that rule. The home hero alone carries a kicker, one line that names the kind of tool.
+**The Part Rule.** Shared rules are 1px. Spacing and type establish the hierarchy. The home hero alone carries a short kicker naming the tool's purpose.
 
 **The Field Opens The Page Rule.** Every page head stands on the field, full width, directly under the header rule.
 
@@ -257,18 +254,15 @@ Print is black on white whatever the screen shows: deeper inks, flat cards and p
 Depth comes from light on black. The page is flat, cards cast nothing at rest (`--shadow-card` is none), and what lies above the page is lit: a dialog over a backdrop of black at 78%. The saved report stays flat and aligned.
 
 ### Shadow Vocabulary
-- **Loose panel** (`0 1px 1px #00000066, 0 12px 28px -14px #000000cc`): a tool panel, a raised card or finding.
-- **Loose sheet** (`0 1px 2px #00000080, 0 30px 60px -18px #000000d9`, with a 1px ring of white at 6% on the page): the report slip.
+- **Cards, tool panels and report sheets:** no decorative shadow.
 - **Pop** (`0 2px 6px #00000080, 0 28px 64px -20px #000000e6`): dialogs.
 
 ### Named Rules
-**The Loose Sheet Rule.** A shadow means a sheet laid over the page: the slip over its second sheet, a raised tool panel, a dialog. It is never hover feedback, and never on a resting card.
+**The Overlay Rule.** Reserve depth for dialogs over a backdrop. A panel does not need a shadow to establish its boundary.
 
 ## Shapes
 
-Forms are square. Chips, controls, cards, tables and sheets turn their corners at 2px; dialogs and example frames at 3px. The rubber stamp is the only soft corner: 0.28em on the large verdict and 0.2em on the hand-stamped severity, set in em so one inked impression fits the stamp at every size. Circles appear only as marks: the status dot, the dots between the words of the verdict run, the radio mark of a pick and the busy spinner.
-
-Only the slip, the stamps and the pen sit off square: the slip at -1.25° (-0.75° on a phone) over its second sheet at +1.75°, the verdict stamp at -2° (-4° on the slip), the severity stamp at -3°, and the pen's ring drawn by hand.
+Use 4px badge corners, 6px control corners, 10px card corners and 12px hero or dialog corners. Keep panels aligned. Circles are functional marks such as status dots, radio buttons and spinners; controls do not become pills.
 
 **The Dashed Means Blank Rule.** A dashed line is a field left blank or a sheet that is not real: an unrated severity, Hold: duplicate, unsupplied code, an evidence gap, the frame around invented output. It is never decoration.
 
@@ -277,43 +271,43 @@ Only the slip, the stamps and the pen sit off square: the slip at -1.25° (-0.75
 Markup, helper signatures and every variant are in `web/site/COMPONENTS.md`, and a dev build renders them all at `/_kit`. This section records how each one looks and behaves.
 
 ### Buttons
-- **Shape:** square (2px), a 1.5px border, 44px minimum height; small is 36px and grows to 44px on touch, large is 52px.
-- **Primary:** the solid action box, vermilion with black letters. Under the pointer it brightens and glows (`0 0.5rem 2rem -0.5rem` of its ink at 70%). On paper and on vermilion stock it is black, with no glow.
+- **Shape:** 6px corners, a 1.5px border, 44px minimum height; small is 36px and grows to 44px on touch, large is 52px.
+- **Primary:** coral with dark text, brightening on hover. On paper and coral stock it is black. No halo or shadow.
 - **Secondary:** a transparent box with a 1.5px rule. Under the pointer it fills with bone and its letters turn black.
 - **Quiet / Danger:** quiet has no box and takes an 8% tint on hover; danger is a rose-red outline that fills on hover.
 - **States:** disabled sits at 50% opacity; a running button shows a spinner and keeps its label. Focus is a 2px bone ring 2px outside.
 - **Links:** vermilion with a half-strength 1px underline that turns full strength on hover.
 
 ### Chips
-Stamps, not pills: a 1.5px outline in the chip's ink, ink letters in condensed caps and a trace of the same ink as fill (10% on the page, 6% on paper), 2px corners, 24px tall. Tones are observed (green), unproven (ochre), ok, danger (rose red) and neutral. A file reference and a hash are mono at 12px in a ruled box; a reference keeps to one line, and its line numbers print in vermilion.
+Badges use a 1.5px semantic outline, live sentence-case text, a transparent background, 4px corners and a 24px minimum height. The transparent fill preserves contrast on all shared surfaces. Tones are observed, unproven, ok, danger and neutral. File references and hashes use mono in a ruled box.
 
-### Stamps
-The verdict, stamped. The large verdict is a double rule around condensed black caps, tilted. Each verdict and severity shows its ink through its own inked impression (`/stamps/verdict-<id>.webp`, `/stamps/sev-<id>.webp`) used as a CSS mask, so the ink is the chip's colour. The words stay in the markup for search, selection and screen readers. `scripts/build-stamps.mjs` makes the impressions from scans of real rubber-stamp imprints (`scripts/ink/SOURCES.md`); re-run it when a label, the stamp geometry or the font changes.
+### Verdicts
+Large verdicts use readable 18px live text and a single 1px outline. They wrap when needed, without tilt, image masks or entrance stamping. The old stamp assets and builder remain for compatibility; new UI does not use them.
 
 ### Cards / Containers
-A ruled box on the page: 2px corners, a 1px frame, hairlines between head, body and foot, no shadow at rest. Cards never nest. The dossier is the card at the head of a result: the verdict stamp, the headline and the counts under a 4px head rule. Under 480px the counts print in two rows: the three severities, then Hardening and Checked safe.
+A panel uses 10px corners, a 1px frame and hairlines between head, body and foot, without a shadow. Avoid unnecessary nested cards. The dossier at the head of a result holds the verdict, headline and counts under its 4px top rule. Under 480px the counts use two rows: the three severities, then Hardening and Checked safe.
 
 ### Inputs / Fields
-A surface box with a 1px control border (3:1 on every surface), 2px corners, 44px minimum height, 14px text that becomes 16px under 768px so phones do not zoom. Help is always visible text under the control; there are no tooltips. A tick box is a 20px square that fills with the action colour when checked.
+A surface box with a 1px control border, 6px corners and 44px minimum height. Text becomes 16px under 768px so phones do not zoom. Keep help visible under the control. The report checker distinguishes an empty form from a checked report with zero passing checks.
 
 ### Navigation
 - **Header:** the brand at left, nav and account control at right, a rule under it.
-- **Links:** 44px targets. The current page is filled with vermilion and printed in black.
+- **Links:** 44px targets. The current page uses coral text and an underline.
 - **Brand mark:** Spec's bent antennae, sceptical eyes, coral shell and blue jacket on a cream tile. `scripts/build-icons.mjs` draws the icons from the same paths as the header.
-- **Footer:** the promise, the primary action, vermilion column titles in condensed caps, and the name across the foot.
+- **Footer:** the shared mark, promise, primary action and useful navigation in sentence case.
 - **Tabs, stepper, segmented control:** the open tab joins the sheet under it. The current step of the stepper and the chosen segment are vermilion with black print; done steps carry a solid marker.
 
 ### Code Blocks
-Near-black (`#0e0e10`) inside a ruled frame, 2px corners. Mono at 13px and 1.7 with ligatures off; line numbers come from data, stay in a sticky gutter and never copy. A marked line takes a tint of the vermilion with a 2px mark in its gutter; an unproven line does the same in ochre.
+Deep charcoal (`#111b24`) inside a ruled frame with 6px corners. Mono at 13px and 1.7 with ligatures off; line numbers come from data, stay in a sticky gutter and never copy. A marked line takes a coral tint and a gutter mark; an unproven line uses ochre.
 
 ### Tables
-A 1px frame; column heads in condensed caps over a 2px rule; hairlines between rows; tabular figures aligned right. On a narrow screen a stack table reads as one block per row, each cell under its column name.
+A 1px frame, sentence-case column heads, hairlines between rows and tabular figures aligned right. Stack tables become labelled blocks on narrow screens. Wide tables scroll inside their frame. The comparison table keeps its row label and one complete option visible even at 320px; size columns from the container, not the viewport.
 
 ### Dialog
-A sheet laid over the page: a 1px frame, 3px corners and the pop shadow over the backdrop. Its head stays in view while the body scrolls, its foot sticks to the bottom and is not printed when every control in it is hidden, and widths are 440, 640 and 900px. It enters with a fade from 98% scale in 160ms.
+A sheet over the page: a 1px frame, 12px corners and the pop shadow over a backdrop. Its head stays visible while the body scrolls. Widths are 440, 640 and 900px, constrained by the viewport. Explicit Sign in links open the sign-in screen; starting a first review or upgrade can open account creation.
 
 ### Finding Card
-The result as an inspection form: a file bar, a head with the finding's id, severity and status chips, its title and its file references, then ledger rows with condensed-caps captions in a 9.75rem margin. A row's standing prints in its caption's ink: Observed is green; Counterargument is ochre while open and green when resolved; Evidence gap is ochre with its margin rule dashed. Path steps are numbered 01, 02. A draft review that lists only late steps keeps the draft's numbers under one line, "Numbered as in the draft." The full markup is in `web/site/COMPONENTS.md` under "The finding card".
+The result as an inspection form: a file bar, finding id, severity, status, title and source references, then rows with sentence-case captions in a 9.75rem margin. Observed is green; Counterargument is ochre while open and green when resolved; Evidence gap is ochre with a dashed margin rule. Numbered path steps preserve the draft's numbering. See `web/site/COMPONENTS.md` for the markup.
 
 ### Report Slip
 The saved example beside Spec's film is built by `reportSlip()` in `web/site/social/example.mjs`. It is a flat, aligned document on paper (`.theme-light`), with no tilted copy or decorative shadow. On it: the draft's typed title in mono, the claimed severity struck through with one pen stroke, the supported severity, the review's headline, the cited source and the verdict beside its date and model. On a phone the slip leads with the claim, stamps and verdict. The homepage hero and share image now use Spec's original portrait.
@@ -326,10 +320,10 @@ The saved example beside Spec's film is built by `reportSlip()` in `web/site/soc
 
 ### Do:
 - **Do** take every colour, size, radius and duration from the tokens in `web/public/css/base.css` section 1. A new colour goes into both palettes, the page and paper, and a test keeps their token names the same.
-- **Do** open every page on the field and every section with the 2px part rule.
+- **Do** use the shared page head, section spacing and 1px rules.
 - **Do** keep vermilion for the pen and the action, and carry standing in green, ochre and rose red.
-- **Do** set headlines and figures in the wide cuts, and stamps, chips and labels in the condensed ones; keep mono for code, paths, references, hashes, model ids and typed entries.
-- **Do** print verdicts and severities as stamps, and give a large verdict its inked impression.
+- **Do** reserve the strongest display treatment for the homepage promise; use normal-width sentence-case labels elsewhere.
+- **Do** render verdicts and severities as readable live text with semantic outlines.
 - **Do** put invented output in a dashed frame labelled Example.
 - **Do** keep every touch target at 44px, except a file reference inside a sentence, which keeps the height of its line (25px); keep every text at 12px or more, and form controls at 16px under 768px.
 - **Do** give every motion a still state, key it on `:root[data-motion="on"]`, and move it by a transform or an opacity.
@@ -339,8 +333,8 @@ The saved example beside Spec's film is built by `reportSlip()` in `web/site/soc
 - **Don't** redraw a canvas on a frame loop, animate a mask or a filter, or fade a group that holds a moving layer.
 - **Don't** mark status with a coloured stripe on the edge of a card, ledger row, tab or list item; the ink of the caption carries it.
 - **Don't** set captions, column heads or buttons in mono, or add a second display face; Archivo is the one webfont, and it is self-hosted.
-- **Don't** round a corner past 3px or draw a pill; the stamp's em corner is the only soft one, and circles are kept for marks.
+- **Don't** invent corner radii or make controls into pills; use the shared 4/6/10/12px tokens.
 - **Don't** shadow a resting card, row or table, or lift anything on hover.
-- **Don't** fake ink with a repeating noise tile or a texture overlay; each stamp carries its own impression.
+- **Don't** add distressed stamps, texture overlays, animated decoration or gratuitous arrows to ordinary action labels.
 - **Don't** add a hex value outside the token blocks, an inline style, or a font or image from another origin; the CSP blocks them and the build fails.
 - **Don't** nest cards, or hide help in a tooltip.
