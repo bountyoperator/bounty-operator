@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { stat } from 'node:fs/promises';
+import { readdir, stat } from 'node:fs/promises';
 import { videoRange, VIDEO_SIZES } from '../src/video-range.ts';
 
 // The Worker smoke check exercises the real FixedLengthStream. Node's unit
@@ -17,9 +17,15 @@ const asset = (options = {}) => new Response(bytes, {
 const request = (range, options = {}) => new Request(url, { ...options, headers: { ...(range ? { Range: range } : {}), ...options.headers } });
 
 test('the fallback lengths match the exact shipped video files', async () => {
+  const shippedVideos = (await readdir(new URL('../public/videos/', import.meta.url)))
+    .filter(name => name.endsWith('.mp4')).map(name => `/videos/${name}`).sort();
+  assert.deepEqual(Object.keys(VIDEO_SIZES).sort(), shippedVideos, 'every shipped video must support seeking');
   for (const [path, length] of Object.entries(VIDEO_SIZES)) {
     const file = new URL(`../public${path}`, import.meta.url);
     assert.equal((await stat(file)).size, length, path);
+    const response = videoRange(asset(), request('bytes=2-5'), path);
+    assert.equal(response.status, 206, path);
+    assert.equal(await response.text(), '2345', path);
   }
   const original = new Response(bytes, { headers: { 'Content-Type': 'video/mp4' } });
   const response = videoRange(original, request('bytes=0-2'), new URL(url).pathname);

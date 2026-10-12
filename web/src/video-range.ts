@@ -1,8 +1,9 @@
 // The asset binding does not expose Content-Length inside the Worker. Pin the
-// two shipped lengths here; the tests check them against the actual MP4 files.
+// shipped lengths here; the tests check them against every public MP4 file.
 export const VIDEO_SIZES: Readonly<Record<string, number>> = Object.freeze({
   '/videos/product-tour.mp4': 2613315,
   '/videos/mcp-walkthrough.mp4': 2761176,
+  '/videos/spec-intro.mp4': 15204817,
 });
 
 /** Add single byte ranges to the walkthrough assets when the asset binding returns a full file. */
