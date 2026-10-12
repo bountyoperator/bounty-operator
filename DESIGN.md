@@ -151,9 +151,6 @@ motion:
   dialog: "160ms"
   stamp: "420ms"
   field-drift: "64s linear, one loop"
-  verdict-run: "52s linear, one loop"
-  ember: "9s ease-in-out, alternating"
-  pen-ring: "900ms cubic-bezier(0.6, 0, 0.2, 1), once, after 500ms"
 ---
 
 # Design System: Bounty Operator
@@ -162,7 +159,7 @@ motion:
 
 Spec is a bug with standards. The original clay character introduces Bounty Operator's habit of questioning a claim and following the code and proof before submission. The homepage and social preview use his approved portrait; the shared header, footer and browser icons use a small vector interpretation of the same character.
 
-The film's charcoal ink, cream paper, coral shell and blue jacket define the palette. Archivo is shared with the film. The character carries the personality while the report, citations, verdicts and review controls stay factual and readable. See [Spec's brand guide](docs/spec-brand.md) for the artwork, provenance and rebuild paths.
+The film's charcoal ink, cream paper, coral shell and blue jacket define the palette. Archivo is shared with the film. The character carries the personality while the report, citations, verdicts and review controls stay factual and readable. Headlines stay plain: no circled words, scrolling decorative verdicts, animated glows or floating paper stacks. See [Spec's brand guide](docs/spec-brand.md) for the artwork, provenance and rebuild paths.
 
 The home hero gives the product promise and review actions room beside Spec. His 20-second film appears beside the saved, explicitly invented example it demonstrates, with native controls, captions and a transcript. The detailed 54-second product tour remains available. Supporting pages retain their source-code field; the workbench keeps its existing interaction and evidence flow.
 
@@ -179,9 +176,9 @@ Every colour is a token in `web/public/css/base.css` section 1. `:root` and `.th
 - **Rules** (`#52616c` frames, `#344550` hairlines, `#98a3ad` control borders). Controls remain at least 3:1 against the surfaces.
 
 ### The hot ink
-- **Coral** (`#f16343`): primary actions, the pen's ring, the current step and the highlighted plan. The Spec mark sits on cream.
+- **Coral** (`#f16343`): primary actions, the current step and the highlighted plan. The Spec mark sits on cream.
 - **Coral for small text** (`#ff987f`, hover `#ffb5a2`): links with sufficient contrast against the charcoal surfaces.
-- **Heat** (`linear-gradient(100deg, #ff2d2d, #ff5a1f 46%, #ffb224)`): the ground of the large figures, the bars of the benchmark strip and the name across the foot of the page. It is never the colour of a sentence.
+- **Heat** (`linear-gradient(100deg, #ff2d2d, #ff5a1f 46%, #ffb224)`): the bars of the benchmark strip. It is never the colour of a sentence.
 
 ### Standing
 - **Observed Green** (`#6fd39b`): what the code shows. Confirmed, pass, proven, resolved.
@@ -193,7 +190,7 @@ Every colour is a token in `web/public/css/base.css` section 1. `:root` and `.th
 Paper is `#fbfaf6` on `#f4f1ea`, printed in `#121214`, with the pen in `#c2280f`. On paper the solid action is black with white letters, and observed, unproven and critical print in `#1b6b3a`, `#855a00` and `#b0172f`.
 
 ### Named Rules
-**The One Action Colour Rule.** Coral marks the pen or the action. Green, ochre and rose red carry review meaning, not mascot decoration.
+**The One Action Colour Rule.** Coral marks actions and relevant review annotations. Green, ochre and rose red carry review meaning, not mascot decoration.
 
 **The Heat Is For Figures Rule.** The gradient sets figures and bars. Text that must be read is bone or muted bone.
 
@@ -206,7 +203,7 @@ One webfont, self-hosted: Archivo as a variable file, width 62 to 125 and weight
 - **Page head** (820, `clamp(2rem, 1.25rem + 3vw, 3.5rem)`, width 108%, -0.024em): every h1.
 - **Section head** (810, `clamp(1.625rem, 1.2rem + 1.7vw, 2.5rem)`, width 106%, -0.021em): every h2.
 - **Title** (760, 22px, width 100%): h3, card and finding titles.
-- **Figure** (850 to 880, width 104% to 125%, about -0.03em): the three results (48px on a phone, up to 116px), a plan's price (56px), a result's counts (28px), the name across the foot.
+- **Figure** (850 to 880, width 104% to 125%, about -0.03em): the three supporting results (48px on a phone, up to 64px), a plan's price (56px), a result's counts (28px).
 - **Verdict run** (840, width 118%, capitals, up to 76px): an outline 2px wide, with the page's black as fill.
 - **Body** (system sans, 16px, line 1.6) and **Lede** (18px, line 1.55, muted bone).
 - **Label** (680, 12px, width 85%, 0.07em, capitals): margin captions, column heads, breadcrumbs.
@@ -224,9 +221,6 @@ One webfont, self-hosted: Archivo as a variable file, width 62 to 125 and weight
 Everything that moves is cheap by construction, and all of it runs only while the page's motion is on. `<html>` carries `data-motion="on"` or `"off"`, set by `theme.js` before the first paint: on unless the visitor's system asks for less motion, and the visitor's own choice wins over the system. The foot of every page has the button, Pause motion or Play motion. A choice that differs from the system is remembered in the browser.
 
 - **The field** (`web/public/field.mjs`, built in every `.page-field`). Four layers, none painted again after the first time. The text: 11px mono, rows 19px apart, drawn once to a canvas. The shade: the page's black at 87% with lights cut out of it, a picture 320px wide, stretched to twice the field and moved round one loop in 64s by a transform. The pen: a 2px vermilion line drawn left to right, held, then let go over 5.2s, a new one every 0.9 to 2.6s; side by side with a head's words it keeps to the right of them or to the top and foot of the field. The fade: the foot of the field sinks into the page, and a wash keeps the field quiet behind the words. There is no frame loop, no mask and no group opacity. Without script the head is printed on black.
-- **The pen's ring.** One SVG stroke around "the hole" in the home headline, drawn once in 900ms after 500ms (`pen()` and `penned()` in `web/site/components.mjs`).
-- **The ember.** A vermilion glow behind the report slip, breathing over 9s.
-- **The verdict run.** The five verdicts in outlined capitals, one loop in 52s, hidden from assistive technology; the section under it says what each one means.
 - **Stamps.** A stamp lands large and light (from 155% and transparent), overshoots to 96% just past halfway and presses flat at its tilt in 420ms on the out-ease. A verdict at the head of an arriving result lands the same way. The page stops on the first line of that result, just under the stepper, and the verdict follows in the same screen. On the home slip the pen strike draws across in 260ms (starting at 380ms), Medium lands at 660ms and the verdict lands over 480ms at 1000ms.
 - **Rise on scroll.** A part with `.rise` comes up 28px into place as it enters the window, driven by the scroll position where the browser has scroll-driven animation. Elsewhere it is simply visible.
 - **The action.** The primary button glows in its own ink under the pointer. Colour and border change in 120ms and a pressed button sinks 1px.
@@ -234,7 +228,7 @@ Everything that moves is cheap by construction, and all of it runs only while th
 ### Named Rules
 **The Nothing Per Frame Rule.** A background is drawn once and moved by a transform or an opacity, which the browser animates off the main thread. Scrolling and typing never wait on decoration.
 
-**The Still State Rule.** Every animation rule is keyed on `:root[data-motion="on"]`; no stylesheet asks the system directly. With motion off, `:root:not([data-motion="on"])` cuts every animation and transition to nothing, and each motion has a still state that reads complete: the ring drawn, two lines struck, the stamps pressed. Working indicators (a spinner, the running bar) are the only animations declared without the switch, and that rule stills them too.
+**The Still State Rule.** Every animation rule is keyed on `:root[data-motion="on"]`; no stylesheet asks the system directly. With motion off, `:root:not([data-motion="on"])` cuts every animation and transition to nothing, and each motion has a still state that reads complete: two lines struck, the stamps pressed. Working indicators (a spinner, the running bar) are the only animations declared without the switch, and that rule stills them too.
 
 ## Layout
 
@@ -248,7 +242,7 @@ On the home page the first viewport is that field. From 960px it holds two colum
 
 Forms are ledgers. The finding card and the workbench sheet print a 9.75rem caption margin, one 1px rule and the content to its right, and under 704px the caption moves above its content. Grids of cells are ruled by 1px gaps over the hairline ground inside a 1px frame, like the rack of verdict stamps.
 
-The header keeps the brand at left and the nav and account control at right. Under 928px the nav becomes a second row that scrolls sideways with no link hidden. The footer ends in the name of the site across the window, set in the heat and sinking into the black.
+The header keeps the brand at left and the nav and account control at right. Under 928px the nav becomes a second row that scrolls sideways with no link hidden. The footer uses the shared Spec mark, the product promise and useful navigation, without a second oversized wordmark.
 
 Print is black on white whatever the screen shows: deeper inks, flat cards and panels, no header, footer, field or buttons, code wrapped.
 
@@ -261,7 +255,7 @@ Print is black on white whatever the screen shows: deeper inks, flat cards and p
 
 ## Elevation & Depth
 
-Depth comes from light on black. The page is flat, cards cast nothing at rest (`--shadow-card` is none), and what lies above the page is lit: the paper slip in the ember's glow, a dialog over a backdrop of black at 78%.
+Depth comes from light on black. The page is flat, cards cast nothing at rest (`--shadow-card` is none), and what lies above the page is lit: a dialog over a backdrop of black at 78%. The saved report stays flat and aligned.
 
 ### Shadow Vocabulary
 - **Loose panel** (`0 1px 1px #00000066, 0 12px 28px -14px #000000cc`): a tool panel, a raised card or finding.
@@ -323,12 +317,11 @@ A sheet laid over the page: a 1px frame, 3px corners and the pop shadow over the
 The result as an inspection form: a file bar, a head with the finding's id, severity and status chips, its title and its file references, then ledger rows with condensed-caps captions in a 9.75rem margin. A row's standing prints in its caption's ink: Observed is green; Counterargument is ochre while open and green when resolved; Evidence gap is ochre with its margin rule dashed. Path steps are numbered 01, 02. A draft review that lists only late steps keeps the draft's numbers under one line, "Numbered as in the draft." The full markup is in `web/site/COMPONENTS.md` under "The finding card".
 
 ### Report Slip
-The saved example beside Spec's film is built by `reportSlip()` in `web/site/social/example.mjs`. It is paper (`.theme-light`), tilted -1.25° over its second sheet (`--copy`). On it: the draft's typed title in mono, the claimed severity struck through with one pen stroke, the supported severity, the review's headline, the cited source and the verdict beside its date and model. On a phone the slip leads with the claim, stamps and verdict. The homepage hero and share image now use Spec's original portrait.
+The saved example beside Spec's film is built by `reportSlip()` in `web/site/social/example.mjs`. It is a flat, aligned document on paper (`.theme-light`), with no tilted copy or decorative shadow. On it: the draft's typed title in mono, the claimed severity struck through with one pen stroke, the supported severity, the review's headline, the cited source and the verdict beside its date and model. On a phone the slip leads with the claim, stamps and verdict. The homepage hero and share image now use Spec's original portrait.
 
-### Figures, bars and the run
-- **The three results** (`.home-stats`): a figure in the heat over a muted caption, the whole item a link to the leaderboard it comes from.
+### Figures and bars
+- **The three results** (`.home-stats`): a cream figure over a muted caption, subordinate to the main heading, the whole item a link to the leaderboard it comes from.
 - **Score bars** (`.bench-teaser__bar`): an inline SVG 4px tall on the heat, with the rest of the track covering it from the score to 100. It is an SVG because the page's own policy refuses a style attribute.
-- **The verdict run** (`.verdict-run`): decoration between the hero and the five verdicts, with a dot in each verdict's ink between the words.
 
 ## Do's and Don'ts
 

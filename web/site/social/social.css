@@ -1,7 +1,7 @@
 @charset "UTF-8";
 
 /*
-  Bounty Operator: the social card (web/public/social-v5.png)
+  Bounty Operator: the social card (web/public/social-spec-v2.png)
 
   Loaded after base.css and home.css by web/site/social/card.html, which is
   drawn at exactly 1200 x 630 and never served. Colours come from the base
@@ -29,34 +29,6 @@
   overflow: hidden;
   background: var(--bg);
   color: var(--text);
-}
-
-/* The ember behind the slip. */
-.social-card::before {
-  content: "";
-  position: absolute;
-  z-index: -1;
-  top: -150px;
-  right: -210px;
-  width: 980px;
-  height: 820px;
-  border-radius: 50%;
-  background: none;
-}
-
-/* The field: report and code lines, quiet behind the words and clearer toward the slip. */
-.social-card__field {
-  position: absolute;
-  z-index: -1;
-  inset: 0;
-  margin: 0;
-  overflow: hidden;
-  color: var(--text);
-  font: 11px / 19px var(--font-mono);
-  opacity: 0.15;
-  white-space: pre;
-  -webkit-mask-image: linear-gradient(to right, #00000033 0, #00000033 40%, #000 80%);
-  mask-image: linear-gradient(to right, #00000033 0, #00000033 40%, #000 80%);
 }
 
 .social-card__pitch {
@@ -91,8 +63,7 @@
   text-wrap: balance;
 }
 
-/* The slip lying on the black page. The card keeps what decides it: the
-   claim, the stamps, the line and the verdict. */
+/* The original Spec portrait, with the same framing as the homepage. */
 .social-card__shot {
   align-self: center;
   margin-bottom: 0;
@@ -111,14 +82,6 @@
   color: var(--muted);
   font-size: 20px;
   line-height: 1.5;
-}
-
-.social-card__shot .slip {
-  transform: rotate(-2deg);
-}
-
-.social-card__shot :is(.slip__field--title, .slip__field--review) {
-  display: none;
 }
 
 .social-card__strip {

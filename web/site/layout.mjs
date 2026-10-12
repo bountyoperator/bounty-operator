@@ -12,7 +12,7 @@ export const SITE = {
   promise: 'Find the hole in your report before the triager does.',
   summary:
     'Pre-submission review for bug bounty reports and smart-contract findings. The AI argues against the finding. The hunter writes the report.',
-  defaultImage: '/social-spec-v1.png',
+  defaultImage: '/social-spec-v2.png',
   iconVersion: 'spec-v1',
   source: 'https://github.com/bountyoperator/bounty-operator',
   // The forum: GitHub Discussions on the source repository. /support routes each kind of request.
@@ -318,7 +318,7 @@ function siteFooter(page, site) {
 <a class="brand" href="/">${brandMark()}<span class="brand__name">${SITE.name}</span></a>
 <p class="site-footer__mascot">A bug with standards.</p>
 <p class="site-footer__promise">${SITE.promise}</p>
-<p class="site-footer__cta">${button({ label: 'Review my report', href: '/?profile=report#workspace', variant: 'primary', iconEnd: 'arrow-right' })}</p>
+<p class="site-footer__cta">${button({ label: 'Review my report', href: '/?profile=report#workspace', variant: 'primary' })}</p>
 </div>
 ${footerColumn('Product', [
     { href: '/#workspace', label: 'Review a report' },
@@ -351,7 +351,6 @@ ${footerColumn('Legal', [
 <p><a href="mailto:${SITE.support}">${SITE.support}</a></p>
 </div>
 </div>
-<div class="site-footer__mark" aria-hidden="true">Bounty Operator</div>
 </footer>`;
 }
 

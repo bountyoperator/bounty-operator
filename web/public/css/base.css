@@ -3497,39 +3497,6 @@ button.ref:hover {
   text-wrap: balance;
 }
 
-/* The name across the foot of the page, in the heat of the ink, sinking into
-   the black. Decoration: the name is already printed above. */
-.site-footer {
-  overflow: clip;
-}
-
-.site-footer__mark {
-  margin: var(--sp-24) 0 -0.24em;
-  background: var(--heat);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  font-family: var(--font-display);
-  font-size: min(7.6vw, 12rem);
-  font-stretch: 125%;
-  font-weight: 880;
-  line-height: 1;
-  letter-spacing: -0.03em;
-  text-align: center;
-  text-transform: uppercase;
-  white-space: nowrap;
-  pointer-events: none;
-  user-select: none;
-  -webkit-mask-image: linear-gradient(to bottom, #000 18%, transparent 92%);
-  mask-image: linear-gradient(to bottom, #000 18%, transparent 92%);
-}
-
-@media (forced-colors: active), print {
-  .site-footer__mark {
-    display: none;
-  }
-}
-
 .site-footer__cta {
   margin-top: var(--sp-24);
 }

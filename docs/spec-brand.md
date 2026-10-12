@@ -23,6 +23,12 @@ Keep the product language direct: review the report, question its claims, cite
 the code and proof. The public example is an invented protocol. Existing
 severity colours retain their meaning; they are not mascot decoration.
 
+Spec carries the personality. Keep headlines plain, evidence aligned, and
+motion tied to an interaction. Do not add hand-drawn circles, decorative
+tickers, floating paper stacks or animated glows around him. Give the mascot
+room; keep supporting figures quieter than the product promise. The footer
+uses the shared mark and useful navigation, without a second giant wordmark.
+
 ## Assets and provenance
 
 The original portrait was created for Bounty Operator on 12 October 2026,
@@ -40,5 +46,5 @@ a visible transcript accompany it. Native controls require a visitor to play
 it; there is no autoplay, remote embed or extra player library.
 
 `web/site/social/card.mjs` and `social.css` are the editable 1200 by 630 preview
-layout. Its export is `web/public/social-spec-v1.png`; the versioned path lets
+layout. Its export is `web/public/social-spec-v2.png`; the versioned path lets
 new link previews pick up the new identity without changing previous shares.

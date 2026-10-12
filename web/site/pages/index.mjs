@@ -1,7 +1,7 @@
 // "/": the home page.
 //
-// Sections: the hero on the field with the report slip, three steps, the five
-// verdicts, the workbench, benchmark, resources, pricing and FAQ.
+// Sections: Spec and the product promise, public proof, the film and saved
+// review, verdicts, workbench, benchmark, pricing and FAQ.
 //
 // Hooks other streams rely on:
 //   [data-demo]      the hero's "View example" control; it also carries
@@ -25,11 +25,9 @@ import {
   icon,
   isHtml,
   link,
-  penned,
   raw,
   sectionHeading,
   verdictChip,
-  verdictLabel,
 } from '../components.mjs';
 import { SITE, faqPageLd, organizationLd, softwareApplicationLd, websiteLd } from '../layout.mjs';
 import { PROFILES } from '../../public/profiles.mjs';
@@ -113,10 +111,10 @@ const hero = html`
   <section class="wrap home-hero" aria-labelledby="hero-title">
     <div class="home-hero__text">
       <p class="home-hero__kicker">Bug bounty report review</p>
-      <h1 class="display home-hero__title" id="hero-title">${penned(SITE.promise, 'the hole')}</h1>
+      <h1 class="display home-hero__title" id="hero-title">${SITE.promise}</h1>
       <p class="lede home-hero__lede">Bounty Operator checks your bug report against the code and proof before you submit. Get one verdict, with the file and line behind it.</p>
       <div class="home-hero__actions">
-        ${button({ label: 'Review my report', href: '/?profile=report#workspace', variant: 'primary', size: 'lg', iconEnd: 'arrow-right' })}
+        ${button({ label: 'Review my report', href: '/?profile=report#workspace', variant: 'primary', size: 'lg' })}
         ${button({ label: 'View example', href: '#workspace', variant: 'secondary', size: 'lg', attrs: { 'data-demo': true, 'data-example': '' } })}
         <a class="link home-hero__film" href="#meet-spec">${icon('play')} Watch Spec in 20 seconds</a>
       </div>
@@ -137,8 +135,7 @@ const hero = html`
       <li><a class="home-stats__item" href="${LEADERBOARDS.quantus}" target="_blank" rel="noopener noreferrer"><span class="home-stats__n">8th</span> <span class="home-stats__t">of 65 in Quantus</span></a></li>
     </ul>
   </div>
-</div>
-<div class="verdict-run" aria-hidden="true"><div class="verdict-run__track">${[0, 1].map(() => VERDICTS.map((verdict) => html`<span class="verdict-run__word" data-verdict="${verdict.id}">${verdictLabel(verdict.id)}</span>`))}</div></div>`;
+</div>`;
 
 const meetSpec = html`
 <section class="section wrap" id="meet-spec" aria-labelledby="spec-title">

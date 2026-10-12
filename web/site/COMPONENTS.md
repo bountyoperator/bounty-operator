@@ -459,7 +459,7 @@ Every page that ends on a call to action ends on this band: the landing pages th
 
 ### Site header and footer
 
-Emitted by the layout. Classes: `.site-header`, `.site-header__inner`, `.brand` (`.brand__mark`, `.brand__name`), `.site-nav`, `.site-header__actions`, `.site-footer`, `.site-footer__grid`, `.site-footer__col`, `.site-footer__base`, `.site-footer__cta`, `.site-footer__mark`. The current page's nav link is filled with vermilion. The footer closes every page with the promise, the Review my report action and the name of the site across the window (`.site-footer__mark`, decoration, hidden from assistive technology). Under 928px the nav becomes a second row that scrolls sideways; no link is hidden.
+Emitted by the layout. Classes: `.site-header`, `.site-header__inner`, `.brand` (`.brand__mark`, `.brand__name`), `.site-nav`, `.site-header__actions`, `.site-footer`, `.site-footer__grid`, `.site-footer__col`, `.site-footer__base`, `.site-footer__cta`. The current page's nav link is filled with vermilion. The footer closes every page with the promise, the Review my report action. Under 928px the nav becomes a second row that scrolls sideways; no link is hidden.
 
 `brandMark()` returns the "b/" mark as inline SVG paths.
 
@@ -541,13 +541,11 @@ Under 704px the label moves above its content and the margin rule moves to the c
 
 Page scripts do not need to wire any of these.
 
-## The field, the pen and the figures
+## The field and the figures
 
 - **The field.** The layout loads `/field.mjs` on every page. For each `.page-field` it builds `div.field-bg` (hidden from assistive technology) with four layers: `canvas.field-bg__text`, `canvas.field-bg__shade`, any number of `i.field-bg__strike` and `div.field-bg__fade`. The name is `field-bg` because `.field` is the form field wrapper. The text and the shade are drawn once; the shade drifts by a CSS transform and a strike is animated with the Web Animations API. Nothing is drawn per frame. With the page's motion off the shade is still and two lines are already struck; it listens for `motionchange`. A page needs only the class `.page-field` on its head.
-- **`pen(words)`, `penned(sentence, phrase)`** (components.mjs). `pen` wraps words in `span.pen` with the ring, an `svg.pen__ring` that is one stroke drawn once. `penned` circles one phrase of a sentence and returns the sentence as it is when the phrase is not in it. Rules in `home.css`.
 - **`verdictLabel(id)`** (components.mjs): the printed name of a verdict, for places that are not a chip.
-- **`.home-stats`**: a list of `a.home-stats__item`, each a figure (`.home-stats__n`, set in `--heat`) and a caption (`.home-stats__t`).
-- **`.verdict-run`**: `div.verdict-run[aria-hidden]` holding `.verdict-run__track` with every `.verdict-run__word[data-verdict]` printed twice, so the track loops by moving half its own width.
+- **`.home-stats`**: a list of `a.home-stats__item`, each a figure (`.home-stats__n`, set in the text colour) and a caption (`.home-stats__t`).
 - **`.bench-teaser__bar`**: an inline SVG, `viewBox="0 0 100 4"`, whose one `rect` covers the track from the score to 100. An SVG attribute, because the CSP refuses a style attribute.
 - **`.rise`**: a part that comes up into place as it enters the window, where the browser has scroll-driven animation. It is visible everywhere else. Do not put it on anything inside the workbench.
 

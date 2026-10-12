@@ -52,9 +52,8 @@ test('the home page passes the generator checks and has one h1', () => {
   assert.equal(home.path, '/');
   assert.equal(home.title, 'Bounty Operator: pre-submission review for bug bounty reports');
   assert.match(textOf(main), /Find the hole in your report before the triager does\./);
-  // The pen's ring is decoration inside the one h1: the words read as plain text.
   assert.equal(find('h1').length, 1);
-  assert.match(main, /<h1 class="display home-hero__title" id="hero-title">Find <span class="pen">the hole<svg class="pen__ring"[^>]* aria-hidden="true" focusable="false">/);
+  assert.match(main, /<h1 class="display home-hero__title" id="hero-title">Find the hole in your report before the triager does\.<\/h1>/);
 });
 
 test('the hooks other streams rely on are present exactly once', () => {
@@ -79,7 +78,7 @@ test('the hooks other streams rely on are present exactly once', () => {
 });
 
 test('the sections come in the order the brief sets', () => {
-  const order = ['id="hero-title"', 'class="home-proof"', 'class="home-stats"', 'class="verdict-run"', 'id="verdicts-title"', 'id="workspace"', 'id="bench-teaser-title"', 'id="pricing"', 'id="faq"'];
+  const order = ['id="hero-title"', 'class="home-proof"', 'class="home-stats"', 'id="meet-spec"', 'id="verdicts-title"', 'id="workspace"', 'id="bench-teaser-title"', 'id="pricing"', 'id="faq"'];
   // The three-step strip and the "More ways" list are gone: the header and the footer carry those links.
   assert.doesNotMatch(markup, /id="how"|id="free-tools"|home-steps|home-resources/);
   const positions = order.map((needle) => markup.indexOf(needle));
@@ -331,28 +330,15 @@ test('the social card is a 1200 x 630 document using the shared Spec identity', 
   assert.deepEqual(CARD, { width: 1200, height: 630 });
   const card = cardDocument();
   assert.match(card, /<html lang="en">/);
-  assert.match(card, /<span class="pen">the hole<svg class="pen__ring"/);
   assert.match(textOf(card), /Find the hole in your report before the triager does\./);
   assert.match(card, /brand\/spec-960\.webp/);
   assert.match(textOf(card), /Spec\. A bug with standards\./);
   assert.match(textOf(card), /bountyoperator\.com/);
   assert.doesNotMatch(card, /\sstyle="/);
 
-  const png = await readFile(path.join(WEB_DIR, 'public', 'social-spec-v1.png'));
+  const png = await readFile(path.join(WEB_DIR, 'public', 'social-spec-v2.png'));
   assert.equal(png.readUInt32BE(16), CARD.width);
   assert.equal(png.readUInt32BE(20), CARD.height);
-});
-
-test('the verdict run is decoration: hidden from assistive technology, the five names printed twice', () => {
-  const start = markup.indexOf('<div class="verdict-run" aria-hidden="true">');
-  assert.ok(start > 0, 'the run is on the page');
-  const run = markup.slice(start, markup.indexOf('</div></div>', start));
-  for (const verdict of ['submit', 'rewrite-then-submit', 'prove-first', 'hold-duplicate', 'drop']) {
-    // Twice, so the track can loop: it moves by half its own width.
-    assert.equal(run.split('data-verdict="' + verdict + '"').length - 1, 2, verdict);
-  }
-  assert.match(run, />Rewrite, then submit</);
-  assert.doesNotMatch(run, /<a |<button/);
 });
 
 test('the three results are figures that link to their public leaderboards', () => {
@@ -384,10 +370,6 @@ test('each place on the benchmark strip carries a bar as long as its score', () 
 
 test('every motion the home page adds runs only while the page\'s motion is on', async () => {
   const css = (await readFile(path.join(WEB_DIR, 'public', 'css', 'home.css'), 'utf8')).replace(/\r\n/g, '\n');
-  // The ember, the pen's ring and the run are each keyed on the motion switch.
-  assert.match(css, /\n:root\[data-motion="on"\] \.home-top::before \{\n  animation: ember /);
-  assert.match(css, /\n:root\[data-motion="on"\] \.pen__ring path \{\n  animation: pen-ring /);
-  assert.match(css, /\n:root\[data-motion="on"\] \.verdict-run__track \{\n  animation: verdict-run /);
   // No rule of the page starts an animation without it.
   const rules = css.replace(/\/\*[\s\S]*?\*\//g, '').replace(/@keyframes [\s\S]*?\n\}\n/g, '');
   let animated = 0;
@@ -395,9 +377,8 @@ test('every motion the home page adds runs only while the page\'s motion is on',
     animated += 1;
     assert.match(selector.trim(), /^:root\[data-motion="on"\] /, selector);
   }
-  assert.ok(animated >= 6, 'the ember, the ring, the three moments of the slip and the run');
+  assert.ok(animated >= 3, 'the three review marks on the slip');
   assert.doesNotMatch(css, /prefers-reduced-motion/);
-  // Text set in the heat gradient or as an outline falls back to plain text in forced colours.
+  // The supporting figures remain legible in forced colours.
   assert.match(css, /@media \(forced-colors: active\) \{\n  \.home-stats__n \{\n    background: none;\n    color: CanvasText;/);
-  assert.match(css, /@media \(forced-colors: active\) \{\n  \.verdict-run__word \{\n    color: CanvasText;/);
 });

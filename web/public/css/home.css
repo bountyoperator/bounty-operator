@@ -6,7 +6,7 @@
   Loaded after base.css, and by the social card (web/site/social). Every value
   comes from the base tokens.
 
-  1. The hero on the field, and the report slip
+  1. Spec, the product promise and the saved review
   2. Three steps
   3. The five verdicts
   4. The workbench fallback
@@ -17,56 +17,20 @@
 */
 
 /* ==========================================================================
-   1. The hero on the field, and the report slip
+   1. Spec, the product promise and the saved review
    ========================================================================== */
 
 .home-top {
   position: relative;
   isolation: isolate;
   padding-top: clamp(var(--sp-32), 4.2vw, var(--sp-72));
-  /* The ember is wider than a phone. */
   overflow-x: clip;
 }
 
-/* The ember: the hot ink's light behind the slip. It breathes slowly; with
-   reduced motion it holds still. */
-.home-top::before {
-  content: "";
-  position: absolute;
-  z-index: -1;
-  top: -4rem;
-  left: calc(50% - 12rem);
-  width: min(72rem, 190vw);
-  aspect-ratio: 1.2;
-  border-radius: 50%;
-  background: radial-gradient(closest-side, #284b7340 0%, #284b7320 44%, transparent 100%);
-  pointer-events: none;
-}
-
-@keyframes ember {
-  from {
-    opacity: 0.72;
-    transform: translate3d(-2%, 2%, 0) scale(0.94);
-  }
-
-  to {
-    opacity: 1;
-    transform: translate3d(3%, -2%, 0) scale(1.06);
-  }
-}
-
-:root[data-motion="on"] .home-top::before {
-  animation: ember 9s ease-in-out infinite alternate;
-}
-
-/* On a phone the page reads kicker, headline, lede, action, then the stamped
-   slip, so the verdict lands in the first screens. The text block steps aside
-   (display: contents) and its parts take their places. */
+/* A phone reads the product promise and actions before the portrait. */
 .home-hero {
   display: flex;
   flex-direction: column;
-  /* The stamps on the slip land from 1.55 times their size: nothing of that
-     reaches past the field, or a narrow phone lays the page out too wide. */
   overflow-x: clip;
 }
 
@@ -74,7 +38,7 @@
   display: contents;
 }
 
-/* What it is, in one printed line with the pen's dash before it. */
+/* A quiet category label leaves the headline and Spec in focus. */
 .home-hero__kicker {
   order: 0;
   display: flex;
@@ -83,63 +47,14 @@
   margin-bottom: var(--sp-16);
   color: var(--muted);
   font-family: var(--font-display);
-  font-size: var(--fs-12);
+  font-size: var(--fs-14);
   font-stretch: 100%;
-  font-weight: 650;
+  font-weight: 500;
   line-height: 1.4;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
-.home-hero__kicker::before {
-  content: "";
-  flex: none;
-  width: 1.75rem;
-  height: 2px;
-  background: var(--accent-solid);
 }
 
 .home-hero__title {
   order: 1;
-}
-
-/* The words the pen circles. The ring is one stroke, drawn once after the page
-   opens; without motion it is simply there. */
-.pen {
-  position: relative;
-  display: inline-block;
-  white-space: nowrap;
-}
-
-.pen__ring {
-  position: absolute;
-  top: -0.1em;
-  left: -0.2em;
-  width: calc(100% + 0.4em);
-  height: calc(100% + 0.16em);
-  overflow: visible;
-  fill: none;
-  stroke: var(--accent-solid);
-  stroke-width: 4;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-dasharray: 1000;
-  max-width: none;
-  pointer-events: none;
-}
-
-@keyframes pen-ring {
-  from {
-    stroke-dashoffset: 1000;
-  }
-
-  to {
-    stroke-dashoffset: 0;
-  }
-}
-
-:root[data-motion="on"] .pen__ring path {
-  animation: pen-ring 900ms cubic-bezier(0.6, 0, 0.2, 1) 500ms both;
 }
 
 .home-hero__lede {
@@ -225,7 +140,6 @@
 
 .spec-example__report {
   min-width: 0;
-  padding: 0.5rem 0.875rem 0 0.25rem;
 }
 
 .spec-example__link {
@@ -254,7 +168,7 @@
   }
 }
 
-/* From a tablet's width the text and the slip stand side by side. */
+/* From a tablet's width the promise and Spec stand side by side. */
 @media (min-width: 60em) {
   .home-hero {
     display: grid;
@@ -280,8 +194,7 @@
   }
 }
 
-/* Who built it, and the three results that say why: figures in the heat of
-   the ink, each a link to the public leaderboard it comes from. */
+/* Supporting credentials link directly to their public leaderboards. */
 .home-proof {
   margin-top: clamp(var(--sp-48), 6vw, 5.5rem);
   padding-top: var(--sp-16);
@@ -308,10 +221,7 @@
 }
 
 .home-stats__n {
-  background: var(--heat);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  color: var(--text);
   font-family: var(--font-display);
   font-size: 3rem;
   font-stretch: 112%;
@@ -350,7 +260,7 @@
   }
 
   .home-stats__n {
-    font-size: clamp(4.5rem, 1.6rem + 6vw, 7.25rem);
+    font-size: clamp(3rem, 2rem + 2vw, 4rem);
   }
 
   .home-stats__t {
@@ -366,115 +276,11 @@
   }
 }
 
-/* The five verdicts, running past under the hero: outlined capitals, one
-   stamp-coloured mark between each. Decoration only; the section below says
-   what each one means. */
-.verdict-run {
-  overflow: clip;
-  border-block: 1px solid var(--line);
-  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 9%, #000 91%, transparent 100%);
-  mask-image: linear-gradient(to right, transparent 0, #000 9%, #000 91%, transparent 100%);
-}
-
-.verdict-run__track {
-  display: flex;
-  width: max-content;
-  padding-block: var(--sp-16);
-}
-
-.verdict-run__word {
-  --mark: var(--muted);
-  display: inline-flex;
-  flex: none;
-  align-items: center;
-  gap: clamp(var(--sp-24), 3vw, var(--sp-48));
-  padding-left: clamp(var(--sp-24), 3vw, var(--sp-48));
-  /* The outline is the stroke's outer half: the fill, in the page's own
-     black, covers the inner half and the joins inside each letter. */
-  color: var(--bg);
-  -webkit-text-stroke: 2px color-mix(in srgb, var(--text) 46%, transparent);
-  paint-order: stroke fill;
-  font-family: var(--font-display);
-  font-size: clamp(2.25rem, 1.2rem + 4.4vw, 4.75rem);
-  font-stretch: 118%;
-  font-weight: 840;
-  line-height: 1;
-  letter-spacing: 0.005em;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
-.verdict-run__word::after {
-  content: "";
-  flex: none;
-  width: 0.32em;
-  height: 0.32em;
-  border-radius: 50%;
-  background: var(--mark);
-}
-
-.verdict-run__word[data-verdict="submit"] {
-  --mark: var(--ok);
-}
-
-.verdict-run__word[data-verdict="rewrite-then-submit"] {
-  --mark: var(--accent-solid);
-}
-
-.verdict-run__word[data-verdict="prove-first"] {
-  --mark: var(--gap);
-}
-
-.verdict-run__word[data-verdict="hold-duplicate"] {
-  --mark: var(--sev-none);
-}
-
-.verdict-run__word[data-verdict="drop"] {
-  --mark: var(--sev-crit);
-}
-
-@keyframes verdict-run {
-  to {
-    transform: translate3d(-50%, 0, 0);
-  }
-}
-
-:root[data-motion="on"] .verdict-run__track {
-  animation: verdict-run 52s linear infinite;
-}
-
-@media (forced-colors: active) {
-  .verdict-run__word {
-    color: CanvasText;
-    -webkit-text-stroke: 0;
-  }
-}
-
-/* Paper carries neither the ember nor the run. */
-@media print {
-  .home-top::before,
-  .verdict-run {
-    display: none;
-  }
-}
-
-/* The slip: the draft's header as typed, marked by the review. Paper in both
-   themes (the slip carries .theme-light), lying slightly askew on the field
-   over its pink carbon copy. */
+/* The saved review is an aligned document. Its marks carry review meaning. */
 .home-shot {
   display: grid;
   margin: 0;
   background: transparent;
-}
-
-/* The second sheet of the set, the pink copy, showing under the white one. */
-.home-shot::before {
-  content: "";
-  grid-area: 1 / 1;
-  border: 1px solid var(--rule);
-  border-radius: var(--r-card);
-  background: var(--copy);
-  transform: translate(0.75rem, 0.875rem) rotate(1.75deg);
 }
 
 .slip {
@@ -484,9 +290,7 @@
   border: 1px solid var(--rule);
   border-radius: var(--r-card);
   background: var(--surface);
-  box-shadow: var(--shadow-slip);
   color: var(--text);
-  transform: rotate(-1.25deg);
 }
 
 .slip__head {
@@ -628,7 +432,7 @@
 }
 
 .slip__stamp .verdict--lg {
-  --stamp-tilt: -4deg;
+  --stamp-tilt: 0deg;
   font-size: 1.5rem;
   mix-blend-mode: multiply;
 }
@@ -662,11 +466,6 @@
 
   .slip {
     padding-inline: var(--sp-16);
-    transform: rotate(-0.75deg);
-  }
-
-  .home-shot::before {
-    transform: translate(0.5rem, 0.625rem) rotate(1.25deg);
   }
 
   .slip__field--title {

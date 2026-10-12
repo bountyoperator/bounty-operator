@@ -3,11 +3,11 @@
 // 1200 x 630. The promise and shared Spec mark sit beside the original mascot
 // portrait. The homepage and film use the same Archivo and four brand colours.
 //
-//   node web/site/social/render.mjs      writes card.html and social-spec-v1.png
+//   node web/site/social/render.mjs      writes card.html and social-spec-v2.png
 //
 // This module lives outside web/site/pages, so the generator builds no page from it.
 
-import { brandMark, html, penned } from '../components.mjs';
+import { brandMark, html } from '../components.mjs';
 import { SITE } from '../layout.mjs';
 
 export const CARD = { width: 1200, height: 630 };
@@ -17,7 +17,7 @@ export function cardDocument({ assets = '../../public' } = {}) {
   const body = html`<main class="social-card">
 <div class="social-card__pitch">
 <p class="social-card__brand">${brandMark()}<span>${SITE.name}</span></p>
-<h1 class="social-card__title">${penned(SITE.promise, 'the hole')}</h1>
+<h1 class="social-card__title">${SITE.promise}</h1>
 <p class="social-card__lede">Review your bug report against the code and proof.</p>
 </div>
 <div class="social-card__shot">
