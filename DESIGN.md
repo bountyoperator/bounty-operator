@@ -32,14 +32,14 @@ colors:
   observed: "#6fd39b"
   gap: "#f2c552"
   gap-bg: "#f2c5521f"
-  sev-crit: "#ff8498"
+  sev-crit: "#ff899b"
   sev-high: "#ff9d5c"
   sev-med: "#f2c552"
   sev-low: "#6fd39b"
   sev-info: "#8fb2ff"
-  sev-none: "#a5a3ad"
+  sev-none: "#b3b1bc"
   ok: "#6fd39b"
-  danger: "#ff8498"
+  danger: "#ff899b"
   code-bg: "#0e0e10"
   code-text: "#ebe8e1"
   code-muted: "#8a8880"
@@ -186,8 +186,8 @@ Every colour is a token in `web/public/css/base.css` section 1. `:root` and `.th
 ### Standing
 - **Observed Green** (`#6fd39b`): what the code shows. Confirmed, pass, proven, resolved.
 - **Ochre** (`#f2c552`): unproven. Overstated, not supplied, an open objection.
-- **Rose Red** (`#ff8498`): critical, contradicted, failed. It stays distinct from the coral action colour.
-- **Severity:** critical `#ff8498`, high `#ff9d5c`, medium `#f2c552`, low `#6fd39b`, info `#8fb2ff`, unrated `#a5a3ad`.
+- **Rose Red** (`#ff899b`): critical, contradicted, failed. It stays distinct from the coral action colour.
+- **Severity:** critical `#ff899b`, high `#ff9d5c`, medium `#f2c552`, low `#6fd39b`, info `#8fb2ff`, unrated `#b3b1bc`.
 
 ### Paper
 Paper is `#fbfaf6` on `#f4f1ea`, printed in `#121214`, with the pen in `#c2280f`. On paper the solid action is black with white letters, and observed, unproven and critical print in `#1b6b3a`, `#855a00` and `#b0172f`.

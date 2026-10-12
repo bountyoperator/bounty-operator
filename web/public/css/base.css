@@ -320,14 +320,14 @@
   --gap-bg: #f2c5521f;
 
   /* Severity and state. Critical is a rose red, clear of the vermilion ink. */
-  --sev-crit: #ff8498;
+  --sev-crit: #ff899b;
   --sev-high: #ff9d5c;
   --sev-med: #f2c552;
   --sev-low: #6fd39b;
   --sev-info: #8fb2ff;
-  --sev-none: #a5a3ad;
+  --sev-none: #b3b1bc;
   --ok: #6fd39b;
-  --danger: #ff8498;
+  --danger: #ff899b;
 
   --chip-fill: 10%;
   --chip-line: 100%;

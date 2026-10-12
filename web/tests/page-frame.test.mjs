@@ -53,12 +53,13 @@ test('every page opens on the shared head, and the home page on its own', async 
   for (const [file, markup] of await pages()) {
     assert.equal((markup.match(/<h1\b/g) ?? []).length, 1, `${file}: one h1`);
     const fields = [...markup.matchAll(/<(\w+) class="([^"]*\bpage-field\b[^"]*)">/g)];
-    assert.equal(fields.length, 1, `${file}: one page head on the field`);
-    const [open, , classes] = fields[0];
     if (file === HOME) {
-      assert.equal(classes, 'home-top page-field', file);
+      assert.equal(fields.length, 0, `${file}: Spec's portrait leads without the code field`);
+      assert.equal((markup.match(/<div class="home-top">/g) ?? []).length, 1, `${file}: one home hero`);
       continue;
     }
+    assert.equal(fields.length, 1, `${file}: one page head on the field`);
+    const [open, , classes] = fields[0];
     assert.match(classes, /^page-head page-field\b/, `${file}: the head is the shared one`);
 
     // Nothing stands between the head and its h1 but the trail and, on a head
