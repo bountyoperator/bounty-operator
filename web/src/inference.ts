@@ -30,8 +30,9 @@ const encoder = new TextEncoder();
 export function inferenceModels(env: Env): InferenceModel[] {
   if (!env.INFERENCE_MODELS) return [];
   try {
-    const models: InferenceModel[] = JSON.parse(env.INFERENCE_MODELS);
-    if (!Array.isArray(models) || models.length > 32) return [];
+    const raw: Partial<InferenceModel>[] = JSON.parse(env.INFERENCE_MODELS);
+    if (!Array.isArray(raw) || raw.length > 32) return [];
+    const models: InferenceModel[] = raw.map((m) => (m && typeof m === 'object' ? { ...m, upstreamModel: m.upstreamModel ?? m.id, maxOutput: m.maxOutput ?? 8192 } as InferenceModel : m as InferenceModel));
     if (models.some((m) => !m || !/^[a-z0-9][a-z0-9.-]{2,79}$/.test(m.id) ||
       !/^https:\/\/[a-z0-9]+\.api\.runpod\.ai$/.test(m.endpoint) ||
       !/^[a-zA-Z0-9_./-]{1,180}$/.test(m.upstreamModel) ||
@@ -57,7 +58,7 @@ export function publicModel(model: InferenceModel): Record<string, unknown> {
     license: model.license, quantization: model.quantization,
     pricing: { currency: 'usd', input_per_million: model.inputRate, output_per_million: model.outputRate, minimum_request: model.minimumMicro / 1_000_000 },
     description: model.description ?? '', tags: model.tags ?? [],
-    capabilities: model.capabilities ?? ['text', 'tools', 'streaming'],
+    capabilities: model.capabilities ?? ['text', 'tools', 'streaming', 'structured_output'],
     ...(model.reasoningParameter ? { reasoning_parameter: `chat_template_kwargs.${model.reasoningParameter}` } : {}) };
 }
 
