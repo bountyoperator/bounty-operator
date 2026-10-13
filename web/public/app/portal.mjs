@@ -1234,7 +1234,7 @@ function renderApi() {
     section('Models and rates', api.enabled ? 'Choose a model in your harness. Fetch the full catalog with GET /v1/models; supported capabilities vary by model.' : 'Model inference is not available yet.',
       models.length ? el('ul', { class: 'portal-list' }, models.map((model) => row({ title: model.name, meta: `${model.id} · ${(model.capabilities ?? ['text']).join(', ')} · ${model.context_length.toLocaleString()} context · $${model.pricing.input_per_million}/million input tokens · $${model.pricing.output_per_million}/million output tokens · ${usd(model.pricing.minimum_request * 1000000)} minimum per request`, actions: [button({ label: 'Copy model ID', variant: 'quiet', size: 'sm', onClick: async () => { announce(await copyText(model.id) ? 'Model ID copied.' : 'Copy the model ID shown above.'); } })] }))) : empty('Models will appear here after verification.'),
       el('p', { class: 'help', text: 'Output tokens include reasoning. Interrupted streams are charged only for confirmed usage. A temporary reservation covers the model’s maximum input and your requested output limit.' }),
-      el('a', { class: 'link', href: '/model-api', text: 'API reference and examples' })),
+      el('a', { class: 'link', href: '/docs/model-api', text: 'API reference and examples' })),
     section('API keys', 'Keys spend this balance up to their individual limit. They cannot buy credit or manage your account.', apiKeyForm()),
     section('Your keys', null, keys.length ? el('ul', { class: 'portal-list' }, keys.map((key) => row({
       title: key.label,
