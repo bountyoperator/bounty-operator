@@ -3,6 +3,8 @@
 // payload, so a replayed or forged-looking event cannot grant anything.
 
 import Stripe from 'stripe';
+import { applyAutoTopupSetupEvent } from './api-autotopup.ts';
+import { syncMonthlyCredit, syncMonthlyCreditForCharge } from './api-monthly-credit.ts';
 import { applyApiPaymentEvent, localStripeTest } from './api-topups.ts';
 
 import { seconds } from './env.ts';
@@ -119,29 +121,36 @@ export type Standing =
 
 type SubscriptionItem = Stripe.Subscription['items']['data'][number];
 
-/** The subscription's single item when it is exactly one Operator plan at US$10 a week. */
-function operatorItem(subscription: Stripe.Subscription, priceId: string): SubscriptionItem | null {
+/** The subscription's single item when it is the US$10 Operator plan (monthly or legacy weekly). */
+function operatorItem(subscription: Stripe.Subscription, priceId: string | readonly string[]): SubscriptionItem | null {
   if (subscription.items.data.length !== 1) return null;
   const item = subscription.items.data[0];
   const price = item.price;
+  const allowed = typeof priceId === 'string' ? [priceId] : priceId;
+  const interval = price.recurring?.interval;
   const matches =
-    price.id === priceId &&
+    allowed.includes(price.id) &&
     item.quantity === 1 &&
     price.currency === 'usd' &&
     price.unit_amount === PRICE_CENTS &&
-    price.recurring?.interval === 'week' &&
-    price.recurring.interval_count === 1;
+    (interval === 'month' || interval === 'week') &&
+    price.recurring?.interval_count === 1;
   return matches ? item : null;
 }
 
 /** Where a subscription stands, from the subscription and its expanded latest invoice alone. */
-export function subscriptionStanding(subscription: Stripe.Subscription, priceId: string, now: number): Standing {
+export function subscriptionStanding(
+  subscription: Stripe.Subscription,
+  priceId: string | readonly string[],
+  now: number,
+  live = true,
+): Standing {
   // Our label for a subscription Stripe calls active that does not carry access.
   const lapsed: Standing = { kind: 'lapsed', status: subscription.status === 'active' ? 'unpaid' : subscription.status };
 
   const item = operatorItem(subscription, priceId);
   const invoice = subscription.latest_invoice;
-  if (!item || !subscription.livemode || subscription.status !== 'active' || subscription.pause_collection) return lapsed;
+  if (!item || subscription.livemode !== live || subscription.status !== 'active' || subscription.pause_collection) return lapsed;
   if (!invoice || typeof invoice === 'string') return lapsed;
 
   if (invoice.status === 'paid' && invoice.amount_paid >= PRICE_CENTS) {
@@ -202,13 +211,36 @@ async function invoiceSettled(api: Stripe, invoiceId: string): Promise<boolean> 
 // it must not write an older state over it.
 const FINAL = `subscriptions.status NOT IN (${ENDED_STATUSES.map((status) => `'${status}'`).join(', ')})`;
 
-function writeSubscription(env: Env, id: string, accountId: string, status: string, paidUntil: number): Promise<unknown> {
+export interface SubscriptionDetails {
+  priceId?: string | null;
+  interval?: 'week' | 'month' | null;
+  periodEnd?: number | null;
+  cancelAtPeriodEnd?: boolean;
+}
+
+function writeSubscription(
+  env: Env,
+  id: string,
+  accountId: string,
+  status: string,
+  paidUntil: number,
+  details: SubscriptionDetails = {},
+): Promise<unknown> {
+  const cancel = details.cancelAtPeriodEnd ? 1 : 0;
   return env.DB.prepare(
-    `INSERT INTO subscriptions (id, account_id, status, paid_until, updated_at) VALUES (?, ?, ?, ?, ?)
-     ON CONFLICT(id) DO UPDATE SET status = excluded.status, paid_until = excluded.paid_until, updated_at = excluded.updated_at
+    `INSERT INTO subscriptions (id, account_id, status, paid_until, price_id, billing_interval, period_end, cancel_at_period_end, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+     ON CONFLICT(id) DO UPDATE SET
+       status = excluded.status,
+       paid_until = excluded.paid_until,
+       price_id = COALESCE(excluded.price_id, subscriptions.price_id),
+       billing_interval = COALESCE(excluded.billing_interval, subscriptions.billing_interval),
+       period_end = COALESCE(excluded.period_end, subscriptions.period_end),
+       cancel_at_period_end = excluded.cancel_at_period_end,
+       updated_at = excluded.updated_at
      WHERE ${FINAL}`,
   )
-    .bind(id, accountId, status, paidUntil, seconds())
+    .bind(id, accountId, status, paidUntil, details.priceId ?? null, details.interval ?? null, details.periodEnd ?? null, cancel, seconds())
     .run();
 }
 
@@ -218,34 +250,44 @@ function writeSubscription(env: Env, id: string, accountId: string, status: stri
  * Every statement is atomic, so a burst of concurrent syncs (Checkout sends
  * about six webhooks at once) reports the activation once.
  */
-async function activate(env: Env, id: string, accountId: string, paidUntil: number): Promise<boolean> {
+async function activate(
+  env: Env,
+  id: string,
+  accountId: string,
+  paidUntil: number,
+  details: SubscriptionDetails = {},
+): Promise<boolean> {
   const now = seconds();
+  const cancel = details.cancelAtPeriodEnd ? 1 : 0;
   const inserted = await env.DB.prepare(
-    "INSERT INTO subscriptions (id, account_id, status, paid_until, updated_at) VALUES (?, ?, 'active', ?, ?) ON CONFLICT(id) DO NOTHING",
+    "INSERT INTO subscriptions (id, account_id, status, paid_until, price_id, billing_interval, period_end, cancel_at_period_end, updated_at) VALUES (?, ?, 'active', ?, ?, ?, ?, ?, ?) ON CONFLICT(id) DO NOTHING",
   )
-    .bind(id, accountId, paidUntil, now)
+    .bind(id, accountId, paidUntil, details.priceId ?? null, details.interval ?? null, details.periodEnd ?? null, cancel, now)
     .run();
   if (inserted.meta.changes > 0) return true;
 
   const turned = await env.DB.prepare(
-    `UPDATE subscriptions SET status = 'active', paid_until = ?, updated_at = ? WHERE id = ? AND status <> 'active' AND ${FINAL}`,
+    `UPDATE subscriptions SET status = 'active', paid_until = ?, price_id = COALESCE(?, price_id), billing_interval = COALESCE(?, billing_interval), period_end = COALESCE(?, period_end), cancel_at_period_end = ?, updated_at = ? WHERE id = ? AND status <> 'active' AND ${FINAL}`,
   )
-    .bind(paidUntil, now, id)
+    .bind(paidUntil, details.priceId ?? null, details.interval ?? null, details.periodEnd ?? null, cancel, now, id)
     .run();
   if (turned.meta.changes > 0) return true;
 
-  await env.DB.prepare("UPDATE subscriptions SET paid_until = ?, updated_at = ? WHERE id = ? AND status = 'active'")
-    .bind(paidUntil, now, id)
+  await env.DB.prepare(
+    "UPDATE subscriptions SET paid_until = ?, price_id = COALESCE(?, price_id), billing_interval = COALESCE(?, billing_interval), period_end = COALESCE(?, period_end), cancel_at_period_end = ?, updated_at = ? WHERE id = ? AND status = 'active'",
+  )
+    .bind(paidUntil, details.priceId ?? null, details.interval ?? null, details.periodEnd ?? null, cancel, now, id)
     .run();
   return false;
 }
 
 /** Extends an entitlement that is already active. Returns false when there was none. */
-async function extendActive(env: Env, id: string, graceUntil: number): Promise<boolean> {
+async function extendActive(env: Env, id: string, graceUntil: number, details: SubscriptionDetails = {}): Promise<boolean> {
+  const cancel = details.cancelAtPeriodEnd === undefined ? null : details.cancelAtPeriodEnd ? 1 : 0;
   const result = await env.DB.prepare(
-    "UPDATE subscriptions SET paid_until = MAX(paid_until, ?), updated_at = ? WHERE id = ? AND status = 'active'",
+    "UPDATE subscriptions SET paid_until = MAX(paid_until, ?), price_id = COALESCE(?, price_id), billing_interval = COALESCE(?, billing_interval), period_end = COALESCE(?, period_end), cancel_at_period_end = COALESCE(?, cancel_at_period_end), updated_at = ? WHERE id = ? AND status = 'active'",
   )
-    .bind(graceUntil, seconds(), id)
+    .bind(graceUntil, details.priceId ?? null, details.interval ?? null, details.periodEnd ?? null, cancel, seconds(), id)
     .run();
   return result.meta.changes > 0;
 }
@@ -261,32 +303,60 @@ export async function storeStanding(
   accountId: string,
   standing: Standing,
   settled: boolean,
+  details: SubscriptionDetails = {},
 ): Promise<void> {
   if (standing.kind === 'paid' && settled) {
-    if (await activate(env, subscriptionId, accountId, paidUntilFor(standing.periodEnd))) count(env, ctx, 'sub_active');
+    if (await activate(env, subscriptionId, accountId, paidUntilFor(standing.periodEnd), details)) count(env, ctx, 'sub_active');
     return;
   }
   // A renewal in progress extends access that exists. It never creates access.
-  if (standing.kind === 'renewing' && (await extendActive(env, subscriptionId, standing.graceUntil))) return;
+  if (standing.kind === 'renewing' && (await extendActive(env, subscriptionId, standing.graceUntil, details))) return;
 
   const status = standing.kind === 'lapsed' ? standing.status : 'unpaid';
-  await writeSubscription(env, subscriptionId, accountId, status, 0);
+  await writeSubscription(env, subscriptionId, accountId, status, 0, details);
+}
+
+function isLegacyWeeklyOperator(subscription: Stripe.Subscription, hasStoredRow: boolean): boolean {
+  if (subscription.items.data.length !== 1) return false;
+  const item = subscription.items.data[0];
+  return (
+    (hasStoredRow || subscription.metadata?.app === APP_TAG) &&
+    item.quantity === 1 &&
+    item.price.currency === 'usd' &&
+    item.price.unit_amount === PRICE_CENTS &&
+    item.price.recurring?.interval === 'week' &&
+    item.price.recurring.interval_count === 1
+  );
 }
 
 /**
  * Reads the subscription from Stripe and stores what it entitles the account
  * to. With `accountId`, a subscription that belongs to another account is ignored.
  */
-export async function syncSubscription(env: Env, ctx: ExecutionContext, subscriptionId: string, accountId?: string): Promise<void> {
+export async function syncSubscription(env: Env, ctx: ExecutionContext, subscriptionId: string, accountId?: string, eventTime = 0): Promise<void> {
   const api = stripeClient(env);
   const subscription = await api.subscriptions.retrieve(subscriptionId, { expand: ['latest_invoice'] });
   const customerId = typeof subscription.customer === 'string' ? subscription.customer : subscription.customer.id;
   const account = await env.DB.prepare('SELECT id FROM accounts WHERE stripe_customer = ?').bind(customerId).first<{ id: string }>();
   if (!account || (accountId && accountId !== account.id)) return;
 
-  const standing = subscriptionStanding(subscription, env.STRIPE_PRICE_ID, seconds());
+  const stored = await env.DB.prepare('SELECT price_id FROM subscriptions WHERE id = ?').bind(subscription.id).first<{ price_id: string | null }>();
+  const legacyPrice = isLegacyWeeklyOperator(subscription, Boolean(stored)) ? subscription.items.data[0].price.id : null;
+  const allowedPrices = [env.STRIPE_PRICE_ID, stored?.price_id, legacyPrice].filter((id): id is string => Boolean(id));
+  const item = operatorItem(subscription, allowedPrices);
+  const rawInterval = item?.price.recurring?.interval;
+  const interval: 'week' | 'month' | null = rawInterval === 'week' ? 'week' : rawInterval === 'month' ? 'month' : null;
+  const standing = subscriptionStanding(subscription, allowedPrices, seconds(), !localStripeTest(env));
   const settled = standing.kind === 'paid' && (await invoiceSettled(api, standing.invoiceId));
-  await storeStanding(env, ctx, subscription.id, account.id, standing, settled);
+  await storeStanding(env, ctx, subscription.id, account.id, standing, settled, {
+    priceId: item?.price.id ?? null,
+    interval,
+    periodEnd: item?.current_period_end ?? (standing.kind === 'paid' ? standing.periodEnd : null),
+    cancelAtPeriodEnd: Boolean(subscription.cancel_at_period_end || (subscription.cancel_at && subscription.status === 'active')),
+  });
+  if (standing.kind === 'paid' && settled && interval === 'month' && item?.price.id === env.STRIPE_PRICE_ID) {
+    await syncMonthlyCredit(env, api, standing.invoiceId, eventTime);
+  }
 }
 
 /**
@@ -348,13 +418,39 @@ export async function hasLiveSubscription(db: D1Database, accountId: string): Pr
   return Boolean(row);
 }
 
+/** Actual subscription billing terms for the signed-in user, preserving legacy weekly intervals. */
+export async function subscriptionSummary(db: D1Database, accountId: string): Promise<Record<string, unknown> | null> {
+  const placeholders = ENDED_STATUSES.map(() => '?').join(', ');
+  const row = await db
+    .prepare(
+      `SELECT status, price_id, billing_interval, period_end, cancel_at_period_end
+       FROM subscriptions
+       WHERE account_id = ? AND status NOT IN (${placeholders})
+       ORDER BY CASE WHEN status = 'active' THEN 0 ELSE 1 END, paid_until DESC, updated_at DESC
+       LIMIT 1`,
+    )
+    .bind(accountId, ...ENDED_STATUSES)
+    .first<{ status: string; price_id: string | null; billing_interval: 'week' | 'month' | null; period_end: number | null; cancel_at_period_end: number }>();
+  if (!row) return null;
+  const interval = row.billing_interval ?? 'week';
+  return {
+    interval,
+    usd: 10,
+    currency: 'usd',
+    legacy: interval === 'week',
+    included_api_credit_usd: interval === 'month' ? 2 : 0,
+    period_end: row.period_end ? new Date(row.period_end * 1000).toISOString() : null,
+    cancel_at_period_end: Boolean(row.cancel_at_period_end),
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Checkout and the customer portal
 // ---------------------------------------------------------------------------
 
 let priceVerified = { id: '', until: 0 };
 
-/** Confirms that the configured price is the live US$10 weekly plan before anyone is sent to pay it. */
+/** Confirms that the configured price is the live US$10 Operator plan before anyone is sent to pay it. */
 async function verifiedClient(env: Env): Promise<Stripe> {
   const api = stripeClient(env);
   const now = seconds();
@@ -366,7 +462,7 @@ async function verifiedClient(env: Env): Promise<Stripe> {
     price.livemode &&
     price.currency === 'usd' &&
     price.unit_amount === PRICE_CENTS &&
-    price.recurring?.interval === 'week' &&
+    (price.recurring?.interval === 'month' || price.recurring?.interval === 'week') &&
     price.recurring.interval_count === 1;
   if (!valid) throw unavailable();
 
@@ -401,9 +497,13 @@ export async function createCheckout(env: Env, ctx: ExecutionContext, accountId:
   const customer = await customerFor(env, api, accountId);
 
   // A subscription paid for before its webhook arrived is found here and synced.
+  const storedPrices = await env.DB.prepare('SELECT price_id FROM subscriptions WHERE account_id = ? AND price_id IS NOT NULL').bind(accountId).all<{ price_id: string }>();
+  const allowedPrices = [env.STRIPE_PRICE_ID, ...storedPrices.results.map((r) => r.price_id)];
   const subscriptions = await api.subscriptions.list({ customer, status: 'all', limit: 100 });
   for (const subscription of subscriptions.data) {
-    const isOperator = subscription.items.data.some((item) => item.price.id === env.STRIPE_PRICE_ID);
+    const isOperator =
+      subscription.items.data.some((item) => allowedPrices.includes(item.price.id)) ||
+      isLegacyWeeklyOperator(subscription, false);
     if (!isOperator || ENDED_STATUSES.includes(subscription.status)) continue;
     await syncSubscription(env, ctx, subscription.id, accountId);
     throw alreadySubscribed();
@@ -433,7 +533,7 @@ export async function createCheckout(env: Env, ctx: ExecutionContext, accountId:
       branding_settings: { display_name: 'Bounty Operator', background_color: '#f6e7cc', button_color: '#18232d' },
       custom_text: {
         submit: {
-          message: `US$10 every week until cancelled. By subscribing, you agree to the [Bounty Operator terms](${origin}/terms). AI provider usage is billed separately.`,
+          message: `US$10 every month until cancelled. Includes US$2 in Bounty Operator API credit per paid month. By subscribing, you agree to the [Bounty Operator terms](${origin}/terms). Other AI provider usage is billed separately.`,
         },
       },
     },
@@ -495,26 +595,33 @@ async function storeReceiptEmail(env: Env, session: Stripe.Checkout.Session): Pr
   await env.DB.prepare('UPDATE accounts SET email = ? WHERE stripe_customer = ?').bind(email, customer).run();
 }
 
-async function syncCustomerSubscriptions(env: Env, ctx: ExecutionContext, api: Stripe, customer: string): Promise<void> {
+async function syncCustomerSubscriptions(env: Env, ctx: ExecutionContext, api: Stripe, customer: string, eventTime = 0): Promise<void> {
+  const account = await env.DB.prepare('SELECT id FROM accounts WHERE stripe_customer = ?').bind(customer).first<{ id: string }>();
+  const storedPrices = account
+    ? await env.DB.prepare('SELECT price_id FROM subscriptions WHERE account_id = ? AND price_id IS NOT NULL').bind(account.id).all<{ price_id: string }>()
+    : { results: [] };
+  const allowedPrices = [env.STRIPE_PRICE_ID, ...storedPrices.results.map((r) => r.price_id)];
   const subscriptions = await api.subscriptions.list({ customer, status: 'all', limit: 100 });
   for (const subscription of subscriptions.data) {
-    if (subscription.items.data.some((item) => item.price.id === env.STRIPE_PRICE_ID)) {
-      await syncSubscription(env, ctx, subscription.id);
+    if (subscription.items.data.some((item) => allowedPrices.includes(item.price.id)) || isLegacyWeeklyOperator(subscription, false)) {
+      await syncSubscription(env, ctx, subscription.id, undefined, eventTime);
     }
   }
 }
 
 async function applyEvent(env: Env, ctx: ExecutionContext, api: Stripe, event: Stripe.Event): Promise<void> {
+  if (await applyAutoTopupSetupEvent(env, api, event)) return;
   if (await applyApiPaymentEvent(env, api, event)) return;
   if (event.type.startsWith('customer.subscription.')) {
-    await syncSubscription(env, ctx, (event.data.object as Stripe.Subscription).id);
+    await syncSubscription(env, ctx, (event.data.object as Stripe.Subscription).id, undefined, event.created);
     return;
   }
 
   if (event.type.startsWith('invoice.')) {
-    const invoice = event.data.object as { subscription?: string; parent?: { subscription_details?: { subscription?: string } } };
-    const subscriptionId = invoice.subscription || invoice.parent?.subscription_details?.subscription;
-    if (subscriptionId) await syncSubscription(env, ctx, subscriptionId);
+    const invoice = event.data.object as Stripe.Invoice & { subscription?: string | { id: string } };
+    const subscriptionId = idOf(invoice.subscription) || idOf(invoice.parent?.subscription_details?.subscription);
+    if (subscriptionId) await syncSubscription(env, ctx, subscriptionId, undefined, event.created);
+    if (invoice.id) await syncMonthlyCredit(env, api, invoice.id, event.created);
     return;
   }
 
@@ -522,15 +629,17 @@ async function applyEvent(env: Env, ctx: ExecutionContext, api: Stripe, event: S
     const session = event.data.object as Stripe.Checkout.Session;
     await storeReceiptEmail(env, session);
     const subscriptionId = idOf(session.subscription);
-    if (subscriptionId) await syncSubscription(env, ctx, subscriptionId);
+    if (subscriptionId) await syncSubscription(env, ctx, subscriptionId, undefined, event.created);
     return;
   }
 
   if (event.type === 'charge.refunded' || event.type.startsWith('charge.dispute.')) {
     const chargeRef = event.type === 'charge.refunded' ? (event.data.object as Stripe.Charge).id : (event.data.object as Stripe.Dispute).charge;
+    const chargeId = idOf(chargeRef);
+    if (chargeId) await syncMonthlyCreditForCharge(env, api, chargeId, event.created);
     const charge = typeof chargeRef === 'string' ? await api.charges.retrieve(chargeRef) : chargeRef;
     const customer = idOf(charge?.customer);
-    if (customer) await syncCustomerSubscriptions(env, ctx, api, customer);
+    if (customer) await syncCustomerSubscriptions(env, ctx, api, customer, event.created);
   }
 }
 

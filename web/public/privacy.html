@@ -58,7 +58,7 @@ FINISH: Responsive layout, native video controls, captions, reduced motion and v
 
 <h1>Privacy policy</h1>
 <p class="lede">Built by Tradi3. Operated by Vaytric, which is responsible for the data described here. This page covers the hosted site at bountyoperator.com. The open-source command-line kit runs on your own machine.</p>
-<p class="meta">Last updated <time datetime="2026-10-13">13 October 2026</time></p>
+<p class="meta">Last updated <time datetime="2026-10-14">14 October 2026</time></p>
 
 </header>
 
@@ -135,11 +135,11 @@ FINISH: Responsive layout, native video controls, captions, reduced motion and v
 </section><section class="docs-section" aria-labelledby="payments">
 <h2 class="docs-section__title" id="payments">Payments</h2>
 <div class="prose">
-<p>Stripe collects your email, card and billing details at checkout. Card details never reach our application. We send Stripe your account identifier.</p>
+<p>Stripe collects your email, card and billing details at checkout. Full card details never reach our application. We send Stripe your account identifier.</p>
 <p>Our database keeps the Stripe customer and subscription IDs, the subscription status, the paid-until time, your receipt email, and webhook event IDs for 30 days. Stripe keeps its own financial records.</p></div>
 </section><section class="docs-section" aria-labelledby="model-api">
 <h2 class="docs-section__title" id="model-api">Model API and prepaid credit</h2>
-<div class="prose"><p>Model API requests pass through Cloudflare to our vLLM deployment on Runpod. The prompt and response stay in memory while the request is processed. Request and response content logging and cross-request prefix caching are disabled. We do not use your content to train models.</p><p>We store hashes of API keys, their visible prefixes and labels, expiry and revocation times, spending limits and aggregate spending. We store each request’s model ID, key ID, time, status, input/output token counts, reserved credit and final charge. Request metadata is deleted after 30 days. Prompts, tool arguments and model responses are not written to our database.</p><p>We keep the prepaid credit ledger and Stripe checkout/payment references for accounting and disputes. Deleting an account removes its link from those records, but does not erase the financial records. Card details stay with Stripe. Cloudflare and Runpod process traffic and infrastructure metadata under their own policies; deployments may run outside your country.</p></div>
+<div class="prose"><p>Model API requests pass through Cloudflare to our vLLM deployment on Runpod. The prompt and response stay in memory while the request is processed. Request and response content logging and cross-request prefix caching are disabled. We do not use your content to train models.</p><p>We store hashes of API keys, their visible prefixes and labels, expiry and revocation times, spending limits and aggregate spending. We store each request’s model ID, key ID, time, status, input/output token counts, reserved credit and final charge. Request metadata is deleted after 30 days. Prompts, tool arguments and model responses are not written to our database.</p><p>We keep the credit ledger, including paid-month grants and reversals, and Stripe checkout/payment references for accounting and disputes. Deleting an account removes its link from those records, but does not erase the financial records.</p><p>If you opt in to auto top-ups, Stripe saves your payment method. We keep its Stripe reference, your top-up settings, the time and version of your consent, and payment attempts and outcomes. Full card details stay with Stripe; we retain the method type and masked details so you can identify it. Cloudflare and Runpod process traffic and infrastructure metadata under their own policies; deployments may run outside your country.</p></div>
 </section><section class="docs-section" aria-labelledby="deletion">
 <h2 class="docs-section__title" id="deletion">Export and deletion</h2>
 <div class="prose">

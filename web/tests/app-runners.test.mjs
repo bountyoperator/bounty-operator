@@ -774,7 +774,7 @@ describe('rules', () => {
     }
     const gauntlet = await readFile(new URL('gauntlet.mjs', APP_DIR), 'utf8');
     // One price, in the words the account panel uses. No dash in a button label.
-    assert.deepEqual([...new Set(gauntlet.match(/US\$\d+(?:\/| a | per )\w+/g))], ['US$10 a week']);
+    assert.deepEqual([...new Set(gauntlet.match(/US\$\d+(?:\/| a | per )\w+/g))], ['US$10 a month']);
     for (const source of sources) assert.doesNotMatch(source, /label: [`'"][^`'"\n]*—/);
   });
 

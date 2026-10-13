@@ -84,9 +84,19 @@ test('legal pages name the builder, the operator and the support address', () =>
   assert.equal(operators[0], operators[1]);
   assert.notEqual(operators[0], 'Tradi3');
   const terms = textOf(rendered.get('/terms'));
-  assert.match(terms, /US\$10 every week/);
-  assert.match(terms, /Price changes are posted here 14 days ahead and never apply to a week already paid\./);
-  assert.match(terms, /If you paid and got no access, or the service was down for a material part of your week, we fix it or refund that charge\./);
+  assert.match(terms, /New Operator subscriptions cost US\$10 every month/);
+  assert.match(terms, /Price changes are posted here 14 days ahead and never apply to a period already paid\./);
+  assert.match(terms, /If you paid and got no access, or the service was down for a material part of your paid period, we fix it or refund that charge\./);
+  assert.match(terms, /Existing weekly subscriptions keep their US\$10 weekly price and billing interval shown in the Stripe portal/);
+  assert.match(terms, /They are not automatically moved to the monthly plan and do not receive the monthly plan’s API credit\./);
+  assert.match(terms, /Each verified paid US\$10 monthly Operator invoice also adds US\$2 in API credit\./);
+  assert.match(terms, /Unpaid invoices and grace periods add no credit\./);
+  assert.match(terms, /Included credit rolls over without expiring, and cancelling a subscription does not remove credit from a paid month\./);
+  assert.match(terms, /Included Operator credit has no separate cash refund/);
+  assert.match(terms, /Auto top-ups are off by default\./);
+  assert.match(terms, /a calendar-month cap of US\$20, US\$50, US\$100, US\$200 or US\$500/);
+  assert.match(terms, /limits automatic top-ups only/);
+  assert.match(terms, /a payment already processing may still complete/);
 });
 
 test('the privacy policy states the cookie count, the keyed IP hash and the counters', () => {
@@ -95,6 +105,9 @@ test('the privacy policy states the cookie count, the keyed IP hash and the coun
   assert.match(privacy, /Abuse limits use a keyed hash of your IP address that expires within a day\./);
   assert.match(privacy, /no account identifier, no IP address/);
   assert.match(privacy, /No ad cookies\. No tracking pixels\./);
+  assert.match(privacy, /If you opt in to auto top-ups, Stripe saves your payment method\./);
+  assert.match(privacy, /the time and version of your consent, and payment attempts and outcomes/);
+  assert.match(privacy, /Full card details stay with Stripe; we retain the method type and masked details/);
 });
 
 test('the privacy policy lists every key the site scripts keep in the browser', async () => {
@@ -281,7 +294,7 @@ test('the privacy policy says page views and named actions are counted in aggreg
   assert.match(privacy, /named actions a page reports from a fixed list: an example loaded, a prompt exported, a reply pasted, a packet saved, a repository imported, the sign-in opened, the upgrade button pressed, a gauntlet or a panel started and finished, a free tool run, a template copied, an MCP command copied/);
   assert.match(privacy, /A page reports an action by its name and sends nothing with it\./);
   assert.match(privacy, /what you paste or drop there never leaves the browser\./);
-  assert.match(privacy, /Last updated 13 October 2026/);
+  assert.match(privacy, /Last updated 14 October 2026/);
 });
 
 test('the privacy policy names every counter the Worker keeps', async () => {

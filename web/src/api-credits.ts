@@ -1,4 +1,5 @@
 // API keys authorize inference only. They cannot manage the account or buy credit.
+import { autoTopupData } from './api-autotopup.ts';
 import { randomToken, sha256 } from './crypto.ts';
 import { seconds } from './env.ts';
 import type { Call, Env } from './env.ts';
@@ -11,16 +12,30 @@ export interface InferenceKey { id: string; account_id: string; budget_micro: nu
 export interface MeteredModel { id: string; inputRate: number; outputRate: number; minimumMicro: number; context: number; maxOutput: number }
 
 export async function apiCreditData(env: Env, accountId: string, full = false): Promise<Record<string, unknown>> {
-  const [wallet, keys, ledger, requests, topups] = await Promise.all([
+  const [wallet, keys, ledger, requests, topups, autoTopup, monthlyGrants] = await Promise.all([
     env.DB.prepare('SELECT balance_micro, reserved_micro FROM api_wallets WHERE account_id = ?').bind(accountId).first<{ balance_micro: number; reserved_micro: number }>(),
     env.DB.prepare('SELECT id, prefix, label, budget_micro, spent_micro, reserved_micro, created_at, expires, last_used, revoked_at FROM inference_keys WHERE account_id = ? ORDER BY created_at DESC').bind(accountId).all(),
     env.DB.prepare(`SELECT id, amount_micro, kind, reference, created_at FROM api_ledger WHERE account_id = ? ORDER BY created_at DESC${full ? '' : ' LIMIT 50'}`).bind(accountId).all(),
     env.DB.prepare(`SELECT id, key_id, model, status, charge_micro, input_tokens, output_tokens, created_at, finished_at, failure_code FROM inference_requests WHERE account_id = ? ORDER BY created_at DESC${full ? '' : ' LIMIT 50'}`).bind(accountId).all(),
-    env.DB.prepare(`SELECT id, amount_micro, credited_micro, status, created_at FROM api_topups WHERE account_id = ? ORDER BY created_at DESC${full ? '' : ' LIMIT 20'}`).bind(accountId).all(),
+    env.DB.prepare(`SELECT id, amount_micro, credited_micro, status, source, auto_month, created_at FROM api_topups WHERE account_id = ? ORDER BY created_at DESC${full ? '' : ' LIMIT 20'}`).bind(accountId).all(),
+    autoTopupData(env, accountId),
+    full ? env.DB.prepare('SELECT invoice_id, subscription_id, price_id, period_start, period_end, amount_micro, credited_micro, refunded_micro, created_at, updated_at FROM api_monthly_grants WHERE account_id = ? ORDER BY created_at DESC').bind(accountId).all() : Promise.resolve(null),
   ]);
   const balance = wallet?.balance_micro ?? 0;
   const reserved = wallet?.reserved_micro ?? 0;
-  return { currency: 'usd', unit: 'microdollar', balance_micro: balance, reserved_micro: reserved, available_micro: Math.max(0, balance - reserved), keys: keys.results, ledger: ledger.results, requests: requests.results, topups: topups.results };
+  return {
+    currency: 'usd',
+    unit: 'microdollar',
+    balance_micro: balance,
+    reserved_micro: reserved,
+    available_micro: Math.max(0, balance - reserved),
+    keys: keys.results,
+    ledger: ledger.results,
+    requests: requests.results,
+    topups: topups.results,
+    auto_topup: autoTopup,
+    ...(full && monthlyGrants ? { monthly_grants: monthlyGrants.results } : {}),
+  };
 }
 
 export async function createInferenceKey({ env, request }: Call, session: Session): Promise<Response> {
@@ -97,6 +112,8 @@ export async function reapInferenceHolds(env: Env, now: number): Promise<number>
 
 export async function hasApiLiability(env: Env, accountId: string): Promise<boolean> {
   const row = await env.DB.prepare(`SELECT 1 AS found WHERE EXISTS(SELECT 1 FROM api_wallets WHERE account_id = ? AND (balance_micro != 0 OR reserved_micro != 0))
-    OR EXISTS(SELECT 1 FROM api_topups WHERE account_id = ? AND (status = 'pending' OR dispute_open = 1))`).bind(accountId, accountId).first();
+    OR EXISTS(SELECT 1 FROM api_topups WHERE account_id = ? AND (status = 'pending' OR dispute_open = 1))
+    OR EXISTS(SELECT 1 FROM api_monthly_grants WHERE account_id = ? AND dispute_open = 1)
+    OR EXISTS(SELECT 1 FROM api_autotopup_settings WHERE account_id = ? AND (enabled = 1 OR setup_id IS NOT NULL))`).bind(accountId, accountId, accountId, accountId).first();
   return Boolean(row);
 }

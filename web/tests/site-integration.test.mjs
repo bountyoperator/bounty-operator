@@ -220,12 +220,12 @@ test('no leftover of the earlier release is deployed', async () => {
   assert.ok(!publicFiles.some((name) => name.endsWith('.zip')));
 });
 
-test('button labels in the app carry no dash and one price', async () => {
+test('button labels have no dash and app prices match the monthly plan and included credit', async () => {
   const prices = new Set();
   for (const file of (await readdir(APP_DIR)).filter((name) => name.endsWith('.mjs'))) {
     const source = await readFile(path.join(APP_DIR, file), 'utf8');
     assert.doesNotMatch(source, /label: [`'"][^`'"\n]*—/, file);
     for (const match of source.matchAll(/US\$\d+(?:\/| a | per )\w+/g)) prices.add(match[0]);
   }
-  assert.deepEqual([...prices].sort(), ['US$10 a week']);
+  assert.deepEqual([...prices].sort(), ['US$10 a month', 'US$2 per paid']);
 });

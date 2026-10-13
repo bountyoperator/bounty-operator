@@ -6,7 +6,7 @@ import { LIMITS } from '../public/review-core.mjs';
 
 import { clearSessionCookie, currentSession } from './auth.ts';
 import type { Session } from './auth.ts';
-import { apiBillingReady, billingReady, hasLiveSubscription, mayStillBill } from './billing.ts';
+import { apiBillingReady, billingReady, hasLiveSubscription, mayStillBill, subscriptionSummary } from './billing.ts';
 import { PRICE, VERSION, seconds } from './env.ts';
 import type { Call, Env } from './env.ts';
 import { currentProfileId } from './hosted.ts';
@@ -25,12 +25,20 @@ function billingState(env: Env): 'live' | 'unavailable' {
 export async function accountStatus({ env, request }: Call): Promise<Response> {
   const session = await currentSession(env, request);
   const signedIn = Boolean(session);
+  const [currentUsage, hasSubscription, subscription] = session
+    ? await Promise.all([
+        usage(env.DB, session.account_id, seconds()),
+        hasLiveSubscription(env.DB, session.account_id),
+        subscriptionSummary(env.DB, session.account_id),
+      ])
+    : [null, false, null];
   return json({
     signedIn,
     csrf: session?.csrf,
-    usage: session ? await usage(env.DB, session.account_id, seconds()) : null,
+    usage: currentUsage,
     billing: billingState(env),
-    hasSubscription: session ? await hasLiveSubscription(env.DB, session.account_id) : false,
+    hasSubscription,
+    subscription,
     limits: LIMITS,
     price: PRICE,
     version: VERSION,
@@ -51,7 +59,7 @@ export async function clientStatus(env: Env, accountId: string): Promise<Record<
 /** What the account panel shows. Exported for tests. */
 export async function portalData(env: Env, accountId: string): Promise<Record<string, unknown>> {
   const now = seconds();
-  const [account, passkeys, connections, reviews, hasSubscription, currentUsage] = await Promise.all([
+  const [account, passkeys, connections, reviews, hasSubscription, subscription, currentUsage, apiData] = await Promise.all([
     env.DB.prepare('SELECT id, created_at, email FROM accounts WHERE id = ?').bind(accountId).first(),
     env.DB.prepare('SELECT id, label, created_at FROM passkeys WHERE account_id = ? ORDER BY created_at').bind(accountId).all(),
     env.DB.prepare('SELECT id, label, created_at, expires, last_used FROM api_tokens WHERE account_id = ? AND expires > ? ORDER BY created_at DESC')
@@ -61,18 +69,21 @@ export async function portalData(env: Env, accountId: string): Promise<Record<st
       .bind(accountId, HISTORY_ROWS)
       .all(),
     hasLiveSubscription(env.DB, accountId),
+    subscriptionSummary(env.DB, accountId),
     usage(env.DB, accountId, now),
+    apiCreditData(env, accountId),
   ]);
 
   return {
     account: { ...account, hasSubscription },
+    subscription,
     passkeys: passkeys.results,
     connections: connections.results,
     // A row stored by an earlier release may carry an id that has since been renamed.
     reviews: reviews.results.map((row) => (typeof row.profile === 'string' ? { ...row, profile: currentProfileId(row.profile) } : row)),
     usage: currentUsage,
     profiles: PROFILES.map((profile) => ({ id: profile.id, name: profile.name })),
-    api: { ...await apiCreditData(env, accountId), enabled: inferenceReady(env), topups_enabled: env.API_TOPUPS_ENABLED === 'true' && inferenceReady(env) && apiBillingReady(env), models: inferenceModels(env).map(publicModel) },
+    api: { ...apiData, enabled: inferenceReady(env), topups_enabled: env.API_TOPUPS_ENABLED === 'true' && inferenceReady(env) && apiBillingReady(env), models: inferenceModels(env).map(publicModel) },
   };
 }
 
@@ -83,10 +94,11 @@ export async function portal({ env }: Call, session: Session): Promise<Response>
 /** Everything stored about the account, minus the hashes that guard it. */
 export async function exportAccount({ env }: Call, session: Session): Promise<Response> {
   const accountId = session.account_id;
-  const [panel, account, subscriptions, reviews] = await Promise.all([
+  const [panel, account, subscriptions, autoTopup, reviews] = await Promise.all([
     portalData(env, accountId),
     env.DB.prepare('SELECT stripe_customer FROM accounts WHERE id = ?').bind(accountId).first<{ stripe_customer: string | null }>(),
-    env.DB.prepare('SELECT id, status, paid_until, updated_at FROM subscriptions WHERE account_id = ? ORDER BY updated_at').bind(accountId).all(),
+    env.DB.prepare('SELECT id, status, paid_until, price_id, billing_interval, period_end, cancel_at_period_end, updated_at FROM subscriptions WHERE account_id = ? ORDER BY updated_at').bind(accountId).all(),
+    env.DB.prepare('SELECT enabled, amount_micro, threshold_micro, monthly_cap_micro, payment_method, payment_method_summary, consent_at, consent_version, pause_reason, updated_at FROM api_autotopup_settings WHERE account_id = ?').bind(accountId).first(),
     // Every stored review row, not only the panel's most recent ones.
     env.DB.prepare('SELECT id, created_at, day, status, profile, channel FROM reviews WHERE account_id = ? ORDER BY created_at DESC').bind(accountId).all(),
   ]);
@@ -94,7 +106,7 @@ export async function exportAccount({ env }: Call, session: Session): Promise<Re
     ...panel,
     api: await apiCreditData(env, accountId, true),
     reviews: reviews.results.map((row) => (typeof row.profile === 'string' ? { ...row, profile: currentProfileId(row.profile) } : row)),
-    billing: { stripeCustomer: account?.stripe_customer ?? null, subscriptions: subscriptions.results },
+    billing: { stripeCustomer: account?.stripe_customer ?? null, subscriptions: subscriptions.results, autoTopup: autoTopup ?? null },
     exportedAt: new Date().toISOString(),
     note: 'Files, prompts, API keys and review text are never stored. Token hashes and passkey public keys are left out of this export.',
   });

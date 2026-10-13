@@ -138,18 +138,19 @@ test('the hero says what a review costs under its two buttons, and a phone shows
   assert.match(css, /\.home-hero__shot \{\n  order: 4;/);
 });
 
-test('pricing states the two fixed plans and nothing else', () => {
+test('pricing states the two plans and the monthly included API credit', () => {
   const pricing = main.slice(main.indexOf('id="pricing"'), main.indexOf('id="faq"'));
   const text = textOf(pricing);
   assert.match(text, /US\$0/);
-  assert.match(text, /US\$10 per week/);
+  assert.match(text, /US\$10 per month/);
   assert.match(text, /Unlimited reviews, 4 at once/);
   assert.match(text, /1 review a day/);
   assert.match(text, /Start a free review/);
   assert.match(text, /Get Operator/);
-  assert.doesNotMatch(text, /trial|discount|per month|\/mo\b|coupon/i);
+  assert.match(text, /US\$2 in Bounty Operator API credit per paid month/);
+  assert.doesNotMatch(text, /trial|discount|per week|\/wk\b|coupon/i);
   const amounts = [...textOf(own).matchAll(/US\$\d+/g)].map((match) => match[0]);
-  assert.deepEqual([...new Set(amounts)].sort(), ['US$0', 'US$10']);
+  assert.deepEqual([...new Set(amounts)].sort(), ['US$0', 'US$10', 'US$2']);
 });
 
 test('every provider the engine supports is named', () => {

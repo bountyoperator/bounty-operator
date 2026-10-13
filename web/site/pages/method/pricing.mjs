@@ -1,6 +1,6 @@
 // /pricing: the standalone pricing page. It mirrors the home pricing section.
-// Pricing is fixed by SPEC section 2: Free = 1 review per day (00:00 UTC
-// reset), Operator = US$10 per week. The plan lines come from ../../plans.mjs.
+// Free = 1 review per day (00:00 UTC reset), Operator = US$10 per month.
+// The plan lines come from ../../plans.mjs.
 //
 // The page loads the account panel (/app/account.mjs). "Get Operator" carries
 // data-account-action="checkout": sign-in when needed, then Stripe. A cancelled
@@ -11,7 +11,7 @@ import { button, faq, html, icon, sectionHeading, table } from '../../components
 import { breadcrumbsLd, faqPageLd, softwareApplicationLd } from '../../layout.mjs';
 import { ACCOUNT_SCRIPTS, ACCOUNT_STYLES, accountDialog } from '../../fragments/account-dialog.mjs';
 import { PROFILES } from '../../../public/profiles.mjs';
-import { AGENT_TICK, CHAT_TICK, COUNTED, FREE_LINE, NOT_COUNTED, RENEWAL, RESET_LINE, WHY_PAY } from '../../plans.mjs';
+import { AGENT_TICK, CHAT_TICK, COUNTED, FREE_LINE, INCLUDED_API_CREDIT, NOT_COUNTED, RENEWAL, RESET_LINE, WHY_PAY } from '../../plans.mjs';
 import { CLAUDE_CREDITS_FAQ, STYLES, pageHero, relatedLinks, tickList, workbenchLink } from './_shared.mjs';
 
 const PATH = '/pricing';
@@ -31,13 +31,14 @@ const no = () => html`<span class="muted">—</span>`;
 
 const planTable = table({
   label: 'Free and Operator, line by line',
-  columns: [{ label: 'What you get' }, { label: 'Free' }, { label: 'Operator · US$10/week' }],
+  columns: [{ label: 'What you get' }, { label: 'Free' }, { label: 'Operator · US$10/month' }],
   rows: [
     [html`Reviews on your API key, on this site or with <code>run_review</code> from Claude Code, Codex or Cursor`, '1 a day', 'Unlimited'],
     ['Review types', 'All 11', 'All 11'],
     [html`<a class="link" href="/gauntlet">Gauntlet</a>: eight stages on one finding, then a verdict`, no(), yes()],
     [html`<a class="link" href="/panel-review">Panel review</a>: 2 to 4 models, then a cross-check`, no(), yes()],
     ['Reviews running at once', '1', '4'],
+    ['Bounty Operator API credit', 'Add credit as needed', 'US$2 per paid month'],
     ['Copy-paste reviews in ChatGPT or Claude (3 review types)', 'Unlimited, not counted', 'Unlimited'],
     [html`Reviews your coding agent’s own model writes with <code>prepare_review</code> or the skills (3 review types)`, 'Unlimited, not counted, no account', 'Unlimited'],
     ['Free tools, GitHub import, local history', yes(), yes()],
@@ -61,7 +62,7 @@ const FAQ_ITEMS = [
   CLAUDE_CREDITS_FAQ,
   {
     q: 'How does billing work?',
-    a: `US$10 a week. ${RENEWAL}`,
+    a: `US$10 a month. ${RENEWAL} ${INCLUDED_API_CREDIT}. Existing weekly subscriptions keep the billing interval shown in their Stripe portal.`,
   },
   {
     q: 'Do I need an email address or a card for the free plan?',
@@ -72,8 +73,8 @@ const FAQ_ITEMS = [
 const body = html`
 ${pageHero({
   trail: [{ label: 'Bounty Operator', href: '/' }, { label: 'Pricing' }],
-  title: 'Free, or US$10 a week.',
-  lede: 'Start with one free review a day. Upgrade for unlimited reviews, the gauntlet and model panels. Model usage is billed separately by your provider.',
+  title: 'Free, or US$10 a month.',
+  lede: 'Start with one free review a day. Operator adds unlimited reviews, the gauntlet, model panels and US$2 in Bounty Operator API credit per paid month.',
 })}
 
 <section class="section section--tight wrap" aria-labelledby="plans">
@@ -98,10 +99,11 @@ ${pageHero({
       <div class="plan__head">
         <h3 class="plan__name" id="plan-operator">Operator</h3>
       </div>
-      <p class="plan__price"><span class="plan__amount">US$10</span><span class="plan__per">per week</span></p>
-      <p class="plan__for">For contest weeks: review every finding, not one a day.</p>
+      <p class="plan__price"><span class="plan__amount">US$10</span><span class="plan__per">per month</span></p>
+      <p class="plan__for">Review every finding, not one a day.</p>
       ${tickList([
         'Unlimited reviews',
+        INCLUDED_API_CREDIT,
         'Gauntlet: eight stages on one finding, then a verdict',
         'Panel review: compare 2 to 4 models',
         '4 reviews running at once',
@@ -121,7 +123,7 @@ ${pageHero({
 </section>
 
 <section class="section wrap wrap--narrow" aria-labelledby="faq">
-  <p>Looking for hosted model access? The <a class="link" href="/model-api">Model API</a> uses separate prepaid credit, with no API subscription.</p>
+  <p>Use your included credit on the <a class="link" href="/model-api">Bounty Operator API</a>, or add prepaid credit as needed. API access does not require a subscription. Other model providers bill usage separately.</p>
   ${sectionHeading({ title: 'Pricing questions', id: 'faq' })}
   ${faq(FAQ_ITEMS, { exclusive: 'pricing-faq' })}
 </section>
@@ -137,8 +139,8 @@ ${pageHero({
 
 export default {
   path: PATH,
-  title: 'Pricing: Free, or Operator at US$10 a week | Bounty Operator',
-  description: `Free gives you ${FREE_LINE.replace(/\.$/, '')}. Operator is US$10 per week for unlimited reviews, the Gauntlet, Panel review and 4 reviews at once.`,
+  title: 'Pricing: Free, or Operator at US$10 a month | Bounty Operator',
+  description: 'Free: 1 review a day. Operator: US$10 per month for unlimited reviews, Gauntlet, Panel review, 4 at once and US$2 API credit per paid month.',
   label: 'Pricing',
   bodyClass: 'pricing-page',
   nav: 'pricing',
@@ -146,6 +148,6 @@ export default {
   scripts: ACCOUNT_SCRIPTS,
   overlays: accountDialog(),
   jsonld: [breadcrumbsLd([{ name: 'Pricing', path: PATH }]), softwareApplicationLd(), faqPageLd(FAQ_ITEMS)],
-  lastmod: '2026-10-09',
+  lastmod: '2026-10-14',
   body,
 };

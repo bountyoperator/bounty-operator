@@ -86,7 +86,7 @@ ${ctaBand({
     { label: cta.button, href: workbenchLink(profileId) },
     { label: 'Read the method', href: '/method' },
   ],
-  note: 'Free: 1 review a day. Operator: unlimited, US$10 per week.',
+  note: 'Free: 1 review a day. Operator: unlimited, US$10 per month with US$2 API credit per paid month.',
 })}
 
 <section class="section section--tight wrap">

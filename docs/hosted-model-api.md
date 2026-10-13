@@ -44,10 +44,16 @@ twenty-minute client timeout. Failed startup with no usage is not charged.
 
 ## Payments and release
 
-Top-ups use one-time Stripe Checkout payments for US$20, US$50 or US$100.
-Credit is posted only after server-side verification of the account, customer,
-currency, amount, captured charge and settled PaymentIntent. Redirect query
-parameters never grant credit. The ledger and reservations are atomic in D1.
+Top-ups use one-time Stripe Checkout payments for US$20, US$50 or US$100, or
+optional customer-authorized automatic top-ups (off by default) with a chosen
+amount (US$20, US$50 or US$100), balance threshold (US$5, US$10 or US$20) and
+UTC monthly cap (US$20, US$50, US$100, US$200 or US$500). New US$10 monthly
+Operator subscriptions also issue US$2 in API credit per verified paid monthly
+invoice; existing weekly subscriptions keep their weekly interval without
+monthly credit. Credit is posted only after server-side verification of the
+account, customer, currency, amount, captured charge and settled PaymentIntent
+or Invoice. Redirect query parameters never grant credit. The ledger and
+reservations are atomic in D1.
 
 Preserve existing subscription events and enable these events on the shared
 Stripe webhook endpoint:
@@ -56,6 +62,10 @@ Stripe webhook endpoint:
 - `checkout.session.async_payment_succeeded`
 - `checkout.session.async_payment_failed`
 - `checkout.session.expired`
+- `payment_intent.succeeded`, `payment_intent.payment_failed`, `payment_intent.canceled`, `payment_intent.requires_action`
+- `setup_intent.succeeded`, `setup_intent.setup_failed`, `setup_intent.canceled`
+- `payment_method.detached`
+- `invoice.paid`, `invoice.updated`
 - `charge.refunded`
 - `charge.dispute.created`, `charge.dispute.updated`, `charge.dispute.closed`
 

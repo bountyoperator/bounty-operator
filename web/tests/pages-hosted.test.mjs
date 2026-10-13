@@ -318,16 +318,16 @@ test('the data flow of a hosted review is stated the way the Worker runs it', as
 test('the two plans read the same wherever they are summarised', () => {
   // Operator: unlimited reviews, the full gauntlet, panel review, four at once.
   const home = text('index.html');
-  for (const line of ['Operator US$10 per week', 'Unlimited reviews, 4 at once', 'Gauntlet: eight stages on one finding, then a verdict', 'Panel review: compare 2 to 4 models']) {
+  for (const line of ['Operator US$10 per month', 'Unlimited reviews, 4 at once', 'US$2 in Bounty Operator API credit per paid month', 'Gauntlet: eight stages on one finding, then a verdict', 'Panel review: compare 2 to 4 models']) {
     assert.ok(home.includes(line), `home: ${line}`);
   }
-  const operator = 'Operator is US$10 per week for unlimited reviews, the Gauntlet, Panel review and 4 reviews at once.';
-  assert.ok(description('pricing.html').includes(operator));
-  assert.ok(llms.includes(operator));
-  assert.match(readme, /\*\*Operator: US\$10\/week\*\* for unlimited reviews, the Gauntlet, Panel review and 4 reviews at once\./);
-  assert.match(text('terms.html'), /Unlimited reviews, the Gauntlet, Panel review and 4 reviews at once\. Renews weekly until you cancel\./);
+  assert.ok(description('pricing.html').includes('Operator: US$10 per month for unlimited reviews'));
+  assert.ok(description('pricing.html').includes('US$2 API credit per paid month'));
+  assert.ok(llms.includes('Operator is US$10 per month for unlimited reviews, the Gauntlet, Panel review and 4 reviews at once.'));
+  assert.match(readme, /\*\*Operator: US\$10\/month\*\* for unlimited reviews, the Gauntlet, Panel review and 4 reviews at once, including US\$2 API credit per paid month\./);
+  assert.match(text('terms.html'), /Unlimited reviews, the Gauntlet, Panel review and 4 reviews at once\. Renews monthly until you cancel\./);
   const pricing = text('pricing.html');
-  for (const line of ['Unlimited reviews', 'Gauntlet: eight stages on one finding, then a verdict', 'Panel review: 2 to 4 models, then a cross-check', '4 reviews running at once']) {
+  for (const line of ['Unlimited reviews', 'US$2 in Bounty Operator API credit per paid month', 'Gauntlet: eight stages on one finding, then a verdict', 'Panel review: 2 to 4 models, then a cross-check', '4 reviews running at once']) {
     assert.ok(pricing.includes(line), line);
   }
 
@@ -339,7 +339,7 @@ test('the two plans read the same wherever they are summarised', () => {
   assert.ok(llms.includes('Free gives you 1 review a day, any review type (reset at 00:00 UTC).'));
   assert.ok(readme.includes('**Free:** 1 review a day, any review type.'));
   // Why pay: answered on the home page and on /pricing in the same words.
-  const whyPay = 'Your provider charges for the model. The US$10 pays for Bounty Operator: no daily limit, the Gauntlet, Panel review and 4 reviews running at once. Model usage is not included.';
+  const whyPay = 'The US$10 monthly plan pays for unlimited reviews, the Gauntlet, Panel review and 4 reviews running at once. It includes US$2 in Bounty Operator API credit per paid month. Other model providers bill usage to your own key.';
   assert.ok(home.includes(whyPay));
   assert.ok(pricing.includes(whyPay));
   // No buyer-facing plan summary uses the internal words.

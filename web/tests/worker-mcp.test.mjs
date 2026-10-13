@@ -679,7 +679,7 @@ test('the account tool reads usage with a valid token and answers 401 without on
   const { structuredContent } = (await response.json()).result;
   assert.equal(structuredContent.usage.plan, 'free');
   assert.equal(structuredContent.usage.remainingToday, 1);
-  assert.deepEqual(structuredContent.price, { usd: 10, interval: 'week' });
+  assert.deepEqual(structuredContent.price, { usd: 10, interval: 'month', included_api_credit_usd: 2 });
 });
 
 /** A provider that answers REVIEW as one JSON body, or as a stream when the request asks for one. */

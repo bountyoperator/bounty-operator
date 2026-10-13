@@ -181,7 +181,7 @@ const FAQ_ITEMS = [
   },
   {
     q: 'What does the free plan show?',
-    a: 'The example on this page. Panel review runs on Operator at US$10 per week.',
+    a: 'The example on this page. Panel review runs on Operator at US$10 per month, including US$2 Bounty Operator API credit per paid month.',
   },
 ];
 
@@ -192,7 +192,7 @@ ${pageHero({
   title: 'Cross-check a finding with 2 to 4 models',
   lede: 'Each model reviews the same files on your own key. A final pass checks every finding against the lines it cites, keeps what the code proves and shows how many models reported it.',
   actions: operatorActions({ secondary: button({ label: 'How it runs', href: '#how', size: 'lg' }) }),
-  note: 'US$10 per week. One OpenRouter key covers the whole panel. Model usage is billed by your provider to your key.',
+  note: 'US$10 per month. One OpenRouter key covers the whole panel. Model usage is billed by your provider to your key.',
   aside: heroAside,
 })}
 

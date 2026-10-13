@@ -15,11 +15,13 @@ import {
   PRICE_LINE,
   billingMessage,
   confirmCheckout,
+  goToAutoTopupSetup,
   goToBillingPortal,
   goToCheckout,
   planLabel,
   readCheckoutReturn,
   rememberPlace,
+  subscriptionPriceLine,
   takePlace,
 } from '../public/app/billing-ui.mjs';
 import {
@@ -36,7 +38,7 @@ import {
   toBase64Url,
   toBytes,
 } from '../public/app/passkey.mjs';
-import { MCP_ENDPOINT, MCP_PACKAGE, TABS, TOKEN_VAR, connectionCommands, reviewRows, usageSummary } from '../public/app/portal.mjs';
+import { MCP_ENDPOINT, MCP_PACKAGE, TABS, TOKEN_VAR, autoTopupAuthorization, autoTopupSettings, connectionCommands, reviewRows, usageSummary } from '../public/app/portal.mjs';
 import { ACCOUNT_SCRIPTS, ACCOUNT_STYLES, accountDialog } from '../site/fragments/account-dialog.mjs';
 import { assertNoBannedNames } from './private-lists.mjs';
 
@@ -49,7 +51,7 @@ const realNavigator = Object.getOwnPropertyDescriptor(globalThis, 'navigator');
 
 const USAGE_FREE = { plan: 'free', usedToday: 0, remainingToday: 1, running: 0, concurrency: 1, resetsAt: '2026-10-03T00:00:00.000Z', paidUntil: null };
 const USAGE_PAID = { plan: 'weekly', usedToday: 3, remainingToday: null, running: 2, concurrency: 4, resetsAt: '2026-10-03T00:00:00.000Z', paidUntil: '2026-10-08T12:00:00.000Z' };
-const SIGNED_OUT = { signedIn: false, usage: null, billing: 'live', hasSubscription: false, limits: {}, price: { usd: 10, interval: 'week' }, version: '0.7.0' };
+const SIGNED_OUT = { signedIn: false, usage: null, billing: 'live', hasSubscription: false, limits: {}, price: { usd: 10, interval: 'month', included_api_credit_usd: 2 }, version: '0.7.0' };
 const SIGNED_IN = { ...SIGNED_OUT, signedIn: true, csrf: 'csrf-1', usage: USAGE_FREE };
 
 function json(body, status = 200) {
@@ -422,15 +424,16 @@ describe('ceremonies', () => {
 
 describe('the plan', () => {
   test('the price is fixed and the rows are SPEC section 2', () => {
-    assert.equal(PRICE_LINE, 'US$10 a week');
+    assert.equal(PRICE_LINE, 'US$10 a month');
     assert.equal(OPERATOR_ACTIVE, 'Operator is active. Unlimited reviews, gauntlet and panel are unlocked.');
     const row = (feature) => PLAN_ROWS.find((entry) => entry.feature === feature);
     assert.deepEqual([row('Reviews on your API key').free, row('Reviews on your API key').operator], ['1 a day (resets 00:00 UTC)', 'Unlimited']);
     assert.deepEqual([row('Gauntlet').free, row('Gauntlet').operator], ['Example', 'Included']);
     assert.deepEqual([row('Panel review').free, row('Panel review').operator], ['Example', 'Included']);
     assert.deepEqual([row('Reviews at once').free, row('Reviews at once').operator], ['1', '4']);
+    assert.deepEqual([row('Model API credit').free, row('Model API credit').operator], ['Buy credit as needed', 'US$2 per paid month on the monthly plan']);
     assert.match(row('Gauntlet').detail, /Eight stages/);
-    for (const entry of PLAN_ROWS.filter((item) => !['Reviews on your API key', 'Gauntlet', 'Panel review', 'Reviews at once'].includes(item.feature))) {
+    for (const entry of PLAN_ROWS.filter((item) => !['Reviews on your API key', 'Gauntlet', 'Panel review', 'Reviews at once', 'Model API credit'].includes(item.feature))) {
       assert.deepEqual([entry.free, entry.operator], ['Included', 'Included'], entry.feature);
     }
   });
@@ -440,6 +443,35 @@ describe('the plan', () => {
     assert.equal(planLabel({ signedIn: true, usage: USAGE_FREE }), 'Free');
     assert.equal(planLabel({ signedIn: true, usage: USAGE_PAID }), 'Operator');
     assert.equal(planLabel({ signedIn: true, usage: { ...USAGE_FREE, plan: 'past_due' } }), 'Past due');
+  });
+
+  test('the account preserves actual billing terms separately from the current offer', async () => {
+    for (const interval of ['week', 'month']) {
+      const subscription = { interval, usd: 10, currency: 'usd', legacy: interval === 'week', included_api_credit_usd: interval === 'month' ? 2 : 0 };
+      mockFetch({ 'GET /api/account': () => json({ ...SIGNED_IN, usage: USAGE_PAID, subscription }) });
+      const account = await refreshAccount();
+      assert.deepEqual(account.subscription, subscription);
+      assert.equal(subscriptionPriceLine(account.subscription), `US$10 a ${interval}`);
+      assert.equal(account.price.interval, 'month');
+    }
+    for (const subscription of [null, {}, { interval: 'year', usd: 10, currency: 'usd' }, { interval: 'week', usd: 10, currency: 'aud' }]) assert.equal(subscriptionPriceLine(subscription), '');
+    mockFetch({ 'GET /api/account': () => json({ ...SIGNED_OUT, subscription: { interval: 'week', usd: 10, currency: 'usd' } }) });
+    assert.equal((await refreshAccount()).subscription, null);
+  });
+});
+
+describe('automatic top-up authorization', () => {
+  test('all offered combinations enforce threshold and monthly-cap limits', () => {
+    for (const amount_usd of [20, 50, 100]) for (const threshold_usd of [5, 10, 20]) for (const monthly_cap_usd of [20, 50, 100, 200, 500]) {
+      const settings = { amount_usd, threshold_usd, monthly_cap_usd };
+      if (threshold_usd >= amount_usd || monthly_cap_usd < amount_usd) assert.throws(() => autoTopupSettings(settings));
+      else assert.deepEqual(autoTopupSettings(settings), settings);
+    }
+    for (const settings of [{ amount_usd: 25, threshold_usd: 5, monthly_cap_usd: 100 }, { amount_usd: 20, threshold_usd: 0, monthly_cap_usd: 100 }, { amount_usd: 20, threshold_usd: 5, monthly_cap_usd: Infinity }]) assert.throws(() => autoTopupSettings(settings));
+  });
+
+  test('consent names the exact charge, trigger, cap, and ongoing authorization', () => {
+    assert.equal(autoTopupAuthorization({ amount_usd: 50, threshold_usd: 10, monthly_cap_usd: 200 }), 'I authorize Bounty Operator to charge my saved payment method US$50 when available API credit falls below US$10, up to US$200 per calendar month (UTC), until I disable automatic top-ups.');
   });
 });
 
@@ -527,6 +559,28 @@ describe('the return from Stripe', () => {
 });
 
 describe('leaving for Stripe', () => {
+  test('automatic top-up setup requires consent and preserves the return location', async () => {
+    const page = mockPage({ hash: '#account/api' });
+    const calls = mockFetch({ 'GET /api/account': () => json(SIGNED_IN), 'POST /api/inference/autotopup/setup': () => json({ url: 'https://checkout.stripe.com/c/pay/cs_live_setup' }) });
+    await refreshAccount();
+    const settings = { amount_usd: 20, threshold_usd: 5, monthly_cap_usd: 100, request_id: '5dc4e5bb-d70c-4864-8619-1e996872cc38' };
+    await assert.rejects(() => goToAutoTopupSetup(settings), /Authorize automatic top-ups/);
+    assert.equal(calls.length, 1, 'no setup request without consent');
+    await goToAutoTopupSetup({ ...settings, consent: true });
+    assert.deepEqual(calls.at(-1).body, { ...settings, consent: true });
+    assert.equal(calls.at(-1).headers['X-CSRF-Token'], 'csrf-1');
+    assert.deepEqual(page.assigned, ['https://checkout.stripe.com/c/pay/cs_live_setup']);
+    assert.equal(takePlace().hash, '#account/api');
+  });
+
+  test('automatic top-up setup refuses a redirect outside Stripe Checkout', async () => {
+    const page = mockPage();
+    mockFetch({ 'GET /api/account': () => json(SIGNED_IN), 'POST /api/inference/autotopup/setup': () => json({ url: 'https://example.com/setup' }) });
+    await refreshAccount();
+    await assert.rejects(() => goToAutoTopupSetup({ consent: true }), /Stripe did not return a setup page/);
+    assert.deepEqual(page.assigned, []);
+  });
+
   test('checkout stores the place, then goes to the URL the Worker returned', async () => {
     const page = mockPage({ pathname: '/', hash: '#workspace' });
     const calls = mockFetch({
@@ -708,7 +762,7 @@ describe('reviewRows and connectionCommands', () => {
 describe('account.mjs', () => {
   test('the reason is the first line of the dialog', () => {
     assert.equal(reasonText('review'), 'Create a free account to run this review. One passkey prompt, no email.');
-    assert.equal(reasonText('operator'), 'Operator is US$10 a week. Account first, then Stripe.');
+    assert.equal(reasonText('operator'), 'Operator is US$10 a month. Account first, then Stripe.');
     assert.equal(reasonText('review', true), 'Sign in to run this review. One passkey prompt.');
     assert.equal(reasonText('  Sign in to keep this packet.  '), 'Sign in to keep this packet.');
     assert.equal(reasonText(undefined), REASONS.account.create);
@@ -886,9 +940,10 @@ describe('source rules', () => {
     }
   });
 
-  test('the price is only ever US$10 a week', () => {
+  test('the current offer is monthly and only includes the stated API credit', () => {
     for (const [name, source] of Object.entries(sources)) {
-      for (const [amount] of source.matchAll(/US\$\d+/g)) assert.equal(amount, 'US$10', name);
+      for (const [amount] of source.matchAll(/US\$\d+/g)) assert.ok(['US$10', 'US$2'].includes(amount), `${name}: ${amount}`);
+      assert.doesNotMatch(source, /US\$10 a week/, name);
       assert.doesNotMatch(source, /\b(free trial|trial period|discount|coupon|% off)\b/i, name);
     }
   });

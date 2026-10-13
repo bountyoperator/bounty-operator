@@ -20,7 +20,7 @@ export interface InferenceModel extends MeteredModel {
   reasoningParameter?: 'enable_thinking' | 'thinking' | 'reasoning_effort';
 }
 const CAPABILITIES = ['text', 'tools', 'streaming', 'reasoning', 'structured_output'];
-const BODY_BYTES = 262144;
+const BODY_BYTES = 8 * 1024 * 1024;
 const RESPONSE_BYTES = 8 * 1024 * 1024;
 const REQUEST_MS = 300000;
 const STARTUP_MS = 600000;
@@ -36,7 +36,7 @@ export function inferenceModels(env: Env): InferenceModel[] {
       !/^https:\/\/[a-z0-9]+\.api\.runpod\.ai$/.test(m.endpoint) ||
       !/^[a-zA-Z0-9_./-]{1,180}$/.test(m.upstreamModel) ||
       ![m.inputRate, m.outputRate, m.minimumMicro, m.context, m.maxOutput].every((n) => Number.isSafeInteger(n) && n > 0) ||
-      m.inputRate > 100 || m.outputRate > 500 || m.minimumMicro > 1_000_000 || m.context > 131072 || m.maxOutput > m.context ||
+      m.inputRate > 100 || m.outputRate > 500 || m.minimumMicro > 1_000_000 || m.context > 1048576 || m.maxOutput > m.context ||
       ![m.name, m.source, m.revision, m.license, m.quantization].every((s) => typeof s === 'string' && s.length <= 200) ||
       (m.description !== undefined && (typeof m.description !== 'string' || m.description.length > 500)) ||
       (m.tags !== undefined && (!Array.isArray(m.tags) || m.tags.length > 8 || m.tags.some((tag) => typeof tag !== 'string' || !/^[a-z0-9-]{1,40}$/.test(tag)))) ||

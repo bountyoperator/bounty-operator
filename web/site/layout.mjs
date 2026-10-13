@@ -4,7 +4,7 @@
 // under web/site/pages. The page contract is documented in COMPONENTS.md.
 
 import { attrs, brandMark, button, cx, esc, html, icon, inline, raw, textOf } from './components.mjs';
-import { CHAT_LINE, FREE_LINE, OPERATOR_LINE } from './plans.mjs';
+import { CHAT_LINE, FREE_LINE, INCLUDED_API_CREDIT, OPERATOR_LINE } from './plans.mjs';
 
 export const SITE = {
   origin: 'https://bountyoperator.com',
@@ -126,7 +126,7 @@ export function websiteLd() {
   };
 }
 
-/** The product with its two fixed offers: Free, and Operator at US$10 per week. */
+/** The current offers: Free, and Operator at US$10 per month. */
 export function softwareApplicationLd() {
   return {
     '@context': 'https://schema.org',
@@ -152,14 +152,14 @@ export function softwareApplicationLd() {
         name: 'Operator',
         price: '10.00',
         priceCurrency: 'USD',
-        description: OPERATOR_LINE,
+        description: `${OPERATOR_LINE} ${INCLUDED_API_CREDIT}.`,
         url: absoluteUrl('/pricing'),
         priceSpecification: {
           '@type': 'UnitPriceSpecification',
           price: '10.00',
           priceCurrency: 'USD',
-          billingDuration: 'P1W',
-          unitText: 'week',
+          billingDuration: 'P1M',
+          unitText: 'month',
         },
       },
     ],

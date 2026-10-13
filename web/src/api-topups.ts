@@ -6,8 +6,9 @@ import { seconds } from './env.ts';
 import type { Env } from './env.ts';
 import { ApiError } from './http.ts';
 
-const TAG = 'bounty-operator-api';
-interface Topup { id: string; account_id: string | null; customer_id: string; checkout_id: string | null; payment_intent: string | null; amount_micro: number; credited_micro: number; refunded_micro: number; dispute_at: number; dispute_blocked: number; dispute_open: number; revision: number; status: string; created_at: number }
+export const API_PAYMENT_TAG = 'bounty-operator-api';
+const TAG = API_PAYMENT_TAG;
+export interface Topup { id: string; account_id: string | null; customer_id: string; checkout_id: string | null; payment_intent: string | null; amount_micro: number; credited_micro: number; refunded_micro: number; dispute_at: number; dispute_blocked: number; dispute_open: number; revision: number; status: string; created_at: number; source: 'checkout' | 'automatic'; auto_month: string | null; auto_revision: number | null; payment_method: string | null; initiated_at: number; payment_verified_at: number }
 const idOf = (value: string | { id: string } | null | undefined): string | null => typeof value === 'string' ? value : value?.id ?? null;
 
 /** Test money is accepted only by an explicitly configured localhost Worker. */
@@ -52,22 +53,39 @@ export async function createApiTopup(env: Env, api: Stripe, accountId: string, c
 
 /** Optimistic revision check makes concurrent fulfilment/refund events retry
  * against a new Stripe read. A refund total can only move forwards. */
-export async function syncApiTopup(env: Env, api: Stripe, topupId: string, eventTime = 0): Promise<void> {
+export async function syncApiTopup(env: Env, api: Stripe, topupId: string, eventTime = 0, verifiedAutomaticSuccess = false): Promise<void> {
   for (let attempt = 0; attempt < 3; attempt++) {
     const row = await env.DB.prepare('SELECT * FROM api_topups WHERE id = ?').bind(topupId).first<Topup>();
-    if (!row?.checkout_id || !row.account_id) return;
-    const session = await api.checkout.sessions.retrieve(row.checkout_id, { expand: ['payment_intent.latest_charge'] });
-    if (session.livemode !== !localStripeTest(env) || session.mode !== 'payment' || session.currency !== 'usd' || session.amount_total !== row.amount_micro / 10000 || session.amount_subtotal !== session.amount_total ||
-      session.metadata?.app !== TAG || session.metadata?.topup_id !== row.id || session.metadata?.account_id !== row.account_id || session.client_reference_id !== row.account_id || idOf(session.customer) !== row.customer_id) throw new Error('API checkout verification failed');
-    const intent = session.payment_intent;
-    let status = session.status === 'expired' ? 'expired' : 'pending';
+    if (!row?.account_id) return;
+    const automatic = row.source === 'automatic';
+    if (automatic ? !row.payment_intent : !row.checkout_id) return;
+    const session = !automatic ? await api.checkout.sessions.retrieve(row.checkout_id!, { expand: ['payment_intent.latest_charge'] }) : null;
+    if (session && (session.livemode !== !localStripeTest(env) || session.mode !== 'payment' || session.currency !== 'usd' || session.amount_total !== row.amount_micro / 10000 || session.amount_subtotal !== session.amount_total ||
+      session.metadata?.app !== TAG || session.metadata?.topup_id !== row.id || session.metadata?.account_id !== row.account_id || session.client_reference_id !== row.account_id || idOf(session.customer) !== row.customer_id)) throw new Error('API checkout verification failed');
+    let intent = automatic ? await api.paymentIntents.retrieve(row.payment_intent!, { expand: ['latest_charge'] }) : session!.payment_intent;
+    if (automatic && (!intent || typeof intent === 'string' || intent.id !== row.payment_intent || intent.livemode !== !localStripeTest(env) ||
+      intent.currency !== 'usd' || intent.amount !== row.amount_micro / 10000 || idOf(intent.customer) !== row.customer_id || idOf(intent.payment_method) !== row.payment_method ||
+      intent.metadata?.app !== TAG || intent.metadata?.topup_id !== row.id || intent.metadata?.account_id !== row.account_id || intent.metadata?.source !== 'automatic')) throw new Error('Automatic API payment verification failed');
+    let status = session?.status === 'expired' ? 'expired' : 'pending';
     let refund = row.refunded_micro;
     let blocked = row.dispute_blocked;
     let disputeOpen = row.dispute_open;
     let disputeAt = row.dispute_at;
     let credit = row.credited_micro;
-    if (session.status === 'complete' && session.payment_status === 'unpaid' && intent && typeof intent !== 'string' && ['canceled', 'requires_payment_method'].includes(intent.status)) status = 'failed';
-    if (session.status === 'complete' && session.payment_status === 'paid') {
+    let verifiedAt = row.payment_verified_at;
+    if (automatic && intent && typeof intent !== 'string' && ['canceled', 'requires_action', 'requires_payment_method', 'requires_confirmation', 'requires_capture'].includes(intent.status)) {
+      const reason = intent.status === 'requires_action' || intent.last_payment_error?.code === 'authentication_required' ? 'authentication_required' : 'payment_failed';
+      await env.DB.prepare('UPDATE api_autotopup_settings SET enabled = 0, pause_reason = ?, updated_at = ? WHERE account_id = ? AND revision = ?')
+        .bind(reason, seconds(), row.account_id, row.auto_revision).run();
+      // An unconfirmed intent must not remain payable beside a future attempt.
+      // A failed cancellation leaves the durable reservation in place.
+      if (intent.status !== 'canceled') intent = await api.paymentIntents.cancel(intent.id, {}, { idempotencyKey: `api-auto-cancel-${row.id}` });
+      if (intent.status !== 'canceled') throw new Error('Automatic API payment cancellation pending');
+      status = 'failed';
+    }
+    if (session?.status === 'complete' && session.payment_status === 'unpaid' && intent && typeof intent !== 'string' && ['canceled', 'requires_payment_method'].includes(intent.status)) status = 'failed';
+    const paid = automatic ? intent && typeof intent !== 'string' && intent.status === 'succeeded' : session?.status === 'complete' && session.payment_status === 'paid';
+    if (paid) {
       if (!intent || typeof intent === 'string' || intent.livemode !== !localStripeTest(env) || intent.status !== 'succeeded' || intent.currency !== 'usd' || intent.amount_received !== row.amount_micro / 10000 || idOf(intent.customer) !== row.customer_id || intent.metadata?.topup_id !== row.id) throw new Error('API payment verification failed');
       const charge = intent.latest_charge;
       if (!charge || typeof charge === 'string' || !charge.paid || !charge.captured || charge.currency !== 'usd' || charge.amount !== row.amount_micro / 10000 || idOf(charge.customer) !== row.customer_id) throw new Error('API charge verification failed');
@@ -82,15 +100,20 @@ export async function syncApiTopup(env: Env, api: Stripe, topupId: string, event
         disputeOpen = disputes.has_more || disputes.data.some((d) => !['won', 'lost', 'warning_closed'].includes(d.status)) ? 1 : 0;
         disputeAt = Math.max(disputeAt, eventTime);
       }
-      credit = blocked ? 0 : row.amount_micro - refund;
-      status = 'paid';
+      // Automatic credit is first unlocked by a signed succeeded event. A
+      // successful create response or return URL can never issue the credit.
+      if (automatic && (verifiedAutomaticSuccess || !eventTime)) verifiedAt = Math.max(verifiedAt, eventTime || seconds());
+      if (!automatic || verifiedAt) {
+        credit = blocked ? 0 : row.amount_micro - refund;
+        status = 'paid';
+      }
     } else if (row.status === 'paid') {
       // Settled payments cannot be reverted by an older pending snapshot.
       return;
     }
     const updated = await env.DB.prepare(`UPDATE api_topups SET status = ?, credited_micro = ?, refunded_micro = ?, dispute_blocked = ?, dispute_open = ?, dispute_at = ?,
-      payment_intent = COALESCE(?, payment_intent), revision = revision + 1, updated_at = ? WHERE id = ? AND revision = ?`)
-      .bind(status, credit, refund, blocked, disputeOpen, disputeAt, idOf(intent), seconds(), row.id, row.revision).run();
+      payment_intent = COALESCE(?, payment_intent), payment_verified_at = ?, revision = revision + 1, updated_at = ? WHERE id = ? AND revision = ?`)
+      .bind(status, credit, refund, blocked, disputeOpen, disputeAt, idOf(intent), verifiedAt, seconds(), row.id, row.revision).run();
     if (updated.meta.changes) return;
   }
   throw new Error('API payment changed concurrently');
@@ -105,6 +128,15 @@ export async function reconcileApiTopup(env: Env, api: Stripe, accountId: string
 }
 
 export async function applyApiPaymentEvent(env: Env, api: Stripe, event: Stripe.Event): Promise<boolean> {
+  if (event.type.startsWith('payment_intent.')) {
+    const intent = event.data.object as Stripe.PaymentIntent;
+    if (intent.metadata?.app !== TAG || intent.metadata?.source !== 'automatic' || !intent.metadata?.topup_id) return false;
+    const row = await env.DB.prepare("SELECT * FROM api_topups WHERE id = ? AND source = 'automatic'").bind(intent.metadata.topup_id).first<Topup>();
+    if (!row || row.customer_id !== idOf(intent.customer) || row.account_id !== intent.metadata.account_id || (row.payment_intent && row.payment_intent !== intent.id)) throw new Error('Automatic API payment ownership failed');
+    await env.DB.prepare('UPDATE api_topups SET payment_intent = ? WHERE id = ? AND payment_intent IS NULL').bind(intent.id, row.id).run();
+    await syncApiTopup(env, api, row.id, event.created, event.type === 'payment_intent.succeeded');
+    return true;
+  }
   if (event.type.startsWith('checkout.session.')) {
     const session = event.data.object as Stripe.Checkout.Session;
     if (session.metadata?.app !== TAG) return false;
@@ -132,7 +164,7 @@ export async function applyApiPaymentEvent(env: Env, api: Stripe, event: Stripe.
 
 export async function resyncPendingTopups(env: Env, api: Stripe): Promise<number> {
   const now = seconds();
-  const rows = await env.DB.prepare("SELECT * FROM api_topups WHERE status = 'pending' AND (checkout_id IS NOT NULL OR created_at < ?) ORDER BY updated_at LIMIT 4").bind(now - 7200).all<Topup>();
+  const rows = await env.DB.prepare("SELECT * FROM api_topups WHERE source = 'checkout' AND status = 'pending' AND (checkout_id IS NOT NULL OR created_at < ?) ORDER BY updated_at LIMIT 4").bind(now - 7200).all<Topup>();
   for (const row of rows.results) {
     if (!row.checkout_id) {
       // A connection can fail after Stripe creates a session but before its id

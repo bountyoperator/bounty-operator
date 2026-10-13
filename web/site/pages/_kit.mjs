@@ -531,7 +531,7 @@ const FAQ_ITEMS = [
   },
   {
     q: 'What does Operator add?',
-    a: `${OPERATOR_LINE} US$10 per week.`,
+    a: `${OPERATOR_LINE} US$10 per month, including US$2 API credit per paid month.`,
   },
   {
     q: 'Which models can I use?',
@@ -611,8 +611,8 @@ const cardsSection = kitSection(
       title: 'Operator',
       variant: 'accent',
       meta: statusChip('operator'),
-      body: html`<div class="stack stack--12"><p class="h2">US$10 <span class="muted small">per week</span></p><p class="muted small">${OPERATOR_LINE}</p></div>`,
-      foot: 'Renews weekly until cancelled.',
+      body: html`<div class="stack stack--12"><p class="h2">US$10 <span class="muted small">per month</span></p><p class="muted small">${OPERATOR_LINE}</p></div>`,
+      foot: 'Renews monthly until cancelled. Includes US$2 API credit per paid month.',
     })}
   </div>`,
 );

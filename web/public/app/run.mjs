@@ -34,7 +34,7 @@ import { saveWorkbench, workbench } from './state.mjs';
 import { button, clear, el, formatCountdown, formatElapsed, notice, on, qs, setBusy, startTimer, timeUntil } from './ui.mjs';
 import { reportInputError, say, scan, setStep, view, warningsAccepted } from './workbench.mjs';
 
-const PRICE = 'US$10 a week';
+const PRICE = 'US$10 a month';
 const PARTIAL_WORTH_KEEPING = 400;
 const COUNTDOWN_REFRESH_MS = 30000;
 

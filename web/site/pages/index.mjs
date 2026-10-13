@@ -35,7 +35,7 @@ import { PROVIDERS } from '../../public/providers.mjs';
 import { reportSlip } from '../social/example.mjs';
 import { IMMUNEFI, LEADERBOARDS, VERDICTS } from './method/_shared.mjs';
 import { BENCH_TEASER } from './benchmark/_teaser.mjs';
-import { AGENT_TICK, CHAT_TICK, RENEWAL, WHY_PAY } from '../plans.mjs';
+import { AGENT_TICK, CHAT_TICK, INCLUDED_API_CREDIT, RENEWAL, WHY_PAY } from '../plans.mjs';
 import { walkthrough } from '../walkthroughs.mjs';
 
 const LASTMOD = '2026-10-12';
@@ -187,7 +187,7 @@ const ticks = (items) => html`<ul class="home-ticks">${items.map((item) => html`
 const pricing = html`
 <section class="section" id="pricing" aria-labelledby="pricing-title">
   <div class="wrap">
-    ${sectionHeading({ title: 'Free for 1 review a day. US$10 a week for unlimited.', id: 'pricing-title', lede: 'Your model provider bills model usage to your own key.' })}
+    ${sectionHeading({ title: 'Free for 1 review a day. US$10 a month for unlimited.', id: 'pricing-title', lede: 'Operator includes US$2 in Bounty Operator API credit per paid month. Other model providers bill usage separately.' })}
     <div class="home-plans__note" data-checkout-note></div>
     <div class="home-plans rise">
       <article class="home-plan" aria-labelledby="plan-free">
@@ -199,10 +199,11 @@ const pricing = html`
       </article>
       <article class="home-plan home-plan--operator" aria-labelledby="plan-operator">
         <h3 class="home-plan__name" id="plan-operator">Operator</h3>
-        <p class="home-plan__price"><span class="home-plan__amount">US$10</span><span class="home-plan__per">per week</span></p>
+        <p class="home-plan__price"><span class="home-plan__amount">US$10</span><span class="home-plan__per">per month</span></p>
         <p class="home-plan__for">Everything in Free, plus:</p>
         ${ticks([
           'Unlimited reviews, 4 at once',
+          INCLUDED_API_CREDIT,
           html`<a class="link" href="/gauntlet">Gauntlet</a>: eight stages on one finding, then a verdict`,
           html`<a class="link" href="/panel-review">Panel review</a>: compare 2 to 4 models`,
         ])}
@@ -232,7 +233,7 @@ const FAQ_ITEMS = [
   },
   {
     q: 'How do I cancel or get help?',
-    a: html`Cancel in the Stripe billing portal. Access continues until the end of your paid week. Contact <a class="link" href="mailto:${SITE.support}">${SITE.support}</a> for access problems or billing help. <a class="link" href="/terms">Refund terms</a>`,
+    a: html`Cancel in the Stripe billing portal. Access continues until the end of your paid period. Contact <a class="link" href="mailto:${SITE.support}">${SITE.support}</a> for access problems or billing help. <a class="link" href="/terms">Refund terms</a>`,
   },
 ];
 

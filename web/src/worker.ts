@@ -47,6 +47,7 @@ import { reapStaleLeases, usage } from './quota.mjs';
 import { clientKey, edgeLimit, rateLimit } from './rate.ts';
 import { REVIEWS_PER_10_MIN, REVIEW_BODY_BYTES, parseReviewRequest, runHostedReview, streamHostedReview } from './review.ts';
 import { serveAsset } from './static.ts';
+import { autoTopupData, createAutoTopupSetup, disableAutoTopup, processAutoTopups, updateAutoTopup } from './api-autotopup.ts';
 import { apiCreditData, createInferenceKey, reapInferenceHolds, revokeInferenceKey } from './api-credits.ts';
 import { createApiTopup, reconcileApiTopup, resyncPendingTopups } from './api-topups.ts';
 import { inferenceEndpoint, inferenceModels, inferenceReady, publicModel } from './inference.ts';
@@ -132,6 +133,9 @@ async function health({ env }: Call): Promise<Response> {
       env.DB.prepare('SELECT email FROM accounts LIMIT 1'),
       env.DB.prepare('SELECT n FROM funnel_daily LIMIT 1'),
       env.DB.prepare('SELECT reserved_micro FROM api_wallets LIMIT 1'),
+      env.DB.prepare('SELECT billing_interval, cancel_at_period_end FROM subscriptions LIMIT 1'),
+      env.DB.prepare('SELECT enabled FROM api_autotopup_settings LIMIT 1'),
+      env.DB.prepare('SELECT credited_micro FROM api_monthly_grants LIMIT 1'),
     ]);
     return json(body);
   } catch {
@@ -217,6 +221,26 @@ const apiTopup = billingRoute('api-topup', BILLING_REQUESTS_PER_10_MIN, async ({
   return json({ url: await createApiTopup(env, api, session.account_id, customer, body.amount_usd, body.request_id) });
 });
 
+const apiAutoTopupSetup = billingRoute('api-autotopup', BILLING_REQUESTS_PER_10_MIN, async ({ env, request }, session) => {
+  requireRecentAuth(session);
+  const body = await readJson(request, 1000);
+  const api = stripeClient(env);
+  const customer = await customerFor(env, api, session.account_id);
+  return json({ url: await createAutoTopupSetup(env, api, session.account_id, customer, body) });
+});
+
+const apiAutoTopupUpdate = billingRoute('api-autotopup', BILLING_REQUESTS_PER_10_MIN, async ({ env, request }, session) => {
+  requireRecentAuth(session);
+  const body = await readJson(request, 1000);
+  await updateAutoTopup(env, stripeClient(env), session.account_id, body);
+  return json({ auto_topup: await autoTopupData(env, session.account_id) });
+});
+
+const apiAutoTopupDisable = signedIn(async ({ env }, session) => {
+  await disableAutoTopup(env, session.account_id);
+  return json({ auto_topup: await autoTopupData(env, session.account_id) });
+});
+
 const apiReconcile = billingRoute('api-reconcile', RECONCILES_PER_10_MIN, async ({ env, request }, session) => {
   const body = await readJson(request, 1000);
   await reconcileApiTopup(env, stripeClient(env), session.account_id, body.sessionId);
@@ -274,6 +298,9 @@ const ROUTES: Readonly<Record<string, Readonly<Record<string, Handler>>>> = {
   '/api/inference/keys/create': { POST: recentlyVerified(createInferenceKey) },
   '/api/inference/keys/revoke': { POST: signedIn(revokeInferenceKey) },
   '/api/inference/topup': { POST: apiTopup },
+  '/api/inference/autotopup/setup': { POST: apiAutoTopupSetup },
+  '/api/inference/autotopup/update': { POST: apiAutoTopupUpdate },
+  '/api/inference/autotopup/disable': { POST: apiAutoTopupDisable },
   '/api/inference/reconcile': { POST: apiReconcile },
 
   '/api/review': { POST: signedIn(review) },
@@ -361,7 +388,9 @@ export default {
     // Stripe the subscriptions whose paid period is ending. The daily run also purges expired rows.
     const reapedLeases = await reapStaleLeases(env.DB, now);
     const reapedInference = await reapInferenceHolds(env, now);
-    const topupsResynced = apiBillingReady(env) ? await resyncPendingTopups(env, stripeClient(env)).catch(() => 0) : 0;
+    const topupsResynced = apiBillingReady(env)
+      ? (await resyncPendingTopups(env, stripeClient(env)).catch(() => 0)) + (await processAutoTopups(env, stripeClient(env), now).catch(() => 0))
+      : 0;
     const resynced = await resyncEndingSubscriptions(env, ctx, now).catch((error: unknown) => {
       console.error('Subscription resync failed', billingLogFields(error));
       return 0;

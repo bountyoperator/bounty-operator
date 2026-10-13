@@ -1,8 +1,8 @@
 // The plan wording, in one place. Every page, card and FAQ that summarises
 // Free or Operator reads these lines, so the offer reads the same everywhere.
 //
-// Pricing is fixed by SPEC section 2: Free = 1 review per day (00:00 UTC
-// reset), Operator = US$10 per week. A "review" here is one run through
+// Free = 1 review per day (00:00 UTC reset). New Operator subscriptions are
+// US$10 per month with US$2 API credit per paid month. A "review" is one run through
 // bountyoperator.com on the user's own API key: the website's run, or
 // run_review from a coding agent over MCP (the Worker counts both in
 // web/src/quota.mjs). Not counted: copy-paste reviews in a chat app, and the
@@ -12,13 +12,16 @@
 // Plan cards and /pricing are buyer-facing: they say "on your API key", not
 // "hosted review" or "core profile" (web/tests/pages-hosted.test.mjs).
 
-export const PRICE = 'US$10 per week';
+export const PRICE = 'US$10 per month';
 
 /** Free plan, one line. */
 export const FREE_LINE = '1 review a day, any review type.';
 
 /** Operator plan, one line. */
 export const OPERATOR_LINE = 'Unlimited reviews, the Gauntlet, Panel review and 4 reviews at once.';
+
+/** Included only with a paid monthly Operator invoice. */
+export const INCLUDED_API_CREDIT = 'US$2 in Bounty Operator API credit per paid month';
 
 /** The chat-subscription route, as a plan bullet. */
 export const CHAT_LINE = 'Unlimited copy-paste reviews in ChatGPT or Claude for code, Solidity and draft reports';
@@ -41,8 +44,8 @@ export const NOT_COUNTED =
 export const RESET_LINE = 'The free review resets at 00:00 UTC. A review the provider fails, refuses or cuts off at the start does not count.';
 
 /** Billing, one line. */
-export const RENEWAL = 'Billed weekly. Cancel any time in the Stripe portal and keep access until the paid week ends.';
+export const RENEWAL = 'Billed monthly. Cancel any time in the Stripe portal and keep access until the paid period ends.';
 
 /** Why pay when the user already pays a model provider. */
 export const WHY_PAY =
-  'Your provider charges for the model. The US$10 pays for Bounty Operator: no daily limit, the Gauntlet, Panel review and 4 reviews running at once. Model usage is not included.';
+  'The US$10 monthly plan pays for unlimited reviews, the Gauntlet, Panel review and 4 reviews running at once. It includes US$2 in Bounty Operator API credit per paid month. Other model providers bill usage to your own key.';

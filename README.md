@@ -44,8 +44,9 @@ example. No account, no API key.
 Use the [cyber-model API pilot](https://bountyoperator.com/model-api) from
 Chat Completions clients at `https://bountyoperator.com/v1`. Sign in, add
 prepaid credit, and create an expiring key with its own spending limit.
-The live catalog lists the model, exact revision, rates and limits. API credit
-is a separate purchase from the Operator review subscription.
+The live catalog lists the model, exact revision, rates and limits. The monthly
+Operator plan includes US$2 API credit per paid month; you can also buy prepaid
+credit without a subscription. Auto top-ups are off by default and require opt-in.
 
 Deployment and payment verification: [hosted API operations](docs/hosted-model-api.md).
 
@@ -231,7 +232,7 @@ node bench/bench.mjs verify --results web/public/bench/latest.json --archive web
 
 ## Pricing
 
-**Free:** 1 review a day, any review type. **Operator: US$10/week** for unlimited reviews, the Gauntlet, Panel review and 4 reviews at once. The CLI, the core profiles' prompt export and MCP prepare, and the free tools cost nothing.
+**Free:** 1 review a day, any review type. **Operator: US$10/month** for unlimited reviews, the Gauntlet, Panel review and 4 reviews at once, including US$2 API credit per paid month. Other model providers bill usage separately. Existing weekly subscriptions retain their Stripe billing interval and do not receive the monthly credit. The CLI, the core profiles' prompt export and MCP prepare, and the free tools cost nothing.
 
 ## Built by Tradi3
 

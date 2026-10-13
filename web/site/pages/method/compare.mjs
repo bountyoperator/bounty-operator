@@ -125,7 +125,7 @@ const ROWS = [
   ],
   [
     'Access and cost',
-    cell('Open to anyone. Free: 1 review a day. Operator: US$10 per week, unlimited. Your provider bills model usage to your key.'),
+    cell('Open to anyone. Free: 1 review a day. Operator: US$10 per month, unlimited, with US$2 API credit per paid month. Other providers bill usage to your key.'),
     cell('Your chat subscription.'),
     cells(cell('A folder you install.', 5), cell('Model usage is billed by the plan your coding agent runs on.')),
     cells(cell('Immunefi described Studio as invite-only on 30 September 2026.', 17), cell('Report Assistant is optional in the report form.', 4), cell('None of the pages cited states a price.')),

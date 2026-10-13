@@ -10,7 +10,7 @@ import { DOCS_STYLES, docPage, facts, supportLink, time } from './_shared.mjs';
 
 const PATH = '/privacy';
 /** The day this page's own text last changed. */
-const PRIVACY_UPDATED = '2026-10-13';
+const PRIVACY_UPDATED = '2026-10-14';
 
 const glance = facts(
   [
@@ -106,10 +106,10 @@ const thirdParties = html`
 <p>Connection tokens are shown once and stored as hashes. They expire after 90 days and you can revoke one in the account panel. Recovering an account, or signing out everywhere, revokes all of them.</p>`;
 
 const payments = html`
-<p>Stripe collects your email, card and billing details at checkout. Card details never reach our application. We send Stripe your account identifier.</p>
+<p>Stripe collects your email, card and billing details at checkout. Full card details never reach our application. We send Stripe your account identifier.</p>
 <p>Our database keeps the Stripe customer and subscription IDs, the subscription status, the paid-until time, your receipt email, and webhook event IDs for 30 days. Stripe keeps its own financial records.</p>`;
 
-const modelApi = html`<p>Model API requests pass through Cloudflare to our vLLM deployment on Runpod. The prompt and response stay in memory while the request is processed. Request and response content logging and cross-request prefix caching are disabled. We do not use your content to train models.</p><p>We store hashes of API keys, their visible prefixes and labels, expiry and revocation times, spending limits and aggregate spending. We store each request’s model ID, key ID, time, status, input/output token counts, reserved credit and final charge. Request metadata is deleted after 30 days. Prompts, tool arguments and model responses are not written to our database.</p><p>We keep the prepaid credit ledger and Stripe checkout/payment references for accounting and disputes. Deleting an account removes its link from those records, but does not erase the financial records. Card details stay with Stripe. Cloudflare and Runpod process traffic and infrastructure metadata under their own policies; deployments may run outside your country.</p>`;
+const modelApi = html`<p>Model API requests pass through Cloudflare to our vLLM deployment on Runpod. The prompt and response stay in memory while the request is processed. Request and response content logging and cross-request prefix caching are disabled. We do not use your content to train models.</p><p>We store hashes of API keys, their visible prefixes and labels, expiry and revocation times, spending limits and aggregate spending. We store each request’s model ID, key ID, time, status, input/output token counts, reserved credit and final charge. Request metadata is deleted after 30 days. Prompts, tool arguments and model responses are not written to our database.</p><p>We keep the credit ledger, including paid-month grants and reversals, and Stripe checkout/payment references for accounting and disputes. Deleting an account removes its link from those records, but does not erase the financial records.</p><p>If you opt in to auto top-ups, Stripe saves your payment method. We keep its Stripe reference, your top-up settings, the time and version of your consent, and payment attempts and outcomes. Full card details stay with Stripe; we retain the method type and masked details so you can identify it. Cloudflare and Runpod process traffic and infrastructure metadata under their own policies; deployments may run outside your country.</p>`;
 
 const deletion = html`
 <p>Download your account data or delete your account from the account panel. Cancel an active subscription and settle any API credit, outstanding balance, running request or pending payment first. Contact support to refund unused credit.</p>

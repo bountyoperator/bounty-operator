@@ -2,7 +2,7 @@
 
 export const VERSION = '0.9.12';
 export const SUPPORT_EMAIL = 'support@bountyoperator.com';
-export const PRICE = Object.freeze({ usd: 10, interval: 'week' });
+export const PRICE = Object.freeze({ usd: 10, interval: 'month', included_api_credit_usd: 2 });
 
 /** The Workers Rate Limiting binding: a counter held at the edge, with no database write. */
 export interface EdgeLimiter {
@@ -23,6 +23,7 @@ export interface Env {
   /** Off until the deployed model and payment flow have passed live checks. */
   INFERENCE_ENABLED?: string;
   API_TOPUPS_ENABLED?: string;
+  API_AUTOTOPUPS_ENABLED?: string;
   /** Validated server-side catalog; endpoints and vendor keys are never public. */
   INFERENCE_MODELS?: string;
   RUNPOD_API_KEY?: string;

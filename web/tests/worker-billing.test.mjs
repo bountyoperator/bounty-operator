@@ -92,14 +92,16 @@ test('a subscription Stripe no longer calls active is lapsed under its own statu
   assert.deepEqual(standing({ status: 'past_due', latest_invoice: draft }), { kind: 'lapsed', status: 'past_due' });
 });
 
-test('anything other than exactly one Operator plan at US$10 a week is lapsed', () => {
+test('anything other than the Operator plan at US$10 a week or month is lapsed', () => {
   const withItem = (item) => standing({ items: { data: [{ quantity: 1, current_period_end: PERIOD_END, price: operatorPrice(), ...item }] } });
   const lapsed = { kind: 'lapsed', status: 'unpaid' };
 
+  assert.deepEqual(withItem({ price: operatorPrice({ recurring: { interval: 'month', interval_count: 1 } }) }), { kind: 'paid', periodEnd: PERIOD_END, invoiceId: 'in_1' });
   assert.deepEqual(withItem({ price: operatorPrice({ id: 'price_other' }) }), lapsed);
   assert.deepEqual(withItem({ price: operatorPrice({ unit_amount: 100 }) }), lapsed);
   assert.deepEqual(withItem({ price: operatorPrice({ currency: 'eur' }) }), lapsed);
-  assert.deepEqual(withItem({ price: operatorPrice({ recurring: { interval: 'month', interval_count: 1 } }) }), lapsed);
+  assert.deepEqual(withItem({ price: operatorPrice({ recurring: { interval: 'year', interval_count: 1 } }) }), lapsed);
+  assert.deepEqual(withItem({ price: operatorPrice({ recurring: { interval: 'month', interval_count: 2 } }) }), lapsed);
   assert.deepEqual(withItem({ price: operatorPrice({ recurring: { interval: 'week', interval_count: 4 } }) }), lapsed);
   assert.deepEqual(withItem({ price: operatorPrice({ recurring: null }) }), lapsed);
   assert.deepEqual(withItem({ quantity: 2 }), lapsed);

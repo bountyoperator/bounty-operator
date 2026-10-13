@@ -204,7 +204,7 @@ ${pageHero({
     })}
     ${card({
       title: 'The full gauntlet',
-      meta: statusChip('operator', 'Operator · US$10/week'),
+      meta: statusChip('operator', 'Operator · US$10/month'),
       variant: 'accent',
       body: html`<div class="stack stack--12">
         <p>A run takes the draft through all eight stages and ends in one verdict. Each stage reads the output of the stages before it.</p>

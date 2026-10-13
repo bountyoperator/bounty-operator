@@ -158,7 +158,7 @@ const HAND_OVER = [
 const FAQ_ITEMS = [
   {
     q: 'What does a gauntlet run cost?',
-    a: 'The Gauntlet is part of Operator at US$10 per week. A run is eight reviews on your own model, so your provider bills eight model calls to your key.',
+    a: 'The Gauntlet is part of Operator at US$10 per month, including US$2 Bounty Operator API credit per paid month. A run is eight reviews on your own model, so your provider bills eight model calls to your key.',
   },
   {
     q: 'Which model runs the stages?',
@@ -189,7 +189,7 @@ ${pageHero({
   title: 'Eight stages. One verdict.',
   lede: 'Give it your draft, code and programme rules. Get a verdict, the main blocker and the quickest fix.',
   actions: operatorActions({ secondary: button({ label: 'See the eight stages', href: '#stages', size: 'lg' }) }),
-  note: 'US$10 per week. Runs on your own model and key.',
+  note: 'US$10 per month. Runs on your own model and key.',
   after: proofLine(),
   aside: heroAside,
   stickyText: true,

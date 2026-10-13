@@ -44,7 +44,7 @@
  */
 
 import { ApiError, currentAccount, planOf, request, subscribeAccount, track, withReauth } from './api.mjs';
-import { PRICE_LINE, billingMessage, goToBillingPortal, goToCheckout, planChip, planTable } from './billing-ui.mjs';
+import { PRICE_LINE, billingMessage, goToAutoTopupSetup, goToBillingPortal, goToCheckout, planChip, planTable, subscriptionPriceLine } from './billing-ui.mjs';
 import { EVENTS } from './events.mjs';
 import { addPasskey, isCancelled } from './passkey.mjs';
 import {
@@ -366,6 +366,8 @@ let secret = null;
 let apiSecret = null;
 let apiCheckoutRequest = null;
 let apiReturnChecked = false;
+let apiAutoTopupRequest = null;
+let apiAutoTopupDraft = null;
 let secretClient = 'claude-code';
 /** The recovery code just issued: memory only. */
 let freshRecovery = '';
@@ -404,6 +406,8 @@ function forgetAccount() {
   secret = null;
   apiSecret = null;
   apiCheckoutRequest = null;
+  apiAutoTopupRequest = null;
+  apiAutoTopupDraft = null;
   freshRecovery = '';
   draftLabel = '';
   confirming = '';
@@ -592,6 +596,14 @@ async function load() {
   const ticket = loads;
   try {
     const params = new URLSearchParams(globalThis.location?.search ?? '');
+    const autoTopupReturn = params.get('api_autotopup');
+    if (autoTopupReturn === 'complete' || autoTopupReturn === 'cancelled') {
+      params.delete('api_autotopup');
+      const query = params.toString();
+      history.replaceState(history.state, '', `${location.pathname}${query ? `?${query}` : ''}${location.hash}`);
+      apiAutoTopupRequest = null;
+      apiAutoTopupDraft = null;
+    }
     if (!apiReturnChecked && params.get('api_checkout') === 'complete' && params.get('session_id')) {
       apiReturnChecked = true;
       await request('/api/inference/reconcile', { body: { sessionId: params.get('session_id') } });
@@ -605,6 +617,13 @@ async function load() {
     if (ticket !== loads) return;
     data = answer;
     loadError = null;
+    if (autoTopupReturn === 'complete') {
+      showFlash(answer.api?.auto_topup?.enabled
+        ? { tone: 'success', title: 'Automatic top-ups enabled.' }
+        : { tone: 'info', title: 'Waiting for Stripe to confirm your payment method.', body: 'Refresh the status below in a moment.' }, 'api');
+    } else if (autoTopupReturn === 'cancelled') {
+      showFlash({ tone: 'info', title: 'Payment method setup was cancelled.', body: 'Your current automatic top-up status is shown below.' }, 'api');
+    }
   } catch (error) {
     if (ticket !== loads) return;
     if (error instanceof ApiError && error.code === 'signin') {
@@ -694,7 +713,7 @@ function renderOverview() {
     const [headline, line] = PLAN_LINES[summary.plan];
     const action =
       summary.plan === 'operator'
-        ? button({ label: 'Manage in Stripe', id: 'overview-manage', iconEnd: 'arrow-up-right', onClick: (event) => manage(event.currentTarget) })
+        ? button({ label: 'Manage or cancel', id: 'overview-manage', iconEnd: 'arrow-up-right', onClick: (event) => manage(event.currentTarget) })
         : upgradeButton('overview-upgrade');
     top = el(
       'div',
@@ -1137,9 +1156,11 @@ function renderBilling() {
   const plan = planOf(account);
   const subscribed = account.hasSubscription || plan === 'operator' || plan === 'past_due';
   const period = usageSummary(account.usage).period;
+  const subscription = data && Object.hasOwn(data, 'subscription') ? data.subscription : account.subscription;
+  const actualPrice = subscriptionPriceLine(subscription);
 
   const manageButton = button({
-    label: plan === 'past_due' ? 'Update card' : 'Manage in Stripe',
+    label: 'Manage or cancel subscription',
     variant: plan === 'past_due' ? 'primary' : 'secondary',
     id: 'billing-manage',
     iconEnd: 'arrow-up-right',
@@ -1148,9 +1169,9 @@ function renderBilling() {
 
   let current;
   if (plan === 'operator') {
-    current = ['Operator', period ? `${PRICE_LINE}. Paid through ${period.value}.` : `${PRICE_LINE}.`];
+    current = ['Operator', [actualPrice && `${actualPrice}.`, period && `${subscription?.cancel_at_period_end ? 'Ends' : 'Paid through'} ${period.value}.`].filter(Boolean).join(' ') || 'Open Stripe to view your billing terms.'];
   } else if (plan === 'past_due') {
-    current = ['Operator, payment failed', 'The last payment did not clear. Update the card in Stripe to restore Operator.'];
+    current = ['Operator, payment failed', `${actualPrice ? `${actualPrice}. ` : ''}The last payment did not clear. Update your payment method in Stripe to restore Operator.`];
   } else if (subscribed) {
     current = ['Free plan', 'A subscription exists on this account and is not active. Open Stripe to see its state.'];
   } else {
@@ -1166,9 +1187,11 @@ function renderBilling() {
     ),
     subscribed ? null : billingClosed(),
     subscribed
-      ? section('Card, invoices and cancellation', 'Stripe holds the card and every invoice. Cancelling is done there too.')
+      ? section('Payment method, invoices and cancellation', subscription?.cancel_at_period_end ? 'Cancellation is scheduled. Access ends after the paid period.' : 'Cancel in Stripe to stop the next renewal. Access continues through the paid period.')
       : null,
-    section('What Operator includes', 'Model usage is billed separately by your provider.', planTable()),
+    section('What Operator includes', subscription?.legacy
+      ? 'Your existing subscription keeps its billing terms. The monthly offer below includes API credit; legacy weekly subscriptions do not.'
+      : 'The monthly plan includes US$2 of Bounty Operator API credit per paid month. Other model providers bill their own usage separately.', planTable()),
     el(
       'p',
       { class: 'help' },
@@ -1198,6 +1221,127 @@ async function openApiTopup(control, amount) {
   render();
 }
 
+/** Validate the choices before asking the customer to authorize future charges. */
+export function autoTopupSettings(values) {
+  const amount_usd = Number(values.amount_usd);
+  const threshold_usd = Number(values.threshold_usd);
+  const monthly_cap_usd = Number(values.monthly_cap_usd);
+  if (![20, 50, 100].includes(amount_usd) || ![5, 10, 20].includes(threshold_usd) || ![20, 50, 100, 200, 500].includes(monthly_cap_usd)) throw new Error('Choose one of the listed amounts.');
+  if (threshold_usd >= amount_usd) throw new Error('The balance threshold must be lower than the top-up amount.');
+  if (monthly_cap_usd < amount_usd) throw new Error('The monthly cap must cover at least one top-up.');
+  return { amount_usd, threshold_usd, monthly_cap_usd };
+}
+
+export function autoTopupAuthorization(settings) {
+  const { amount_usd, threshold_usd, monthly_cap_usd } = autoTopupSettings(settings);
+  return `I authorize Bounty Operator to charge my saved payment method US$${amount_usd} when available API credit falls below US$${threshold_usd}, up to US$${monthly_cap_usd} per calendar month (UTC), until I disable automatic top-ups.`;
+}
+
+const AUTO_TOPUP_PAUSES = {
+  payment_failed: 'The last payment failed. Update your payment method to resume.',
+  authentication_required: 'Your payment needs confirmation. Save your payment method in Stripe again.',
+  payment_method_unavailable: 'Save a payment method in Stripe to resume.',
+  reconciliation_required: 'A payment is being checked. Refresh the status before trying again.',
+};
+
+async function disableAutoTopup(control) {
+  const result = await act(control, () => request('/api/inference/autotopup/disable', { body: {} }), { busy: 'Disabling' });
+  if (result?.auto_topup) {
+    data.api.auto_topup = result.auto_topup;
+    apiAutoTopupDraft = null;
+    apiAutoTopupRequest = null;
+    showFlash({ tone: 'success', title: 'Automatic top-ups disabled.', body: result.auto_topup.pending ? 'A payment already processing may still complete.' : '' }, 'api');
+    render();
+    await load();
+  } else render();
+}
+
+function autoTopupPanel(auto) {
+  if (!auto) return null;
+  const values = apiAutoTopupDraft ?? { amount_usd: auto.amount_usd ?? 20, threshold_usd: auto.threshold_usd ?? 5, monthly_cap_usd: auto.monthly_cap_usd ?? 100 };
+  const choice = (id, label, options, value) => {
+    const select = el('select', { class: 'input', id }, options.map((amount) => el('option', { value: String(amount), selected: Number(value) === amount, text: `US$${amount}` })));
+    return { select, field: el('div', { class: 'field' }, el('label', { class: 'label', for: id, text: label }), select) };
+  };
+  const amount = choice('api-auto-amount', 'Top-up amount', [20, 50, 100], values.amount_usd);
+  const threshold = choice('api-auto-threshold', 'When credit is below', [5, 10, 20], values.threshold_usd);
+  const cap = choice('api-auto-cap', 'Monthly cap', [20, 50, 100, 200, 500], values.monthly_cap_usd);
+  const consent = el('input', { id: 'api-auto-consent', type: 'checkbox', required: true });
+  const authorization = el('span');
+  const validation = el('p', { class: 'help', role: 'alert', hidden: true });
+  const hasMethod = Boolean(auto.payment_method);
+  const submit = button({ label: hasMethod ? (auto.enabled ? 'Save settings' : 'Enable automatic top-ups') : 'Save payment method in Stripe', variant: 'primary', id: 'api-auto-save', type: 'submit', disabled: true });
+  const selected = () => ({ amount_usd: Number(amount.select.value), threshold_usd: Number(threshold.select.value), monthly_cap_usd: Number(cap.select.value) });
+  const updateConsent = (reset = true) => {
+    if (reset) consent.checked = false;
+    try {
+      const settings = autoTopupSettings(selected());
+      authorization.textContent = autoTopupAuthorization(settings);
+      validation.textContent = '';
+      validation.hidden = true;
+      submit.disabled = !auto.available || !consent.checked;
+    } catch (error) {
+      authorization.textContent = 'Choose valid settings to authorize automatic top-ups.';
+      validation.textContent = error.message;
+      validation.hidden = false;
+      submit.disabled = true;
+    }
+  };
+  for (const select of [amount.select, threshold.select, cap.select]) on(select, 'change', () => { apiAutoTopupDraft = selected(); updateConsent(); });
+  on(consent, 'change', () => updateConsent(false));
+
+  const save = async (control, forceSetup = false) => {
+    if (!consent.checked || !auto.available) return;
+    let settings;
+    try { settings = autoTopupSettings(selected()); }
+    catch (error) { validation.textContent = error.message; validation.hidden = false; return; }
+    const setup = forceSetup || !hasMethod;
+    const fingerprint = JSON.stringify(settings);
+    if (!apiAutoTopupRequest || apiAutoTopupRequest.fingerprint !== fingerprint) apiAutoTopupRequest = { fingerprint, id: crypto.randomUUID() };
+    const body = { ...settings, consent: true };
+    const result = await act(control, () => withReauth(() => setup
+      ? goToAutoTopupSetup({ ...body, request_id: apiAutoTopupRequest.id })
+      : request('/api/inference/autotopup/update', { body })), { busy: setup ? 'Opening Stripe' : 'Saving' });
+    if (!setup && result?.auto_topup) {
+      data.api.auto_topup = result.auto_topup;
+      apiAutoTopupDraft = null;
+      apiAutoTopupRequest = null;
+      showFlash({ tone: 'success', title: result.auto_topup.enabled ? 'Automatic top-ups enabled.' : 'Automatic top-up settings saved.' }, 'api');
+      render();
+      await load();
+    } else render();
+  };
+  const form = el('form', { class: 'stack', onSubmit: async (event) => { event.preventDefault(); await save(submit); } },
+    el('div', { class: 'api-auto-fields' }, amount.field, threshold.field, cap.field),
+    validation,
+    el('label', { class: 'api-auto-consent', for: 'api-auto-consent' }, consent, authorization),
+    el('div', { class: 'portal-row__actions' }, submit,
+      hasMethod ? button({ label: 'Change payment method', variant: 'quiet', id: 'api-auto-payment', onClick: async (event) => {
+        if (!consent.checked) { consent.reportValidity(); return; }
+        await save(event.currentTarget, true);
+      } }) : null),
+    el('p', { class: 'help', text: 'You can disable this at any time. A payment already processing may still complete.' }),
+  );
+  const state = auto.enabled ? 'On' : auto.status === 'setup_pending' ? 'Waiting for Stripe' : auto.status === 'paused' ? 'Paused' : 'Off';
+  const method = auto.payment_method;
+  const methodText = method ? (method.last4 ? `${method.brand ?? 'Payment method'} ending ${method.last4}` : 'Saved payment method') : '';
+  const disable = auto.enabled || ['setup_pending', 'paused'].includes(auto.status);
+  const panel = el('div', { class: 'api-autotopup' },
+    el('div', { class: 'api-auto-heading' },
+      el('p', null, el('strong', { text: 'Automatic top-ups' }), ` · ${state}`),
+      disable ? button({ label: 'Disable automatic top-ups', variant: 'secondary', size: 'sm', id: 'api-auto-disable', onClick: (event) => disableAutoTopup(event.currentTarget) }) : null),
+    auto.enabled ? el('p', { class: 'help', text: `Add US$${auto.amount_usd} below US$${auto.threshold_usd}. US$${auto.spent_this_month_usd ?? 0} of US$${auto.monthly_cap_usd} used this UTC month.${methodText ? ` ${methodText}.` : ''}` }) : null,
+    !auto.available ? el('p', { class: 'help', text: 'Automatic top-up setup is currently unavailable.' }) : null,
+    auto.status === 'paused' ? el('p', { class: 'help', text: AUTO_TOPUP_PAUSES[auto.pause_reason] ?? 'Automatic top-ups are paused. Review your settings to resume.' }) : null,
+    auto.cap_reached ? el('p', { class: 'help', text: 'The monthly cap has been reached. Add credit manually or authorize a higher cap.' }) : null,
+    auto.pending ? el('p', { class: 'help', text: 'A top-up is processing. Its charge may still settle if you disable automatic top-ups.' }) : null,
+    el('details', { class: 'api-auto-settings' }, el('summary', { text: auto.enabled ? 'Change settings' : 'Set up automatic top-ups' }), form),
+    auto.pending || auto.status === 'setup_pending' ? button({ label: 'Refresh status', variant: 'quiet', size: 'sm', onClick: () => load() }) : null,
+  );
+  updateConsent();
+  return panel;
+}
+
 function apiKeyForm() {
   if (apiSecret) return el('div', { class: 'secret', id: 'api-key-secret' },
     el('p', { text: 'Copy this API key now. It is shown only once.' }),
@@ -1225,12 +1369,13 @@ function renderApi() {
   const keys = api.keys ?? [];
   const models = api.models ?? [];
   return [
-    section('Prepaid API credit', 'One balance for the models below. Add credit when you need it; there is no API subscription or automatic top-up.',
+    section('Prepaid API credit', 'One balance for every model. Add credit manually or choose optional automatic top-ups.',
       el('dl', { class: 'stats' }, stat('Available', { value: usd(api.available_micro), note: 'USD available for new requests' }), stat('Reserved', { value: usd(api.reserved_micro), note: 'Unused credit returns when a request ends' })),
       el('div', { class: 'portal-row__actions' }, [20, 50, 100].map((amount) => button({ label: `Add $${amount}`, variant: 'secondary', disabled: !api.topups_enabled, onClick: (event) => openApiTopup(event.currentTarget, amount) })),
         button({ label: 'Refresh balance', variant: 'quiet', onClick: () => load() })),
       !api.topups_enabled ? el('p', { class: 'help', text: 'Top-ups are closed while the model service is being verified.' }) : null,
-      Number(api.balance_micro) < 0 ? el('p', { class: 'help', text: 'A payment reversal left an outstanding balance. Contact support before making more requests.' }) : null),
+      Number(api.balance_micro) < 0 ? el('p', { class: 'help', text: 'A payment reversal left an outstanding balance. Contact support before making more requests.' }) : null,
+      autoTopupPanel(api.auto_topup)),
     section('Models and rates', api.enabled ? 'Choose a model in your harness. Fetch the full catalog with GET /v1/models; supported capabilities vary by model.' : 'Model inference is not available yet.',
       models.length ? el('ul', { class: 'portal-list' }, models.map((model) => row({ title: model.name, meta: `${model.id} · ${(model.capabilities ?? ['text']).join(', ')} · ${model.context_length.toLocaleString()} context · $${model.pricing.input_per_million}/million input tokens · $${model.pricing.output_per_million}/million output tokens · ${usd(model.pricing.minimum_request * 1000000)} minimum per request`, actions: [button({ label: 'Copy model ID', variant: 'quiet', size: 'sm', onClick: async () => { announce(await copyText(model.id) ? 'Model ID copied.' : 'Copy the model ID shown above.'); } })] }))) : empty('Models will appear here after verification.'),
       el('p', { class: 'help', text: 'Output tokens include reasoning. Interrupted streams are charged only for confirmed usage. A temporary reservation covers the model’s maximum input and your requested output limit.' }),
@@ -1246,7 +1391,7 @@ function renderApi() {
       } })],
     }))) : empty('No API keys yet.')),
     section('Recent usage', 'Request metadata only. Prompts and responses are not stored.', (api.requests ?? []).length ? el('ul', { class: 'portal-list' }, api.requests.map((entry) => row({ title: `${entry.model} · ${usd(entry.charge_micro)}`, meta: `${formatDate(entry.created_at, { time: true })} · ${entry.status} · ${entry.input_tokens} input / ${entry.output_tokens} output tokens` }))) : empty('No API requests yet.')),
-    section('Credit history', null, (api.ledger ?? []).length ? el('ul', { class: 'portal-list' }, api.ledger.map((entry) => row({ title: `${entry.kind === 'topup' ? 'Credit added' : entry.kind === 'usage' ? 'Model usage' : 'Payment adjustment'} · ${usd(entry.amount_micro)}`, meta: `${formatDate(entry.created_at, { time: true })} · ${entry.reference}` }))) : empty('No credit transactions yet.')),
+    section('Credit history', null, (api.ledger ?? []).length ? el('ul', { class: 'portal-list' }, api.ledger.map((entry) => row({ title: `${entry.kind === 'topup' ? 'Credit added' : entry.kind === 'usage' ? 'Model usage' : entry.kind === 'operator_adjustment' && entry.reference?.startsWith('monthly:') ? 'Monthly Operator credit' : 'Payment adjustment'} · ${usd(entry.amount_micro)}`, meta: `${formatDate(entry.created_at, { time: true })} · ${entry.reference}` }))) : empty('No credit transactions yet.')),
   ];
 }
 

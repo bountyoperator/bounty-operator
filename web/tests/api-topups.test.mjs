@@ -1,6 +1,16 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+import {
+  applyAutoTopupSetupEvent,
+  autoTopupData,
+  createAutoTopupSetup,
+  disableAutoTopup,
+  processAutoTopups,
+  updateAutoTopup,
+} from '../src/api-autotopup.ts';
+import { syncMonthlyCredit, syncMonthlyCreditForCharge } from '../src/api-monthly-credit.ts';
 import { applyApiPaymentEvent, createApiTopup, localStripeTest, reconcileApiTopup, resyncPendingTopups, syncApiTopup } from '../src/api-topups.ts';
+import { subscriptionSummary } from '../src/billing.ts';
 import { addAccount, createEnv } from './worker-helpers.mjs';
 
 function setup() {
@@ -158,4 +168,353 @@ test('a missing checkout closes only after a complete Stripe search', async () =
   await resyncPendingTopups(f.env, f.api);
   assert.equal(f.env.DB.sqlite.prepare('SELECT status FROM api_topups').get().status, 'failed');
   assert.equal(f.balance(), 0);
+});
+
+// ---------------------------------------------------------------------------
+// Monthly included $2 API credit
+// ---------------------------------------------------------------------------
+
+function setupMonthly() {
+  const env = createEnv({
+    BILLING_MODE: 'live',
+    STRIPE_SECRET_KEY: 'rk_live_fixture',
+    STRIPE_WEBHOOK_SECRET: 'whsec_fixture',
+    STRIPE_PRICE_ID: 'price_monthly',
+  });
+  const account = addAccount(env.DB);
+  env.DB.sqlite.prepare('UPDATE accounts SET stripe_customer = ? WHERE id = ?').run('cus_1', account);
+
+  const price = {
+    id: 'price_monthly',
+    livemode: true,
+    currency: 'usd',
+    unit_amount: 1000,
+    type: 'recurring',
+    billing_scheme: 'per_unit',
+    transform_quantity: null,
+    recurring: { interval: 'month', interval_count: 1, usage_type: 'licensed' },
+  };
+  const sub = { id: 'sub_m1', livemode: true, customer: 'cus_1', status: 'active' };
+  const line = {
+    livemode: true,
+    invoice: 'in_m1',
+    currency: 'usd',
+    amount: 1000,
+    subtotal: 1000,
+    quantity: 1,
+    quantity_decimal: '1',
+    parent: {
+      type: 'subscription_item_details',
+      subscription_item_details: { proration: false, subscription: 'sub_m1' },
+    },
+    subscription: 'sub_m1',
+    pricing: {
+      type: 'price_details',
+      price_details: { price: 'price_monthly' },
+      unit_amount_decimal: '1000',
+    },
+    discount_amounts: [],
+    pretax_credit_amounts: [],
+    period: { start: 1790899200, end: 1793577600 },
+  };
+  const invoice = {
+    id: 'in_m1',
+    livemode: true,
+    status: 'paid',
+    currency: 'usd',
+    customer: 'cus_1',
+    billing_reason: 'subscription_create',
+    parent: { type: 'subscription_details', subscription_details: { subscription: 'sub_m1' } },
+    amount_due: 1000,
+    amount_paid: 1000,
+    amount_remaining: 0,
+    subtotal: 1000,
+    total: 1000,
+    total_discount_amounts: [],
+    total_pretax_credit_amounts: [],
+    pre_payment_credit_notes_amount: 0,
+    post_payment_credit_notes_amount: 0,
+    lines: { data: [line], has_more: false },
+  };
+  const intent = {
+    id: 'pi_m1',
+    livemode: true,
+    status: 'succeeded',
+    currency: 'usd',
+    amount_received: 1000,
+    customer: 'cus_1',
+    latest_charge: 'ch_m1',
+  };
+  const charge = {
+    id: 'ch_m1',
+    livemode: true,
+    status: 'succeeded',
+    paid: true,
+    captured: true,
+    refunded: false,
+    disputed: false,
+    currency: 'usd',
+    amount: 1000,
+    amount_captured: 1000,
+    amount_refunded: 0,
+    customer: 'cus_1',
+    payment_intent: 'pi_m1',
+  };
+  const payment = {
+    id: 'inpay_1',
+    livemode: true,
+    status: 'paid',
+    currency: 'usd',
+    invoice: 'in_m1',
+    amount_paid: 1000,
+    payment: { type: 'payment_intent', payment_intent: 'pi_m1' },
+  };
+  const disputes = [];
+  const api = {
+    invoices: { retrieve: async () => structuredClone(invoice) },
+    prices: { retrieve: async () => structuredClone(price) },
+    subscriptions: { retrieve: async () => structuredClone(sub) },
+    invoicePayments: { list: async () => ({ data: [structuredClone(payment)], has_more: false }) },
+    paymentIntents: { retrieve: async () => structuredClone(intent) },
+    charges: { retrieve: async () => structuredClone(charge) },
+    disputes: { list: async () => ({ data: structuredClone(disputes), has_more: false }) },
+  };
+  const balance = () => env.DB.sqlite.prepare('SELECT balance_micro FROM api_wallets').get()?.balance_micro ?? 0;
+  return { env, account, price, sub, line, invoice, intent, charge, payment, disputes, api, balance };
+}
+
+test('paid monthly invoice issues $2 API credit once and ignores duplicate or weekly invoices', async () => {
+  const m = setupMonthly();
+  await Promise.all([syncMonthlyCredit(m.env, m.api, 'in_m1'), syncMonthlyCredit(m.env, m.api, 'in_m1')]);
+  await syncMonthlyCredit(m.env, m.api, 'in_m1');
+  assert.equal(m.balance(), 2000000);
+  assert.equal(m.env.DB.sqlite.prepare('SELECT COUNT(*) AS n FROM api_ledger').get().n, 1);
+
+  // Another invoice for the same subscription and period_start does not issue a second grant.
+  m.invoice.id = 'in_m1_dup';
+  m.line.invoice = 'in_m1_dup';
+  m.payment.invoice = 'in_m1_dup';
+  await syncMonthlyCredit(m.env, m.api, 'in_m1_dup');
+  assert.equal(m.balance(), 2000000);
+
+  // A weekly price never issues monthly credit.
+  const w = setupMonthly();
+  w.price.recurring.interval = 'week';
+  await syncMonthlyCredit(w.env, w.api, 'in_m1');
+  assert.equal(w.balance(), 0);
+});
+
+test('monthly credit refund revokes the full $2 grant permanently and stale events cannot restore it', async () => {
+  const m = setupMonthly();
+  await syncMonthlyCredit(m.env, m.api, 'in_m1', 10);
+  assert.equal(m.balance(), 2000000);
+
+  m.charge.amount_refunded = 100;
+  await syncMonthlyCreditForCharge(m.env, m.api, 'ch_m1', 20);
+  assert.equal(m.balance(), 0);
+
+  // Stale replay reporting 0 refunded cannot restore the revoked grant.
+  m.charge.amount_refunded = 0;
+  await syncMonthlyCredit(m.env, m.api, 'in_m1', 30);
+  assert.equal(m.balance(), 0);
+});
+
+test('monthly credit dispute suspends credit, blocks account deletion, and restores on win if unrefunded', async () => {
+  const m = setupMonthly();
+  await syncMonthlyCredit(m.env, m.api, 'in_m1', 10);
+  m.charge.disputed = true;
+  m.disputes.push({ charge: 'ch_m1', livemode: true, status: 'needs_response' });
+  await syncMonthlyCreditForCharge(m.env, m.api, 'ch_m1', 20);
+  assert.equal(m.balance(), 0);
+  assert.throws(() => m.env.DB.sqlite.prepare('DELETE FROM accounts').run(), /api_balance_exists/);
+
+  m.disputes[0].status = 'won';
+  await syncMonthlyCreditForCharge(m.env, m.api, 'ch_m1', 30);
+  assert.equal(m.balance(), 2000000);
+});
+
+// ---------------------------------------------------------------------------
+// Optional automatic top-ups
+// ---------------------------------------------------------------------------
+
+function setupAuto() {
+  const env = createEnv({
+    BILLING_MODE: 'live',
+    STRIPE_SECRET_KEY: 'rk_live_fixture',
+    STRIPE_WEBHOOK_SECRET: 'whsec_fixture',
+    STRIPE_PRICE_ID: 'price_monthly',
+    INFERENCE_ENABLED: 'true',
+    API_TOPUPS_ENABLED: 'true',
+  });
+  const account = addAccount(env.DB);
+  env.DB.sqlite.prepare('UPDATE accounts SET stripe_customer = ? WHERE id = ?').run('cus_1', account);
+
+  let setupMeta = {};
+  const method = {
+    id: 'pm_1',
+    livemode: true,
+    customer: 'cus_1',
+    type: 'card',
+    card: { brand: 'visa', last4: '4242', exp_month: 12, exp_year: 2030 },
+  };
+  const setupIntent = {
+    id: 'seti_1',
+    livemode: true,
+    status: 'succeeded',
+    usage: 'off_session',
+    customer: 'cus_1',
+    payment_method: method,
+    metadata: {},
+  };
+  const checkoutSession = {
+    id: 'cs_live_setup_1',
+    livemode: true,
+    mode: 'setup',
+    status: 'complete',
+    currency: 'usd',
+    customer: 'cus_1',
+    client_reference_id: account,
+    url: 'https://checkout.stripe.com/c/pay/cs_live_setup_1',
+    setup_intent: setupIntent,
+    metadata: {},
+  };
+  const charges = new Map();
+  const intents = new Map();
+  const api = {
+    checkout: {
+      sessions: {
+        create: async (body) => {
+          setupMeta = body.metadata;
+          checkoutSession.metadata = body.metadata;
+          setupIntent.metadata = body.setup_intent_data.metadata;
+          return structuredClone(checkoutSession);
+        },
+        retrieve: async () => structuredClone(checkoutSession),
+      },
+    },
+    setupIntents: { retrieve: async () => structuredClone(setupIntent) },
+    paymentMethods: { retrieve: async () => structuredClone(method) },
+    paymentIntents: {
+      create: async (body) => {
+        const id = `pi_auto_${intents.size + 1}`;
+        const ch = {
+          id: `ch_auto_${intents.size + 1}`,
+          paid: true,
+          captured: true,
+          amount: body.amount,
+          amount_refunded: 0,
+          currency: 'usd',
+          customer: body.customer,
+          disputed: false,
+          payment_intent: id,
+        };
+        const pi = {
+          id,
+          livemode: true,
+          status: 'succeeded',
+          currency: 'usd',
+          amount: body.amount,
+          amount_received: body.amount,
+          customer: body.customer,
+          payment_method: body.payment_method,
+          latest_charge: ch,
+          metadata: body.metadata,
+        };
+        charges.set(ch.id, ch);
+        intents.set(id, pi);
+        return structuredClone(pi);
+      },
+      retrieve: async (id) => structuredClone(intents.get(id)),
+      cancel: async (id) => {
+        const pi = intents.get(id);
+        pi.status = 'canceled';
+        return structuredClone(pi);
+      },
+      list: async () => ({ data: [...intents.values()].map((i) => structuredClone(i)), has_more: false }),
+    },
+    charges: { retrieve: async (id) => structuredClone(charges.get(id)) },
+    disputes: { list: async () => ({ data: [], has_more: false }) },
+  };
+  const balance = () => env.DB.sqlite.prepare('SELECT balance_micro FROM api_wallets').get()?.balance_micro ?? 0;
+  return { env, account, api, method, setupIntent, checkoutSession, intents, charges, balance, getSetupMeta: () => setupMeta };
+}
+
+test('automatic top-ups require verified setup, obey monthly caps, credit only on signed webhook, and stop when disabled', async () => {
+  const a = setupAuto();
+  assert.equal((await autoTopupData(a.env, a.account)).status, 'off');
+
+  await assert.rejects(
+    createAutoTopupSetup(a.env, a.api, a.account, 'cus_1', { amount_usd: 20, threshold_usd: 5, monthly_cap_usd: 20, consent: false, request_id: 'req-auto-setup-0001' }),
+    { code: 'consent_required' },
+  );
+
+  const url = await createAutoTopupSetup(a.env, a.api, a.account, 'cus_1', {
+    amount_usd: 20,
+    threshold_usd: 5,
+    monthly_cap_usd: 20,
+    consent: true,
+    request_id: 'req-auto-setup-0001',
+  });
+  assert.equal(url, 'https://checkout.stripe.com/c/pay/cs_live_setup_1');
+  assert.equal((await autoTopupData(a.env, a.account)).status, 'setup_pending');
+
+  // Webhook confirms the SetupIntent and enables automatic top-ups.
+  await applyAutoTopupSetupEvent(a.env, a.api, { type: 'checkout.session.completed', created: 100, data: { object: a.checkoutSession } });
+  const enabledState = await autoTopupData(a.env, a.account);
+  assert.equal(enabledState.enabled, true);
+  assert.equal(enabledState.payment_method.last4, '4242');
+
+  // Cron initiates one $20 charge because balance ($0) < threshold ($5).
+  const baseNow = Math.floor(Date.now() / 1000) + 5;
+  await processAutoTopups(a.env, a.api, baseNow);
+  assert.equal(a.intents.size, 1);
+  // Credit is NOT unlocked before the signed payment_intent.succeeded webhook.
+  assert.equal(a.balance(), 0);
+
+  const pi = [...a.intents.values()][0];
+  await applyApiPaymentEvent(a.env, a.api, { type: 'payment_intent.succeeded', created: baseNow + 5, data: { object: pi } });
+  await applyApiPaymentEvent(a.env, a.api, { type: 'payment_intent.succeeded', created: baseNow + 5, data: { object: pi } });
+  assert.equal(a.balance(), 20000000);
+
+  // Spend credit down to $0; monthly cap ($20) prevents a second automatic charge in the same UTC month.
+  a.env.DB.sqlite.prepare("INSERT INTO api_ledger(id, account_id, amount_micro, kind, reference, created_at) VALUES('u1', ?, -20000000, 'usage', 'r1', ?)").run(a.account, baseNow + 10);
+  assert.equal(a.balance(), 0);
+  await processAutoTopups(a.env, a.api, baseNow + 400);
+  assert.equal(a.intents.size, 1);
+  assert.equal((await autoTopupData(a.env, a.account)).cap_reached, true);
+
+  // Raise monthly cap to $50 with fresh consent, then disable before cron runs: no charge is made.
+  await updateAutoTopup(a.env, a.api, a.account, { amount_usd: 20, threshold_usd: 5, monthly_cap_usd: 50, consent: true });
+  await disableAutoTopup(a.env, a.account);
+  assert.equal((await autoTopupData(a.env, a.account)).enabled, false);
+  await processAutoTopups(a.env, a.api, baseNow + 800);
+  assert.equal(a.intents.size, 1);
+
+  // Re-enable and verify that a payment reversal trigger automatically pauses auto top-ups.
+  await updateAutoTopup(a.env, a.api, a.account, { amount_usd: 20, threshold_usd: 5, monthly_cap_usd: 50, consent: true });
+  assert.equal((await autoTopupData(a.env, a.account)).enabled, true);
+  a.env.DB.sqlite.prepare("INSERT INTO api_ledger(id, account_id, amount_micro, kind, reference, created_at) VALUES('rev1', ?, -1000000, 'payment_adjustment', 'topup:rev1', ?)").run(a.account, baseNow + 900);
+  const paused = await autoTopupData(a.env, a.account);
+  assert.equal(paused.enabled, false);
+  assert.equal(paused.pause_reason, 'payment_failed');
+});
+
+test('subscriptionSummary preserves legacy weekly terms separately from monthly subscriptions', async () => {
+  const env = createEnv();
+  const account = addAccount(env.DB);
+  env.DB.sqlite
+    .prepare("INSERT INTO subscriptions(id, account_id, status, paid_until, price_id, billing_interval, period_end, cancel_at_period_end, updated_at) VALUES('sub_w', ?, 'active', 2000, 'price_w', 'week', 1500, 1, 1)")
+    .run(account);
+  const weekly = await subscriptionSummary(env.DB, account);
+  assert.equal(weekly.interval, 'week');
+  assert.equal(weekly.legacy, true);
+  assert.equal(weekly.included_api_credit_usd, 0);
+  assert.equal(weekly.cancel_at_period_end, true);
+
+  env.DB.sqlite.prepare("UPDATE subscriptions SET billing_interval = 'month', cancel_at_period_end = 0 WHERE id = 'sub_w'").run();
+  const monthly = await subscriptionSummary(env.DB, account);
+  assert.equal(monthly.interval, 'month');
+  assert.equal(monthly.legacy, false);
+  assert.equal(monthly.included_api_credit_usd, 2);
+  assert.equal(monthly.cancel_at_period_end, false);
 });

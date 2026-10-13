@@ -235,7 +235,7 @@ test('softwareApplicationLd carries the two fixed offers', () => {
     ['Free', '0', 'USD'],
     ['Operator', '10.00', 'USD'],
   ]);
-  assert.equal(offers[1].priceSpecification.billingDuration, 'P1W');
+  assert.equal(offers[1].priceSpecification.billingDuration, 'P1M');
 });
 
 test('faq and faqPageLd share one list of items', () => {

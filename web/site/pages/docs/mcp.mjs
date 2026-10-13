@@ -390,7 +390,7 @@ const token = html`
 <li><code>run_review</code>, with your provider key</li>
 <li>The <code>gauntlet</code> prompt, which runs its hosted stages with <code>run_review</code></li>
 </ul>
-<p class="fine">A hosted review uses the same allowance as the website: one per UTC day on Free, unlimited on Operator at US$10 per week.</p>
+<p class="fine">A hosted review uses the same allowance as the website: one per UTC day on Free, unlimited on Operator at US$10 per month.</p>
 </div>
 </div>
 <div class="prose">
@@ -506,7 +506,7 @@ const FAQ = [
   },
   {
     q: 'What does a hosted review cost through MCP?',
-    a: `\`run_review\` shares one allowance with the website: one hosted review per UTC day on Free, any profile, and unlimited on Operator at US$10 per week. A gauntlet run over MCP uses ${WORDS[HOSTED_STAGES]} hosted reviews, one for every stage but the report stage, so a full run takes Operator. ${NOT_COUNTED} Your model provider bills its own usage to your key.`,
+    a: `\`run_review\` shares one allowance with the website: one hosted review per UTC day on Free, any profile, and unlimited on Operator at US$10 per month. Operator includes US$2 Bounty Operator API credit per paid month. A gauntlet run over MCP uses ${WORDS[HOSTED_STAGES]} hosted reviews, one for every stage but the report stage, so a full run takes Operator. ${NOT_COUNTED} Other model providers bill usage to your key.`,
   },
   {
     q: 'Which profiles can my agent’s own model run?',

@@ -55,7 +55,7 @@ const bug = html`<p>${ext('The bug report form', SUPPORT_LINKS.bug)} asks where 
 const account = html`<p>Write to ${supportLink()} about sign-in, a lost passkey, a charge or a refund. Email is private; the forum is not.</p>
 <ul>
 <li><strong>A payment or a refund:</strong> give the receipt reference, so the subscription can be found. Leave out card numbers, API keys, recovery codes and private reports. The <a href="/terms">terms</a> say when a refund is due.</li>
-<li><strong>Cancelling:</strong> open <a href="/#account">Account</a> and go to the billing portal. Access runs to the end of the paid week.</li>
+<li><strong>Cancelling:</strong> open <a href="/#account">Account</a> and go to the billing portal. Access runs to the end of the paid period.</li>
 <li><strong>A lost passkey:</strong> sign in with your recovery code and add a new passkey. We keep only a hash of the code, so we cannot read it back to you.</li>
 </ul>`;
 

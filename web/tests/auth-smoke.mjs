@@ -18,7 +18,7 @@ const browser = createBrowser(origin);
 const signedOut = await browser.call('/api/account');
 assert.equal(signedOut.signedIn, false);
 assert.equal(signedOut.usage, null);
-assert.deepEqual(signedOut.price, { usd: 10, interval: 'week' });
+assert.deepEqual(signedOut.price, { usd: 10, interval: 'month', included_api_credit_usd: 2 });
 await browser.call('/api/portal', undefined, { status: 401, code: 'signin' });
 
 // Registration signs the user in and shows the recovery code once.

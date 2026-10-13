@@ -196,7 +196,7 @@ ${pageHero({
       <div class="prose">
         <p>You create the key in your provider’s console and paste it in when you run a review. It travels with that request to our server, goes on to the provider’s endpoint, and is gone when the request ends.</p>
         <p>Each provider is called at one fixed endpoint. A redirect is refused. An error message from the provider is shown to you with the key removed.</p>
-        <p>Model usage is billed by the provider to the account that owns the key. Operator is a flat US$10 per week for unlimited reviews and does not include model usage.</p>
+        <p>Operator is US$10 per month for unlimited reviews, including US$2 in Bounty Operator API credit per paid month. Other model providers bill usage to the account that owns the key.</p>
       </div>
     </div>
     <div>

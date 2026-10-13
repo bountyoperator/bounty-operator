@@ -7,7 +7,7 @@
  *
  * Exports
  *   Plan
- *     PRICE_LINE                       'US$10 a week'
+ *     PRICE_LINE                       'US$10 a month'
  *     OPERATOR_ACTIVE                  the sentence shown once Operator is on (also split as _TITLE and _BODY)
  *     PLAN_ROWS                        Free against Operator, row by row (SPEC section 2)
  *     planLabel(account?)              -> 'Signed out' | 'Free' | 'Operator' | 'Past due'
@@ -38,7 +38,7 @@
 import { ApiError, currentAccount, planOf, refreshAccount, request } from './api.mjs';
 import { button, el, formatCountdown, icon } from './ui.mjs';
 
-export const PRICE_LINE = 'US$10 a week';
+export const PRICE_LINE = 'US$10 a month';
 export const OPERATOR_ACTIVE_TITLE = 'Operator is active.';
 export const OPERATOR_ACTIVE_BODY = 'Unlimited reviews, gauntlet and panel are unlocked.';
 export const OPERATOR_ACTIVE = `${OPERATOR_ACTIVE_TITLE} ${OPERATOR_ACTIVE_BODY}`;
@@ -49,6 +49,7 @@ export const PLAN_ROWS = Object.freeze([
   { feature: 'Gauntlet', detail: 'Eight stages, from scope to a verdict dossier.', free: 'Example', operator: 'Included' },
   { feature: 'Panel review', detail: 'Two to four models in parallel, then a cross-examination.', free: 'Example', operator: 'Included' },
   { feature: 'Reviews at once', free: '1', operator: '4' },
+  { feature: 'Model API credit', free: 'Buy credit as needed', operator: 'US$2 per paid month on the monthly plan' },
   { feature: 'All 11 review types', free: 'Included', operator: 'Included' },
   { feature: 'Copy-paste reviews in your chat app, free tools, repo import', free: 'Included', operator: 'Included' },
 ]);
@@ -69,6 +70,12 @@ const NOTE_ID = 'checkout-note';
 // ---------------------------------------------------------------------------
 
 const PLAN_LABELS = { anon: 'Signed out', free: 'Free', operator: 'Operator', past_due: 'Past due' };
+
+/** The customer's actual Stripe interval; never substitute the current offer. */
+export function subscriptionPriceLine(subscription) {
+  if (!subscription || subscription.currency !== 'usd' || !Number.isFinite(subscription.usd) || subscription.usd <= 0 || !['week', 'month'].includes(subscription.interval)) return '';
+  return `US$${subscription.usd} a ${subscription.interval}`;
+}
 
 /**
  * @param {import('./api.mjs').Account} [value]
@@ -214,7 +221,7 @@ export function takePlace() {
     typeof place.path === 'string' &&
     place.path.startsWith('/') &&
     typeof place.hash === 'string' &&
-    /^(#[\w-]{1,80})?$/.test(place.hash) &&
+    /^(#[\w-]{1,80}|#account\/(overview|reviews|connections|api|security|billing))?$/.test(place.hash) &&
     Number.isFinite(place.y) &&
     Number.isFinite(place.at) &&
     Date.now() - place.at < PLACE_MAX_AGE_MS;
@@ -259,6 +266,17 @@ export function goToCheckout() {
  */
 export function goToBillingPortal() {
   return leaveFor(PORTAL_PATH);
+}
+
+/** Save a payment method only after the account form collects explicit consent. */
+export async function goToAutoTopupSetup(settings) {
+  if (settings?.consent !== true) throw new ApiError('Authorize automatic top-ups before saving a payment method.', { code: 'bad_request' });
+  const answer = await request('/api/inference/autotopup/setup', { body: settings });
+  const url = stripeUrl(answer?.url);
+  if (new URL(url).hostname !== 'checkout.stripe.com') throw new ApiError('Stripe did not return a setup page. Try again.', { code: 'bad_response' });
+  await persistWork();
+  rememberPlace();
+  globalThis.location.assign(url);
 }
 
 // ---------------------------------------------------------------------------

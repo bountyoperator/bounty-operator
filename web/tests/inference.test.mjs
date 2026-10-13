@@ -149,6 +149,59 @@ test('request allowlist blocks remote images, overrides and oversized token budg
   assert.deepEqual(inferenceModels({ INFERENCE_MODELS: JSON.stringify([{ ...model, endpoint: 'https://evil.example' }]) }), []);
 });
 
+test('catalog accepts larger native contexts up to one million tokens and retains output bounds', () => {
+  for (const context of [262144, 524288, 1048576]) {
+    const configured = { ...model, context };
+    assert.deepEqual(inferenceModels({ INFERENCE_MODELS: JSON.stringify([configured]) }), [configured]);
+  }
+  assert.deepEqual(inferenceModels({ INFERENCE_MODELS: JSON.stringify([{ ...model, context: 1048577 }]) }), []);
+  assert.deepEqual(inferenceModels({ INFERENCE_MODELS: JSON.stringify([{ ...model, context: 262144, maxOutput: 262145 }]) }), []);
+});
+
+test('a request over 256 KiB reaches the larger configured model and settles its usage', async (t) => {
+  const { env, token } = await setup();
+  const largeModel = { ...model, context: 262144 };
+  env.INFERENCE_MODELS = JSON.stringify([largeModel]);
+  const content = 'context '.repeat(65536);
+  const largeRequest = request(token, { messages: [{ role: 'user', content }] });
+  assert.ok(Buffer.byteLength(await largeRequest.clone().text()) > 256 * 1024);
+  let generations = 0;
+  t.mock.method(globalThis, 'fetch', async (url, options) => {
+    assert.equal(env.DB.sqlite.prepare('SELECT reserved_micro FROM api_wallets').get().reserved_micro, largeModel.context * largeModel.inputRate + 20 * largeModel.outputRate);
+    if (url.endsWith('/health')) return new Response(null, { status: 200 });
+    generations++;
+    assert.equal(JSON.parse(options.body).messages[0].content, content);
+    return Response.json({ created: 1, choices: [{ message: { role: 'assistant', content: 'Ready' }, finish_reason: 'stop' }], usage: { prompt_tokens: 65536, completion_tokens: 2 } });
+  });
+  const response = await inferenceEndpoint(createCall(largeRequest, env));
+  assert.equal(response.status, 200);
+  assert.equal((await response.json()).usage.prompt_tokens, 65536);
+  assert.equal(generations, 1);
+  assert.equal(env.DB.sqlite.prepare('SELECT charge_micro FROM inference_requests').get().charge_micro, 65536 * largeModel.inputRate + 2 * largeModel.outputRate);
+  assert.equal(env.DB.sqlite.prepare('SELECT reserved_micro FROM api_wallets').get().reserved_micro, 0);
+});
+
+test('requests over 8 MiB are rejected before GPU access or reservation, with or without Content-Length', async (t) => {
+  const { env, token } = await setup();
+  env.INFERENCE_MODELS = JSON.stringify([{ ...model, context: 1048576 }]);
+  const content = '\u20ac'.repeat(3 * 1024 * 1024);
+  const gpuFetch = t.mock.method(globalThis, 'fetch', async (url) => url.endsWith('/health') ? new Response(null, { status: 200 }) : Response.json({ choices: [{ message: { content: 'Unexpected generation' } }], usage: { prompt_tokens: 1, completion_tokens: 1 } }));
+  for (const declared of [false, true]) {
+    const oversized = request(token, { messages: [{ role: 'user', content }] });
+    const bytes = Buffer.byteLength(await oversized.clone().text());
+    assert.ok(bytes > 8 * 1024 * 1024);
+    assert.equal(oversized.headers.has('Content-Length'), false);
+    if (declared) oversized.headers.set('Content-Length', String(bytes));
+    const response = await inferenceEndpoint(createCall(oversized, env));
+    assert.equal(response.status, 413);
+    assert.equal((await response.json()).error.code, 'too_large');
+  }
+  assert.equal(gpuFetch.mock.callCount(), 0);
+  assert.equal(env.DB.sqlite.prepare('SELECT COUNT(*) AS n FROM inference_requests').get().n, 0);
+  assert.equal(env.DB.sqlite.prepare('SELECT reserved_micro FROM api_wallets').get().reserved_micro, 0);
+  assert.equal(env.DB.sqlite.prepare('SELECT balance_micro FROM api_wallets').get().balance_micro, 20000000);
+});
+
 test('plain completion uses only the configured upstream and settles trusted usage without storing text', async (t) => {
   const { env, token } = await setup();
   t.mock.method(globalThis, 'fetch', async (url, options) => {

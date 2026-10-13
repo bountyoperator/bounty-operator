@@ -10,6 +10,7 @@ function modelCard(model) {
         el('h3', { text: model.name }),
         model.description && el('p', { text: model.description }),
         el('ul', { class: 'catalog-tags', 'aria-label': 'Capabilities' },
+          el('li', { text: `${Math.round(model.context_length / 1024)}K context`, title: `${model.context_length.toLocaleString()} tokens` }),
           el('li', { text: (model.capabilities ?? []).includes('tools') ? 'Agent tools' : 'Chat only' }),
           ...(model.tags ?? []).filter(value => ['cybersecurity', 'uncensored'].includes(value)).map(value => el('li', { text: value === 'cybersecurity' ? 'Security focused' : 'Uncensored' })),
         ),
@@ -47,28 +48,27 @@ async function loadCatalog() {
     const list = el('div', { class: 'catalog-grid' });
     const count = el('p', { class: 'help catalog-count', role: 'status' });
     const search = el('input', { id: 'catalog-search', class: 'input', type: 'search', placeholder: 'Search models' });
-    const filter = el('select', { id: 'catalog-filter', class: 'input' },
-      el('option', { value: '', text: 'All models' }),
-      el('option', { value: 'cybersecurity', text: 'Cybersecurity' }),
-      el('option', { value: 'uncensored', text: 'Uncensored models' }),
-      el('option', { value: 'tools', text: 'For agents' }),
-      ...(result.models.some(model => (model.capabilities ?? []).includes('reasoning')) ? [el('option', { value: 'reasoning', text: 'Reasoning' })] : []),
-    );
+    let selectedFilter = '';
+    const filters = [['', 'All'], ['uncensored', 'Uncensored'], ['cybersecurity', 'Security'], ['tools', 'For agents']];
+    const filterButtons = filters.map(([value, label]) => button({ label: `${label} (${result.models.filter(model => !value || [...(model.tags ?? []), ...(model.capabilities ?? [])].includes(value)).length})`, size: 'sm', variant: 'secondary', attrs: { 'aria-pressed': value === '' ? 'true' : 'false' }, onClick: () => {
+      selectedFilter = value;
+      filterButtons.forEach((item, index) => item.setAttribute('aria-pressed', filters[index][0] === value ? 'true' : 'false'));
+      render();
+    } }));
     const render = () => {
-      const query = search.value.trim().toLowerCase();
+      const query = search.value.trim().toLowerCase().replace(/\bunfiltered\b/g, 'uncensored');
       const models = result.models.filter((model) => {
         const labels = [...(model.tags ?? []), ...(model.capabilities ?? [])];
-        return (!filter.value || labels.includes(filter.value)) && [model.id, model.name, model.source, model.description, ...labels].join(' ').toLowerCase().includes(query);
+        return (!selectedFilter || labels.includes(selectedFilter)) && [model.id, model.name, model.source, model.description, ...labels].join(' ').toLowerCase().includes(query);
       });
       count.textContent = `${models.length} of ${result.models.length} models`;
       list.replaceChildren(...(models.length ? models.map(modelCard) : [el('p', { text: 'No models match these filters.' })]));
     };
     search.addEventListener('input', render);
-    filter.addEventListener('change', render);
     catalog.replaceChildren(
       el('div', { class: 'catalog-filters' },
         el('div', { class: 'field' }, el('label', { class: 'label', for: 'catalog-search', text: 'Find a model' }), search),
-        el('div', { class: 'field' }, el('label', { class: 'label', for: 'catalog-filter', text: 'Filter models' }), filter),
+        el('div', { class: 'catalog-filter-buttons', role: 'group', 'aria-label': 'Filter models' }, ...filterButtons),
       ), count, list,
     );
     render();

@@ -76,6 +76,7 @@
  * @property {Usage | null} usage    null when signed out
  * @property {'live' | 'unavailable'} billing
  * @property {boolean} hasSubscription
+ * @property {object | null} subscription Actual subscription terms, including legacy billing intervals.
  * @property {{ files: number, fileBytes: number, totalBytes: number, promptChars: number, totalLines?: number } | null} limits   the engine's LIMITS; null until loaded
  * @property {{ usd: number, interval: string } | null} price
  * @property {string} version
@@ -270,6 +271,7 @@ const SIGNED_OUT = Object.freeze({
   usage: null,
   billing: 'unavailable',
   hasSubscription: false,
+  subscription: null,
   limits: null,
   price: null,
   version: '',
@@ -297,6 +299,7 @@ function normalizeAccount(body) {
     usage: signedIn && isRecord(source.usage) ? Object.freeze({ ...source.usage }) : null,
     billing: source.billing === 'live' ? 'live' : 'unavailable',
     hasSubscription: signedIn && source.hasSubscription === true,
+    subscription: signedIn && isRecord(source.subscription) ? Object.freeze({ ...source.subscription }) : null,
     limits: isRecord(source.limits) ? Object.freeze({ ...source.limits }) : cached.limits,
     price: isRecord(source.price) ? Object.freeze({ ...source.price }) : cached.price,
     version: typeof source.version === 'string' ? source.version : cached.version,
@@ -313,7 +316,7 @@ function publish() {
 }
 
 function signedOutCopy() {
-  return Object.freeze({ ...cached, signedIn: false, csrf: '', usage: null, hasSubscription: false });
+  return Object.freeze({ ...cached, signedIn: false, csrf: '', usage: null, hasSubscription: false, subscription: null });
 }
 
 /**

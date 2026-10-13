@@ -26,7 +26,7 @@
  * `reason` is one of the REASONS keys, or your own sentence. It is the first
  * line of the dialog:
  *   'review'    "Create a free account to run this review. One passkey prompt, no email."
- *   'operator'  "Operator is US$10 a week. Account first, then Stripe."
+ *   'operator'  "Operator is US$10 a month. Account first, then Stripe."
  *
  * What the module wires without being asked
  *   #account-button                       the header control: "Sign in", or the plan chip and "Account"
@@ -88,8 +88,8 @@ export const REASONS = Object.freeze({
     next: 'run the review',
   },
   operator: {
-    create: 'Operator is US$10 a week. Account first, then Stripe.',
-    signin: 'Operator is US$10 a week. Sign in first, then Stripe.',
+    create: 'Operator is US$10 a month. Account first, then Stripe.',
+    signin: 'Operator is US$10 a month. Sign in first, then Stripe.',
     next: 'continue to Stripe',
   },
   billing: {

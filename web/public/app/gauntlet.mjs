@@ -61,7 +61,7 @@ export { panelFileName, stageFileName };
 
 const RUN_KEY = 'bo:gauntlet:run';
 const TOTAL = GAUNTLET.length;
-const PRICE = 'US$10 a week';
+const PRICE = 'US$10 a month';
 const CELL_CHARS = 400;
 const MASK_PASSES = 4;
 // The one model measured to stop at the proof stage: on 9 October 2026 OpenAI's
