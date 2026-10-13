@@ -72,7 +72,7 @@ test('account reads the usage the Worker reports for the token', { skip }, async
   assert.equal(usage.usedToday, 0);
   assert.equal(usage.remainingToday, 1);
   assert.equal(usage.concurrency, 1);
-  assert.deepEqual(price, { usd: 10, interval: 'week' });
+  assert.deepEqual(price, { usd: 10, interval: 'month', included_api_credit_usd: 2 });
   assert.equal(limits.files, 50);
   assert.equal(version, '0.9.12');
 

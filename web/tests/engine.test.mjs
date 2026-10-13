@@ -1206,7 +1206,7 @@ describe('providers', () => {
       assert.equal(entry.models[0].id, entry.defaultModel);
       // OpenRouter includes the benchmarked choices; direct providers stay compact.
       const fewest = entry.id === 'deepseek' ? 2 : 3;
-      const most = entry.id === 'openrouter' ? 9 : 5;
+      const most = entry.id === 'openrouter' ? 12 : 5;
       assert.ok(entry.models.length >= fewest && entry.models.length <= most, entry.id);
       assert.equal(new Set(entry.models.map((model) => model.id)).size, entry.models.length, entry.id);
       for (const model of entry.models) assert.doesNotThrow(() => validateProviderRequest({ provider: entry.id, model: model.id, apiKey: API_KEY }), model.id);
@@ -1344,7 +1344,7 @@ describe('providers', () => {
 
   test('every provider lists current models, and OpenRouter only verified slugs', () => {
     assert.deepEqual(Object.fromEntries(PROVIDERS.map((entry) => [entry.id, entry.models.map((model) => model.id)])), {
-      openrouter: ['anthropic/claude-sonnet-5.5', 'openai/gpt-6.1-sol', 'deepseek/deepseek-v4.1-flash', 'anthropic/claude-opus-5.5', 'openai/gpt-6-astra', 'google/gemini-3.8-flash', 'x-ai/grok-4.7', 'z-ai/glm-5.3-flash', 'openai/gpt-6-luna'],
+      openrouter: ['anthropic/claude-sonnet-5.5', 'openai/gpt-6.1-sol', 'deepseek/deepseek-v4.1-flash', 'anthropic/claude-opus-5.5', 'openai/gpt-6-astra', 'google/gemini-3.8-flash', 'x-ai/grok-4.7', 'z-ai/glm-5.3-flash', 'xiaomi/mimo-v2.6-pro', 'mistralai/mistral-large-4-0', 'moonshotai/kimi-k3', 'openai/gpt-6-luna'],
       anthropic: ['claude-opus-5-5', 'claude-sonnet-5-5', 'claude-fable-5-1', 'claude-haiku-4-5'],
       openai: ['gpt-6.1-sol', 'gpt-6-astra', 'gpt-6-luna'],
       gemini: ['gemini-3.8-flash', 'gemini-3.1-pro-preview', 'gemini-3.5-flash-lite'],
@@ -1361,7 +1361,7 @@ describe('providers', () => {
       'nvidia/nemotron-3-ultra-550b-a55b', 'openai/gpt-6-luna', 'google/gemini-3.5-flash-lite', 'google/gemini-3.8-flash',
       'x-ai/grok-4.7', 'meta/muse-spark-1.3', 'mistralai/mistral-medium-3-5', 'anthropic/claude-haiku-4.5', 'openai/gpt-5.6-terra',
       'openai/gpt-6.1-sol', 'google/gemini-3.1-pro-preview', 'anthropic/claude-sonnet-5.5', 'anthropic/claude-opus-5.5',
-      'openai/gpt-6-astra', 'anthropic/claude-fable-5.1',
+      'openai/gpt-6-astra', 'anthropic/claude-fable-5.1', 'xiaomi/mimo-v2.6-pro', 'mistralai/mistral-large-4-0',
     ]);
     for (const model of provider('openrouter').models) assert.ok(verified.has(model.id), model.id);
     // A panel picks models from different labs, so the list spans at least four of them.

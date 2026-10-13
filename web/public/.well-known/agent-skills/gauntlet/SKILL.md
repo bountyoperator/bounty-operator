@@ -18,7 +18,7 @@ The gauntlet takes one finding through eight stages, in the order that ends a we
 - The `bounty-operator` MCP server. The Claude Code plugin adds the remote endpoint; any other client adds it with the commands at https://bountyoperator.com/mcp.
 - A connection token. Create one in the account panel at https://bountyoperator.com/#account. The plugin reads it from `BOUNTY_OPERATOR_TOKEN`; the local server reads the same variable.
 - A provider key for the model the hosted stages run on. The plugin sends `BOUNTY_OPERATOR_PROVIDER_KEY` as the `X-Provider-Key` header. The local server reads the provider's own variable, such as `OPENROUTER_API_KEY`.
-- Operator, US$10 per week. A run uses seven hosted reviews and the verdict stage runs on Operator only. Free covers one hosted review per UTC day.
+- Operator, US$10 per month. A run uses seven hosted reviews and the verdict stage runs on Operator only. Free covers one hosted review per UTC day.
 - Optional, for an Immunefi programme: Immunefi Studio's MCP server, described under "On an Immunefi programme".
 
 When one of these is missing, say in one sentence what is needed and where to get it, then offer the `challenge-report` skill: it runs the report stage's method on your own model with no account.
@@ -66,7 +66,7 @@ Every failure carries a `code`. Act on it and say what happened in one sentence.
 
 - `token`: the connection token is missing, malformed, expired or revoked. The remote endpoint answers the same case with an unauthorized error. Point to https://bountyoperator.com/#account and offer `challenge-report`.
 - `daily_used`: today's free hosted review is used. Give `resetsAt`, say Operator has no daily limit, and offer `challenge-report`.
-- `operator_only`: the verdict stage runs on Operator. Nothing was sent and the day's review is kept. Show the stages that ran, say Operator is US$10 per week at https://bountyoperator.com/pricing, and offer `challenge-report`.
+- `operator_only`: the verdict stage runs on Operator. Nothing was sent and the day's review is kept. Show the stages that ran, say Operator is US$10 per month at https://bountyoperator.com/pricing, and offer `challenge-report`.
 - `bad_key`, `bad_provider`, `bad_model`: the provider key, provider or model is missing or wrong. Name the variable or argument to set and run the stage again.
 - `provider`: the provider rejected the key or the model, had no credit, failed or timed out. The review is not counted. Fix the key, model or credit and run the stage again.
 - `provider_policy`: the provider blocked the request under its usage policy. The review is not counted and the key is not the cause. Follow "When a stage is refused or blocked".

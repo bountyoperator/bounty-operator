@@ -136,7 +136,7 @@ A run uses seven hosted reviews. Free covers one hosted review per UTC day, so a
 
 ## Hosted reviews
 
-`run_review` runs any profile on a provider's model with your own API key and returns the review checked. It is the only way to run a hosted profile from an agent. It uses the same allowance as the website: one hosted review per UTC day on Free, any profile, and unlimited on Operator at US$10 per week.
+`run_review` runs any profile on a provider's model with your own API key and returns the review checked. It is the only way to run a hosted profile from an agent. It uses the same allowance as the website: one hosted review per UTC day on Free, any profile, and unlimited on Operator at US$10 per month.
 
 Three result fields say when the text is not a review. `truncated` is true when the provider cut the answer short. `refused` is true when the model or the provider declined. `blocked` is set when the review was blocked: `anthropic-cyber`, `anthropic-reasoning` or `openai-cyber` for that provider's safeguards, `guardrail` for a guardrail on the key or its account, `policy` for any other block under a usage policy. A blocked review is never counted. After a refusal or a block, do not call again with the same model: use another model or provider, or `prepare_review` for a core profile.
 

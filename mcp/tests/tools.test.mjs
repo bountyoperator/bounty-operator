@@ -304,7 +304,7 @@ test('account says how to connect when the token is missing or malformed, and ca
 });
 
 test('account returns the usage of the account behind the token', async () => {
-  const api = fakeFetch({ 'GET /api/client/account': () => ({ body: { usage: USAGE, billing: 'live', limits: LIMITS, price: { usd: 10, interval: 'week' }, version: '0.7.0' } }) });
+  const api = fakeFetch({ 'GET /api/client/account': () => ({ body: { usage: USAGE, billing: 'live', limits: LIMITS, price: { usd: 10, interval: 'month', included_api_credit_usd: 2 }, version: '0.7.0' } }) });
   const result = await server({ fetch: api.fetch, env: { BOUNTY_OPERATOR_TOKEN: TOKEN } }).tool('account');
 
   assert.equal(result.isError, false);

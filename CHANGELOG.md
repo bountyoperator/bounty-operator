@@ -2,29 +2,37 @@
 
 ## 0.9.12 — 2026-10-11
 
-### Model catalog — 2026-10-13
+Model catalog and Operator billing
 
-- Added a selectable catalog of security specialists and uncensored models,
-  with per-model prices and verified chat, streaming and tool capabilities.
-- Harnesses can discover models through `/v1/models` and retrieve individual
-  model details. The sales page has searchable model rows with comparable prices;
-  connection details expand on request, and setup is at `/docs/model-api`.
-- Added model-specific reasoning controls and a longer cold-start allowance,
+- Expanded the hosted model catalog to ten security-focused and uncensored
+  open-weight models with full native context windows up to 262,144 tokens,
+  searchable model rows, per-model prices, and setup instructions at
+  `/docs/model-api`. Harnesses can discover models through `/v1/models` and
+  retrieve individual model details without starting a worker.
+- Moved the Operator plan for new subscribers to US$10 per month, with US$2 in
+  Bounty Operator API credit issued on each verified paid monthly subscription
+  invoice. Existing weekly subscriptions keep their weekly interval.
+- Added optional customer-authorized automatic API top-ups (off by default) with
+  configurable recharge amount, balance threshold, and a UTC monthly cap from
+  US$20 to US$500, plus in-account controls to turn off automatic top-ups or
+  cancel a subscription.
+- Added model-specific reasoning controls and a ten-minute cold-start allowance,
   with credit reservations that remain valid for the full request window.
   Health checks use the full allowance without retrying generation.
 
-### Hosted API pilot — 2026-10-13
+Hosted API
 
 - OpenAI-compatible model inference with streaming, function tools and
-  structured output, using a pinned community cyber model on Runpod.
+  structured output, using pinned community cyber and uncensored models on
+  Runpod.
 - Prepaid API wallets, one-time Stripe top-ups and expiring API keys with
   lifetime spending limits. API credit is separate from the review subscription.
 - Atomic credit reservations, metered settlement, duplicate-payment protection,
   refund and dispute reconciliation, and cancellation that releases unused credit.
-- Model rates, source revision, limits and setup examples at `/model-api`.
+- Model rates, source revisions, limits and setup examples at `/model-api`.
   Request history contains usage metadata; prompts and responses are not saved.
 
-### Walkthroughs
+Walkthroughs
 
 - A 54-second product tour follows the saved public example from its
   input files to the verdict, source citation and downloadable packet.

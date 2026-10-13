@@ -73,7 +73,7 @@ const SECRET_PATTERNS = [
   ['private-key', /BEGIN [A-Z ]{0,40}PRIVATE KEY/],
   ['api-key', /(?<![A-Za-z0-9_-])(?:[sr]k_(?:live|test)_[A-Za-z0-9]{16,}|gsk_[A-Za-z0-9]{20,}|xai-[A-Za-z0-9]{20,}|hf_[A-Za-z0-9]{30,}|npm_[A-Za-z0-9]{36})/],
   ['webhook-secret', /(?<![A-Za-z0-9_])whsec_[A-Za-z0-9]{20,}/],
-  ['ai-connection-secret', /(?<![A-Za-z0-9_-])bok_[A-Za-z0-9_-]{43}/],
+  ['ai-connection-secret', /(?<![A-Za-z0-9_-])(?:bok|bo_api)_[A-Za-z0-9_-]{43}/],
   ['github-token', /(?<![A-Za-z0-9_])(?:gh[pousr]_[A-Za-z0-9_]{20,}|github_pat_[A-Za-z0-9_]{40,})/],
   ['slack-token', /(?<![A-Za-z0-9-])xox[baprs]-[A-Za-z0-9-]{20,}/],
   ['aws-key', /(?<![A-Z0-9])(?:AKIA|ASIA)[0-9A-Z]{16}(?![0-9A-Z])/],

@@ -27,7 +27,7 @@
       "type": "skill-md",
       "description": "Runs a security finding through Bounty Operator's eight pre-submission stages in order (scope, provenance, prior art, proof, severity, triager, report, verdict) on the bounty-operator MCP server, stops at a drop or duplicate gate, then builds the evidence packet and reports the verdict, the blocker and the cheapest action that removes it. Use when the user wants the full pre-submission check on a bug bounty finding and has a Bounty Operator connection token and a provider key. Without them, use challenge-report.",
       "url": "/.well-known/agent-skills/gauntlet/SKILL.md",
-      "digest": "sha256:37b4e56ed7b4c53bd868026934b3b7ce7f0d83b62e6490d0c1b832bcbd361bdf"
+      "digest": "sha256:bb249784454977976b5c6e940e16447d8a2f7cf60e5d463ffa2a22f0988ab7ba"
     },
     {
       "name": "hunt-with-gate",
