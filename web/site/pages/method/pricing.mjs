@@ -121,6 +121,7 @@ ${pageHero({
 </section>
 
 <section class="section wrap wrap--narrow" aria-labelledby="faq">
+  <p>Looking for hosted model access? The <a class="link" href="/model-api">Model API</a> uses separate prepaid credit, with no API subscription.</p>
   ${sectionHeading({ title: 'Pricing questions', id: 'faq' })}
   ${faq(FAQ_ITEMS, { exclusive: 'pricing-faq' })}
 </section>

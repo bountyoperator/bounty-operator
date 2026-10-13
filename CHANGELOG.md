@@ -1,5 +1,16 @@
 # Changelog
 
+## Hosted API pilot — 2026-10-13
+
+- OpenAI-compatible model inference with streaming, function tools and
+  structured output, using a pinned community cyber model on Runpod.
+- Prepaid API wallets, one-time Stripe top-ups and expiring API keys with
+  lifetime spending limits. API credit is separate from the review subscription.
+- Atomic credit reservations, metered settlement, duplicate-payment protection,
+  refund and dispute reconciliation, and cancellation that releases unused credit.
+- Model rates, source revision, limits and setup examples at `/model-api`.
+  Request history contains usage metadata; prompts and responses are not saved.
+
 ## 0.9.12 — 2026-10-11
 
 Walkthroughs

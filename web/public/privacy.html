@@ -46,7 +46,7 @@ FINISH: Responsive layout, native video controls, captions, reduced motion and v
 <header class="site-header">
 <div class="wrap site-header__inner">
 <a class="brand" href="/"><svg class="brand__mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect width="64" height="64" rx="14" fill="#f6e7cc"/><path d="M23 19 20 9 14 7M40 19 44 8 50 10" fill="none" stroke="#18232d" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 37c0-15 7-22 20-22s20 7 20 22v20H12Z" fill="#f16343"/><path d="M32 16v12" fill="none" stroke="#18232d" stroke-width="2"/><rect x="17" y="29" width="30" height="21" rx="9" fill="#18232d"/><path d="M21 37h10c0 10-10 10-10 0Zm12 0h10c0 10-10 10-10 0Z" fill="#f6e7cc"/><path d="m20 33 10 1m4-1 8-3" fill="none" stroke="#f6e7cc" stroke-width="2.3" stroke-linecap="round"/><circle cx="27" cy="38" r="2.3" fill="#18232d"/><circle cx="39" cy="38" r="2.3" fill="#18232d"/><path d="m12 48 12 4v8H10Zm40 0-12 4v8h14Z" fill="#284b73"/></svg><span class="brand__name">Bounty Operator</span></a>
-<nav class="site-nav" aria-label="Main"><ul><li><a href="/#workspace">Review</a></li><li><a href="/benchmark">Benchmark</a></li><li><a href="/tools">Tools</a></li><li><a href="/guide">Guide</a></li><li><a href="/pricing">Pricing</a></li></ul></nav>
+<nav class="site-nav" aria-label="Main"><ul><li><a href="/#workspace">Review</a></li><li><a href="/benchmark">Benchmark</a></li><li><a href="/model-api">Model API</a></li><li><a href="/tools">Tools</a></li><li><a href="/guide">Guide</a></li><li><a href="/pricing">Pricing</a></li></ul></nav>
 <div class="site-header__actions">
 <a class="btn btn--secondary btn--sm" href="/#account">Sign in</a>
 </div>
@@ -58,14 +58,14 @@ FINISH: Responsive layout, native video controls, captions, reduced motion and v
 
 <h1>Privacy policy</h1>
 <p class="lede">Built by Tradi3. Operated by Vaytric, which is responsible for the data described here. This page covers the hosted site at bountyoperator.com. The open-source command-line kit runs on your own machine.</p>
-<p class="meta">Last updated <time datetime="2026-10-10">10 October 2026</time></p>
+<p class="meta">Last updated <time datetime="2026-10-13">13 October 2026</time></p>
 
 </header>
 
 <div class="docs-body">
 <nav class="docs-toc" aria-label="On this page">
 <p class="meta">On this page</p>
-<ul><li><a href="#files">Files and API key</a></li><li><a href="#account">Account records</a></li><li><a href="#cookies">Cookies and browser storage</a></li><li><a href="#usage">Usage and abuse limits</a></li><li><a href="#counters">Page and funnel counters</a></li><li><a href="#third-parties">Other services</a></li><li><a href="#payments">Payments</a></li><li><a href="#deletion">Export and deletion</a></li><li><a href="#changes">Changes</a></li></ul>
+<ul><li><a href="#files">Files and API key</a></li><li><a href="#account">Account records</a></li><li><a href="#cookies">Cookies and browser storage</a></li><li><a href="#usage">Usage and abuse limits</a></li><li><a href="#counters">Page and funnel counters</a></li><li><a href="#third-parties">Other services</a></li><li><a href="#payments">Payments</a></li><li><a href="#model-api">Model API and prepaid credit</a></li><li><a href="#deletion">Export and deletion</a></li><li><a href="#changes">Changes</a></li></ul>
 </nav>
 <div class="docs-content">
 <ul class="facts facts--glance"><li class="facts__item"><span class="icon icon--eye" aria-hidden="true"></span><div><p class="facts__title">No ad cookies. No tracking pixels.</p><p class="facts__text">No third-party analytics scripts either.</p></div></li><li class="facts__item"><span class="icon icon--file" aria-hidden="true"></span><div><p class="facts__title">Your files are not stored</p><p class="facts__text">Files, instructions, API keys and review results are never written to our database or logs.</p></div></li><li class="facts__item"><span class="icon icon--lock" aria-hidden="true"></span><div><p class="facts__title">Two cookies</p><p class="facts__text">Both exist to sign you in. Nothing else is set.</p></div></li><li class="facts__item"><span class="icon icon--download" aria-hidden="true"></span><div><p class="facts__title">Export or delete</p><p class="facts__text">Download your account data or delete the account from the account panel.</p></div></li></ul>
@@ -137,11 +137,14 @@ FINISH: Responsive layout, native video controls, captions, reduced motion and v
 <div class="prose">
 <p>Stripe collects your email, card and billing details at checkout. Card details never reach our application. We send Stripe your account identifier.</p>
 <p>Our database keeps the Stripe customer and subscription IDs, the subscription status, the paid-until time, your receipt email, and webhook event IDs for 30 days. Stripe keeps its own financial records.</p></div>
+</section><section class="docs-section" aria-labelledby="model-api">
+<h2 class="docs-section__title" id="model-api">Model API and prepaid credit</h2>
+<div class="prose"><p>Model API requests pass through Cloudflare to our vLLM deployment on Runpod. The prompt and response stay in memory while the request is processed. Request and response content logging and cross-request prefix caching are disabled. We do not use your content to train models.</p><p>We store hashes of API keys, their visible prefixes and labels, expiry and revocation times, spending limits and aggregate spending. We store each request’s model ID, key ID, time, status, input/output token counts, reserved credit and final charge. Request metadata is deleted after 30 days. Prompts, tool arguments and model responses are not written to our database.</p><p>We keep the prepaid credit ledger and Stripe checkout/payment references for accounting and disputes. Deleting an account removes its link from those records, but does not erase the financial records. Card details stay with Stripe. Cloudflare and Runpod process traffic and infrastructure metadata under their own policies; deployments may run outside your country.</p></div>
 </section><section class="docs-section" aria-labelledby="deletion">
 <h2 class="docs-section__title" id="deletion">Export and deletion</h2>
 <div class="prose">
-<p>Download your account data or delete your account from the account panel. Cancel an active subscription first.</p>
-<p>Deleting removes the account, its passkeys, sessions, connection tokens, usage rows and billing references from our database. It cannot be undone.</p>
+<p>Download your account data or delete your account from the account panel. Cancel an active subscription and settle any API credit, outstanding balance, running request or pending payment first. Contact support to refund unused credit.</p>
+<p>Deleting removes the account, its passkeys, sessions, connection tokens, API keys, request metadata and subscription references from our database. Prepaid financial records remain with the account link removed. It cannot be undone.</p>
 <p>Questions: <a href="mailto:support@bountyoperator.com">support@bountyoperator.com</a>.</p></div>
 </section><section class="docs-section" aria-labelledby="changes">
 <h2 class="docs-section__title" id="changes">Changes</h2>
@@ -160,7 +163,7 @@ FINISH: Responsive layout, native video controls, captions, reduced motion and v
 <p class="site-footer__promise">Find the hole in your report before the triager does.</p>
 <p class="site-footer__cta"><a class="btn btn--primary" href="/?profile=report#workspace"><span class="btn__label">Review my report</span></a></p>
 </div>
-<nav class="site-footer__col" aria-label="Product"><h2 class="site-footer__title">Product</h2><ul><li><a href="/#workspace">Review a report</a></li><li><a href="/benchmark">Benchmark</a></li><li><a href="/tools">Free tools</a></li><li><a href="/pricing">Pricing</a></li><li><a href="/#account">Account</a></li></ul></nav>
+<nav class="site-footer__col" aria-label="Product"><h2 class="site-footer__title">Product</h2><ul><li><a href="/#workspace">Review a report</a></li><li><a href="/benchmark">Benchmark</a></li><li><a href="/model-api">Model API</a></li><li><a href="/tools">Free tools</a></li><li><a href="/pricing">Pricing</a></li><li><a href="/#account">Account</a></li></ul></nav>
 <nav class="site-footer__col" aria-label="Resources"><h2 class="site-footer__title">Resources</h2><ul><li><a href="/guide">Report guide</a></li><li><a href="/mcp">MCP setup</a></li><li><a href="/method">Review method</a></li><li><a href="/templates">Report templates</a></li><li><a href="/changelog">Changelog</a></li><li><a href="/support">Help and feedback</a></li><li><a href="https://github.com/bountyoperator/bounty-operator" target="_blank" rel="noopener noreferrer">Source<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></li></ul></nav>
 <nav class="site-footer__col" aria-label="Legal"><h2 class="site-footer__title">Legal</h2><ul><li><a href="/privacy">Privacy</a></li><li><a href="/terms">Terms</a></li><li><a href="/security">Security</a></li><li><a href="/licenses">Licences</a></li><li><a href="mailto:security@bountyoperator.com">Report a vulnerability</a></li></ul></nav>
 </div>

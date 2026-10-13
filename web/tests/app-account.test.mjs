@@ -696,8 +696,8 @@ describe('reviewRows and connectionCommands', () => {
     assert.ok(local.code.includes(`npx -y ${MCP_PACKAGE}`) && local.code.includes(`--env ${TOKEN_VAR}=${token}`));
   });
 
-  test('the sheet has the five sections', () => {
-    assert.deepEqual(TABS.map((tab) => tab.id), ['overview', 'reviews', 'connections', 'security', 'billing']);
+  test('the sheet separates model API credit from review billing', () => {
+    assert.deepEqual(TABS.map((tab) => tab.id), ['overview', 'reviews', 'connections', 'api', 'security', 'billing']);
   });
 });
 

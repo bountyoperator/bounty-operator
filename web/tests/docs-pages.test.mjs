@@ -17,7 +17,7 @@ const WEB_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const PUBLIC_DIR = path.join(WEB_DIR, 'public');
 /** A link as it stands in Markdown, YAML or plain text: up to the first space, bracket or quote. */
 const LINK = /https?:\/\/[^\s)\]>"']+/g;
-const EXPECTED_PATHS = ['/changelog', '/guide', '/licenses', '/mcp', '/privacy', '/security', '/support', '/terms'];
+const EXPECTED_PATHS = ['/changelog', '/guide', '/licenses', '/mcp', '/model-api', '/privacy', '/security', '/support', '/terms'];
 
 const site = { pages: [], has: () => true, preloadsFor: () => [] };
 const pages = (await loadPages(path.join(WEB_DIR, 'site', 'pages'))).filter((page) => page.source.startsWith('docs/'));
@@ -36,7 +36,7 @@ function textOf(markup) {
     .replace(/\s+/g, ' ');
 }
 
-test('the docs group builds its eight pages', () => {
+test('the docs group builds its nine pages', () => {
   assert.deepEqual([...rendered.keys()].sort(), EXPECTED_PATHS);
 });
 
@@ -281,7 +281,7 @@ test('the privacy policy says page views and named actions are counted in aggreg
   assert.match(privacy, /named actions a page reports from a fixed list: an example loaded, a prompt exported, a reply pasted, a packet saved, a repository imported, the sign-in opened, the upgrade button pressed, a gauntlet or a panel started and finished, a free tool run, a template copied, an MCP command copied/);
   assert.match(privacy, /A page reports an action by its name and sends nothing with it\./);
   assert.match(privacy, /what you paste or drop there never leaves the browser\./);
-  assert.match(privacy, /Last updated 10 October 2026/);
+  assert.match(privacy, /Last updated 13 October 2026/);
 });
 
 test('the privacy policy names every counter the Worker keeps', async () => {

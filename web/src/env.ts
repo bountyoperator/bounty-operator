@@ -20,6 +20,12 @@ export interface Env {
   STRIPE_SECRET_KEY?: string;
   STRIPE_WEBHOOK_SECRET?: string;
   STRIPE_PORTAL_CONFIGURATION?: string;
+  /** Off until the deployed model and payment flow have passed live checks. */
+  INFERENCE_ENABLED?: string;
+  API_TOPUPS_ENABLED?: string;
+  /** Validated server-side catalog; endpoints and vendor keys are never public. */
+  INFERENCE_MODELS?: string;
+  RUNPOD_API_KEY?: string;
   /** Secret for the keyed hash that turns an IP address into a rate-limit key. */
   IP_HASH_KEY?: string;
   API_LIMITER?: EdgeLimiter;

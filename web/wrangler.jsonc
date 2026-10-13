@@ -41,10 +41,13 @@
     "BILLING_MODE": "disabled",
     "STRIPE_PRICE_ID": "",
     "STRIPE_PORTAL_CONFIGURATION": "",
-    "AI_REVIEW_ENABLED": "true"
+    "AI_REVIEW_ENABLED": "true",
+    "INFERENCE_ENABLED": "false",
+    "API_TOPUPS_ENABLED": "false",
+    "INFERENCE_MODELS": "[]"
   },
   // Secrets, set with `wrangler secret put`: STRIPE_SECRET_KEY,
-  // STRIPE_WEBHOOK_SECRET, IP_HASH_KEY.
+  // STRIPE_WEBHOOK_SECRET, IP_HASH_KEY, RUNPOD_API_KEY.
   "observability": {
     "enabled": true,
     "head_sampling_rate": 1,

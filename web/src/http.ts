@@ -113,7 +113,7 @@ export function aliasRedirect(method: string, url: URL): string | null {
 export function pageRedirect(method: string, url: URL): string | null {
   if (method !== 'GET' && method !== 'HEAD') return null;
   const { pathname } = url;
-  if (pathname === '/' || pathname.startsWith('/api/') || pathname.startsWith('/.well-known/')) return null;
+  if (pathname === '/' || pathname.startsWith('/api/') || pathname.startsWith('/v1/') || pathname.startsWith('/.well-known/')) return null;
   let page = pathname;
   if (page.endsWith('/index.html')) page = page.slice(0, -'index.html'.length);
   else if (page.endsWith('.html')) page = page.slice(0, -'.html'.length);

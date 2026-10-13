@@ -337,6 +337,7 @@ export async function recover({ env, request }: Call): Promise<Response> {
   await env.DB.batch([
     env.DB.prepare('DELETE FROM sessions WHERE account_id = ?').bind(account.id),
     env.DB.prepare('DELETE FROM api_tokens WHERE account_id = ?').bind(account.id),
+    env.DB.prepare('UPDATE inference_keys SET revoked_at = ? WHERE account_id = ? AND revoked_at IS NULL').bind(seconds(), account.id),
   ]);
   const issued = await issueSession(env, account.id);
   return json({ signedIn: true, csrf: issued.csrf, recoveryCode: nextCode }, 200, { cookies: [issued.cookie] });
@@ -351,6 +352,7 @@ export async function logoutEverywhere({ env }: Call, session: Session): Promise
   await env.DB.batch([
     env.DB.prepare('DELETE FROM sessions WHERE account_id = ?').bind(session.account_id),
     env.DB.prepare('DELETE FROM api_tokens WHERE account_id = ?').bind(session.account_id),
+    env.DB.prepare('UPDATE inference_keys SET revoked_at = ? WHERE account_id = ? AND revoked_at IS NULL').bind(seconds(), session.account_id),
   ]);
   return json({ signedIn: false }, 200, { cookies: [clearSessionCookie(env)] });
 }
@@ -381,6 +383,7 @@ export async function removePasskey({ env, request }: Call, session: Session): P
   const [, tokens] = await env.DB.batch([
     env.DB.prepare('DELETE FROM sessions WHERE account_id = ? AND token_hash <> ?').bind(session.account_id, session.token_hash),
     env.DB.prepare('DELETE FROM api_tokens WHERE account_id = ?').bind(session.account_id),
+    env.DB.prepare('UPDATE inference_keys SET revoked_at = ? WHERE account_id = ? AND revoked_at IS NULL').bind(seconds(), session.account_id),
   ]);
   return json({ removed: true, connectionsRevoked: tokens.meta.changes });
 }

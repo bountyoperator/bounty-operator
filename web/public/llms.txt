@@ -8,6 +8,8 @@ A hosted review sends the user's files and provider key through bountyoperator.c
 
 ## Product
 
+- [Model API](https://bountyoperator.com/model-api): Hosted cyber model API with prepaid credit, individual API key limits, function tools and streaming. Availability and prices come from the live catalog. Separate from the Operator review subscription.
+
 - [Benchmark](https://bountyoperator.com/benchmark): Paydirt, the model benchmark: which model finds the planted bug, leaves the fixed twin alone and catches an overclaimed report, with cost per run.
 - [Benchmark method](https://bountyoperator.com/benchmark/method): How Paydirt is built and scored, and how to check every published number.
 - [Workbench](https://bountyoperator.com/#workspace): Select files, pick a review profile and run it on your own model key. The three core profiles also export as a prompt.

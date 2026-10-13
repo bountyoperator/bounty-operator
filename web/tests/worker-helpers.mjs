@@ -30,6 +30,10 @@ export function createDatabase() {
       const result = sqlite.prepare(sql).run(...params);
       return { meta: { changes: Number(result.changes) } };
     },
+    execute() {
+      const result = sqlite.prepare(sql).run(...params);
+      return { meta: { changes: Number(result.changes) } };
+    },
   });
 
   return {
@@ -37,8 +41,15 @@ export function createDatabase() {
     prepare: (sql) => statement(sql),
     async batch(statements) {
       const results = [];
-      for (const item of statements) results.push(await item.run());
-      return results;
+      sqlite.exec('BEGIN');
+      try {
+        for (const item of statements) results.push(item.execute());
+        sqlite.exec('COMMIT');
+        return results;
+      } catch (error) {
+        sqlite.exec('ROLLBACK');
+        throw error;
+      }
     },
   };
 }

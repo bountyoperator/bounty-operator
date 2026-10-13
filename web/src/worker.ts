@@ -28,8 +28,11 @@ import {
   billingFailure,
   billingLogFields,
   billingReady,
+  apiBillingReady,
   createCheckout,
   createPortal,
+  customerFor,
+  stripeClient,
   handleWebhook,
   reconcileCheckout,
   resyncEndingSubscriptions,
@@ -44,6 +47,9 @@ import { reapStaleLeases, usage } from './quota.mjs';
 import { clientKey, edgeLimit, rateLimit } from './rate.ts';
 import { REVIEWS_PER_10_MIN, REVIEW_BODY_BYTES, parseReviewRequest, runHostedReview, streamHostedReview } from './review.ts';
 import { serveAsset } from './static.ts';
+import { apiCreditData, createInferenceKey, reapInferenceHolds, revokeInferenceKey } from './api-credits.ts';
+import { createApiTopup, reconcileApiTopup, resyncPendingTopups } from './api-topups.ts';
+import { inferenceEndpoint, inferenceModels, inferenceReady, publicModel } from './inference.ts';
 
 const AUTH_REQUESTS_PER_HOUR = 90;
 const BILLING_REQUESTS_PER_10_MIN = 6;
@@ -109,6 +115,7 @@ async function health({ env }: Call): Promise<Response> {
     version: VERSION,
     billing: billingReady(env) ? 'live' : 'unavailable',
     reviews: env.AI_REVIEW_ENABLED === 'true',
+    inference: inferenceReady(env) ? 'available' : 'unavailable',
     // 'hosted' when the Worker was built with the production method. A build
     // from the community stub, or one that lacks a profile, says so here.
     profiles: METHOD_SOURCE === 'private' && missingMethods().length === 0 ? 'hosted' : 'community',
@@ -124,6 +131,7 @@ async function health({ env }: Call): Promise<Response> {
       env.DB.prepare('SELECT auth_at FROM sessions LIMIT 1'),
       env.DB.prepare('SELECT email FROM accounts LIMIT 1'),
       env.DB.prepare('SELECT n FROM funnel_daily LIMIT 1'),
+      env.DB.prepare('SELECT reserved_micro FROM api_wallets LIMIT 1'),
     ]);
     return json(body);
   } catch {
@@ -201,6 +209,20 @@ const billingPortal = billingRoute('billing', BILLING_REQUESTS_PER_10_MIN, async
   json({ url: await createPortal(env, session.account_id) }),
 );
 
+const apiTopup = billingRoute('api-topup', BILLING_REQUESTS_PER_10_MIN, async ({ env, request }, session) => {
+  if (env.API_TOPUPS_ENABLED !== 'true' || !inferenceReady(env)) throw new ApiError('API top-ups are not open right now.', 503, 'topups_unavailable');
+  const body = await readJson(request, 1000);
+  const api = stripeClient(env);
+  const customer = await customerFor(env, api, session.account_id);
+  return json({ url: await createApiTopup(env, api, session.account_id, customer, body.amount_usd, body.request_id) });
+});
+
+const apiReconcile = billingRoute('api-reconcile', RECONCILES_PER_10_MIN, async ({ env, request }, session) => {
+  const body = await readJson(request, 1000);
+  await reconcileApiTopup(env, stripeClient(env), session.account_id, body.sessionId);
+  return json(await apiCreditData(env, session.account_id));
+});
+
 const reconcile = billingRoute('reconcile', RECONCILES_PER_10_MIN, async ({ env, ctx, request }, session) => {
   const body = await readJson(request, 2000);
   await reconcileCheckout(env, ctx, session.account_id, body.sessionId);
@@ -230,6 +252,7 @@ async function stripeWebhook({ env, ctx, request }: Call): Promise<Response> {
 const ROUTES: Readonly<Record<string, Readonly<Record<string, Handler>>>> = {
   '/api/health': { GET: health },
   '/api/profiles': { GET: profiles },
+  '/api/inference/catalog': { GET: async ({ env }) => json({ enabled: inferenceReady(env), topups_enabled: env.API_TOPUPS_ENABLED === 'true' && inferenceReady(env) && apiBillingReady(env), models: inferenceModels(env).map(publicModel) }) },
   '/api/account': { GET: accountStatus },
   '/api/portal': { GET: signedInRead(portal) },
   '/api/account/export': { GET: signedInRead(exportAccount) },
@@ -248,6 +271,10 @@ const ROUTES: Readonly<Record<string, Readonly<Record<string, Handler>>>> = {
   '/api/passkeys/remove': { POST: recentlyVerified(removePasskey) },
   '/api/connections/create': { POST: recentlyVerified(createConnection) },
   '/api/connections/revoke': { POST: signedIn(revokeConnection) },
+  '/api/inference/keys/create': { POST: recentlyVerified(createInferenceKey) },
+  '/api/inference/keys/revoke': { POST: signedIn(revokeInferenceKey) },
+  '/api/inference/topup': { POST: apiTopup },
+  '/api/inference/reconcile': { POST: apiReconcile },
 
   '/api/review': { POST: signedIn(review) },
   '/api/client/review': { POST: clientReview },
@@ -309,8 +336,9 @@ async function purgeExpired(env: Env, now: number): Promise<Record<string, numbe
     env.DB.prepare('DELETE FROM reviews WHERE created_at < ?').bind(now - 7 * day),
     env.DB.prepare('DELETE FROM stripe_events WHERE created_at < ?').bind(now - 30 * day),
     env.DB.prepare('DELETE FROM funnel_daily WHERE day < ?').bind(oldestFunnelDay),
+    env.DB.prepare("DELETE FROM inference_requests WHERE status != 'running' AND created_at < ?").bind(now - 30 * day),
   ]);
-  const names = ['sessions', 'challenges', 'rateLimits', 'apiTokens', 'reviews', 'stripeEvents', 'funnelDays'];
+  const names = ['sessions', 'challenges', 'rateLimits', 'apiTokens', 'reviews', 'stripeEvents', 'funnelDays', 'apiRequests'];
   return Object.fromEntries(names.map((name, index) => [name, results[index].meta.changes]));
 }
 
@@ -323,6 +351,7 @@ export default {
     if (location) return finalize(redirectResponse(location), 'redirect', url.pathname);
 
     if (url.pathname.startsWith('/api/')) return finalize(await handleApi(call), 'api', url.pathname);
+    if (url.pathname.startsWith('/v1/')) return finalize(await inferenceEndpoint(call), 'api', url.pathname);
     return compressPage(finalize(await serveAsset(call), 'static', url.pathname), request);
   },
 
@@ -331,11 +360,13 @@ export default {
     // Every run frees reviews whose Worker was stopped mid-call and reads again from
     // Stripe the subscriptions whose paid period is ending. The daily run also purges expired rows.
     const reapedLeases = await reapStaleLeases(env.DB, now);
+    const reapedInference = await reapInferenceHolds(env, now);
+    const topupsResynced = apiBillingReady(env) ? await resyncPendingTopups(env, stripeClient(env)).catch(() => 0) : 0;
     const resynced = await resyncEndingSubscriptions(env, ctx, now).catch((error: unknown) => {
       console.error('Subscription resync failed', billingLogFields(error));
       return 0;
     });
     const purged = controller.cron === DAILY_CRON ? await purgeExpired(env, now) : {};
-    console.log('Scheduled cleanup', { cron: controller.cron, reapedLeases, resynced, ...purged });
+    console.log('Scheduled cleanup', { cron: controller.cron, reapedLeases, reapedInference, topupsResynced, resynced, ...purged });
   },
 } satisfies ExportedHandler<Env>;

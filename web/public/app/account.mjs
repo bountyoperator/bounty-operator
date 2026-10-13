@@ -838,11 +838,12 @@ function ensureStyles() {
 }
 
 function openFromHash() {
-  if (location.hash !== '#account') return;
+  if (location.hash !== '#account' && location.hash !== '#account/api') return;
+  const apiTab = location.hash === '#account/api';
   // Stripe's customer portal returns to /#account: show Billing, where the change is.
   const fromStripe = /^https:\/\/([a-z0-9-]+\.)*stripe\.com\//.test(document.referrer);
   history.replaceState(history.state, '', `${location.pathname}${location.search}`);
-  openAccount(fromStripe ? { tab: 'billing' } : {});
+  openAccount(apiTab ? { tab: 'api' } : fromStripe ? { tab: 'billing' } : {});
 }
 
 const ACTIONS = {

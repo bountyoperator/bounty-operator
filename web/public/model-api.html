@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cyber model API with prepaid credit | Bounty Operator</title>
+<meta name="description" content="Hosted cyber models over an OpenAI-compatible API, with prepaid credit, per-key limits, function tools and streaming.">
+<link rel="canonical" href="https://bountyoperator.com/model-api">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#18232d">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Bounty Operator">
+<meta property="og:title" content="Cyber model API with prepaid credit | Bounty Operator">
+<meta property="og:description" content="Hosted cyber models over an OpenAI-compatible API, with prepaid credit, per-key limits, function tools and streaming.">
+<meta property="og:url" content="https://bountyoperator.com/model-api">
+<meta property="og:image" content="https://bountyoperator.com/social-spec-v2.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Bounty Operator. Find the hole in your report before the triager does. Spec, our coral bug mascot, holds a magnifying glass.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:creator" content="@Tradi3_">
+<meta name="twitter:title" content="Cyber model API with prepaid credit | Bounty Operator">
+<meta name="twitter:description" content="Hosted cyber models over an OpenAI-compatible API, with prepaid credit, per-key limits, function tools and streaming.">
+<meta name="twitter:image" content="https://bountyoperator.com/social-spec-v2.png">
+<meta name="twitter:image:alt" content="Bounty Operator. Find the hole in your report before the triager does. Spec, our coral bug mascot, holds a magnifying glass.">
+<link rel="icon" href="/favicon.ico?v=spec-v1" sizes="48x48">
+<link rel="icon" href="/icon.svg?v=spec-v1" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png?v=spec-v1">
+<link rel="manifest" href="/site.webmanifest?v=spec-v1">
+<link rel="preload" href="/fonts/archivo-latin-wdth.woff2" as="font" type="font/woff2" crossorigin>
+<script src="/theme.js"></script>
+<link rel="stylesheet" href="/css/base.css">
+<link rel="stylesheet" href="/css/docs.css">
+<link rel="stylesheet" href="/css/account.css">
+<link rel="modulepreload" href="/app/api.mjs" fetchpriority="low">
+<link rel="modulepreload" href="/app/billing-ui.mjs" fetchpriority="low">
+<link rel="modulepreload" href="/app/events.mjs" fetchpriority="low">
+<link rel="modulepreload" href="/app/passkey.mjs" fetchpriority="low">
+<link rel="modulepreload" href="/app/portal.mjs" fetchpriority="low">
+<link rel="modulepreload" href="/app/ui.mjs" fetchpriority="low">
+<script type="module" src="/app/account.mjs" fetchpriority="low"></script>
+<script type="module" src="/app/model-api.mjs" fetchpriority="low"></script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Bounty Operator","item":"https://bountyoperator.com/"},{"@type":"ListItem","position":2,"name":"Model API","item":"https://bountyoperator.com/model-api"}]}</script>
+</head>
+<body>
+<!--
+THESIS: Spec is a bug with standards. Every claim has to stand up to the code and proof before a report is submitted.
+OWN-WORLD: The film's coral shell, cream paper, charcoal ink and blue work jacket. Archivo carries both film and site; mono is reserved for code and typed evidence. Spec brings the personality; the review stays clear and factual.
+STORY: Meet Spec, see an inflated Critical claim meet the evidence, then open the saved example or review your own report.
+FIRST VIEWPORT: The product promise and review actions beside the original Spec portrait. Below: the narrated film and its actual, clearly labelled invented example.
+FORM: Original clay mascot, a small vector Spec mark, readable report sheets and verdict stamps.
+FINISH: Responsive layout, native video controls, captions, reduced motion and verified source citations. See DESIGN.md and docs/spec-brand.md.
+-->
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="site-header">
+<div class="wrap site-header__inner">
+<a class="brand" href="/"><svg class="brand__mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect width="64" height="64" rx="14" fill="#f6e7cc"/><path d="M23 19 20 9 14 7M40 19 44 8 50 10" fill="none" stroke="#18232d" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 37c0-15 7-22 20-22s20 7 20 22v20H12Z" fill="#f16343"/><path d="M32 16v12" fill="none" stroke="#18232d" stroke-width="2"/><rect x="17" y="29" width="30" height="21" rx="9" fill="#18232d"/><path d="M21 37h10c0 10-10 10-10 0Zm12 0h10c0 10-10 10-10 0Z" fill="#f6e7cc"/><path d="m20 33 10 1m4-1 8-3" fill="none" stroke="#f6e7cc" stroke-width="2.3" stroke-linecap="round"/><circle cx="27" cy="38" r="2.3" fill="#18232d"/><circle cx="39" cy="38" r="2.3" fill="#18232d"/><path d="m12 48 12 4v8H10Zm40 0-12 4v8h14Z" fill="#284b73"/></svg><span class="brand__name">Bounty Operator</span></a>
+<nav class="site-nav" aria-label="Main"><ul><li><a href="/#workspace">Review</a></li><li><a href="/benchmark">Benchmark</a></li><li><a href="/model-api" aria-current="page">Model API</a></li><li><a href="/tools">Tools</a></li><li><a href="/guide">Guide</a></li><li><a href="/pricing">Pricing</a></li></ul></nav>
+<div class="site-header__actions">
+<a class="btn btn--secondary btn--sm" href="/#account">Sign in</a>
+</div>
+</div>
+</header>
+<main id="main" tabindex="-1">
+<article class="docs wrap">
+<header class="page-head page-field">
+
+<h1>Cyber models. Your tools. One API.</h1>
+<p class="lede">Use a hosted security model from your scripts and coding tools. Prepaid credit, individual key limits, and an OpenAI-compatible chat endpoint.</p>
+
+<div class="cluster page-head__actions"><a class="btn btn--primary btn--lg" href="/#account/api"><span class="btn__label">Open API account</span></a><a class="btn btn--secondary btn--lg" href="#quickstart"><span class="btn__label">Read the quickstart</span></a></div>
+</header>
+
+<div class="docs-body">
+<nav class="docs-toc" aria-label="On this page">
+<p class="meta">On this page</p>
+<ul><li><a href="#start">Start with credit, not a subscription</a></li><li><a href="#quickstart">Python quickstart</a></li><li><a href="#reference">Endpoints and parameters</a></li><li><a href="#cost">How requests are charged</a></li><li><a href="#privacy">Your content passes through</a></li><li><a href="#scope">For authorized security work</a></li></ul>
+</nav>
+<div class="docs-content">
+<div class="notice notice--info" role="status" id="model-api-status"><p>Checking model availability…</p></div><div id="model-api-catalog"></div>
+<section class="docs-section" aria-labelledby="start">
+<h2 class="docs-section__title" id="start">Start with credit, not a subscription</h2>
+<div class="prose"><ol><li>Sign in with a passkey and open <strong>Model API</strong> in your account.</li><li>Add US$20, US$50 or US$100 when top-ups are open.</li><li>Create a key with a lifetime spending limit and an expiry. Copy it once.</li><li>Set your tool’s base URL to <code>https://bountyoperator.com/v1</code> and use the model ID shown above.</li></ol><p>API credit and the Operator review subscription are separate purchases. No API subscription or automatic top-up is required.</p></div>
+</section><section class="docs-section" aria-labelledby="quickstart">
+<h2 class="docs-section__title" id="quickstart">Python quickstart</h2>
+<div class="prose"><p>Use the OpenAI Python client. Keep your key in an environment variable, outside source control.</p><figure class="code"><figcaption class="code__bar"><span class="code__name">Terminal</span><button class="code__copy" type="button" data-copy><span class="icon icon--copy" aria-hidden="true"></span><span data-copy-label>Copy</span></button></figcaption><pre class="code__pre" tabindex="0" role="region" aria-label="Source: Terminal"><code><span class="code__line">python -m pip install openai
+</span></code></pre></figure><figure class="code"><figcaption class="code__bar"><span class="code__name">Python</span><button class="code__copy" type="button" data-copy><span class="icon icon--copy" aria-hidden="true"></span><span data-copy-label>Copy</span></button></figcaption><pre class="code__pre" tabindex="0" role="region" aria-label="Source: Python"><code><span class="code__line">from openai import OpenAI
+</span><span class="code__line">import os
+</span><span class="code__line">
+</span><span class="code__line">client = OpenAI(
+</span><span class="code__line">    api_key=os.environ[&quot;BOUNTY_OPERATOR_API_KEY&quot;],
+</span><span class="code__line">    base_url=&quot;https://bountyoperator.com/v1&quot;,
+</span><span class="code__line">    timeout=600.0,
+</span><span class="code__line">)
+</span><span class="code__line">
+</span><span class="code__line">for chunk in client.chat.completions.create(
+</span><span class="code__line">    model=&quot;cyber-qwen-27b-awq&quot;,
+</span><span class="code__line">    messages=[{&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: &quot;Review this authorized test case...&quot;}],
+</span><span class="code__line">    max_tokens=2048,
+</span><span class="code__line">    stream=True,
+</span><span class="code__line">    stream_options={&quot;include_usage&quot;: True},
+</span><span class="code__line">):
+</span><span class="code__line">    if chunk.choices:
+</span><span class="code__line">        print(chunk.choices[0].delta.content or &quot;&quot;, end=&quot;&quot;)
+</span><span class="code__line">    if chunk.usage:
+</span><span class="code__line">        print(&quot;\nUsage:&quot;, chunk.usage)
+</span></code></pre></figure><p>Clients must support the Chat Completions API. Anthropic’s Messages API, OpenAI Responses, images, audio and embeddings are not supported by this endpoint.</p></div>
+</section><section class="docs-section" aria-labelledby="reference">
+<h2 class="docs-section__title" id="reference">Endpoints and parameters</h2>
+<div class="prose"><div class="table-wrap" tabindex="0" role="region" aria-label="Model API endpoints"><table class="table"><thead><tr><th scope="col">Method</th><th scope="col">Path</th><th scope="col">Returns</th></tr></thead><tbody><tr><th scope="row">GET</th><td>/v1/models</td><td>Available models, limits and rates</td></tr><tr><th scope="row">POST</th><td>/v1/chat/completions</td><td>A response or an SSE stream; supports function tools</td></tr><tr><th scope="row">GET</th><td>/v1/usage</td><td>Your available wallet and this key’s spending limit</td></tr></tbody></table></div><p>Authenticate with <code>Authorization: Bearer YOUR_KEY</code>. Chat requests accept text messages, <code>tools</code>, <code>tool_choice</code>, <code>parallel_tool_calls</code>, <code>response_format</code>, <code>temperature</code>, <code>top_p</code>, <code>top_k</code>, penalties, <code>seed</code> and <code>stop</code>. Set either <code>max_tokens</code> or <code>max_completion_tokens</code>. Only one completion per request is supported.</p><p>For this Qwen model, <code>extra_body={"chat_template_kwargs": {"enable_thinking": False}}</code> disables thinking in the Python client. Reasoning tokens count as output tokens.</p><p>Requests are limited to 256 messages, 32 tools and 256 KiB of JSON. Each account can run two requests at once. The pilot serves four requests at once across accounts. When capacity is full, a 429 response includes a retry delay.</p><p>Set <code>stream_options.include_usage</code> to receive token counts at the end of a stream. An interrupted stream may end with a coded error. Use the request ID to find its charge in your account.</p><p>An optional <code>Idempotency-Key</code> prevents the same key from starting twice for 30 days. A repeat returns 409; responses are not stored for replay. Use a new value only when you intend to start a new generation.</p></div>
+</section><section class="docs-section" aria-labelledby="cost">
+<h2 class="docs-section__title" id="cost">How requests are charged</h2>
+<div class="prose"><p>The live catalog above and <code>/v1/models</code> show the current input rate, output rate and minimum request charge. The charge is the greater of the token cost or that minimum whenever usage has been confirmed, including an interrupted request. A request with no confirmed usage is not charged.</p><p>Before generation, enough credit is reserved for the model’s full input context and your requested output limit. The final charge uses the model’s token counters. The unused reservation is released when the request ends. Keep enough available credit for the reservation as well as the expected charge.</p><p>Keys stop spending at their lifetime limit. A refund or chargeback removes the corresponding credit and may suspend further requests until the balance is settled. Unused credit does not expire; see the <a href="/terms#api-credit">API credit terms</a> for refunds.</p><p>The first request after idle can take longer while the worker starts. A timeout is not a completed answer. The gateway allows up to three minutes for startup and five minutes for generation. Set a ten-minute client timeout and respect retry headers.</p></div>
+</section><section class="docs-section" aria-labelledby="privacy">
+<h2 class="docs-section__title" id="privacy">Your content passes through</h2>
+<div class="prose"><p>Requests pass through Cloudflare to our vLLM deployment on Runpod. Prompt and response logging is disabled. We do not save prompts or responses in our application database. Cross-request prefix caching is disabled.</p><p>We retain API key hashes, limits, token counts and billing records. Recent request metadata is deleted after 30 days. Infrastructure providers process traffic under their own policies. Read the <a href="/privacy#model-api">full data handling details</a>.</p></div>
+</section><section class="docs-section" aria-labelledby="scope">
+<h2 class="docs-section__title" id="scope">For authorized security work</h2>
+<div class="prose"><p>The available model is a community fine-tune; its source, exact revision, quantization and license are shown in the catalog. Passing our compatibility checks is not a security benchmark or a promise that its findings are correct. Check scope, evidence and conclusions yourself.</p><p>Use the service only on code, data and systems you are authorized to assess. The API generates text and tool calls; your client controls whether a tool executes.</p></div>
+</section>
+</div>
+</div>
+
+</article>
+</main>
+<footer class="site-footer theme-dark">
+<div class="wrap site-footer__grid">
+<div class="site-footer__brand">
+<a class="brand" href="/"><svg class="brand__mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect width="64" height="64" rx="14" fill="#f6e7cc"/><path d="M23 19 20 9 14 7M40 19 44 8 50 10" fill="none" stroke="#18232d" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 37c0-15 7-22 20-22s20 7 20 22v20H12Z" fill="#f16343"/><path d="M32 16v12" fill="none" stroke="#18232d" stroke-width="2"/><rect x="17" y="29" width="30" height="21" rx="9" fill="#18232d"/><path d="M21 37h10c0 10-10 10-10 0Zm12 0h10c0 10-10 10-10 0Z" fill="#f6e7cc"/><path d="m20 33 10 1m4-1 8-3" fill="none" stroke="#f6e7cc" stroke-width="2.3" stroke-linecap="round"/><circle cx="27" cy="38" r="2.3" fill="#18232d"/><circle cx="39" cy="38" r="2.3" fill="#18232d"/><path d="m12 48 12 4v8H10Zm40 0-12 4v8h14Z" fill="#284b73"/></svg><span class="brand__name">Bounty Operator</span></a>
+<p class="site-footer__mascot">A bug with standards.</p>
+<p class="site-footer__promise">Find the hole in your report before the triager does.</p>
+<p class="site-footer__cta"><a class="btn btn--primary" href="/?profile=report#workspace"><span class="btn__label">Review my report</span></a></p>
+</div>
+<nav class="site-footer__col" aria-label="Product"><h2 class="site-footer__title">Product</h2><ul><li><a href="/#workspace">Review a report</a></li><li><a href="/benchmark">Benchmark</a></li><li><a href="/model-api">Model API</a></li><li><a href="/tools">Free tools</a></li><li><a href="/pricing">Pricing</a></li><li><a href="/#account">Account</a></li></ul></nav>
+<nav class="site-footer__col" aria-label="Resources"><h2 class="site-footer__title">Resources</h2><ul><li><a href="/guide">Report guide</a></li><li><a href="/mcp">MCP setup</a></li><li><a href="/method">Review method</a></li><li><a href="/templates">Report templates</a></li><li><a href="/changelog">Changelog</a></li><li><a href="/support">Help and feedback</a></li><li><a href="https://github.com/bountyoperator/bounty-operator" target="_blank" rel="noopener noreferrer">Source<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></li></ul></nav>
+<nav class="site-footer__col" aria-label="Legal"><h2 class="site-footer__title">Legal</h2><ul><li><a href="/privacy">Privacy</a></li><li><a href="/terms">Terms</a></li><li><a href="/security">Security</a></li><li><a href="/licenses">Licences</a></li><li><a href="mailto:security@bountyoperator.com">Report a vulnerability</a></li></ul></nav>
+</div>
+<div class="wrap">
+<div class="site-footer__base">
+<p>Built by <a href="https://immunefi.com/profile/Tradi3/" target="_blank" rel="noopener noreferrer">Tradi3</a></p>
+<p><button class="motion-toggle" type="button" data-motion-toggle hidden>Pause motion</button></p>
+<p><a href="mailto:support@bountyoperator.com">support@bountyoperator.com</a></p>
+</div>
+</div>
+</footer>
+<dialog class="dialog dialog--sm account-dialog" id="account-dialog" aria-labelledby="account-dialog-title" closedby="any"><header class="dialog__head"><h2 class="dialog__title" id="account-dialog-title">Sign in</h2><button class="dialog__close" type="button" data-close-dialog aria-label="Close"><span class="icon icon--x" aria-hidden="true"></span></button></header><div class="dialog__body"></div></dialog>
+<dialog class="dialog dialog--lg portal" id="portal-dialog" aria-labelledby="portal-dialog-title" closedby="any"><header class="dialog__head"><h2 class="dialog__title" id="portal-dialog-title">Account</h2><button class="dialog__close" type="button" data-close-dialog aria-label="Close"><span class="icon icon--x" aria-hidden="true"></span></button></header><div class="dialog__body"></div></dialog>
+<dialog class="dialog dialog--sm reauth-dialog" id="reauth-dialog" aria-labelledby="reauth-dialog-title" closedby="any"><header class="dialog__head"><h2 class="dialog__title" id="reauth-dialog-title">Confirm it&#39;s you</h2><button class="dialog__close" type="button" data-close-dialog aria-label="Close"><span class="icon icon--x" aria-hidden="true"></span></button></header><div class="dialog__body"></div></dialog>
+</body>
+</html>

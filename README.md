@@ -39,6 +39,16 @@ command line.
 Open [bountyoperator.com](https://bountyoperator.com/) and run the built-in
 example. No account, no API key.
 
+### Hosted model API
+
+Use the [cyber-model API pilot](https://bountyoperator.com/model-api) from
+Chat Completions clients at `https://bountyoperator.com/v1`. Sign in, add
+prepaid credit, and create an expiring key with its own spending limit.
+The live catalog lists the model, exact revision, rates and limits. API credit
+is a separate purchase from the Operator review subscription.
+
+Deployment and payment verification: [hosted API operations](docs/hosted-model-api.md).
+
 ### MCP
 
 Run reviews from Claude Code, Codex, Cursor or any MCP client. The remote

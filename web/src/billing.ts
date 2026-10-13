@@ -3,6 +3,7 @@
 // payload, so a replayed or forged-looking event cannot grant anything.
 
 import Stripe from 'stripe';
+import { applyApiPaymentEvent, localStripeTest } from './api-topups.ts';
 
 import { seconds } from './env.ts';
 import type { Env } from './env.ts';
@@ -38,6 +39,10 @@ export function billingReady(env: Env): boolean {
   return env.BILLING_MODE === 'live' && liveKey && Boolean(env.STRIPE_PRICE_ID && env.STRIPE_WEBHOOK_SECRET);
 }
 
+export function apiBillingReady(env: Env): boolean {
+  return billingReady(env) || (localStripeTest(env) && Boolean(env.STRIPE_WEBHOOK_SECRET));
+}
+
 function unavailable(message = 'Subscriptions are not open right now. The free plan works as usual.'): ApiError {
   return new ApiError(message, 503, 'billing_unavailable');
 }
@@ -46,8 +51,8 @@ function alreadySubscribed(): ApiError {
   return new ApiError('This account already has a subscription. Open Manage subscription.', 409, 'billing_exists');
 }
 
-function stripeClient(env: Env): Stripe {
-  if (!billingReady(env)) throw unavailable();
+export function stripeClient(env: Env): Stripe {
+  if (!apiBillingReady(env)) throw unavailable();
   return new Stripe(env.STRIPE_SECRET_KEY!, {
     httpClient: Stripe.createFetchHttpClient(),
     maxNetworkRetries: 2,
@@ -369,7 +374,7 @@ async function verifiedClient(env: Env): Promise<Stripe> {
   return api;
 }
 
-async function customerFor(env: Env, api: Stripe, accountId: string): Promise<string> {
+export async function customerFor(env: Env, api: Stripe, accountId: string): Promise<string> {
   const account = await env.DB.prepare('SELECT stripe_customer FROM accounts WHERE id = ?').bind(accountId).first<{ stripe_customer: string | null }>();
   if (!account) throw new ApiError('Sign in to continue.', 401, 'signin');
   if (account.stripe_customer) return account.stripe_customer;
@@ -500,6 +505,7 @@ async function syncCustomerSubscriptions(env: Env, ctx: ExecutionContext, api: S
 }
 
 async function applyEvent(env: Env, ctx: ExecutionContext, api: Stripe, event: Stripe.Event): Promise<void> {
+  if (await applyApiPaymentEvent(env, api, event)) return;
   if (event.type.startsWith('customer.subscription.')) {
     await syncSubscription(env, ctx, (event.data.object as Stripe.Subscription).id);
     return;
@@ -535,7 +541,7 @@ async function applyEvent(env: Env, ctx: ExecutionContext, api: Stripe, event: S
 export async function handleWebhook(env: Env, ctx: ExecutionContext, request: Request, body: string): Promise<Response> {
   const rejected = new Response('Invalid signature', { status: 400 });
   const signature = request.headers.get('stripe-signature');
-  if (!signature || !billingReady(env)) return rejected;
+  if (!signature || (!billingReady(env) && !localStripeTest(env))) return rejected;
 
   const api = stripeClient(env);
   let event: Stripe.Event;
@@ -544,7 +550,7 @@ export async function handleWebhook(env: Env, ctx: ExecutionContext, request: Re
   } catch {
     return rejected;
   }
-  if (!event.livemode) return new Response('Wrong environment', { status: 400 });
+  if (event.livemode !== !localStripeTest(env)) return new Response('Wrong environment', { status: 400 });
 
   const seen = await env.DB.prepare('SELECT 1 FROM stripe_events WHERE id = ?').bind(event.id).first();
   if (seen) return new Response('OK');

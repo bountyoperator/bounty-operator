@@ -5,3 +5,4 @@
 *.ico binary
 *.tgz binary
 *.gz binary
+web/migrations/*.sql text eol=lf

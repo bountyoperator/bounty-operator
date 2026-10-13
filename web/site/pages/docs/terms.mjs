@@ -7,10 +7,11 @@
 import { LIMITS } from '../../../public/review-core.mjs';
 import { html, inline, table } from '../../components.mjs';
 import { breadcrumbsLd } from '../../layout.mjs';
-import { DOCS_STYLES, UPDATED, docPage, facts, supportLink, time } from './_shared.mjs';
+import { DOCS_STYLES, docPage, facts, supportLink, time } from './_shared.mjs';
 import { FREE_LINE, NOT_COUNTED, OPERATOR_LINE } from '../../plans.mjs';
 
 const PATH = '/terms';
+const UPDATED = '2026-10-13';
 
 const kb = (bytes) => `${bytes / 1000} KB`;
 const thousands = (value) => value.toLocaleString('en-US');
@@ -73,6 +74,8 @@ const accounts = html`
 <p>Keep your recovery code private. Anyone who has it can sign in. Using it replaces it and signs out every session and connection token.</p>
 <p>We suspend accounts used for abuse.</p>`;
 
+const apiCredit = html`<p>The Model API is a separate prepaid service. You may add US$20, US$50 or US$100 through Stripe. There is no automatic top-up or API subscription. The Operator review subscription does not include API credit.</p><p>The model catalog shows the rates and minimum request charge before use. Input and output tokens are metered by the model server; output includes reasoning. A request with confirmed usage is charged at the greater of its token cost or the minimum, including when your client cancels a stream. Requests with no confirmed usage are not charged. A temporary reservation is released after settlement or, if processing is interrupted, after the reservation expires.</p><p>Credit does not expire, cannot be transferred to another account and is used only for this API. Contact ${supportLink()} to request a refund of unused credit to the original payment method. We refund the unused amount; credit already consumed is not refunded merely because a model answer was unhelpful. Service failures and statutory consumer rights are handled separately and are not excluded by this term.</p><p>Refunds and chargebacks remove the related credit. If that credit has already been spent, further requests stop until the resulting balance is settled. Set a limit and expiry for each key and revoke keys you no longer control.</p><p>Use the API only for authorized activity. Do not use it for unauthorized access, credential theft or deploying malware. The model can make mistakes and produces no guarantee of security, eligibility or bounty payment. Your client, not this API, executes any generated tool calls.</p><p>Model availability and capacity vary. An idle model can take time to start. Rates in effect when a request starts determine its charge; check the catalog before submitting requests. Your statutory consumer rights are unaffected.</p>`;
+
 const rest = html`
 <p>The <a href="/privacy">privacy policy</a> lists what we store. The <a href="/security">security page</a> shows how it is protected.</p>
 <p>The three core profiles, the free tools, the command-line kit and the MCP server are open source under the MIT licence. Using them needs no subscription. The gauntlet stages and the panel cross-examination run on the hosted service. The method of a hosted profile is not published, and the open-source licence does not cover it. The licence is on the <a href="/licenses">licences page</a>.</p>
@@ -92,6 +95,7 @@ const body = docPage({
     { id: 'material', title: 'Your material', body: material },
     { id: 'provider', title: 'Your AI provider', body: provider },
     { id: 'billing', title: 'Subscription, cancellation and refunds', label: 'Billing and refunds', body: billing },
+    { id: 'api-credit', title: 'Model API credit and use', body: apiCredit },
     { id: 'accounts', title: 'Accounts', body: accounts },
     { id: 'more', title: 'Privacy, source and changes', label: 'Privacy and changes', body: rest },
   ],

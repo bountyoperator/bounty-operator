@@ -6,12 +6,14 @@ import { LIMITS } from '../public/review-core.mjs';
 
 import { clearSessionCookie, currentSession } from './auth.ts';
 import type { Session } from './auth.ts';
-import { billingReady, hasLiveSubscription, mayStillBill } from './billing.ts';
+import { apiBillingReady, billingReady, hasLiveSubscription, mayStillBill } from './billing.ts';
 import { PRICE, VERSION, seconds } from './env.ts';
 import type { Call, Env } from './env.ts';
 import { currentProfileId } from './hosted.ts';
 import { ApiError, json } from './http.ts';
 import { usage } from './quota.mjs';
+import { apiCreditData, hasApiLiability } from './api-credits.ts';
+import { inferenceModels, inferenceReady, publicModel } from './inference.ts';
 
 const HISTORY_ROWS = 30;
 
@@ -70,6 +72,7 @@ export async function portalData(env: Env, accountId: string): Promise<Record<st
     reviews: reviews.results.map((row) => (typeof row.profile === 'string' ? { ...row, profile: currentProfileId(row.profile) } : row)),
     usage: currentUsage,
     profiles: PROFILES.map((profile) => ({ id: profile.id, name: profile.name })),
+    api: { ...await apiCreditData(env, accountId), enabled: inferenceReady(env), topups_enabled: env.API_TOPUPS_ENABLED === 'true' && inferenceReady(env) && apiBillingReady(env), models: inferenceModels(env).map(publicModel) },
   };
 }
 
@@ -89,6 +92,7 @@ export async function exportAccount({ env }: Call, session: Session): Promise<Re
   ]);
   return json({
     ...panel,
+    api: await apiCreditData(env, accountId, true),
     reviews: reviews.results.map((row) => (typeof row.profile === 'string' ? { ...row, profile: currentProfileId(row.profile) } : row)),
     billing: { stripeCustomer: account?.stripe_customer ?? null, subscriptions: subscriptions.results },
     exportedAt: new Date().toISOString(),
@@ -97,6 +101,9 @@ export async function exportAccount({ env }: Call, session: Session): Promise<Re
 }
 
 export async function deleteAccount({ env }: Call, session: Session): Promise<Response> {
+  if (await hasApiLiability(env, session.account_id)) {
+    throw new ApiError('API credit, a running request or a pending payment remains. Contact support to settle the balance before deleting your account.', 409, 'api_balance_exists');
+  }
   // Deleting the account while Stripe can still bill would leave a
   // subscription nobody is able to cancel.
   if (await mayStillBill(env, session.account_id)) {

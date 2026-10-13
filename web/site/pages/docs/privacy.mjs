@@ -10,7 +10,7 @@ import { DOCS_STYLES, docPage, facts, supportLink, time } from './_shared.mjs';
 
 const PATH = '/privacy';
 /** The day this page's own text last changed. */
-const PRIVACY_UPDATED = '2026-10-10';
+const PRIVACY_UPDATED = '2026-10-13';
 
 const glance = facts(
   [
@@ -109,9 +109,11 @@ const payments = html`
 <p>Stripe collects your email, card and billing details at checkout. Card details never reach our application. We send Stripe your account identifier.</p>
 <p>Our database keeps the Stripe customer and subscription IDs, the subscription status, the paid-until time, your receipt email, and webhook event IDs for 30 days. Stripe keeps its own financial records.</p>`;
 
+const modelApi = html`<p>Model API requests pass through Cloudflare to our vLLM deployment on Runpod. The prompt and response stay in memory while the request is processed. Request and response content logging and cross-request prefix caching are disabled. We do not use your content to train models.</p><p>We store hashes of API keys, their visible prefixes and labels, expiry and revocation times, spending limits and aggregate spending. We store each request’s model ID, key ID, time, status, input/output token counts, reserved credit and final charge. Request metadata is deleted after 30 days. Prompts, tool arguments and model responses are not written to our database.</p><p>We keep the prepaid credit ledger and Stripe checkout/payment references for accounting and disputes. Deleting an account removes its link from those records, but does not erase the financial records. Card details stay with Stripe. Cloudflare and Runpod process traffic and infrastructure metadata under their own policies; deployments may run outside your country.</p>`;
+
 const deletion = html`
-<p>Download your account data or delete your account from the account panel. Cancel an active subscription first.</p>
-<p>Deleting removes the account, its passkeys, sessions, connection tokens, usage rows and billing references from our database. It cannot be undone.</p>
+<p>Download your account data or delete your account from the account panel. Cancel an active subscription and settle any API credit, outstanding balance, running request or pending payment first. Contact support to refund unused credit.</p>
+<p>Deleting removes the account, its passkeys, sessions, connection tokens, API keys, request metadata and subscription references from our database. Prepaid financial records remain with the account link removed. It cannot be undone.</p>
 <p>Questions: ${supportLink()}.</p>`;
 
 const changes = html`<p>We update this page when what we process changes. The date at the top is the current version. The <a href="/security">security page</a> shows how the stored data is protected.</p>`;
@@ -132,6 +134,7 @@ const body = docPage({
     { id: 'counters', title: 'Page and funnel counters', body: counters },
     { id: 'third-parties', title: 'Cloudflare, GitHub, OpenRouter and MCP', label: 'Other services', body: thirdParties },
     { id: 'payments', title: 'Payments', body: payments },
+    { id: 'model-api', title: 'Model API and prepaid credit', body: modelApi },
     { id: 'deletion', title: 'Export and deletion', body: deletion },
     { id: 'changes', title: 'Changes', body: changes },
   ],

@@ -69,6 +69,7 @@ export const TABS = Object.freeze([
   { id: 'overview', label: 'Overview', icon: 'user' },
   { id: 'reviews', label: 'Reviews', icon: 'clock' },
   { id: 'connections', label: 'Connections', icon: 'terminal' },
+  { id: 'api', label: 'Model API', icon: 'terminal' },
   { id: 'security', label: 'Security', icon: 'shield' },
   { id: 'billing', label: 'Billing', icon: 'file' },
 ]);
@@ -362,6 +363,9 @@ let loadError = null;
 let loads = 0;
 /** The connection token just created: memory only. */
 let secret = null;
+let apiSecret = null;
+let apiCheckoutRequest = null;
+let apiReturnChecked = false;
 let secretClient = 'claude-code';
 /** The recovery code just issued: memory only. */
 let freshRecovery = '';
@@ -398,6 +402,8 @@ function forgetAccount() {
   data = null;
   loadError = null;
   secret = null;
+  apiSecret = null;
+  apiCheckoutRequest = null;
   freshRecovery = '';
   draftLabel = '';
   confirming = '';
@@ -585,6 +591,16 @@ async function load() {
   loads += 1;
   const ticket = loads;
   try {
+    const params = new URLSearchParams(globalThis.location?.search ?? '');
+    if (!apiReturnChecked && params.get('api_checkout') === 'complete' && params.get('session_id')) {
+      apiReturnChecked = true;
+      await request('/api/inference/reconcile', { body: { sessionId: params.get('session_id') } });
+      params.delete('api_checkout');
+      params.delete('session_id');
+      const query = params.toString();
+      history.replaceState(history.state, '', `${location.pathname}${query ? `?${query}` : ''}${location.hash}`);
+      showFlash({ tone: 'info', title: 'Payment checked. Credit appears below once Stripe confirms settlement.' }, 'api');
+    }
     const answer = await request('/api/portal');
     if (ticket !== loads) return;
     data = answer;
@@ -1169,7 +1185,72 @@ function renderBilling() {
 // Rendering
 // ---------------------------------------------------------------------------
 
-const RENDERERS = { overview: renderOverview, reviews: renderReviews, connections: renderConnections, security: renderSecurity, billing: renderBilling };
+const usd = (micro) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 4 }).format(Number(micro ?? 0) / 1000000);
+
+async function openApiTopup(control, amount) {
+  if (!apiCheckoutRequest || apiCheckoutRequest.amount !== amount) apiCheckoutRequest = { amount, id: crypto.randomUUID() };
+  await act(control, async () => {
+    const result = await request('/api/inference/topup', { body: { amount_usd: amount, request_id: apiCheckoutRequest.id } });
+    const target = new URL(result.url);
+    if (target.protocol !== 'https:' || target.hostname !== 'checkout.stripe.com') throw new Error('Invalid checkout destination');
+    location.assign(target.href);
+  }, { busy: 'Opening Stripe' });
+  render();
+}
+
+function apiKeyForm() {
+  if (apiSecret) return el('div', { class: 'secret', id: 'api-key-secret' },
+    el('p', { text: 'Copy this API key now. It is shown only once.' }),
+    codeBlock({ name: 'API key', code: apiSecret.key, wrap: true, onCopy: () => copyText(apiSecret.key) }),
+    button({ label: 'Done, I saved it', variant: 'secondary', id: 'api-key-done', onClick: () => { apiSecret = null; render(); } }));
+  const label = el('input', { class: 'input', id: 'api-key-label', maxlength: '60', required: true, placeholder: 'My coding agent', autocomplete: 'off' });
+  const budget = el('input', { class: 'input', id: 'api-key-budget', type: 'number', value: '20', min: '1', max: '1000', step: '1', required: true });
+  const expiry = el('select', { class: 'input', id: 'api-key-expiry' }, [7, 30, 90, 365].map((days) => el('option', { value: String(days), selected: days === 90, text: `${days} days` })));
+  const submit = button({ label: 'Create API key', variant: 'primary', id: 'api-key-create', type: 'submit' });
+  return el('form', { class: 'stack', onSubmit: async (event) => {
+    event.preventDefault();
+    const result = await act(submit, () => withReauth(() => request('/api/inference/keys/create', { body: { label: label.value, budget_usd: Number(budget.value), expires_days: Number(expiry.value) } })), { busy: 'Creating key' });
+    if (result) { apiSecret = result; await load(); }
+    render();
+  } },
+  el('div', { class: 'field' }, el('label', { class: 'label', for: 'api-key-label', text: 'Key name' }), label),
+  el('div', { class: 'field' }, el('label', { class: 'label', for: 'api-key-budget', text: 'Lifetime spending limit (USD)' }), budget,
+    el('p', { class: 'help', text: 'This caps what the key can spend. It does not buy credit or reset each month.' })),
+  el('div', { class: 'field' }, el('label', { class: 'label', for: 'api-key-expiry', text: 'Expires after' }), expiry), submit);
+}
+
+function renderApi() {
+  if (!data) return [skeleton()];
+  const api = data.api ?? {};
+  const keys = api.keys ?? [];
+  const models = api.models ?? [];
+  return [
+    section('Prepaid API credit', 'One balance for the models below. Add credit when you need it; there is no API subscription or automatic top-up.',
+      el('dl', { class: 'stats' }, stat('Available', { value: usd(api.available_micro), note: 'USD available for new requests' }), stat('Reserved', { value: usd(api.reserved_micro), note: 'Unused credit returns when a request ends' })),
+      el('div', { class: 'portal-row__actions' }, [20, 50, 100].map((amount) => button({ label: `Add $${amount}`, variant: 'secondary', disabled: !api.topups_enabled, onClick: (event) => openApiTopup(event.currentTarget, amount) })),
+        button({ label: 'Refresh balance', variant: 'quiet', onClick: () => load() })),
+      !api.topups_enabled ? el('p', { class: 'help', text: 'Top-ups are closed while the model service is being verified.' }) : null,
+      Number(api.balance_micro) < 0 ? el('p', { class: 'help', text: 'A payment reversal left an outstanding balance. Contact support before making more requests.' }) : null),
+    section('Models and rates', api.enabled ? 'Text, streaming and function tools through the OpenAI chat-completions format.' : 'Model inference is not available yet.',
+      models.length ? el('ul', { class: 'portal-list' }, models.map((model) => row({ title: model.name, meta: `${model.id} · ${model.context_length.toLocaleString()} context · $${model.pricing.input_per_million}/million input tokens · $${model.pricing.output_per_million}/million output tokens · ${usd(model.pricing.minimum_request * 1000000)} minimum per request` }))) : empty('Models will appear here after verification.'),
+      el('p', { class: 'help', text: 'Output tokens include reasoning. Interrupted streams are charged only for confirmed usage. A temporary reservation covers the model’s maximum input and your requested output limit.' }),
+      el('a', { class: 'link', href: '/model-api', text: 'API reference and examples' })),
+    section('API keys', 'Keys spend this balance up to their individual limit. They cannot buy credit or manage your account.', apiKeyForm()),
+    section('Your keys', null, keys.length ? el('ul', { class: 'portal-list' }, keys.map((key) => row({
+      title: key.label,
+      meta: `${key.prefix}… · ${usd(key.spent_micro)} of ${usd(key.budget_micro)} · ${key.revoked_at ? 'Revoked' : `Expires ${formatDate(key.expires)}`}`,
+      actions: key.revoked_at ? [] : [button({ label: 'Revoke', variant: 'quiet', size: 'sm', onClick: async (event) => {
+        const result = await act(event.currentTarget, () => request('/api/inference/keys/revoke', { body: { id: key.id } }), { success: 'API key revoked.' });
+        if (result) { if (apiSecret?.id === key.id) apiSecret = null; await load(); }
+        render();
+      } })],
+    }))) : empty('No API keys yet.')),
+    section('Recent usage', 'Request metadata only. Prompts and responses are not stored.', (api.requests ?? []).length ? el('ul', { class: 'portal-list' }, api.requests.map((entry) => row({ title: `${entry.model} · ${usd(entry.charge_micro)}`, meta: `${formatDate(entry.created_at, { time: true })} · ${entry.status} · ${entry.input_tokens} input / ${entry.output_tokens} output tokens` }))) : empty('No API requests yet.')),
+    section('Credit history', null, (api.ledger ?? []).length ? el('ul', { class: 'portal-list' }, api.ledger.map((entry) => row({ title: `${entry.kind === 'topup' ? 'Credit added' : entry.kind === 'usage' ? 'Model usage' : 'Payment adjustment'} · ${usd(entry.amount_micro)}`, meta: `${formatDate(entry.created_at, { time: true })} · ${entry.reference}` }))) : empty('No credit transactions yet.')),
+  ];
+}
+
+const RENDERERS = { overview: renderOverview, reviews: renderReviews, connections: renderConnections, api: renderApi, security: renderSecurity, billing: renderBilling };
 
 function renderStatus() {
   if (!statusNode) return;
