@@ -7,9 +7,11 @@
 - Added a selectable catalog of security specialists and uncensored models,
   with per-model prices and verified chat, streaming and tool capabilities.
 - Harnesses can discover models through `/v1/models` and retrieve individual
-  model details. The sales page has searchable cards; setup is at `/docs/model-api`.
+  model details. The sales page has searchable model rows with comparable prices;
+  connection details expand on request, and setup is at `/docs/model-api`.
 - Added model-specific reasoning controls and a longer cold-start allowance,
   with credit reservations that remain valid for the full request window.
+  Health checks use the full allowance without retrying generation.
 
 ### Hosted API pilot — 2026-10-13
 

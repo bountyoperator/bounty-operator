@@ -1,38 +1,43 @@
-/* The model list uses the site's existing spacing, type and colour tokens. */
-.catalog-filters {
-  display: grid;
-  gap: var(--sp-16);
-  margin-block: var(--sp-24) var(--sp-12);
-}
-
-.catalog-grid {
-  display: grid;
-  gap: var(--sp-16);
-  margin-top: var(--sp-12);
-}
-
-.catalog-card {
-  display: grid;
-  align-content: start;
-  gap: var(--sp-12);
-  min-width: 0;
-  padding: var(--sp-24);
-  border: 1px solid var(--line);
-  border-radius: var(--r-8, 8px);
-}
-
-.catalog-card h3 {
-  font-size: var(--fs-20);
-  line-height: 1.3;
-}
-
+/* A compact storefront; technical connection details open on request. */
+.api-guide-link { padding: var(--sp-12); font-size: var(--fs-14); }
+.model-api-page .api-highlights { display: flex; flex-wrap: wrap; gap: var(--sp-12) var(--sp-24); list-style: none; padding: 0 0 var(--sp-32); color: var(--muted); font-size: var(--fs-14); }
+.api-highlights li::before { content: '✓'; margin-right: var(--sp-8); color: var(--accent); }
+.api-content > * + * { margin-top: var(--sp-48); }
+.catalog-heading { display: flex; align-items: baseline; justify-content: space-between; gap: var(--sp-16); }
+.catalog-heading h2 { font-size: var(--fs-28); }
+.catalog-status { margin-top: var(--sp-8); }
+.catalog-filters { display: grid; gap: var(--sp-16); margin-block: var(--sp-24) var(--sp-12); }
+.catalog-count { margin-bottom: var(--sp-12); }
+.catalog-grid { border-top: 1px solid var(--line); }
+.catalog-card { min-width: 0; padding-block: var(--sp-24); border-bottom: 1px solid var(--line); }
+.catalog-card__main { display: grid; gap: var(--sp-24); }
+.catalog-card__about { min-width: 0; }
+.catalog-card h3 { font-size: var(--fs-22); line-height: 1.3; }
+.catalog-card__about > p { max-width: 56ch; margin-top: var(--sp-8); color: var(--muted); font-size: var(--fs-14); }
+.catalog-tags { display: flex; flex-wrap: wrap; gap: var(--sp-8); margin-top: var(--sp-12); padding: 0; list-style: none; }
+.catalog-tags li { padding: 2px var(--sp-8); border: 1px solid var(--line); border-radius: 4px; font-size: var(--fs-12); color: var(--muted); }
+.catalog-rates { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-12); margin: 0; }
+.catalog-rates dt { color: var(--muted); font-size: var(--fs-12); }
+.catalog-rates dd { display: grid; margin: var(--sp-4) 0 0; gap: var(--sp-4); }
+.catalog-rates strong { font-family: var(--font-display); font-size: var(--fs-28); font-weight: 650; font-variant-numeric: tabular-nums; line-height: 1.2; }
+.catalog-rates dd span { color: var(--muted); font-size: var(--fs-12); }
 .catalog-card code { overflow-wrap: anywhere; }
-.catalog-card > .btn { justify-self: start; }
-.catalog-card__price { font-weight: 600; }
-.catalog-card > [role="status"]:empty { display: none; }
-.catalog-card details > p { margin-top: var(--sp-12); }
-
+.catalog-card .catalog-details { margin-top: var(--sp-16); padding: 0; border: 0; background: transparent; }
+.catalog-details summary { width: fit-content; min-height: 2.75rem; align-content: center; font-size: var(--fs-12); color: var(--muted); }
+.catalog-details > p { margin-top: var(--sp-12); }
+.catalog-connect { display: grid; gap: var(--sp-24); padding-block: var(--sp-16); }
+.catalog-connect > div { display: grid; justify-items: start; gap: var(--sp-8); min-width: 0; }
+.catalog-connect code { font-size: var(--fs-14); }
+.catalog-details > [role="status"]:empty { display: none; }
+.catalog-footnote { margin-top: var(--sp-24); max-width: 80ch; }
+.api-start, .api-footer { display: grid; gap: var(--sp-32); }
+.api-start h2 { font-size: clamp(2rem, 4vw, 3.5rem); line-height: 1.08; }
+.api-start .lede { margin-block: var(--sp-16) var(--sp-24); }
+.api-footer h2, .api-footer h3 { font-size: var(--fs-22); }
+.api-footer p { margin-block: var(--sp-12); max-width: 48ch; color: var(--muted); }
+.api-footer a { font-size: var(--fs-14); }
 @media (min-width: 48em) {
   .catalog-filters { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
-  .catalog-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .catalog-card__main { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); align-items: start; gap: var(--sp-48); }
+  .catalog-connect, .api-start, .api-footer { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }

@@ -203,6 +203,46 @@ test('stream parses split SSE frames, reports final usage and charges exactly on
   assert.equal(env.DB.sqlite.prepare('SELECT spent_micro FROM inference_keys').get().spent_micro, 10000);
 });
 
+test('cold starts keep probing beyond three transient failures and generate only once', async (t) => {
+  const { env, token } = await setup();
+  const realTimeout = globalThis.setTimeout;
+  t.mock.method(globalThis, 'setTimeout', (callback, delay, ...args) => realTimeout(callback, delay === 15000 ? 0 : delay, ...args));
+  let probes = 0;
+  let generations = 0;
+  t.mock.method(globalThis, 'fetch', async (url, options) => {
+    if (url.endsWith('/health')) {
+      assert.equal(options.body, undefined);
+      probes++;
+      return new Response(null, { status: probes <= 3 ? 503 : 200 });
+    }
+    generations++;
+    return Response.json({ created: 1, choices: [{ message: { role: 'assistant', content: 'Ready' }, finish_reason: 'stop' }], usage: { prompt_tokens: 100, completion_tokens: 2 } });
+  });
+  const response = await inferenceEndpoint(createCall(request(token), env));
+  assert.equal(response.status, 200);
+  assert.equal(probes, 4);
+  assert.equal(generations, 1);
+  assert.equal(env.DB.sqlite.prepare("SELECT COUNT(*) AS n FROM api_ledger WHERE kind = 'usage'").get().n, 1);
+  assert.equal(env.DB.sqlite.prepare('SELECT reserved_micro FROM api_wallets').get().reserved_micro, 0);
+});
+
+test('an aborted cold start releases credit without sending the prompt', async (t) => {
+  const { env, token } = await setup();
+  const controller = new AbortController();
+  let probes = 0;
+  t.mock.method(globalThis, 'fetch', async (url) => {
+    assert.equal(url, `${model.endpoint}/health`);
+    probes++;
+    controller.abort();
+    throw new DOMException('Aborted', 'AbortError');
+  });
+  const response = await inferenceEndpoint(createCall(new Request(request(token), { signal: controller.signal }), env));
+  assert.equal(response.status, 503);
+  assert.equal(probes, 1);
+  assert.equal(env.DB.sqlite.prepare('SELECT reserved_micro FROM api_wallets').get().reserved_micro, 0);
+  assert.equal(env.DB.sqlite.prepare('SELECT balance_micro FROM api_wallets').get().balance_micro, 20000000);
+});
+
 test('a health redirect is rejected before a prompt or vendor credential can reach another host', async (t) => {
   const { env, token } = await setup();
   let calls = 0;

@@ -274,7 +274,9 @@ async function generate(call: Call, model: InferenceModel, parsed: ReturnType<ty
 }
 
 async function readyWorker(model: InferenceModel, env: Env, signal: AbortSignal): Promise<void> {
-  for (let attempt = 0; attempt < 3 && !signal.aborted; attempt++) {
+  // Use the full startup allowance. A fixed count of three 60-second probes
+  // stopped slower models after about three minutes, before the deadline.
+  while (!signal.aborted) {
     try {
       const response = await fetch(`${model.endpoint}/health`, {
         headers: { Authorization: `Bearer ${env.RUNPOD_API_KEY}` }, redirect: 'manual',
@@ -285,9 +287,9 @@ async function readyWorker(model: InferenceModel, env: Env, signal: AbortSignal)
       // Wrong credentials or a changed URL cannot be repaired by warming.
       if (response.status < 500 && response.status !== 429 && response.status !== 408) break;
     } catch { if (signal.aborted) break; }
-    if (attempt < 2 && !signal.aborted) await new Promise<void>((resolve) => {
+    if (!signal.aborted) await new Promise<void>((resolve) => {
       const finish = () => { clearTimeout(delay); signal.removeEventListener('abort', finish); resolve(); };
-      const delay = setTimeout(finish, 5000);
+      const delay = setTimeout(finish, 15000);
       signal.addEventListener('abort', finish, { once: true });
     });
   }
