@@ -14,11 +14,16 @@ export interface InferenceModel extends MeteredModel {
   quantization: string;
   endpoint: string;
   upstreamModel: string;
+  description?: string;
+  tags?: string[];
+  capabilities?: string[];
+  reasoningParameter?: 'enable_thinking' | 'thinking' | 'reasoning_effort';
 }
+const CAPABILITIES = ['text', 'tools', 'streaming', 'reasoning', 'structured_output'];
 const BODY_BYTES = 262144;
 const RESPONSE_BYTES = 8 * 1024 * 1024;
 const REQUEST_MS = 300000;
-const STARTUP_MS = 180000;
+const STARTUP_MS = 600000;
 const encoder = new TextEncoder();
 
 /** Configuration comes from the operator, never from a caller's URL or headers. */
@@ -26,13 +31,17 @@ export function inferenceModels(env: Env): InferenceModel[] {
   if (!env.INFERENCE_MODELS) return [];
   try {
     const models: InferenceModel[] = JSON.parse(env.INFERENCE_MODELS);
-    if (!Array.isArray(models) || models.length > 10) return [];
+    if (!Array.isArray(models) || models.length > 32) return [];
     if (models.some((m) => !m || !/^[a-z0-9][a-z0-9.-]{2,79}$/.test(m.id) ||
       !/^https:\/\/[a-z0-9]+\.api\.runpod\.ai$/.test(m.endpoint) ||
       !/^[a-zA-Z0-9_./-]{1,180}$/.test(m.upstreamModel) ||
       ![m.inputRate, m.outputRate, m.minimumMicro, m.context, m.maxOutput].every((n) => Number.isSafeInteger(n) && n > 0) ||
       m.inputRate > 100 || m.outputRate > 500 || m.minimumMicro > 1_000_000 || m.context > 131072 || m.maxOutput > m.context ||
-      ![m.name, m.source, m.revision, m.license, m.quantization].every((s) => typeof s === 'string' && s.length <= 200))) return [];
+      ![m.name, m.source, m.revision, m.license, m.quantization].every((s) => typeof s === 'string' && s.length <= 200) ||
+      (m.description !== undefined && (typeof m.description !== 'string' || m.description.length > 500)) ||
+      (m.tags !== undefined && (!Array.isArray(m.tags) || m.tags.length > 8 || m.tags.some((tag) => typeof tag !== 'string' || !/^[a-z0-9-]{1,40}$/.test(tag)))) ||
+      (m.capabilities !== undefined && (!Array.isArray(m.capabilities) || !m.capabilities.includes('text') || m.capabilities.length > CAPABILITIES.length || new Set(m.capabilities).size !== m.capabilities.length || m.capabilities.some((capability) => !CAPABILITIES.includes(capability)))) ||
+      (m.reasoningParameter !== undefined && !['enable_thinking', 'thinking', 'reasoning_effort'].includes(m.reasoningParameter)))) return [];
     if (new Set(models.map((m) => m.id)).size !== models.length) return [];
     return models;
   } catch { return []; }
@@ -47,14 +56,21 @@ export function publicModel(model: InferenceModel): Record<string, unknown> {
     context_length: model.context, max_output_tokens: model.maxOutput, source: model.source, revision: model.revision,
     license: model.license, quantization: model.quantization,
     pricing: { currency: 'usd', input_per_million: model.inputRate, output_per_million: model.outputRate, minimum_request: model.minimumMicro / 1_000_000 },
-    capabilities: ['text', 'tools', 'streaming'] };
+    description: model.description ?? '', tags: model.tags ?? [],
+    capabilities: model.capabilities ?? ['text', 'tools', 'streaming'],
+    ...(model.reasoningParameter ? { reasoning_parameter: `chat_template_kwargs.${model.reasoningParameter}` } : {}) };
 }
 
 function object(value: unknown): value is Record<string, unknown> { return Boolean(value) && typeof value === 'object' && !Array.isArray(value); }
 function invalid(message: string): never { throw new ApiError(message, 400, 'invalid_request_error'); }
 
 export function parseInference(body: Record<string, unknown>, model: InferenceModel): { payload: Record<string, unknown>; maxOutput: number; stream: boolean; includeUsage: boolean } {
-  const supported = new Set(['model', 'messages', 'stream', 'stream_options', 'max_tokens', 'max_completion_tokens', 'temperature', 'top_p', 'top_k', 'frequency_penalty', 'presence_penalty', 'seed', 'stop', 'tools', 'tool_choice', 'parallel_tool_calls', 'response_format', 'n', 'store', 'chat_template_kwargs']);
+  if (model.capabilities) {
+    if (!model.capabilities.includes('tools') && ((Array.isArray(body.tools) && body.tools.length > 0) || (body.tool_choice !== undefined && body.tool_choice !== 'none'))) invalid('This model does not support function tools. Choose a model with the tools capability.');
+    if (!model.capabilities.includes('streaming') && body.stream === true) invalid('This model does not support streaming.');
+    if (!model.capabilities.includes('structured_output') && body.response_format !== undefined && (!object(body.response_format) || body.response_format.type !== 'text')) invalid('This model does not support structured output.');
+  }
+  const supported = new Set(['model', 'messages', 'stream', 'stream_options', 'max_tokens', 'max_completion_tokens', 'temperature', 'top_p', 'top_k', 'frequency_penalty', 'presence_penalty', 'seed', 'stop', 'tools', 'tool_choice', 'parallel_tool_calls', 'response_format', 'n', 'store', 'chat_template_kwargs', 'reasoning_effort']);
   for (const key of Object.keys(body)) if (!supported.has(key)) invalid(`Unsupported parameter: ${key}.`);
   if (!Array.isArray(body.messages) || !body.messages.length || body.messages.length > 256) invalid('Send 1–256 messages.');
   for (const message of body.messages) {
@@ -83,9 +99,28 @@ export function parseInference(body: Record<string, unknown>, model: InferenceMo
   if (body.tool_choice !== undefined && !['auto', 'none', 'required'].includes(String(body.tool_choice)) && !(object(body.tool_choice) && body.tool_choice.type === 'function' && object(body.tool_choice.function) && typeof body.tool_choice.function.name === 'string')) invalid('Invalid tool_choice.');
   if (body.parallel_tool_calls !== undefined && typeof body.parallel_tool_calls !== 'boolean') invalid('parallel_tool_calls must be a boolean.');
   if (body.response_format !== undefined && (!object(body.response_format) || !['text', 'json_object', 'json_schema'].includes(String(body.response_format.type)))) invalid('Unsupported response_format.');
-  if (body.chat_template_kwargs !== undefined && (!object(body.chat_template_kwargs) || Object.keys(body.chat_template_kwargs).some((k) => k !== 'enable_thinking') || typeof body.chat_template_kwargs.enable_thinking !== 'boolean')) invalid('Only enable_thinking is accepted in chat_template_kwargs.');
+  if (body.reasoning_effort !== undefined && (typeof body.reasoning_effort !== 'string' || !['none', 'low', 'medium', 'high', 'max'].includes(body.reasoning_effort))) invalid('Invalid reasoning_effort.');
+  if (body.chat_template_kwargs !== undefined) {
+    if (!object(body.chat_template_kwargs)) invalid('chat_template_kwargs must be an object.');
+    for (const [name, value] of Object.entries(body.chat_template_kwargs)) {
+      if (['enable_thinking', 'thinking', 'clear_thinking'].includes(name)) {
+        if (typeof value !== 'boolean') invalid(`${name} must be a boolean.`);
+      } else if (name === 'reasoning_effort') {
+        if (typeof value !== 'string' || !['none', 'low', 'medium', 'high', 'max'].includes(value)) invalid('Invalid reasoning_effort.');
+      } else invalid(`Unsupported chat template parameter: ${name}.`);
+    }
+  }
   if (body.stream_options !== undefined && (!object(body.stream_options) || Object.keys(body.stream_options).some((k) => k !== 'include_usage') || typeof body.stream_options.include_usage !== 'boolean')) invalid('stream_options accepts include_usage only.');
   const payload: Record<string, unknown> = { ...body, model: model.upstreamModel, max_tokens: maxOutput };
+  // These hybrid models default to direct answers. Keep the template and parser
+  // in agreement, while allowing the caller to explicitly enable reasoning.
+  if (model.reasoningParameter) {
+    const supplied = object(body.chat_template_kwargs) ? body.chat_template_kwargs : {};
+    const defaults = model.reasoningParameter === 'reasoning_effort'
+      ? { reasoning_effort: supplied.reasoning_effort ?? body.reasoning_effort ?? 'none', enable_thinking: (supplied.reasoning_effort ?? body.reasoning_effort ?? 'none') !== 'none' }
+      : { [model.reasoningParameter]: false };
+    payload.chat_template_kwargs = { ...defaults, ...supplied };
+  }
   delete payload.max_completion_tokens;
   delete payload.store;
   if (body.stream) payload.stream_options = { include_usage: true, continuous_usage_stats: true };
@@ -114,6 +149,12 @@ export async function inferenceEndpoint(call: Call): Promise<Response> {
     await rateLimit(call.env.DB, `inference:${key.account_id}`, 60, 60);
     if (call.url.pathname === '/v1/models' && ['GET', 'HEAD'].includes(call.request.method)) {
       return json({ object: 'list', data: inferenceReady(call.env) ? inferenceModels(call.env).map(publicModel) : [] });
+    }
+    if (call.url.pathname.startsWith('/v1/models/') && ['GET', 'HEAD'].includes(call.request.method)) {
+      const id = call.url.pathname.slice('/v1/models/'.length);
+      const model = inferenceReady(call.env) ? inferenceModels(call.env).find((entry) => entry.id === id) : undefined;
+      if (!model) throw new ApiError('Choose a model returned by /v1/models.', 404, 'model_not_found');
+      return json(publicModel(model));
     }
     if (call.url.pathname === '/v1/usage' && ['GET', 'HEAD'].includes(call.request.method)) {
       const wallet = await call.env.DB.prepare('SELECT balance_micro, reserved_micro FROM api_wallets WHERE account_id = ?').bind(key.account_id).first();

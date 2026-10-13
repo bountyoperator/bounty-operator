@@ -1,0 +1,38 @@
+/* The model list uses the site's existing spacing, type and colour tokens. */
+.catalog-filters {
+  display: grid;
+  gap: var(--sp-16);
+  margin-block: var(--sp-24) var(--sp-12);
+}
+
+.catalog-grid {
+  display: grid;
+  gap: var(--sp-16);
+  margin-top: var(--sp-12);
+}
+
+.catalog-card {
+  display: grid;
+  align-content: start;
+  gap: var(--sp-12);
+  min-width: 0;
+  padding: var(--sp-24);
+  border: 1px solid var(--line);
+  border-radius: var(--r-8, 8px);
+}
+
+.catalog-card h3 {
+  font-size: var(--fs-20);
+  line-height: 1.3;
+}
+
+.catalog-card code { overflow-wrap: anywhere; }
+.catalog-card > .btn { justify-self: start; }
+.catalog-card__price { font-weight: 600; }
+.catalog-card > [role="status"]:empty { display: none; }
+.catalog-card details > p { margin-top: var(--sp-12); }
+
+@media (min-width: 48em) {
+  .catalog-filters { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
+  .catalog-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

@@ -17,7 +17,7 @@ const WEB_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const PUBLIC_DIR = path.join(WEB_DIR, 'public');
 /** A link as it stands in Markdown, YAML or plain text: up to the first space, bracket or quote. */
 const LINK = /https?:\/\/[^\s)\]>"']+/g;
-const EXPECTED_PATHS = ['/changelog', '/guide', '/licenses', '/mcp', '/model-api', '/privacy', '/security', '/support', '/terms'];
+const EXPECTED_PATHS = ['/changelog', '/docs/model-api', '/guide', '/licenses', '/mcp', '/model-api', '/privacy', '/security', '/support', '/terms'];
 
 const site = { pages: [], has: () => true, preloadsFor: () => [] };
 const pages = (await loadPages(path.join(WEB_DIR, 'site', 'pages'))).filter((page) => page.source.startsWith('docs/'));
@@ -36,7 +36,7 @@ function textOf(markup) {
     .replace(/\s+/g, ' ');
 }
 
-test('the docs group builds its nine pages', () => {
+test('the docs group builds its expected pages', () => {
   assert.deepEqual([...rendered.keys()].sort(), EXPECTED_PATHS);
 });
 

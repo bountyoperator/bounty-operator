@@ -4,14 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Cyber model API with prepaid credit | Bounty Operator</title>
-<meta name="description" content="Hosted cyber models over an OpenAI-compatible API, with prepaid credit, per-key limits, function tools and streaming.">
+<meta name="description" content="Use cyber models in your own agents and chat tools. Browse live prices, add prepaid credit and set spending limits for each API key.">
 <link rel="canonical" href="https://bountyoperator.com/model-api">
 <meta name="color-scheme" content="dark">
 <meta name="theme-color" content="#18232d">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Bounty Operator">
 <meta property="og:title" content="Cyber model API with prepaid credit | Bounty Operator">
-<meta property="og:description" content="Hosted cyber models over an OpenAI-compatible API, with prepaid credit, per-key limits, function tools and streaming.">
+<meta property="og:description" content="Use cyber models in your own agents and chat tools. Browse live prices, add prepaid credit and set spending limits for each API key.">
 <meta property="og:url" content="https://bountyoperator.com/model-api">
 <meta property="og:image" content="https://bountyoperator.com/social-spec-v2.png">
 <meta property="og:image:width" content="1200">
@@ -20,7 +20,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:creator" content="@Tradi3_">
 <meta name="twitter:title" content="Cyber model API with prepaid credit | Bounty Operator">
-<meta name="twitter:description" content="Hosted cyber models over an OpenAI-compatible API, with prepaid credit, per-key limits, function tools and streaming.">
+<meta name="twitter:description" content="Use cyber models in your own agents and chat tools. Browse live prices, add prepaid credit and set spending limits for each API key.">
 <meta name="twitter:image" content="https://bountyoperator.com/social-spec-v2.png">
 <meta name="twitter:image:alt" content="Bounty Operator. Find the hole in your report before the triager does. Spec, our coral bug mascot, holds a magnifying glass.">
 <link rel="icon" href="/favicon.ico?v=spec-v1" sizes="48x48">
@@ -32,6 +32,7 @@
 <link rel="stylesheet" href="/css/base.css">
 <link rel="stylesheet" href="/css/docs.css">
 <link rel="stylesheet" href="/css/account.css">
+<link rel="stylesheet" href="/css/catalog.css">
 <link rel="modulepreload" href="/app/api.mjs" fetchpriority="low">
 <link rel="modulepreload" href="/app/billing-ui.mjs" fetchpriority="low">
 <link rel="modulepreload" href="/app/events.mjs" fetchpriority="low">
@@ -65,62 +66,37 @@ FINISH: Responsive layout, native video controls, captions, reduced motion and v
 <article class="docs wrap">
 <header class="page-head page-field">
 
-<h1>Cyber models. Your tools. One API.</h1>
-<p class="lede">Use a hosted security model from your scripts and coding tools. Prepaid credit, individual key limits, and an OpenAI-compatible chat endpoint.</p>
+<h1>Cyber models. In your tools.</h1>
+<p class="lede">Choose a model for your security work. Connect it to your agent or chat app. Pay from one prepaid balance.</p>
 
-<div class="cluster page-head__actions"><a class="btn btn--primary btn--lg" href="/#account/api"><span class="btn__label">Open API account</span></a><a class="btn btn--secondary btn--lg" href="#quickstart"><span class="btn__label">Read the quickstart</span></a></div>
+<div class="cluster page-head__actions"><a class="btn btn--primary btn--lg" href="/#account/api"><span class="btn__label">Get an API key</span></a><a class="btn btn--secondary btn--lg" href="/docs/model-api"><span class="btn__label">Setup guide</span></a></div>
 </header>
-
-<div class="docs-body">
-<nav class="docs-toc" aria-label="On this page">
-<p class="meta">On this page</p>
-<ul><li><a href="#start">Start with credit, not a subscription</a></li><li><a href="#quickstart">Python quickstart</a></li><li><a href="#reference">Endpoints and parameters</a></li><li><a href="#cost">How requests are charged</a></li><li><a href="#privacy">Your content passes through</a></li><li><a href="#scope">For authorized security work</a></li></ul>
-</nav>
-<div class="docs-content">
-<div class="notice notice--info" role="status" id="model-api-status"><p>Checking model availability…</p></div><div id="model-api-catalog"></div>
+<div class="docs-lead">
+<ul class="facts"><li class="facts__item"><span class="icon icon--check" aria-hidden="true"></span><div><p class="facts__title">Keep your workflow</p><p class="facts__text">Works with tools that support an OpenAI-compatible Chat Completions API.</p></div></li><li class="facts__item"><span class="icon icon--check" aria-hidden="true"></span><div><p class="facts__title">Control your spending</p><p class="facts__text">No API subscription. Set a spending limit and expiry for each key.</p></div></li><li class="facts__item"><span class="icon icon--check" aria-hidden="true"></span><div><p class="facts__title">No saved conversations</p><p class="facts__text">We do not save prompts or responses in our application database.</p></div></li></ul>
+<section class="docs-section" aria-labelledby="models">
+<h2 class="docs-section__title" id="models">Choose a model</h2>
+<div class="notice notice--info" role="status" id="model-api-status"><p>Checking model availability…</p></div>
+<div id="model-api-catalog"></div>
+<noscript><p>Enable JavaScript to see current models, prices and availability.</p></noscript>
+<p class="help">The first request after idle can take several minutes while the model starts.</p>
+</section>
+<section class="docs-section" aria-labelledby="pricing">
+<h2 class="docs-section__title" id="pricing">Add credit when you need it</h2>
+<div class="prose">
+<p>Top up US$20, US$50 or US$100 when top-ups are open. Credit does not expire. No automatic top-ups.</p>
+<p>Each model shows its input price, output price and minimum request charge. You pay the token cost or the minimum, whichever is higher. Requests with no confirmed usage are not charged.</p>
+<p>API credit is separate from the Operator review subscription. <a href="/docs/model-api#cost">How billing works</a> · <a href="/terms#api-credit">Credit and refund terms</a></p>
+</div>
+</section>
 <section class="docs-section" aria-labelledby="start">
-<h2 class="docs-section__title" id="start">Start with credit, not a subscription</h2>
-<div class="prose"><ol><li>Sign in with a passkey and open <strong>Model API</strong> in your account.</li><li>Add US$20, US$50 or US$100 when top-ups are open.</li><li>Create a key with a lifetime spending limit and an expiry. Copy it once.</li><li>Set your tool’s base URL to <code>https://bountyoperator.com/v1</code> and use the model ID shown above.</li></ol><p>API credit and the Operator review subscription are separate purchases. No API subscription or automatic top-up is required.</p></div>
-</section><section class="docs-section" aria-labelledby="quickstart">
-<h2 class="docs-section__title" id="quickstart">Python quickstart</h2>
-<div class="prose"><p>Use the OpenAI Python client. Keep your key in an environment variable, outside source control.</p><figure class="code"><figcaption class="code__bar"><span class="code__name">Terminal</span><button class="code__copy" type="button" data-copy><span class="icon icon--copy" aria-hidden="true"></span><span data-copy-label>Copy</span></button></figcaption><pre class="code__pre" tabindex="0" role="region" aria-label="Source: Terminal"><code><span class="code__line">python -m pip install openai
-</span></code></pre></figure><figure class="code"><figcaption class="code__bar"><span class="code__name">Python</span><button class="code__copy" type="button" data-copy><span class="icon icon--copy" aria-hidden="true"></span><span data-copy-label>Copy</span></button></figcaption><pre class="code__pre" tabindex="0" role="region" aria-label="Source: Python"><code><span class="code__line">from openai import OpenAI
-</span><span class="code__line">import os
-</span><span class="code__line">
-</span><span class="code__line">client = OpenAI(
-</span><span class="code__line">    api_key=os.environ[&quot;BOUNTY_OPERATOR_API_KEY&quot;],
-</span><span class="code__line">    base_url=&quot;https://bountyoperator.com/v1&quot;,
-</span><span class="code__line">    timeout=600.0,
-</span><span class="code__line">)
-</span><span class="code__line">
-</span><span class="code__line">for chunk in client.chat.completions.create(
-</span><span class="code__line">    model=&quot;cyber-qwen-27b-awq&quot;,
-</span><span class="code__line">    messages=[{&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: &quot;Review this authorized test case...&quot;}],
-</span><span class="code__line">    max_tokens=2048,
-</span><span class="code__line">    stream=True,
-</span><span class="code__line">    stream_options={&quot;include_usage&quot;: True},
-</span><span class="code__line">):
-</span><span class="code__line">    if chunk.choices:
-</span><span class="code__line">        print(chunk.choices[0].delta.content or &quot;&quot;, end=&quot;&quot;)
-</span><span class="code__line">    if chunk.usage:
-</span><span class="code__line">        print(&quot;\nUsage:&quot;, chunk.usage)
-</span></code></pre></figure><p>Clients must support the Chat Completions API. Anthropic’s Messages API, OpenAI Responses, images, audio and embeddings are not supported by this endpoint.</p></div>
-</section><section class="docs-section" aria-labelledby="reference">
-<h2 class="docs-section__title" id="reference">Endpoints and parameters</h2>
-<div class="prose"><div class="table-wrap" tabindex="0" role="region" aria-label="Model API endpoints"><table class="table"><thead><tr><th scope="col">Method</th><th scope="col">Path</th><th scope="col">Returns</th></tr></thead><tbody><tr><th scope="row">GET</th><td>/v1/models</td><td>Available models, limits and rates</td></tr><tr><th scope="row">POST</th><td>/v1/chat/completions</td><td>A response or an SSE stream; supports function tools</td></tr><tr><th scope="row">GET</th><td>/v1/usage</td><td>Your available wallet and this key’s spending limit</td></tr></tbody></table></div><p>Authenticate with <code>Authorization: Bearer YOUR_KEY</code>. Chat requests accept text messages, <code>tools</code>, <code>tool_choice</code>, <code>parallel_tool_calls</code>, <code>response_format</code>, <code>temperature</code>, <code>top_p</code>, <code>top_k</code>, penalties, <code>seed</code> and <code>stop</code>. Set either <code>max_tokens</code> or <code>max_completion_tokens</code>. Only one completion per request is supported.</p><p>For this Qwen model, <code>extra_body={"chat_template_kwargs": {"enable_thinking": False}}</code> disables thinking in the Python client. Reasoning tokens count as output tokens.</p><p>Requests are limited to 256 messages, 32 tools and 256 KiB of JSON. Each account can run two requests at once. The pilot serves four requests at once across accounts. When capacity is full, a 429 response includes a retry delay.</p><p>Set <code>stream_options.include_usage</code> to receive token counts at the end of a stream. An interrupted stream may end with a coded error. Use the request ID to find its charge in your account.</p><p>An optional <code>Idempotency-Key</code> prevents the same key from starting twice for 30 days. A repeat returns 409; responses are not stored for replay. Use a new value only when you intend to start a new generation.</p></div>
-</section><section class="docs-section" aria-labelledby="cost">
-<h2 class="docs-section__title" id="cost">How requests are charged</h2>
-<div class="prose"><p>The live catalog above and <code>/v1/models</code> show the current input rate, output rate and minimum request charge. The charge is the greater of the token cost or that minimum whenever usage has been confirmed, including an interrupted request. A request with no confirmed usage is not charged.</p><p>Before generation, enough credit is reserved for the model’s full input context and your requested output limit. The final charge uses the model’s token counters. The unused reservation is released when the request ends. Keep enough available credit for the reservation as well as the expected charge.</p><p>Keys stop spending at their lifetime limit. A refund or chargeback removes the corresponding credit and may suspend further requests until the balance is settled. Unused credit does not expire; see the <a href="/terms#api-credit">API credit terms</a> for refunds.</p><p>The first request after idle can take longer while the worker starts. A timeout is not a completed answer. The gateway allows up to three minutes for startup and five minutes for generation. Set a ten-minute client timeout and respect retry headers.</p></div>
-</section><section class="docs-section" aria-labelledby="privacy">
-<h2 class="docs-section__title" id="privacy">Your content passes through</h2>
-<div class="prose"><p>Requests pass through Cloudflare to our vLLM deployment on Runpod. Prompt and response logging is disabled. We do not save prompts or responses in our application database. Cross-request prefix caching is disabled.</p><p>We retain API key hashes, limits, token counts and billing records. Recent request metadata is deleted after 30 days. Infrastructure providers process traffic under their own policies. Read the <a href="/privacy#model-api">full data handling details</a>.</p></div>
-</section><section class="docs-section" aria-labelledby="scope">
-<h2 class="docs-section__title" id="scope">For authorized security work</h2>
-<div class="prose"><p>The available model is a community fine-tune; its source, exact revision, quantization and license are shown in the catalog. Passing our compatibility checks is not a security benchmark or a promise that its findings are correct. Check scope, evidence and conclusions yourself.</p><p>Use the service only on code, data and systems you are authorized to assess. The API generates text and tool calls; your client controls whether a tool executes.</p></div>
+<h2 class="docs-section__title" id="start">Connect your tools</h2>
+<div class="prose">
+<ol><li>Open your account, add credit and create an API key.</li><li>Choose a model from the catalog.</li><li>Follow the <a href="/docs/model-api">setup guide</a> to connect your agent or chat app.</li></ol>
+<p><a class="btn btn--primary btn--lg" href="/#account/api"><span class="btn__label">Get an API key</span></a></p>
+<p class="fine">For authorized security work. Models can make mistakes; check their answers. <a href="/privacy#model-api">Data handling</a> · <a href="/docs/model-api#scope">Model licenses and use</a></p>
+</div>
 </section>
 </div>
-</div>
-
 </article>
 </main>
 <footer class="site-footer theme-dark">

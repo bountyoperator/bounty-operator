@@ -67,7 +67,7 @@ export async function reserveInference(env: Env, key: InferenceKey, model: Meter
   try {
     await env.DB.prepare(`INSERT INTO inference_requests(id, account_id, key_id, model, idempotency_hash, hold_micro, input_rate, output_rate, minimum_micro, created_at, lease_until)
       VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
-      .bind(id, key.account_id, key.id, model.id, hash, hold, model.inputRate, model.outputRate, model.minimumMicro, now, now + 900).run();
+      .bind(id, key.account_id, key.id, model.id, hash, hold, model.inputRate, model.outputRate, model.minimumMicro, now, now + 1200).run();
   } catch (error) {
     const message = error instanceof Error ? `${error.message} ${error.cause instanceof Error ? error.cause.message : ''}` : '';
     if (message.includes('api_insufficient_credit')) throw new ApiError('Add API credit to cover this request. Any unused reservation is released.', 402, 'insufficient_quota');

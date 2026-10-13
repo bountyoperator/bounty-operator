@@ -16,6 +16,79 @@ async function setup(balance = 20000000) {
 }
 const request = (token, body) => new Request('https://bountyoperator.com/v1/chat/completions', { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ model: model.id, messages: [{ role: 'user', content: 'Explain this test.' }], max_tokens: 20, ...body }) });
 
+test('harness discovery lists each configured model and retrieves its actual capabilities without starting workers', async (t) => {
+  const { env, token } = await setup();
+  const second = { ...model, id: 'security-chat', name: 'Security chat', endpoint: 'https://second123.api.runpod.ai', upstreamModel: 'second-model', description: 'Security analysis', tags: ['cybersecurity'], capabilities: ['text', 'streaming'], inputRate: 3, outputRate: 12 };
+  env.INFERENCE_MODELS = JSON.stringify([model, second]);
+  t.mock.method(globalThis, 'fetch', () => { throw new Error('Model discovery must not start a worker'); });
+  const get = (path) => inferenceEndpoint(createCall(new Request(`https://bountyoperator.com${path}`, { headers: { Authorization: `Bearer ${token}` } }), env));
+  const list = await (await get('/v1/models')).json();
+  assert.equal(list.object, 'list');
+  assert.deepEqual(list.data.map((entry) => entry.id), ['cyber-test', 'security-chat']);
+  const detail = await (await get('/v1/models/security-chat')).json();
+  assert.deepEqual(detail, list.data[1]);
+  assert.deepEqual(detail.capabilities, ['text', 'streaming']);
+  assert.equal(detail.pricing.output_per_million, 12);
+  assert.equal(detail.endpoint, undefined);
+  assert.equal(detail.upstreamModel, undefined);
+  assert.equal((await get('/v1/models/not-offered')).status, 404);
+  env.INFERENCE_ENABLED = 'false';
+  assert.deepEqual((await (await get('/v1/models')).json()).data, []);
+  assert.equal((await get('/v1/models/security-chat')).status, 404);
+});
+
+test('a selected catalog model routes to its own worker and settles at its own price', async (t) => {
+  const { env, token } = await setup();
+  const second = { ...model, id: 'second-model', endpoint: 'https://second123.api.runpod.ai', upstreamModel: 'served-second', inputRate: 3, outputRate: 12, minimumMicro: 15000 };
+  env.INFERENCE_MODELS = JSON.stringify([model, second]);
+  const paths = [];
+  t.mock.method(globalThis, 'fetch', async (url, options) => {
+    paths.push(url);
+    assert.ok(url.startsWith(second.endpoint));
+    if (url.endsWith('/health')) return new Response(null, { status: 200 });
+    assert.equal(JSON.parse(options.body).model, 'served-second');
+    return Response.json({ created: 1, choices: [{ message: { role: 'assistant', content: 'Ready' }, finish_reason: 'stop' }], usage: { prompt_tokens: 100, completion_tokens: 2 } });
+  });
+  const response = await inferenceEndpoint(createCall(request(token, { model: second.id }), env));
+  assert.equal(response.status, 200);
+  assert.equal((await response.json()).model, second.id);
+  assert.deepEqual(paths, [`${second.endpoint}/health`, `${second.endpoint}/v1/chat/completions`]);
+  assert.equal(env.DB.sqlite.prepare('SELECT charge_micro FROM inference_requests').get().charge_micro, 15000);
+});
+
+test('model capabilities reject unsupported harness requests before reservation or generation', () => {
+  const chat = { ...model, capabilities: ['text'] };
+  const messages = [{ role: 'user', content: 'Explain this test.' }];
+  assert.throws(() => parseInference({ messages, tools: [{ type: 'function' }] }, chat), /does not support function tools/);
+  assert.throws(() => parseInference({ messages, stream: true }, chat), /does not support streaming/);
+  assert.throws(() => parseInference({ messages, response_format: { type: 'json_object' } }, chat), /does not support structured output/);
+  assert.doesNotThrow(() => parseInference({ messages, tools: [], tool_choice: 'none', response_format: { type: 'text' } }, chat));
+  for (const capabilities of [[], ['tools'], ['text', 'invented'], ['text', 'text']]) {
+    assert.deepEqual(inferenceModels({ INFERENCE_MODELS: JSON.stringify([{ ...model, capabilities }]) }), []);
+  }
+});
+
+test('reasoning controls preserve supported values and reject coercible non-strings before inference', () => {
+  const body = { model: model.id, messages: [{ role: 'user', content: 'hello' }] };
+  for (const name of ['thinking', 'enable_thinking', 'clear_thinking']) {
+    assert.deepEqual(parseInference({ ...body, chat_template_kwargs: { [name]: false } }, model).payload.chat_template_kwargs, { [name]: false });
+    assert.throws(() => parseInference({ ...body, chat_template_kwargs: { [name]: 'false' } }, model), /must be a boolean/);
+  }
+  for (const effort of ['none', 'low', 'medium', 'high', 'max']) {
+    assert.equal(parseInference({ ...body, reasoning_effort: effort }, model).payload.reasoning_effort, effort);
+    assert.deepEqual(parseInference({ ...body, chat_template_kwargs: { reasoning_effort: effort } }, model).payload.chat_template_kwargs, { reasoning_effort: effort });
+  }
+  for (const effort of [['low'], null, true, 1, {}, 'invented']) {
+    assert.throws(() => parseInference({ ...body, reasoning_effort: effort }, model), /Invalid reasoning_effort/);
+    assert.throws(() => parseInference({ ...body, chat_template_kwargs: { reasoning_effort: effort } }, model), /Invalid reasoning_effort/);
+  }
+  assert.throws(() => parseInference({ ...body, chat_template_kwargs: { arbitrary: true } }, model), /Unsupported chat template parameter/);
+  assert.deepEqual(parseInference(body, { ...model, reasoningParameter: 'thinking' }).payload.chat_template_kwargs, { thinking: false });
+  assert.deepEqual(parseInference({ ...body, chat_template_kwargs: { thinking: true } }, { ...model, reasoningParameter: 'thinking' }).payload.chat_template_kwargs, { thinking: true });
+  assert.deepEqual(parseInference(body, { ...model, reasoningParameter: 'reasoning_effort' }).payload.chat_template_kwargs, { reasoning_effort: 'none', enable_thinking: false });
+  assert.deepEqual(parseInference({ ...body, reasoning_effort: 'high' }, { ...model, reasoningParameter: 'reasoning_effort' }).payload.chat_template_kwargs, { reasoning_effort: 'high', enable_thinking: true });
+});
+
 test('concurrent reservations cannot exceed either wallet credit or key budget', async () => {
   const { env, key } = await setup(80000);
   const results = await Promise.allSettled([reserveInference(env, key, model, 20, null), reserveInference(env, key, model, 20, null)]);

@@ -21,12 +21,26 @@ Wrangler's secret store. Do not put it in a tracked config or browser asset.
 | `context`, `maxOutput` | Input/output limits enforced by the gateway |
 | `inputRate`, `outputRate` | Whole US dollars per million tokens |
 | `minimumMicro` | Minimum billed request cost, in millionths of a US dollar |
+| `description`, `tags` | Short customer description and search/filter tags |
+| `capabilities` | Verified `text`, `tools`, `streaming`, `structured_output`, or `reasoning` support |
+| `reasoningParameter` | Hybrid model control: `thinking`, `enable_thinking`, or `reasoning_effort`; defaults to direct answers |
+
+Up to 32 validated entries share the catalog used by the public page, account,
+`GET /v1/models`, and `GET /v1/models/{id}`. Discovery does not start a worker.
+The gateway rejects unsupported capabilities before reserving credit. For Nex,
+it keeps the reasoning template setting and the Qwen parser setting in sync.
+Customers can explicitly enable reasoning using the documented model parameter.
 
 Use a pinned image and model revision. Disable prompt/response logging and
 cross-request prefix caching in the serving engine. Validate streaming usage
 counters, tool parsing and the chat template with the exact deployed quantization.
 Keep the worker at zero minimum replicas until paid demand justifies continuous
 capacity; measure cold-start and generation costs before choosing rates.
+
+Cold startup has a ten-minute allowance, followed by a five-minute generation
+allowance. Credit reservations expire after twenty minutes so the reaper cannot
+release an active request's hold during the normal timeout window. Recommend a
+twenty-minute client timeout. Failed startup with no usage is not charged.
 
 ## Payments and release
 
