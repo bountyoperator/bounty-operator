@@ -27,6 +27,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import * as miniflare from 'miniflare';
+import { unstable_splitSqlQuery as splitSqlQuery } from 'wrangler';
 
 import { reviewProfile } from '../public/profiles.mjs';
 import { SHINGLE_WORDS, words } from '../src/guard.mjs';
@@ -56,15 +57,8 @@ function migrationStatements() {
   const directory = join(WEB_DIR, 'migrations');
   return readdirSync(directory)
     .sort()
-    .flatMap((file) =>
-      readFileSync(join(directory, file), 'utf8')
-        .split('\n')
-        .filter((line) => !line.trimStart().startsWith('--'))
-        .join(' ')
-        .split(';')
-        .map((statement) => statement.trim())
-        .filter(Boolean),
-    );
+    // Match Wrangler's migration parser: trigger bodies contain semicolons.
+    .flatMap((file) => splitSqlQuery(readFileSync(join(directory, file), 'utf8')));
 }
 
 // --- The stand-in provider -------------------------------------------------

@@ -1,6 +1,8 @@
 # Changelog
 
-## Hosted API pilot — 2026-10-13
+## 0.9.12 — 2026-10-11
+
+### Hosted API pilot — 2026-10-13
 
 - OpenAI-compatible model inference with streaming, function tools and
   structured output, using a pinned community cyber model on Runpod.
@@ -11,9 +13,7 @@
 - Model rates, source revision, limits and setup examples at `/model-api`.
   Request history contains usage metadata; prompts and responses are not saved.
 
-## 0.9.12 — 2026-10-11
-
-Walkthroughs
+### Walkthroughs
 
 - A 54-second product tour follows the saved public example from its
   input files to the verdict, source citation and downloadable packet.
