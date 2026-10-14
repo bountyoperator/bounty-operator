@@ -1,17 +1,30 @@
 # Changelog
 
+## 0.9.13 — 2026-10-14
+
+Model API and review providers
+
+- Expanded the `/model-api` and `/v1/models` catalog to 24 zero-idle-cost
+  cybersecurity, low-refusal, OrcaCyber Zero, DeepSeek, GLM, Qwen, Gemma 4,
+  Kimi K3, Omen 2.0, CyberStrike, Orca, Dolphin, Foundation-Sec and Hermes
+  models across scale-to-zero GPU workers and serverless upstream gateways.
+- Added `Bounty Operator` (`bountyoperator`, `BOUNTYOPERATOR_API_KEY`),
+  `Infron` (`infron`, `INFRON_API_KEY`) and `OrcaRouter` (`orcarouter`,
+  `ORCAROUTER_API_KEY`) as supported review providers across the workbench,
+  Gauntlet, Panel review, CLI and MCP server (11 providers in all), with
+  in-process Worker routing when a review uses a `bo_api_...` key.
+- Added a workload cost estimator (`Per 1M tokens`, `Review run`, `Agent
+  session`), an interactive quickstart switcher (`curl`, `Python`, `TypeScript`,
+  `Agent config`), and one-click `Use in review` deep links on `/model-api`.
+- Added a hosting-balance pause gate so `/api/health`, `/api/inference/catalog`
+  and `/api/portal` report `paused` when upstream capacity is paused, close
+  new top-ups, and exclude `hosting_paused` attempts from the caller failure
+  limit.
+
 ## 0.9.12 — 2026-10-11
 
 Model catalog and Operator billing
 
-- Expanded the hosted model catalog to ten cybersecurity and lower-refusal
-  open-weight models with full native context windows up to 262,144 tokens,
-  compact security-stack model rows, per-model prices, and setup instructions
-  at `/docs/model-api`. Harnesses can discover models through `/v1/models` and
-  retrieve individual model details without starting a worker.
-- Added Infron (`infron`, `INFRON_API_KEY`) as a supported review provider across
-  the workbench, Gauntlet, Panel review and MCP server, with its seven-model
-  cybersecurity and low-refusal stack.
 - Moved the Operator plan for new subscribers to US$10 per month, with US$2 in
   Bounty Operator API credit issued on each verified paid monthly subscription
   invoice. Existing weekly subscriptions keep their weekly interval.
