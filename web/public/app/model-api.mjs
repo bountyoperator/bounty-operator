@@ -140,12 +140,11 @@ function modelCard(model, { workload, activeId, onSelect }) {
           attrs: { 'aria-pressed': isSelected ? 'true' : 'false', 'aria-label': `Use ${model.name} in quickstart snippet` },
           onClick: () => onSelect(model.id, true),
         }),
-        button({
-          label: 'Use in review',
+        el('a', {
+          class: 'btn btn--secondary btn--sm',
           href: `/?provider=bountyoperator&model=${encodeURIComponent(model.id)}#workspace`,
-          size: 'sm',
-          variant: 'secondary',
-        }),
+          'aria-label': `Use ${model.name} in review`,
+        }, el('span', { class: 'btn__label', text: 'Use in review' })),
       ),
     ),
   );
