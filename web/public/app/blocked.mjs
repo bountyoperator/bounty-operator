@@ -60,6 +60,7 @@ const SAID_CHARS = 300;
 // blocked model is offered.
 const AFTER_BLOCK = Object.freeze({
   openrouter: Object.freeze(['anthropic/claude-sonnet-5.5', 'deepseek/deepseek-v4.1-flash']),
+  infron: Object.freeze(['z-ai/glm-5.3-flash-cybersecurity', 'deepseek/deepseek-v4-flash-vision-exp-cybersecurity']),
 });
 const vendorOf = (modelId) => String(modelId).split('/')[0];
 

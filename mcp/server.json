@@ -97,6 +97,13 @@
           "format": "string",
           "isRequired": false,
           "isSecret": true
+        },
+        {
+          "name": "INFRON_API_KEY",
+          "description": "Infron API key, for run_review with provider infron.",
+          "format": "string",
+          "isRequired": false,
+          "isSecret": true
         }
       ]
     }

@@ -4,11 +4,14 @@
 
 Model catalog and Operator billing
 
-- Expanded the hosted model catalog to ten security-focused and uncensored
+- Expanded the hosted model catalog to ten cybersecurity and lower-refusal
   open-weight models with full native context windows up to 262,144 tokens,
-  searchable model rows, per-model prices, and setup instructions at
-  `/docs/model-api`. Harnesses can discover models through `/v1/models` and
+  compact security-stack model rows, per-model prices, and setup instructions
+  at `/docs/model-api`. Harnesses can discover models through `/v1/models` and
   retrieve individual model details without starting a worker.
+- Added Infron (`infron`, `INFRON_API_KEY`) as a supported review provider across
+  the workbench, Gauntlet, Panel review and MCP server, with its seven-model
+  cybersecurity and low-refusal stack.
 - Moved the Operator plan for new subscribers to US$10 per month, with US$2 in
   Bounty Operator API credit issued on each verified paid monthly subscription
   invoice. Existing weekly subscriptions keep their weekly interval.
@@ -23,8 +26,8 @@ Model catalog and Operator billing
 Hosted API
 
 - OpenAI-compatible model inference with streaming, function tools and
-  structured output, using pinned community cyber and uncensored models on
-  Runpod.
+  structured output, using pinned cybersecurity and lower-refusal open-weight
+  models on Runpod.
 - Prepaid API wallets, one-time Stripe top-ups and expiring API keys with
   lifetime spending limits. API credit is separate from the review subscription.
 - Atomic credit reservations, metered settlement, duplicate-payment protection,

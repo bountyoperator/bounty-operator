@@ -170,7 +170,7 @@ The remote endpoint takes the same two values as headers: `Authorization: Bearer
 | `BOUNTY_OPERATOR_TOKEN` | Connection token for `account` and `run_review` |
 | `BOUNTY_OPERATOR_MODEL` | Model id `run_review` uses when the call names none |
 | `BOUNTY_OPERATOR_ROOT` | Absolute path of the project folder that `paths` resolve under. Default: the working directory |
-| `OPENROUTER_API_KEY`, `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GEMINI_API_KEY`, `XAI_API_KEY`, `DEEPSEEK_API_KEY`, `MISTRAL_API_KEY`, `GROQ_API_KEY` | Provider key for `run_review`, one per provider |
+| `OPENROUTER_API_KEY`, `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GEMINI_API_KEY`, `XAI_API_KEY`, `DEEPSEEK_API_KEY`, `MISTRAL_API_KEY`, `GROQ_API_KEY`, `INFRON_API_KEY` | Provider key for `run_review`, one per provider |
 
 ## What the server reaches
 

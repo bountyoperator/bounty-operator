@@ -275,6 +275,24 @@ export const PROVIDERS = Object.freeze([
     envVar: 'GROQ_API_KEY',
     docsUrl: 'https://console.groq.com/keys',
   }),
+  describe({
+    id: 'infron',
+    label: 'Infron',
+    keyLabel: 'Infron API key',
+    keyPrefixHint: 'sk-',
+    defaultModel: 'z-ai/glm-5.3-flash-cybersecurity',
+    models: [
+      model('z-ai/glm-5.3-flash-cybersecurity', 'GLM-5.3 Flash Cybersecurity', 'default'),
+      model('z-ai/glm-5.3-abliterated', 'GLM-5.3 Abliterated', 'flagship'),
+      model('z-ai/glm-5.3-flash-abliterated', 'GLM-5.3 Flash Abliterated', 'value'),
+      model('deepseek/deepseek-v4-flash-vision-exp-cybersecurity', 'DeepSeek V4 Flash Vision Exp Cybersecurity', 'value'),
+      model('qwen/qwen3.8-27b-cybersecurity', 'Qwen3.8 27B Cybersecurity'),
+      model('google/gemma-4-26b-a4b-it-cybersecurity', 'Gemma 4 26B A4B IT Cybersecurity', 'value'),
+      model('nvidia/nemotron-3.5-content-safety', 'NVIDIA Nemotron 3.5 Content Safety'),
+    ],
+    envVar: 'INFRON_API_KEY',
+    docsUrl: 'https://infron.ai/dashboard/apiKeys',
+  }),
 ]);
 
 // How each provider is called. `tokenParam` is the provider's own name for the
@@ -329,6 +347,12 @@ const WIRE = Object.freeze({
     style: 'chat',
     endpoint: 'https://api.groq.com/openai/v1/chat/completions',
     tokenParam: 'max_completion_tokens',
+    streamUsage: true,
+  },
+  infron: {
+    style: 'chat',
+    endpoint: 'https://api.infron.ai/v1/chat/completions',
+    tokenParam: 'max_tokens',
     streamUsage: true,
   },
 });
@@ -538,7 +562,7 @@ function transportFailure(error, deadline) {
 function redact(text, apiKey) {
   return text
     .split(apiKey).join('[key]')
-    .replace(/(?<![A-Za-z0-9])(?:sk-|sk_|gsk_|xai-|AIza|Bearer\s+)[A-Za-z0-9_*.\-]{6,200}/g, '[key]')
+    .replace(/(?<![A-Za-z0-9])(?:bo_api_|sk-|sk_|gsk_|xai-|AIza|Bearer\s+)[A-Za-z0-9_*.\-]{6,200}/g, '[key]')
     .replace(/[\x00-\x1f\x7f]+/g, ' ')
     .replace(/\s+/g, ' ')
     .trim()

@@ -28,7 +28,7 @@ command line.
   counterargument, whether the source resolves it, and the one missing artifact
   that would settle it.
 - **Your model and your key. Nothing is stored.** OpenRouter, Anthropic, OpenAI,
-  Gemini, xAI, DeepSeek, Mistral or Groq with your own key. A hosted review
+  Gemini, xAI, DeepSeek, Mistral, Groq or Infron with your own key. A hosted review
   passes your files and your key through bountyoperator.com to that provider.
   Source files, keys and review text are never stored.
 

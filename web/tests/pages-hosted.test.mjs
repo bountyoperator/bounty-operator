@@ -360,7 +360,7 @@ test('the panel page names the keys the workbench takes', async () => {
   assert.match(panel, /dataset: \{ seatKey: provider\.id \}/);
 
   const page = text('panel-review.html');
-  assert.match(page, /One OpenRouter key reaches models from several labs, so a panel of different models runs on a single key\. A panel model on Anthropic, OpenAI, Google Gemini, xAI, DeepSeek, Mistral or Groq takes that provider’s own key\./);
+  assert.match(page, /One OpenRouter or Infron key reaches models from several labs, so a panel of different models runs on a single key\. A panel model on Anthropic, OpenAI, Google Gemini, xAI, DeepSeek, Mistral or Groq takes that provider’s own key\./);
   assert.match(page, /A panel of three is four hosted reviews\. Each goes through our server to your provider and is billed to your key\./);
   assert.match(page, /The cross-examination is a hosted profile: its method is added on our server/);
   assert.doesNotMatch(page, /on your own OpenRouter key|billed by OpenRouter/);

@@ -165,7 +165,7 @@ const STEPS = [
 const FAQ_ITEMS = [
   {
     q: 'Which keys does a panel run on?',
-    a: 'One OpenRouter key reaches models from several labs, so a panel of different models runs on a single key. A panel model on Anthropic, OpenAI, Google Gemini, xAI, DeepSeek, Mistral or Groq takes that provider’s own key.',
+    a: 'One OpenRouter or Infron key reaches models from several labs, so a panel of different models runs on a single key. A panel model on Anthropic, OpenAI, Google Gemini, xAI, DeepSeek, Mistral or Groq takes that provider’s own key.',
   },
   {
     q: 'How many model calls is a panel?',

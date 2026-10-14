@@ -535,7 +535,7 @@ const FAQ_ITEMS = [
   },
   {
     q: 'Which models can I use?',
-    a: 'Your own key for OpenRouter, Anthropic, OpenAI, Gemini, xAI, DeepSeek, Mistral or Groq. With ChatGPT or Claude, copy the prompt of a code, Solidity or draft-report review and paste the answer back.',
+    a: 'Your own key for OpenRouter, Anthropic, OpenAI, Gemini, xAI, DeepSeek, Mistral, Groq or Infron. With ChatGPT or Claude, copy the prompt of a code, Solidity or draft-report review and paste the answer back.',
   },
 ];
 

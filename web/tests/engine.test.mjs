@@ -1179,6 +1179,7 @@ describe('providers', () => {
     deepseek: { url: 'https://api.deepseek.com/chat/completions', model: 'deepseek-v4-pro', cap: 'max_tokens' },
     mistral: { url: 'https://api.mistral.ai/v1/chat/completions', model: 'mistral-medium-latest', cap: 'max_tokens' },
     groq: { url: 'https://api.groq.com/openai/v1/chat/completions', model: 'openai/gpt-oss-120b', cap: 'max_completion_tokens' },
+    infron: { url: 'https://api.infron.ai/v1/chat/completions', model: 'z-ai/glm-5.3-flash-cybersecurity', cap: 'max_tokens' },
   };
   const chatIds = Object.keys(expected).filter((id) => id !== 'anthropic');
 
@@ -1195,7 +1196,7 @@ describe('providers', () => {
     ...overrides,
   });
 
-  test('the registry lists the eight providers with their default models', () => {
+  test('the registry lists the nine providers with their default models', () => {
     assert.deepEqual(PROVIDERS.map((entry) => entry.id), Object.keys(expected));
     for (const entry of PROVIDERS) {
       assert.deepEqual(
@@ -1206,7 +1207,7 @@ describe('providers', () => {
       assert.equal(entry.models[0].id, entry.defaultModel);
       // OpenRouter includes the benchmarked choices; direct providers stay compact.
       const fewest = entry.id === 'deepseek' ? 2 : 3;
-      const most = entry.id === 'openrouter' ? 12 : 5;
+      const most = entry.id === 'openrouter' ? 12 : entry.id === 'infron' ? 7 : 5;
       assert.ok(entry.models.length >= fewest && entry.models.length <= most, entry.id);
       assert.equal(new Set(entry.models.map((model) => model.id)).size, entry.models.length, entry.id);
       for (const model of entry.models) assert.doesNotThrow(() => validateProviderRequest({ provider: entry.id, model: model.id, apiKey: API_KEY }), model.id);
@@ -1217,6 +1218,7 @@ describe('providers', () => {
       assert.ok(Object.isFrozen(entry) && Object.isFrozen(entry.models));
     }
     assert.equal(provider('groq').label, 'Groq');
+    assert.equal(provider('infron').label, 'Infron');
   });
 
   test('unsupported providers, models and keys are rejected before anything is sent', async () => {
@@ -1352,6 +1354,7 @@ describe('providers', () => {
       deepseek: ['deepseek-v4-pro', 'deepseek-flash'],
       mistral: ['mistral-medium-latest', 'mistral-large-2512', 'mistral-small-latest'],
       groq: ['openai/gpt-oss-120b', 'qwen/qwen3.8-27b', 'openai/gpt-oss-20b'],
+      infron: ['z-ai/glm-5.3-flash-cybersecurity', 'z-ai/glm-5.3-abliterated', 'z-ai/glm-5.3-flash-abliterated', 'deepseek/deepseek-v4-flash-vision-exp-cybersecurity', 'qwen/qwen3.8-27b-cybersecurity', 'google/gemma-4-26b-a4b-it-cybersecurity', 'nvidia/nemotron-3.5-content-safety'],
     });
 
     // The slugs checked against OpenRouter's model list on 2 October 2026.
@@ -2299,6 +2302,7 @@ describe('providers', () => {
       deepseek: { include_usage: true },
       mistral: undefined,
       groq: { include_usage: true },
+      infron: { include_usage: true },
     });
   });
 

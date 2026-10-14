@@ -152,7 +152,7 @@ ${button({ label: 'Edit', variant: 'quiet', size: 'sm', attrs: { 'data-step-targ
 
   const via = html`<div class="wb-picks wb-picks--wide" id="wb-via" role="radiogroup" aria-labelledby="wb-via-label">
 ${viaChoice({ value: 'connect', title: 'OpenRouter, one click', text: 'Connect your OpenRouter account. Every model, billed to your own credits.' })}
-${viaChoice({ value: 'key', title: 'My own API key', text: 'Anthropic, OpenAI, Gemini, xAI, DeepSeek, Mistral, Groq or OpenRouter.' })}
+${viaChoice({ value: 'key', title: 'My own API key', text: 'Anthropic, OpenAI, Gemini, xAI, DeepSeek, Mistral, Groq, Infron or OpenRouter.' })}
 ${viaChoice({ value: 'export', title: 'My chat subscription', text: 'Copy the prompt into ChatGPT, Claude or Gemini and paste the reply back. Code security, Solidity and draft-report reviews only. No account, no daily limit.' })}
 </div>`;
 

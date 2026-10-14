@@ -141,6 +141,9 @@ describe('blocked.mjs', () => {
     // Every model the offer can name is one the Model field lists.
     const listed = PROVIDERS.find((entry) => entry.id === 'openrouter').models.map((entry) => entry.id);
     for (const offer of [sonnet, deepseek]) assert.ok(listed.includes(offer.id), offer.id);
+    // Infron reaches models across several labs as well.
+    assert.deepEqual(alternateAfter('policy', { provider: 'infron', model: 'z-ai/glm-5.3-abliterated' }), { id: 'deepseek/deepseek-v4-flash-vision-exp-cybersecurity', label: 'DeepSeek V4 Flash Vision Exp Cybersecurity' });
+    assert.deepEqual(alternateAfter('policy', { provider: 'infron', model: 'qwen/qwen3.8-27b-cybersecurity' }), { id: 'z-ai/glm-5.3-flash-cybersecurity', label: 'GLM-5.3 Flash Cybersecurity' });
   });
 
   test('a reply pasted from a chat app gets the one step that applies there, and no allowance line', () => {
