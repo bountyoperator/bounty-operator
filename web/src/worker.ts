@@ -47,10 +47,11 @@ import { reapStaleLeases, usage } from './quota.mjs';
 import { clientKey, edgeLimit, rateLimit } from './rate.ts';
 import { REVIEWS_PER_10_MIN, REVIEW_BODY_BYTES, parseReviewRequest, runHostedReview, streamHostedReview } from './review.ts';
 import { serveAsset } from './static.ts';
-import { autoTopupData, createAutoTopupSetup, disableAutoTopup, processAutoTopups, updateAutoTopup } from './api-autotopup.ts';
+import { autoTopupAvailable, autoTopupData, createAutoTopupSetup, disableAutoTopup, processAutoTopups, updateAutoTopup } from './api-autotopup.ts';
 import { apiCreditData, createInferenceKey, reapInferenceHolds, revokeInferenceKey } from './api-credits.ts';
 import { createApiTopup, reconcileApiTopup, resyncPendingTopups } from './api-topups.ts';
-import { inferenceEndpoint, inferenceModels, inferencePaused, inferenceReady, inferenceStatus, publicModel } from './inference.ts';
+import { inferenceCatalog, inferenceEndpoint, inferenceModels, inferenceStatus } from './inference.ts';
+import { reconcileRunpodBilling } from './supplier-costs.ts';
 
 const AUTH_REQUESTS_PER_HOUR = 90;
 const BILLING_REQUESTS_PER_10_MIN = 6;
@@ -136,6 +137,8 @@ async function health({ env }: Call): Promise<Response> {
       env.DB.prepare('SELECT billing_interval, cancel_at_period_end FROM subscriptions LIMIT 1'),
       env.DB.prepare('SELECT enabled FROM api_autotopup_settings LIMIT 1'),
       env.DB.prepare('SELECT credited_micro FROM api_monthly_grants LIMIT 1'),
+      env.DB.prepare('SELECT limit_micro FROM supplier_budget_windows LIMIT 1'),
+      env.DB.prepare('SELECT total_micro FROM supplier_billing_buckets LIMIT 1'),
     ]);
     return json(body);
   } catch {
@@ -214,8 +217,9 @@ const billingPortal = billingRoute('billing', BILLING_REQUESTS_PER_10_MIN, async
 );
 
 const apiTopup = billingRoute('api-topup', BILLING_REQUESTS_PER_10_MIN, async ({ env, request }, session) => {
-  if (env.API_TOPUPS_ENABLED !== 'true' || !inferenceReady(env)) throw new ApiError('API top-ups are not open right now.', 503, 'topups_unavailable');
-  if (await inferencePaused(env)) throw new ApiError('API top-ups are closed while model inference is paused.', 503, 'topups_unavailable');
+  if (env.API_TOPUPS_ENABLED !== 'true') throw new ApiError('API top-ups are not open right now.', 503, 'topups_unavailable');
+  const status = await inferenceStatus(env);
+  if (status !== 'available') throw new ApiError(status === 'paused' ? 'API top-ups are closed while model inference is paused.' : 'API top-ups are not open right now.', 503, 'topups_unavailable');
   const body = await readJson(request, 1000);
   const api = stripeClient(env);
   const customer = await customerFor(env, api, session.account_id);
@@ -224,6 +228,7 @@ const apiTopup = billingRoute('api-topup', BILLING_REQUESTS_PER_10_MIN, async ({
 
 const apiAutoTopupSetup = billingRoute('api-autotopup', BILLING_REQUESTS_PER_10_MIN, async ({ env, request }, session) => {
   requireRecentAuth(session);
+  if (!(await autoTopupAvailable(env))) throw new ApiError('Automatic API top-ups are not open right now.', 503, 'topups_unavailable');
   const body = await readJson(request, 1000);
   const api = stripeClient(env);
   const customer = await customerFor(env, api, session.account_id);
@@ -279,7 +284,7 @@ const ROUTES: Readonly<Record<string, Readonly<Record<string, Handler>>>> = {
   '/api/profiles': { GET: profiles },
   '/api/inference/catalog': { GET: async ({ env }) => {
     const status = await inferenceStatus(env);
-    return json({ enabled: status === 'available', status, topups_enabled: status === 'available' && env.API_TOPUPS_ENABLED === 'true' && apiBillingReady(env), models: inferenceModels(env).map(publicModel) });
+    return json({ enabled: status === 'available', status, topups_enabled: status === 'available' && env.API_TOPUPS_ENABLED === 'true' && apiBillingReady(env), models: await inferenceCatalog(env) });
   } },
   '/api/account': { GET: accountStatus },
   '/api/portal': { GET: signedInRead(portal) },
@@ -356,6 +361,22 @@ async function handleApi(call: Call): Promise<Response> {
 // Scheduled cleanup
 // ---------------------------------------------------------------------------
 
+async function reconcileSupplierBilling(env: Env, now: number): Promise<Record<string, unknown>> {
+  const resourceIds = [...new Set(inferenceModels(env).flatMap(({ endpoint }) => {
+    const match = /^https:\/\/([a-z0-9]+)\.api\.runpod\.ai$/.exec(endpoint);
+    return match ? [match[1]] : [];
+  }))];
+  if (!env.RUNPOD_API_KEY || !resourceIds.length) return { status: 'not_configured' };
+  const end = Math.floor(now / 3600) * 3600;
+  try {
+    // Re-read complete hours for corrections, including while new inference is disabled.
+    return { status: 'synced', ...await reconcileRunpodBilling(env, { start: end - 72 * 3600, end, resourceIds }) };
+  } catch (error) {
+    console.error('Supplier billing reconciliation failed', { name: error instanceof Error ? error.name : 'unknown' });
+    return { status: 'unknown' };
+  }
+}
+
 async function purgeExpired(env: Env, now: number): Promise<Record<string, number>> {
   const day = 86400;
   const oldestFunnelDay = new Date((now - 400 * day) * 1000).toISOString().slice(0, 10);
@@ -400,6 +421,7 @@ export default {
       return 0;
     });
     const purged = controller.cron === DAILY_CRON ? await purgeExpired(env, now) : {};
-    console.log('Scheduled cleanup', { cron: controller.cron, reapedLeases, reapedInference, topupsResynced, resynced, ...purged });
+    const supplierBilling = controller.cron === DAILY_CRON ? await reconcileSupplierBilling(env, now) : null;
+    console.log('Scheduled cleanup', { cron: controller.cron, reapedLeases, reapedInference, topupsResynced, resynced, ...purged, ...(supplierBilling ? { supplierBilling } : {}) });
   },
 } satisfies ExportedHandler<Env>;

@@ -43,6 +43,9 @@ const LONG_OUTPUT_MODELS = Object.freeze({
 });
 const TIMEOUT_MS = 180000;
 const CALL_LIMIT_MS = 900000;
+// Hosted models may need 600 seconds to start and 300 seconds to generate.
+// Leave 30 seconds for transport/settlement around those server-side limits.
+const BOUNTY_OPERATOR_CALL_LIMIT_MS = 930000;
 const RESPONSE_BYTES = 2000000;
 // A stream wraps every token in its own JSON event, so the wire size of a
 // normal answer is many times its text. The 2 MB cap applies to the text.
@@ -550,18 +553,20 @@ function startTimer(callback, delay) {
 /**
  * One abort signal for a call: it fires when the caller aborts, when the
  * provider is silent for `idleMs`, or when the whole call outlasts
- * CALL_LIMIT_MS. `touch()` restarts the silence clock, which turns that limit
+ * `totalMs`. `touch()` restarts the silence clock, which turns that limit
  * into an idle limit while a stream is delivering. The overall limit is never
  * restarted, so keep-alive comments cannot hold a stream open for ever.
  *
  * A call without a stream sends nothing until the whole answer is written, so
  * silence says nothing there: it gets the overall limit, and the caller's own
- * signal (the Worker's single-answer limit) ends it sooner.
+ * signal (the Worker's single-answer limit) ends it sooner. A cold-starting
+ * service may use a longer `initialMs` until its first response bytes arrive.
  */
-function createDeadline(callerSignal, idleMs = TIMEOUT_MS) {
+function createDeadline(callerSignal, idleMs = TIMEOUT_MS, { initialMs = idleMs, totalMs = CALL_LIMIT_MS } = {}) {
   const controller = new AbortController();
   let expired = '';
   let idleTimer = null;
+  let silenceMs = initialMs;
 
   const expire = (limit) => {
     // The first limit to fire is the cause; a second one in the same instant does not rename it.
@@ -570,22 +575,24 @@ function createDeadline(callerSignal, idleMs = TIMEOUT_MS) {
     controller.abort(new DOMException('The provider timed out.', 'TimeoutError'));
   };
   const forward = () => controller.abort(callerSignal.reason);
-  const arm = () => {
+  const arm = (delay = idleMs) => {
     clearTimeout(idleTimer);
-    idleTimer = startTimer(() => expire('idle'), idleMs);
+    silenceMs = delay;
+    idleTimer = startTimer(() => expire('idle'), delay);
   };
 
   if (callerSignal) {
     if (callerSignal.aborted) forward();
     else callerSignal.addEventListener('abort', forward, { once: true });
   }
-  arm();
-  const totalTimer = startTimer(() => expire('total'), CALL_LIMIT_MS);
+  arm(initialMs);
+  const totalTimer = startTimer(() => expire('total'), totalMs);
 
   return {
     signal: controller.signal,
     touch: arm,
-    idleMs,
+    get idleMs() { return silenceMs; },
+    totalMs,
     expired: () => expired,
     callerAborted: () => Boolean(callerSignal && callerSignal.aborted),
     clear() {
@@ -607,7 +614,7 @@ function transportFailure(error, deadline) {
     return new ProviderError(`Provider did not answer within ${duration(deadline.idleMs)}. Run the review again or pick a faster model.`, { kind: 'timeout' });
   }
   if (deadline.expired() === 'total') {
-    return new ProviderError(`Provider was still writing after ${CALL_LIMIT_MS / 60000} minutes. Run the review again or pick a faster model.`, { kind: 'timeout' });
+    return new ProviderError(`Provider was still writing after ${duration(deadline.totalMs)}. Run the review again or pick a faster model.`, { kind: 'timeout' });
   }
   return new ProviderError('Provider could not be reached. Check the connection and run again.', { kind: 'network' });
 }
@@ -920,12 +927,16 @@ const OPTIONAL_FIELDS = Object.freeze([
 
 async function send(providerId, request, { stream }) {
   const selected = provider(providerId);
-  const deadline = createDeadline(request.signal, stream ? TIMEOUT_MS : CALL_LIMIT_MS);
+  const coldStart = stream && providerId === 'bountyoperator';
+  const deadline = createDeadline(request.signal, stream ? TIMEOUT_MS : CALL_LIMIT_MS,
+    coldStart ? { initialMs: BOUNTY_OPERATOR_CALL_LIMIT_MS, totalMs: BOUNTY_OPERATOR_CALL_LIMIT_MS } : {});
 
   const attempt = async (options) => {
     const { url, init } = buildRequest(providerId, request, options);
     const response = await (request.fetch ?? fetch)(url, { ...init, signal: deadline.signal });
-    deadline.touch();
+    // Headers alone need not mean a cold model has started writing. Its first
+    // body chunk switches to the ordinary 180-second inactivity limit.
+    if (!coldStart) deadline.touch();
     await refuseRedirect(response, selected);
     return response;
   };

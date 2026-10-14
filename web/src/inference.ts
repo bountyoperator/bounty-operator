@@ -5,19 +5,21 @@ import type { MeteredModel } from './api-credits.ts';
 import type { Call, Env } from './env.ts';
 import { ApiError, json, readJson } from './http.ts';
 import { rateLimit } from './rate.ts';
+import { markSupplierDispatched, supplierAvailability } from './supplier-costs.ts';
 
 export interface InferenceModel extends MeteredModel {
   name: string;
   source: string;
-  revision: string;
-  license: string;
-  quantization: string;
+  revision: string | null;
+  license: string | null;
+  quantization: string | null;
   endpoint: string;
   upstreamModel: string;
   description?: string;
   tags?: string[];
   capabilities?: string[];
   reasoningParameter?: 'enable_thinking' | 'thinking' | 'reasoning_effort';
+  enabled?: boolean;
 }
 const CAPABILITIES = ['text', 'tools', 'streaming', 'reasoning', 'structured_output'];
 const BODY_BYTES = 8 * 1024 * 1024;
@@ -26,24 +28,30 @@ const REQUEST_MS = 300000;
 const STARTUP_MS = 600000;
 const encoder = new TextEncoder();
 
+// Managed alias metadata was checked against the providers' public catalogs
+// on 2026-10-14. Aliases do not prove a weight revision, license or a fixed
+// quantization. Kimi 8/12, Omen 8/14 and Qwen Cyber 4/70 USD per million use
+// the maximum published supplier rates (4.5/4.5, 4.5/7 and 2/37.5) plus room
+// for Infron's 5% funding fee. Fixed payment fees and tax are separate costs.
+// Supplier-cost rules have their own expiring quotes; these are retail prices.
 const CATALOG_DEFAULTS: Readonly<Record<string, Omit<InferenceModel, 'endpoint'>>> = {
   'cyber-qwen-27b-awq': { id: 'cyber-qwen-27b-awq', name: 'Qwen Cyber 27B AWQ', source: 'philbert440/Qwen3.8-27B-Uncensored-Cyber-W4A16-AWQ', revision: 'd6db3e17ccf92e0082001019bf932b34beb81764', license: 'Apache-2.0', quantization: 'AWQ W4A16', description: 'Low-refusal cyber model for code review, security analysis and agent workflows.', tags: ['cybersecurity', 'uncensored'], context: 262144, maxOutput: 8192, inputRate: 3, outputRate: 36, minimumMicro: 150000, upstreamModel: 'cyber-qwen-27b-awq', reasoningParameter: 'enable_thinking' },
-  'orca-cyber-zero-1.5': { id: 'orca-cyber-zero-1.5', name: 'OrcaCyber Zero 1.5', source: 'orca/orcacyber-zero-1.5', revision: 'e4810c920a1f7844029d8b3e11209a8f7c61e205', license: 'OrcaRouter Security Research Terms', quantization: 'FP8', description: 'OrcaRouter’s flagship offensive-security and vulnerability-discovery model for exploit verification and defense.', tags: ['cybersecurity', 'uncensored'], context: 262144, maxOutput: 8192, inputRate: 4, outputRate: 12, minimumMicro: 150000, upstreamModel: 'orca/orcacyber-zero-1.5' },
-  'orca-cyber-zero-1.0': { id: 'orca-cyber-zero-1.0', name: 'OrcaCyber Zero 1.0', source: 'orca/orcacyber-zero-1.0', revision: 'c1094b827a3e650192837465a1b2c3d4e5f60718', license: 'OrcaRouter Security Research Terms', quantization: 'FP8', description: 'First-generation OrcaCyber Zero security research model for code audit, log triage and PoC validation.', tags: ['cybersecurity', 'uncensored'], context: 131072, maxOutput: 8192, inputRate: 4, outputRate: 12, minimumMicro: 150000, upstreamModel: 'orca/orcacyber-zero-1.0' },
-  'glm-5.3-flash-cyber': { id: 'glm-5.3-flash-cyber', name: 'GLM-5.3 Flash Cybersecurity', source: 'z-ai/glm-5.3-flash-cybersecurity', revision: '9f848dc33d625bf2b150e2bc5871437aa2dcbe5c', license: 'MIT', quantization: 'FP8', description: 'Fast cybersecurity fine-tune of GLM-5.3 Flash for vulnerability triage, code audit and agent tool loops.', tags: ['cybersecurity', 'uncensored'], context: 131072, maxOutput: 8192, inputRate: 2, outputRate: 24, minimumMicro: 100000, upstreamModel: 'z-ai/glm-5.3-flash-cybersecurity' },
-  'deepseek-v4-flash-cyber': { id: 'deepseek-v4-flash-cyber', name: 'DeepSeek V4 Flash Vision Cyber', source: 'deepseek/deepseek-v4-flash-vision-exp-cybersecurity', revision: '71e308afe2e2e0604c81e52f11a91b86097c43dc', license: 'MIT', quantization: 'FP8', description: 'Cybersecurity-tuned DeepSeek V4 Flash for exploit-path verification, reverse engineering and code review.', tags: ['cybersecurity', 'uncensored'], context: 131072, maxOutput: 8192, inputRate: 2, outputRate: 6, minimumMicro: 50000, upstreamModel: 'deepseek/deepseek-v4-flash-vision-exp-cybersecurity' },
-  'qwen3.8-27b-cyber': { id: 'qwen3.8-27b-cyber', name: 'Qwen 3.8 27B Cybersecurity', source: 'qwen/qwen3.8-27b-cybersecurity', revision: 'd6db3e17ccf92e0082001019bf932b34beb81764', license: 'Apache-2.0', quantization: 'FP8', description: 'Full-precision FP8 Qwen 3.8 27B cybersecurity specialist for deep vulnerability analysis and PoC review.', tags: ['cybersecurity', 'uncensored'], context: 262144, maxOutput: 8192, inputRate: 3, outputRate: 32, minimumMicro: 150000, upstreamModel: 'qwen/qwen3.8-27b-cybersecurity' },
-  'gemma-4-26b-cyber': { id: 'gemma-4-26b-cyber', name: 'Gemma 4 26B A4B Cybersecurity', source: 'google/gemma-4-26b-a4b-it-cybersecurity', revision: '875769fd53ffce066f9cefe7d8eb76be5ca124f2', license: 'Gemma Terms of Use', quantization: 'FP8', description: 'High-throughput 26B-A4B MoE cybersecurity instruction model for rapid code scanning and triage.', tags: ['cybersecurity', 'uncensored'], context: 131072, maxOutput: 8192, inputRate: 2, outputRate: 5, minimumMicro: 50000, upstreamModel: 'google/gemma-4-26b-a4b-it-cybersecurity' },
-  'glm-5.3-cyber': { id: 'glm-5.3-cyber', name: 'GLM-5.3 Cybersecurity 744B', source: 'z-ai/glm-5.3-cybersecurity', revision: '371bdb98e6a02c5ff8191fa57cb04825b33ca26e', license: 'MIT', quantization: 'FP8', description: 'Frontier 744B MoE cybersecurity specialist for complex multi-contract invariant and exploit reasoning.', tags: ['cybersecurity', 'uncensored'], context: 131072, maxOutput: 8192, inputRate: 10, outputRate: 20, minimumMicro: 200000, upstreamModel: 'z-ai/glm-5.3-cybersecurity' },
-  'glm-5.3-ablit': { id: 'glm-5.3-ablit', name: 'GLM-5.3 Low-Refusal 744B', source: 'z-ai/glm-5.3-abliterated', revision: '371bdb98e6a02c5ff8191fa57cb04825b33ca26e', license: 'MIT', quantization: 'NVFP4', description: 'Flagship 744B low-refusal reasoning model for red-team verification and proof-of-concept stress testing.', tags: ['uncensored'], context: 131072, maxOutput: 8192, inputRate: 10, outputRate: 18, minimumMicro: 200000, upstreamModel: 'z-ai/glm-5.3-abliterated' },
-  'glm-5.3-flash-ablit': { id: 'glm-5.3-flash-ablit', name: 'GLM-5.3 Flash Low-Refusal', source: 'z-ai/glm-5.3-flash-abliterated', revision: '0d5b22fd326c8733088c8df87b9c89df2deec226', license: 'MIT', quantization: 'NVFP4', description: 'Fast low-refusal GLM-5.3 Flash variant for iterative security analysis and agent harnesses.', tags: ['uncensored'], context: 131072, maxOutput: 8192, inputRate: 3, outputRate: 8, minimumMicro: 80000, upstreamModel: 'z-ai/glm-5.3-flash-abliterated' },
+  'orca-cyber-zero-1.5': { id: 'orca-cyber-zero-1.5', name: 'OrcaCyber Zero 1.5', source: 'orca/orcacyber-zero-1.5', revision: null, license: null, quantization: null, description: 'OrcaRouter’s flagship offensive-security and vulnerability-discovery model for exploit verification and defense.', tags: ['cybersecurity', 'uncensored'], context: 1000000, maxOutput: 8192, inputRate: 4, outputRate: 12, minimumMicro: 150000, upstreamModel: 'orca/orcacyber-zero-1.5' },
+  'orca-cyber-zero-1.0': { id: 'orca-cyber-zero-1.0', name: 'OrcaCyber Zero 1.0', source: 'orca/orcacyber-zero-1.0', revision: null, license: null, quantization: null, description: 'First-generation OrcaCyber Zero security research model for code audit, log triage and PoC validation.', tags: ['cybersecurity', 'uncensored'], context: 1000000, maxOutput: 8192, inputRate: 4, outputRate: 12, minimumMicro: 150000, upstreamModel: 'orca/orcacyber-zero-1.0' },
+  'glm-5.3-flash-cyber': { id: 'glm-5.3-flash-cyber', name: 'GLM-5.3 Flash Cybersecurity', source: 'z-ai/glm-5.3-flash-cybersecurity', revision: null, license: null, quantization: null, description: 'Fast cybersecurity fine-tune of GLM-5.3 Flash for vulnerability triage, code audit and agent tool loops.', tags: ['cybersecurity', 'uncensored'], context: 1048576, maxOutput: 8192, inputRate: 2, outputRate: 24, minimumMicro: 100000, upstreamModel: 'z-ai/glm-5.3-flash-cybersecurity' },
+  'deepseek-v4-flash-cyber': { id: 'deepseek-v4-flash-cyber', name: 'DeepSeek V4 Flash Vision Cyber', source: 'deepseek/deepseek-v4-flash-vision-exp-cybersecurity', revision: null, license: null, quantization: null, description: 'Cybersecurity-tuned DeepSeek V4 Flash for exploit-path verification, reverse engineering and code review.', tags: ['cybersecurity', 'uncensored'], context: 1048576, maxOutput: 8192, inputRate: 2, outputRate: 6, minimumMicro: 50000, upstreamModel: 'deepseek/deepseek-v4-flash-vision-exp-cybersecurity' },
+  'qwen3.8-27b-cyber': { id: 'qwen3.8-27b-cyber', name: 'Qwen 3.8 27B Cybersecurity', source: 'qwen/qwen3.8-27b-cybersecurity', revision: null, license: null, quantization: null, description: 'Provider-hosted Qwen 3.8 27B cybersecurity specialist for deep vulnerability analysis and PoC review.', tags: ['cybersecurity', 'uncensored'], context: 262144, maxOutput: 8192, inputRate: 4, outputRate: 70, minimumMicro: 150000, upstreamModel: 'qwen/qwen3.8-27b-cybersecurity' },
+  'gemma-4-26b-cyber': { id: 'gemma-4-26b-cyber', name: 'Gemma 4 26B A4B Cybersecurity', source: 'google/gemma-4-26b-a4b-it-cybersecurity', revision: null, license: null, quantization: null, description: 'High-throughput 26B-A4B MoE cybersecurity instruction model for rapid code scanning and triage.', tags: ['cybersecurity', 'uncensored'], context: 262144, maxOutput: 8192, inputRate: 2, outputRate: 5, minimumMicro: 50000, upstreamModel: 'google/gemma-4-26b-a4b-it-cybersecurity' },
+  'glm-5.3-cyber': { id: 'glm-5.3-cyber', name: 'GLM-5.3 Cybersecurity 744B', source: 'z-ai/glm-5.3-cybersecurity', revision: null, license: null, quantization: null, description: 'Frontier 744B MoE cybersecurity specialist for complex multi-contract invariant and exploit reasoning.', tags: ['cybersecurity', 'uncensored'], context: 1048576, maxOutput: 8192, inputRate: 10, outputRate: 20, minimumMicro: 200000, upstreamModel: 'z-ai/glm-5.3-cybersecurity' },
+  'glm-5.3-ablit': { id: 'glm-5.3-ablit', name: 'GLM-5.3 Low-Refusal 744B', source: 'z-ai/glm-5.3-abliterated', revision: null, license: null, quantization: null, description: 'Flagship 744B low-refusal reasoning model for red-team verification and proof-of-concept stress testing.', tags: ['uncensored'], context: 1048576, maxOutput: 8192, inputRate: 10, outputRate: 18, minimumMicro: 200000, upstreamModel: 'z-ai/glm-5.3-abliterated' },
+  'glm-5.3-flash-ablit': { id: 'glm-5.3-flash-ablit', name: 'GLM-5.3 Flash Low-Refusal', source: 'z-ai/glm-5.3-flash-abliterated', revision: null, license: null, quantization: null, description: 'Fast low-refusal GLM-5.3 Flash variant for iterative security analysis and agent harnesses.', tags: ['uncensored'], context: 1048576, maxOutput: 8192, inputRate: 3, outputRate: 8, minimumMicro: 80000, upstreamModel: 'z-ai/glm-5.3-flash-abliterated' },
   'cyberstrike-offsec-35b': { id: 'cyberstrike-offsec-35b', name: 'CyberStrike OffSec 35B', source: 'huihui-ai/Huihui-CyberStrike-OffSec-35B-abliterated', revision: '01521758ee85df1ed4edaf494c48e20704b80204', license: 'Apache-2.0', quantization: 'BF16', description: 'Low-refusal 35B-A3B MoE security and code-review model tuned for structured tool calls and clean termination.', tags: ['cybersecurity', 'uncensored'], context: 262144, maxOutput: 8192, inputRate: 2, outputRate: 24, minimumMicro: 150000, upstreamModel: 'cyberstrike-offsec-35b', reasoningParameter: 'enable_thinking' },
   'qwen-coder390-27b-ablit': { id: 'qwen-coder390-27b-ablit', name: 'Qwen 3.8 27B Coder390 Low-Refusal', source: 'huihui-ai/Huihui-Qwen3.8-27B-Coder390-EfficientThink-abliterated', revision: '14c13fcf593d692a5b96f29afecca6fe2fc030e6', license: 'Apache-2.0', quantization: 'BF16', description: 'Low-refusal 27B coding and security specialist distilled on frontier SFT/RLOO traces with efficient thinking.', tags: ['cybersecurity', 'uncensored'], context: 262144, maxOutput: 8192, inputRate: 3, outputRate: 38, minimumMicro: 200000, upstreamModel: 'qwen-coder390-27b-ablit', reasoningParameter: 'enable_thinking' },
-  'kimi-k3-cyber': { id: 'kimi-k3-cyber', name: 'Kimi K3 Cybersecurity Two-Stage', source: 'moonshotai/kimi-k3-cybersecurity-two-stage', revision: 'b0f12a8719c2e390451a88e01c2d934e8a7f1120', license: 'MIT', quantization: 'FP8', description: 'Two-stage Kimi K3 cybersecurity reasoning model for long-context audit trails and exploit validation.', tags: ['cybersecurity'], context: 131072, maxOutput: 8192, inputRate: 3, outputRate: 12, minimumMicro: 150000, upstreamModel: 'moonshotai/kimi-k3-cybersecurity-two-stage' },
-  'omen-2.0-cyber': { id: 'omen-2.0-cyber', name: 'Omen 2.0 Cybersecurity', source: 'audn/omen-2.0-cybersecurity', revision: 'c81a4402f9d3110e894b120f55e90a1c7822310f', license: 'Apache-2.0', quantization: 'BF16', description: 'Second-generation Omen security model tuned for vulnerability discovery, triage and defensive verification.', tags: ['cybersecurity', 'uncensored'], context: 131072, maxOutput: 8192, inputRate: 2, outputRate: 8, minimumMicro: 100000, upstreamModel: 'audn/omen-2.0-cybersecurity' },
-  'gemma-4-31b-ablit': { id: 'gemma-4-31b-ablit', name: 'Gemma 4 31B Low-Refusal', source: 'google/gemma-4-31b-it-abliterated-v2', revision: 'a4491c8201e7f93310bc29a811f402e88a901c22', license: 'Gemma Terms of Use', quantization: 'BF16', description: 'Dense 31B Gemma 4 instruction model with refusal vectors removed for direct technical security analysis.', tags: ['uncensored'], context: 131072, maxOutput: 8192, inputRate: 2, outputRate: 6, minimumMicro: 80000, upstreamModel: 'google/gemma-4-31b-it-abliterated-v2' },
-  'qwen3-coder-next': { id: 'qwen3-coder-next', name: 'Qwen3 Coder Next 80B-A3B', source: 'qwen/qwen3-coder-next', revision: 'e12098a47c331209f8441a09bc881230f91a2201', license: 'Apache-2.0', quantization: 'FP8', description: '80B-A3B Mixture-of-Experts coding and repository-analysis model built for multi-file agent tool loops.', tags: ['general'], context: 262144, maxOutput: 8192, inputRate: 2, outputRate: 8, minimumMicro: 80000, upstreamModel: 'qwen/qwen3-coder-next' },
-  'deepseek-v4.1-flash': { id: 'deepseek-v4.1-flash', name: 'DeepSeek V4.1 Flash', source: 'deepseek/deepseek-v4.1-flash', revision: 'f00192837465a1b2c3d4e5f60718293a4b5c6d7e', license: 'MIT', quantization: 'FP8', description: 'High-speed DeepSeek V4.1 Flash reasoning and coding model for large-context security diffs.', tags: ['general'], context: 131072, maxOutput: 8192, inputRate: 1, outputRate: 4, minimumMicro: 50000, upstreamModel: 'deepseek/deepseek-v4.1-flash' },
+  'kimi-k3-cyber': { id: 'kimi-k3-cyber', name: 'Kimi K3 Cybersecurity Two-Stage', source: 'moonshotai/kimi-k3-cybersecurity-two-stage', revision: null, license: null, quantization: null, description: 'Two-stage Kimi K3 cybersecurity reasoning model for long-context audit trails and exploit validation.', tags: ['cybersecurity'], context: 1048576, maxOutput: 8192, inputRate: 8, outputRate: 12, minimumMicro: 150000, upstreamModel: 'moonshotai/kimi-k3-cybersecurity-two-stage' },
+  'omen-2.0-cyber': { id: 'omen-2.0-cyber', name: 'Omen 2.0 Cybersecurity', source: 'audn/omen-2.0-cybersecurity', revision: null, license: null, quantization: null, description: 'Second-generation Omen security model tuned for vulnerability discovery, triage and defensive verification.', tags: ['cybersecurity', 'uncensored'], context: 1048576, maxOutput: 8192, inputRate: 8, outputRate: 14, minimumMicro: 100000, upstreamModel: 'audn/omen-2.0-cybersecurity' },
+  'gemma-4-31b-ablit': { id: 'gemma-4-31b-ablit', name: 'Gemma 4 31B Low-Refusal', source: 'google/gemma-4-31b-it-abliterated-v2', revision: null, license: null, quantization: null, description: 'Dense 31B Gemma 4 instruction model with refusal vectors removed for direct technical security analysis.', tags: ['uncensored'], context: 32768, maxOutput: 8192, inputRate: 2, outputRate: 6, minimumMicro: 80000, upstreamModel: 'google/gemma-4-31b-it-abliterated-v2' },
+  'qwen3-coder-next': { id: 'qwen3-coder-next', name: 'Qwen3 Coder Next 80B-A3B', source: 'qwen/qwen3-coder-next', revision: null, license: null, quantization: null, description: '80B-A3B Mixture-of-Experts coding and repository-analysis model built for multi-file agent tool loops.', tags: ['general'], context: 262140, maxOutput: 8192, inputRate: 2, outputRate: 8, minimumMicro: 80000, upstreamModel: 'qwen/qwen3-coder-next' },
+  'deepseek-v4.1-flash': { id: 'deepseek-v4.1-flash', name: 'DeepSeek V4.1 Flash', source: 'deepseek/deepseek-v4.1-flash', revision: null, license: null, quantization: null, description: 'High-speed DeepSeek V4.1 Flash reasoning and coding model for large-context security diffs.', tags: ['general'], context: 1000000, maxOutput: 8192, inputRate: 1, outputRate: 4, minimumMicro: 50000, upstreamModel: 'deepseek/deepseek-v4.1-flash' },
   'deephat-v1-7b': { id: 'deephat-v1-7b', name: 'DeepHat V1 7B', source: 'DeepHat/DeepHat-V1-7B', revision: '361a5ce60e67c815ff868a253fdfd54364dbb84f', license: 'Apache-2.0 + DeepHat use restrictions', quantization: 'BF16', description: 'A security specialist for code review and technical investigation.', tags: ['cybersecurity'], context: 32768, maxOutput: 8192, inputRate: 2, outputRate: 18, minimumMicro: 150000, upstreamModel: 'deephat-v1-7b' },
   'orca-qwen-27b': { id: 'orca-qwen-27b', name: 'Orca Qwen 3.8 27B', source: 'orcarouter/Qwen3.8-27B-Uncensored-FP8', revision: '8b4ede700a2ee547a35daa035d5e62d9be05d10d', license: 'Apache-2.0; publisher use conditions apply', quantization: 'FP8', description: 'Orca’s low-refusal Qwen model for coding and agent workflows.', tags: ['uncensored'], context: 262144, maxOutput: 8192, inputRate: 3, outputRate: 40, minimumMicro: 300000, upstreamModel: 'orca-qwen-27b', reasoningParameter: 'enable_thinking' },
   'orca-nex-mini': { id: 'orca-nex-mini', name: 'Orca Nex N2.5 Mini', source: 'orcarouter/Nex-N2.5-mini-Uncensored-FP8', revision: 'bf828724f25dd45c7dce05c83cdf5b6b3eb5b5f8', license: 'Apache-2.0; publisher use conditions apply', quantization: 'FP8', description: 'Low-refusal Nex model with function tools and structured responses.', tags: ['uncensored'], context: 262144, maxOutput: 8192, inputRate: 3, outputRate: 65, minimumMicro: 200000, upstreamModel: 'orca-nex-mini', reasoningParameter: 'reasoning_effort' },
@@ -80,7 +88,9 @@ export function inferenceModels(env: Env): InferenceModel[] {
       !/^[a-zA-Z0-9_./-]{1,180}$/.test(m.upstreamModel) ||
       ![m.inputRate, m.outputRate, m.minimumMicro, m.context, m.maxOutput].every((n) => Number.isSafeInteger(n) && n > 0) ||
       m.inputRate > 100 || m.outputRate > 500 || m.minimumMicro > 1_000_000 || m.context > 1048576 || m.maxOutput > m.context ||
-      ![m.name, m.source, m.revision, m.license, m.quantization].every((s) => typeof s === 'string' && s.length <= 200) ||
+      ![m.name, m.source].every((s) => typeof s === 'string' && s.length <= 200) ||
+      ![m.revision, m.license, m.quantization].every((s) => s === null || (typeof s === 'string' && s.length <= 200)) ||
+      (m.enabled !== undefined && typeof m.enabled !== 'boolean') ||
       (m.description !== undefined && (typeof m.description !== 'string' || m.description.length > 500)) ||
       (m.tags !== undefined && (!Array.isArray(m.tags) || m.tags.length > 8 || m.tags.some((tag) => typeof tag !== 'string' || !/^[a-z0-9-]{1,40}$/.test(tag)))) ||
       (m.capabilities !== undefined && (!Array.isArray(m.capabilities) || !m.capabilities.includes('text') || m.capabilities.length > CAPABILITIES.length || new Set(m.capabilities).size !== m.capabilities.length || m.capabilities.some((capability) => !CAPABILITIES.includes(capability)))) ||
@@ -91,7 +101,7 @@ export function inferenceModels(env: Env): InferenceModel[] {
 }
 
 export function inferenceReady(env: Env): boolean {
-  return env.INFERENCE_ENABLED === 'true' && Boolean(env.RUNPOD_API_KEY || env.INFRON_API_KEY || env.ORCAROUTER_API_KEY) && inferenceModels(env).length > 0;
+  return env.INFERENCE_ENABLED === 'true' && inferenceModels(env).some((m) => m.enabled !== false && Boolean(backendKey(m.endpoint, env)));
 }
 // The hosting account pauses every endpoint when its balance runs out: a
 // worker answers /health with 402 and nothing can start. That state is read
@@ -133,20 +143,48 @@ export async function inferencePaused(env: Env): Promise<boolean> {
 
 export async function inferenceStatus(env: Env): Promise<'unavailable' | 'paused' | 'available'> {
   if (!inferenceReady(env)) return 'unavailable';
-  const models = inferenceModels(env);
-  const hasDirectGateway = models.some((m) => !isRunpod(m.endpoint) && Boolean(backendKey(m.endpoint, env)));
+  const configured = inferenceModels(env).filter((model) => model.enabled !== false && Boolean(backendKey(model.endpoint, env)));
+  const [supplier, faults] = await Promise.all([supplierAvailability(env, configured), usageFaultModels(env)]);
+  const models = configured.filter((model) => supplier[model.id]?.available && !faults.has(model.id));
+  if (!models.length) return 'unavailable';
+  const hasDirectGateway = models.some((m) => m.enabled !== false && !isRunpod(m.endpoint) && Boolean(backendKey(m.endpoint, env)));
   if (hasDirectGateway) return 'available';
   return (await inferencePaused(env)) ? 'paused' : 'available';
 }
 
-export function publicModel(model: InferenceModel): Record<string, unknown> {
+export function publicModel(model: InferenceModel, env?: Env, supplierAvailable = false): Record<string, unknown> {
+  const runpod = isRunpod(model.endpoint);
+  const available = Boolean(env && env.INFERENCE_ENABLED === 'true' && model.enabled !== false && backendKey(model.endpoint, env) && supplierAvailable);
+  const paused = available && runpod && hosting.key === env?.RUNPOD_API_KEY && Date.now() - hosting.at < HOSTING_CHECK_MS && hosting.paused;
+  const sourceUrl = runpod ? `https://huggingface.co/${model.source.split('/').map(encodeURIComponent).join('/')}`
+    : model.endpoint === 'https://api.infron.ai' ? 'https://api.infron.ai/v1/models'
+      : `https://www.orcarouter.ai/api/public/models/${model.upstreamModel.split('/').map(encodeURIComponent).join('/')}`;
   return { id: model.id, object: 'model', created: 1791849600, owned_by: 'bountyoperator', name: model.name,
     context_length: model.context, max_output_tokens: model.maxOutput, source: model.source, revision: model.revision,
     license: model.license, quantization: model.quantization,
+    source_url: sourceUrl, hosting_provider: runpod ? 'RunPod' : model.endpoint === 'https://api.infron.ai' ? 'Infron' : 'OrcaRouter',
+    availability: paused ? 'paused' : available ? 'available' : 'unavailable',
+    admission_policy: 'conservative_utf8_bytes_with_template_reserve',
     pricing: { currency: 'usd', input_per_million: model.inputRate, output_per_million: model.outputRate, minimum_request: model.minimumMicro / 1_000_000 },
     description: model.description ?? '', tags: model.tags ?? [],
     capabilities: model.capabilities ?? ['text', 'tools', 'streaming', 'structured_output'],
     ...(model.reasoningParameter ? { reasoning_parameter: `chat_template_kwargs.${model.reasoningParameter}` } : {}) };
+}
+
+/** Retain every requested model in the catalog, with honest per-model state. */
+export async function inferenceCatalog(env: Env): Promise<Record<string, unknown>[]> {
+  const models = inferenceModels(env);
+  const [supplier, faults] = await Promise.all([supplierAvailability(env, models), usageFaultModels(env)]);
+  // Discovery checks account funding through the management API, never /health
+  // (which can start a paid worker). Do this even when a direct gateway is up.
+  if (env.INFERENCE_ENABLED === 'true' && models.some((model) => model.enabled !== false && isRunpod(model.endpoint) && backendKey(model.endpoint, env) && supplier[model.id]?.available && !faults.has(model.id))) await inferencePaused(env);
+  return models.map((model) => publicModel(model, env, supplier[model.id]?.available === true && !faults.has(model.id)));
+}
+
+async function usageFaultModels(env: Env): Promise<Set<string>> {
+  const rows = await env.DB.prepare("SELECT DISTINCT model FROM inference_requests WHERE failure_code = 'usage_limit_exceeded' AND finished_at > ?")
+    .bind(Math.floor(Date.now() / 1000) - 600).all<{ model: string }>();
+  return new Set(rows.results.map((row) => row.model));
 }
 
 function object(value: unknown): value is Record<string, unknown> { return Boolean(value) && typeof value === 'object' && !Array.isArray(value); }
@@ -213,15 +251,35 @@ export function parseInference(body: Record<string, unknown>, model: InferenceMo
   delete payload.store;
   if (body.stream) payload.stream_options = isRunpod(model.endpoint) ? { include_usage: true, continuous_usage_stats: true } : { include_usage: true };
   else delete payload.stream_options;
+  // An alias does not identify a tokenizer. Count UTF-8 bytes rather than
+  // guessing a characters/token ratio, including tools and response schemas.
+  // Reserve template overhead per message/tool plus the requested completion.
+  // The provider still enforces its actual token window; this is a conservative
+  // admission bound, not a claim that a byte is an actual model token.
+  const inputBytes = encoder.encode(JSON.stringify({ messages: payload.messages, tools: payload.tools, tool_choice: payload.tool_choice, response_format: payload.response_format })).byteLength;
+  const templateReserve = 1024 + body.messages.length * 64 + (Array.isArray(body.tools) ? body.tools.length * 256 : 0);
+  if (inputBytes + templateReserve + maxOutput > model.context) throw new ApiError(`Input is too large for this model's conservative context budget. Shorten the messages, tools or response schema, or request fewer output tokens. The provider window is ${model.context} tokens.`, 400, 'context_length_exceeded');
   return { payload, maxOutput, stream: body.stream === true, includeUsage: object(body.stream_options) && body.stream_options.include_usage === true };
 }
 
-export function usageCounters(value: unknown, model: MeteredModel, maxOutput: number): { input: number; output: number } | null {
+export function usageCounters(value: unknown, model: MeteredModel): { input: number; output: number } | null {
   if (!object(value)) return null;
   const input = value.prompt_tokens;
   const output = value.completion_tokens;
-  if (typeof input !== 'number' || typeof output !== 'number' || !Number.isSafeInteger(input) || !Number.isSafeInteger(output) || input < 0 || input > model.context || output < 0 || output > maxOutput) return null;
+  // A provider exceeding our declared window is an operational fault, not a
+  // reason to erase confirmed billable usage. Settlement caps the charge at
+  // the existing reservation and records the original counters.
+  if (typeof input !== 'number' || typeof output !== 'number' || !Number.isSafeInteger(input) || !Number.isSafeInteger(output) || input < 0 || output < 0 || !Number.isSafeInteger(input * model.inputRate + output * model.outputRate)) return null;
   return { input, output };
+}
+
+function usageFailure(tokens: { input: number; output: number }, model: MeteredModel, maxOutput: number): string | null {
+  return tokens.input + tokens.output > model.context || tokens.output > maxOutput ? 'usage_limit_exceeded' : null;
+}
+
+function hasTerminalChoice(choices: unknown): boolean {
+  return Array.isArray(choices) && choices.length === 1 && object(choices[0]) && typeof choices[0].finish_reason === 'string' &&
+    ['stop', 'length', 'tool_calls', 'function_call', 'content_filter'].includes(choices[0].finish_reason);
 }
 
 export function inferenceError(error: unknown): Response {
@@ -236,13 +294,13 @@ export async function inferenceEndpoint(call: Call): Promise<Response> {
     const key = await authenticateInference(call);
     await rateLimit(call.env.DB, `inference:${key.account_id}`, 60, 60);
     if (call.url.pathname === '/v1/models' && ['GET', 'HEAD'].includes(call.request.method)) {
-      return json({ object: 'list', data: inferenceReady(call.env) ? inferenceModels(call.env).map(publicModel) : [] });
+      return json({ object: 'list', data: (await inferenceCatalog(call.env)).filter((model) => model.availability === 'available') });
     }
     if (call.url.pathname.startsWith('/v1/models/') && ['GET', 'HEAD'].includes(call.request.method)) {
       const id = call.url.pathname.slice('/v1/models/'.length);
-      const model = inferenceReady(call.env) ? inferenceModels(call.env).find((entry) => entry.id === id) : undefined;
+      const model = (await inferenceCatalog(call.env)).find((entry) => entry.id === id && entry.availability === 'available');
       if (!model) throw new ApiError('Choose a model returned by /v1/models.', 404, 'model_not_found');
-      return json(publicModel(model));
+      return json(model);
     }
     if (call.url.pathname === '/v1/usage' && ['GET', 'HEAD'].includes(call.request.method)) {
       const wallet = await call.env.DB.prepare('SELECT balance_micro, reserved_micro FROM api_wallets WHERE account_id = ?').bind(key.account_id).first();
@@ -254,9 +312,11 @@ export async function inferenceEndpoint(call: Call): Promise<Response> {
     const body = await readJson(call.request, BODY_BYTES);
     const model = inferenceModels(call.env).find((m) => m.id === body.model);
     if (!model) throw new ApiError('Choose a model returned by /v1/models.', 404, 'model_not_found');
-    if (!backendKey(model.endpoint, call.env)) throw new ApiError('This model is being provisioned right now. No charge was made.', 503, 'model_unavailable', { retryAfter: 60 });
+    if (model.enabled === false || !backendKey(model.endpoint, call.env)) throw new ApiError('This model is not available right now. No charge was made.', 503, 'model_unavailable', { retryAfter: 60 });
     if (isRunpod(model.endpoint) && hosting.key === call.env.RUNPOD_API_KEY && Date.now() - hosting.at < HOSTING_CHECK_MS && hosting.paused) throw new ApiError(PAUSED_MESSAGE, 503, 'inference_paused', { retryAfter: 300 });
     const parsed = parseInference(body, model);
+    const usageFault = await call.env.DB.prepare("SELECT 1 AS found FROM inference_requests WHERE model = ? AND failure_code = 'usage_limit_exceeded' AND finished_at > ? LIMIT 1").bind(model.id, Math.floor(Date.now() / 1000) - 600).first();
+    if (usageFault) throw new ApiError('This model is temporarily unavailable while its usage limits are checked. No charge was made.', 503, 'model_usage_unavailable', { retryAfter: 600 });
     const idempotency = call.request.headers.get('idempotency-key');
     if (idempotency && !/^[\x21-\x7e]{1,128}$/.test(idempotency)) invalid('Idempotency-Key must contain 1–128 printable characters.');
     // Repeated failures with no metered output must not provide unlimited free GPU work.
@@ -280,6 +340,10 @@ async function generate(call: Call, model: InferenceModel, parsed: ReturnType<ty
   const clean = () => { clearTimeout(timer); call.request.signal.removeEventListener('abort', abort); };
   let tokens: { input: number; output: number } | null = null;
   try {
+    if (controller.signal.aborted) throw new ApiError('The model request was interrupted. No charge was made.', 503, 'model_unavailable');
+    // Starting a worker can itself incur supplier cost. Mark the durable
+    // supplier reservation before either a health probe or generation call.
+    await markSupplierDispatched(call.env, id);
     // Warm only a Runpod health endpoint. A generation is submitted exactly once,
     // after readiness, so retrying a cold start cannot duplicate paid work.
     if (isRunpod(model.endpoint)) await readyWorker(model, call.env, controller.signal);
@@ -299,20 +363,44 @@ async function generate(call: Call, model: InferenceModel, parsed: ReturnType<ty
     }
     if (!parsed.stream) {
       const result = JSON.parse(await boundedBody(upstream, RESPONSE_BYTES));
-      tokens = usageCounters(result.usage, model, parsed.maxOutput);
-      if (!tokens || !Array.isArray(result.choices) || result.choices.length !== 1) throw new ApiError('The model returned an incomplete response. No charge was made.', 502, 'invalid_model_response');
-      await settleInference(call.env, id, 'completed', tokens);
+      tokens = usageCounters(result.usage, model);
+      if (!tokens || !Array.isArray(result.choices) || result.choices.length !== 1) throw new ApiError('The model returned an incomplete response. Only confirmed usage is charged.', 502, 'invalid_model_response');
+      await settleInference(call.env, id, 'completed', tokens, usageFailure(tokens, model, parsed.maxOutput), hasTerminalChoice(result.choices));
       clean();
       return json({ id, object: 'chat.completion', created: result.created, model: model.id, choices: result.choices, usage: { prompt_tokens: tokens.input, completion_tokens: tokens.output, total_tokens: tokens.input + tokens.output } }, 200, { headers: { 'X-Request-ID': id } });
     }
     const reader = upstream.body.getReader();
     const stream = new TransformStream<Uint8Array, Uint8Array>();
     const writer = stream.writable.getWriter();
+    const writeChunk = async (chunk: Uint8Array): Promise<void> => {
+      if (controller.signal.aborted) throw new Error('Stream cancelled');
+      let stop: () => void = () => {};
+      const interrupted = new Promise<never>((_resolve, reject) => {
+        stop = () => {
+          // A blocked downstream write must not outlive the lease with known
+          // usage trapped in the pump. Reject independently of stream teardown.
+          reject(new Error('Stream cancelled'));
+          void writer.abort(new Error('Stream cancelled')).catch(() => {});
+        };
+        controller.signal.addEventListener('abort', stop, { once: true });
+      });
+      try { await Promise.race([writer.write(chunk), interrupted]); }
+      finally { controller.signal.removeEventListener('abort', stop); }
+    };
     const pump = async () => {
       let buffer = '';
       let bytes = 0;
       let done = false;
       let finalUsage = false;
+      let terminalChoice = false;
+      const pending: Uint8Array[] = [];
+      const forward = async (event: Uint8Array) => {
+        // Gate output on confirmed usage. Gateways that report usage only at
+        // the end remain SSE-compatible, but their content is held until then.
+        if (!tokens) { pending.push(event); return; }
+        for (const queued of pending.splice(0)) await writeChunk(queued);
+        await writeChunk(event);
+      };
       const decoder = new TextDecoder('utf-8', { fatal: true, ignoreBOM: false });
       try {
         while (!done) {
@@ -332,24 +420,32 @@ async function generate(call: Call, model: InferenceModel, parsed: ReturnType<ty
             const chunk = JSON.parse(data);
             if (chunk.error || !Array.isArray(chunk.choices)) throw new Error('Invalid model event');
             if (chunk.usage != null) {
-              const next = usageCounters(chunk.usage, model, parsed.maxOutput);
+              const next = usageCounters(chunk.usage, model);
               if (!next || (tokens && (next.input !== tokens.input || next.output < tokens.output))) throw new Error('Invalid model usage');
               tokens = next;
               if (!chunk.choices.length) finalUsage = true;
             }
             if (!chunk.choices.length) continue;
-            await writer.write(encoder.encode(`data: ${JSON.stringify({ id, object: 'chat.completion.chunk', created: chunk.created, model: model.id, choices: chunk.choices })}\n\n`));
+            // A usage event preceding more output is not the terminal meter.
+            finalUsage = false;
+            terminalChoice = hasTerminalChoice(chunk.choices);
+            await forward(encoder.encode(`data: ${JSON.stringify({ id, object: 'chat.completion.chunk', created: chunk.created, model: model.id, choices: chunk.choices })}\n\n`));
           }
         }
         if (!done || !tokens || !finalUsage) throw new Error('Incomplete model stream');
-        await settleInference(call.env, id, 'completed', tokens);
-        if (parsed.includeUsage) await writer.write(encoder.encode(`data: ${JSON.stringify({ id, object: 'chat.completion.chunk', created: Math.floor(Date.now() / 1000), model: model.id, choices: [], usage: { prompt_tokens: tokens.input, completion_tokens: tokens.output, total_tokens: tokens.input + tokens.output } })}\n\n`));
-        await writer.write(encoder.encode('data: [DONE]\n\n'));
+        // Settle before flushing final-only provider output so a downstream
+        // disconnect cannot erase confirmed usage or leave a wallet hold open.
+        await settleInference(call.env, id, 'completed', tokens, usageFailure(tokens, model, parsed.maxOutput), terminalChoice);
+        for (const queued of pending.splice(0)) await writeChunk(queued);
+        if (parsed.includeUsage) await writeChunk(encoder.encode(`data: ${JSON.stringify({ id, object: 'chat.completion.chunk', created: Math.floor(Date.now() / 1000), model: model.id, choices: [], usage: { prompt_tokens: tokens.input, completion_tokens: tokens.output, total_tokens: tokens.input + tokens.output } })}\n\n`));
+        await writeChunk(encoder.encode('data: [DONE]\n\n'));
         await writer.close();
       } catch {
+        const aborted = controller.signal.aborted;
         controller.abort();
-        await settleInference(call.env, id, 'cancelled', tokens, tokens ? 'stream_interrupted' : 'unmetered_stream');
-        try { await writer.write(encoder.encode(`data: ${JSON.stringify({ error: { message: 'The stream was interrupted. Only confirmed usage is charged.', type: 'server_error', code: 'stream_interrupted' } })}\n\n`)); await writer.close(); } catch { /* The caller disconnected. */ }
+        await settleInference(call.env, id, 'cancelled', tokens, tokens ? usageFailure(tokens, model, parsed.maxOutput) ?? 'stream_interrupted' : 'unmetered_stream');
+        if (aborted) void writer.abort(new Error('Stream cancelled')).catch(() => {});
+        else try { await writer.write(encoder.encode(`data: ${JSON.stringify({ error: { message: 'The stream was interrupted. Only confirmed usage is charged.', type: 'server_error', code: 'stream_interrupted' } })}\n\n`)); await writer.close(); } catch { /* The caller disconnected. */ }
       } finally { clean(); await reader.cancel().catch(() => {}); }
     };
     call.ctx.waitUntil(pump());
@@ -358,9 +454,9 @@ async function generate(call: Call, model: InferenceModel, parsed: ReturnType<ty
     console.error('Inference upstream stopped', { name: error instanceof Error ? error.name : 'unknown', aborted: controller.signal.aborted });
     controller.abort();
     clean();
-    await settleInference(call.env, id, 'failed', null, error instanceof ApiError && error.code === 'inference_paused' ? 'hosting_paused' : controller.signal.aborted ? 'upstream_failed' : 'model_failed');
+    await settleInference(call.env, id, 'failed', tokens, tokens ? usageFailure(tokens, model, parsed.maxOutput) ?? 'model_failed' : error instanceof ApiError && error.code === 'inference_paused' ? 'hosting_paused' : controller.signal.aborted ? 'upstream_failed' : 'model_failed');
     if (error instanceof ApiError) throw error;
-    throw new ApiError('The model request was interrupted. No charge was made.', 503, 'model_unavailable', { retryAfter: 30 });
+    throw new ApiError(tokens ? 'The model request was interrupted. Only confirmed usage is charged.' : 'The model request was interrupted. No charge was made.', 503, 'model_unavailable', { retryAfter: 30 });
   }
 }
 

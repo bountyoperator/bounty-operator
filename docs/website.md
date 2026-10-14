@@ -105,8 +105,15 @@ without it the script prints a notice and exits 0.
 5. `reviewPacket` writes the packet: verdict, context, manifest and the review.
 
 Limits: 50 files, 120 KB per file, 240 KB and 20,000 lines of text per review,
-16,000 characters of instructions. Provider calls use one fixed endpoint per provider, refuse
-redirects, time out after 180 seconds and read at most 2 MB.
+16,000 characters of instructions. Provider calls use one fixed endpoint per provider,
+refuse redirects and accept at most 2 MB of review text. Streamed calls normally allow
+180 seconds of inactivity and 15 minutes overall. Bounty Operator streams allow up to
+930 seconds for the first response body bytes and overall: 600 seconds for model startup,
+300 seconds for generation and 30 seconds of transport margin. Headers alone do not
+shorten that initial wait; after the first body bytes, the usual 180-second inactivity
+limit applies. The review reservation is renewed while the model warms, and caller
+cancellation stops the provider request. The separate single-answer hosted route keeps
+its 270-second limit.
 
 Source files, instructions, provider keys and review text are held in memory for
 the length of the request. D1 stores accounts, passkey public keys, hashed

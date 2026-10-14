@@ -2,12 +2,16 @@
 // The provider is a stubbed fetch: nothing leaves the machine.
 
 import assert from 'node:assert/strict';
+import { getEventListeners } from 'node:events';
 import test from 'node:test';
 
 import { ANTHROPIC_CYBER_NOTICE, ProviderError } from '../public/providers.mjs';
+import { createInferenceKey } from '../src/api-credits.ts';
 import { ApiError } from '../src/http.ts';
-import { failureReason, parseReviewRequest, reviewFailure, runHostedReview, streamHostedReview } from '../src/review.ts';
+import { reserveReview } from '../src/quota.mjs';
+import { collectHostedReview, failureReason, parseReviewRequest, reviewFailure, runHostedReview, streamHostedReview } from '../src/review.ts';
 import { SITE_ORIGIN, addAccount, addSubscription, createCall, createContext, createEnv, funnelCounts } from './worker-helpers.mjs';
+import { enableSupplierFixture } from './supplier-fixtures.mjs';
 
 const ACCOUNT = 'account-1';
 const KEY = 'sk-test-key-0123456789';
@@ -174,6 +178,7 @@ test('reviews can be paused without touching anything else', async (t) => {
 
 test('a completed review returns the answer and is counted afterwards', async (t) => {
   const { env, ctx, call, calls } = setup(t, () => completion());
+  const timeout = t.mock.method(AbortSignal, 'timeout');
 
   const result = await runHostedReview(call, ACCOUNT, parseReviewRequest(body()), 'web');
   assert.equal(result.review, REVIEW_TEXT);
@@ -189,6 +194,8 @@ test('a completed review returns the answer and is counted afterwards', async (t
   assert.equal(calls.length, 1);
   assert.equal(calls[0].url, 'https://api.openai.com/v1/chat/completions');
   assert.equal(calls[0].init.headers.Authorization, `Bearer ${KEY}`);
+  assert.equal(JSON.parse(calls[0].init.body).stream, undefined);
+  assert.deepEqual(timeout.mock.calls.map((call) => call.arguments[0]), [270000], 'other providers retain the single-answer deadline');
 
   await ctx.settled();
   assert.deepEqual(reviews(env), [{ status: 'completed', profile: 'solidity', channel: 'web' }]);
@@ -366,6 +373,112 @@ function parseEvents(text) {
       const [eventLine, dataLine] = block.split('\n');
       return { event: eventLine.slice('event: '.length), data: JSON.parse(dataLine.slice('data: '.length)) };
     });
+}
+
+/** Hold the in-process Model API at its health probe, without any real inference. */
+async function coldReview(t, fail = false) {
+  let started;
+  let warm;
+  let warmingSignal;
+  const warming = new Promise((resolve) => { started = resolve; });
+  const fixture = setup(t, (init) => {
+    if (!init.body) {
+      warmingSignal = init.signal;
+      return new Promise((resolve, reject) => {
+        const aborted = () => reject(init.signal.reason);
+        init.signal.addEventListener('abort', aborted, { once: true });
+        warm = () => {
+          init.signal.removeEventListener('abort', aborted);
+          resolve(new Response(null, { status: 200 }));
+        };
+        started();
+      });
+    }
+    if (fail) return new Response('Model unavailable', { status: 503 });
+    const usage = `data: ${JSON.stringify({ choices: [], usage: { prompt_tokens: 1200, completion_tokens: 300 } })}\n\n`;
+    return new Response(chunk(REVIEW_TEXT) + chunk(null, 'stop') + usage + 'data: [DONE]\n\n', {
+      headers: { 'Content-Type': 'text/event-stream' },
+    });
+  });
+  const model = {
+    id: 'cyber-test', name: 'Cyber test', source: 'test/model', revision: 'fixture', license: 'Apache-2.0', quantization: 'AWQ',
+    endpoint: 'https://reviewtest.api.runpod.ai', upstreamModel: 'cyber-test',
+    inputRate: 2, outputRate: 8, minimumMicro: 10000, context: 32768, maxOutput: 8192,
+  };
+  Object.assign(fixture.env, { INFERENCE_ENABLED: 'true', RUNPOD_API_KEY: 'review-test-vendor-key', INFERENCE_MODELS: JSON.stringify([model]) });
+  enableSupplierFixture(fixture.env);
+  fixture.env.DB.sqlite.prepare('INSERT INTO api_ledger(id, account_id, amount_micro, kind, reference, created_at) VALUES(?, ?, ?, ?, ?, ?)')
+    .run('review-test-credit', ACCOUNT, 20000000, 'topup', 'fixture', 1);
+  const created = await createInferenceKey(createCall(new Request(`${SITE_ORIGIN}/api/inference/keys/create`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ label: 'Review test', budget_usd: 20 }),
+  }), fixture.env), { account_id: ACCOUNT });
+  const credentials = await created.json();
+  const input = parseReviewRequest(body({ provider: 'bountyoperator', model: model.id, apiKey: credentials.key }));
+  let renewals = 0;
+  const prepare = fixture.env.DB.prepare;
+  t.mock.method(fixture.env.DB, 'prepare', (sql) => {
+    if (sql.startsWith('UPDATE reviews SET lease_until')) renewals += 1;
+    return prepare(sql);
+  });
+  return { ...fixture, input, warming, warm: () => warm(), warmingSignal: () => warmingSignal, renewals: () => renewals };
+}
+
+for (const [name, run] of [['JSON', runHostedReview], ['collected', collectHostedReview], ['SSE', streamHostedReview]]) {
+  for (const ending of ['success', 'failure', 'disconnect']) {
+    test(`a cold ${name} hosted review retains its lease and cleans up after ${ending}`, async (t) => {
+      t.mock.timers.enable({ apis: ['Date', 'setTimeout', 'setInterval'], now: Date.now() });
+      const { env, ctx, call, calls, disconnect, input, warming, warm, warmingSignal, renewals } = await coldReview(t, ending === 'failure');
+      const timeout = AbortSignal.timeout.bind(AbortSignal);
+      const deadlines = [];
+      t.mock.method(AbortSignal, 'timeout', (milliseconds) => {
+        deadlines.push(milliseconds);
+        return timeout(milliseconds);
+      });
+      const pending = run(call, ACCOUNT, input, 'web').then((value) => ({ value }), (error) => ({ error }));
+      t.after(() => disconnect.abort());
+      await Promise.race([warming, pending.then((result) => { throw result.error ?? new Error('The review finished before warming'); })]);
+      // A startup outlasts the original five-minute review lease.
+      for (let minute = 0; minute < 6; minute += 1) {
+        t.mock.timers.tick(60000);
+        await ctx.settled();
+      }
+      const now = Math.floor(Date.now() / 1000);
+      const held = env.DB.sqlite.prepare('SELECT status, lease_until FROM reviews').get();
+      assert.equal(held.status, 'running');
+      assert(held.lease_until > now, 'the warming review still owns its reservation');
+      assert(renewals() > 0, 'the lease was renewed before provider headers arrived');
+      assert.equal(deadlines.includes(270000), false, 'a cold hosted model is not given the shorter single-answer deadline');
+      assert.equal((await rejection(run(call, ACCOUNT, input, 'web'))).code, 'review_running');
+      assert.equal(calls.length, 1, 'only the readiness probe ran while the model was cold');
+
+      if (ending === 'disconnect') disconnect.abort();
+      else warm();
+      const result = await pending;
+      if (ending === 'success') {
+        assert.equal(result.error, undefined);
+        const answer = name === 'SSE' ? parseEvents(await result.value.text()).at(-1).data : result.value;
+        assert.equal(answer.review, REVIEW_TEXT);
+      } else {
+        assert(result.error instanceof ApiError);
+      }
+      await ctx.settled();
+      assert.equal(reviews(env)[0].status, ending === 'success' ? 'completed' : 'failed');
+      assert.equal(getEventListeners(call.request.signal, 'abort').length, 0, 'the caller abort listener is removed');
+      if (ending !== 'success') {
+        assert.deepEqual(await reserveReview(env.DB, ACCOUNT, 'next-review', now), { ok: true }, 'the free review can be retried immediately');
+        assert.equal(env.DB.sqlite.prepare('SELECT charge_micro FROM inference_requests').get().charge_micro, 0);
+      }
+      if (ending === 'disconnect') {
+        assert.equal(warmingSignal().aborted, true, 'disconnect aborts the upstream readiness request');
+        assert.equal(funnelCounts(env.DB)['review_fail:client_gone'], 1);
+        assert.equal(calls.length, 1, 'disconnect never submits a generation');
+      }
+      const finishedRenewals = renewals();
+      t.mock.timers.tick(120000);
+      await ctx.settled();
+      assert.equal(renewals(), finishedRenewals, 'no lease timer survives the finished call');
+    });
+  }
 }
 
 test('a streamed review sends deltas, then done with the whole review', async (t) => {

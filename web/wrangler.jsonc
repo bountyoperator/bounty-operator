@@ -44,7 +44,10 @@
     "AI_REVIEW_ENABLED": "true",
     "INFERENCE_ENABLED": "false",
     "API_TOPUPS_ENABLED": "false",
-    "INFERENCE_MODELS": "[]"
+    "API_AUTOTOPUPS_ENABLED": "false",
+    "INFERENCE_MODELS": "[]",
+    // Verified, expiring supplier cost rules. A funded D1 budget is also required.
+    "SUPPLIER_COST_RULES": "[]"
   },
   // Secrets, set with `wrangler secret put`: STRIPE_SECRET_KEY,
   // STRIPE_WEBHOOK_SECRET, IP_HASH_KEY, RUNPOD_API_KEY.

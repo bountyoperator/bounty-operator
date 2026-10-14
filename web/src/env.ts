@@ -1,6 +1,6 @@
 // Bindings and constants shared by every Worker module.
 
-export const VERSION = '0.9.13';
+export const VERSION = '0.9.14';
 export const SUPPORT_EMAIL = 'support@bountyoperator.com';
 export const PRICE = Object.freeze({ usd: 10, interval: 'month', included_api_credit_usd: 2 });
 
@@ -26,6 +26,8 @@ export interface Env {
   API_AUTOTOPUPS_ENABLED?: string;
   /** Validated server-side catalog; endpoints and vendor keys are never public. */
   INFERENCE_MODELS?: string;
+  /** Verified supplier rates; admission also requires a funded current budget window. */
+  SUPPLIER_COST_RULES?: string;
   RUNPOD_API_KEY?: string;
   INFRON_API_KEY?: string;
   ORCAROUTER_API_KEY?: string;

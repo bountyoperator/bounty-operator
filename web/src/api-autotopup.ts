@@ -8,6 +8,7 @@ import { sha256 } from './crypto.ts';
 import { seconds } from './env.ts';
 import type { Env } from './env.ts';
 import { ApiError } from './http.ts';
+import { inferenceStatus } from './inference.ts';
 
 const SETUP_TAG = 'bounty-operator-api-autotopup';
 const CONSENT_VERSION = 'api-autotopup-2026-10-14';
@@ -28,10 +29,10 @@ interface Setup {
 }
 interface Configuration { amount: number; threshold: number; cap: number }
 
-export function autoTopupAvailable(env: Env): boolean {
+export async function autoTopupAvailable(env: Env): Promise<boolean> {
   const live = env.BILLING_MODE === 'live' && /^(sk|rk)_live_/.test(env.STRIPE_SECRET_KEY ?? '') && Boolean(env.STRIPE_PRICE_ID);
-  return env.API_AUTOTOPUPS_ENABLED !== 'false' && env.API_TOPUPS_ENABLED === 'true' && env.INFERENCE_ENABLED === 'true' &&
-    Boolean(env.STRIPE_WEBHOOK_SECRET) && (live || localStripeTest(env));
+  return env.API_AUTOTOPUPS_ENABLED === 'true' && env.API_TOPUPS_ENABLED === 'true' &&
+    Boolean(env.STRIPE_WEBHOOK_SECRET) && (live || localStripeTest(env)) && (await inferenceStatus(env)) === 'available';
 }
 
 function configuration(body: Record<string, unknown>): Configuration {
@@ -43,8 +44,8 @@ function configuration(body: Record<string, unknown>): Configuration {
   return { amount: amount * MICRO_USD, threshold: threshold * MICRO_USD, cap: cap * MICRO_USD };
 }
 
-function requireAvailable(env: Env): void {
-  if (!autoTopupAvailable(env)) throw new ApiError('Automatic API top-ups are not open right now.', 503, 'topups_unavailable');
+async function requireAvailable(env: Env): Promise<void> {
+  if (!(await autoTopupAvailable(env))) throw new ApiError('Automatic API top-ups are not open right now.', 503, 'topups_unavailable');
 }
 
 function methodSummary(method: Stripe.PaymentMethod): string {
@@ -55,15 +56,16 @@ function methodSummary(method: Stripe.PaymentMethod): string {
 
 export async function autoTopupData(env: Env, accountId: string): Promise<Record<string, unknown>> {
   const month = utcMonth(seconds());
-  const [settings, usage] = await Promise.all([
+  const [settings, usage, available] = await Promise.all([
     env.DB.prepare('SELECT * FROM api_autotopup_settings WHERE account_id = ?').bind(accountId).first<Settings>(),
     env.DB.prepare(`SELECT COALESCE(SUM(CASE WHEN auto_month = ? AND status IN ('pending', 'paid') THEN amount_micro ELSE 0 END), 0) AS spent,
       COALESCE(MAX(CASE WHEN status = 'pending' THEN 1 ELSE 0 END), 0) AS pending FROM api_topups WHERE account_id = ? AND source = 'automatic'`)
       .bind(month, accountId).first<{ spent: number; pending: number }>(),
+    autoTopupAvailable(env),
   ]);
   const amount = settings?.amount_micro ?? 20 * MICRO_USD;
   const cap = settings?.monthly_cap_micro ?? 100 * MICRO_USD;
-  return { available: autoTopupAvailable(env), enabled: Boolean(settings?.enabled),
+  return { available, enabled: Boolean(settings?.enabled),
     status: settings?.enabled ? 'enabled' : settings?.pause_reason ? 'paused' : settings?.setup_id ? 'setup_pending' : 'off',
     amount_usd: amount / MICRO_USD, threshold_usd: (settings?.threshold_micro ?? 5 * MICRO_USD) / MICRO_USD,
     monthly_cap_usd: cap / MICRO_USD, spent_this_month_usd: (usage?.spent ?? 0) / MICRO_USD, month,
@@ -73,7 +75,7 @@ export async function autoTopupData(env: Env, accountId: string): Promise<Record
 
 /** The saved method remains disabled until a verified setup webhook arrives. */
 export async function createAutoTopupSetup(env: Env, api: Stripe, accountId: string, customer: string, body: Record<string, unknown>): Promise<string> {
-  requireAvailable(env);
+  await requireAvailable(env);
   const config = configuration(body);
   if (typeof body.request_id !== 'string' || !/^[a-zA-Z0-9-]{16,80}$/.test(body.request_id)) throw new ApiError('A setup request ID is required.');
   const id = await sha256(`auto-setup:${accountId}:${body.request_id}`);
@@ -118,7 +120,7 @@ export async function createAutoTopupSetup(env: Env, api: Stripe, accountId: str
 
 /** Updating or re-enabling a previously verified method needs fresh consent. */
 export async function updateAutoTopup(env: Env, api: Stripe, accountId: string, body: Record<string, unknown>): Promise<void> {
-  requireAvailable(env);
+  await requireAvailable(env);
   const config = configuration(body);
   const row = await env.DB.prepare('SELECT * FROM api_autotopup_settings WHERE account_id = ?').bind(accountId).first<Settings>();
   if (!row?.payment_method) throw new ApiError('Save a payment method through Stripe first.', 409, 'setup_required');
@@ -206,7 +208,7 @@ async function pause(env: Env, row: Topup, reason = 'reconciliation_required'): 
 }
 
 async function sendAttempt(env: Env, api: Stripe, row: Topup, now: number): Promise<void> {
-  if (!row.account_id || !row.payment_method) return;
+  if (!row.account_id || !row.payment_method || !(await autoTopupAvailable(env))) return;
   // This compare-and-set is the send boundary. A disable before it wins; a
   // disable after it sees a payment already in progress, which may settle.
   const claimed = await env.DB.prepare(`UPDATE api_topups SET initiated_at = ?, updated_at = ? WHERE id = ? AND initiated_at = 0 AND status = 'pending' AND auto_month = ?
@@ -254,7 +256,7 @@ export async function processAutoTopups(env: Env, api: Stripe, now = seconds()):
     try {
       if (row.payment_intent) await syncApiTopup(env, api, row.id);
       else if (!row.initiated_at) {
-        if (autoTopupAvailable(env)) await sendAttempt(env, api, row, now);
+        await sendAttempt(env, api, row, now);
       } else {
         const intents = await api.paymentIntents.list({ customer: row.customer_id, limit: 100, created: { gte: row.created_at - 60, lte: row.initiated_at + 3600 } });
         const found = intents.data.find((intent) => intent.metadata?.app === API_PAYMENT_TAG && intent.metadata?.source === 'automatic' && intent.metadata?.topup_id === row.id && intent.metadata?.account_id === row.account_id);
@@ -271,7 +273,7 @@ export async function processAutoTopups(env: Env, api: Stripe, now = seconds()):
     }
     await env.DB.prepare('UPDATE api_topups SET updated_at = ? WHERE id = ?').bind(now, row.id).run();
   }
-  if (!autoTopupAvailable(env)) return pending.results.length;
+  if (!(await autoTopupAvailable(env))) return pending.results.length;
   const due = await env.DB.prepare(`SELECT account_id FROM api_autotopup_settings WHERE enabled = 1 AND payment_method IS NOT NULL AND next_check_at <= ? ORDER BY next_check_at LIMIT 4`)
     .bind(now).all<{ account_id: string }>();
   for (const { account_id: accountId } of due.results) {

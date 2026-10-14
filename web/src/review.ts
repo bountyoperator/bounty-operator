@@ -377,8 +377,28 @@ function providerCall(call: Call, input: ReviewRequest, prepared: Prepared, sign
   return { provider: input.provider, model: input.model, apiKey: input.apiKey, prepared, signal, ...inProcess };
 }
 
+/** Keep the reservation alive while a hosted model warms before sending headers. */
+async function openProviderStream(call: Call, input: ReviewRequest, prepared: Prepared, signal: AbortSignal, keepLease: () => void) {
+  let stop = (): void => {};
+  if (input.provider === 'bountyoperator' && !signal.aborted) {
+    const timer = setInterval(keepLease, LEASE_RENEW_SECONDS * 1000);
+    stop = () => clearInterval(timer);
+    signal.addEventListener('abort', stop, { once: true });
+  }
+  try {
+    return await providerStream(providerCall(call, input, prepared, signal));
+  } finally {
+    stop();
+    signal.removeEventListener('abort', stop);
+  }
+}
+
 /** Runs a hosted review and returns the whole answer. */
-export async function runHostedReview({ env, ctx, request }: Call, accountId: string, input: ReviewRequest, channel: Channel): Promise<ReviewResult> {
+export async function runHostedReview(call: Call, accountId: string, input: ReviewRequest, channel: Channel): Promise<ReviewResult> {
+  // A JSON response still needs the hosted model's cold-start allowance and
+  // renewable review lease. Collect its provider stream into the same result.
+  if (input.provider === 'bountyoperator') return collectHostedReview(call, accountId, input, channel);
+  const { env, ctx, request } = call;
   assertReviewsEnabled(env);
   await assertPlanCovers(env, accountId, input.profileId);
   const prepared = await prepareChecked(input);
@@ -388,7 +408,7 @@ export async function runHostedReview({ env, ctx, request }: Call, accountId: st
   // request.signal aborts when the client disconnects, which stops the provider call.
   const signal = AbortSignal.any([request.signal, AbortSignal.timeout(SINGLE_ANSWER_LIMIT_MS)]);
   try {
-    const { text, ...answer } = await providerReview(providerCall({ env, ctx, request, url: new URL(request.url) }, input, prepared, signal));
+    const { text, ...answer } = await providerReview(providerCall(call, input, prepared, signal));
     const scanner = outputScanner(input.profileId);
     if (scanner) {
       scanner.push(text);
@@ -449,7 +469,7 @@ export async function collectHostedReview(
   };
 
   try {
-    const events = await providerStream(providerCall({ env, ctx, request, url: new URL(request.url) }, input, prepared, abort.signal));
+    const events = await openProviderStream({ env, ctx, request, url: new URL(request.url) }, input, prepared, abort.signal, keepLease);
     const parts: string[] = [];
     let chars = 0;
     for await (const event of withKeepAlive(events, KEEP_ALIVE_MS)) {
@@ -541,10 +561,20 @@ export async function streamHostedReview({ env, ctx, request }: Call, accountId:
   if (request.signal.aborted) onDisconnect();
   else request.signal.addEventListener('abort', onDisconnect, { once: true });
 
+  let leaseRenewedAt = seconds();
+  const keepLease = (): void => {
+    const now = seconds();
+    if (now - leaseRenewedAt < LEASE_RENEW_SECONDS) return;
+    leaseRenewedAt = now;
+    ctx.waitUntil(extendLease(env.DB, accountId, reviewId, now).catch(() => {}));
+  };
+
   let events: Awaited<ReturnType<typeof providerStream>>;
   try {
-    events = await providerStream(providerCall({ env, ctx, request, url: new URL(request.url) }, input, prepared, abort.signal));
+    events = await openProviderStream({ env, ctx, request, url: new URL(request.url) }, input, prepared, abort.signal, keepLease);
   } catch (error) {
+    abort.abort();
+    request.signal.removeEventListener('abort', onDisconnect);
     settle(false, failureReason(error, clientGone));
     throw reviewFailure(error);
   }
@@ -560,14 +590,6 @@ export async function streamHostedReview({ env, ctx, request }: Call, accountId:
       onDisconnect();
       throw error;
     }
-  };
-
-  let leaseRenewedAt = seconds();
-  const keepLease = (): void => {
-    const now = seconds();
-    if (now - leaseRenewedAt < LEASE_RENEW_SECONDS) return;
-    leaseRenewedAt = now;
-    ctx.waitUntil(extendLease(env.DB, accountId, reviewId, now).catch(() => {}));
   };
 
   // The answer of a hosted profile passes through the scanner, which holds

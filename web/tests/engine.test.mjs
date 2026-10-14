@@ -2230,6 +2230,82 @@ describe('providers', () => {
     assert.equal(timedOut.kind, 'timeout');
   });
 
+  test('a Bounty Operator stream can cold-start for ten minutes and then wait for generation', async (t) => {
+    t.mock.timers.enable({ apis: ['setTimeout'] });
+    let accept;
+    let upstream;
+    let signal;
+    const pending = providerStream({ provider: 'bountyoperator', model: 'm', apiKey: API_KEY, prepared: PREPARED,
+      fetch: (_url, init) => new Promise((resolve, reject) => {
+        signal = init.signal;
+        signal.addEventListener('abort', () => reject(signal.reason));
+        accept = () => resolve(new Response(new ReadableStream({ start(controller) {
+          upstream = controller;
+          signal.addEventListener('abort', () => controller.error(signal.reason));
+        } }), { headers: { 'content-type': 'text/event-stream' } }));
+      }),
+    });
+    t.mock.timers.tick(600000);
+    assert.equal(signal.aborted, false, 'warming is allowed to use the full startup window');
+    accept();
+    const events = await pending;
+    const reading = collect(events);
+    t.mock.timers.tick(300000);
+    await new Promise((resolve) => setImmediate(resolve));
+    assert.equal(signal.aborted, false, 'headers do not shorten the first-byte window');
+    upstream.enqueue(new TextEncoder().encode(dataLines({ choices: [{ delta: { content: 'Review completed.' }, finish_reason: 'stop' }] }, '[DONE]')));
+    upstream.close();
+    assert.deepEqual((await reading).map((event) => event.type), ['delta', 'done']);
+  });
+
+  test('a Bounty Operator stream returns to the ordinary inactivity limit after its first bytes', async (t) => {
+    t.mock.timers.enable({ apis: ['setTimeout'] });
+    let upstream;
+    let signal;
+    const events = await providerStream({ provider: 'bountyoperator', model: 'm', apiKey: API_KEY, prepared: PREPARED,
+      fetch: (_url, init) => {
+        signal = init.signal;
+        return new Response(new ReadableStream({ start(controller) {
+          upstream = controller;
+          signal.addEventListener('abort', () => controller.error(signal.reason));
+        } }), { headers: { 'content-type': 'text/event-stream' } });
+      },
+    });
+    const first = events.next();
+    t.mock.timers.tick(600000);
+    upstream.enqueue(new TextEncoder().encode(dataLines({ choices: [{ delta: { content: 'Review started.' } }] })));
+    assert.deepEqual((await first).value, { type: 'delta', text: 'Review started.' });
+    const stopped = events.next().then(() => null, (error) => error);
+    t.mock.timers.tick(179999);
+    assert.equal(signal.aborted, false);
+    t.mock.timers.tick(1);
+    const error = await stopped;
+    assert.equal(error.kind, 'timeout');
+    assert.match(error.message, /^Provider did not answer within 180 seconds/);
+  });
+
+  test('a Bounty Operator stream that never starts is bounded and still honours caller cancellation', async (t) => {
+    t.mock.timers.enable({ apis: ['setTimeout'] });
+    const hang = (_url, init) => new Promise((_resolve, reject) => {
+      init.signal.addEventListener('abort', () => reject(init.signal.reason));
+    });
+    const stopped = providerStream({ provider: 'bountyoperator', model: 'm', apiKey: API_KEY, prepared: PREPARED, fetch: hang })
+      .then(() => null, (error) => error);
+    t.mock.timers.tick(930000);
+    const timeout = await stopped;
+    assert.equal(timeout.kind, 'timeout');
+    assert.match(timeout.message, /^Provider did not answer within 15\.5 minutes/);
+
+    const caller = new AbortController();
+    const cancelled = providerStream({ provider: 'bountyoperator', model: 'm', apiKey: API_KEY, prepared: PREPARED, fetch: hang, signal: caller.signal })
+      .then(() => null, (error) => error);
+    t.mock.timers.tick(600000);
+    caller.abort();
+    const error = await cancelled;
+    assert.equal(error.name, 'AbortError');
+    assert.ok(!(error instanceof ProviderError));
+  });
+
   test('keep-alive comments cannot hold a stream open past the overall limit', async (t) => {
     t.mock.timers.enable({ apis: ['setTimeout'] });
 
@@ -2258,6 +2334,24 @@ describe('providers', () => {
     assert.match(error.message, /^Provider was still writing after 15 minutes/);
     assert.equal(error.kind, 'timeout');
     assert.ok(pulls >= 9 && pulls <= 13, `${pulls} comments were sent`);
+  });
+
+  test('Bounty Operator keep-alives cannot extend the startup and generation budget', async (t) => {
+    t.mock.timers.enable({ apis: ['setTimeout'] });
+    const encoder = new TextEncoder();
+    const respond = (_url, init) => new Response(new ReadableStream({
+      start(controller) {
+        init.signal.addEventListener('abort', () => controller.error(init.signal.reason));
+      },
+      pull(controller) {
+        controller.enqueue(encoder.encode(': PROCESSING\n\n'));
+        t.mock.timers.tick(90000);
+      },
+    }), { headers: { 'content-type': 'text/event-stream' } });
+    const error = await collect(await providerStream({ provider: 'bountyoperator', model: 'm', apiKey: API_KEY, prepared: PREPARED, fetch: respond }))
+      .then(() => null, (reason) => reason);
+    assert.equal(error.kind, 'timeout');
+    assert.match(error.message, /^Provider was still writing after 15\.5 minutes/);
   });
 
   test("the caller's abort signal cancels the request and is not reported as a provider failure", async () => {

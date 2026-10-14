@@ -69,6 +69,20 @@ Stripe webhook endpoint:
 - `charge.refunded`
 - `charge.dispute.created`, `charge.dispute.updated`, `charge.dispute.closed`
 
+Automatic top-ups also require `API_AUTOTOPUPS_ENABLED=true`; an absent or false
+value keeps new automatic setups, changes and payments closed. Set it only after
+the required Stripe permissions and webhook events are verified. Disabling stays
+available, and payments already initiated continue to reconcile.
+
+Model availability requires a configured provider credential, verified unexpired
+`SUPPLIER_COST_RULES` for that model and a funded current supplier budget window.
+No pricing rule or no remaining supplier allowance means unavailable, even when
+a customer has credit. The website catalog retains unavailable models with their
+individual status; `/v1/models` lists only available models. Customer payments and
+monthly credit grants do not create supplier budgets or refill provider accounts.
+Supplier funding must be recorded separately; these budgets limit admitted work,
+not an upstream provider's actual bill.
+
 Back up D1 and apply migrations before enabling inference. Keep customer
 top-ups closed during model acceptance. Run the affected tests, type check,
 private-profile checks, and `npm run deploy:check` from `web/`. Deploy using
@@ -84,12 +98,18 @@ of a real live settlement.
 
 ## Ongoing operation
 
-- `/api/inference/catalog` exposes availability (`status`: `available`, `paused` or `unavailable`) and current rates. When the Runpod account reports `underBalance: true` (or a worker answers `/health` with HTTP 402), the gateway marks inference `paused`, closes new customer top-ups, and returns HTTP 503 (`inference_paused`) without charging or counting the attempt toward the caller's failure limit. It contains no runtime secret or upstream endpoint.
+- `/api/inference/catalog` exposes service and per-model availability (`available`, `paused` or `unavailable`) and current rates. A RunPod funding pause blocks its models; an available direct provider can keep the service open. When no model is available, new manual and automatic customer purchases close. Paused requests return HTTP 503 (`inference_paused`) without charging or counting toward the caller's failure limit. The catalog contains no runtime secret or upstream endpoint.
 - `/v1/usage` reports wallet and key limits; the account's Model API section
   shows requests and credit entries without storing content.
 - The 15-minute scheduled task reaps expired request holds and reconciles
   pending top-ups. An ambiguous Checkout creation is resolved against Stripe
   before its local record can be closed.
+- The existing daily task reads the last 72 complete UTC hours of RunPod
+  serverless billing for the configured RunPod endpoint IDs, even while inference
+  is disabled. It never calls worker health, generation or funding endpoints.
+  Successful reads reconcile supplier cost records; a failed read reports
+  `unknown` and preserves earlier records. Other providers are not treated as
+  RunPod costs, and missing cost evidence is not reported as zero spend.
 - Stripe refunds and disputes remove the corresponding credit. A negative
   balance prevents new spending. Account deletion waits for settled balances,
   released holds, completed checkouts and closed disputes.
