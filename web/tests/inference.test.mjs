@@ -1,11 +1,12 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { apiCreditData, authenticateInference, createInferenceKey, hasApiLiability, reapInferenceHolds, reserveInference, settleInference } from '../src/api-credits.ts';
-import { inferenceEndpoint, inferenceModels, parseInference } from '../src/inference.ts';
+import { clearHostingState, inferenceEndpoint, inferenceModels, inferencePaused, inferenceStatus, parseInference } from '../src/inference.ts';
 import { addAccount, createCall, createContext, createEnv } from './worker-helpers.mjs';
 
 const model = { id: 'cyber-test', name: 'Cyber test', source: 'test/model', revision: 'abc', license: 'Apache-2.0', quantization: 'AWQ', endpoint: 'https://test123.api.runpod.ai', upstreamModel: 'cyber-test', inputRate: 2, outputRate: 8, minimumMicro: 10000, context: 32768, maxOutput: 8192 };
 async function setup(balance = 20000000) {
+  clearHostingState();
   const env = createEnv({ INFERENCE_ENABLED: 'true', RUNPOD_API_KEY: 'vendor-secret', INFERENCE_MODELS: JSON.stringify([model]) });
   const account = addAccount(env.DB);
   env.DB.sqlite.prepare('INSERT INTO api_ledger(id, account_id, amount_micro, kind, reference, created_at) VALUES(?, ?, ?, ?, ?, ?)').run('fund-1', account, balance, 'topup', 'fixture', 1);
@@ -310,4 +311,69 @@ test('a health redirect is rejected before a prompt or vendor credential can rea
   assert.equal(response.status, 503);
   assert.equal(calls, 1);
   assert.equal(env.DB.sqlite.prepare('SELECT reserved_micro FROM api_wallets').get().reserved_micro, 0);
+});
+
+test('a paused hosting account reports paused status, releases holds with no charge and never triggers the caller failure limit', async (t) => {
+  const { env, token } = await setup();
+  let healthCalls = 0;
+  t.mock.method(globalThis, 'fetch', async (url) => {
+    if (url === 'https://api.runpod.io/graphql') return Response.json({ data: { myself: { underBalance: true } } });
+    if (url.endsWith('/health')) {
+      healthCalls++;
+      return new Response(JSON.stringify({ status: 402, title: 'Insufficient Balance' }), { status: 402 });
+    }
+    throw new Error('Generation must not run while hosting is paused');
+  });
+  assert.equal(await inferencePaused(env), true);
+  assert.equal(await inferenceStatus(env), 'paused');
+
+  // Memoized fast-fail: after the first 402 from /health, the next call fails before reserving or probing.
+  clearHostingState();
+  for (let i = 0; i < 2; i++) {
+    const response = await inferenceEndpoint(createCall(request(token), env));
+    assert.equal(response.status, 503);
+    assert.equal(response.headers.get('Retry-After'), '300');
+    assert.equal((await response.json()).error.code, 'inference_paused');
+  }
+  assert.equal(healthCalls, 1, 'second call fast-fails before reserving or probing while the pause memo is fresh');
+  const row = env.DB.sqlite.prepare('SELECT status, charge_micro, failure_code FROM inference_requests').get();
+  assert.deepEqual({ ...row }, { status: 'failed', charge_micro: 0, failure_code: 'hosting_paused' });
+
+  // Even across six un-memoized pause failures, hosting_paused rows never trigger the 5-strike caller failure_limit (429).
+  for (let i = 0; i < 5; i++) {
+    clearHostingState();
+    const response = await inferenceEndpoint(createCall(request(token), env));
+    assert.equal(response.status, 503);
+    assert.equal((await response.json()).error.code, 'inference_paused');
+  }
+  assert.equal(env.DB.sqlite.prepare("SELECT COUNT(*) AS n FROM inference_requests WHERE failure_code = 'hosting_paused'").get().n, 6);
+  assert.equal(env.DB.sqlite.prepare('SELECT reserved_micro, balance_micro FROM api_wallets').get().reserved_micro, 0);
+  assert.equal(env.DB.sqlite.prepare('SELECT balance_micro FROM api_wallets').get().balance_micro, 20000000);
+});
+
+test('serverless upstream gateways route with their own secret, skip the Runpod health probe and bill wallet usage', async (t) => {
+  const { env, token } = await setup();
+  const infronModel = { ...model, id: 'glm-5.3-flash-cyber', endpoint: 'https://api.infron.ai', upstreamModel: 'z-ai/glm-5.3-flash-cybersecurity', inputRate: 2, outputRate: 24, minimumMicro: 100000 };
+  env.INFERENCE_MODELS = JSON.stringify([model, infronModel]);
+
+  // Without INFRON_API_KEY, a request to an Infron-backed model returns 503 before reserving credit.
+  let response = await inferenceEndpoint(createCall(request(token, { model: infronModel.id }), env));
+  assert.equal(response.status, 503);
+  assert.equal(env.DB.sqlite.prepare('SELECT reserved_micro FROM api_wallets').get().reserved_micro, 0);
+
+  // With INFRON_API_KEY configured, it routes straight to api.infron.ai/v1/chat/completions without a /health probe, even if Runpod is paused.
+  env.INFRON_API_KEY = 'infron-secret';
+  const urls = [];
+  t.mock.method(globalThis, 'fetch', async (url, options) => {
+    urls.push(url);
+    assert.equal(options.headers.Authorization, 'Bearer infron-secret');
+    const sent = JSON.parse(options.body);
+    assert.equal(sent.model, 'z-ai/glm-5.3-flash-cybersecurity');
+    return Response.json({ created: 1, choices: [{ message: { role: 'assistant', content: 'Verified' }, finish_reason: 'stop' }], usage: { prompt_tokens: 1000, completion_tokens: 10 } });
+  });
+  assert.equal(await inferenceStatus(env), 'available');
+  response = await inferenceEndpoint(createCall(request(token, { model: infronModel.id }), env));
+  assert.equal(response.status, 200);
+  assert.deepEqual(urls, ['https://api.infron.ai/v1/chat/completions']);
+  assert.equal(env.DB.sqlite.prepare('SELECT charge_micro FROM inference_requests ORDER BY created_at DESC LIMIT 1').get().charge_micro, 100000);
 });

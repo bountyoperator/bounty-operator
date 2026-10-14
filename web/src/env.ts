@@ -27,6 +27,8 @@ export interface Env {
   /** Validated server-side catalog; endpoints and vendor keys are never public. */
   INFERENCE_MODELS?: string;
   RUNPOD_API_KEY?: string;
+  INFRON_API_KEY?: string;
+  ORCAROUTER_API_KEY?: string;
   /** Secret for the keyed hash that turns an IP address into a rate-limit key. */
   IP_HASH_KEY?: string;
   API_LIMITER?: EdgeLimiter;

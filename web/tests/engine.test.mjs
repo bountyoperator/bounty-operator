@@ -1863,6 +1863,19 @@ describe('providers', () => {
       assert.ok(!error.message.includes('sk-abc'), `HTTP ${status} leaked a partial key`);
       assert.deepEqual([error.status, error.kind, error.code], [status, kind, 'provider']);
     }
+
+    // Infron documents 401 for an invalid or disabled key and 403 for moderation-flagged input.
+    const infronModeration = await withFetch(
+      () => json({ error: { message: 'Request input was flagged by moderation', type: 'infron_ai_error' } }, 403),
+      () => providerReview({ provider: 'infron', model: 'z-ai/glm-5.3-flash-cybersecurity', apiKey: API_KEY, prepared: PREPARED }).then(() => null, (reason) => reason),
+    );
+    assert.deepEqual([infronModeration.status, infronModeration.kind, infronModeration.blocked], [403, 'policy', 'policy']);
+    assert.match(infronModeration.message, /blocked this request under its usage policy \(HTTP 403\)/);
+    const infronKey = await withFetch(
+      () => json({ error: { message: 'The token status is not available', type: 'infron_ai_error' } }, 401),
+      () => providerReview({ provider: 'infron', model: 'z-ai/glm-5.3-flash-cybersecurity', apiKey: API_KEY, prepared: PREPARED }).then(() => null, (reason) => reason),
+    );
+    assert.deepEqual([infronKey.status, infronKey.kind], [401, 'auth']);
   });
 
   test('a guardrail block, an upstream cyber block and a credit hold are named by their cause', async () => {
@@ -2302,7 +2315,7 @@ describe('providers', () => {
       deepseek: { include_usage: true },
       mistral: undefined,
       groq: { include_usage: true },
-      infron: { include_usage: true },
+      infron: undefined,
     });
   });
 

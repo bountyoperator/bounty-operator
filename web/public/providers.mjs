@@ -279,7 +279,7 @@ export const PROVIDERS = Object.freeze([
     id: 'infron',
     label: 'Infron',
     keyLabel: 'Infron API key',
-    keyPrefixHint: 'sk-',
+    keyPrefixHint: '',
     defaultModel: 'z-ai/glm-5.3-flash-cybersecurity',
     models: [
       model('z-ai/glm-5.3-flash-cybersecurity', 'GLM-5.3 Flash Cybersecurity', 'default'),
@@ -353,7 +353,6 @@ const WIRE = Object.freeze({
     style: 'chat',
     endpoint: 'https://api.infron.ai/v1/chat/completions',
     tokenParam: 'max_tokens',
-    streamUsage: true,
   },
 });
 
@@ -778,6 +777,9 @@ async function httpFailure(response, selected, request) {
   const retryAfter = Number.isFinite(retryHeader) && retryHeader > 0 ? Math.ceil(retryHeader) : null;
 
   if (status === 401 || status === 403) {
+    // Infron's API documents 401 for an invalid or disabled key and 403 for
+    // input flagged by moderation (infron.ai/en/docs/api-reference/errors).
+    if (status === 403 && selected.id === 'infron') return policyFailure('policy', { status, detail });
     return new ProviderError(`Provider rejected the API key (HTTP ${status}). Check that the key belongs to ${selected.label} and is still active.${said}`, { status, kind: 'auth' });
   }
   if (status === 404) {

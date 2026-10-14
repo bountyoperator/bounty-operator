@@ -84,8 +84,7 @@ of a real live settlement.
 
 ## Ongoing operation
 
-- `/api/inference/catalog` exposes availability and current rates. It contains
-  no runtime secret or upstream endpoint.
+- `/api/inference/catalog` exposes availability (`status`: `available`, `paused` or `unavailable`) and current rates. When the Runpod account reports `underBalance: true` (or a worker answers `/health` with HTTP 402), the gateway marks inference `paused`, closes new customer top-ups, and returns HTTP 503 (`inference_paused`) without charging or counting the attempt toward the caller's failure limit. It contains no runtime secret or upstream endpoint.
 - `/v1/usage` reports wallet and key limits; the account's Model API section
   shows requests and credit entries without storing content.
 - The 15-minute scheduled task reaps expired request holds and reconciles

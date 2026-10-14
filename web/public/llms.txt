@@ -8,7 +8,7 @@ A hosted review sends the user's files and provider key through bountyoperator.c
 
 ## Product
 
-- [Model API](https://bountyoperator.com/model-api): Hosted cyber model API with prepaid credit, individual API key limits, function tools and streaming. Availability and prices come from the live catalog. No subscription required; the monthly Operator plan includes US$2 API credit per paid month. Optional auto top-ups are off by default.
+- [Model API](https://bountyoperator.com/model-api): Hosted cybersecurity and low-refusal model API (`/v1/chat/completions`, `/v1/models`) with prepaid credit, per-key spending limits, function tools, streaming, workload cost estimator and interactive quickstart, plus native Infron 7-model cybersecurity stack support (`provider: "infron"`, `INFRON_API_KEY`) in the workbench, Gauntlet, Panel review, CLI and MCP. No subscription required; the monthly Operator plan includes US$2 API credit per paid month. Optional auto top-ups are off by default.
 
 - [Benchmark](https://bountyoperator.com/benchmark): Paydirt, the model benchmark: which model finds the planted bug, leaves the fixed twin alone and catches an overclaimed report, with cost per run.
 - [Benchmark method](https://bountyoperator.com/benchmark/method): How Paydirt is built and scored, and how to check every published number.

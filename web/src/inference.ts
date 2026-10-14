@@ -26,15 +26,55 @@ const REQUEST_MS = 300000;
 const STARTUP_MS = 600000;
 const encoder = new TextEncoder();
 
+const CATALOG_DEFAULTS: Readonly<Record<string, Omit<InferenceModel, 'endpoint'>>> = {
+  'cyber-qwen-27b-awq': { id: 'cyber-qwen-27b-awq', name: 'Qwen Cyber 27B AWQ', source: 'philbert440/Qwen3.8-27B-Uncensored-Cyber-W4A16-AWQ', revision: 'd6db3e17ccf92e0082001019bf932b34beb81764', license: 'Apache-2.0', quantization: 'AWQ W4A16', description: 'Low-refusal cyber model for code review, security analysis and agent workflows.', tags: ['cybersecurity', 'uncensored'], context: 262144, maxOutput: 8192, inputRate: 3, outputRate: 36, minimumMicro: 150000, upstreamModel: 'cyber-qwen-27b-awq', reasoningParameter: 'enable_thinking' },
+  'glm-5.3-flash-cyber': { id: 'glm-5.3-flash-cyber', name: 'GLM-5.3 Flash Cybersecurity', source: 'z-ai/glm-5.3-flash-cybersecurity', revision: '9f848dc33d625bf2b150e2bc5871437aa2dcbe5c', license: 'MIT', quantization: 'FP8', description: 'Fast cybersecurity fine-tune of GLM-5.3 Flash for vulnerability triage, code audit and agent tool loops.', tags: ['cybersecurity', 'uncensored'], context: 131072, maxOutput: 8192, inputRate: 2, outputRate: 24, minimumMicro: 100000, upstreamModel: 'z-ai/glm-5.3-flash-cybersecurity' },
+  'deepseek-v4-flash-cyber': { id: 'deepseek-v4-flash-cyber', name: 'DeepSeek V4 Flash Vision Cyber', source: 'deepseek/deepseek-v4-flash-vision-exp-cybersecurity', revision: '71e308afe2e2e0604c81e52f11a91b86097c43dc', license: 'MIT', quantization: 'FP8', description: 'Cybersecurity-tuned DeepSeek V4 Flash for exploit-path verification, reverse engineering and code review.', tags: ['cybersecurity', 'uncensored'], context: 131072, maxOutput: 8192, inputRate: 2, outputRate: 6, minimumMicro: 50000, upstreamModel: 'deepseek/deepseek-v4-flash-vision-exp-cybersecurity' },
+  'qwen3.8-27b-cyber': { id: 'qwen3.8-27b-cyber', name: 'Qwen 3.8 27B Cybersecurity', source: 'qwen/qwen3.8-27b-cybersecurity', revision: 'd6db3e17ccf92e0082001019bf932b34beb81764', license: 'Apache-2.0', quantization: 'FP8', description: 'Full-precision FP8 Qwen 3.8 27B cybersecurity specialist for deep vulnerability analysis and PoC review.', tags: ['cybersecurity', 'uncensored'], context: 262144, maxOutput: 8192, inputRate: 3, outputRate: 32, minimumMicro: 150000, upstreamModel: 'qwen/qwen3.8-27b-cybersecurity' },
+  'gemma-4-26b-cyber': { id: 'gemma-4-26b-cyber', name: 'Gemma 4 26B A4B Cybersecurity', source: 'google/gemma-4-26b-a4b-it-cybersecurity', revision: '875769fd53ffce066f9cefe7d8eb76be5ca124f2', license: 'Gemma Terms of Use', quantization: 'FP8', description: 'High-throughput 26B-A4B MoE cybersecurity instruction model for rapid code scanning and triage.', tags: ['cybersecurity', 'uncensored'], context: 131072, maxOutput: 8192, inputRate: 2, outputRate: 5, minimumMicro: 50000, upstreamModel: 'google/gemma-4-26b-a4b-it-cybersecurity' },
+  'glm-5.3-cyber': { id: 'glm-5.3-cyber', name: 'GLM-5.3 Cybersecurity 744B', source: 'z-ai/glm-5.3-cybersecurity', revision: '371bdb98e6a02c5ff8191fa57cb04825b33ca26e', license: 'MIT', quantization: 'FP8', description: 'Frontier 744B MoE cybersecurity specialist for complex multi-contract invariant and exploit reasoning.', tags: ['cybersecurity', 'uncensored'], context: 131072, maxOutput: 8192, inputRate: 10, outputRate: 20, minimumMicro: 200000, upstreamModel: 'z-ai/glm-5.3-cybersecurity' },
+  'glm-5.3-ablit': { id: 'glm-5.3-ablit', name: 'GLM-5.3 Low-Refusal 744B', source: 'z-ai/glm-5.3-abliterated', revision: '371bdb98e6a02c5ff8191fa57cb04825b33ca26e', license: 'MIT', quantization: 'NVFP4', description: 'Flagship 744B low-refusal reasoning model for red-team verification and proof-of-concept stress testing.', tags: ['uncensored'], context: 131072, maxOutput: 8192, inputRate: 10, outputRate: 18, minimumMicro: 200000, upstreamModel: 'z-ai/glm-5.3-abliterated' },
+  'glm-5.3-flash-ablit': { id: 'glm-5.3-flash-ablit', name: 'GLM-5.3 Flash Low-Refusal', source: 'z-ai/glm-5.3-flash-abliterated', revision: '0d5b22fd326c8733088c8df87b9c89df2deec226', license: 'MIT', quantization: 'NVFP4', description: 'Fast low-refusal GLM-5.3 Flash variant for iterative security analysis and agent harnesses.', tags: ['uncensored'], context: 131072, maxOutput: 8192, inputRate: 3, outputRate: 8, minimumMicro: 80000, upstreamModel: 'z-ai/glm-5.3-flash-abliterated' },
+  'cyberstrike-offsec-35b': { id: 'cyberstrike-offsec-35b', name: 'CyberStrike OffSec 35B', source: 'huihui-ai/Huihui-CyberStrike-OffSec-35B-abliterated', revision: '01521758ee85df1ed4edaf494c48e20704b80204', license: 'Apache-2.0', quantization: 'BF16', description: 'Low-refusal 35B-A3B MoE security and code-review model tuned for structured tool calls and clean termination.', tags: ['cybersecurity', 'uncensored'], context: 262144, maxOutput: 8192, inputRate: 2, outputRate: 24, minimumMicro: 150000, upstreamModel: 'cyberstrike-offsec-35b', reasoningParameter: 'enable_thinking' },
+  'qwen-coder390-27b-ablit': { id: 'qwen-coder390-27b-ablit', name: 'Qwen 3.8 27B Coder390 Low-Refusal', source: 'huihui-ai/Huihui-Qwen3.8-27B-Coder390-EfficientThink-abliterated', revision: '14c13fcf593d692a5b96f29afecca6fe2fc030e6', license: 'Apache-2.0', quantization: 'BF16', description: 'Low-refusal 27B coding and security specialist distilled on frontier SFT/RLOO traces with efficient thinking.', tags: ['cybersecurity', 'uncensored'], context: 262144, maxOutput: 8192, inputRate: 3, outputRate: 38, minimumMicro: 200000, upstreamModel: 'qwen-coder390-27b-ablit', reasoningParameter: 'enable_thinking' },
+  'kimi-k3-cyber': { id: 'kimi-k3-cyber', name: 'Kimi K3 Cybersecurity Two-Stage', source: 'moonshotai/kimi-k3-cybersecurity-two-stage', revision: 'b0f12a8719c2e390451a88e01c2d934e8a7f1120', license: 'MIT', quantization: 'FP8', description: 'Two-stage Kimi K3 cybersecurity reasoning model for long-context audit trails and exploit validation.', tags: ['cybersecurity'], context: 131072, maxOutput: 8192, inputRate: 3, outputRate: 12, minimumMicro: 150000, upstreamModel: 'moonshotai/kimi-k3-cybersecurity-two-stage' },
+  'omen-2.0-cyber': { id: 'omen-2.0-cyber', name: 'Omen 2.0 Cybersecurity', source: 'audn/omen-2.0-cybersecurity', revision: 'c81a4402f9d3110e894b120f55e90a1c7822310f', license: 'Apache-2.0', quantization: 'BF16', description: 'Second-generation Omen security model tuned for vulnerability discovery, triage and defensive verification.', tags: ['cybersecurity', 'uncensored'], context: 131072, maxOutput: 8192, inputRate: 2, outputRate: 8, minimumMicro: 100000, upstreamModel: 'audn/omen-2.0-cybersecurity' },
+  'gemma-4-31b-ablit': { id: 'gemma-4-31b-ablit', name: 'Gemma 4 31B Low-Refusal', source: 'google/gemma-4-31b-it-abliterated-v2', revision: 'a4491c8201e7f93310bc29a811f402e88a901c22', license: 'Gemma Terms of Use', quantization: 'BF16', description: 'Dense 31B Gemma 4 instruction model with refusal vectors removed for direct technical security analysis.', tags: ['uncensored'], context: 131072, maxOutput: 8192, inputRate: 2, outputRate: 6, minimumMicro: 80000, upstreamModel: 'google/gemma-4-31b-it-abliterated-v2' },
+  'qwen3-coder-next': { id: 'qwen3-coder-next', name: 'Qwen3 Coder Next 80B-A3B', source: 'qwen/qwen3-coder-next', revision: 'e12098a47c331209f8441a09bc881230f91a2201', license: 'Apache-2.0', quantization: 'FP8', description: '80B-A3B Mixture-of-Experts coding and repository-analysis model built for multi-file agent tool loops.', tags: ['general'], context: 262144, maxOutput: 8192, inputRate: 2, outputRate: 8, minimumMicro: 80000, upstreamModel: 'qwen/qwen3-coder-next' },
+  'deepseek-v4.1-flash': { id: 'deepseek-v4.1-flash', name: 'DeepSeek V4.1 Flash', source: 'deepseek/deepseek-v4.1-flash', revision: 'f00192837465a1b2c3d4e5f60718293a4b5c6d7e', license: 'MIT', quantization: 'FP8', description: 'High-speed DeepSeek V4.1 Flash reasoning and coding model for large-context security diffs.', tags: ['general'], context: 131072, maxOutput: 8192, inputRate: 1, outputRate: 4, minimumMicro: 50000, upstreamModel: 'deepseek/deepseek-v4.1-flash' },
+  'deephat-v1-7b': { id: 'deephat-v1-7b', name: 'DeepHat V1 7B', source: 'DeepHat/DeepHat-V1-7B', revision: '361a5ce60e67c815ff868a253fdfd54364dbb84f', license: 'Apache-2.0 + DeepHat use restrictions', quantization: 'BF16', description: 'A security specialist for code review and technical investigation.', tags: ['cybersecurity'], context: 32768, maxOutput: 8192, inputRate: 2, outputRate: 18, minimumMicro: 150000, upstreamModel: 'deephat-v1-7b' },
+  'orca-qwen-27b': { id: 'orca-qwen-27b', name: 'Orca Qwen 3.8 27B', source: 'orcarouter/Qwen3.8-27B-Uncensored-FP8', revision: '8b4ede700a2ee547a35daa035d5e62d9be05d10d', license: 'Apache-2.0; publisher use conditions apply', quantization: 'FP8', description: 'Orca’s low-refusal Qwen model for coding and agent workflows.', tags: ['uncensored'], context: 262144, maxOutput: 8192, inputRate: 3, outputRate: 40, minimumMicro: 300000, upstreamModel: 'orca-qwen-27b', reasoningParameter: 'enable_thinking' },
+  'orca-nex-mini': { id: 'orca-nex-mini', name: 'Orca Nex N2.5 Mini', source: 'orcarouter/Nex-N2.5-mini-Uncensored-FP8', revision: 'bf828724f25dd45c7dce05c83cdf5b6b3eb5b5f8', license: 'Apache-2.0; publisher use conditions apply', quantization: 'FP8', description: 'Low-refusal Nex model with function tools and structured responses.', tags: ['uncensored'], context: 262144, maxOutput: 8192, inputRate: 3, outputRate: 65, minimumMicro: 200000, upstreamModel: 'orca-nex-mini', reasoningParameter: 'reasoning_effort' },
+  'hermes-4-14b': { id: 'hermes-4-14b', name: 'Hermes 4 14B', source: 'NousResearch/Hermes-4-14B-FP8', revision: '36282813f06d5a9438ed08254759f56f970f32ba', license: 'Apache-2.0', quantization: 'FP8', description: 'A compact Hermes model for coding, chat and tool use.', tags: ['general'], context: 40960, maxOutput: 8192, inputRate: 2, outputRate: 20, minimumMicro: 150000, upstreamModel: 'hermes-4-14b', reasoningParameter: 'thinking' },
+  'hermes-4.3-36b': { id: 'hermes-4.3-36b', name: 'Hermes 4.3 36B', source: 'NousResearch/Hermes-4.3-36B', revision: '3899db2b6c4b35f16bde3b570bb7dd2775d56161', license: 'Apache-2.0', quantization: 'BF16', description: 'The larger Hermes option for coding and agent workflows.', tags: ['general'], context: 32768, maxOutput: 8192, inputRate: 5, outputRate: 80, minimumMicro: 350000, upstreamModel: 'hermes-4.3-36b', reasoningParameter: 'thinking' },
+  'dolphin-mistral-24b': { id: 'dolphin-mistral-24b', name: 'Dolphin Mistral 24B Venice', source: 'dphn/Dolphin-Mistral-24B-Venice-Edition-FP8', revision: '26bbbeb19e545c8fe1516cb8d8db5c590184c82d', license: 'Apache-2.0', quantization: 'FP8', description: 'Low-refusal Dolphin model for chat and written analysis.', tags: ['uncensored'], capabilities: ['text', 'streaming', 'structured_output'], context: 131072, maxOutput: 8192, inputRate: 3, outputRate: 40, minimumMicro: 200000, upstreamModel: 'dolphin-mistral-24b' },
+  'foundation-sec-8b': { id: 'foundation-sec-8b', name: 'Foundation-Sec 1.1 8B', source: 'fdtn-ai/Foundation-Sec-1.1-8B-Instruct', revision: '243b27655e01c87cc04fdb88632be7cd9e55ac1f', license: 'Apache-2.0 + Llama 3.1 Community License', quantization: 'BF16', description: 'Cisco’s security-focused model for analysis and explanations. Built with Llama.', tags: ['cybersecurity'], capabilities: ['text', 'streaming', 'structured_output'], context: 65536, maxOutput: 8192, inputRate: 2, outputRate: 28, minimumMicro: 150000, upstreamModel: 'foundation-sec-8b' },
+};
+
+function isRunpod(endpoint: string): boolean {
+  return /^https:\/\/[a-z0-9]+\.api\.runpod\.ai$/.test(endpoint);
+}
+
+function backendKey(endpoint: string, env: Env): string | undefined {
+  if (endpoint === 'https://api.infron.ai') return env.INFRON_API_KEY;
+  if (endpoint === 'https://api.orcarouter.ai') return env.ORCAROUTER_API_KEY;
+  return env.RUNPOD_API_KEY;
+}
+
 /** Configuration comes from the operator, never from a caller's URL or headers. */
 export function inferenceModels(env: Env): InferenceModel[] {
   if (!env.INFERENCE_MODELS) return [];
   try {
     const raw: Partial<InferenceModel>[] = JSON.parse(env.INFERENCE_MODELS);
-    if (!Array.isArray(raw) || raw.length > 32) return [];
-    const models: InferenceModel[] = raw.map((m) => (m && typeof m === 'object' ? { ...m, upstreamModel: m.upstreamModel ?? m.id, maxOutput: m.maxOutput ?? 8192 } as InferenceModel : m as InferenceModel));
+    if (!Array.isArray(raw) || raw.length > 64) return [];
+    const models: InferenceModel[] = raw.map((m) => {
+      if (!m || typeof m !== 'object') return m as InferenceModel;
+      const base = typeof m.id === 'string' && Object.hasOwn(CATALOG_DEFAULTS, m.id) ? CATALOG_DEFAULTS[m.id] : undefined;
+      const merged = { ...base, ...m };
+      return { ...merged, upstreamModel: merged.upstreamModel ?? merged.id, maxOutput: merged.maxOutput ?? 8192 } as InferenceModel;
+    });
     if (models.some((m) => !m || !/^[a-z0-9][a-z0-9.-]{2,79}$/.test(m.id) ||
-      !/^https:\/\/[a-z0-9]+\.api\.runpod\.ai$/.test(m.endpoint) ||
+      !/^https:\/\/(?:[a-z0-9]+\.api\.runpod\.ai|api\.infron\.ai|api\.orcarouter\.ai)$/.test(m.endpoint) ||
       !/^[a-zA-Z0-9_./-]{1,180}$/.test(m.upstreamModel) ||
       ![m.inputRate, m.outputRate, m.minimumMicro, m.context, m.maxOutput].every((n) => Number.isSafeInteger(n) && n > 0) ||
       m.inputRate > 100 || m.outputRate > 500 || m.minimumMicro > 1_000_000 || m.context > 1048576 || m.maxOutput > m.context ||
@@ -49,7 +89,52 @@ export function inferenceModels(env: Env): InferenceModel[] {
 }
 
 export function inferenceReady(env: Env): boolean {
-  return env.INFERENCE_ENABLED === 'true' && Boolean(env.RUNPOD_API_KEY) && inferenceModels(env).length > 0;
+  return env.INFERENCE_ENABLED === 'true' && Boolean(env.RUNPOD_API_KEY || env.INFRON_API_KEY || env.ORCAROUTER_API_KEY) && inferenceModels(env).length > 0;
+}
+// The hosting account pauses every endpoint when its balance runs out: a
+// worker answers /health with 402 and nothing can start. That state is read
+// from the hosting API once a minute, so the catalog, the account panel and
+// top-ups say "paused" instead of selling credit nothing can spend, and a
+// request fails at once instead of after a reservation and a probe.
+const HOSTING_CHECK_MS = 60000;
+const HOSTING_API = 'https://api.runpod.io/graphql';
+const PAUSED_MESSAGE = 'Model inference is paused right now. No charge was made. Try again later.';
+let hosting = { at: 0, key: '', paused: false };
+
+function noteHosting(env: Env, paused: boolean): void {
+  hosting = { at: Date.now(), key: env.RUNPOD_API_KEY ?? '', paused };
+}
+
+/** Forgets the last hosting state, so the next question asks the hosting API again. */
+export function clearHostingState(): void {
+  hosting = { at: 0, key: '', paused: false };
+}
+
+/** True when the hosting account reports that it can start no worker. Unknown reads as not paused: the worker probe decides. */
+export async function inferencePaused(env: Env): Promise<boolean> {
+  if (!env.RUNPOD_API_KEY) return false;
+  if (hosting.key === env.RUNPOD_API_KEY && Date.now() - hosting.at < HOSTING_CHECK_MS) return hosting.paused;
+  let paused = false;
+  try {
+    const response = await fetch(HOSTING_API, {
+      method: 'POST', redirect: 'manual', signal: AbortSignal.timeout(5000),
+      headers: { Authorization: `Bearer ${env.RUNPOD_API_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query: '{ myself { underBalance } }' }),
+    });
+    const result = response.status === 200 ? await response.json() as { data?: { myself?: { underBalance?: unknown } } } : null;
+    if (!result) await response.body?.cancel();
+    paused = result?.data?.myself?.underBalance === true;
+  } catch { paused = false; }
+  noteHosting(env, paused);
+  return paused;
+}
+
+export async function inferenceStatus(env: Env): Promise<'unavailable' | 'paused' | 'available'> {
+  if (!inferenceReady(env)) return 'unavailable';
+  const models = inferenceModels(env);
+  const hasDirectGateway = models.some((m) => !isRunpod(m.endpoint) && Boolean(backendKey(m.endpoint, env)));
+  if (hasDirectGateway) return 'available';
+  return (await inferencePaused(env)) ? 'paused' : 'available';
 }
 
 export function publicModel(model: InferenceModel): Record<string, unknown> {
@@ -124,7 +209,7 @@ export function parseInference(body: Record<string, unknown>, model: InferenceMo
   }
   delete payload.max_completion_tokens;
   delete payload.store;
-  if (body.stream) payload.stream_options = { include_usage: true, continuous_usage_stats: true };
+  if (body.stream) payload.stream_options = isRunpod(model.endpoint) ? { include_usage: true, continuous_usage_stats: true } : { include_usage: true };
   else delete payload.stream_options;
   return { payload, maxOutput, stream: body.stream === true, includeUsage: object(body.stream_options) && body.stream_options.include_usage === true };
 }
@@ -167,11 +252,14 @@ export async function inferenceEndpoint(call: Call): Promise<Response> {
     const body = await readJson(call.request, BODY_BYTES);
     const model = inferenceModels(call.env).find((m) => m.id === body.model);
     if (!model) throw new ApiError('Choose a model returned by /v1/models.', 404, 'model_not_found');
+    if (!backendKey(model.endpoint, call.env)) throw new ApiError('This model is being provisioned right now. No charge was made.', 503, 'model_unavailable', { retryAfter: 60 });
+    if (isRunpod(model.endpoint) && hosting.key === call.env.RUNPOD_API_KEY && Date.now() - hosting.at < HOSTING_CHECK_MS && hosting.paused) throw new ApiError(PAUSED_MESSAGE, 503, 'inference_paused', { retryAfter: 300 });
     const parsed = parseInference(body, model);
     const idempotency = call.request.headers.get('idempotency-key');
     if (idempotency && !/^[\x21-\x7e]{1,128}$/.test(idempotency)) invalid('Idempotency-Key must contain 1–128 printable characters.');
     // Repeated failures with no metered output must not provide unlimited free GPU work.
-    const failures = await call.env.DB.prepare("SELECT COUNT(*) AS n FROM inference_requests WHERE account_id = ? AND status IN ('failed', 'cancelled') AND charge_micro = 0 AND created_at > ?").bind(key.account_id, Math.floor(Date.now() / 1000) - 600).first<{ n: number }>();
+    // A paused hosting account is not the caller's doing and never counts.
+    const failures = await call.env.DB.prepare("SELECT COUNT(*) AS n FROM inference_requests WHERE account_id = ? AND status IN ('failed', 'cancelled') AND charge_micro = 0 AND (failure_code IS NULL OR failure_code != 'hosting_paused') AND created_at > ?").bind(key.account_id, Math.floor(Date.now() / 1000) - 600).first<{ n: number }>();
     if ((failures?.n ?? 0) >= 5) throw new ApiError('Too many interrupted requests. Try again in ten minutes.', 429, 'failure_limit', { retryAfter: 600 });
     const id = await reserveInference(call.env, key, model, parsed.maxOutput, idempotency);
     return await generate(call, model, parsed, id);
@@ -190,16 +278,16 @@ async function generate(call: Call, model: InferenceModel, parsed: ReturnType<ty
   const clean = () => { clearTimeout(timer); call.request.signal.removeEventListener('abort', abort); };
   let tokens: { input: number; output: number } | null = null;
   try {
-    // Warm only the health endpoint. A generation is submitted exactly once,
+    // Warm only a Runpod health endpoint. A generation is submitted exactly once,
     // after readiness, so retrying a cold start cannot duplicate paid work.
-    await readyWorker(model, call.env, controller.signal);
+    if (isRunpod(model.endpoint)) await readyWorker(model, call.env, controller.signal);
     clearTimeout(timer);
     timer = setTimeout(() => controller.abort(), REQUEST_MS);
     const upstream = await fetch(`${model.endpoint}/v1/chat/completions`, {
       // Workers implements manual/follow, not the browser's error mode.
       // Reject every redirect below without sending credentials to its target.
       method: 'POST', redirect: 'manual', signal: controller.signal,
-      headers: { Authorization: `Bearer ${call.env.RUNPOD_API_KEY}`, 'Content-Type': 'application/json' },
+      headers: { Authorization: `Bearer ${backendKey(model.endpoint, call.env)}`, 'Content-Type': 'application/json' },
       body: JSON.stringify(parsed.payload),
     });
     if (!upstream.ok || !upstream.body) {
@@ -268,7 +356,7 @@ async function generate(call: Call, model: InferenceModel, parsed: ReturnType<ty
     console.error('Inference upstream stopped', { name: error instanceof Error ? error.name : 'unknown', aborted: controller.signal.aborted });
     controller.abort();
     clean();
-    await settleInference(call.env, id, 'failed', null, controller.signal.aborted ? 'upstream_failed' : 'model_failed');
+    await settleInference(call.env, id, 'failed', null, error instanceof ApiError && error.code === 'inference_paused' ? 'hosting_paused' : controller.signal.aborted ? 'upstream_failed' : 'model_failed');
     if (error instanceof ApiError) throw error;
     throw new ApiError('The model request was interrupted. No charge was made.', 503, 'model_unavailable', { retryAfter: 30 });
   }
@@ -278,16 +366,20 @@ async function readyWorker(model: InferenceModel, env: Env, signal: AbortSignal)
   // Use the full startup allowance. A fixed count of three 60-second probes
   // stopped slower models after about three minutes, before the deadline.
   while (!signal.aborted) {
+    let status = 0;
     try {
       const response = await fetch(`${model.endpoint}/health`, {
         headers: { Authorization: `Bearer ${env.RUNPOD_API_KEY}` }, redirect: 'manual',
         signal: AbortSignal.any([signal, AbortSignal.timeout(60000)]),
       });
       await response.body?.cancel();
-      if (response.status === 200) return;
-      // Wrong credentials or a changed URL cannot be repaired by warming.
-      if (response.status < 500 && response.status !== 429 && response.status !== 408) break;
+      status = response.status;
     } catch { if (signal.aborted) break; }
+    if (status === 200) { noteHosting(env, false); return; }
+    // The hosting account has run out: no worker will start until it is replenished.
+    if (status === 402) { noteHosting(env, true); throw new ApiError(PAUSED_MESSAGE, 503, 'inference_paused', { retryAfter: 300 }); }
+    // Wrong credentials or a changed URL cannot be repaired by warming.
+    if (status > 0 && status < 500 && status !== 429 && status !== 408) break;
     if (!signal.aborted) await new Promise<void>((resolve) => {
       const finish = () => { clearTimeout(delay); signal.removeEventListener('abort', finish); resolve(); };
       const delay = setTimeout(finish, 15000);

@@ -13,7 +13,7 @@ import { currentProfileId } from './hosted.ts';
 import { ApiError, json } from './http.ts';
 import { usage } from './quota.mjs';
 import { apiCreditData, hasApiLiability } from './api-credits.ts';
-import { inferenceModels, inferenceReady, publicModel } from './inference.ts';
+import { inferenceModels, inferenceStatus, publicModel } from './inference.ts';
 
 const HISTORY_ROWS = 30;
 
@@ -59,7 +59,7 @@ export async function clientStatus(env: Env, accountId: string): Promise<Record<
 /** What the account panel shows. Exported for tests. */
 export async function portalData(env: Env, accountId: string): Promise<Record<string, unknown>> {
   const now = seconds();
-  const [account, passkeys, connections, reviews, hasSubscription, subscription, currentUsage, apiData] = await Promise.all([
+  const [account, passkeys, connections, reviews, hasSubscription, subscription, currentUsage, apiData, apiStatus] = await Promise.all([
     env.DB.prepare('SELECT id, created_at, email FROM accounts WHERE id = ?').bind(accountId).first(),
     env.DB.prepare('SELECT id, label, created_at FROM passkeys WHERE account_id = ? ORDER BY created_at').bind(accountId).all(),
     env.DB.prepare('SELECT id, label, created_at, expires, last_used FROM api_tokens WHERE account_id = ? AND expires > ? ORDER BY created_at DESC')
@@ -72,8 +72,8 @@ export async function portalData(env: Env, accountId: string): Promise<Record<st
     subscriptionSummary(env.DB, accountId),
     usage(env.DB, accountId, now),
     apiCreditData(env, accountId),
+    inferenceStatus(env),
   ]);
-
   return {
     account: { ...account, hasSubscription },
     subscription,
@@ -83,7 +83,7 @@ export async function portalData(env: Env, accountId: string): Promise<Record<st
     reviews: reviews.results.map((row) => (typeof row.profile === 'string' ? { ...row, profile: currentProfileId(row.profile) } : row)),
     usage: currentUsage,
     profiles: PROFILES.map((profile) => ({ id: profile.id, name: profile.name })),
-    api: { ...apiData, enabled: inferenceReady(env), topups_enabled: env.API_TOPUPS_ENABLED === 'true' && inferenceReady(env) && apiBillingReady(env), models: inferenceModels(env).map(publicModel) },
+    api: { ...apiData, enabled: apiStatus === 'available', status: apiStatus, topups_enabled: apiStatus === 'available' && env.API_TOPUPS_ENABLED === 'true' && apiBillingReady(env), models: inferenceModels(env).map(publicModel) },
   };
 }
 

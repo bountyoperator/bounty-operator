@@ -24,6 +24,7 @@
  */
 
 import { reviewProfile } from '../profiles.mjs';
+import { PROVIDERS } from '../providers.mjs';
 import { manifestFor } from '../review-core.mjs';
 import { account, track } from './api.mjs';
 import { initDossier } from './dossier.mjs';
@@ -34,7 +35,7 @@ import { initGithub } from './github-ui.mjs';
 import { initHistory } from './history.mjs';
 import { initPanel } from './panel.mjs';
 import { initPasteback } from './pasteback.mjs';
-import { initProviders, resumeOpenRouter } from './providers-ui.mjs';
+import { chooseModel, initProviders, resumeOpenRouter } from './providers-ui.mjs';
 import { initResults } from './results.mjs';
 import { initRun } from './run.mjs';
 import { initSourcePane } from './source-pane.mjs';
@@ -258,7 +259,17 @@ export function deepLink(search) {
   } catch {
     profile = '';
   }
-  return { profile, example: start === 'example' || params.has('example'), exampleId: params.get('example') ?? '' };
+  const providerParam = (params.get('provider') ?? '').trim();
+  const provider = PROVIDERS.some((entry) => entry.id === providerParam) ? providerParam : '';
+  const modelParam = (params.get('model') ?? '').trim();
+  const model = provider && /^[\x21-\x7e]{1,200}$/.test(modelParam) ? modelParam : '';
+  return {
+    profile,
+    example: start === 'example' || params.has('example'),
+    exampleId: params.get('example') ?? '',
+    ...(provider ? { provider } : {}),
+    ...(model ? { model } : {}),
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -411,14 +422,19 @@ export function boot() {
 
   // 3. Deep links. The parameters are removed once applied, so a reload keeps what the user changed since.
   const link = deepLink(window.location.search);
-  const arrived = Boolean(handoff) || Boolean(link.profile) || link.example;
+  const arrived = Boolean(handoff) || Boolean(link.profile) || Boolean(link.provider) || link.example;
   if (link.profile) {
     leaveExample();
     const profile = reviewProfile(link.profile);
     workbench.set((state) => ({ profile: profile.id, mode: profile.mode === 'either' ? state.mode : profile.mode }));
     setStep('files', { scroll: false, focus: false });
   }
-  stripParams(['profile', 'start', 'example']);
+  if (link.provider) {
+    leaveExample();
+    workbench.set({ provider: link.provider, ...(link.model ? { model: link.model } : {}) });
+    if (link.model) chooseModel(link.model);
+  }
+  stripParams(['profile', 'start', 'example', 'provider', 'model']);
   if (link.example) loadExample(link.exampleId);
   else if (arrived) qs('#workspace').scrollIntoView({ block: 'start' });
 

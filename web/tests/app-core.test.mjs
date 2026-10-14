@@ -38,6 +38,7 @@ import {
 } from '../public/app/github-ui.mjs';
 import { historyRecord } from '../public/app/history.mjs';
 import { PLACEHOLDER_EXAMPLE, deepLink, exampleList } from '../public/app/main.mjs';
+import { DEFAULT_MODELS, buildSnippet, estimateRunCost } from '../public/app/model-api.mjs';
 import { cleanReply, pastedResult } from '../public/app/pasteback.mjs';
 import { authUrl, challengeFor, newVerifier, reconcileVia } from '../public/app/providers-ui.mjs';
 import {
@@ -617,6 +618,31 @@ describe('deep links', () => {
     assert.equal(deepLink('?profile=%3Cscript%3E').profile, '');
     assert.deepEqual(deepLink('?start=example'), { profile: '', example: true, exampleId: '' });
     assert.deepEqual(deepLink('?checkout=complete&session_id=cs_x'), { profile: '', example: false, exampleId: '' });
+    assert.deepEqual(deepLink('?provider=infron&model=z-ai/glm-5.3-flash-cybersecurity'), {
+      profile: '',
+      example: false,
+      exampleId: '',
+      provider: 'infron',
+      model: 'z-ai/glm-5.3-flash-cybersecurity',
+    });
+    assert.deepEqual(deepLink('?provider=unknown&model=x'), { profile: '', example: false, exampleId: '' });
+    assert.deepEqual(deepLink('?provider=infron&model=bad%20space'), { profile: '', example: false, exampleId: '', provider: 'infron' });
+  });
+
+  test('model catalog workload estimator and quickstart snippets respect per-request minimums and reasoning parameters', () => {
+    assert.equal(DEFAULT_MODELS.length, 22);
+    const qwen = DEFAULT_MODELS.find((m) => m.id === 'cyber-qwen-27b-awq');
+    const est = estimateRunCost(qwen.pricing, 24000, 4000);
+    assert.equal(Number(est.cost.toFixed(4)), 0.216);
+    assert.equal(est.runsPer20, 92);
+    assert.equal(est.runsPer2, 9);
+    // Short workload stays at the model's minimum_request floor.
+    const minEst = estimateRunCost(qwen.pricing, 1000, 500);
+    assert.equal(minEst.cost, 0.15);
+    assert.match(buildSnippet(qwen, 'curl'), /"chat_template_kwargs": \{ "enable_thinking": false \}/);
+    const nex = DEFAULT_MODELS.find((m) => m.id === 'orca-nex-mini');
+    assert.match(buildSnippet(nex, 'ts'), /"reasoning_effort": "low"/);
+    assert.match(buildSnippet(qwen, 'agent'), /context_window = 262144/);
   });
 });
 

@@ -50,7 +50,7 @@ import { serveAsset } from './static.ts';
 import { autoTopupData, createAutoTopupSetup, disableAutoTopup, processAutoTopups, updateAutoTopup } from './api-autotopup.ts';
 import { apiCreditData, createInferenceKey, reapInferenceHolds, revokeInferenceKey } from './api-credits.ts';
 import { createApiTopup, reconcileApiTopup, resyncPendingTopups } from './api-topups.ts';
-import { inferenceEndpoint, inferenceModels, inferenceReady, publicModel } from './inference.ts';
+import { inferenceEndpoint, inferenceModels, inferencePaused, inferenceReady, inferenceStatus, publicModel } from './inference.ts';
 
 const AUTH_REQUESTS_PER_HOUR = 90;
 const BILLING_REQUESTS_PER_10_MIN = 6;
@@ -116,7 +116,7 @@ async function health({ env }: Call): Promise<Response> {
     version: VERSION,
     billing: billingReady(env) ? 'live' : 'unavailable',
     reviews: env.AI_REVIEW_ENABLED === 'true',
-    inference: inferenceReady(env) ? 'available' : 'unavailable',
+    inference: await inferenceStatus(env),
     // 'hosted' when the Worker was built with the production method. A build
     // from the community stub, or one that lacks a profile, says so here.
     profiles: METHOD_SOURCE === 'private' && missingMethods().length === 0 ? 'hosted' : 'community',
@@ -215,6 +215,7 @@ const billingPortal = billingRoute('billing', BILLING_REQUESTS_PER_10_MIN, async
 
 const apiTopup = billingRoute('api-topup', BILLING_REQUESTS_PER_10_MIN, async ({ env, request }, session) => {
   if (env.API_TOPUPS_ENABLED !== 'true' || !inferenceReady(env)) throw new ApiError('API top-ups are not open right now.', 503, 'topups_unavailable');
+  if (await inferencePaused(env)) throw new ApiError('API top-ups are closed while model inference is paused.', 503, 'topups_unavailable');
   const body = await readJson(request, 1000);
   const api = stripeClient(env);
   const customer = await customerFor(env, api, session.account_id);
@@ -276,7 +277,10 @@ async function stripeWebhook({ env, ctx, request }: Call): Promise<Response> {
 const ROUTES: Readonly<Record<string, Readonly<Record<string, Handler>>>> = {
   '/api/health': { GET: health },
   '/api/profiles': { GET: profiles },
-  '/api/inference/catalog': { GET: async ({ env }) => json({ enabled: inferenceReady(env), topups_enabled: env.API_TOPUPS_ENABLED === 'true' && inferenceReady(env) && apiBillingReady(env), models: inferenceModels(env).map(publicModel) }) },
+  '/api/inference/catalog': { GET: async ({ env }) => {
+    const status = await inferenceStatus(env);
+    return json({ enabled: status === 'available', status, topups_enabled: status === 'available' && env.API_TOPUPS_ENABLED === 'true' && apiBillingReady(env), models: inferenceModels(env).map(publicModel) });
+  } },
   '/api/account': { GET: accountStatus },
   '/api/portal': { GET: signedInRead(portal) },
   '/api/account/export': { GET: signedInRead(exportAccount) },
