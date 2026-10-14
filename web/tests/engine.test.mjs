@@ -1180,6 +1180,8 @@ describe('providers', () => {
     mistral: { url: 'https://api.mistral.ai/v1/chat/completions', model: 'mistral-medium-latest', cap: 'max_tokens' },
     groq: { url: 'https://api.groq.com/openai/v1/chat/completions', model: 'openai/gpt-oss-120b', cap: 'max_completion_tokens' },
     infron: { url: 'https://api.infron.ai/v1/chat/completions', model: 'z-ai/glm-5.3-flash-cybersecurity', cap: 'max_tokens' },
+    orcarouter: { url: 'https://api.orcarouter.ai/v1/chat/completions', model: 'orca/orcacyber-zero-1.5', cap: 'max_tokens' },
+    bountyoperator: { url: 'https://bountyoperator.com/v1/chat/completions', model: 'cyber-qwen-27b-awq', cap: 'max_completion_tokens' },
   };
   const chatIds = Object.keys(expected).filter((id) => id !== 'anthropic');
 
@@ -1196,7 +1198,7 @@ describe('providers', () => {
     ...overrides,
   });
 
-  test('the registry lists the nine providers with their default models', () => {
+  test('the registry lists the eleven providers with their default models', () => {
     assert.deepEqual(PROVIDERS.map((entry) => entry.id), Object.keys(expected));
     for (const entry of PROVIDERS) {
       assert.deepEqual(
@@ -1205,9 +1207,9 @@ describe('providers', () => {
       );
       assert.equal(entry.defaultModel, expected[entry.id].model);
       assert.equal(entry.models[0].id, entry.defaultModel);
-      // OpenRouter includes the benchmarked choices; direct providers stay compact.
+      // OpenRouter and Bounty Operator include the broader catalogs; direct providers stay compact.
       const fewest = entry.id === 'deepseek' ? 2 : 3;
-      const most = entry.id === 'openrouter' ? 12 : entry.id === 'infron' ? 7 : 5;
+      const most = entry.id === 'openrouter' || entry.id === 'bountyoperator' ? 12 : entry.id === 'infron' || entry.id === 'orcarouter' ? 7 : 5;
       assert.ok(entry.models.length >= fewest && entry.models.length <= most, entry.id);
       assert.equal(new Set(entry.models.map((model) => model.id)).size, entry.models.length, entry.id);
       for (const model of entry.models) assert.doesNotThrow(() => validateProviderRequest({ provider: entry.id, model: model.id, apiKey: API_KEY }), model.id);
@@ -1219,6 +1221,8 @@ describe('providers', () => {
     }
     assert.equal(provider('groq').label, 'Groq');
     assert.equal(provider('infron').label, 'Infron');
+    assert.equal(provider('orcarouter').label, 'OrcaRouter');
+    assert.equal(provider('bountyoperator').label, 'Bounty Operator');
   });
 
   test('unsupported providers, models and keys are rejected before anything is sent', async () => {
@@ -1263,7 +1267,7 @@ describe('providers', () => {
 
         const caps = ['max_tokens', 'max_completion_tokens'].filter((name) => name in body);
         assert.deepEqual(caps, expected[id].cap ? [expected[id].cap] : [], id);
-        if (expected[id].cap) assert.equal(body[expected[id].cap], 16000);
+        if (expected[id].cap) assert.equal(body[expected[id].cap], id === 'bountyoperator' ? 8192 : 16000);
         for (const banned of ['temperature', 'top_p', 'stream']) assert.ok(!(banned in body), `${id} sent ${banned}`);
         // OpenAI would keep the messages in the account's dashboard logs; no other provider takes the field.
         assert.equal(body.store, id === 'openai' ? false : undefined, id);
@@ -1355,6 +1359,8 @@ describe('providers', () => {
       mistral: ['mistral-medium-latest', 'mistral-large-2512', 'mistral-small-latest'],
       groq: ['openai/gpt-oss-120b', 'qwen/qwen3.8-27b', 'openai/gpt-oss-20b'],
       infron: ['z-ai/glm-5.3-flash-cybersecurity', 'z-ai/glm-5.3-abliterated', 'z-ai/glm-5.3-flash-abliterated', 'deepseek/deepseek-v4-flash-vision-exp-cybersecurity', 'qwen/qwen3.8-27b-cybersecurity', 'google/gemma-4-26b-a4b-it-cybersecurity', 'nvidia/nemotron-3.5-content-safety'],
+      orcarouter: ['orca/orcacyber-zero-1.5', 'orca/orcacyber-zero-1.0', 'openai/gpt-6.1-sol', 'anthropic/claude-sonnet-5.5', 'deepseek/deepseek-v4.1-flash', 'z-ai/glm-5.3-flash', 'qwen/qwen3.8-27b'],
+      bountyoperator: ['cyber-qwen-27b-awq', 'orca-cyber-zero-1.5', 'glm-5.3-flash-cyber', 'deepseek-v4-flash-cyber', 'qwen3.8-27b-cyber', 'gemma-4-26b-cyber', 'glm-5.3-cyber', 'glm-5.3-ablit', 'glm-5.3-flash-ablit', 'cyberstrike-offsec-35b', 'qwen-coder390-27b-ablit', 'kimi-k3-cyber'],
     });
 
     // The slugs checked against OpenRouter's model list on 2 October 2026.
@@ -2316,6 +2322,8 @@ describe('providers', () => {
       mistral: undefined,
       groq: { include_usage: true },
       infron: undefined,
+      orcarouter: undefined,
+      bountyoperator: { include_usage: true },
     });
   });
 

@@ -112,7 +112,7 @@ const FAQ_ITEMS = [
   },
   {
     q: 'Which key does Panel review use?',
-    a: 'One OpenRouter or Infron key covers a whole panel: it reaches models from several labs, so two to four different models review the same files. A panel model on another provider takes that provider’s own key.',
+    a: 'One OpenRouter, Infron, OrcaRouter or Bounty Operator key covers a whole panel: it reaches models from several labs, so two to four different models review the same files. A panel model on another provider takes that provider’s own key.',
   },
 ];
 
@@ -159,7 +159,7 @@ ${pageHero({
       title: 'Your API key',
       meta: icon('key'),
       body: html`<div class="stack stack--12">
-        <p>Paste a key from one of nine providers and run the review on this site. It goes through our server to your provider, and the answer streams into finding cards.</p>
+        <p>Paste a key from one of eleven providers and run the review on this site. It goes through our server to your provider, and the answer streams into finding cards.</p>
         ${tickList(['All 11 review types, the Gauntlet and Panel review', 'Free: 1 review a day, any review type', 'Operator: unlimited, 4 at once', 'The key is used for that request only'])}
       </div>`,
       foot: html`<a class="link" href="${workbenchLink()}">Start a free review</a>`,

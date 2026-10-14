@@ -104,6 +104,20 @@
           "format": "string",
           "isRequired": false,
           "isSecret": true
+        },
+        {
+          "name": "ORCAROUTER_API_KEY",
+          "description": "OrcaRouter API key, for run_review with provider orcarouter.",
+          "format": "string",
+          "isRequired": false,
+          "isSecret": true
+        },
+        {
+          "name": "BOUNTYOPERATOR_API_KEY",
+          "description": "Bounty Operator Model API key (bo_api_...), for run_review with provider bountyoperator.",
+          "format": "string",
+          "isRequired": false,
+          "isSecret": true
         }
       ]
     }

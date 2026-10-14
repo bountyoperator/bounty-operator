@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { apiCreditData, authenticateInference, createInferenceKey, hasApiLiability, reapInferenceHolds, reserveInference, settleInference } from '../src/api-credits.ts';
 import { clearHostingState, inferenceEndpoint, inferenceModels, inferencePaused, inferenceStatus, parseInference } from '../src/inference.ts';
+import { parseReviewRequest, runHostedReview } from '../src/review.ts';
 import { addAccount, createCall, createContext, createEnv } from './worker-helpers.mjs';
 
 const model = { id: 'cyber-test', name: 'Cyber test', source: 'test/model', revision: 'abc', license: 'Apache-2.0', quantization: 'AWQ', endpoint: 'https://test123.api.runpod.ai', upstreamModel: 'cyber-test', inputRate: 2, outputRate: 8, minimumMicro: 10000, context: 32768, maxOutput: 8192 };
@@ -375,5 +376,30 @@ test('serverless upstream gateways route with their own secret, skip the Runpod 
   response = await inferenceEndpoint(createCall(request(token, { model: infronModel.id }), env));
   assert.equal(response.status, 200);
   assert.deepEqual(urls, ['https://api.infron.ai/v1/chat/completions']);
+  assert.equal(env.DB.sqlite.prepare('SELECT charge_micro FROM inference_requests ORDER BY created_at DESC LIMIT 1').get().charge_micro, 100000);
+});
+
+test('a hosted review with provider bountyoperator routes in-process to inferenceEndpoint and settles API credit', async (t) => {
+  const { env, account, token } = await setup();
+  env.AI_REVIEW_ENABLED = 'true';
+  const infronModel = { ...model, id: 'glm-5.3-flash-cyber', endpoint: 'https://api.infron.ai', upstreamModel: 'z-ai/glm-5.3-flash-cybersecurity', inputRate: 2, outputRate: 24, minimumMicro: 100000 };
+  env.INFERENCE_MODELS = JSON.stringify([infronModel]);
+  env.INFRON_API_KEY = 'infron-secret';
+
+  t.mock.method(globalThis, 'fetch', async (url) => {
+    assert.equal(url, 'https://api.infron.ai/v1/chat/completions');
+    return Response.json({ created: 1, choices: [{ message: { role: 'assistant', content: '# Review\nVerdict: submit\nMode: bounty\nCounts: critical=0 high=1 medium=0 hardening=0 checked-safe=0\nHeadline: Verified via Bounty Operator API.' }, finish_reason: 'stop' }], usage: { prompt_tokens: 500, completion_tokens: 40 } });
+  });
+  const reviewReq = parseReviewRequest({
+    provider: 'bountyoperator',
+    model: 'glm-5.3-flash-cyber',
+    apiKey: token,
+    profile: 'general',
+    files: [{ name: 'Vault.sol', content: 'contract Vault {}' }],
+  });
+  const ctx = createContext();
+  const result = await runHostedReview(createCall(new Request('https://bountyoperator.com/api/review', { method: 'POST' }), env, ctx), account, reviewReq, 'web');
+  await ctx.settled();
+  assert.match(result.review, /Verified via Bounty Operator API/);
   assert.equal(env.DB.sqlite.prepare('SELECT charge_micro FROM inference_requests ORDER BY created_at DESC LIMIT 1').get().charge_micro, 100000);
 });

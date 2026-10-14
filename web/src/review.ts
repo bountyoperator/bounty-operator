@@ -10,6 +10,7 @@ import type { Call, Env } from './env.ts';
 import { count } from './funnel.ts';
 import { instructionsFor, outputScanner } from './hosted.ts';
 import { ApiError, errorBody } from './http.ts';
+import { inferenceEndpoint } from './inference.ts';
 import { LEASE_SECONDS, extendLease, finishReview, paidAccess, reserveReview } from './quota.mjs';
 
 export type Channel = 'web' | 'mcp';
@@ -369,8 +370,11 @@ function toResult(prepared: Prepared, review: string, answer: ProviderAnswer): R
   };
 }
 
-function providerCall(input: ReviewRequest, prepared: Prepared, signal: AbortSignal) {
-  return { provider: input.provider, model: input.model, apiKey: input.apiKey, prepared, signal };
+function providerCall(call: Call, input: ReviewRequest, prepared: Prepared, signal: AbortSignal) {
+  const inProcess = input.provider === 'bountyoperator'
+    ? { fetch: (url: string, init?: RequestInit) => inferenceEndpoint({ request: new Request(url, init), env: call.env, ctx: call.ctx, url: new URL(url) }) }
+    : {};
+  return { provider: input.provider, model: input.model, apiKey: input.apiKey, prepared, signal, ...inProcess };
 }
 
 /** Runs a hosted review and returns the whole answer. */
@@ -384,7 +388,7 @@ export async function runHostedReview({ env, ctx, request }: Call, accountId: st
   // request.signal aborts when the client disconnects, which stops the provider call.
   const signal = AbortSignal.any([request.signal, AbortSignal.timeout(SINGLE_ANSWER_LIMIT_MS)]);
   try {
-    const { text, ...answer } = await providerReview(providerCall(input, prepared, signal));
+    const { text, ...answer } = await providerReview(providerCall({ env, ctx, request, url: new URL(request.url) }, input, prepared, signal));
     const scanner = outputScanner(input.profileId);
     if (scanner) {
       scanner.push(text);
@@ -445,7 +449,7 @@ export async function collectHostedReview(
   };
 
   try {
-    const events = await providerStream(providerCall(input, prepared, abort.signal));
+    const events = await providerStream(providerCall({ env, ctx, request, url: new URL(request.url) }, input, prepared, abort.signal));
     const parts: string[] = [];
     let chars = 0;
     for await (const event of withKeepAlive(events, KEEP_ALIVE_MS)) {
@@ -539,7 +543,7 @@ export async function streamHostedReview({ env, ctx, request }: Call, accountId:
 
   let events: Awaited<ReturnType<typeof providerStream>>;
   try {
-    events = await providerStream(providerCall(input, prepared, abort.signal));
+    events = await providerStream(providerCall({ env, ctx, request, url: new URL(request.url) }, input, prepared, abort.signal));
   } catch (error) {
     settle(false, failureReason(error, clientGone));
     throw reviewFailure(error);

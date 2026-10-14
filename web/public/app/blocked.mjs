@@ -61,8 +61,13 @@ const SAID_CHARS = 300;
 const AFTER_BLOCK = Object.freeze({
   openrouter: Object.freeze(['anthropic/claude-sonnet-5.5', 'deepseek/deepseek-v4.1-flash']),
   infron: Object.freeze(['z-ai/glm-5.3-flash-cybersecurity', 'deepseek/deepseek-v4-flash-vision-exp-cybersecurity']),
+  orcarouter: Object.freeze(['orca/orcacyber-zero-1.5', 'deepseek/deepseek-v4.1-flash']),
+  bountyoperator: Object.freeze(['cyber-qwen-27b-awq', 'glm-5.3-flash-cyber', 'deepseek-v4-flash-cyber']),
 });
-const vendorOf = (modelId) => String(modelId).split('/')[0];
+const vendorOf = (modelId) => {
+  const text = String(modelId);
+  return text.includes('/') ? text.split('/')[0] : text.split('-')[0];
+};
 
 /**
  * The block a value carries, or '' when it carries none. Takes a block id, a

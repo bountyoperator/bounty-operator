@@ -132,13 +132,21 @@ function modelCard(model, { workload, activeId, onSelect }) {
         model.reasoning_parameter && el('p', { class: 'help' }, 'Reasoning control: ', el('code', { text: model.reasoning_parameter })),
         el('p', { class: 'help' }, 'Revision: ', el('code', { text: model.revision })),
       ),
-      button({
-        label: isSelected ? 'In quickstart' : 'Use in quickstart',
-        size: 'sm',
-        variant: 'secondary',
-        attrs: { 'aria-pressed': isSelected ? 'true' : 'false', 'aria-label': `Use ${model.name} in quickstart snippet` },
-        onClick: () => onSelect(model.id, true),
-      }),
+      el('div', { class: 'catalog-filter-buttons' },
+        button({
+          label: isSelected ? 'In quickstart' : 'Use in quickstart',
+          size: 'sm',
+          variant: 'secondary',
+          attrs: { 'aria-pressed': isSelected ? 'true' : 'false', 'aria-label': `Use ${model.name} in quickstart snippet` },
+          onClick: () => onSelect(model.id, true),
+        }),
+        button({
+          label: 'Use in review',
+          href: `/?provider=bountyoperator&model=${encodeURIComponent(model.id)}#workspace`,
+          size: 'sm',
+          variant: 'secondary',
+        }),
+      ),
     ),
   );
 }

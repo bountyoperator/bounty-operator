@@ -28,14 +28,14 @@ const RELATED = {
 // A core profile runs three ways: hosted, as an exported prompt, or prepared over MCP.
 const MODEL_FAQ = {
   q: 'Which model runs the review?',
-  a: 'The one you choose, on your own key: OpenRouter, Anthropic, OpenAI, Google Gemini, xAI, DeepSeek, Mistral, Groq or Infron. That is the review of the day on Free. Or copy the prompt into ChatGPT or Claude and paste the answer back. From a coding agent, `prepare_review` hands the same request to the agent’s own model over MCP. Those two routes need no account and are not counted.',
+  a: 'The one you choose, on your own key: OpenRouter, Anthropic, OpenAI, Google Gemini, xAI, DeepSeek, Mistral, Groq, Infron, OrcaRouter or Bounty Operator. That is the review of the day on Free. Or copy the prompt into ChatGPT or Claude and paste the answer back. From a coding agent, `prepare_review` hands the same request to the agent’s own model over MCP. Those two routes need no account and are not counted.',
 };
 
 // A hosted profile runs through bountyoperator.com on the user's key, in the
 // workbench or through run_review. It has no prompt to take away.
 const HOSTED_MODEL_FAQ = {
   q: 'Which model runs the review?',
-  a: 'The one you choose, on your own key: OpenRouter, Anthropic, OpenAI, Google Gemini, xAI, DeepSeek, Mistral, Groq or Infron. It counts as a review: 1 a day on Free, unlimited on Operator. From a coding agent it runs through `run_review` over MCP, on the same allowance.',
+  a: 'The one you choose, on your own key: OpenRouter, Anthropic, OpenAI, Google Gemini, xAI, DeepSeek, Mistral, Groq, Infron, OrcaRouter or Bounty Operator. It counts as a review: 1 a day on Free, unlimited on Operator. From a coding agent it runs through `run_review` over MCP, on the same allowance.',
 };
 
 const STORED_FAQ = {

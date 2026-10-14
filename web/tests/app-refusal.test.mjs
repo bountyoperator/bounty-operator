@@ -144,6 +144,8 @@ describe('blocked.mjs', () => {
     // Infron reaches models across several labs as well.
     assert.deepEqual(alternateAfter('policy', { provider: 'infron', model: 'z-ai/glm-5.3-abliterated' }), { id: 'deepseek/deepseek-v4-flash-vision-exp-cybersecurity', label: 'DeepSeek V4 Flash Vision Exp Cybersecurity' });
     assert.deepEqual(alternateAfter('policy', { provider: 'infron', model: 'qwen/qwen3.8-27b-cybersecurity' }), { id: 'z-ai/glm-5.3-flash-cybersecurity', label: 'GLM-5.3 Flash Cybersecurity' });
+    assert.deepEqual(alternateAfter('policy', { provider: 'orcarouter', model: 'openai/gpt-6.1-sol' }), { id: 'orca/orcacyber-zero-1.5', label: 'OrcaCyber Zero 1.5' });
+    assert.deepEqual(alternateAfter('policy', { provider: 'bountyoperator', model: 'cyber-qwen-27b-awq' }), { id: 'glm-5.3-flash-cyber', label: 'GLM-5.3 Flash Cybersecurity' });
   });
 
   test('a reply pasted from a chat app gets the one step that applies there, and no allowance line', () => {

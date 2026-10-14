@@ -4,6 +4,7 @@
 import { boundedBody } from './review-core.mjs';
 
 const OUTPUT_TOKENS = 16000;
+const BOUNTY_OPERATOR_OUTPUT_TOKENS = 8192;
 // Reasoning and the final answer share one output allowance. These exact
 // OpenRouter models exhausted 16k in native document checks and support at
 // least 64k, so they get the larger allowance on every call. Keep their own
@@ -293,6 +294,47 @@ export const PROVIDERS = Object.freeze([
     envVar: 'INFRON_API_KEY',
     docsUrl: 'https://infron.ai/dashboard/apiKeys',
   }),
+  describe({
+    id: 'orcarouter',
+    label: 'OrcaRouter',
+    keyLabel: 'OrcaRouter API key',
+    keyPrefixHint: 'sk-orca-',
+    defaultModel: 'orca/orcacyber-zero-1.5',
+    models: [
+      model('orca/orcacyber-zero-1.5', 'OrcaCyber Zero 1.5', 'default'),
+      model('orca/orcacyber-zero-1.0', 'OrcaCyber Zero 1.0'),
+      model('openai/gpt-6.1-sol', 'GPT-6.1 Sol', 'flagship'),
+      model('anthropic/claude-sonnet-5.5', 'Claude Sonnet 5.5', 'balanced'),
+      model('deepseek/deepseek-v4.1-flash', 'DeepSeek V4.1 Flash', 'value'),
+      model('z-ai/glm-5.3-flash', 'GLM 5.3 Flash', 'value'),
+      model('qwen/qwen3.8-27b', 'Qwen3.8 27B'),
+    ],
+    envVar: 'ORCAROUTER_API_KEY',
+    docsUrl: 'https://www.orcarouter.ai/console/token',
+  }),
+  describe({
+    id: 'bountyoperator',
+    label: 'Bounty Operator',
+    keyLabel: 'Bounty Operator API key',
+    keyPrefixHint: 'bo_api_',
+    defaultModel: 'cyber-qwen-27b-awq',
+    models: [
+      model('cyber-qwen-27b-awq', 'Qwen Cyber 27B AWQ', 'default'),
+      model('orca-cyber-zero-1.5', 'OrcaCyber Zero 1.5', 'flagship'),
+      model('glm-5.3-flash-cyber', 'GLM-5.3 Flash Cybersecurity', 'value'),
+      model('deepseek-v4-flash-cyber', 'DeepSeek V4 Flash Vision Cyber', 'value'),
+      model('qwen3.8-27b-cyber', 'Qwen 3.8 27B Cybersecurity'),
+      model('gemma-4-26b-cyber', 'Gemma 4 26B A4B Cybersecurity', 'value'),
+      model('glm-5.3-cyber', 'GLM-5.3 Cybersecurity 744B', 'flagship'),
+      model('glm-5.3-ablit', 'GLM-5.3 Low-Refusal 744B', 'flagship'),
+      model('glm-5.3-flash-ablit', 'GLM-5.3 Flash Low-Refusal', 'value'),
+      model('cyberstrike-offsec-35b', 'CyberStrike OffSec 35B'),
+      model('qwen-coder390-27b-ablit', 'Qwen 3.8 27B Coder390 Low-Refusal'),
+      model('kimi-k3-cyber', 'Kimi K3 Cybersecurity Two-Stage'),
+    ],
+    envVar: 'BOUNTYOPERATOR_API_KEY',
+    docsUrl: 'https://bountyoperator.com/#account/api',
+  }),
 ]);
 
 // How each provider is called. `tokenParam` is the provider's own name for the
@@ -354,6 +396,17 @@ const WIRE = Object.freeze({
     endpoint: 'https://api.infron.ai/v1/chat/completions',
     tokenParam: 'max_tokens',
   },
+  orcarouter: {
+    style: 'chat',
+    endpoint: 'https://api.orcarouter.ai/v1/chat/completions',
+    tokenParam: 'max_tokens',
+  },
+  bountyoperator: {
+    style: 'chat',
+    endpoint: 'https://bountyoperator.com/v1/chat/completions',
+    tokenParam: 'max_completion_tokens',
+    streamUsage: true,
+  },
 });
 
 /**
@@ -363,6 +416,7 @@ const WIRE = Object.freeze({
  */
 export function outputTokenLimit(providerId, modelId, { stream = false } = {}) {
   if (!WIRE[providerId]?.tokenParam) return null;
+  if (providerId === 'bountyoperator') return BOUNTY_OPERATOR_OUTPUT_TOKENS;
   if (providerId === 'openrouter' && EXTENDED_OPENROUTER_MODELS.has(modelId)) return EXTENDED_OUTPUT_TOKENS;
   return stream && LONG_OUTPUT_MODELS[providerId]?.has(modelId) ? EXTENDED_OUTPUT_TOKENS : OUTPUT_TOKENS;
 }
@@ -561,7 +615,7 @@ function transportFailure(error, deadline) {
 function redact(text, apiKey) {
   return text
     .split(apiKey).join('[key]')
-    .replace(/(?<![A-Za-z0-9])(?:bo_api_|sk-|sk_|gsk_|xai-|AIza|Bearer\s+)[A-Za-z0-9_*.\-]{6,200}/g, '[key]')
+    .replace(/(?<![A-Za-z0-9])(?:bo_api_|sk-orca-|sk-|sk_|gsk_|xai-|AIza|Bearer\s+)[A-Za-z0-9_*.\-]{6,200}/g, '[key]')
     .replace(/[\x00-\x1f\x7f]+/g, ' ')
     .replace(/\s+/g, ' ')
     .trim()
@@ -655,6 +709,7 @@ function policySignal(payload, status = 0) {
   const error = errorObject(payload);
   if (!error) return '';
   if (error.code === 'cyber_policy') return 'openai-cyber';
+  if (error.code === 'guardrail_blocked') return 'policy';
 
   const metadata = error.metadata && typeof error.metadata === 'object' ? error.metadata : {};
   // A relay passes the upstream code along. The code is OpenAI's; when the
@@ -780,6 +835,11 @@ async function httpFailure(response, selected, request) {
     // Infron's API documents 401 for an invalid or disabled key and 403 for
     // input flagged by moderation (infron.ai/en/docs/api-reference/errors).
     if (status === 403 && selected.id === 'infron') return policyFailure('policy', { status, detail });
+    // OrcaRouter answers 403 with tier_not_granted / block_tier_gate when a Cyber model needs Security Research tier access.
+    const errObj = errorObject(payload);
+    if (status === 403 && (errObj?.code === 'tier_not_granted' || errObj?.metadata?.reason === 'block_tier_gate')) {
+      return new ProviderError(`Provider requires Security Research tier access for this model (HTTP 403). Unlock it at ${selected.label} or pick another model.${said}`, { status, kind: 'routing' });
+    }
     return new ProviderError(`Provider rejected the API key (HTTP ${status}). Check that the key belongs to ${selected.label} and is still active.${said}`, { status, kind: 'auth' });
   }
   if (status === 404) {
@@ -864,7 +924,7 @@ async function send(providerId, request, { stream }) {
 
   const attempt = async (options) => {
     const { url, init } = buildRequest(providerId, request, options);
-    const response = await fetch(url, { ...init, signal: deadline.signal });
+    const response = await (request.fetch ?? fetch)(url, { ...init, signal: deadline.signal });
     deadline.touch();
     await refuseRedirect(response, selected);
     return response;
@@ -1037,10 +1097,10 @@ function readCompletion(providerId, data, request) {
  * @param {ProviderRequest} request
  * @returns {Promise<ProviderResult>}
  */
-export async function providerReview({ provider: providerId, model: modelId, apiKey, prepared, signal }) {
+export async function providerReview({ provider: providerId, model: modelId, apiKey, prepared, signal, fetch: callFetch }) {
   validateProviderRequest({ provider: providerId, model: modelId, apiKey });
   assertPrepared(prepared);
-  const request = { model: modelId, apiKey, prepared, signal };
+  const request = { model: modelId, apiKey, prepared, signal, fetch: callFetch };
 
   const { response, deadline } = await send(providerId, request, { stream: false });
   try {
@@ -1306,10 +1366,10 @@ async function* streamEvents(providerId, response, deadline, request) {
  * @param {ProviderRequest} request
  * @returns {Promise<AsyncGenerator<StreamDelta | StreamDone, void, void>>}
  */
-export async function providerStream({ provider: providerId, model: modelId, apiKey, prepared, signal }) {
+export async function providerStream({ provider: providerId, model: modelId, apiKey, prepared, signal, fetch: callFetch }) {
   validateProviderRequest({ provider: providerId, model: modelId, apiKey });
   assertPrepared(prepared);
-  const request = { model: modelId, apiKey, prepared, signal };
+  const request = { model: modelId, apiKey, prepared, signal, fetch: callFetch };
 
   const { response, deadline } = await send(providerId, request, { stream: true });
   return streamEvents(providerId, response, deadline, request);

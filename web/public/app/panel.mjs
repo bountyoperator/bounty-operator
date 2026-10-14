@@ -68,7 +68,7 @@ function providerOf(id) {
 }
 
 function vendorOf(modelId) {
-  return modelId.includes('/') ? modelId.slice(0, modelId.indexOf('/')) : modelId;
+  return modelId.includes('/') ? modelId.slice(0, modelId.indexOf('/')) : modelId.split('-')[0];
 }
 
 /**

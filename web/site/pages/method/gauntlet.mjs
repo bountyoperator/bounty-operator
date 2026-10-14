@@ -162,7 +162,7 @@ const FAQ_ITEMS = [
   },
   {
     q: 'Which model runs the stages?',
-    a: 'The one you choose, on your own API key: OpenRouter, Anthropic, OpenAI, Google Gemini, xAI, DeepSeek, Mistral, Groq or Infron. Your files and key pass through our server, which adds the method of each stage. No file, key or review is stored.',
+    a: 'The one you choose, on your own API key: OpenRouter, Anthropic, OpenAI, Google Gemini, xAI, DeepSeek, Mistral, Groq, Infron, OrcaRouter or Bounty Operator. Your files and key pass through our server, which adds the method of each stage. No file, key or review is stored.',
   },
   {
     q: 'Can I run the stages on a chat subscription or from a coding agent?',
