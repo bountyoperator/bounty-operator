@@ -4,9 +4,9 @@ import { ACCOUNT_SCRIPTS, ACCOUNT_STYLES, accountDialog } from '../../fragments/
 import { DOCS_STYLES, docHead } from './_shared.mjs';
 
 const INFRON_STACK = [
-  { mark: 'Z', name: 'GLM-5.3 Flash Cybersecurity', id: 'z-ai/glm-5.3-flash-cybersecurity', badge: 'cybersecurity', badgeLabel: 'Cybersecurity', role: 'Default · fast security triage & tool use', input: '0.75', output: '12.50' },
+  { mark: 'Z', name: 'GLM-5.3 Flash Cybersecurity', id: 'z-ai/glm-5.3-flash-cybersecurity', badge: 'cybersecurity', badgeLabel: 'Cybersecurity', role: 'Fast security triage & tool use', input: '0.75', output: '12.50' },
   { mark: 'D', name: 'DeepSeek V4 Flash Vision Exp Cybersecurity', id: 'deepseek/deepseek-v4-flash-vision-exp-cybersecurity', badge: 'cybersecurity', badgeLabel: 'Cybersecurity', role: 'Cross-vendor fallback · multimodal security analysis', input: '0.75', output: '2.50' },
-  { mark: 'Q', name: 'Qwen3.8 27B Cybersecurity', id: 'qwen/qwen3.8-27b-cybersecurity', badge: 'cybersecurity', badgeLabel: 'Cybersecurity', role: 'Deep code review & vulnerability reasoning', input: '1.75', output: '17.83' },
+  { mark: 'Q', name: 'Qwen3.8 27B Cybersecurity', id: 'qwen/qwen3.8-27b-cybersecurity', badge: 'cybersecurity', badgeLabel: 'Cybersecurity', role: 'Deep code review & vulnerability reasoning', input: '1.25–2.00', output: '8.00–37.50' },
   { mark: 'G', name: 'Gemma 4 26B A4B IT Cybersecurity', id: 'google/gemma-4-26b-a4b-it-cybersecurity', badge: 'cybersecurity', badgeLabel: 'Cybersecurity', role: 'MoE security instruction model · high throughput', input: '0.60', output: '1.90' },
   { mark: 'Z', name: 'GLM-5.3 Low-Refusal', id: 'z-ai/glm-5.3-abliterated', badge: 'low-refusal', badgeLabel: 'Low refusal', role: 'Flagship low-refusal reasoning & proof stress-testing', input: '6.00', output: '9.00' },
   { mark: 'Z', name: 'GLM-5.3 Flash Low-Refusal', id: 'z-ai/glm-5.3-flash-abliterated', badge: 'low-refusal', badgeLabel: 'Low refusal', role: 'Fast low-refusal variant for iterative red-team drafts', input: '1.25', output: '4.00' },
@@ -16,11 +16,12 @@ const INFRON_STACK = [
 const body = html`<article class="docs wrap model-api-page">
 ${docHead({
   crumbs: [{ label: 'Bounty Operator', href: '/' }, { label: 'Model API' }],
-  title: 'Cybersecurity models. Now live.',
+  title: 'Cybersecurity model API.',
   lede: 'Cybersecurity fine-tunes and lower-refusal variants through one OpenAI-compatible API. One key. Prepaid credit.',
   actions: html`${button({ label: 'Get an API key', href: '/#account/api', variant: 'primary', size: 'lg' })}${button({ label: 'Browse models', href: '#models', variant: 'secondary', size: 'lg' })}${button({ label: 'Setup guide', href: '/docs/model-api', variant: 'secondary', size: 'lg' })}`,
 })}
-<ul class="api-highlights" aria-label="API features"><li>OpenAI-compatible <code>/v1</code></li><li>Prepaid credit or US$2/mo on Operator</li><li>Per-key spending caps</li><li>Zero prompt or response logging</li></ul>
+<ul class="api-highlights" aria-label="API features"><li>OpenAI-compatible <code>/v1</code></li><li>Prepaid credit or US$2/mo on Operator</li><li>Per-key spending caps</li><li>No prompt or response storage in our application</li></ul>
+<p class="help">Requests also pass to the selected hosting provider, whose data policies apply. Read the <a href="/privacy#model-api">provider and data handling details</a>.</p>
 <div class="api-content">
 <section class="docs-section" aria-labelledby="models">
 <div class="catalog-heading"><h2 id="models">Hosted security catalog</h2><p class="help">USD per 1M tokens · minimum per request · switch workload view to estimate run cost</p></div>
@@ -31,7 +32,7 @@ ${docHead({
 <p class="help catalog-footnote">The first request after idle can take several minutes while the model starts. <a href="/docs/model-api#cost">What to expect</a></p>
 </section>
 <section class="docs-section" aria-labelledby="infron-stack">
-<div class="catalog-heading"><h2 id="infron-stack">Infron cybersecurity stack (BYO key)</h2><p class="help">USD per 1M tokens at Infron · runs in the Workbench, Gauntlet, Panel, CLI and MCP</p></div>
+<div class="catalog-heading"><h2 id="infron-stack">Infron cybersecurity stack (BYO key)</h2><p class="help">Infron’s own USD rates per 1M tokens with your Infron key · separate from the prepaid catalog above</p></div>
 <p class="lede catalog-section-lede">Already have an <a href="https://infron.ai/dashboard/apiKeys" target="_blank" rel="noopener noreferrer">Infron API key</a>? All seven models in Infron’s cybersecurity stack are wired directly into Bounty Operator. Open any model in the review workbench with one click, or pass <code>--provider infron</code> in the CLI and MCP server.</p>
 <div class="catalog-grid">
 ${INFRON_STACK.map((m) => html`<section class="catalog-card" aria-label="${m.name}">
@@ -54,6 +55,7 @@ ${button({ label: 'Use in review', href: `/?provider=infron&model=${encodeURICom
 </div>
 </section>`)}
 </div>
+<p class="help catalog-footnote">Infron rates checked 14 October 2026. Rates vary by the upstream provider used; ranges show the listed routes. Platform fees are separate. Check <a href="https://api.infron.ai/v1/models" target="_blank" rel="noopener noreferrer">Infron’s current model rates</a> and <a href="https://infron.ai/docs/overview/pricing-and-fee-structure" target="_blank" rel="noopener noreferrer">fees</a> before using your own key.</p>
 </section>
 <section class="docs-section" aria-labelledby="pricing">
 <div class="api-start">
@@ -71,7 +73,7 @@ ${closingBand({
     { label: 'Start a free review', href: '/#workspace' },
     { label: 'Setup guide', href: '/docs/model-api' },
   ],
-  note: 'Zero prompt or response logging. Per-key spending limits.',
+  note: 'Our application does not store prompts or responses. The hosting provider’s data policies also apply.',
 })}
 </article>`;
 

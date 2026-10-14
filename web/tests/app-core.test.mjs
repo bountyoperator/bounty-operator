@@ -38,7 +38,7 @@ import {
 } from '../public/app/github-ui.mjs';
 import { historyRecord } from '../public/app/history.mjs';
 import { PLACEHOLDER_EXAMPLE, deepLink, exampleList } from '../public/app/main.mjs';
-import { DEFAULT_MODELS, buildSnippet, estimateRunCost } from '../public/app/model-api.mjs';
+import { DEFAULT_MODELS, buildSnippet, estimateRunCost, loadCatalog } from '../public/app/model-api.mjs';
 import { cleanReply, pastedResult } from '../public/app/pasteback.mjs';
 import { authUrl, challengeFor, newVerifier, reconcileVia } from '../public/app/providers-ui.mjs';
 import {
@@ -643,6 +643,106 @@ describe('deep links', () => {
     const nex = DEFAULT_MODELS.find((m) => m.id === 'orca-nex-mini');
     assert.match(buildSnippet(nex, 'ts'), /"reasoning_effort": "low"/);
     assert.match(buildSnippet(qwen, 'agent'), /context_window = 262144/);
+  });
+});
+
+describe('model catalog availability and provenance', () => {
+  // A small DOM stand-in exercises the real card and quickstart construction.
+  class Node {
+    constructor(tag) {
+      this.tagName = tag;
+      this.nodeType = 1;
+      this.children = [];
+      this.attributes = new Map();
+      this.dataset = {};
+      this.listeners = new Map();
+      this.value = '';
+    }
+    setAttribute(name, value) { this.attributes.set(name, String(value)); }
+    addEventListener(name, callback) { this.listeners.set(name, callback); }
+    append(...nodes) { this.children.push(...nodes); }
+    replaceChildren(...nodes) { this.children = [...nodes]; }
+    set textContent(value) { this.children = [String(value)]; }
+    get textContent() { return this.children.map((node) => typeof node === 'string' ? node : node.textContent).join(''); }
+    scrollIntoView() {}
+  }
+  function setup(t, result) {
+    const originalDocument = globalThis.document;
+    const originalFetch = globalThis.fetch;
+    const nodes = new Map(['model-api-catalog', 'model-api-quickstart', 'model-api-status'].map((id) => [id, new Node('div')]));
+    globalThis.document = { createElement: (tag) => new Node(tag), getElementById: (id) => nodes.get(id) };
+    globalThis.fetch = async () => {
+      if (result instanceof Error) throw result;
+      return new Response(JSON.stringify(result), { headers: { 'content-type': 'application/json' } });
+    };
+    t.after(() => {
+      if (originalDocument === undefined) delete globalThis.document;
+      else globalThis.document = originalDocument;
+      globalThis.fetch = originalFetch;
+    });
+    return nodes;
+  }
+  function descendants(node) {
+    return [node, ...node.children.filter((child) => child instanceof Node).flatMap(descendants)];
+  }
+  const reviewLinks = (node) => descendants(node).filter((child) => child.tagName === 'a' && child.attributes.get('href')?.startsWith('/?provider=bountyoperator'));
+
+  test('fallback metadata preserves hosted sources and leaves undisclosed provider fields empty', () => {
+    assert.equal(DEFAULT_MODELS.filter((model) => model.hosting_provider === 'RunPod').length, 10);
+    const direct = DEFAULT_MODELS.filter((model) => model.hosting_provider !== 'RunPod');
+    assert.equal(direct.length, 14);
+    for (const model of DEFAULT_MODELS) assert.equal(model.availability, 'unavailable', model.id);
+    for (const model of direct) {
+      for (const field of ['revision', 'license', 'quantization']) assert.equal(model[field], null, `${model.id} ${field}`);
+      assert.equal(new URL(model.source_url).hostname, model.hosting_provider === 'Infron' ? 'api.infron.ai' : 'www.orcarouter.ai');
+      assert.doesNotMatch(model.description, /FP8|BF16|NVFP4/);
+    }
+    const byId = Object.fromEntries(DEFAULT_MODELS.map((model) => [model.id, model]));
+    assert.equal(byId['gemma-4-31b-ablit'].context_length, 32768);
+    assert.equal(byId['gemma-4-26b-cyber'].context_length, 262144);
+    assert.equal(byId['glm-5.3-cyber'].context_length, 1048576);
+    assert.equal(byId['orca-cyber-zero-1.5'].context_length, 1000000);
+    assert.equal(byId['deepseek-v4.1-flash'].context_length, 1000000);
+    assert.equal(byId['qwen3-coder-next'].context_length, 262140);
+    assert.equal(byId['qwen3.8-27b-cyber'].pricing.input_per_million, 4);
+    assert.equal(byId['qwen3.8-27b-cyber'].pricing.output_per_million, 70);
+    assert.equal(byId['kimi-k3-cyber'].pricing.input_per_million, 8);
+    assert.equal(byId['omen-2.0-cyber'].pricing.input_per_million, 8);
+    assert.equal(byId['omen-2.0-cyber'].pricing.output_per_million, 14);
+  });
+
+  test('a failed live check retains inspectable models but offers no review launch', async (t) => {
+    const nodes = setup(t, new Error('network unavailable'));
+    await loadCatalog();
+    const catalog = nodes.get('model-api-catalog');
+    assert.equal(reviewLinks(catalog).length, 0);
+    assert.equal(descendants(catalog).filter((node) => node.className === 'catalog-card').length, 24);
+    assert.match(nodes.get('model-api-status').textContent, /Availability could not be checked/);
+    const kimi = descendants(catalog).find((node) => node.attributes.get('aria-label') === 'Use Kimi K3 Cybersecurity Two-Stage in quickstart snippet');
+    kimi.listeners.get('click')();
+    assert.match(nodes.get('model-api-quickstart').textContent, /kimi-k3-cyber/);
+  });
+
+  test('only individually available live models launch review and direct metadata links stay with the provider', async (t) => {
+    const kimi = DEFAULT_MODELS.find((model) => model.id === 'kimi-k3-cyber');
+    const orca = DEFAULT_MODELS.find((model) => model.id === 'orca-cyber-zero-1.5');
+    const nodes = setup(t, { enabled: true, topups_enabled: true, models: [{ ...kimi, availability: 'available' }, orca, { ...kimi, id: 'unknown-status', availability: undefined }] });
+    await loadCatalog();
+    const catalog = nodes.get('model-api-catalog');
+    assert.deepEqual(reviewLinks(catalog).map((node) => node.attributes.get('href')), ['/?provider=bountyoperator&model=kimi-k3-cyber#workspace']);
+    assert.match(nodes.get('model-api-status').textContent, /1 of 3 models available/);
+    assert.ok(descendants(catalog).some((node) => node.attributes.get('href') === orca.source_url));
+    assert.ok(descendants(catalog).some((node) => node.attributes.get('href') === kimi.source_url));
+    assert.doesNotMatch(catalog.textContent, /FP8|BF16|NVFP4/);
+    assert.match(catalog.textContent, /License: Not disclosed by provider/);
+    assert.match(catalog.textContent, /Revision: Not disclosed by provider/);
+  });
+
+  test('a disabled catalog cannot launch a model with a stale available flag', async (t) => {
+    const nodes = setup(t, { enabled: false, status: 'paused', models: [{ ...DEFAULT_MODELS[0], availability: 'available' }] });
+    await loadCatalog();
+    assert.equal(reviewLinks(nodes.get('model-api-catalog')).length, 0);
+    assert.match(nodes.get('model-api-status').textContent, /inference is paused/);
   });
 });
 

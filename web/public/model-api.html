@@ -66,12 +66,13 @@ FINISH: Responsive layout, native video controls, captions, reduced motion and v
 <article class="docs wrap model-api-page">
 <header class="page-head page-field">
 
-<h1>Cybersecurity models. Now live.</h1>
+<h1>Cybersecurity model API.</h1>
 <p class="lede">Cybersecurity fine-tunes and lower-refusal variants through one OpenAI-compatible API. One key. Prepaid credit.</p>
 
 <div class="cluster page-head__actions"><a class="btn btn--primary btn--lg" href="/#account/api"><span class="btn__label">Get an API key</span></a><a class="btn btn--secondary btn--lg" href="#models"><span class="btn__label">Browse models</span></a><a class="btn btn--secondary btn--lg" href="/docs/model-api"><span class="btn__label">Setup guide</span></a></div>
 </header>
-<ul class="api-highlights" aria-label="API features"><li>OpenAI-compatible <code>/v1</code></li><li>Prepaid credit or US$2/mo on Operator</li><li>Per-key spending caps</li><li>Zero prompt or response logging</li></ul>
+<ul class="api-highlights" aria-label="API features"><li>OpenAI-compatible <code>/v1</code></li><li>Prepaid credit or US$2/mo on Operator</li><li>Per-key spending caps</li><li>No prompt or response storage in our application</li></ul>
+<p class="help">Requests also pass to the selected hosting provider, whose data policies apply. Read the <a href="/privacy#model-api">provider and data handling details</a>.</p>
 <div class="api-content">
 <section class="docs-section" aria-labelledby="models">
 <div class="catalog-heading"><h2 id="models">Hosted security catalog</h2><p class="help">USD per 1M tokens · minimum per request · switch workload view to estimate run cost</p></div>
@@ -82,7 +83,7 @@ FINISH: Responsive layout, native video controls, captions, reduced motion and v
 <p class="help catalog-footnote">The first request after idle can take several minutes while the model starts. <a href="/docs/model-api#cost">What to expect</a></p>
 </section>
 <section class="docs-section" aria-labelledby="infron-stack">
-<div class="catalog-heading"><h2 id="infron-stack">Infron cybersecurity stack (BYO key)</h2><p class="help">USD per 1M tokens at Infron · runs in the Workbench, Gauntlet, Panel, CLI and MCP</p></div>
+<div class="catalog-heading"><h2 id="infron-stack">Infron cybersecurity stack (BYO key)</h2><p class="help">Infron’s own USD rates per 1M tokens with your Infron key · separate from the prepaid catalog above</p></div>
 <p class="lede catalog-section-lede">Already have an <a href="https://infron.ai/dashboard/apiKeys" target="_blank" rel="noopener noreferrer">Infron API key</a>? All seven models in Infron’s cybersecurity stack are wired directly into Bounty Operator. Open any model in the review workbench with one click, or pass <code>--provider infron</code> in the CLI and MCP server.</p>
 <div class="catalog-grid">
 <section class="catalog-card" aria-label="GLM-5.3 Flash Cybersecurity">
@@ -91,7 +92,7 @@ FINISH: Responsive layout, native video controls, captions, reduced motion and v
 <span class="catalog-mark" aria-hidden="true">Z</span>
 <div class="catalog-card__titles">
 <h3>GLM-5.3 Flash Cybersecurity</h3>
-<p class="catalog-card__sub"><code class="catalog-slug">z-ai/glm-5.3-flash-cybersecurity</code><span class="catalog-meta">Default · fast security triage &amp; tool use</span></p>
+<p class="catalog-card__sub"><code class="catalog-slug">z-ai/glm-5.3-flash-cybersecurity</code><span class="catalog-meta">Fast security triage &amp; tool use</span></p>
 </div>
 </div>
 <div class="catalog-card__badges" aria-label="Model category"><span class="catalog-pill" data-badge="cybersecurity">Cybersecurity</span></div>
@@ -133,8 +134,8 @@ FINISH: Responsive layout, native video controls, captions, reduced motion and v
 <div class="catalog-card__badges" aria-label="Model category"><span class="catalog-pill" data-badge="cybersecurity">Cybersecurity</span></div>
 <div class="catalog-rates catalog-rates--byok">
 <dl class="catalog-rates__pair">
-<div class="catalog-rate"><dt>Input</dt><dd><strong>$1.75</strong></dd></div>
-<div class="catalog-rate"><dt>Output</dt><dd><strong>$17.83</strong></dd></div>
+<div class="catalog-rate"><dt>Input</dt><dd><strong>$1.25–2.00</strong></dd></div>
+<div class="catalog-rate"><dt>Output</dt><dd><strong>$8.00–37.50</strong></dd></div>
 </dl>
 <a class="btn btn--secondary btn--sm" href="/?provider=infron&amp;model=qwen%2Fqwen3.8-27b-cybersecurity#workspace"><span class="btn__label">Use in review</span></a>
 </div>
@@ -213,6 +214,7 @@ FINISH: Responsive layout, native video controls, captions, reduced motion and v
 </div>
 </section>
 </div>
+<p class="help catalog-footnote">Infron rates checked 14 October 2026. Rates vary by the upstream provider used; ranges show the listed routes. Platform fees are separate. Check <a href="https://api.infron.ai/v1/models" target="_blank" rel="noopener noreferrer">Infron’s current model rates</a> and <a href="https://infron.ai/docs/overview/pricing-and-fee-structure" target="_blank" rel="noopener noreferrer">fees</a> before using your own key.</p>
 </section>
 <section class="docs-section" aria-labelledby="pricing">
 <div class="api-start">
@@ -224,7 +226,7 @@ FINISH: Responsive layout, native video controls, captions, reduced motion and v
 </div>
 <section class="closing-band" aria-labelledby="next-step">
 <div class="closing-band__text"><h2 class="closing-band__title" id="next-step">Ready to connect your agent or run a review?</h2><p class="closing-band__lede">Create a prepaid Model API key for /v1/chat/completions, or start a free review with your own provider key.</p></div>
-<div class="closing-band__actions"><div class="cluster"><a class="btn btn--primary btn--lg" href="/#account/api"><span class="btn__label">Get an API key</span></a><a class="btn btn--secondary btn--lg" href="/#workspace"><span class="btn__label">Start a free review</span></a><a class="btn btn--secondary btn--lg" href="/docs/model-api"><span class="btn__label">Setup guide</span></a></div><p class="fine">Zero prompt or response logging. Per-key spending limits.</p></div>
+<div class="closing-band__actions"><div class="cluster"><a class="btn btn--primary btn--lg" href="/#account/api"><span class="btn__label">Get an API key</span></a><a class="btn btn--secondary btn--lg" href="/#workspace"><span class="btn__label">Start a free review</span></a><a class="btn btn--secondary btn--lg" href="/docs/model-api"><span class="btn__label">Setup guide</span></a></div><p class="fine">Our application does not store prompts or responses. The hosting provider’s data policies also apply.</p></div>
 </section>
 </article>
 </main>

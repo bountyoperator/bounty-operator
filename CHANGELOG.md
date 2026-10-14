@@ -1,5 +1,40 @@
 # Changelog
 
+## 0.9.14 — 2026-10-15
+
+Model API and reviews
+
+- Reviews using the Bounty Operator provider now allow time for a cold model
+  to start, keep the review slot reserved during startup, and release it when
+  a request fails or is cancelled. JSON-only callers collect the model stream
+  into a complete answer. Streaming inactivity checks resume after the first
+  response bytes.
+- Model cards show availability for each configured model. Gateway model IDs
+  link to their provider rather than an assumed model repository; unavailable
+  metadata is labelled, and a model-selection guide explains the choices.
+- Manual and automatic API top-ups use the same availability checks as the
+  catalog. Automatic top-ups require an explicit enable flag and stop initiating
+  payments while inference is unavailable.
+- Oversized inputs are rejected before contacting a model host. Confirmed usage
+  is preserved when a response fails, and customer charges cannot exceed the
+  amount reserved for that request.
+- Updated Infron rate references and clarified that our application does not
+  store prompts or responses, while the selected hosting provider's policies
+  also apply.
+
+Operating safeguards
+
+- Added separate supplier budgets and request commitments. Customer API credit
+  alone cannot authorize a model request; each request requires a current
+  supplier allowance before contacting a model host.
+- Interrupted requests retain their supplier allowance until final usage is
+  confirmed. These allowances limit admitted work; they are not vendor bill caps.
+- Added supplier billing reconciliation and a read-only JSON report that keeps
+  actual vendor costs, estimates, customer credit liability and usage revenue
+  separate. Missing payment fees and net profit remain unknown.
+- Rebuilt the MCP download and checksum manifest for this release while
+  retaining the existing versioned downloads.
+
 ## 0.9.13 — 2026-10-14
 
 Model API and review providers

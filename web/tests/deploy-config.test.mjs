@@ -69,7 +69,9 @@ test('the public template names no account, no route and no live database', () =
     AI_REVIEW_ENABLED: 'true',
     INFERENCE_ENABLED: 'false',
     API_TOPUPS_ENABLED: 'false',
+    API_AUTOTOPUPS_ENABLED: 'false',
     INFERENCE_MODELS: '[]',
+    SUPPLIER_COST_RULES: '[]',
   });
 
   // No identifier of a live resource in any form: a 32-hex account id, a

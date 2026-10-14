@@ -5,6 +5,7 @@ import { seconds } from './env.ts';
 import type { Call, Env } from './env.ts';
 import type { Session } from './auth.ts';
 import { ApiError, json, readJson } from './http.ts';
+import { quoteSupplierCommitment, supplierReservationStatement, supplierSettlementStatements, reapSupplierCommitmentsStatement } from './supplier-costs.ts';
 
 export const MICRO_USD = 1_000_000;
 export const TOPUP_USD = [20, 50, 100] as const;
@@ -72,42 +73,51 @@ export async function authenticateInference({ env, request }: Call): Promise<Inf
   return key;
 }
 
-export async function reserveInference(env: Env, key: InferenceKey, model: MeteredModel, maxOutput: number, idempotency: string | null): Promise<string> {
+export async function reserveInference(env: Env, key: InferenceKey, model: MeteredModel & { endpoint?: string; upstreamModel?: string }, maxOutput: number, idempotency: string | null): Promise<string> {
   const id = `chatcmpl-${crypto.randomUUID()}`;
   const now = seconds();
   // The tokenizer is hosted with the model. Holding the context's worst-case
   // input cost before calling it prevents unmetered GPU work and overdrafts.
   const hold = Math.max(model.minimumMicro, model.context * model.inputRate + maxOutput * model.outputRate);
   const hash = idempotency ? await sha256(`${key.id}:${idempotency}`) : null;
+  const supplier = quoteSupplierCommitment(env, model, maxOutput, now);
   try {
-    await env.DB.prepare(`INSERT INTO inference_requests(id, account_id, key_id, model, idempotency_hash, hold_micro, input_rate, output_rate, minimum_micro, created_at, lease_until)
+    const request = env.DB.prepare(`INSERT INTO inference_requests(id, account_id, key_id, model, idempotency_hash, hold_micro, input_rate, output_rate, minimum_micro, created_at, lease_until)
       VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
-      .bind(id, key.account_id, key.id, model.id, hash, hold, model.inputRate, model.outputRate, model.minimumMicro, now, now + 1200).run();
+      .bind(id, key.account_id, key.id, model.id, hash, hold, model.inputRate, model.outputRate, model.minimumMicro, now, now + 1200);
+    await env.DB.batch([request, supplierReservationStatement(env, id, supplier, now)]);
   } catch (error) {
     const message = error instanceof Error ? `${error.message} ${error.cause instanceof Error ? error.cause.message : ''}` : '';
     if (message.includes('api_insufficient_credit')) throw new ApiError('Add API credit to cover this request. Any unused reservation is released.', 402, 'insufficient_quota');
     if (message.includes('api_key_budget')) throw new ApiError('This request exceeds the API key’s remaining limit, or the key has been revoked.', 402, 'key_budget_exceeded');
     if (message.includes('api_concurrency')) throw new ApiError('Two requests are already running on this account.', 429, 'concurrency_limit', { retryAfter: 10 });
     if (message.includes('api_capacity')) throw new ApiError('The model is at capacity. Try again shortly.', 429, 'capacity_limit', { retryAfter: 10 });
+    if (message.includes('supplier_budget_exhausted')) throw new ApiError('This model is temporarily at capacity. No charge was made.', 503, 'supplier_budget_exhausted', { retryAfter: 60 });
+    if (message.includes('supplier_unavailable')) throw new ApiError('This model is temporarily unavailable. No charge was made.', 503, 'supplier_unavailable', { retryAfter: 60 });
     if (hash && message.includes('UNIQUE')) throw new ApiError('This idempotency key has already been used. Responses are not stored for replay.', 409, 'idempotency_conflict');
     throw error;
   }
   return id;
 }
 
-export async function settleInference(env: Env, id: string, status: 'completed' | 'failed' | 'cancelled', tokens: { input: number; output: number } | null, failureCode: string | null = null): Promise<void> {
+export async function settleInference(env: Env, id: string, status: 'completed' | 'failed' | 'cancelled', tokens: { input: number; output: number } | null, failureCode: string | null = null, terminalUsage = false): Promise<void> {
   const input = tokens?.input ?? 0;
   const output = tokens?.output ?? 0;
   if (![input, output].every((n) => Number.isSafeInteger(n) && n >= 0)) throw new Error('Invalid usage counters');
-  await env.DB.prepare(`UPDATE inference_requests SET status = ?, input_tokens = ?, output_tokens = ?,
-    charge_micro = CASE WHEN ? THEN MAX(minimum_micro, ? * input_rate + ? * output_rate) ELSE 0 END,
-    finished_at = ?, failure_code = ? WHERE id = ? AND status = 'running'`)
-    .bind(status, input, output, tokens ? 1 : 0, input, output, seconds(), failureCode, id).run();
+  const now = seconds();
+  const supplier = await supplierSettlementStatements(env, id, tokens, now, status === 'completed' && terminalUsage);
+  const request = env.DB.prepare(`UPDATE inference_requests SET status = ?, input_tokens = ?, output_tokens = ?,
+    charge_micro = CASE WHEN ? THEN MIN(hold_micro, MAX(minimum_micro, ? * input_rate + ? * output_rate)) ELSE 0 END,
+    finished_at = ?, failure_code = CASE WHEN ? AND MAX(minimum_micro, ? * input_rate + ? * output_rate) > hold_micro
+      THEN 'usage_limit_exceeded' ELSE ? END WHERE id = ? AND status = 'running'`)
+    .bind(status, input, output, tokens ? 1 : 0, input, output, now, tokens ? 1 : 0, input, output, failureCode, id);
+  await env.DB.batch([request, ...supplier]);
 }
 
 export async function reapInferenceHolds(env: Env, now: number): Promise<number> {
-  const result = await env.DB.prepare("UPDATE inference_requests SET status = 'failed', finished_at = ?, failure_code = 'interrupted' WHERE status = 'running' AND lease_until < ?").bind(now, now).run();
-  return result.meta.changes;
+  const results = await env.DB.batch([reapSupplierCommitmentsStatement(env, now),
+    env.DB.prepare("UPDATE inference_requests SET status = 'failed', finished_at = ?, failure_code = 'interrupted' WHERE status = 'running' AND lease_until < ?").bind(now, now)]);
+  return results[1].meta.changes;
 }
 
 export async function hasApiLiability(env: Env, accountId: string): Promise<boolean> {

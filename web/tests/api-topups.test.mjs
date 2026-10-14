@@ -11,7 +11,9 @@ import {
 import { syncMonthlyCredit, syncMonthlyCreditForCharge } from '../src/api-monthly-credit.ts';
 import { applyApiPaymentEvent, createApiTopup, localStripeTest, reconcileApiTopup, resyncPendingTopups, syncApiTopup } from '../src/api-topups.ts';
 import { subscriptionSummary } from '../src/billing.ts';
+import { clearHostingState, inferencePaused } from '../src/inference.ts';
 import { addAccount, createEnv } from './worker-helpers.mjs';
+import { enableSupplierFixture } from './supplier-fixtures.mjs';
 
 function setup() {
   const env = createEnv();
@@ -337,7 +339,10 @@ test('monthly credit dispute suspends credit, blocks account deletion, and resto
 // Optional automatic top-ups
 // ---------------------------------------------------------------------------
 
-function setupAuto() {
+const automaticModel = { id: 'auto-test', name: 'Automatic billing test', source: 'test/model', revision: 'abc', license: 'MIT', quantization: 'FP8', endpoint: 'https://api.infron.ai', upstreamModel: 'test/model', inputRate: 2, outputRate: 8, minimumMicro: 10000, context: 32768, maxOutput: 8192 };
+
+function setupAuto(overrides = {}) {
+  clearHostingState();
   const env = createEnv({
     BILLING_MODE: 'live',
     STRIPE_SECRET_KEY: 'rk_live_fixture',
@@ -345,7 +350,12 @@ function setupAuto() {
     STRIPE_PRICE_ID: 'price_monthly',
     INFERENCE_ENABLED: 'true',
     API_TOPUPS_ENABLED: 'true',
+    API_AUTOTOPUPS_ENABLED: 'true',
+    INFRON_API_KEY: 'fixture-direct-key',
+    INFERENCE_MODELS: JSON.stringify([automaticModel]),
+    ...overrides,
   });
+  enableSupplierFixture(env);
   const account = addAccount(env.DB);
   env.DB.sqlite.prepare('UPDATE accounts SET stripe_customer = ? WHERE id = ?').run('cus_1', account);
 
@@ -439,7 +449,7 @@ function setupAuto() {
   return { env, account, api, method, setupIntent, checkoutSession, intents, charges, balance, getSetupMeta: () => setupMeta };
 }
 
-test('automatic top-ups require verified setup, obey monthly caps, credit only on signed webhook, and stop when disabled', async () => {
+test('automatic top-ups require verified setup, obey monthly caps, and stop when disabled', async () => {
   const a = setupAuto();
   assert.equal((await autoTopupData(a.env, a.account)).status, 'off');
 
@@ -468,7 +478,7 @@ test('automatic top-ups require verified setup, obey monthly caps, credit only o
   const baseNow = Math.floor(Date.now() / 1000) + 5;
   await processAutoTopups(a.env, a.api, baseNow);
   assert.equal(a.intents.size, 1);
-  // Credit is NOT unlocked before the signed payment_intent.succeeded webhook.
+  // The create response does not unlock credit; a webhook or reconciliation verifies it.
   assert.equal(a.balance(), 0);
 
   const pi = [...a.intents.values()][0];
@@ -497,6 +507,104 @@ test('automatic top-ups require verified setup, obey monthly caps, credit only o
   const paused = await autoTopupData(a.env, a.account);
   assert.equal(paused.enabled, false);
   assert.equal(paused.pause_reason, 'payment_failed');
+});
+
+const autoSettings = { amount_usd: 20, threshold_usd: 5, monthly_cap_usd: 20, consent: true, request_id: 'req-auto-setup-0002' };
+
+async function enableAutomatic(a) {
+  await createAutoTopupSetup(a.env, a.api, a.account, 'cus_1', autoSettings);
+  await applyAutoTopupSetupEvent(a.env, a.api, { type: 'checkout.session.completed', created: 100, data: { object: a.checkoutSession } });
+}
+
+function useRunpod(a) {
+  a.env.INFRON_API_KEY = undefined;
+  a.env.RUNPOD_API_KEY = 'fixture-runpod-key';
+  a.env.INFERENCE_MODELS = JSON.stringify([{ ...automaticModel, endpoint: 'https://autotest.api.runpod.ai' }]);
+  clearHostingState();
+}
+
+test('automatic purchases fail closed without explicit enablement or a usable model service', async (t) => {
+  const outbound = t.mock.method(globalThis, 'fetch', async () => { throw new Error('No external request is expected'); });
+  for (const overrides of [
+    { API_AUTOTOPUPS_ENABLED: undefined },
+    { API_AUTOTOPUPS_ENABLED: 'false' },
+    { INFERENCE_ENABLED: 'false' },
+    { INFRON_API_KEY: undefined },
+    { INFERENCE_MODELS: '[]' },
+  ]) {
+    const a = setupAuto(overrides);
+    assert.equal((await autoTopupData(a.env, a.account)).available, false);
+    await assert.rejects(createAutoTopupSetup(a.env, a.api, a.account, 'cus_1', autoSettings), { code: 'topups_unavailable' });
+    await assert.rejects(updateAutoTopup(a.env, a.api, a.account, autoSettings), { code: 'topups_unavailable' });
+    await processAutoTopups(a.env, a.api);
+    assert.equal(a.env.DB.sqlite.prepare('SELECT COUNT(*) AS n FROM api_autotopup_setups').get().n, 0);
+    assert.equal(a.intents.size, 0);
+  }
+  assert.equal(outbound.mock.callCount(), 0);
+});
+
+test('automatic purchases stay closed without supplier pricing or funded allowance', async () => {
+  for (const missing of ['pricing', 'allowance']) {
+    const a = setupAuto();
+    if (missing === 'pricing') delete a.env.SUPPLIER_COST_RULES;
+    else a.env.DB.sqlite.prepare('UPDATE supplier_budget_windows SET limit_micro = 0').run();
+    assert.equal((await autoTopupData(a.env, a.account)).available, false);
+    await assert.rejects(createAutoTopupSetup(a.env, a.api, a.account, 'cus_1', autoSettings), { code: 'topups_unavailable' });
+    await processAutoTopups(a.env, a.api);
+    assert.equal(a.intents.size, 0);
+  }
+});
+
+test('paused hosting blocks automatic setup, updates and both new and reserved payments; disable still works', async (t) => {
+  const a = setupAuto();
+  await enableAutomatic(a);
+  useRunpod(a);
+  t.mock.method(globalThis, 'fetch', async () => Response.json({ data: { myself: { underBalance: true } } }));
+  assert.equal((await autoTopupData(a.env, a.account)).available, false);
+  await assert.rejects(createAutoTopupSetup(a.env, a.api, a.account, 'cus_1', { ...autoSettings, request_id: 'req-auto-paused-0001' }), { code: 'topups_unavailable' });
+  await assert.rejects(updateAutoTopup(a.env, a.api, a.account, autoSettings), { code: 'topups_unavailable' });
+  const now = Math.floor(Date.now() / 1000) + 5;
+  await processAutoTopups(a.env, a.api, now);
+  assert.equal(a.env.DB.sqlite.prepare('SELECT COUNT(*) AS n FROM api_topups').get().n, 0);
+
+  // A Worker may stop after reserving a top-up and before sending it to Stripe.
+  a.env.DB.sqlite.prepare(`INSERT INTO api_topups(id, account_id, customer_id, amount_micro, source, auto_month, auto_revision, payment_method, created_at, updated_at)
+    SELECT 'pending-before-pause', account_id, customer_id, amount_micro, 'automatic', ?, revision, payment_method, ?, ? FROM api_autotopup_settings`)
+    .run(new Date(now * 1000).toISOString().slice(0, 7), now - 120, now - 120);
+  await processAutoTopups(a.env, a.api, now);
+  assert.equal(a.intents.size, 0);
+  assert.deepEqual({ ...a.env.DB.sqlite.prepare('SELECT status, initiated_at FROM api_topups').get() }, { status: 'pending', initiated_at: 0 });
+  await disableAutoTopup(a.env, a.account);
+  assert.equal((await autoTopupData(a.env, a.account)).enabled, false);
+  assert.equal(a.env.DB.sqlite.prepare('SELECT status FROM api_topups').get().status, 'failed');
+});
+
+test('payments already sent reconcile while hosting is paused or automatic top-ups are disabled', async (t) => {
+  t.mock.method(globalThis, 'fetch', async () => Response.json({ data: { myself: { underBalance: true } } }));
+  for (const stop of ['hosting', 'configuration']) {
+    const a = setupAuto();
+    await enableAutomatic(a);
+    const now = Math.floor(Date.now() / 1000) + 5;
+    await processAutoTopups(a.env, a.api, now);
+    assert.equal(a.intents.size, 1);
+    assert.equal(a.balance(), 0);
+    if (stop === 'hosting') useRunpod(a);
+    else a.env.API_AUTOTOPUPS_ENABLED = 'false';
+    await processAutoTopups(a.env, a.api, now + 120);
+    assert.equal(a.balance(), 20000000);
+    assert.equal(a.env.DB.sqlite.prepare('SELECT status FROM api_topups').get().status, 'paid');
+    assert.equal(a.intents.size, 1);
+  }
+});
+
+test('a usable direct provider keeps automatic top-ups available when Runpod is paused', async (t) => {
+  const a = setupAuto({ RUNPOD_API_KEY: 'fixture-runpod-key' });
+  t.mock.method(globalThis, 'fetch', async () => Response.json({ data: { myself: { underBalance: true } } }));
+  assert.equal(await inferencePaused(a.env), true);
+  assert.equal((await autoTopupData(a.env, a.account)).available, true);
+  await enableAutomatic(a);
+  await processAutoTopups(a.env, a.api, Math.floor(Date.now() / 1000) + 5);
+  assert.equal(a.intents.size, 1);
 });
 
 test('subscriptionSummary preserves legacy weekly terms separately from monthly subscriptions', async () => {

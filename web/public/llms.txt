@@ -52,6 +52,7 @@ A hosted review sends the user's files and provider key through bountyoperator.c
 ## Guides
 
 - [Model API setup guide](https://bountyoperator.com/docs/model-api): Connect agents and chat tools, discover models, send requests and understand prepaid billing.
+- [Choose a model](https://bountyoperator.com/docs/model-selection): Compare workflow needs, capabilities, cost, availability, data handling and evaluation evidence.
 
 - [Report guide](https://bountyoperator.com/guide): How to write a bug bounty report that survives triage, with a worked example rewritten fragment by fragment.
 - [MCP server](https://bountyoperator.com/mcp): Install commands for Claude Code, Codex and Cursor, the tools, the three prompts and token setup.

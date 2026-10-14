@@ -780,7 +780,8 @@ export async function handleMcpMessage(message: unknown, host: McpHost): Promise
  * `onProgress` is set when the reply is a stream. The review then reads the
  * provider as a stream too and may run past the single-answer limit, because
  * the client hears from the server every few seconds. A JSON-only caller keeps
- * the single-answer limit, which ends inside the timeouts such clients use.
+ * the single-answer limit for other providers; Bounty Operator requests still
+ * use a collected provider stream so cold starts retain their full allowance.
  */
 function hostFor(call: Call, onProgress?: (chars: number) => void, knownAccount?: string): McpHost {
   const { env, request } = call;
