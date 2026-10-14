@@ -630,7 +630,7 @@ describe('deep links', () => {
   });
 
   test('model catalog workload estimator and quickstart snippets respect per-request minimums and reasoning parameters', () => {
-    assert.equal(DEFAULT_MODELS.length, 22);
+    assert.equal(DEFAULT_MODELS.length, 24);
     const qwen = DEFAULT_MODELS.find((m) => m.id === 'cyber-qwen-27b-awq');
     const est = estimateRunCost(qwen.pricing, 24000, 4000);
     assert.equal(Number(est.cost.toFixed(4)), 0.216);
