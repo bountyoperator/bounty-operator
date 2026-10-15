@@ -13,7 +13,11 @@
 //   3. scripts/leak-audit.mjs: no text of the hosted method is in a file git
 //      would publish, under web/public or in the MCP download.
 //   4. scripts/build-site.mjs --check: the pages in web/public match their sources.
-//   5. wrangler deploy --config wrangler.production.jsonc
+//   5. wrangler d1 migrations list DB --remote: the production database has every
+//      migration in web/migrations. A Worker deployed ahead of its schema fails
+//      every credit until the migration is applied. --dry-run skips this step,
+//      since it reads nothing remote.
+//   6. wrangler deploy --config wrangler.production.jsonc
 //
 // web/wrangler.jsonc is the public template. Its Worker has another name, so
 // `wrangler deploy` run by hand in web/ cannot replace the production Worker.
@@ -48,6 +52,25 @@ export function configRefusal(config = PRODUCTION_CONFIG, exists = existsSync) {
   return `Refusing to deploy: web/${config} does not exist. It holds the production account, routes and ids and is not in the repository.`;
 }
 
+// What Wrangler prints when the database has every migration. Any other
+// output, pending migrations and a failed read alike, stops the deploy.
+const MIGRATIONS_APPLIED = /No migrations to apply!/;
+
+/**
+ * Why the deploy must stop after the migration check, as one line, or null
+ * when Wrangler reported that every migration is applied.
+ *
+ * @param {number | null} status  Wrangler's exit status.
+ * @param {string} output  What it printed.
+ * @returns {string | null}
+ */
+export function migrationRefusal(status, output) {
+  if (status === 0 && MIGRATIONS_APPLIED.test(output)) return null;
+  return status === 0
+    ? 'Stopped: the production database has migrations that are not applied. Apply them first: npx wrangler d1 migrations apply DB --remote --config wrangler.production.jsonc, run in web/. Nothing was deployed.'
+    : 'Stopped: the production database migrations could not be listed. Nothing was deployed.';
+}
+
 /** Wrangler's own entry script, so it runs under this Node without a shell. */
 function wranglerEntry() {
   const require = createRequire(join(WEB_DIR, 'package.json'));
@@ -70,8 +93,44 @@ export function deploySteps({ config = PRODUCTION_CONFIG, dryRun = false, outDir
     { name: 'hosted profiles', args: [join(ROOT, 'scripts', 'select-profiles.mjs'), '--require-private'], cwd: ROOT },
     { name: 'leak audit', args: [join(ROOT, 'scripts', 'leak-audit.mjs')], cwd: ROOT },
     { name: 'page check', args: [join(ROOT, 'scripts', 'build-site.mjs'), '--check'], cwd: ROOT },
+    // Lists what web/migrations holds and the database does not, and applies nothing. Its output decides.
+    ...(dryRun ? [] : [{ name: 'database migrations', args: [wrangler, 'd1', 'migrations', 'list', 'DB', '--remote', '--config', config], cwd: WEB_DIR, checkOutput: migrationRefusal }]),
     { name: dryRun ? 'production bundle (nothing is deployed)' : 'deploy', args: deploy, cwd: WEB_DIR },
   ];
+}
+
+/**
+ * Runs the steps in order under this Node and returns the exit status. A step
+ * with `checkOutput` is read as well as shown, because its output decides; any
+ * other step is judged by its status. Nothing after a stop is run.
+ *
+ * @param {ReturnType<typeof deploySteps>} steps
+ * @param {{ dryRun?: boolean, run?: typeof spawnSync }} [options]  `run` is the spawn, so a test can stand in for Wrangler.
+ * @returns {number}
+ */
+export function runSteps(steps, { dryRun = false, run = spawnSync } = {}) {
+  for (const [index, step] of steps.entries()) {
+    console.log(`\n[${index + 1}/${steps.length}] ${step.name}`);
+    if (step.checkOutput) {
+      const listed = run(process.execPath, step.args, { cwd: step.cwd, stdio: ['inherit', 'pipe', 'inherit'], encoding: 'utf8' });
+      process.stdout.write(listed.stdout ?? '');
+      const refusal = step.checkOutput(listed.status, listed.stdout ?? '');
+      if (!refusal) continue;
+      console.error(refusal);
+      return 1;
+    }
+    const result = run(process.execPath, step.args, { cwd: step.cwd, stdio: 'inherit' });
+    if (result.status !== 0) {
+      const deploying = index === steps.length - 1 && !dryRun;
+      console.error(
+        deploying
+          ? 'Wrangler stopped with an error. Check what is live: npm run verify:live -- --base-url https://bountyoperator.com'
+          : `Stopped at "${step.name}". Nothing was deployed.`,
+      );
+      return result.status ?? 1;
+    }
+  }
+  return 0;
 }
 
 /**
@@ -121,19 +180,10 @@ function main(argv) {
 
   const outDir = options.dryRun ? mkdtempSync(join(tmpdir(), 'bounty-operator-deploy-')) : '';
   const steps = deploySteps({ ...options, outDir, wrangler: wranglerEntry() });
-  for (const [index, step] of steps.entries()) {
-    console.log(`\n[${index + 1}/${steps.length}] ${step.name}`);
-    const result = spawnSync(process.execPath, step.args, { cwd: step.cwd, stdio: 'inherit' });
-    if (result.status !== 0) {
-      const deploying = index === steps.length - 1 && !options.dryRun;
-      console.error(
-        deploying
-          ? 'Wrangler stopped with an error. Check what is live: npm run verify:live -- --base-url https://bountyoperator.com'
-          : `Stopped at "${step.name}". Nothing was deployed.`,
-      );
-      if (outDir) rmSync(outDir, { recursive: true, force: true });
-      return result.status ?? 1;
-    }
+  const stopped = runSteps(steps, { dryRun: options.dryRun });
+  if (stopped !== 0) {
+    if (outDir) rmSync(outDir, { recursive: true, force: true });
+    return stopped;
   }
   if (options.dryRun) {
     // The bundle holds the hosted method: it is built to prove that it builds, then removed.

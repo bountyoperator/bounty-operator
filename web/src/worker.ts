@@ -50,8 +50,8 @@ import { serveAsset } from './static.ts';
 import { autoTopupAvailable, autoTopupData, createAutoTopupSetup, disableAutoTopup, processAutoTopups, updateAutoTopup } from './api-autotopup.ts';
 import { apiCreditData, createInferenceKey, reapInferenceHolds, revokeInferenceKey } from './api-credits.ts';
 import { createApiTopup, reconcileApiTopup, resyncPendingTopups } from './api-topups.ts';
-import { inferenceCatalog, inferenceEndpoint, inferenceModels, inferenceStatus } from './inference.ts';
-import { reconcileRunpodBilling } from './supplier-costs.ts';
+import { inferenceCatalog, inferenceEndpoint, inferenceModels, inferenceStatus, manualTopupsOpen } from './inference.ts';
+import { reconcileRunpodBilling, supplierBudgetProviders, supplierBudgetShare, supplierBudgetShareProblem, supplierShareShortfalls, sweepSupplierBudgets } from './supplier-costs.ts';
 
 const AUTH_REQUESTS_PER_HOUR = 90;
 const BILLING_REQUESTS_PER_10_MIN = 6;
@@ -139,6 +139,7 @@ async function health({ env }: Call): Promise<Response> {
       env.DB.prepare('SELECT credited_micro FROM api_monthly_grants LIMIT 1'),
       env.DB.prepare('SELECT limit_micro FROM supplier_budget_windows LIMIT 1'),
       env.DB.prepare('SELECT total_micro FROM supplier_billing_buckets LIMIT 1'),
+      env.DB.prepare('SELECT amount_micro FROM supplier_budget_adjustments LIMIT 1'),
     ]);
     return json(body);
   } catch {
@@ -219,7 +220,8 @@ const billingPortal = billingRoute('billing', BILLING_REQUESTS_PER_10_MIN, async
 const apiTopup = billingRoute('api-topup', BILLING_REQUESTS_PER_10_MIN, async ({ env, request }, session) => {
   if (env.API_TOPUPS_ENABLED !== 'true') throw new ApiError('API top-ups are not open right now.', 503, 'topups_unavailable');
   const status = await inferenceStatus(env);
-  if (status !== 'available') throw new ApiError(status === 'paused' ? 'API top-ups are closed while model inference is paused.' : 'API top-ups are not open right now.', 503, 'topups_unavailable');
+  // Open while inference is available, and while only a payment-refilled supplier budget is short.
+  if (!(await manualTopupsOpen(env, status))) throw new ApiError(status === 'paused' ? 'API top-ups are closed while model inference is paused.' : 'API top-ups are not open right now.', 503, 'topups_unavailable');
   const body = await readJson(request, 1000);
   const api = stripeClient(env);
   const customer = await customerFor(env, api, session.account_id);
@@ -284,7 +286,8 @@ const ROUTES: Readonly<Record<string, Readonly<Record<string, Handler>>>> = {
   '/api/profiles': { GET: profiles },
   '/api/inference/catalog': { GET: async ({ env }) => {
     const status = await inferenceStatus(env);
-    return json({ enabled: status === 'available', status, topups_enabled: status === 'available' && env.API_TOPUPS_ENABLED === 'true' && apiBillingReady(env), models: await inferenceCatalog(env) });
+    const topups = env.API_TOPUPS_ENABLED === 'true' && apiBillingReady(env) && await manualTopupsOpen(env, status);
+    return json({ enabled: status === 'available', status, topups_enabled: topups, models: await inferenceCatalog(env) });
   } },
   '/api/account': { GET: accountStatus },
   '/api/portal': { GET: signedInRead(portal) },
@@ -394,6 +397,9 @@ async function purgeExpired(env: Env, now: number): Promise<Record<string, numbe
   return Object.fromEntries(names.map((name, index) => [name, results[index].meta.changes]));
 }
 
+// The SUPPLIER_BUDGET_SHARE value already warned about in this isolate.
+let shareWarned: string | undefined;
+
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
@@ -413,6 +419,22 @@ export default {
     // Stripe the subscriptions whose paid period is ending. The daily run also purges expired rows.
     const reapedLeases = await reapStaleLeases(env.DB, now);
     const reapedInference = await reapInferenceHolds(env, now);
+    // After the reaper has released expired holds: customer-funded allowance
+    // left in an ended budget window moves into a current one.
+    const models = inferenceModels(env);
+    const supplierBudgetsSwept = await sweepSupplierBudgets(env, supplierBudgetProviders(env, models, now), now).catch((error: unknown) => {
+      console.error('Supplier budget sweep failed', { name: error instanceof Error ? error.name : 'unknown' });
+      return 0;
+    });
+    // The share in force, and the models whose sales fund less allowance than
+    // they use at that share: their budget drains while customers hold credit.
+    const supplierBudgetSharePpm = supplierBudgetShare(env);
+    const shareProblem = supplierBudgetShareProblem(env);
+    if (shareProblem && shareWarned !== env.SUPPLIER_BUDGET_SHARE) {
+      shareWarned = env.SUPPLIER_BUDGET_SHARE;
+      console.warn('SUPPLIER_BUDGET_SHARE is not a decimal from 0 to 1', { problem: shareProblem, sharePpm: supplierBudgetSharePpm });
+    }
+    const supplierShareShortfall = supplierShareShortfalls(env, models, now);
     const topupsResynced = apiBillingReady(env)
       ? (await resyncPendingTopups(env, stripeClient(env)).catch(() => 0)) + (await processAutoTopups(env, stripeClient(env), now).catch(() => 0))
       : 0;
@@ -422,6 +444,7 @@ export default {
     });
     const purged = controller.cron === DAILY_CRON ? await purgeExpired(env, now) : {};
     const supplierBilling = controller.cron === DAILY_CRON ? await reconcileSupplierBilling(env, now) : null;
-    console.log('Scheduled cleanup', { cron: controller.cron, reapedLeases, reapedInference, topupsResynced, resynced, ...purged, ...(supplierBilling ? { supplierBilling } : {}) });
+    console.log('Scheduled cleanup', { cron: controller.cron, reapedLeases, reapedInference, supplierBudgetsSwept, supplierBudgetSharePpm,
+      ...(supplierShareShortfall.length ? { supplierShareShortfall } : {}), topupsResynced, resynced, ...purged, ...(supplierBilling ? { supplierBilling } : {}) });
   },
 } satisfies ExportedHandler<Env>;

@@ -13,7 +13,7 @@ import { currentProfileId } from './hosted.ts';
 import { ApiError, json } from './http.ts';
 import { usage } from './quota.mjs';
 import { apiCreditData, hasApiLiability } from './api-credits.ts';
-import { inferenceCatalog, inferenceStatus } from './inference.ts';
+import { inferenceCatalog, inferenceStatus, manualTopupsOpen } from './inference.ts';
 
 const HISTORY_ROWS = 30;
 
@@ -75,6 +75,7 @@ export async function portalData(env: Env, accountId: string): Promise<Record<st
     inferenceStatus(env),
     inferenceCatalog(env),
   ]);
+  const topups = env.API_TOPUPS_ENABLED === 'true' && apiBillingReady(env) && await manualTopupsOpen(env, apiStatus);
   return {
     account: { ...account, hasSubscription },
     subscription,
@@ -84,7 +85,7 @@ export async function portalData(env: Env, accountId: string): Promise<Record<st
     reviews: reviews.results.map((row) => (typeof row.profile === 'string' ? { ...row, profile: currentProfileId(row.profile) } : row)),
     usage: currentUsage,
     profiles: PROFILES.map((profile) => ({ id: profile.id, name: profile.name })),
-    api: { ...apiData, enabled: apiStatus === 'available', status: apiStatus, topups_enabled: apiStatus === 'available' && env.API_TOPUPS_ENABLED === 'true' && apiBillingReady(env), models },
+    api: { ...apiData, enabled: apiStatus === 'available', status: apiStatus, topups_enabled: topups, models },
   };
 }
 

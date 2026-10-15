@@ -14,7 +14,7 @@ import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 
-import { PRODUCTION_CONFIG, TEMPLATE_CONFIG, configRefusal, deploySteps, pagesOf } from '../../scripts/deploy.mjs';
+import { PRODUCTION_CONFIG, TEMPLATE_CONFIG, configRefusal, deploySteps, migrationRefusal, pagesOf, runSteps } from '../../scripts/deploy.mjs';
 
 const WEB_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const REPO_DIR = path.resolve(WEB_DIR, '..');
@@ -72,6 +72,7 @@ test('the public template names no account, no route and no live database', () =
     API_AUTOTOPUPS_ENABLED: 'false',
     INFERENCE_MODELS: '[]',
     SUPPLIER_COST_RULES: '[]',
+    SUPPLIER_BUDGET_SHARE: '0.9',
   });
 
   // No identifier of a live resource in any form: a 32-hex account id, a
@@ -123,16 +124,73 @@ test('npm run deploy goes through the gates, in order, and deploys from the prod
 
   const relative = (step) => step.args.map((arg) => path.relative(REPO_DIR, arg).split(path.sep).join('/') || arg);
   const steps = deploySteps();
-  assert.deepEqual(steps.map((step) => step.name), ['hosted profiles', 'leak audit', 'page check', 'deploy']);
+  assert.deepEqual(steps.map((step) => step.name), ['hosted profiles', 'leak audit', 'page check', 'database migrations', 'deploy']);
   assert.deepEqual(relative(steps[0]).slice(0, 1).concat(steps[0].args.slice(1)), ['scripts/select-profiles.mjs', '--require-private']);
   assert.deepEqual(relative(steps[1]), ['scripts/leak-audit.mjs']);
   assert.deepEqual(relative(steps[2]).slice(0, 1).concat(steps[2].args.slice(1)), ['scripts/build-site.mjs', '--check']);
-  assert.deepEqual(steps[3].args, ['wrangler', 'deploy', '--config', 'wrangler.production.jsonc']);
+  // A read-only list of the production database's pending migrations, judged by its output.
+  assert.deepEqual(steps[3].args, ['wrangler', 'd1', 'migrations', 'list', 'DB', '--remote', '--config', 'wrangler.production.jsonc']);
   assert.equal(path.relative(REPO_DIR, steps[3].cwd), 'web');
+  assert.equal(steps[3].checkOutput, migrationRefusal);
+  assert.deepEqual(steps[4].args, ['wrangler', 'deploy', '--config', 'wrangler.production.jsonc']);
+  assert.equal(path.relative(REPO_DIR, steps[4].cwd), 'web');
 
+  // A dry run reads nothing remote, so it has no migration step.
   const dry = deploySteps({ dryRun: true, outDir: 'out' });
   assert.deepEqual(dry[3].args, ['wrangler', 'deploy', '--config', 'wrangler.production.jsonc', '--dry-run', '--outdir', 'out']);
   assert.equal(dry.length, 4);
+});
+
+test('the deploy stops unless Wrangler reports every production migration applied', () => {
+  // Wrangler 4 prints this line when nothing is pending, and a table after
+  // "Migrations to be applied:" otherwise; both exit 0.
+  assert.equal(migrationRefusal(0, '\u2705 No migrations to apply!\n'), null);
+  assert.equal(migrationRefusal(0, '\n \u26c5\ufe0f wrangler 4.151.0\n\u2705 No migrations to apply!\n'), null);
+  const pending = migrationRefusal(0, 'Migrations to be applied:\n\u250c\u2500\u2510\n\u2502 Name \u2502\n\u2502 0007_supplier_budget_from_credit.sql \u2502\n');
+  assert.match(pending, /migrations that are not applied/);
+  assert.match(pending, /wrangler d1 migrations apply DB --remote --config wrangler\.production\.jsonc/);
+  assert.match(pending, /Nothing was deployed/);
+  // A failed read, or output it does not recognize, stops it too.
+  assert.match(migrationRefusal(1, 'No migrations to apply!'), /could not be listed/);
+  assert.match(migrationRefusal(null, ''), /could not be listed/);
+  assert.match(migrationRefusal(0, ''), /not applied/);
+  for (const output of ['', 'x']) assert.equal(migrationRefusal(0, output).split('\n').length, 1);
+});
+
+test('the run reads the migration step’s output and never reaches Wrangler deploy while one is pending', (t) => {
+  t.mock.method(console, 'log', () => {});
+  const errors = t.mock.method(console, 'error', () => {});
+  const shown = t.mock.method(process.stdout, 'write', () => true);
+  const steps = deploySteps();
+  const of = (args) => steps.find((step) => step.args === args);
+  // `wrangler d1 migrations list DB --remote` against a database behind the repository.
+  const pending = 'Migrations to be applied:\n│ 0007_supplier_budget_from_credit.sql │\n';
+  const applied = '✅ No migrations to apply!\n';
+  const record = (output, failing) => {
+    const names = [];
+    const status = runSteps(steps, { run: (executable, args, options) => {
+      const step = of(args);
+      assert.equal(executable, process.execPath);
+      assert.equal(options.cwd, step.cwd);
+      names.push(step.name);
+      return step.name === failing ? { status: 2 } : { status: 0, stdout: step.checkOutput ? output : undefined };
+    } });
+    return { status, names };
+  };
+
+  const stopped = record(pending);
+  assert.equal(stopped.status, 1);
+  assert.deepEqual(stopped.names, ['hosted profiles', 'leak audit', 'page check', 'database migrations']);
+  assert.equal(shown.mock.calls.at(-1).arguments[0], pending, 'what Wrangler printed is shown as well as read');
+  assert.match(errors.mock.calls.at(-1).arguments[0], /migrations that are not applied/);
+
+  const deployed = record(applied);
+  assert.deepEqual([deployed.status, deployed.names.at(-1)], [0, 'deploy']);
+
+  // An ordinary gate failure stops with that step's name, before the migration read.
+  const failed = record(applied, 'leak audit');
+  assert.deepEqual([failed.status, failed.names], [2, ['hosted profiles', 'leak audit']]);
+  assert.match(errors.mock.calls.at(-1).arguments[0], /Stopped at "leak audit"\. Nothing was deployed\./);
 });
 
 test('a deploy without the production file is refused with one line, before any gate runs', () => {
@@ -209,5 +267,5 @@ test('after a deploy IndexNow is told of the pages that changed, by their site p
   const source = readFileSync(DEPLOY_SCRIPT, 'utf8');
   assert.ok(source.indexOf("'scripts', 'indexnow.mjs'") > source.indexOf('const steps = deploySteps('));
   assert.match(source, /if \(ping\.status !== 0\) console\.error\('IndexNow did not take the list\. The deploy stands\./);
-  assert.deepEqual(deploySteps().map((step) => step.name), ['hosted profiles', 'leak audit', 'page check', 'deploy'], 'the gates are unchanged');
+  assert.deepEqual(deploySteps().map((step) => step.name), ['hosted profiles', 'leak audit', 'page check', 'database migrations', 'deploy'], 'IndexNow is not a gate');
 });

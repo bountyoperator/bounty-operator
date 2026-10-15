@@ -745,6 +745,14 @@ describe('model catalog availability and provenance', () => {
     assert.equal(reviewLinks(nodes.get('model-api-catalog')).length, 0);
     assert.match(nodes.get('model-api-status').textContent, /inference is paused/);
   });
+
+  test('a catalog at capacity with top-ups still open says so instead of "not open"', async (t) => {
+    const nodes = setup(t, { enabled: false, status: 'unavailable', topups_enabled: true, models: [{ ...DEFAULT_MODELS[0], availability: 'available' }] });
+    await loadCatalog();
+    assert.equal(reviewLinks(nodes.get('model-api-catalog')).length, 0);
+    assert.match(nodes.get('model-api-status').textContent, /^Every model is at capacity right now.*Top-ups stay open/);
+    assert.doesNotMatch(nodes.get('model-api-status').textContent, /Not open for purchases/);
+  });
 });
 
 describe('result analysis', () => {

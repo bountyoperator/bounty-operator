@@ -110,3 +110,93 @@ test('website and account catalogs retain unavailable models with the same indiv
   assert.equal(closed.models.length, 2);
   assert(closed.models.every(({ availability }) => availability === 'unavailable'));
 });
+
+const catalog = async (env) => (await worker.fetch(new Request(`${SITE_ORIGIN}/api/inference/catalog`), env, createContext())).json();
+/** Every window's allowance used up: no room for one more request. */
+const exhaust = (env) => env.DB.sqlite.prepare('UPDATE supplier_budget_windows SET consumed_micro = limit_micro').run();
+
+/** A request that finished moments ago over its usage limit. The wallet and
+ * key only satisfy the reservation triggers; the fault itself is the point. */
+function addUsageFault(env, account) {
+  const at = Math.floor(Date.now() / 1000);
+  env.DB.sqlite.prepare('INSERT INTO api_wallets(account_id, balance_micro) VALUES(?, 1000000)').run(account);
+  env.DB.sqlite.prepare("INSERT INTO inference_keys(id, account_id, token_hash, prefix, label, budget_micro, created_at, expires) VALUES('fault-key', ?, 'fault-hash', 'bo_fault', 'fault', 1000000, ?, ?)")
+    .run(account, at, at + 3600);
+  env.DB.sqlite.prepare(`INSERT INTO inference_requests(id, account_id, key_id, model, status, hold_micro, input_rate, output_rate, minimum_micro, created_at, lease_until, finished_at, failure_code)
+    VALUES('fault-request', ?, 'fault-key', ?, 'completed', 1, 0, 0, 0, ?, ?, ?, 'usage_limit_exceeded')`).run(account, model.id, at, at + 1200, at);
+}
+
+test('manual top-ups stay open while only an exhausted supplier budget blocks inference, since the payment refills it', async (t) => {
+  let underBalance = false;
+  const stripeCalls = [];
+  t.mock.method(globalThis, 'fetch', async (input) => {
+    const url = new URL(typeof input === 'string' ? input : input.url);
+    if (url.host === 'api.runpod.io') return Response.json({ data: { myself: { underBalance } } });
+    assert.equal(url.host, 'api.stripe.com');
+    stripeCalls.push(url.pathname);
+    return Response.json({ id: 'cs_live_fixture', url: 'https://checkout.stripe.com/c/pay/cs_live_fixture', payment_intent: null });
+  });
+  const { env, account, post } = await setup();
+  env.DB.sqlite.prepare('UPDATE accounts SET stripe_customer = ? WHERE id = ?').run('cus_fixture', account);
+  exhaust(env);
+  const shown = await catalog(env);
+  assert.deepEqual([shown.enabled, shown.status, shown.topups_enabled], [false, 'unavailable', true]);
+  const portal = await portalData(env, account);
+  assert.deepEqual([portal.api.enabled, portal.api.status, portal.api.topups_enabled], [false, 'unavailable', true]);
+  const response = await post('/api/inference/topup');
+  assert.equal(response.status, 200);
+  assert.deepEqual(stripeCalls, ['/v1/checkout/sessions']);
+  // Automatic top-ups still need the service available.
+  const automatic = await post('/api/inference/autotopup/setup');
+  assert.equal(automatic.status, 503);
+  assert.equal((await automatic.json()).code, 'topups_unavailable');
+  assert.equal(stripeCalls.length, 1);
+
+  // The window ended with nothing left to carry: the next payment opens one.
+  const now = Math.floor(Date.now() / 1000);
+  env.DB.sqlite.prepare('UPDATE supplier_budget_windows SET starts_at = ?, ends_at = ?').run(now - 2 * 86400, now - 1);
+  assert.equal((await catalog(env)).topups_enabled, true);
+
+  // A RunPod-only service stays open too, unless the hosting account is paused.
+  const runpod = await setup({ INFRON_API_KEY: undefined, RUNPOD_API_KEY: 'fixture-runpod-key', INFERENCE_MODELS: JSON.stringify([{ ...model, endpoint: 'https://billingtest.api.runpod.ai' }]) });
+  exhaust(runpod.env);
+  assert.equal((await catalog(runpod.env)).topups_enabled, true);
+  clearHostingState();
+  underBalance = true;
+  assert.equal((await catalog(runpod.env)).topups_enabled, false);
+});
+
+test('every other reason inference is unavailable keeps manual top-ups closed', async (t) => {
+  const stripeCalls = [];
+  t.mock.method(globalThis, 'fetch', async (input) => {
+    const url = new URL(typeof input === 'string' ? input : input.url);
+    if (url.host === 'api.runpod.io') return Response.json({ data: { myself: { underBalance: true } } });
+    stripeCalls.push(url.toString());
+    throw new Error('A closed purchase route must not contact Stripe');
+  });
+  const runpodOnly = { INFRON_API_KEY: undefined, RUNPOD_API_KEY: 'fixture-runpod-key', INFERENCE_MODELS: JSON.stringify([{ ...model, endpoint: 'https://billingtest.api.runpod.ai' }]) };
+  const cases = [
+    ['a provider that was never funded', {}, (env) => env.DB.sqlite.prepare('DELETE FROM supplier_budget_windows').run()],
+    ['the operator\u2019s pause', {}, (env) => { exhaust(env); env.DB.sqlite.prepare('UPDATE supplier_budget_windows SET enabled = 0').run(); }],
+    ['automatic funding off', { SUPPLIER_BUDGET_SHARE: '0' }, exhaust],
+    ['an unreadable share', { SUPPLIER_BUDGET_SHARE: 'ninety' }, exhaust],
+    ['a share of the smallest top-up too small for one request', { SUPPLIER_BUDGET_SHARE: '0.000001' }, exhaust],
+    ['no cost rule', {}, (env) => { exhaust(env); delete env.SUPPLIER_COST_RULES; }],
+    ['a disabled model', { INFERENCE_MODELS: JSON.stringify([{ ...model, enabled: false }]) }, exhaust],
+    ['inference switched off', { INFERENCE_ENABLED: 'false' }, exhaust],
+    ['a hosting pause', runpodOnly, exhaust],
+    // A model that just exceeded its usage limit is held back by more than
+    // allowance, so the payment would not bring it back.
+    ['a recent usage fault', {}, (env, account) => { exhaust(env); addUsageFault(env, account); }],
+  ];
+  for (const [reason, overrides, arrange] of cases) {
+    const { env, account, post } = await setup(overrides);
+    arrange(env, account);
+    assert.equal((await catalog(env)).topups_enabled, false, reason);
+    assert.equal((await portalData(env, account)).api.topups_enabled, false, reason);
+    const response = await post('/api/inference/topup');
+    assert.equal(response.status, 503, reason);
+    assert.equal((await response.json()).code, 'topups_unavailable', reason);
+  }
+  assert.equal(stripeCalls.length, 0);
+});

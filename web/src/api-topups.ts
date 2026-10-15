@@ -5,6 +5,8 @@ import { sha256 } from './crypto.ts';
 import { seconds } from './env.ts';
 import type { Env } from './env.ts';
 import { ApiError } from './http.ts';
+import { inferenceModels } from './inference.ts';
+import { supplierBudgetCreditStatements } from './supplier-costs.ts';
 
 export const API_PAYMENT_TAG = 'bounty-operator-api';
 const TAG = API_PAYMENT_TAG;
@@ -111,9 +113,16 @@ export async function syncApiTopup(env: Env, api: Stripe, topupId: string, event
       // Settled payments cannot be reverted by an older pending snapshot.
       return;
     }
-    const updated = await env.DB.prepare(`UPDATE api_topups SET status = ?, credited_micro = ?, refunded_micro = ?, dispute_blocked = ?, dispute_open = ?, dispute_at = ?,
-      payment_intent = COALESCE(?, payment_intent), payment_verified_at = ?, revision = revision + 1, updated_at = ? WHERE id = ? AND revision = ?`)
-      .bind(status, credit, refund, blocked, disputeOpen, disputeAt, idOf(intent), verifiedAt, seconds(), row.id, row.revision).run();
+    const now = seconds();
+    // The trigger posts the credit change as ledger entry topup:<id>:<new
+    // revision>; the supplier budget follows that entry in this transaction.
+    const [updated] = await env.DB.batch([
+      env.DB.prepare(`UPDATE api_topups SET status = ?, credited_micro = ?, refunded_micro = ?, dispute_blocked = ?, dispute_open = ?, dispute_at = ?,
+        payment_intent = COALESCE(?, payment_intent), payment_verified_at = ?, revision = revision + 1, updated_at = ? WHERE id = ? AND revision = ?`)
+        .bind(status, credit, refund, blocked, disputeOpen, disputeAt, idOf(intent), verifiedAt, now, row.id, row.revision),
+      ...supplierBudgetCreditStatements(env, inferenceModels(env),
+        { ledgerId: `topup:${row.id}:${row.revision + 1}`, source: `topup:${row.id}`, deltaMicro: credit - row.credited_micro }, now),
+    ]);
     if (updated.meta.changes) return;
   }
   throw new Error('API payment changed concurrently');

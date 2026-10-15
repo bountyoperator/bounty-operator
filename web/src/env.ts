@@ -28,6 +28,8 @@ export interface Env {
   INFERENCE_MODELS?: string;
   /** Verified supplier rates; admission also requires a funded current budget window. */
   SUPPLIER_COST_RULES?: string;
+  /** Share (0..1, default 0.9) of confirmed customer API credit that funds each provider's budget window. */
+  SUPPLIER_BUDGET_SHARE?: string;
   RUNPOD_API_KEY?: string;
   INFRON_API_KEY?: string;
   ORCAROUTER_API_KEY?: string;

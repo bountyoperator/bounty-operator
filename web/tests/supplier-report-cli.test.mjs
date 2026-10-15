@@ -167,6 +167,11 @@ test('runReport returns the module report unchanged with date boundaries, liabil
   DB.sqlite.prepare('INSERT INTO api_wallets(account_id, balance_micro) VALUES(?, ?)').run('debtor', -400);
   DB.sqlite.prepare(`INSERT INTO supplier_budget_windows(id, provider, starts_at, ends_at, limit_micro, consumed_micro, enabled, funding_reference, updated_at)
     VALUES('budget', 'runpod', ?, ?, 100000, 6000, 1, 'fixture-only', ?)`).run(start, end, start);
+  const adjustment = DB.sqlite.prepare(`INSERT INTO supplier_budget_adjustments(id, kind, provider, window_id, ledger_id, source, customer_micro, share_ppm, requested_micro, amount_micro, created_at)
+    VALUES(?, 'customer_credit', 'runpod', 'budget', ?, 'topup:fixture', ?, 900000, ?, ?, ?)`);
+  for (const [id, amount, at] of [['before', 9000, start - 1], ['credit', 900, start], ['refund', -90, end - 1], ['after', 450, end]]) {
+    adjustment.run(`${id}:runpod`, id, amount * 10 / 9, amount, amount, at);
+  }
   const cost = DB.sqlite.prepare(`INSERT INTO supplier_billing_buckets(provider, resource_type, resource_id, bucket_start, bucket_end, total_micro, fetched_at, source_hash)
     VALUES('runpod', 'serverless', 'fixture123', ?, ?, ?, ?, 'fixture')`);
   for (const [at, amount] of [[start - 3600, 4000], [start, 1000], [start + 3600, 2000], [end, 8000]]) {
@@ -180,12 +185,13 @@ test('runReport returns the module report unchanged with date boundaries, liabil
   const sqls = [];
   const actual = await runReport(options, { execute: async (sql) => { sqls.push(sql); return DB.sqlite.prepare(sql).all(); } });
   assert.deepEqual(actual, expected);
-  assert.equal(sqls.length, 6, 'only the six report queries ran');
+  assert.equal(sqls.length, 7, 'only the seven report queries ran');
   assert(sqls.every((sql) => /^SELECT\b/.test(sql) && !sql.includes('?')));
   assert.equal(DB.sqlite.prepare('SELECT total_changes() AS n').get().n, before);
   assert.equal(actual.revenue.usage_revenue_micro, 900);
   assert.equal(actual.actual_supplier_costs[0].actual_cost_micro, 3000);
   assert.equal(actual.budgets[0].consumed_micro, 6000, 'allowance consumption stays separate from actual vendor cost');
+  assert.deepEqual(actual.budget_adjustments.map((row) => ({ ...row })), [{ provider: 'runpod', kind: 'customer_credit', entries: 2, added_micro: 900, removed_micro: 90 }]);
   assert.equal(actual.successful_billing_reads.length, 1);
   assert.equal(actual.current_customer_wallets.customer_credit_liability_micro, 998300);
   assert.equal(actual.current_customer_wallets.customer_deficit_micro, 400);

@@ -25,6 +25,9 @@ const normalize = (sql) => typeof sql === 'string' ? sql.replace(/\s+/g, ' ').tr
 // explicit review here; even an arbitrary SELECT cannot read customer records.
 const REPORT_QUERIES = [
   'SELECT * FROM supplier_budget_windows ORDER BY provider, starts_at',
+  `SELECT provider, kind, COUNT(DISTINCT COALESCE(ledger_id, id)) AS entries, SUM(CASE WHEN amount_micro > 0 THEN amount_micro ELSE 0 END) AS added_micro,
+    SUM(CASE WHEN amount_micro < 0 THEN -amount_micro ELSE 0 END) AS removed_micro
+    FROM supplier_budget_adjustments WHERE created_at >= ? AND created_at < ? GROUP BY provider, kind ORDER BY provider, kind`,
   `SELECT provider, resource_id, basis, state, COUNT(*) AS requests, SUM(hold_micro) AS allowance_micro,
     SUM(expense_micro) AS consumed_allowance_micro, SUM(estimated_cost_micro) AS estimated_cost_micro
     FROM supplier_commitments WHERE created_at >= ? AND created_at < ? GROUP BY provider, resource_id, basis, state`,
