@@ -50,7 +50,8 @@ const capital = (text) => text.charAt(0).toUpperCase() + text.slice(1);
 
 // Read from the engine, so the page cannot drift from what the servers do.
 const WORDS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve'];
-const CORE = PROFILES.filter((profile) => profile.listed && !profile.hosted);
+const LISTED = PROFILES.filter((profile) => profile.listed);
+const CORE = LISTED.filter((profile) => !profile.hosted);
 const CORE_NAMES = CORE.map((profile) => profile.name);
 const CORE_SENTENCE = `${CORE_NAMES.slice(0, -1).join(', ')} and ${CORE_NAMES.at(-1)}`;
 const HOSTED_STAGES = GAUNTLET.filter((id) => reviewProfile(id).hosted).length;
@@ -170,6 +171,16 @@ ${file(
   },
 ];
 
+// The way from this page to a token: the home page opens the account dialog for
+// this link (web/public/app/account.mjs), offers a new browser Create account
+// first, and lands on Connections, where the token is made.
+export const TOKEN_SIGNUP = '/#account/connections';
+
+/** The button to an account and a token, with what it takes. A div: inside .prose a paragraph would restyle the button as a text link. */
+function tokenSignup() {
+  return html`<div class="install__alt">${button({ label: 'Create a free account and token', href: TOKEN_SIGNUP, size: 'sm', icon: 'key' })}<span class="fine">One passkey prompt, no email, no card.</span></div>`;
+}
+
 const install = html`<section class="install" data-tabs aria-labelledby="install-title">
 <h2 class="visually-hidden" id="install-title">Install</h2>
 ${tabs({ label: 'Client', items: CLIENTS.map((client, index) => ({ id: client.id, label: client.label, selected: index === 0 })) })}
@@ -181,7 +192,7 @@ ${CLIENTS.map(
 ${client.remote}
 </div>
 ${disclosure({ summary: 'Run a local server instead', hint: 'Node 22 or later', body: client.local })}
-${disclosure({ summary: 'Add your account token', hint: 'for account and run_review', body: html`<div class="install__token">${client.token}</div>` })}
+${disclosure({ summary: 'Add your account token', hint: 'for account and run_review', body: html`<div class="install__token">${tokenSignup()}${client.token}</div>` })}
 </div>`,
 )}
 <p class="install__foot fine">${inline('No account needed for either route. `list_profiles`, `prepare_review` for the three core profiles and `build_packet` work as soon as the server is added.')} The local package is listed with its SHA-256 in <a href="${CHECKSUMS}">SHA256SUMS.txt</a>.</p>
@@ -395,9 +406,10 @@ const token = html`
 </div>
 <div class="prose">
 <h3 id="create-token">Create a token</h3>
+${tokenSignup()}
 <ol>
-<li>Sign in at <a href="/#account">bountyoperator.com</a> with your passkey and open the account panel.</li>
-<li>Under Connections, name the connection after the client that will use it, and create it.</li>
+<li>Create a free account at <a href="${TOKEN_SIGNUP}">bountyoperator.com</a> with a passkey, or sign in with yours. The account panel opens on Connections.</li>
+<li>Name the connection after the client that will use it, and create it.</li>
 <li>${inline('Copy the token. It starts with `bok_` and is shown once.')}</li>
 <li>${inline(`Set it as \`${TOKEN_VAR}\` in your environment and add the server with the token command for your client.`)}</li>
 </ol>
@@ -537,8 +549,10 @@ const FAQ = [
 const body = docPage({
   head: {
     crumbs: [{ label: 'Bounty Operator', href: '/' }, { label: 'MCP server' }],
-    title: 'Connect your coding agent',
-    lede: 'Choose your app and copy the setup command. Core reviews need no Bounty Operator account.',
+    title: 'Bug report review in your coding agent',
+    lede: inline(
+      `Your agent checks a bug report against the code before you submit. Code, Solidity and draft-report reviews run on your agent’s own model with no account. A free account adds \`run_review\` for all ${LISTED.length} review types, one a day on your own key.`,
+    ),
   },
   lead: install,
   sections: [

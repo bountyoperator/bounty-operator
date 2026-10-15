@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { afterEach, beforeEach, describe, test } from 'node:test';
 
-import { REASONS, capabilityMessage, headerControl, inAppBrowser, onAccountChange, reasonText, requireSignIn } from '../public/app/account.mjs';
+import { ACCOUNT_LINKS, REASONS, capabilityMessage, headerControl, inAppBrowser, onAccountChange, opensOnSignIn, reasonText, requireSignIn } from '../public/app/account.mjs';
 import { ApiError, currentAccount, refreshAccount } from '../public/app/api.mjs';
 import {
   OPERATOR_ACTIVE,
@@ -39,6 +39,7 @@ import {
   toBytes,
 } from '../public/app/passkey.mjs';
 import { MCP_ENDPOINT, MCP_PACKAGE, TABS, TOKEN_VAR, apiPanelCopy, autoTopupAuthorization, autoTopupSettings, autoTopupUnavailableText, connectionCommands, reviewRows, topupsUnavailableText, usageSummary } from '../public/app/portal.mjs';
+import { PROFILES } from '../public/profiles.mjs';
 import { ACCOUNT_SCRIPTS, ACCOUNT_STYLES, accountDialog } from '../site/fragments/account-dialog.mjs';
 import { assertNoBannedNames } from './private-lists.mjs';
 
@@ -828,12 +829,44 @@ describe('account.mjs', () => {
     assert.equal(reasonText('constructor'), 'constructor');
   });
 
+  // A new browser is asked to sign up, and the account's benefit is the first
+  // line it reads. A browser that has signed in before is asked to sign in.
   test('the header control follows the plan', () => {
-    assert.deepEqual(headerControl({ signedIn: false }), { label: 'Sign in', chip: '', tone: 'neutral', name: 'Sign in' });
+    assert.deepEqual(headerControl({ signedIn: false }), { label: 'Sign up', chip: '', tone: 'neutral', name: 'Sign up' });
+    assert.deepEqual(headerControl({ signedIn: false }, true), { label: 'Sign in', chip: '', tone: 'neutral', name: 'Sign in' });
+    assert.equal(headerControl({ signedIn: true, usage: USAGE_FREE }, true).label, 'Account');
     assert.deepEqual([headerControl({ signedIn: true, usage: USAGE_FREE }).label, headerControl({ signedIn: true, usage: USAGE_FREE }).chip], ['Account', 'Free']);
     assert.deepEqual([headerControl({ signedIn: true, usage: USAGE_PAID }).chip, headerControl({ signedIn: true, usage: USAGE_PAID }).tone], ['Operator', 'operator']);
     const pastDue = headerControl({ signedIn: true, usage: { ...USAGE_FREE, plan: 'past_due' } });
     assert.deepEqual([pastDue.chip, pastDue.tone, pastDue.name], ['Past due', 'danger', 'Account, payment failed']);
+  });
+
+  test('a new browser is offered an account first, whatever opened the dialog but billing', () => {
+    for (const reason of ['account', 'review', 'operator', 'token', 'Sign in to keep this packet.', undefined]) {
+      assert.equal(opensOnSignIn(reason), false, String(reason));
+      assert.equal(opensOnSignIn(reason, true), true, String(reason));
+    }
+    assert.equal(opensOnSignIn('billing'), true);
+  });
+
+  test('the header dialog names what a free account runs, counted from the profiles', () => {
+    const line = reasonText('account');
+    // Triager simulation, Prior-art overlap "and six more": the listed review types that run only on our server.
+    const serverOnly = PROFILES.filter((profile) => profile.listed && profile.hosted);
+    assert.equal(serverOnly.length, 8);
+    for (const name of ['Triager simulation', 'Prior-art overlap']) assert.ok(serverOnly.some((profile) => profile.name === name), name);
+    assert.ok(line.startsWith('A free account runs Triager simulation, Prior-art overlap and six more checks'), line);
+    assert.match(line, /one a day on your own AI key, plus a token for your coding agent\. One passkey prompt, no email, no card\.$/);
+    assert.equal(reasonText('account', true), 'Sign in with the passkey on this device. No password, no email.');
+  });
+
+  test('the /mcp token link opens the dialog for a token and lands on Connections', () => {
+    assert.deepEqual(ACCOUNT_LINKS['#account/connections'], { tab: 'connections', reason: 'token' });
+    assert.deepEqual(ACCOUNT_LINKS['#account/api'], { tab: 'api' });
+    assert.ok(TABS.some((tab) => tab.id === 'connections'));
+    assert.equal(reasonText('token'), 'Create a free account to get your MCP token. One passkey prompt, no email. The token is shown once, with the setup command for your client.');
+    assert.equal(reasonText('token', true), 'Sign in to create your MCP token. One passkey prompt. The token is shown once, with the setup command for your client.');
+    assert.equal(REASONS.token.next, 'open Connections');
   });
 
   test('requireSignIn answers at once for a signed-in user, and false where no dialog can open', async () => {
@@ -953,10 +986,18 @@ describe('passkeys inside an in-app browser', () => {
     }
   });
 
-  test('a browser where passkeys work gets no notice, and one with no provider keeps its own', () => {
+  // Many Linux laptops and virtual machines have no built-in authenticator. The
+  // notice names what works there instead of Windows Hello or Touch ID.
+  test('a browser where passkeys work gets no notice, and a computer with no built-in passkey is told what works', () => {
     for (const agent of BROWSER_AGENTS) assert.equal(capabilityMessage({ webauthn: true, platform: true }, agent), null);
     const noProvider = capabilityMessage({ webauthn: true, platform: false }, BROWSER_AGENTS[3]);
-    assert.deepEqual([noProvider.tone, noProvider.title, noProvider.copyLink], ['info', 'No passkey provider is set up on this device.', false]);
+    assert.deepEqual(noProvider, {
+      tone: 'info',
+      title: 'No built-in passkey on this computer.',
+      body: 'Choose the phone or tablet option in the passkey prompt and scan the QR code with your phone. Or use 1Password, Bitwarden or a security key. You get a recovery code to save once.',
+      copyLink: false,
+    });
+    assert.doesNotMatch(noProvider.body, /Windows Hello|Touch ID/);
     assert.equal(capabilityMessage({ webauthn: true, platform: true }, undefined), null);
   });
 });
@@ -1020,6 +1061,16 @@ describe('source rules', () => {
 
   test('the support address is on the product domain', () => {
     assert.match(sources['portal.mjs'], /support@bountyoperator\.com/);
+  });
+
+  // A new free account lands on Overview: next to the upgrade, the first check only an account runs.
+  test('the free Overview opens Triager simulation in the workbench', () => {
+    const portal = sources['portal.mjs'];
+    assert.match(portal, /: \[upgradeButton\('overview-upgrade'\), triageLink\(\)\];/);
+    assert.match(portal, /id: 'overview-triage', href: '\/\?profile=triage#workspace'/);
+    assert.match(portal, /text: 'Run Triager simulation'/);
+    const triage = PROFILES.find((profile) => profile.id === 'triage');
+    assert.deepEqual([triage.name, triage.listed, triage.hosted], ['Triager simulation', true, true]);
   });
 
   test('the ids the account module documents exist in the code', () => {

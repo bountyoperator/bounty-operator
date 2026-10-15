@@ -3322,6 +3322,18 @@ button.ref:hover {
   gap: var(--sp-8);
 }
 
+/* The account control carries two labels and shows one: Sign up in a new
+   browser, Sign in where theme.js found that this browser has signed in before. */
+:root[data-known] .account-label--new,
+:root:not([data-known]) .account-label--known {
+  display: none;
+}
+
+/* The Menu button belongs to the phone header below; wider screens list the links. */
+.site-header__menu {
+  display: none;
+}
+
 /* Narrow screens: brand and actions on the first row, navigation on the
    second. Every link stays on screen, none scrolls out of sight: the links
    share the row, each with a little padding and an equal share of the room
@@ -3372,6 +3384,82 @@ button.ref:hover {
 /* Under 360px the header keeps the mark and drops the wordmark to stay on one row. */
 @media (max-width: 22.49em) {
   .site-header .brand__name {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+
+/* A phone header is one row: the brand, the account control and Menu, which
+   opens the navigation under the row as a ruled list and closes it again.
+   theme.js sets [data-js] before the first paint and wires the button. Where
+   no script runs, the rules above keep every link on screen in a second row. */
+@media (max-width: 39.99em) {
+  :root[data-js] .site-header__inner {
+    column-gap: var(--sp-8);
+    min-height: 0;
+    padding-block: var(--sp-8);
+  }
+
+  :root[data-js] .site-header__menu {
+    display: inline-flex;
+  }
+
+  :root[data-js] .site-nav:not([data-menu-open]) {
+    display: none;
+  }
+
+  /* Open, the list runs from under the row down to the header rule. */
+  :root[data-js] .site-nav[data-menu-open] {
+    margin-top: var(--sp-8);
+    margin-bottom: calc(-1 * var(--sp-8));
+  }
+
+  :root[data-js] .site-nav ul {
+    display: block;
+    padding: 0;
+  }
+
+  :root[data-js] .site-nav li + li {
+    border-top: 1px solid var(--line);
+  }
+
+  :root[data-js] .site-nav a {
+    justify-content: flex-start;
+    min-height: 3rem;
+    padding-inline: var(--gutter);
+    font-size: 1rem;
+  }
+
+  /* Location is the coloured label and its underline, never a stripe on the row. */
+  :root[data-js] .site-nav a[aria-current="page"] {
+    box-shadow: none;
+    text-decoration: underline 2px;
+    text-underline-offset: 0.4em;
+  }
+
+  .site-header__menu .icon {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+
+  .site-header__menu[aria-expanded="true"] .icon {
+    --icon: var(--icon-x);
+  }
+
+  :root[data-motion="on"] .site-nav[data-menu-open] {
+    animation: rise var(--t-panel) var(--ease) both;
+  }
+}
+
+/* Signed in on Operator, or with a payment due, the control carries a long plan
+   chip: under 384px the wordmark gives way so the row still holds the mark, the
+   control and Menu. account.mjs sets [data-plan] on the control. */
+@media (max-width: 23.99em) {
+  :root[data-js] .site-header:has(:is([data-plan="operator"], [data-plan="past_due"])) .brand__name {
     position: absolute;
     width: 1px;
     height: 1px;

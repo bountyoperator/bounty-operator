@@ -238,7 +238,7 @@ The home page pairs the product promise and review actions with Spec's portrait.
 
 Forms are ledgers. The finding card and the workbench sheet print a 9.75rem caption margin, one 1px rule and the content to its right, and under 704px the caption moves above its content. Grids of cells are ruled by 1px gaps over the hairline ground inside a 1px frame, like the rack of verdict stamps.
 
-The header keeps the brand at left and the nav and account control at right. Under 928px the nav becomes a second row with every link on screen: one row from 384px, two even rows of three below that, and a wrapped row for enlarged text. Nothing scrolls sideways. The footer uses the shared Spec mark, the product promise and useful navigation, without a second oversized wordmark.
+The header keeps the brand at left and the nav and account control at right. Under 928px the nav becomes a second row with every link on screen: one row from 384px, two even rows of three below that, and a wrapped row for enlarged text. Under 640px, where scripts run, the header is one row instead: the brand, the account control and Menu, a 44px button with the menu icon (an X while open). Menu opens the links under the row as a ruled list, one link a row, and moves focus to the first; Menu again, Escape or a chosen link closes it. Without scripts a phone keeps the second row. Nothing scrolls sideways. The footer uses the shared Spec mark, the product promise and useful navigation, without a second oversized wordmark.
 
 Print is black on white whatever the screen shows: deeper inks, flat cards and panels, no header, footer, field or buttons, code wrapped.
 
@@ -291,7 +291,8 @@ A panel uses 10px corners, a 1px frame and hairlines between head, body and foot
 A surface box with a 1px control border, 6px corners and 44px minimum height. Text becomes 16px under 768px so phones do not zoom. Keep help visible under the control. The report checker distinguishes an empty form from a checked report with zero passing checks.
 
 ### Navigation
-- **Header:** the brand at left, nav and account control at right, a rule under it.
+- **Header:** the brand at left, nav and account control at right, a rule under it. On a phone: the brand, the account control and Menu.
+- **Account control:** Sign up in a new browser, Sign in in one that has signed in before, and the plan chip with Account once signed in.
 - **Links:** 44px targets. The current page uses coral text and an underline.
 - **Brand mark:** Spec's bent antennae, sceptical eyes, coral shell and blue jacket on a cream tile. `scripts/build-icons.mjs` draws the icons from the same paths as the header.
 - **Footer:** the shared mark, promise, primary action and useful navigation in sentence case.
@@ -304,7 +305,7 @@ Deep charcoal (`#111b24`) inside a ruled frame with 6px corners. Mono at 13px an
 A 1px frame, sentence-case column heads, hairlines between rows and tabular figures aligned right. Stack tables become labelled blocks on narrow screens. Wide tables scroll inside their frame. The comparison table keeps its row label and one complete option visible even at 320px; size columns from the container, not the viewport.
 
 ### Dialog
-A sheet over the page: a 1px frame, 12px corners and the pop shadow over a backdrop. Its head stays visible while the body scrolls. Widths are 440, 640 and 900px, constrained by the viewport. Explicit Sign in links open the sign-in screen; starting a first review or upgrade can open account creation.
+A sheet over the page: a 1px frame, 12px corners and the pop shadow over a backdrop. Its head stays visible while the body scrolls. Widths are 440, 640 and 900px, constrained by the viewport. A new browser sees account creation first, whatever opened the dialog (the header’s Sign up, a first review, an upgrade, the /mcp token); billing and a browser that has signed in before open on Sign in.
 
 ### Finding Card
 The result as an inspection form: a file bar, finding id, severity, status, title and source references, then rows with sentence-case captions in a 9.75rem margin. Observed is green; Counterargument is ochre while open and green when resolved; Evidence gap is ochre with a dashed margin rule. Numbered path steps preserve the draft's numbering. See `web/site/COMPONENTS.md` for the markup.
