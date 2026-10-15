@@ -859,6 +859,13 @@ describe('model catalog availability and provenance', () => {
     assert.deepEqual(order.slice(0, 3).map((model) => [model.id, model.availability]), [['kimi-k3-cyber', 'available'], ['orca-cyber-zero-1.5', 'paused'], ['cyber-qwen-27b-awq', 'unavailable']]);
     // A catalog that is switched off sells nothing.
     assert.ok(mergeCatalog({ ...OPEN, enabled: false }).every((model) => model.availability === 'unavailable'));
+    // A pause is not "not available yet": a listed model the pause stopped reads paused, a
+    // stale available flag reads paused too, and a model the catalog itself calls unavailable
+    // keeps that. Nothing becomes available, so no card offers a review.
+    const pausedCatalog = { enabled: false, status: 'paused', topups_enabled: false, models: [{ ...DEFAULT_MODELS[0], availability: 'paused' }, { ...DEFAULT_MODELS[1], availability: 'available' }, { ...DEFAULT_MODELS[2], availability: 'unavailable' }] };
+    const pausedMerged = mergeCatalog(pausedCatalog);
+    assert.deepEqual(pausedMerged.slice(0, 3).map((model) => [model.id, model.availability]), [['cyber-qwen-27b-awq', 'paused'], ['orca-cyber-zero-1.5', 'paused'], ['orca-cyber-zero-1.0', 'unavailable']]);
+    assert.ok(pausedMerged.every((model) => model.availability !== 'available'));
     assert.deepEqual(['available', 'paused', 'unavailable', undefined].map((state) => availabilityLabel(state)), ['Available', 'Paused', 'Not available yet', 'Not available yet']);
     assert.equal(availabilityLabel('available', false), 'Not checked');
   });
@@ -969,6 +976,24 @@ describe('model catalog availability and provenance', () => {
     assert.match(top.line.textContent, /^No request runs and no credit can be bought until it resumes\./);
     assert.deepEqual([top.start.dataset.state, top.start.dataset.open], ['paused', 'false']);
     assert.match(nodes.get('model-api-status').textContent, /inference is paused/);
+  });
+
+  test('a paused catalog says paused on the cards too, and still offers no review', async (t) => {
+    const nodes = setup(t, { enabled: false, status: 'paused', topups_enabled: false, models: [{ ...DEFAULT_MODELS[0], availability: 'paused' }] });
+    await loadCatalog();
+    const catalog = nodes.get('model-api-catalog');
+    // A model that was on sale is paused, not "not available yet": only the 23 never listed are.
+    const groups = descendants(catalog).filter((node) => node.className === 'catalog-group').map((node) => node.textContent);
+    assert.deepEqual(groups, ['Paused (1)', 'Not available yet (23)']);
+    const cards = descendants(catalog).filter((node) => node.className === 'catalog-card');
+    const pills = (card) => descendants(card).filter((node) => node.className === 'catalog-pill' && node.dataset.availability).map((node) => node.textContent);
+    assert.equal(cards[0].attributes.get('aria-label'), 'Qwen Cyber 27B AWQ');
+    assert.deepEqual(pills(cards[0]), ['Paused']);
+    assert.deepEqual(pills(cards[1]), ['Not available yet']);
+    assert.match(cards[0].textContent, /Hosting provider: RunPod · Paused/);
+    // Paused sells nothing: no card launches a review, and the quickstart line says so.
+    assert.equal(reviewLinks(catalog).length, 0);
+    assert.match(nodes.get('model-api-quickstart').textContent, /Qwen Cyber 27B AWQ \(cyber-qwen-27b-awq\) · \$3\/\$36 per 1M · paused/);
   });
 
   test('when the live check fails, the top stops claiming a model is available and hides the steps and the first call', async (t) => {

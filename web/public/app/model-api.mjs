@@ -111,6 +111,19 @@ export function availabilityLabel(availability, checked = true) {
 }
 
 /**
+ * What a listed model's state reads as once the catalog's own switch is
+ * counted. A catalog that is switched off sells nothing, whatever a model row
+ * says, so an available flag never survives. A pause is not "not available
+ * yet", though: a model the pause stopped keeps reading paused, which sells
+ * nothing either (a card offers a review only on 'available').
+ */
+function liveState(model, result) {
+  if (result?.enabled === true) return model.availability;
+  if (result?.status === 'paused' && (model.availability === 'paused' || model.availability === 'available')) return 'paused';
+  return 'unavailable';
+}
+
+/**
  * The catalog the page shows: the live catalog, which lists only what
  * production is set up to serve, followed by every other known model marked
  * not available yet. A catalog that is switched off sells nothing, whatever a
@@ -118,8 +131,7 @@ export function availabilityLabel(availability, checked = true) {
  * in catalog order.
  */
 export function mergeCatalog(result) {
-  const enabled = result?.enabled === true;
-  const live = (Array.isArray(result?.models) ? result.models : []).map((model) => ({ ...model, availability: enabled ? model.availability : 'unavailable' }));
+  const live = (Array.isArray(result?.models) ? result.models : []).map((model) => ({ ...model, availability: liveState(model, result) }));
   const listed = new Set(live.map((model) => model.id));
   const rest = DEFAULT_MODELS.filter((model) => !listed.has(model.id)).map((model) => ({ ...model, availability: 'unavailable' }));
   const rank = (model) => (model.availability === 'available' ? 0 : model.availability === 'paused' ? 1 : 2);
