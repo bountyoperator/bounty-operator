@@ -6,7 +6,7 @@ import { LIMITS } from '../public/review-core.mjs';
 
 import { clearSessionCookie, currentSession } from './auth.ts';
 import type { Session } from './auth.ts';
-import { apiTopupsDecision, billingReady, hasLiveSubscription, mayStillBill, subscriptionSummary } from './billing.ts';
+import { apiTopupsClosure, apiTopupsDecision, billingReady, hasLiveSubscription, mayStillBill, subscriptionSummary } from './billing.ts';
 import { PRICE, VERSION, seconds } from './env.ts';
 import type { Call, Env } from './env.ts';
 import { currentProfileId } from './hosted.ts';
@@ -79,8 +79,10 @@ export async function portalData(env: Env, accountId: string): Promise<Record<st
     billing,
     inferenceCatalog(env, billing),
   ]);
-  // An unknown hosting state is shown as available, but closes top-ups.
+  // An unknown hosting state is shown as available, but closes top-ups. The
+  // panel is given the closure as well, so its text names the actual cause.
   const apiStatus = shownInferenceStatus(apiBilling.status);
+  const topups = apiTopupsDecision(env, apiBilling);
   return {
     account: { ...account, hasSubscription },
     subscription,
@@ -90,7 +92,7 @@ export async function portalData(env: Env, accountId: string): Promise<Record<st
     reviews: reviews.results.map((row) => (typeof row.profile === 'string' ? { ...row, profile: currentProfileId(row.profile) } : row)),
     usage: currentUsage,
     profiles: PROFILES.map((profile) => ({ id: profile.id, name: profile.name })),
-    api: { ...apiData, enabled: apiStatus === 'available', status: apiStatus, topups_enabled: apiTopupsDecision(env, apiBilling).open, models },
+    api: { ...apiData, enabled: apiStatus === 'available', status: apiStatus, topups_enabled: topups.open, topups_closure: apiTopupsClosure(topups), models },
   };
 }
 

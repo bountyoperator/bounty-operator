@@ -1251,6 +1251,23 @@ export function autoTopupUnavailableText(auto) {
   return 'No automatic payment is made while automatic top-ups are closed. They resume on their own when top-ups reopen.';
 }
 
+/**
+ * The line shown while manual top-ups are closed. `topups_closure` says why:
+ * the model service ('paused', 'unavailable', 'unknown') or our own
+ * configuration ('disabled', 'billing_not_ready'), so an operator's switch and
+ * an unfinished Stripe setup are never read as a model outage. An older server
+ * sends no closure, so the status stands in and anything else reads neutrally.
+ */
+export function topupsUnavailableText(api) {
+  if (api.topups_enabled) return '';
+  const tail = ' Existing credit stays available and is spent only on confirmed usage.';
+  const closure = api.topups_closure ?? (api.status === 'paused' ? 'paused' : null);
+  if (closure === 'paused') return `Top-ups are closed while model inference is paused.${tail}`;
+  if (closure === 'unknown') return `Top-ups are closed while the model service is being verified.${tail}`;
+  if (closure === 'unavailable') return `Top-ups are closed while the model service is unavailable.${tail}`;
+  return `Top-ups are closed right now.${tail}`;
+}
+
 const AUTO_TOPUP_PAUSES = {
   payment_failed: 'The last payment failed. Update your payment method to resume.',
   authentication_required: 'Your payment needs confirmation. Save your payment method in Stripe again.',
@@ -1387,7 +1404,7 @@ function renderApi() {
       el('dl', { class: 'stats' }, stat('Available', { value: usd(api.available_micro), note: 'USD available for new requests' }), stat('Reserved', { value: usd(api.reserved_micro), note: 'Unused credit returns when a request ends' })),
       el('div', { class: 'portal-row__actions' }, [20, 50, 100].map((amount) => button({ label: `Add $${amount}`, variant: 'secondary', disabled: !api.topups_enabled, onClick: (event) => openApiTopup(event.currentTarget, amount) })),
         button({ label: 'Refresh balance', variant: 'quiet', onClick: () => load() })),
-      !api.topups_enabled ? el('p', { class: 'help', text: api.status === 'paused' ? 'Top-ups are closed while model inference is paused. Existing credit stays available and is spent only on confirmed usage.' : 'Top-ups are closed while the model service is being verified.' }) : null,
+      !api.topups_enabled ? el('p', { class: 'help', text: topupsUnavailableText(api) }) : null,
       Number(api.balance_micro) < 0 ? el('p', { class: 'help', text: 'A payment reversal left an outstanding balance. Contact support before making more requests.' }) : null,
       autoTopupPanel(api.auto_topup)),
     section('Models and rates', api.enabled ? 'Choose a model in your harness. Fetch the full catalog with GET /v1/models; supported capabilities vary by model.' : api.status === 'paused' ? 'Model inference is paused right now. Requests return 503 without a charge until it resumes.' : 'Model inference is not available yet.',

@@ -799,6 +799,7 @@ test('a stranded reservation is sent later only while credit is still below the 
 test('once a run finds purchases closed, other reservations expire without another read and nothing is reserved', async (t) => {
   let answer = fundedHosting;
   const reads = t.mock.method(globalThis, 'fetch', async () => answer());
+  const warn = t.mock.method(console, 'warn', () => {});
   const a = setupAuto();
   useRunpod(a);
   await enableAutomatic(a);
@@ -813,6 +814,62 @@ test('once a run finds purchases closed, other reservations expire without anoth
   assert.equal(a.intents.size, 0);
   assert.deepEqual(a.env.DB.sqlite.prepare('SELECT id, status, initiated_at FROM api_topups ORDER BY id').all().map((row) => [row.id, row.status, row.initiated_at]),
     [['stranded-1', 'expired', 0], ['stranded-2', 'expired', 0]], 'both due accounts reserve nothing');
+  // Each unsent reservation is logged with the run's answer, so a fail-closed
+  // stop is visible in production. The key and the body never are.
+  const unsent = warn.mock.calls.filter((call) => call.arguments[0] === 'Automatic top-up not sent; purchases closed');
+  assert.deepEqual(unsent.map((call) => call.arguments[1]),
+    [{ state: 'unknown', reason: 'http_500', expired: 1 }, { state: 'unknown', reason: 'http_500', expired: 1 }]);
+  const logged = JSON.stringify(unsent.map((call) => call.arguments));
+  for (const secret of ['fixture-runpod-key', 'Internal Server Error']) assert.ok(!logged.includes(secret), `the log holds "${secret}"`);
+});
+
+test('a billing status that cannot be read closes the run, is logged by name alone, and sends nothing', async (t) => {
+  const reads = t.mock.method(globalThis, 'fetch', async () => fundedHosting());
+  const a = setupAuto();
+  useRunpod(a);
+  await enableAutomatic(a);
+  const now = Math.floor(Date.now() / 1000) + 5;
+  strandedReservation(a, 'stranded-unreadable', now);
+  // D1 fails inside the billing read itself, for the first read and the retry.
+  const query = a.env.DB.prepare.bind(a.env.DB);
+  a.env.DB.prepare = (sql) => {
+    if (sql.includes("failure_code = 'usage_limit_exceeded'")) throw new RangeError('D1 unavailable');
+    return query(sql);
+  };
+  const warn = t.mock.method(console, 'warn', () => {});
+  const failed = t.mock.method(console, 'error', () => {});
+  const before = reads.mock.callCount();
+  await processAutoTopups(a.env, a.api, now, FAST);
+  assert.equal(a.intents.size, 0, 'a status that cannot be worked out never opens a payment');
+  assert.equal(a.env.DB.sqlite.prepare("SELECT status FROM api_topups WHERE id = 'stranded-unreadable'").get().status, 'expired');
+  assert.equal(autoTopupCount(a), 1, 'the due account reserves nothing either');
+  const checks = failed.mock.calls.filter((call) => call.arguments[0] === 'Automatic top-up check failed');
+  assert.deepEqual(checks.map((call) => call.arguments[1]), [{ name: 'RangeError' }, { name: 'RangeError' }], 'the read and its retry each report, with the error name alone');
+  assert.ok(!JSON.stringify(checks.map((call) => call.arguments)).includes('D1 unavailable'));
+  assert.deepEqual(warn.mock.calls.filter((call) => call.arguments[0] === 'Automatic top-up not sent; purchases closed').map((call) => call.arguments[1]),
+    [{ state: 'unknown', reason: 'check_failed', expired: 1 }]);
+  assert.equal(reads.mock.callCount(), before, 'a status that failed before the hosting read reads nothing from it');
+});
+
+test('a stranded reservation is not sent once a dispute is open on the account, as a new one could not be reserved', async (t) => {
+  t.mock.method(globalThis, 'fetch', async () => fundedHosting());
+  for (const disputed of ['a top-up', 'a monthly grant']) {
+    const a = setupAuto();
+    useRunpod(a);
+    await enableAutomatic(a);
+    const now = Math.floor(Date.now() / 1000) + 5;
+    strandedReservation(a, 'stranded-disputed', now);
+    if (disputed === 'a top-up') {
+      a.env.DB.sqlite.prepare("INSERT INTO api_topups(id, account_id, customer_id, amount_micro, status, dispute_open, created_at, updated_at) VALUES('disputed-checkout', ?, 'cus_1', 20000000, 'paid', 1, ?, ?)")
+        .run(a.account, now - 600, now - 600);
+    } else {
+      a.env.DB.sqlite.prepare(`INSERT INTO api_monthly_grants(invoice_id, account_id, customer_id, subscription_id, price_id, period_start, period_end, dispute_open, created_at, updated_at)
+        VALUES('in_disputed', ?, 'cus_1', 'sub_1', 'price_monthly', ?, ?, 1, ?, ?)`).run(a.account, now - 86400, now + 86400, now - 600, now - 600);
+    }
+    await processAutoTopups(a.env, a.api, now, FAST);
+    assert.equal(a.intents.size, 0, disputed);
+    assert.deepEqual({ ...a.env.DB.sqlite.prepare("SELECT status, initiated_at FROM api_topups WHERE id = 'stranded-disputed'").get() }, { status: 'expired', initiated_at: 0 }, disputed);
+  }
 });
 
 test('a send that finds purchases closed stops the run before the next due account is reserved', async (t) => {

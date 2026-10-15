@@ -157,9 +157,14 @@ const errorName = (error: unknown): string => {
   return typeof name === 'string' ? name.slice(0, 40) : 'unknown';
 };
 
-/** An unknown answer, logged once per read with its reason and never with the key or the body. */
+/**
+ * An unknown answer, logged once per read with its reason and never with the
+ * key or the body. The line says only what this read found: whether payments
+ * close is inferenceBilling's decision, and a usable direct provider keeps
+ * them open whatever Runpod's state is.
+ */
 function unknownHosting(reason: HostingUnknownReason, details: Record<string, string | number> = {}): HostingRead {
-  console.warn('Hosting status unknown; payments closed', { reason, ...details });
+  console.warn('Hosting status unknown', { reason, ...details });
   return { state: 'unknown', reason };
 }
 
@@ -184,7 +189,10 @@ async function readHosting(env: Env): Promise<HostingRead> {
   try {
     result = await response.json();
   } catch (error) {
-    return unknownHosting(errorName(error) === 'TimeoutError' ? 'timeout' : 'malformed_body', { error: errorName(error) });
+    // The deadline can be reached while the body is read, under either abort
+    // name, as it can during the fetch above. That is a timeout, not a bad body.
+    const name = errorName(error);
+    return unknownHosting(name === 'TimeoutError' || name === 'AbortError' ? 'timeout' : 'malformed_body', { error: name });
   }
   if (!object(result)) return unknownHosting('malformed_body');
   // GraphQL can answer 200 with errors beside partial data. Any error makes the answer unknown.

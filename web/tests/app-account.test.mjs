@@ -38,7 +38,7 @@ import {
   toBase64Url,
   toBytes,
 } from '../public/app/passkey.mjs';
-import { MCP_ENDPOINT, MCP_PACKAGE, TABS, TOKEN_VAR, autoTopupAuthorization, autoTopupSettings, autoTopupUnavailableText, connectionCommands, reviewRows, usageSummary } from '../public/app/portal.mjs';
+import { MCP_ENDPOINT, MCP_PACKAGE, TABS, TOKEN_VAR, autoTopupAuthorization, autoTopupSettings, autoTopupUnavailableText, connectionCommands, reviewRows, topupsUnavailableText, usageSummary } from '../public/app/portal.mjs';
 import { ACCOUNT_SCRIPTS, ACCOUNT_STYLES, accountDialog } from '../site/fragments/account-dialog.mjs';
 import { assertNoBannedNames } from './private-lists.mjs';
 
@@ -489,6 +489,21 @@ describe('automatic top-up authorization', () => {
     for (const closure of ['closed', 'paused', 'unknown']) {
       assert.equal(autoTopupUnavailableText({ available: false, closure, enabled: false }), 'Automatic top-up setup is currently unavailable.', closure);
     }
+  });
+
+  test('the manual top-up line names the cause too, and never blames the model service for a switch or Stripe', () => {
+    assert.equal(topupsUnavailableText({ topups_enabled: true, topups_closure: null }), '');
+    assert.equal(topupsUnavailableText({ topups_enabled: false, topups_closure: 'paused' }), 'Top-ups are closed while model inference is paused. Existing credit stays available and is spent only on confirmed usage.');
+    assert.equal(topupsUnavailableText({ topups_enabled: false, topups_closure: 'unknown' }), 'Top-ups are closed while the model service is being verified. Existing credit stays available and is spent only on confirmed usage.');
+    assert.equal(topupsUnavailableText({ topups_enabled: false, topups_closure: 'unavailable' }), 'Top-ups are closed while the model service is unavailable. Existing credit stays available and is spent only on confirmed usage.');
+    for (const closure of ['disabled', 'billing_not_ready']) {
+      const text = topupsUnavailableText({ topups_enabled: false, topups_closure: closure });
+      assert.equal(text, 'Top-ups are closed right now. Existing credit stays available and is spent only on confirmed usage.', closure);
+      assert.doesNotMatch(text, /model service|inference/);
+    }
+    // An older server sends no closure field: fall back to the status, then to neutral text.
+    assert.equal(topupsUnavailableText({ topups_enabled: false, status: 'paused' }), 'Top-ups are closed while model inference is paused. Existing credit stays available and is spent only on confirmed usage.');
+    assert.doesNotMatch(topupsUnavailableText({ topups_enabled: false, status: 'available' }), /model service|inference/);
   });
 });
 

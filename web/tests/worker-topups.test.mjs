@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import { sha256 } from '../src/crypto.ts';
 import { portalData } from '../src/account.ts';
@@ -212,6 +213,26 @@ test('the account panel reads the hosting state once, so its buttons, automatic 
   }
 });
 
+test('the account panel is told why manual top-ups are closed, so its text need not blame the model service', async (t) => {
+  let answer = fundedHosting;
+  t.mock.method(globalThis, 'fetch', async (input, options) => answer(input, options));
+  t.mock.method(console, 'warn', () => {});
+  for (const [overrides, hosting, closure] of [
+    [{}, fundedHosting, null],
+    [{}, pausedHosting, 'paused'],
+    [{}, HOSTING_FAILURES['fetch 500'], 'unknown'],
+    // The operator's own switch and an unfinished Stripe setup are not the model service.
+    [{ API_TOPUPS_ENABLED: 'false' }, fundedHosting, 'disabled'],
+    [{ STRIPE_WEBHOOK_SECRET: undefined }, fundedHosting, 'billing_not_ready'],
+    [{ INFERENCE_ENABLED: 'false' }, fundedHosting, 'unavailable'],
+  ]) {
+    const { env, account } = await setup({ ...runpodOnly, ...overrides });
+    answer = hosting;
+    const { api } = await portalData(env, account);
+    assert.deepEqual([api.topups_enabled, api.topups_closure], [closure === null, closure], JSON.stringify(overrides));
+  }
+});
+
 test('automatic setup requires explicit configuration but disabling stays available without it', async (t) => {
   const { env, account, post } = await setup({ API_AUTOTOPUPS_ENABLED: undefined });
   const outbound = t.mock.method(globalThis, 'fetch', async () => { throw new Error('No external request is expected'); });
@@ -224,6 +245,30 @@ test('automatic setup requires explicit configuration but disabling stays availa
   assert.equal(disabled.status, 200);
   assert.equal((await disabled.json()).auto_topup.enabled, false);
   assert.equal(outbound.mock.callCount(), 0);
+});
+
+const source = (name) => readFileSync(new URL(name, import.meta.url), 'utf8');
+
+test('the deploy guide explains every reason code and every log line an operator can meet', () => {
+  const guide = source('../../docs/hosted-model-api.md');
+  // Read the codes from the types themselves, so a new one cannot be added
+  // without the operator's guide gaining it. The `http_<status>` and
+  // `hosting_unknown:<reason>` templates are written out there in that form.
+  const codes = (file, name) => [...source(file).match(new RegExp(`export type ${name} = ([^;]+);`))[1].matchAll(/'([a-z_]+)'/g)].map((match) => match[1]);
+  const hosting = codes('../src/inference.ts', 'HostingUnknownReason');
+  const topups = codes('../src/billing.ts', 'TopupsReason');
+  assert.deepEqual([hosting.length, topups.length], [8, 5], 'both unions were read');
+  for (const code of [...hosting, ...topups]) assert.ok(guide.includes(`\`${code}\``), `the guide does not explain ${code}`);
+  // The lines an operator greps for, exactly as the Worker writes them.
+  for (const line of ['Hosting status unknown', 'Top-up refused; hosting status unknown', 'Automatic top-up not sent; purchases closed', 'Automatic top-up check failed']) {
+    const written = ['../src/inference.ts', '../src/api-topups.ts', '../src/api-autotopup.ts'].some((file) => source(file).includes(`'${line}'`));
+    assert.ok(written, `no source writes "${line}"`);
+    assert.ok(guide.includes(`\`${line}\``), `the guide does not name "${line}"`);
+  }
+  // The deploy steps tell an operator what to do when this named check fails.
+  const named = 'top-ups: /api/inference/catalog agrees with /api/health';
+  assert.ok(source('../../scripts/verify-live.mjs').includes(`check('${named}'`), 'verify-live no longer registers that check');
+  assert.ok(guide.includes(`\`${named}\``), 'the deploy steps do not name that check');
 });
 
 test('website and account catalogs retain unavailable models with the same individual status', async () => {

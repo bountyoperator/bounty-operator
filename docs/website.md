@@ -230,7 +230,7 @@ profile.
 
 | Route | Purpose |
 | --- | --- |
-| `GET /api/health` | Version, the state of billing, reviews, inference and D1, `profiles` (`hosted` or `community`), and `topups` (`open` or `closed`) with a `topups_reason` code when closed. Returns 503 when D1 is down. |
+| `GET /api/health` | Version, the state of billing, reviews, inference (`available`, `paused`, `unavailable`, or `unknown` when it could not be worked out) and D1, `profiles` (`hosted` or `community`), and `topups` (`open` or `closed`) with a `topups_reason` code when closed, including `check_failed`. Returns 503 when D1 is down. |
 | `GET /api/profiles` | The listed profiles: name, description, inputs, output section titles and `hosted`. |
 | `GET /api/account` | Session state, usage, plan, limits and the CSRF token. |
 | `POST /api/review` | Run a review. JSON, or server-sent events when `stream` is true. |

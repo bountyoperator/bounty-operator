@@ -296,15 +296,18 @@ async function sendAttempt(env: Env, api: Stripe, row: Topup, now: number, gate:
   }
   // This compare-and-set is the send boundary. A disable before it wins; a
   // disable after it sees a payment already in progress, which may settle.
-  // It also re-checks the balance trigger the customer consented to, as the
-  // reservation did: a reservation left by a stopped Worker can wait for a
-  // later run, and a top-up or grant in between means none is due.
+  // It also re-checks every condition of the reservation that can change
+  // while a reservation left by a stopped Worker waits for a later run: the
+  // balance trigger the customer consented to, a running request, and a
+  // dispute opened meanwhile, which would refuse a reservation made now.
   const claimed = await env.DB.prepare(`UPDATE api_topups SET initiated_at = ?, updated_at = ? WHERE id = ? AND initiated_at = 0 AND status = 'pending' AND auto_month = ?
     AND EXISTS(SELECT 1 FROM api_autotopup_settings s LEFT JOIN api_wallets w ON w.account_id = s.account_id
       WHERE s.account_id = ? AND s.enabled = 1 AND s.revision = ? AND s.payment_method = ?
       AND COALESCE(w.balance_micro, 0) >= 0 AND COALESCE(w.balance_micro, 0) - COALESCE(w.reserved_micro, 0) < s.threshold_micro)
-    AND NOT EXISTS(SELECT 1 FROM inference_requests WHERE account_id = ? AND status = 'running')`)
-    .bind(now, now, row.id, utcMonth(now), row.account_id, row.auto_revision, row.payment_method, row.account_id).run();
+    AND NOT EXISTS(SELECT 1 FROM inference_requests WHERE account_id = ? AND status = 'running')
+    AND NOT EXISTS(SELECT 1 FROM api_topups WHERE account_id = ? AND dispute_open = 1)
+    AND NOT EXISTS(SELECT 1 FROM api_monthly_grants WHERE account_id = ? AND dispute_open = 1)`)
+    .bind(now, now, row.id, utcMonth(now), row.account_id, row.auto_revision, row.payment_method, row.account_id, row.account_id, row.account_id).run();
   if (!claimed.meta.changes) {
     // The settings or the balance changed before the send boundary, so nothing reached Stripe.
     await env.DB.prepare("UPDATE api_topups SET status = 'expired', updated_at = ? WHERE id = ? AND initiated_at = 0 AND status = 'pending'").bind(now, row.id).run();

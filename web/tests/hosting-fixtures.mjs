@@ -18,6 +18,11 @@ export const HOSTING_FAILURES = {
   // AbortSignal.timeout rejects the fetch with this error. hosting-state tests
   // also wait for the real five-second signal once.
   timeout: () => Promise.reject(new DOMException('The operation was aborted due to timeout', 'TimeoutError')),
+  // The same deadline reached while the body is read: the stream fails instead
+  // of the fetch, under the other abort name. It is still a timeout, not a bad body.
+  'body aborted': () => new Response(new ReadableStream({
+    start(controller) { controller.error(new DOMException('The operation was aborted', 'AbortError')); },
+  }), { status: 200, headers: { 'Content-Type': 'application/json' } }),
   redirect: () => new Response(null, { status: 302, headers: { Location: 'https://other.example/graphql' } }),
 };
 
@@ -31,5 +36,6 @@ export const HOSTING_REASONS = {
   'underBalance missing': 'no_flag',
   'malformed JSON': 'malformed_body',
   timeout: 'timeout',
+  'body aborted': 'timeout',
   redirect: 'redirect',
 };

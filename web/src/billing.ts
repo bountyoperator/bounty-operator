@@ -56,6 +56,14 @@ export function apiBillingReady(env: Env): boolean {
 export type TopupsReason = 'disabled' | 'billing_not_ready' | 'inference_unavailable' | 'hosting_paused' | `hosting_unknown:${string}` | 'check_failed';
 export interface TopupsDecision { open: boolean; reason: TopupsReason | null }
 
+/**
+ * The same reason without the hosting detail, for the account panel: either
+ * our own configuration ('disabled', 'billing_not_ready') or the model service
+ * ('unavailable', 'paused', 'unknown'). The panel's text can then name the
+ * right cause instead of blaming the model service for an operator's switch.
+ */
+export type TopupsClosure = 'disabled' | 'billing_not_ready' | 'unavailable' | 'paused' | 'unknown';
+
 /** Why configuration alone keeps manual API top-ups closed, or null when it allows them. Reads nothing. */
 export function apiTopupsConfigClosure(env: Env): 'disabled' | 'billing_not_ready' | null {
   if (env.API_TOPUPS_ENABLED !== 'true') return 'disabled';
@@ -74,6 +82,16 @@ export function apiTopupsDecision(env: Env, billing: InferenceBilling): TopupsDe
   if (billing.status === 'paused') return { open: false, reason: 'hosting_paused' };
   if (billing.status === 'unknown') return { open: false, reason: `hosting_unknown:${billing.reason ?? 'unread'}` };
   return { open: false, reason: 'inference_unavailable' };
+}
+
+/** That decision as a closure for the panel, or null while manual top-ups are open. */
+export function apiTopupsClosure({ open, reason }: TopupsDecision): TopupsClosure | null {
+  if (open || !reason) return null;
+  if (reason === 'disabled' || reason === 'billing_not_ready') return reason;
+  if (reason === 'hosting_paused') return 'paused';
+  if (reason === 'inference_unavailable') return 'unavailable';
+  // 'check_failed' and every hosting_unknown reason: the state is not known.
+  return 'unknown';
 }
 
 function unavailable(message = 'Subscriptions are not open right now. The free plan works as usual.'): ApiError {

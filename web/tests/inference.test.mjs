@@ -717,7 +717,7 @@ test('each unknown hosting read is logged once with a reason code, never with th
     assert.deepEqual(await inferenceBilling(env), { status: 'unknown', reason: HOSTING_REASONS[name] }, `${name}: billing carries the reason`);
     assert.equal(warn.mock.callCount(), 1, `${name}: one line per read, none for the cached answer`);
     const [message, fields] = warn.mock.calls[0].arguments;
-    assert.equal(message, 'Hosting status unknown; payments closed', name);
+    assert.equal(message, 'Hosting status unknown', name);
     assert.equal(fields.reason, HOSTING_REASONS[name], name);
     const logged = JSON.stringify(warn.mock.calls[0].arguments);
     for (const secret of ['vendor-secret', 'Unauthorized', 'Field failed', 'Internal Server Error', 'other.example']) assert.ok(!logged.includes(secret), `${name} logged "${secret}"`);
@@ -736,6 +736,23 @@ test('each unknown hosting read is logged once with a reason code, never with th
   // Without a credential nothing is read, and the reason says so.
   env.RUNPOD_API_KEY = undefined;
   assert.deepEqual(await hostingRead(env), { state: 'unknown', reason: 'no_credential' });
+});
+
+test('an unknown hosting read says only that it is unknown; whether payments close is decided elsewhere', async (t) => {
+  const { env } = await setup();
+  env.INFRON_API_KEY = 'direct-secret';
+  env.INFERENCE_MODELS = JSON.stringify([model, { ...model, id: 'direct-test', endpoint: 'https://api.infron.ai', upstreamModel: 'test/direct' }]);
+  t.mock.method(globalThis, 'fetch', async (url, options) => {
+    assert.equal(url, HOSTING_API, 'the catalog reads funding, never a worker');
+    return HOSTING_FAILURES['fetch 500'](url, options);
+  });
+  const warn = t.mock.method(console, 'warn', () => {});
+  // The direct provider can spend credit, so purchases are open although the
+  // Runpod state is unknown. The read must not claim otherwise.
+  assert.deepEqual(await inferenceBilling(env), { status: 'available', reason: null });
+  assert.equal(warn.mock.callCount(), 0, 'a direct provider answers without reading Runpod');
+  await inferenceCatalog(env);
+  assert.deepEqual(warn.mock.calls.map((call) => call.arguments), [['Hosting status unknown', { reason: 'http_500' }]]);
 });
 
 test('a worker /health 200 never opens payments; a worker 402 closes them until the hosting API answers again', async (t) => {
