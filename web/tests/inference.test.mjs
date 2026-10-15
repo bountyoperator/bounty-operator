@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { apiCreditData, authenticateInference, createInferenceKey, hasApiLiability, reapInferenceHolds, reserveInference, settleInference } from '../src/api-credits.ts';
-import { clearHostingState, inferenceCatalog, inferenceEndpoint, inferenceModels, inferencePaused, inferenceStatus, parseInference, startsOnDemand, usageCounters } from '../src/inference.ts';
+import { clearHostingState, inferenceCatalog, inferenceEndpoint, inferenceModels, inferencePaused, inferenceStatus, parseInference, usageCounters } from '../src/inference.ts';
 import { parseReviewRequest, runHostedReview } from '../src/review.ts';
 import { addAccount, createCall, createContext, createEnv } from './worker-helpers.mjs';
 import { enableSupplierFixture } from './supplier-fixtures.mjs';
@@ -20,13 +20,102 @@ async function setup(balance = 20000000) {
 }
 const request = (token, body) => new Request('https://bountyoperator.com/v1/chat/completions', { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ model: model.id, messages: [{ role: 'user', content: 'Explain this test.' }], max_tokens: 20, ...body }) });
 
-test('only a model on a worker started on demand is said to need a start', () => {
+// ---------------------------------------------------------------------------
+// Call.onStarting: when the gateway tells a hosted review that a worker is starting
+// ---------------------------------------------------------------------------
+
+const answered = () => Response.json({ created: 1, choices: [{ message: { role: 'assistant', content: 'Ready' }, finish_reason: 'stop' }], usage: { prompt_tokens: 100, completion_tokens: 2 } });
+const starting = (call, counter) => ({ ...call, onStarting: () => { counter.told += 1; } });
+
+test('a warm worker, a paused account and a probe that can never succeed are not reported as starting', async (t) => {
+  for (const [name, health, status] of [['warm', 200, 200], ['paused', 402, 503], ['refused', 401, 503]]) {
+    const { env, token } = await setup();
+    const upstream = t.mock.method(globalThis, 'fetch', async (url) => url.endsWith('/health') ? new Response(null, { status: health }) : answered());
+    const counter = { told: 0 };
+    const response = await inferenceEndpoint(starting(createCall(request(token), env), counter));
+    assert.equal(response.status, status, name);
+    assert.equal(counter.told, 0, name);
+    upstream.mock.restore();
+  }
+});
+
+test('a model behind a gateway is never reported as starting, however slow it is', async (t) => {
+  const { env, token } = await setup();
   const gateway = { ...model, id: 'gateway-model', endpoint: 'https://api.infron.ai', upstreamModel: 'z-ai/glm-5.3-flash-cybersecurity' };
-  const env = createEnv({ INFERENCE_MODELS: JSON.stringify([model, gateway]) });
-  assert.equal(startsOnDemand(env, model.id), true);
-  assert.equal(startsOnDemand(env, gateway.id), false, 'a provider gateway is always running');
-  assert.equal(startsOnDemand(env, 'not-configured'), false);
-  assert.equal(startsOnDemand(createEnv(), model.id), false, 'no catalog, no start');
+  Object.assign(env, { INFERENCE_MODELS: JSON.stringify([gateway]), INFRON_API_KEY: 'infron-secret' });
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  let answer;
+  let reached;
+  const generating = new Promise((resolve) => { reached = resolve; });
+  t.mock.method(globalThis, 'fetch', async (url) => {
+    assert.equal(url, 'https://api.infron.ai/v1/chat/completions', 'a gateway is never probed');
+    reached();
+    return new Promise((resolve) => { answer = () => resolve(answered()); });
+  });
+  const counter = { told: 0 };
+  const pending = inferenceEndpoint(starting(createCall(request(token, { model: gateway.id }), env), counter));
+  await generating;
+  t.mock.timers.tick(30000);
+  answer();
+  assert.equal((await pending).status, 200);
+  assert.equal(counter.told, 0);
+});
+
+test('a worker whose probes say it is not ready is reported as starting once, and generates once', async (t) => {
+  const realTimeout = globalThis.setTimeout;
+  t.mock.method(globalThis, 'setTimeout', (callback, delay, ...args) => realTimeout(callback, delay === 15000 ? 0 : delay, ...args));
+  for (const notice of ['counted', 'throws']) {
+    const { env, token } = await setup();
+    let probes = 0;
+    let generations = 0;
+    const upstream = t.mock.method(globalThis, 'fetch', async (url) => {
+      if (url.endsWith('/health')) {
+        probes += 1;
+        if (probes === 2) throw new TypeError('fetch failed');
+        return new Response(null, { status: probes <= 3 ? 503 : 200 });
+      }
+      generations += 1;
+      return answered();
+    });
+    const counter = { told: 0 };
+    const call = starting(createCall(request(token), env), counter);
+    if (notice === 'throws') {
+      call.onStarting = () => {
+        counter.told += 1;
+        throw new Error('A notice that fails');
+      };
+    }
+    const response = await inferenceEndpoint(call);
+    assert.equal(response.status, 200, `${notice}: a failing notice never stops the start`);
+    assert.equal(probes, 4);
+    assert.equal(generations, 1);
+    assert.equal(counter.told, 1, `${notice}: 503, no answer and 503 again are one start`);
+    upstream.mock.restore();
+  }
+});
+
+test('a first probe still unanswered after five seconds is reported as starting then, and only then', async (t) => {
+  const { env, token } = await setup();
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  let answer;
+  let probing;
+  const probed = new Promise((resolve) => { probing = resolve; });
+  t.mock.method(globalThis, 'fetch', async (url) => {
+    if (!url.endsWith('/health')) return answered();
+    probing();
+    return new Promise((resolve) => { answer = () => resolve(new Response(null, { status: 200 })); });
+  });
+  const counter = { told: 0 };
+  const pending = inferenceEndpoint(starting(createCall(request(token), env), counter));
+  await probed;
+  t.mock.timers.tick(4999);
+  assert.equal(counter.told, 0);
+  t.mock.timers.tick(1);
+  assert.equal(counter.told, 1);
+  answer();
+  assert.equal((await pending).status, 200);
+  t.mock.timers.tick(60000);
+  assert.equal(counter.told, 1, 'said once');
 });
 
 test('harness discovery lists each configured model and retrieves its actual capabilities without starting workers', async (t) => {

@@ -459,7 +459,15 @@ async function runReviewTool(args, ctx) {
   // The same privacy check the server runs, run here first: a blocked file never leaves this machine.
   await prepareChecked(input, prepareRequest);
 
-  const stopProgress = ctx.progress(`Waiting for ${request.model}`);
+  const waiting = `Waiting for ${request.model}`;
+  const stopProgress = ctx.progress(waiting);
+  // A Bounty Operator model may first have to start, which can take ten
+  // minutes: longer than Node's fetch waits for the headers of a JSON answer.
+  // The review is read as a stream, which opens at once, and the progress
+  // message carries what the Worker says while the model starts.
+  const streamed = request.provider === 'bountyoperator'
+    ? { stream: true, onStatus: (message) => stopProgress.say?.(message ?? waiting) }
+    : {};
   let result;
   try {
     result = await hostedCall(ctx, '/api/client/review', {
@@ -470,7 +478,7 @@ async function runReviewTool(args, ctx) {
       mode: input.mode,
       acknowledgeWarnings: input.acknowledgeWarnings,
       ...request,
-    });
+    }, streamed);
   } finally {
     stopProgress();
   }

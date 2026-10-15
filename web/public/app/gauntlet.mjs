@@ -255,6 +255,8 @@ export function effectiveMode(state = workbench.get()) {
 // ---------------------------------------------------------------------------
 
 const LIVE_STATES = Object.freeze({ running: 'Running', done: 'Done', failed: 'Failed', queued: 'Stopped' });
+// Leads a live box's label while its hosted model starts.
+const STARTING_LABEL = 'Starting the model';
 
 /**
  * Drives one live box: the state chip, the clock, the label and the text as
@@ -287,9 +289,12 @@ export function liveController({ box, chip, clock, what, text, cancel = null }) 
         if (clock) clock.textContent = formatElapsed(elapsed);
       });
     },
-    /** What the Worker said before the answer started (see streamReview's onStatus); null puts the label back. */
+    /**
+     * What the Worker said before the answer started (see streamReview's onStatus); null puts the label back.
+     * The state leads: the label is cut at its end on a narrow screen.
+     */
     status(status) {
-      if (what) what.textContent = status?.state === 'starting' ? `${current} · starting the model` : current;
+      if (what) what.textContent = status?.state === 'starting' ? `${STARTING_LABEL} · ${current}` : current;
     },
     write(delta) {
       if (!node) return;

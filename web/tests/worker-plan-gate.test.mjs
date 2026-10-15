@@ -90,7 +90,7 @@ async function setup(t, plan = 'free') {
     /** POST /api/review as the signed-in browser. */
     web: (profile, extra) => send('/api/review', request(profile, { apiKey: KEY, ...extra }), { Origin: SITE_ORIGIN, Cookie: `__Host-bounty-session=${SESSION}`, 'X-CSRF-Token': CSRF }),
     /** POST /api/client/review, which the local MCP package calls for run_review. */
-    client: (profile) => send('/api/client/review', request(profile, { apiKey: KEY }), { Authorization: `Bearer ${TOKEN}` }),
+    client: (profile, extra) => send('/api/client/review', request(profile, { apiKey: KEY, ...extra }), { Authorization: `Bearer ${TOKEN}` }),
     /** run_review on the remote MCP endpoint. */
     mcp: (profile) => send('/api/mcp', { jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: 'run_review', arguments: request(profile) } }, { Authorization: `Bearer ${TOKEN}`, 'X-Provider-Key': KEY }),
   };
@@ -168,6 +168,34 @@ test('POST /api/client/review refuses verdict and panel for a free account and r
     assert.equal(JSON.parse(answer.text).profile.id, profile);
   }
   assert.equal(paid.providerCalls.length, 2);
+});
+
+test('POST /api/client/review answers with a stream when asked, still gated and counted as an MCP review', async (t) => {
+  const free = await setup(t, 'free');
+  // The gate comes before the reservation, so its refusal is still JSON with its status.
+  for (const profile of GATED) {
+    const answer = await free.client(profile, { stream: true });
+    assert.equal(answer.status, 403, profile);
+    assert.match(answer.type, /^application\/json/);
+    assert.deepEqual(JSON.parse(answer.text), refusal(profile));
+  }
+  assert.equal(free.providerCalls.length, 0);
+
+  const answer = await free.client('scope', { stream: true });
+  assert.equal(answer.status, 200);
+  assert.equal(answer.type, 'text/event-stream; charset=utf-8');
+  const events = answer.text.split('\n\n').filter((block) => block.startsWith('event:')).map((block) => {
+    const [name, data] = block.split('\n');
+    return { event: name.slice('event: '.length), data: JSON.parse(data.slice('data: '.length)) };
+  });
+  // A hosted profile's scanner may release the text in several pieces.
+  assert.deepEqual([...new Set(events.slice(0, -1).map((item) => item.event))], ['delta']);
+  assert.equal(events.slice(0, -1).map((item) => item.data.text).join(''), REVIEW);
+  const done = events.at(-1);
+  assert.equal(done.event, 'done');
+  assert.equal(done.data.review, REVIEW);
+  assert.equal(done.data.profile.id, 'scope');
+  assert.deepEqual(free.reviews(), [{ status: 'completed', profile: 'scope', channel: 'mcp' }]);
 });
 
 test('MCP run_review refuses verdict and panel for a free account and runs them on Operator', async (t) => {

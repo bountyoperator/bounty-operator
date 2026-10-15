@@ -648,6 +648,12 @@ async function readEventStream(response, { onDelta, onStatus, progress, arm }) {
     }
   } finally {
     reader.cancel().catch(() => {});
+    // A stream that ends with no text, in `done`, `error` or a dropped
+    // connection, still withdraws its status before the caller hears the outcome.
+    if (status) {
+      status = false;
+      safely(onStatus, null);
+    }
   }
 
   if (failure) throw failure;
@@ -733,9 +739,10 @@ async function runReview(body, { onDelta, onStatus, signal }, progress, limits) 
  * POSTs `{ ...body, stream: true }` to /api/review. `onDelta(text)` receives
  * each piece of the review. `onStatus(status)` receives what the Worker says
  * before the review starts, a ReviewStatus: today only that a hosted model is
- * starting, which can take minutes. Show `status.message` while waiting. When
- * the first piece of the review follows a status, `onStatus(null)` comes just
- * before it: the status no longer applies. Then exactly one of these happens:
+ * starting, which can take minutes. Show `status.message` while waiting.
+ * `onStatus(null)` means the status no longer applies: it comes just before
+ * the first piece of the review, or, when the stream ends with no text, before
+ * the outcome below. Then exactly one of these happens:
  *   - `onDone(result)` and the promise resolves with `result`;
  *   - the call fails: with `onError` given, `onError(apiError)` is called and
  *     the promise resolves with null; without it, the promise rejects with the

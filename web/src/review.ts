@@ -10,7 +10,7 @@ import type { Call, Env } from './env.ts';
 import { count } from './funnel.ts';
 import { instructionsFor, outputScanner } from './hosted.ts';
 import { ApiError, errorBody } from './http.ts';
-import { STARTUP_MS, inferenceEndpoint, startsOnDemand } from './inference.ts';
+import { STARTUP_MS, inferenceEndpoint } from './inference.ts';
 import { LEASE_SECONDS, extendLease, finishReview, paidAccess, reserveReview } from './quota.mjs';
 
 export type Channel = 'web' | 'mcp';
@@ -66,10 +66,10 @@ const KEEP_ALIVE_MS = 5000;
 // often. A hosted model can take ten minutes to start, far longer than a
 // browser or a proxy waits on a silent request.
 const WARMING_KEEP_ALIVE_MS = 15000;
-// A Bounty Operator model that has not accepted the review by then is starting,
-// and the reader is told so once.
-const STARTING_NOTICE_MS = 5000;
-/** The `status` event a streamed review sends while a hosted model starts. */
+/**
+ * The `status` event a streamed review sends once, when the Model API finds
+ * that the model's worker is starting (Call.onStarting; see readyWorker).
+ */
 export const STARTING_STATUS = Object.freeze({
   state: 'starting',
   message: `Starting the model. The first request after a quiet spell can take up to ${STARTUP_MS / 60000} minutes; you are not charged for the wait.`,
@@ -383,8 +383,9 @@ function toResult(prepared: Prepared, review: string, answer: ProviderAnswer): R
 }
 
 function providerCall(call: Call, input: ReviewRequest, prepared: Prepared, signal: AbortSignal) {
+  // call.onStarting goes with the in-process call: the Model API knows when a worker is starting.
   const inProcess = input.provider === 'bountyoperator'
-    ? { fetch: (url: string, init?: RequestInit) => inferenceEndpoint({ request: new Request(url, init), env: call.env, ctx: call.ctx, url: new URL(url) }) }
+    ? { fetch: (url: string, init?: RequestInit) => inferenceEndpoint({ request: new Request(url, init), env: call.env, ctx: call.ctx, url: new URL(url), onStarting: call.onStarting }) }
     : {};
   return { provider: input.provider, model: input.model, apiKey: input.apiKey, prepared, signal, ...inProcess };
 }
@@ -549,19 +550,17 @@ async function* withKeepAlive<T>(source: AsyncIterable<T>, intervalMs: number): 
 
 /**
  * Waits for the provider to accept a streamed review. Until it does, `beat`
- * runs every WARMING_KEEP_ALIVE_MS and `notice`, when given, runs once after
- * STARTING_NOTICE_MS. Neither runs after the provider has answered or failed.
+ * runs every WARMING_KEEP_ALIVE_MS. It never runs after the provider has
+ * answered or failed.
  */
-async function whileOpening<T>(opening: Promise<T>, beat: () => void, notice: (() => void) | null): Promise<T> {
-  // Both timers stay inside this function, so their types are whatever
-  // setInterval and setTimeout return; see withKeepAlive.
+async function whileOpening<T>(opening: Promise<T>, beat: () => void): Promise<T> {
+  // The timer stays inside this function, so its type is whatever setInterval
+  // returns; see withKeepAlive.
   const beats = setInterval(beat, WARMING_KEEP_ALIVE_MS);
-  const noticeTimer = notice ? setTimeout(notice, STARTING_NOTICE_MS) : null;
   try {
     return await opening;
   } finally {
     clearInterval(beats);
-    if (noticeTimer !== null) clearTimeout(noticeTimer);
   }
 }
 
@@ -574,11 +573,12 @@ async function whileOpening<T>(opening: Promise<T>, beat: () => void, notice: ((
  *
  * The stream opens as soon as the review is reserved, before the provider has
  * answered: a hosted model can take ten minutes to start. Until the provider
- * accepts the request a `: keep-alive` comment goes out every 15 seconds, and
- * a Bounty Operator review on a model started on demand that has not answered
- * after 5 seconds gets one `status` event, STARTING_STATUS. An error the
- * provider reports before its first token (bad key, unknown model, rate limit,
- * a model that did not start) is therefore an `error` event too.
+ * accepts the request a `: keep-alive` comment goes out every 15 seconds. A
+ * Bounty Operator review whose model the Model API finds starting gets one
+ * `status` event, STARTING_STATUS; a warm model and any other provider never
+ * send one. An error the provider reports before its first token (bad key,
+ * unknown model, rate limit, a model that did not start) is therefore an
+ * `error` event too.
  *
  * Errors found before anything is reserved or sent (paused reviews, the plan,
  * the inputs, the allowance) are thrown, so the caller answers them as
@@ -608,13 +608,6 @@ export async function streamHostedReview({ env, ctx, request }: Call, accountId:
     ctx.waitUntil(extendLease(env.DB, accountId, reviewId, now).catch(() => {}));
   };
 
-  // The provider call starts now, and the response does not wait for it. The
-  // pump reads the outcome; until then a failure is not an unhandled rejection.
-  const opening = openProviderStream({ env, ctx, request, url: new URL(request.url) }, input, prepared, abort.signal, keepLease);
-  opening.catch(() => {});
-  // Only a Bounty Operator model on a worker started on demand can be starting.
-  const coldStart = input.provider === 'bountyoperator' && startsOnDemand(env, input.model);
-
   const { readable, writable } = new TransformStream<Uint8Array, Uint8Array>();
   const writer = writable.getWriter();
   const encoder = new TextEncoder();
@@ -627,6 +620,26 @@ export async function streamHostedReview({ env, ctx, request }: Call, accountId:
       throw error;
     }
   };
+  // Not awaited: a write resolves only once the reader takes it, and the
+  // provider call must not wait for that. A write that fails still stops it.
+  const sendNow = (text: string): void => {
+    void send(text).catch(() => {});
+  };
+
+  // The Model API calls this when it finds the model's worker starting. It is
+  // said once, and only before the provider has accepted the review.
+  let opened = false;
+  let announced = false;
+  const onStarting = (): void => {
+    if (opened || announced) return;
+    announced = true;
+    sendNow(sseEvent('status', STARTING_STATUS));
+  };
+
+  // The provider call starts now, and the response does not wait for it. The
+  // pump reads the outcome; until then a failure is not an unhandled rejection.
+  const opening = openProviderStream({ env, ctx, request, url: new URL(request.url), onStarting }, input, prepared, abort.signal, keepLease);
+  opening.catch(() => {});
 
   // The answer of a hosted profile passes through the scanner, which holds
   // text back until it is known not to open a copy of the method.
@@ -648,20 +661,13 @@ export async function streamHostedReview({ env, ctx, request }: Call, accountId:
       await send(sseEvent('delta', { text }));
       delivered += text.length;
     };
-    // Not awaited: a write resolves only once the reader takes it, and the
-    // provider call must not wait for that. A write that fails still stops it.
-    const sendNow = (text: string): void => {
-      void send(text).catch(() => {});
-    };
     try {
-      const events = await whileOpening(
-        opening,
-        () => {
-          keepLease();
-          sendNow(': keep-alive\n\n');
-        },
-        coldStart ? () => sendNow(sseEvent('status', STARTING_STATUS)) : null,
-      );
+      const events = await whileOpening(opening, () => {
+        keepLease();
+        sendNow(': keep-alive\n\n');
+      }).finally(() => {
+        opened = true;
+      });
       for await (const event of withKeepAlive(events, KEEP_ALIVE_MS)) {
         keepLease();
         if (event === KEEP_ALIVE) {
@@ -696,7 +702,9 @@ export async function streamHostedReview({ env, ctx, request }: Call, accountId:
   // waitUntil keeps the Worker alive to settle the reservation after the client has left.
   ctx.waitUntil(pump());
 
+  // no-store and no-transform: a cache or proxy on the way must neither keep
+  // the stream nor hold it back to rewrite it.
   return new Response(readable, {
-    headers: { 'Content-Type': 'text/event-stream; charset=utf-8', 'X-Accel-Buffering': 'no' },
+    headers: { 'Content-Type': 'text/event-stream; charset=utf-8', 'Cache-Control': 'no-store, no-transform', 'X-Accel-Buffering': 'no' },
   });
 }

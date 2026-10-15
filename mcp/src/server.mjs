@@ -99,18 +99,35 @@ export function createServer({ env = process.env, cwd = process.cwd(), fetch = g
     return rpcResult(id, { tools });
   }
 
-  /** Sends a progress notification every few seconds while a slow call runs. Returns the function that stops it. */
+  /**
+   * Sends a progress notification every few seconds while a slow call runs.
+   * Returns the function that stops it. Its `say(message)` changes the message
+   * and sends it at once, as when a hosted model is found to be starting.
+   */
   function progressFor(params, notify) {
     const token = isObject(params._meta) ? params._meta.progressToken : undefined;
+    // One count for the whole request: each notification must carry a higher progress.
+    let progress = 0;
     return (message) => {
-      if (!isRpcId(token)) return () => {};
-      let progress = 0;
-      const timer = setInterval(() => {
+      if (!isRpcId(token)) return Object.assign(() => {}, { say() {} });
+      let current = message;
+      let stopped = false;
+      const send = () => {
         progress += 1;
-        notify({ jsonrpc: '2.0', method: 'notifications/progress', params: { progressToken: token, progress, message } });
-      }, PROGRESS_INTERVAL_MS);
+        notify({ jsonrpc: '2.0', method: 'notifications/progress', params: { progressToken: token, progress, message: current } });
+      };
+      const timer = setInterval(send, PROGRESS_INTERVAL_MS);
       timer.unref?.();
-      return () => clearInterval(timer);
+      const stop = () => {
+        stopped = true;
+        clearInterval(timer);
+      };
+      stop.say = (next) => {
+        if (stopped || next === current) return;
+        current = next;
+        send();
+      };
+      return stop;
     };
   }
 

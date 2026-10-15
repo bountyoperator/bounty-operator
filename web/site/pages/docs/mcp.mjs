@@ -134,7 +134,7 @@ tool_timeout_sec = ${CODEX_TIMEOUT_S}`,
   '~/.codex/config.toml',
   'Codex: local server with a token',
 )}
-<p class="fine">${inline(`Codex stops a tool call after 60 seconds by default, so keep the \`tool_timeout_sec\` line: ${CODEX_TIMEOUT_S} seconds is above the longest hosted review. On the remote endpoint a hosted review runs until the model finishes, for up to 15 minutes, and sends progress every 10 seconds. Through the local server it ends within 270 seconds.`)}</p>`,
+<p class="fine">${inline(`Codex stops a tool call after 60 seconds by default, so keep the \`tool_timeout_sec\` line: ${CODEX_TIMEOUT_S} seconds is above the longest hosted review. On the remote endpoint a hosted review runs until the model finishes, for up to 15 minutes, and sends progress every 10 seconds. Through the local server it ends within 270 seconds, or runs for up to 15 minutes on a Bounty Operator model, whose first request after a quiet spell can wait up to 10 minutes for the model to start.`)}</p>`,
   },
   {
     id: 'cursor',

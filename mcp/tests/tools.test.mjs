@@ -2,13 +2,15 @@
 // nothing here touches the network.
 
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
 import { GAUNTLET, CORE_PROFILE_IDS, PROFILES } from '../lib/profiles.mjs';
 import { PROVIDERS } from '../lib/providers.mjs';
 import { LIMITS, REVIEW_CONTRACT } from '../lib/review-core.mjs';
 import { runsHosted, stageFile } from '../src/gauntlet.mjs';
-import { PROVIDER_KEY, TOKEN, VAULT, failure, fakeFetch, project, reviewFor, server, sha256 } from './helpers.mjs';
+import { STREAM_TIMEOUT_MS, TIMEOUT_MS } from '../src/hosted.mjs';
+import { PROVIDER_KEY, TOKEN, VAULT, eventStream, failure, fakeFetch, project, reviewFor, server, sha256 } from './helpers.mjs';
 
 const MARKER = 'UNIQUE_BODY_MARKER_7f3a';
 const SOURCE = `// ${MARKER}\n${VAULT}`;
@@ -678,6 +680,227 @@ test('run_review reports progress while it waits, to a client that asked for it'
   release();
   await silent;
   assert.deepEqual(quiet, []);
+});
+
+// ---------------------------------------------------------------------------
+// run_review on a Bounty Operator model: read as a stream through a cold start
+// ---------------------------------------------------------------------------
+
+const BO_KEY = `bo_api_${'b'.repeat(40)}`;
+const BO_ENV = { BOUNTY_OPERATOR_TOKEN: TOKEN, BOUNTYOPERATOR_API_KEY: BO_KEY };
+const BO_ARGS = { files: [{ name: 'a.sol', content: VAULT }], provider: 'bountyoperator', model: 'cyber-qwen-27b-awq' };
+const STARTING = 'Starting the model. The first request after a quiet spell can take up to 10 minutes; you are not charged for the wait.';
+
+/** The `done` body: the same body the JSON route returns. */
+function reviewBody(model) {
+  return {
+    review: reviewFor('input-1/a.sol'),
+    manifest: [{ label: 'input-1/a.sol', bytes: 1, sha256: sha256('x'), lines: 3 }],
+    profile: { id: 'solidity', name: 'Solidity review' },
+    mode: 'bounty',
+    model,
+    truncated: false,
+    refused: false,
+    usage: { input: 900, output: 300 },
+  };
+}
+
+async function turns(count = 10) {
+  for (let turn = 0; turn < count; turn += 1) await new Promise((resolve) => setImmediate(resolve));
+}
+
+/** The time limits each call set, in order. */
+function recordLimits(t) {
+  const limits = [];
+  const timeout = AbortSignal.timeout.bind(AbortSignal);
+  t.mock.method(AbortSignal, 'timeout', (milliseconds) => {
+    limits.push(milliseconds);
+    return timeout(milliseconds);
+  });
+  return limits;
+}
+
+test('the stream limit covers the Worker allowance for a Bounty Operator model, and a JSON call keeps Node fetch limit', async () => {
+  const providers = await readFile(new URL('../lib/providers.mjs', import.meta.url), 'utf8');
+  const allowance = Number(/const BOUNTY_OPERATOR_CALL_LIMIT_MS = (\d+);/.exec(providers)?.[1]);
+  assert.equal(allowance, 930000, 'the Worker gives a hosted model 600 seconds to start and 300 to write, plus 30');
+  assert.ok(STREAM_TIMEOUT_MS > allowance, 'the local server waits longer than the Worker does');
+  assert.equal(STREAM_TIMEOUT_MS, 960000);
+  // Node's fetch stops waiting for response headers after 300 seconds, so a JSON call cannot wait longer.
+  assert.equal(TIMEOUT_MS, 300000);
+});
+
+test('run_review on a Bounty Operator model reads a stream, says while the model starts, and waits up to 960 seconds', async (t) => {
+  t.mock.timers.enable({ apis: ['setInterval'] });
+  const limits = recordLimits(t);
+  let stream;
+  const api = fakeFetch({
+    'POST /api/client/review': ({ signal }) => {
+      stream = eventStream(signal);
+      return { body: stream.body, headers: stream.headers };
+    },
+    'GET /api/client/account': () => ({ body: { usage: USAGE } }),
+  });
+  const instance = server({ fetch: api.fetch, env: BO_ENV });
+  const sent = [];
+  const reply = instance.handle(
+    { jsonrpc: '2.0', id: 'bo-1', method: 'tools/call', params: { name: 'run_review', arguments: BO_ARGS, _meta: { progressToken: 'tok-bo' } } },
+    (notification) => sent.push(notification.params),
+  );
+  while (!stream) await turns(1);
+
+  const [request] = api.calls;
+  assert.equal(request.body.stream, true, 'the review is asked for as a stream');
+  assert.equal(request.body.apiKey, BO_KEY);
+  assert.equal(request.headers.Accept, 'text/event-stream, application/json');
+
+  stream.send('status', { state: 'starting', message: STARTING });
+  await turns();
+  assert.deepEqual(sent, [{ progressToken: 'tok-bo', progress: 1, message: STARTING }], 'the start is passed on at once');
+  stream.comment();
+  t.mock.timers.tick(15000);
+  assert.deepEqual(sent.at(-1), { progressToken: 'tok-bo', progress: 2, message: STARTING }, 'and repeated while the model starts');
+
+  stream.send('delta', { text: '# Review\n' });
+  await turns();
+  assert.deepEqual(sent.at(-1), { progressToken: 'tok-bo', progress: 3, message: 'Waiting for cyber-qwen-27b-awq' }, 'the model is writing');
+  // A status once the review is arriving is old news.
+  stream.send('status', { state: 'starting', message: STARTING });
+  stream.send('done', reviewBody('cyber-qwen-27b-awq'));
+
+  const result = (await reply).result;
+  assert.equal(result.isError, false, result.content[0].text);
+  assert.equal(result.structuredContent.verdict, 'prove-first');
+  assert.equal(result.structuredContent.model, 'cyber-qwen-27b-awq');
+  assert.deepEqual(result.structuredContent.allowance, USAGE);
+  assert.equal(sent.length, 3);
+  assert.deepEqual(limits, [STREAM_TIMEOUT_MS, TIMEOUT_MS], 'the review waits 960 seconds, the account call 300');
+  assert.ok(!JSON.stringify(result).includes(BO_KEY));
+
+  // Another provider is one JSON call with the 300-second limit, as before.
+  limits.length = 0;
+  const other = reviewApi(reviewFor('input-1/a.sol'));
+  assert.equal((await server({ fetch: other.fetch, env: HOSTED_ENV }).tool('run_review', { ...BO_ARGS, provider: 'openrouter', model: 'm' })).isError, false);
+  assert.equal(other.calls[0].body.stream, undefined);
+  assert.equal(other.calls[0].headers.Accept, 'application/json');
+  assert.deepEqual(limits, [TIMEOUT_MS, TIMEOUT_MS]);
+});
+
+test('run_review on a Bounty Operator model fails with the code and details of an error event', async () => {
+  const sentence = 'The model is still starting or temporarily unavailable. No charge was made. Try again shortly.';
+  const api = fakeFetch({
+    'POST /api/client/review': ({ signal }) => {
+      const stream = eventStream(signal);
+      stream.send('status', { state: 'starting', message: STARTING });
+      stream.comment();
+      stream.send('error', { error: sentence, code: 'provider', kind: 'server', retryAfter: 30 });
+      return { body: stream.body, headers: stream.headers };
+    },
+    'GET /api/client/account': () => ({ body: { usage: USAGE } }),
+  });
+  const failed = failure(await server({ fetch: api.fetch, env: BO_ENV }).tool('run_review', BO_ARGS));
+  assert.deepEqual(failed, { kind: 'server', retryAfter: 30, error: sentence, code: 'provider' });
+  assert.equal(api.calls.filter((entry) => entry.path === '/api/client/review').length, 1, 'never retried');
+
+  // An error event without a usable body still fails, with a sentence of its own.
+  const bare = fakeFetch({
+    'POST /api/client/review': ({ signal }) => {
+      const stream = eventStream(signal);
+      stream.send('error', 'not json');
+      return { body: stream.body, headers: stream.headers };
+    },
+  });
+  const unreadable = failure(await server({ fetch: bare.fetch, env: BO_ENV }).tool('run_review', BO_ARGS));
+  assert.equal(unreadable.code, 'hosted');
+  assert.match(unreadable.error, /^The review did not finish\. Call account/);
+});
+
+test('a review stream that ends before its outcome fails as a dropped connection', async () => {
+  for (const [name, write] of [
+    ['closed', (stream) => { stream.send('status', { state: 'starting', message: STARTING }); stream.end(); }],
+    ['cut off in the done event', (stream) => { stream.send('delta', { text: '# Review' }); stream.raw('event: done\ndata: {"review": "# Rev'); stream.end(); }],
+    ['an unreadable done', (stream) => { stream.send('done', 'not json'); stream.end(); }],
+  ]) {
+    const api = fakeFetch({
+      'POST /api/client/review': ({ signal }) => {
+        const stream = eventStream(signal);
+        write(stream);
+        return { body: stream.body, headers: stream.headers };
+      },
+    });
+    const failed = failure(await server({ fetch: api.fetch, env: BO_ENV }).tool('run_review', BO_ARGS));
+    assert.equal(failed.code, 'network', name);
+    assert.match(failed.error, /^The connection closed before the review finished\. Call account/, name);
+  }
+
+  // The connection drops while the body is read: the read itself fails.
+  const encoder = new TextEncoder();
+  const dropped = fakeFetch({
+    'POST /api/client/review': () => ({
+      body: new ReadableStream({
+        start(controller) { controller.enqueue(encoder.encode(': keep-alive\n\n')); },
+        pull(controller) { controller.error(new TypeError('terminated')); },
+      }),
+      headers: { 'Content-Type': 'text/event-stream' },
+    }),
+  });
+  const failed = failure(await server({ fetch: dropped.fetch, env: BO_ENV }).tool('run_review', BO_ARGS));
+  assert.equal(failed.code, 'network');
+  assert.match(failed.error, /^The connection to Bounty Operator closed before its answer was complete\./, 'reached, then lost: not "could not be reached"');
+});
+
+test('on the stream path, an answer that is not a stream is read as JSON: an early error, or a server that does not stream', async () => {
+  const busy = fakeFetch({
+    'POST /api/client/review': () => ({ status: 409, body: { error: 'Another review is running for this account.', code: 'review_running' } }),
+  });
+  const refused = failure(await server({ fetch: busy.fetch, env: BO_ENV }).tool('run_review', BO_ARGS));
+  assert.deepEqual(refused, { error: 'Another review is running for this account.', code: 'review_running' });
+  assert.equal(busy.calls[0].body.stream, true);
+
+  const older = fakeFetch({
+    'POST /api/client/review': ({ body }) => ({ body: reviewBody(body.model), headers: { 'Content-Type': 'application/json' } }),
+    'GET /api/client/account': () => ({ body: { usage: USAGE } }),
+  });
+  const result = await server({ fetch: older.fetch, env: BO_ENV }).tool('run_review', BO_ARGS);
+  assert.equal(result.isError, false, result.content[0].text);
+  assert.equal(result.structuredContent.verdict, 'prove-first');
+});
+
+test('progress keeps one rising count when its message changes, and says nothing after the call', async (t) => {
+  t.mock.timers.enable({ apis: ['setInterval'] });
+  let stream;
+  const api = fakeFetch({
+    'POST /api/client/review': ({ signal }) => {
+      stream = eventStream(signal);
+      return { body: stream.body, headers: stream.headers };
+    },
+    'GET /api/client/account': () => ({ body: { usage: USAGE } }),
+  });
+  const instance = server({ fetch: api.fetch, env: BO_ENV });
+  const sent = [];
+  const reply = instance.handle(
+    { jsonrpc: '2.0', id: 'bo-2', method: 'tools/call', params: { name: 'run_review', arguments: BO_ARGS, _meta: { progressToken: 'tok-2' } } },
+    (notification) => sent.push(notification.params),
+  );
+  while (!stream) await turns(1);
+  t.mock.timers.tick(15000);
+  stream.send('status', { state: 'starting', message: STARTING });
+  await turns();
+  stream.send('status', { state: 'starting', message: STARTING });
+  await turns();
+  t.mock.timers.tick(15000);
+  stream.send('delta', { text: '# Review\n' });
+  await turns();
+  stream.send('done', reviewBody('cyber-qwen-27b-awq'));
+  assert.equal((await reply).result.isError, false);
+  t.mock.timers.tick(60000);
+
+  assert.deepEqual(sent.map((entry) => [entry.progress, entry.message]), [
+    [1, 'Waiting for cyber-qwen-27b-awq'],
+    [2, STARTING],
+    [3, STARTING],
+    [4, 'Waiting for cyber-qwen-27b-awq'],
+  ], 'a repeated message is not sent again at once, and nothing follows the response');
 });
 
 // ---------------------------------------------------------------------------

@@ -124,6 +124,98 @@ test('run_review runs through the Worker on the provider key from the environmen
   assert.equal(account.structuredContent.usage.remainingToday, 0);
 });
 
+test('run_review on a Bounty Operator model waits through an eight-minute cold start on the real Worker', { skip }, async (t) => {
+  const { worker, createEnv, createContext, createCall, addAccount, sha256, SITE_ORIGIN } = await load();
+  const [{ createInferenceKey }, { enableSupplierFixture }] = await Promise.all([
+    import(new URL('src/api-credits.ts', WEB)),
+    import(new URL('tests/supplier-fixtures.mjs', WEB)),
+  ]);
+  const model = {
+    id: 'cyber-test', name: 'Cyber test', source: 'test/model', revision: 'fixture', license: 'Apache-2.0', quantization: 'AWQ',
+    endpoint: 'https://contract.api.runpod.ai', upstreamModel: 'cyber-test',
+    inputRate: 2, outputRate: 8, minimumMicro: 10000, context: 32768, maxOutput: 8192,
+  };
+  const env = createEnv({ INFERENCE_ENABLED: 'true', RUNPOD_API_KEY: 'contract-vendor-key', INFERENCE_MODELS: JSON.stringify([model]) });
+  addAccount(env.DB, 'account-1');
+  enableSupplierFixture(env);
+  env.DB.sqlite.prepare('INSERT INTO api_ledger(id, account_id, amount_micro, kind, reference, created_at) VALUES(?, ?, ?, ?, ?, ?)').run('contract-credit', 'account-1', 20000000, 'topup', 'fixture', 1);
+  env.DB.sqlite
+    .prepare('INSERT INTO api_tokens (token_hash, id, account_id, label, created_at, expires) VALUES (?, ?, ?, ?, ?, ?)')
+    .run(await sha256(TOKEN), 'token-1', 'account-1', 'Local MCP', 1, Math.floor(Date.now() / 1000) + 7200);
+  const created = await createInferenceKey(createCall(new Request(`${SITE_ORIGIN}/api/inference/keys/create`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ label: 'Contract', budget_usd: 20 }),
+  }), env), { account_id: 'account-1' });
+  const { key } = await created.json();
+
+  t.mock.timers.enable({ apis: ['Date', 'setTimeout', 'setInterval'], now: Date.now() });
+  // Time limits run on the same clock, so a client limit shorter than the start would end the call.
+  t.mock.method(AbortSignal, 'timeout', (milliseconds) => {
+    const controller = new AbortController();
+    setTimeout(() => controller.abort(new DOMException('The operation timed out.', 'TimeoutError')), milliseconds);
+    return controller.signal;
+  });
+
+  // The GPU worker answers its health probe with 503 until eight minutes have passed.
+  const startedAt = Date.now();
+  const WARM_AFTER_MS = 480000;
+  let probes = 0;
+  let generations = 0;
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async (url) => {
+    if (url === `${model.endpoint}/health`) {
+      probes += 1;
+      return new Response(null, { status: Date.now() - startedAt >= WARM_AFTER_MS ? 200 : 503 });
+    }
+    assert.equal(url, `${model.endpoint}/v1/chat/completions`);
+    generations += 1;
+    const chunk = (content, finish = null) => `data: ${JSON.stringify({ choices: [{ delta: content === null ? {} : { content }, finish_reason: finish }] })}\n\n`;
+    const usage = `data: ${JSON.stringify({ choices: [], usage: { prompt_tokens: 1200, completion_tokens: 300 } })}\n\n`;
+    return new Response(chunk(reviewFor('input-1/src/Vault.sol')) + chunk(null, 'stop') + usage + 'data: [DONE]\n\n', { headers: { 'Content-Type': 'text/event-stream' } });
+  };
+  t.after(() => {
+    globalThis.fetch = originalFetch;
+  });
+
+  // A stream is read while the Worker writes it, so its work settles after the response is returned.
+  const contexts = [];
+  const toWorker = async (url, init) => {
+    const ctx = createContext();
+    contexts.push(ctx);
+    return worker.fetch(new Request(url, init), env, ctx);
+  };
+  const instance = server({ cwd: await project(t, {}), fetch: toWorker, env: { BOUNTY_OPERATOR_TOKEN: TOKEN, BOUNTYOPERATOR_API_KEY: key } });
+  const notes = [];
+  let answeredAt = null;
+  const reply = instance.handle(
+    {
+      jsonrpc: '2.0', id: 'cold-1', method: 'tools/call',
+      params: { name: 'run_review', arguments: { files: [{ name: 'src/Vault.sol', content: VAULT }], provider: 'bountyoperator', model: model.id, profile: 'solidity', mode: 'bounty' }, _meta: { progressToken: 'cold' } },
+    },
+    (notification) => notes.push({ at: Date.now() - startedAt, ...notification.params }),
+  );
+  void reply.then(() => { answeredAt = Date.now() - startedAt; });
+
+  for (let elapsed = 0; elapsed < WARM_AFTER_MS + 60000 && answeredAt === null; elapsed += 5000) {
+    t.mock.timers.tick(5000);
+    for (let turn = 0; turn < 10; turn += 1) await new Promise((resolve) => setImmediate(resolve));
+  }
+  const result = (await reply).result;
+  assert.equal(result.isError, false, result.content[0].text);
+  assert.equal(result.structuredContent.verdict, 'prove-first');
+  assert.ok(answeredAt >= WARM_AFTER_MS, `the review came back after the start, at ${answeredAt / 1000} s`);
+  assert.equal(generations, 1, 'the prompt is sent once, after the worker is up');
+  assert.ok(probes > 1);
+
+  // The agent's client heard that the model was starting, and kept hearing from the call past five minutes.
+  assert.match(notes[0].message, /^Starting the model\. The first request after a quiet spell can take up to 10 minutes/);
+  assert.ok(notes.some((note) => note.at > 300000), 'progress continued past 300 seconds');
+  assert.ok(notes.every((note, index) => index === 0 || note.progress > notes[index - 1].progress), 'progress rises');
+
+  for (const ctx of contexts) await ctx.settled();
+  const reviews = env.DB.sqlite.prepare('SELECT status, channel FROM reviews').all().map((row) => ({ ...row }));
+  assert.deepEqual(reviews, [{ status: 'completed', channel: 'mcp' }]);
+});
+
 test('a hosted profile runs on the Worker: the method reaches the provider and never this client', { skip }, async (t) => {
   const { local, providerCalls } = await connected(t, { 'report.md': '# Draft\nwithdraw has no access check.\n', 'src/Vault.sol': VAULT });
   const { tool } = local({ BOUNTY_OPERATOR_TOKEN: TOKEN, OPENROUTER_API_KEY: PROVIDER_KEY });

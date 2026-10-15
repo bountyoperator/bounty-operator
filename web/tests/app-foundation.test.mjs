@@ -988,15 +988,42 @@ describe('streamReview', () => {
           { signal: init.signal },
         ),
     });
-    const statuses = [];
-    const failures = [];
-    const result = await api.streamReview(REVIEW_BODY, { onStatus: (status) => statuses.push(status), onError: (error) => failures.push(error) });
+    const heard = [];
+    const result = await api.streamReview(REVIEW_BODY, { onStatus: (status) => heard.push(['status', status]), onError: (error) => heard.push(['error', error]) });
     assert.equal(result, null);
-    assert.equal(failures.length, 1);
-    assert.equal(failures[0].code, 'provider');
-    assert.equal(failures[0].status, 0);
-    assert.deepEqual(failures[0].data, { kind: 'server' });
-    assert.deepEqual(statuses, [{ state: 'starting', message: 'Starting the model.' }], 'the caller replaces the status with the failure');
+    assert.deepEqual(heard.map(([kind, value]) => (kind === 'error' ? kind : value)), [{ state: 'starting', message: 'Starting the model.' }, null, 'error'], 'the status is withdrawn before the failure is reported');
+    const failure = heard[2][1];
+    assert.equal(failure.code, 'provider');
+    assert.equal(failure.status, 0);
+    assert.deepEqual(failure.data, { kind: 'server' });
+  });
+
+  test('a stream that ends with no text withdraws its status: a done, or a dropped connection', async () => {
+    const starting = { state: 'starting', message: 'Starting the model.' };
+    const empty = { ...DONE, review: '' };
+    for (const [ending, events] of [
+      ['done', [sse('status', starting), ': keep-alive\n\n', sse('done', empty)]],
+      ['dropped', [sse('status', starting), ': keep-alive\n\n']],
+    ]) {
+      const api = await loadApi();
+      mockFetch({
+        'GET /api/account': () => jsonResponse(ACCOUNT),
+        'POST /api/review': ({ init }) => sseResponse(events, { signal: init.signal }),
+      });
+      const heard = [];
+      const result = await api.streamReview(REVIEW_BODY, {
+        onStatus: (status) => heard.push(status),
+        onDone: () => heard.push('done'),
+        onError: (error) => heard.push(error.code),
+      });
+      if (ending === 'done') {
+        assert.deepEqual(result, empty);
+        assert.deepEqual(heard, [starting, null, 'done'], 'null comes before onDone');
+      } else {
+        assert.equal(result, null);
+        assert.deepEqual(heard, [starting, null, 'stream_ended'], 'null comes before the failure');
+      }
+    }
   });
 
   test('a signed-out visitor is refused before the files and the key are sent', async () => {

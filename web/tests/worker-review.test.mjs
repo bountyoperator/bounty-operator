@@ -380,13 +380,21 @@ async function turns(count) {
   for (let turn = 0; turn < count; turn += 1) await new Promise((resolve) => setImmediate(resolve));
 }
 
+/** The Model API's streamed answer: the whole review, then the usage the gateway needs to settle. */
+function modelAnswer() {
+  const usage = `data: ${JSON.stringify({ choices: [], usage: { prompt_tokens: 1200, completion_tokens: 300 } })}\n\n`;
+  return new Response(chunk(REVIEW_TEXT) + chunk(null, 'stop') + usage + 'data: [DONE]\n\n', {
+    headers: { 'Content-Type': 'text/event-stream' },
+  });
+}
+
 /** Hold the in-process Model API at its health probe, without any real inference. */
 async function coldReview(t, fail = false) {
   let started;
   let warm;
   let warmingSignal;
   const warming = new Promise((resolve) => { started = resolve; });
-  const fixture = setup(t, (init) => {
+  const fixture = await hostedReview(t, (init) => {
     if (!init.body) {
       warmingSignal = init.signal;
       return new Promise((resolve, reject) => {
@@ -400,17 +408,25 @@ async function coldReview(t, fail = false) {
       });
     }
     if (fail) return new Response('Model unavailable', { status: 503 });
-    const usage = `data: ${JSON.stringify({ choices: [], usage: { prompt_tokens: 1200, completion_tokens: 300 } })}\n\n`;
-    return new Response(chunk(REVIEW_TEXT) + chunk(null, 'stop') + usage + 'data: [DONE]\n\n', {
-      headers: { 'Content-Type': 'text/event-stream' },
-    });
+    return modelAnswer();
   });
+  return { ...fixture, warming, warm: () => warm(), warmingSignal: () => warmingSignal };
+}
+
+/**
+ * A review on a Bounty Operator model through the in-process Model API.
+ * `respond` stands in for the supplier: the health probe (no body) and the
+ * generation call. `model` overrides the catalog entry, `env` the settings.
+ */
+async function hostedReview(t, respond, { model: overrides = {}, env: settings = {} } = {}) {
+  const fixture = setup(t, respond);
   const model = {
     id: 'cyber-test', name: 'Cyber test', source: 'test/model', revision: 'fixture', license: 'Apache-2.0', quantization: 'AWQ',
     endpoint: 'https://reviewtest.api.runpod.ai', upstreamModel: 'cyber-test',
     inputRate: 2, outputRate: 8, minimumMicro: 10000, context: 32768, maxOutput: 8192,
+    ...overrides,
   };
-  Object.assign(fixture.env, { INFERENCE_ENABLED: 'true', RUNPOD_API_KEY: 'review-test-vendor-key', INFERENCE_MODELS: JSON.stringify([model]) });
+  Object.assign(fixture.env, { INFERENCE_ENABLED: 'true', RUNPOD_API_KEY: 'review-test-vendor-key', INFERENCE_MODELS: JSON.stringify([model]), ...settings });
   enableSupplierFixture(fixture.env);
   fixture.env.DB.sqlite.prepare('INSERT INTO api_ledger(id, account_id, amount_micro, kind, reference, created_at) VALUES(?, ?, ?, ?, ?, ?)')
     .run('review-test-credit', ACCOUNT, 20000000, 'topup', 'fixture', 1);
@@ -425,7 +441,7 @@ async function coldReview(t, fail = false) {
     if (sql.startsWith('UPDATE reviews SET lease_until')) renewals += 1;
     return prepare(sql);
   });
-  return { ...fixture, input, warming, warm: () => warm(), warmingSignal: () => warmingSignal, renewals: () => renewals };
+  return { ...fixture, input, renewals: () => renewals };
 }
 
 for (const [name, run] of [['JSON', runHostedReview], ['collected', collectHostedReview], ['SSE', streamHostedReview]]) {
@@ -654,6 +670,107 @@ test('a Bounty Operator model that takes eight minutes to start still reaches th
 
   await ctx.settled();
   assert.equal(reviews(env)[0].status, 'completed');
+});
+
+const STATUS_EVENT = `event: status\ndata: ${JSON.stringify(STARTING_STATUS)}\n\n`;
+
+/** A supplier whose worker is up but whose generation call waits for `accept()`. It fails when its request is aborted. */
+function slowGeneration() {
+  const held = {};
+  held.reached = new Promise((resolve) => { held.reach = resolve; });
+  held.respond = (init) => {
+    if (!init.body) return new Response(null, { status: 200 });
+    held.signal = init.signal;
+    held.reach();
+    return new Promise((resolve, reject) => {
+      init.signal.addEventListener('abort', () => reject(init.signal.reason), { once: true });
+      held.accept = () => resolve(modelAnswer());
+    });
+  };
+  return held;
+}
+
+for (const [name, options] of [
+  ['a warm hosted worker', {}],
+  ['a Bounty Operator model behind a gateway', { model: { endpoint: 'https://api.infron.ai', upstreamModel: 'z-ai/glm-5.3-flash-cybersecurity' }, env: { INFRON_API_KEY: 'infron-test-key' } }],
+]) {
+  test(`${name} that is slow to accept the review gets keep-alives and no status`, async (t) => {
+    t.mock.timers.enable({ apis: ['Date', 'setTimeout', 'setInterval'], now: Date.now() });
+    const held = slowGeneration();
+    const { env, ctx, call, calls, input } = await hostedReview(t, held.respond, options);
+
+    const response = await streamHostedReview(call, ACCOUNT, input, 'web');
+    assert.equal(response.headers.get('Cache-Control'), 'no-store, no-transform', 'no cache or proxy keeps or rewrites the stream');
+    await held.reached;
+    const { received, finished } = collect(response);
+    t.mock.timers.tick(30000);
+    await turns(10);
+    assert.deepEqual(received, [KEEP_ALIVE_LINE, KEEP_ALIVE_LINE], 'a busy model is not said to be starting');
+
+    held.accept();
+    await finished;
+    assert.deepEqual(parseEvents(received.join('')).map((item) => item.event), ['delta', 'done']);
+    assert.equal(calls.filter((entry) => !entry.init.body).length, options.model ? 0 : 1, 'only a worker started on demand is probed');
+    await ctx.settled();
+    assert.equal(reviews(env)[0].status, 'completed');
+  });
+}
+
+test('a worker whose first probe says it is not ready is said to be starting at once', async (t) => {
+  t.mock.timers.enable({ apis: ['Date', 'setTimeout', 'setInterval'], now: Date.now() });
+  let probes = 0;
+  let probed;
+  const firstProbe = new Promise((resolve) => { probed = resolve; });
+  const { env, ctx, call, input } = await hostedReview(t, (init) => {
+    if (init.body) return modelAnswer();
+    probes += 1;
+    probed();
+    return new Response(null, { status: probes === 1 ? 503 : 200 });
+  });
+
+  const response = await streamHostedReview(call, ACCOUNT, input, 'web');
+  const { received, finished } = collect(response);
+  await firstProbe;
+  await turns(10);
+  assert.deepEqual(received, [STATUS_EVENT], 'said on the first answer, before five seconds have passed');
+
+  // The next probe, 15 seconds later, finds the worker up.
+  t.mock.timers.tick(15000);
+  await finished;
+  assert.equal(probes, 2);
+  assert.deepEqual(parseEvents(received.join('')).map((item) => item.event), ['status', 'delta', 'done']);
+  await ctx.settled();
+  assert.equal(reviews(env)[0].status, 'completed');
+});
+
+test('a reader that leaves while the model starts, with no abort signal, stops the start at the next write', async (t) => {
+  for (const write of ['status', 'keep-alive']) {
+    await t.test(`the failed ${write} write`, async (t) => {
+      t.mock.timers.enable({ apis: ['Date', 'setTimeout', 'setInterval'], now: Date.now() });
+      // A cold worker writes the status at 5 seconds; a busy warm one only the keep-alive at 15.
+      const held = write === 'status' ? null : slowGeneration();
+      const fixture = held ? await hostedReview(t, held.respond) : await coldReview(t);
+      const { env, ctx, call, input } = fixture;
+      const signal = held ? () => held.signal : fixture.warmingSignal;
+
+      const response = await streamHostedReview(call, ACCOUNT, input, 'web');
+      await (held ? held.reached : fixture.warming);
+      // The reader is gone. request.signal never fires, as behind some proxies.
+      await response.body.cancel();
+      const due = write === 'status' ? 5000 : 15000;
+      t.mock.timers.tick(due - 1);
+      await turns(10);
+      assert.equal(signal().aborted, false, 'nothing is written yet, so nothing is known');
+
+      t.mock.timers.tick(1);
+      await turns(10);
+      assert.equal(signal().aborted, true, `the failed ${write} write stops the supplier call`);
+      await ctx.settled();
+      assert.deepEqual(reviews(env), [{ status: 'failed', profile: 'solidity', channel: 'web' }]);
+      assert.equal(funnelCounts(env.DB)['review_fail:client_gone'], 1);
+      assert.equal(getEventListeners(call.request.signal, 'abort').length, 0, 'the caller abort listener is removed');
+    });
+  }
 });
 
 test('a streamed review sends deltas, then done with the whole review', async (t) => {

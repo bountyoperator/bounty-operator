@@ -157,7 +157,7 @@ env_vars = ["BOUNTY_OPERATOR_TOKEN", "OPENROUTER_API_KEY"]
 tool_timeout_sec = 1200
 ```
 
-A hosted review runs for up to 270 seconds. Codex stops a tool call after 60 by default, so keep the `tool_timeout_sec` line.
+A hosted review ends within 270 seconds. On a Bounty Operator model it runs for up to 15 minutes: the first request after a quiet spell can wait up to 10 minutes for the model to start, and the progress message says so while it does. Codex stops a tool call after 60 seconds by default, so keep the `tool_timeout_sec` line.
 
 The token and the key are read from the environment. Neither is a tool argument, and both are removed from every result.
 
@@ -195,7 +195,7 @@ A failed call returns `isError` with one JSON object: `error`, a sentence the ag
 | `provider_policy` | The provider blocked the request under its usage policy. The key is not the cause and the review is not counted. Call again with another model or provider, not the same one. |
 | `output_withheld` | The model repeated its instructions instead of reviewing, so the answer was stopped and the call used one review. Run it again or choose a stronger model. |
 | `bad_path`, `bad_root` | A path cannot be read under the working directory, or the working directory itself cannot be used. |
-| `network`, `timeout`, `cancelled` | The service was not reached, did not answer within 300 seconds, or the client cancelled the call. |
+| `network`, `timeout`, `cancelled` | The service was not reached or the connection closed before the answer, the service did not answer within 300 seconds (960 for a review on a Bounty Operator model), or the client cancelled the call. |
 
 ## Verify the download
 

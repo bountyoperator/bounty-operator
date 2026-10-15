@@ -786,7 +786,8 @@ describe('rules', () => {
     try {
       live.start('Stage 1 of 8 · Scope · cyber-qwen-27b-awq');
       live.status({ state: 'starting', message: 'Starting the model.' });
-      assert.equal(what.textContent, 'Stage 1 of 8 · Scope · cyber-qwen-27b-awq · starting the model');
+      // The state leads: a narrow screen cuts the label at its end.
+      assert.equal(what.textContent, 'Starting the model · Stage 1 of 8 · Scope · cyber-qwen-27b-awq');
       live.status(null);
       assert.equal(what.textContent, 'Stage 1 of 8 · Scope · cyber-qwen-27b-awq');
       live.status({ state: 'something new', message: 'Not known here.' });

@@ -175,7 +175,12 @@ async function clientReview(call: Call): Promise<Response> {
   const accountId = await bearerAccount(call);
   await rateLimit(call.env.DB, `review:${accountId}`, REVIEWS_PER_10_MIN, 600);
   const body = await readJson(call.request, REVIEW_BODY_BYTES);
-  return json(await runHostedReview(call, accountId, parseReviewRequest(body), 'mcp'));
+  const input = parseReviewRequest(body);
+  // The local MCP server asks for the stream on a Bounty Operator model. Its
+  // response then starts at once, and the keep-alives carry it through a cold
+  // start longer than Node's fetch waits for response headers (300 seconds).
+  if (body.stream === true) return streamHostedReview(call, accountId, input, 'mcp');
+  return json(await runHostedReview(call, accountId, input, 'mcp'));
 }
 
 async function clientAccount(call: Call): Promise<Response> {

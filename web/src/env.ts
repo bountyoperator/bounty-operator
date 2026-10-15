@@ -43,6 +43,12 @@ export interface Call {
   env: Env;
   ctx: ExecutionContext;
   url: URL;
+  /**
+   * Set only on the in-process Model API call a hosted review makes: called
+   * once when the model's worker is found to be starting, so the review can
+   * tell its reader. See readyWorker in inference.ts.
+   */
+  onStarting?: () => void;
 }
 
 export function seconds(): number {
