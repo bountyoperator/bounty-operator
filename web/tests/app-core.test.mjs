@@ -632,13 +632,14 @@ describe('deep links', () => {
   test('model catalog workload estimator and quickstart snippets respect per-request minimums and reasoning parameters', () => {
     assert.equal(DEFAULT_MODELS.length, 24);
     const qwen = DEFAULT_MODELS.find((m) => m.id === 'cyber-qwen-27b-awq');
+    // 24K in and 4K out is US$0.216 of tokens, under the US$0.30 floor that covers a cold start.
     const est = estimateRunCost(qwen.pricing, 24000, 4000);
-    assert.equal(Number(est.cost.toFixed(4)), 0.216);
-    assert.equal(est.runsPer20, 92);
-    assert.equal(est.runsPer2, 9);
+    assert.equal(Number(est.cost.toFixed(4)), 0.3);
+    assert.equal(est.runsPer20, 66);
+    assert.equal(est.runsPer2, 6);
     // Short workload stays at the model's minimum_request floor.
     const minEst = estimateRunCost(qwen.pricing, 1000, 500);
-    assert.equal(minEst.cost, 0.15);
+    assert.equal(minEst.cost, 0.3);
     assert.match(buildSnippet(qwen, 'curl'), /"chat_template_kwargs": \{ "enable_thinking": false \}/);
     const nex = DEFAULT_MODELS.find((m) => m.id === 'orca-nex-mini');
     assert.match(buildSnippet(nex, 'ts'), /"reasoning_effort": "low"/);

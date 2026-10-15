@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.9.15 — 2026-10-15
+
+Model API
+
+- The Model API is open. Qwen Cyber 27B AWQ is available to buy and use:
+  add prepaid credit, create a key and call it from any OpenAI-compatible
+  tool. It passed three live test requests on 15 October.
+- The catalog lists only models you can use today. The others return once
+  each one passes the same live test.
+- When the model has been idle, its first request waits up to 10 minutes
+  while a GPU starts. The model now loads from a cache, so that wait is
+  mostly set-up time that nobody is charged for. Requests after that answer
+  in seconds while it stays warm.
+- The minimum charge per request for Qwen Cyber 27B AWQ is US$0.30, so a
+  request that wakes the model covers the GPU time it uses.
+- While the API is closed, the catalog now says so in plain words.
+
 ## 0.9.14 — 2026-10-15
 
 Model API and reviews

@@ -29,7 +29,7 @@ ${docHead({
 <div id="model-api-catalog"></div>
 <div id="model-api-quickstart" class="catalog-quickstart" aria-label="Interactive quickstart"></div>
 <noscript><p>Enable JavaScript to filter models, estimate workload costs and copy model snippets. Full reference: <a href="/docs/model-api">/docs/model-api</a>.</p></noscript>
-<p class="help catalog-footnote">The first request after idle can take several minutes while the model starts. <a href="/docs/model-api#cost">What to expect</a></p>
+<p class="help catalog-footnote">When a model has been idle, its first request waits up to 10 minutes while a GPU starts and loads it. Requests after that answer in seconds while it stays warm. You are not charged for the wait. <a href="/docs/model-api#cost">What to expect</a></p>
 </section>
 <section class="docs-section" aria-labelledby="infron-stack">
 <div class="catalog-heading"><h2 id="infron-stack">Infron cybersecurity stack (BYO key)</h2><p class="help">Infron’s own USD rates per 1M tokens with your Infron key · separate from the prepaid catalog above</p></div>
