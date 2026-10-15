@@ -13,7 +13,11 @@
 //   3. scripts/leak-audit.mjs: no text of the hosted method is in a file git
 //      would publish, under web/public or in the MCP download.
 //   4. scripts/build-site.mjs --check: the pages in web/public match their sources.
-//   5. wrangler deploy --config wrangler.production.jsonc
+//   5. wrangler d1 migrations list DB --remote: the production database has every
+//      migration in web/migrations. A Worker deployed ahead of its schema fails
+//      every credit until the migration is applied. --dry-run skips this step,
+//      since it reads nothing remote.
+//   6. wrangler deploy --config wrangler.production.jsonc
 //
 // web/wrangler.jsonc is the public template. Its Worker has another name, so
 // `wrangler deploy` run by hand in web/ cannot replace the production Worker.
@@ -48,6 +52,25 @@ export function configRefusal(config = PRODUCTION_CONFIG, exists = existsSync) {
   return `Refusing to deploy: web/${config} does not exist. It holds the production account, routes and ids and is not in the repository.`;
 }
 
+// What Wrangler prints when the database has every migration. Any other
+// output, pending migrations and a failed read alike, stops the deploy.
+const MIGRATIONS_APPLIED = /No migrations to apply!/;
+
+/**
+ * Why the deploy must stop after the migration check, as one line, or null
+ * when Wrangler reported that every migration is applied.
+ *
+ * @param {number | null} status  Wrangler's exit status.
+ * @param {string} output  What it printed.
+ * @returns {string | null}
+ */
+export function migrationRefusal(status, output) {
+  if (status === 0 && MIGRATIONS_APPLIED.test(output)) return null;
+  return status === 0
+    ? 'Stopped: the production database has migrations that are not applied. Apply them first: npx wrangler d1 migrations apply DB --remote --config wrangler.production.jsonc, run in web/. Nothing was deployed.'
+    : 'Stopped: the production database migrations could not be listed. Nothing was deployed.';
+}
+
 /** Wrangler's own entry script, so it runs under this Node without a shell. */
 function wranglerEntry() {
   const require = createRequire(join(WEB_DIR, 'package.json'));
@@ -70,6 +93,8 @@ export function deploySteps({ config = PRODUCTION_CONFIG, dryRun = false, outDir
     { name: 'hosted profiles', args: [join(ROOT, 'scripts', 'select-profiles.mjs'), '--require-private'], cwd: ROOT },
     { name: 'leak audit', args: [join(ROOT, 'scripts', 'leak-audit.mjs')], cwd: ROOT },
     { name: 'page check', args: [join(ROOT, 'scripts', 'build-site.mjs'), '--check'], cwd: ROOT },
+    // Lists what web/migrations holds and the database does not, and applies nothing. Its output decides.
+    ...(dryRun ? [] : [{ name: 'database migrations', args: [wrangler, 'd1', 'migrations', 'list', 'DB', '--remote', '--config', config], cwd: WEB_DIR, checkOutput: migrationRefusal }]),
     { name: dryRun ? 'production bundle (nothing is deployed)' : 'deploy', args: deploy, cwd: WEB_DIR },
   ];
 }
@@ -123,6 +148,17 @@ function main(argv) {
   const steps = deploySteps({ ...options, outDir, wrangler: wranglerEntry() });
   for (const [index, step] of steps.entries()) {
     console.log(`\n[${index + 1}/${steps.length}] ${step.name}`);
+    if (step.checkOutput) {
+      // Read as well as shown, because the output decides.
+      const listed = spawnSync(process.execPath, step.args, { cwd: step.cwd, stdio: ['inherit', 'pipe', 'inherit'], encoding: 'utf8' });
+      process.stdout.write(listed.stdout ?? '');
+      const refusal = step.checkOutput(listed.status, listed.stdout ?? '');
+      if (refusal) {
+        console.error(refusal);
+        return 1;
+      }
+      continue;
+    }
     const result = spawnSync(process.execPath, step.args, { cwd: step.cwd, stdio: 'inherit' });
     if (result.status !== 0) {
       const deploying = index === steps.length - 1 && !options.dryRun;

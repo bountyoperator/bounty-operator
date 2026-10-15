@@ -1,11 +1,11 @@
 // OpenAI-compatible text/tool inference. This gateway stores usage, never content.
 import { boundedBody } from '../public/review-core.mjs';
-import { authenticateInference, reserveInference, settleInference } from './api-credits.ts';
+import { MICRO_USD, TOPUP_USD, authenticateInference, reserveInference, settleInference } from './api-credits.ts';
 import type { MeteredModel } from './api-credits.ts';
 import type { Call, Env } from './env.ts';
 import { ApiError, json, readJson } from './http.ts';
 import { rateLimit } from './rate.ts';
-import { markSupplierDispatched, supplierAvailability } from './supplier-costs.ts';
+import { markSupplierDispatched, supplierAvailability, supplierBudgetRefillable } from './supplier-costs.ts';
 
 export interface InferenceModel extends MeteredModel {
   name: string;
@@ -150,6 +150,24 @@ export async function inferenceStatus(env: Env): Promise<'unavailable' | 'paused
   const hasDirectGateway = models.some((m) => m.enabled !== false && !isRunpod(m.endpoint) && Boolean(backendKey(m.endpoint, env)));
   if (hasDirectGateway) return 'available';
   return (await inferencePaused(env)) ? 'paused' : 'available';
+}
+
+/** Manual top-ups follow inference availability, with one exception. When the
+ * only thing keeping every model unavailable is supplier allowance that the
+ * payment itself refills (see supplierBudgetRefillable), closing top-ups would
+ * leave nothing to refill it, so they stay open. Every other reason keeps them
+ * closed: inference off, no cost rule, the operator's pause, a provider never
+ * funded, automatic funding off, a usage fault or a hosting pause. */
+export async function manualTopupsOpen(env: Env, status?: Awaited<ReturnType<typeof inferenceStatus>>): Promise<boolean> {
+  const state = status ?? await inferenceStatus(env);
+  if (state === 'available') return true;
+  if (state !== 'unavailable' || !inferenceReady(env)) return false;
+  const configured = inferenceModels(env).filter((model) => model.enabled !== false && Boolean(backendKey(model.endpoint, env)));
+  const [refillable, faults] = await Promise.all([supplierBudgetRefillable(env, configured, TOPUP_USD[0] * MICRO_USD), usageFaultModels(env)]);
+  const models = configured.filter((model) => refillable.has(model.id) && !faults.has(model.id));
+  if (!models.length) return false;
+  if (models.some((model) => !isRunpod(model.endpoint))) return true;
+  return !(await inferencePaused(env));
 }
 
 export function publicModel(model: InferenceModel, env?: Env, supplierAvailable = false): Record<string, unknown> {

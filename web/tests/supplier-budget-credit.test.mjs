@@ -5,7 +5,7 @@ import { test } from 'node:test';
 import { reserveInference } from '../src/api-credits.ts';
 import { syncMonthlyCredit, syncMonthlyCreditForCharge } from '../src/api-monthly-credit.ts';
 import { applyApiPaymentEvent, reconcileApiTopup, syncApiTopup } from '../src/api-topups.ts';
-import { supplierBudgetProviders, supplierBudgetShare, supplierOperatingReport, sweepSupplierBudgets } from '../src/supplier-costs.ts';
+import { supplierBudgetCreditStatements, supplierBudgetProviders, supplierBudgetShare, supplierBudgetShareProblem, supplierOperatingReport, supplierShareShortfalls, sweepSupplierBudgets } from '../src/supplier-costs.ts';
 import worker from '../src/worker.ts';
 import { addAccount, createContext, createEnv } from './worker-helpers.mjs';
 
@@ -271,8 +271,9 @@ test('an automatic top-up adds the share when its verified payment succeeds, onc
   assert.deepEqual(adjustments(f.env).map((row) => row.source), ['topup:auto-1']);
 });
 
-test('a monthly Operator credit grant adds the share once and a refund removes it', async () => {
-  const env = baseEnv({ overrides: { BILLING_MODE: 'live', STRIPE_SECRET_KEY: 'rk_live_fixture', STRIPE_WEBHOOK_SECRET: 'whsec_fixture', STRIPE_PRICE_ID: 'price_monthly' } });
+/** A paid US$10 monthly Operator invoice that grants US$2 of API credit, as Stripe reports it. */
+function monthly(options = {}) {
+  const env = baseEnv({ ...options, overrides: { BILLING_MODE: 'live', STRIPE_SECRET_KEY: 'rk_live_fixture', STRIPE_WEBHOOK_SECRET: 'whsec_fixture', STRIPE_PRICE_ID: 'price_monthly' } });
   const account = addAccount(env.DB);
   env.DB.sqlite.prepare('UPDATE accounts SET stripe_customer = ? WHERE id = ?').run('cus_1', account);
   const price = { id: 'price_monthly', livemode: true, currency: 'usd', unit_amount: 1000, type: 'recurring', billing_scheme: 'per_unit', transform_quantity: null,
@@ -287,6 +288,7 @@ test('a monthly Operator credit grant adds the share once and a refund removes i
     lines: { data: [line], has_more: false } };
   const charge = { id: 'ch_m1', livemode: true, status: 'succeeded', paid: true, captured: true, refunded: false, disputed: false, currency: 'usd', amount: 1000,
     amount_captured: 1000, amount_refunded: 0, customer: 'cus_1', payment_intent: 'pi_m1' };
+  const disputes = [];
   const api = {
     invoices: { retrieve: async () => structuredClone(invoice) },
     prices: { retrieve: async () => structuredClone(price) },
@@ -295,17 +297,22 @@ test('a monthly Operator credit grant adds the share once and a refund removes i
       payment: { type: 'payment_intent', payment_intent: 'pi_m1' } }], has_more: false }) },
     paymentIntents: { retrieve: async () => ({ id: 'pi_m1', livemode: true, status: 'succeeded', currency: 'usd', amount_received: 1000, customer: 'cus_1', latest_charge: 'ch_m1' }) },
     charges: { retrieve: async () => structuredClone(charge) },
-    disputes: { list: async () => ({ data: [], has_more: false }) },
+    disputes: { list: async () => ({ data: structuredClone(disputes), has_more: false }) },
   };
-  await Promise.all([syncMonthlyCredit(env, api, 'in_m1', 10), syncMonthlyCredit(env, api, 'in_m1', 10)]);
-  await syncMonthlyCredit(env, api, 'in_m1', 10);
-  assert.equal(automaticWindow(env).limit_micro, 1800000);
-  assert.deepEqual(adjustments(env).map((row) => [row.ledger_id, row.source, row.amount_micro]), [['monthly:in_m1:1', 'monthly:in_m1', 1800000]]);
-  charge.amount_refunded = 100;
-  await syncMonthlyCreditForCharge(env, api, 'ch_m1', 20);
-  await syncMonthlyCreditForCharge(env, api, 'ch_m1', 20);
-  assert.equal(automaticWindow(env).limit_micro, 0);
-  assert.equal(adjustments(env).length, 2);
+  return { env, account, api, charge, disputes, sync: (eventTime = 10) => syncMonthlyCredit(env, api, 'in_m1', eventTime) };
+}
+
+test('a monthly Operator credit grant adds the share once and a refund removes it', async () => {
+  const m = monthly();
+  await Promise.all([m.sync(), m.sync()]);
+  await m.sync();
+  assert.equal(automaticWindow(m.env).limit_micro, 1800000);
+  assert.deepEqual(adjustments(m.env).map((row) => [row.ledger_id, row.source, row.amount_micro]), [['monthly:in_m1:1', 'monthly:in_m1', 1800000]]);
+  m.charge.amount_refunded = 100;
+  await syncMonthlyCreditForCharge(m.env, m.api, 'ch_m1', 20);
+  await syncMonthlyCreditForCharge(m.env, m.api, 'ch_m1', 20);
+  assert.equal(automaticWindow(m.env).limit_micro, 0);
+  assert.equal(adjustments(m.env).length, 2);
 });
 
 test('customer-funded allowance left in an ended window carries into a current one; operator funding does not', async () => {
@@ -403,4 +410,242 @@ test('health reports a database that has not applied the budget migration', asyn
   assert.deepEqual(await health(), [200, 'ok']);
   env.DB.sqlite.exec('DROP TABLE supplier_budget_adjustments');
   assert.deepEqual(await health(), [503, 'error']);
+});
+
+// A won dispute gives back only what its dispute took, and a removal finds the
+// payment's allowance wherever it sits.
+
+test('a dispute opened after usage and then won gives back only what the dispute removed', async () => {
+  const f = topup();
+  addWindow(f.env);
+  await f.sync(1);
+  // Requests consumed 16 of the 18 the payment funded, so the dispute can take only 2.
+  f.env.DB.sqlite.prepare("UPDATE supplier_budget_windows SET consumed_micro = 16000000 WHERE id = 'operator'").run();
+  f.charge.disputed = true;
+  f.disputes.push({ status: 'needs_response' });
+  await f.sync(20);
+  assert.equal(windowById(f.env, 'operator').limit_micro, 16000000);
+  f.disputes[0].status = 'won';
+  await f.sync(30);
+  assert.equal(f.balance(), 20000000);
+  // The payment funded 18 in all: 16 spent and 2 left, not 18 more.
+  assert.equal(windowById(f.env, 'operator').limit_micro, 18000000);
+  assert.deepEqual(adjustments(f.env).map((row) => row.amount_micro), [18000000, -2000000, 2000000]);
+  const won = adjustments(f.env).at(-1);
+  assert.deepEqual([won.ledger_id, won.share_ppm, won.requested_micro], ['topup:topup-1:3', 900000, 18000000]);
+  // A later resync of the won dispute adds nothing.
+  await f.sync(40);
+  assert.equal(adjustments(f.env).length, 3);
+});
+
+test('a won dispute restores at the original share, and a payment that funded nothing gets nothing back', async () => {
+  const f = topup();
+  addWindow(f.env);
+  await f.sync(1);
+  f.charge.disputed = true;
+  f.disputes.push({ status: 'needs_response' });
+  await f.sync(20);
+  f.env.SUPPLIER_BUDGET_SHARE = '1';
+  f.disputes[0].status = 'won';
+  await f.sync(30);
+  assert.equal(windowById(f.env, 'operator').limit_micro, 18000000, 'not 20 at the new share');
+
+  // Credited while automatic funding was off: the dispute takes nothing and its win adds nothing.
+  const off = topup({ share: '0' });
+  await off.sync(1);
+  off.env.SUPPLIER_BUDGET_SHARE = '0.9';
+  off.charge.disputed = true;
+  off.disputes.push({ status: 'needs_response' });
+  await off.sync(20);
+  off.disputes[0].status = 'won';
+  await off.sync(30);
+  assert.equal(off.balance(), 20000000);
+  assert.deepEqual(windows(off.env), []);
+  assert.deepEqual(adjustments(off.env), []);
+});
+
+test('a won dispute gives nothing to a provider that started selling after the payment', async () => {
+  const f = topup();
+  await f.sync(1);
+  f.charge.disputed = true;
+  f.disputes.push({ status: 'needs_response' });
+  await f.sync(20);
+  f.env.INFERENCE_MODELS = JSON.stringify([runpodModel, infronModel]);
+  f.env.SUPPLIER_COST_RULES = JSON.stringify([rule(runpodModel), rule(infronModel)]);
+  f.disputes[0].status = 'won';
+  await f.sync(30);
+  assert.equal(automaticWindow(f.env, 'runpod').limit_micro, 18000000);
+  assert.equal(automaticWindow(f.env, 'infron'), undefined);
+  assert.deepEqual(adjustments(f.env).map((row) => row.provider), ['runpod', 'runpod', 'runpod']);
+});
+
+test('a monthly grant disputed after usage and then won gives back only what the dispute removed', async () => {
+  const m = monthly();
+  await m.sync(10);
+  const id = automaticWindow(m.env).id;
+  m.env.DB.sqlite.prepare('UPDATE supplier_budget_windows SET consumed_micro = 1500000 WHERE id = ?').run(id);
+  m.charge.disputed = true;
+  m.disputes.push({ charge: 'ch_m1', livemode: true, status: 'needs_response' });
+  await m.sync(20);
+  assert.equal(windowById(m.env, id).limit_micro, 1500000);
+  m.disputes[0].status = 'won';
+  await m.sync(30);
+  assert.equal(windowById(m.env, id).limit_micro, 1800000);
+  assert.deepEqual(adjustments(m.env).map((row) => row.amount_micro), [1800000, -300000, 300000]);
+});
+
+test('a refund finds the allowance in an ended window while the share is 0, so a later carry cannot bring it back', async () => {
+  const f = topup();
+  addWindow(f.env, { id: 'first' });
+  await f.sync();
+  f.env.DB.sqlite.prepare("UPDATE supplier_budget_windows SET ends_at = ? WHERE id = 'first'").run(now() - 1);
+  f.env.SUPPLIER_BUDGET_SHARE = '0';
+  f.charge.amount_refunded = 2000;
+  await f.sync();
+  assert.equal(windowById(f.env, 'first').limit_micro, 0);
+  const removal = adjustments(f.env).at(-1);
+  assert.deepEqual([removal.window_id, removal.requested_micro, removal.amount_micro], ['first', -18000000, -18000000]);
+  // Funding back on: nothing is left to carry, so no window opens.
+  f.env.SUPPLIER_BUDGET_SHARE = '0.9';
+  assert.equal(await sweepSupplierBudgets(f.env, ['runpod']), 0);
+  assert.deepEqual(windows(f.env).map((row) => row.id), ['first']);
+});
+
+test('a refund while the provider is not sellable still takes the allowance from the ended window', async () => {
+  for (const stop of ['lapsed cost rule', 'disabled model']) {
+    const f = topup();
+    addWindow(f.env, { id: 'first' });
+    await f.sync();
+    f.env.DB.sqlite.prepare("UPDATE supplier_budget_windows SET ends_at = ? WHERE id = 'first'").run(now() - 1);
+    const live = { rules: f.env.SUPPLIER_COST_RULES, models: f.env.INFERENCE_MODELS };
+    if (stop === 'lapsed cost rule') f.env.SUPPLIER_COST_RULES = JSON.stringify([{ ...rule(runpodModel), validUntil: now() - 10 }]);
+    else f.env.INFERENCE_MODELS = JSON.stringify([{ ...runpodModel, enabled: false }]);
+    assert.deepEqual(supplierBudgetProviders(f.env, JSON.parse(f.env.INFERENCE_MODELS)), [], stop);
+    f.charge.amount_refunded = 2000;
+    await f.sync();
+    // The rule is renewed or the model comes back.
+    f.env.SUPPLIER_COST_RULES = live.rules;
+    f.env.INFERENCE_MODELS = live.models;
+    assert.equal(await sweepSupplierBudgets(f.env, ['runpod']), 0, stop);
+    assert.equal(windowById(f.env, 'first').limit_micro, 0, stop);
+    assert.equal(automaticWindow(f.env), undefined, stop);
+  }
+});
+
+test('a refund never takes operator funding, and records 0 when the payment’s allowance is spent', async () => {
+  const f = topup();
+  addWindow(f.env, { id: 'first' });
+  await f.sync();
+  // The window ends with the payment's 18 unspent. Funding is off, and the
+  // operator funds the next window with 5.
+  f.env.DB.sqlite.prepare("UPDATE supplier_budget_windows SET ends_at = ? WHERE id = 'first'").run(now() - 1);
+  f.env.SUPPLIER_BUDGET_SHARE = '0';
+  addWindow(f.env, { id: 'next', starts: now() - 1, ends: now() + DAY, limit: 5000000 });
+  f.charge.amount_refunded = 1000;
+  await f.sync();
+  assert.equal(windowById(f.env, 'next').limit_micro, 5000000);
+  assert.equal(windowById(f.env, 'first').limit_micro, 9000000);
+
+  // Spent allowance cannot be taken back: one row of 0, against no window.
+  const spent = topup();
+  addWindow(spent.env, { limit: 5000000 });
+  await spent.sync();
+  spent.env.DB.sqlite.prepare("UPDATE supplier_budget_windows SET consumed_micro = 23000000 WHERE id = 'operator'").run();
+  spent.charge.amount_refunded = 2000;
+  await spent.sync();
+  const last = adjustments(spent.env).at(-1);
+  assert.deepEqual([last.id, last.window_id, last.requested_micro, last.amount_micro], ['topup:topup-1:2:runpod', null, -18000000, 0]);
+  assert.equal(windowById(spent.env, 'operator').limit_micro, 23000000);
+});
+
+test('a removal spread over several windows takes from each, one row per window, and is applied once', async () => {
+  const f = topup();
+  addWindow(f.env, { id: 'first' });
+  await f.sync();
+  // The window ends while a running request holds 1 of the payment's 18, so 17 carry.
+  f.env.DB.sqlite.prepare("UPDATE supplier_budget_windows SET reserved_micro = 1000000, ends_at = ? WHERE id = 'first'").run(now() - 1);
+  assert.equal(await sweepSupplierBudgets(f.env, ['runpod']), 2);
+  const next = automaticWindow(f.env).id;
+  assert.equal(windowById(f.env, next).limit_micro, 17000000);
+  // Funding stops, then the hold is released: that 1 waits in the ended window.
+  f.env.SUPPLIER_BUDGET_SHARE = '0';
+  f.env.DB.sqlite.prepare("UPDATE supplier_budget_windows SET reserved_micro = 0 WHERE id = 'first'").run();
+  f.charge.amount_refunded = 2000;
+  await f.sync();
+  assert.equal(windowById(f.env, 'first').limit_micro, 0);
+  assert.equal(windowById(f.env, next).limit_micro, 0);
+  const rows = adjustments(f.env).filter((row) => row.ledger_id === 'topup:topup-1:2');
+  assert.deepEqual(rows.map((row) => [row.id, row.window_id, row.requested_micro, row.amount_micro]), [
+    ['topup:topup-1:2:runpod', 'first', -18000000, -1000000],
+    ['topup:topup-1:2:runpod:2', next, -18000000, -17000000],
+  ]);
+  // Replaying either entry, as a batch that lost its revision race does, writes nothing.
+  f.env.SUPPLIER_BUDGET_SHARE = '0.9';
+  const count = adjustments(f.env).length;
+  for (const [ledgerId, deltaMicro] of [['topup:topup-1:1', 20000000], ['topup:topup-1:2', -20000000]]) {
+    await f.env.DB.batch(supplierBudgetCreditStatements(f.env, [runpodModel], { ledgerId, source: 'topup:topup-1', deltaMicro }));
+  }
+  assert.equal(adjustments(f.env).length, count);
+  assert.equal(windowById(f.env, next).limit_micro, 0);
+  // Every customer-credit row's id names its ledger entry and provider.
+  assert.throws(() => f.env.DB.sqlite.prepare(`INSERT INTO supplier_budget_adjustments(id, kind, provider, window_id, ledger_id, source, customer_micro, share_ppm, requested_micro, amount_micro, created_at)
+    VALUES('other', 'customer_credit', 'runpod', NULL, 'topup:topup-1:9', 'topup:topup-1', 1, 900000, 0, 0, 1)`).run(), /CHECK constraint failed/);
+});
+
+test('a pause lasts until its disabled window ends; then sales resume with the allowance it held', async () => {
+  const f = topup();
+  addWindow(f.env, { id: 'paused', enabled: 0 });
+  await f.sync();
+  f.env.DB.sqlite.prepare("UPDATE supplier_budget_windows SET ends_at = ? WHERE id = 'paused'").run(now() - 1);
+  assert.equal(await sweepSupplierBudgets(f.env, ['runpod']), 2);
+  const resumed = automaticWindow(f.env);
+  assert.deepEqual([resumed.enabled, resumed.limit_micro], [1, 18000000]);
+  assert.equal(windowById(f.env, 'paused').limit_micro, 0);
+});
+
+test('operator funding beside an automatic window: raise its limit, or start a window where it ends', async () => {
+  const f = topup();
+  await f.sync();
+  const auto = automaticWindow(f.env);
+  // An enabled window overlapping the automatic one is refused.
+  assert.throws(() => addWindow(f.env, { id: 'manual', starts: now(), ends: now() + 10 * DAY, limit: 5000000 }), /supplier_budget_overlap/);
+  addWindow(f.env, { id: 'after', starts: auto.ends_at, ends: auto.ends_at + TERM, limit: 5000000 });
+  // A raised limit is operator funding: spent first, and it ends with its window.
+  f.env.DB.sqlite.prepare('UPDATE supplier_budget_windows SET limit_micro = limit_micro + 5000000, consumed_micro = 4000000 WHERE id = ?').run(auto.id);
+  f.env.DB.sqlite.prepare('UPDATE supplier_budget_windows SET starts_at = ?, ends_at = ? WHERE id = ?').run(now() - DAY, now() - 1, auto.id);
+  assert.equal(await sweepSupplierBudgets(f.env, ['runpod']), 2);
+  const next = windows(f.env).find((row) => row.funding_reference.startsWith('automatic') && row.id !== auto.id);
+  assert.deepEqual([next.limit_micro, next.ends_at], [18000000, auto.ends_at]);
+  const ended = windowById(f.env, auto.id);
+  assert.equal(ended.limit_micro - ended.consumed_micro, 1000000, 'the operator’s unspent 1 stays behind');
+});
+
+test('the scheduled run logs the share in force, warns once about an unusable value, and names models that fund less than they use', async (t) => {
+  t.mock.method(console, 'log', () => {});
+  t.mock.method(console, 'warn', () => {});
+  const affordable = { ...runpodModel, id: 'budget-affordable', upstreamModel: 'budget-affordable', minimumMicro: 1200 };
+  const thin = { ...infronModel, id: 'budget-thin', upstreamModel: 'test/budget-thin', outputRate: 1 };
+  const models = [runpodModel, affordable, infronModel, thin, { ...orcaModel, enabled: false }];
+  const env = baseEnv({ models });
+  // At 0.9: a 10 minimum funds 9 of a 1,000 hold (1,200 funds 1,080), and a
+  // US$1 output rate funds US$0.90 of the supplier's US$1.
+  assert.deepEqual(supplierShareShortfalls(env, models), ['budget-runpod', 'budget-thin']);
+  const cron = () => worker.scheduled({ cron: '*/15 * * * *' }, env, createContext());
+  await cron();
+  const first = console.log.mock.calls[0].arguments[1];
+  assert.deepEqual([first.supplierBudgetSharePpm, first.supplierShareShortfall], [900000, ['budget-runpod', 'budget-thin']]);
+  assert.equal(console.warn.mock.callCount(), 0);
+
+  env.SUPPLIER_BUDGET_SHARE = '0,9';
+  await cron();
+  await cron();
+  assert.equal(console.warn.mock.callCount(), 1, 'once for each value');
+  assert.deepEqual(console.warn.mock.calls[0].arguments, ['SUPPLIER_BUDGET_SHARE is not a decimal from 0 to 1', { problem: 'unreadable', sharePpm: 0 }]);
+  const off = console.log.mock.calls.at(-1).arguments[1];
+  assert.equal(off.supplierBudgetSharePpm, 0);
+  assert.equal(Object.hasOwn(off, 'supplierShareShortfall'), false, 'with funding off nothing is funded short');
+  env.SUPPLIER_BUDGET_SHARE = '1.5';
+  await cron();
+  assert.deepEqual(console.warn.mock.calls[1].arguments[1], { problem: 'out_of_range', sharePpm: 1000000 });
+  for (const value of [undefined, '', '0', '0.9', '1']) assert.equal(supplierBudgetShareProblem({ SUPPLIER_BUDGET_SHARE: value }), null, String(value));
 });

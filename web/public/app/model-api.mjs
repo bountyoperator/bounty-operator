@@ -265,7 +265,7 @@ export async function loadCatalog() {
     const models = result.models.map((model) => ({ ...model, availability: result.enabled === true ? model.availability : 'unavailable' }));
     mountCatalog(models);
     const available = models.filter((model) => model.availability === 'available').length;
-    if (status) status.textContent = result.enabled ? `${available} of ${models.length} model${models.length === 1 ? '' : 's'} available.${result.topups_enabled ? '' : ' Customer top-ups are currently closed.'}` : result.status === 'paused' ? 'Model inference is paused right now. Top-ups are closed until it resumes; existing credit is unaffected.' : 'Not open for purchases yet, so no model below can be used today. Reviews with your own model key work now. Check back here: this line changes when the API opens.';
+    if (status) status.textContent = result.enabled ? `${available} of ${models.length} model${models.length === 1 ? '' : 's'} available.${result.topups_enabled ? '' : ' Customer top-ups are currently closed.'}` : result.status === 'paused' ? 'Model inference is paused right now. Top-ups are closed until it resumes; existing credit is unaffected.' : result.topups_enabled ? 'Every model is at capacity right now, so requests return 503 without a charge. Top-ups stay open: new credit adds capacity, and existing credit is unaffected.' : 'Not open for purchases yet, so no model below can be used today. Reviews with your own model key work now. Check back here: this line changes when the API opens.';
   } catch {
     if (status) status.textContent = 'Availability could not be checked. Refresh this page before adding credit.';
   }

@@ -150,6 +150,8 @@ export async function supplierAvailability(env: SupplierEnv, models: SupplierMod
 // D1 batch as the credit itself. Each provider with a sellable model receives
 // the share separately, so the share caps each provider, not their total.
 const SHARE_SCALE = 1_000_000;
+const DEFAULT_SHARE = 900_000;
+const SHARE_PATTERN = /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/;
 const AUTOMATIC_TERM = 30 * 86400;
 const AUTOMATIC_REFERENCE = 'automatic: share of confirmed customer API credit';
 // The window covering now, preferring an enabled one. A disabled window that
@@ -157,20 +159,58 @@ const AUTOMATIC_REFERENCE = 'automatic: share of confirmed customer API credit';
 // automatic window is opened beside it.
 const TARGET = `target AS (SELECT w.id, w.limit_micro, w.reserved_micro, w.consumed_micro FROM supplier_budget_windows w, input
   WHERE w.provider = input.provider AND w.starts_at <= input.now AND w.ends_at > input.now ORDER BY w.enabled DESC, w.starts_at DESC LIMIT 1)`;
-// What an ended window can pass on: its unspent allowance, counting reserved
-// holds as spent, and never more than its customer-funded part.
+// The customer-funded allowance a window can still give up, to a carry or a
+// refund: its unspent allowance, counting reserved holds as spent, and never
+// more than its customer-funded part. Spending uses operator funding first.
 const CARRYABLE = `MIN(w.limit_micro - w.reserved_micro - w.consumed_micro,
   (SELECT COALESCE(SUM(CASE WHEN a.window_id = w.id THEN a.amount_micro ELSE -a.amount_micro END), 0)
     FROM supplier_budget_adjustments a WHERE a.window_id = w.id OR a.from_window_id = w.id))`;
+// What this payment has given this provider so far: the share its first credit
+// used, and the allowance it still funds after any removals.
+const PAID = `paid AS (SELECT
+    (SELECT a.share_ppm FROM supplier_budget_adjustments a WHERE a.source = input.source AND a.provider = input.provider
+      AND a.kind = 'customer_credit' AND a.customer_micro > 0 ORDER BY a.rowid LIMIT 1) AS share_ppm,
+    (SELECT COALESCE(SUM(a.amount_micro), 0) FROM supplier_budget_adjustments a WHERE a.source = input.source AND a.provider = input.provider
+      AND a.kind = 'customer_credit') AS net FROM input)`;
+// A ledger entry is applied once per provider. A replay, or a batch that lost
+// its revision race and reads the winner's entry, finds its rows and adds none.
+const UNAPPLIED = 'NOT EXISTS (SELECT 1 FROM supplier_budget_adjustments a WHERE a.ledger_id = input.ledger_id AND a.provider = input.provider)';
+// The allowance one positive ledger entry adds. A payment's first credit adds
+// the current share. A later one (a dispute won after a removal) only gives
+// back what removals actually took: at the payment's original share, and never
+// beyond that share of what the payment is credited now. A payment that funded
+// this provider nothing the first time gets nothing back. The payment's ledger
+// ids are '<source>:<revision>', so they sort between '<source>:' and '<source>;'.
+const GAIN = `${PAID},
+  history AS (SELECT
+    (SELECT COUNT(*) FROM api_ledger h WHERE h.id > input.source || ':' AND h.id < input.source || ';'
+      AND h.id != input.ledger_id AND h.amount_micro > 0) AS earlier,
+    (SELECT COALESCE(SUM(h.amount_micro), 0) FROM api_ledger h WHERE h.id > input.source || ':' AND h.id < input.source || ';') AS credited
+    FROM input),
+  gain AS (SELECT l.id, l.amount_micro, CASE WHEN history.earlier = 0 THEN input.share_ppm ELSE paid.share_ppm END AS share_ppm,
+      l.amount_micro * (CASE WHEN history.earlier = 0 THEN input.share_ppm ELSE paid.share_ppm END) / ${SHARE_SCALE} AS requested,
+      CASE WHEN history.earlier = 0 THEN l.amount_micro * input.share_ppm / ${SHARE_SCALE}
+        ELSE MIN(l.amount_micro * paid.share_ppm / ${SHARE_SCALE}, MAX(0, history.credited * paid.share_ppm / ${SHARE_SCALE} - paid.net)) END AS micro
+    FROM input JOIN api_ledger l ON l.id = input.ledger_id, history, paid
+    WHERE l.amount_micro > 0 AND (history.earlier = 0 OR paid.share_ppm IS NOT NULL) AND ${UNAPPLIED})`;
 
 /** SUPPLIER_BUDGET_SHARE in parts per million, clamped to 0..1. Unset means
  * 0.9. A value that is not a plain decimal means 0, so a typo can only stop
  * automatic funding, never multiply it. */
 export function supplierBudgetShare(env: Pick<SupplierEnv, 'SUPPLIER_BUDGET_SHARE'>): number {
   const raw = env.SUPPLIER_BUDGET_SHARE?.trim();
-  if (!raw) return 900_000;
-  if (!/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(raw)) return 0;
+  if (!raw) return DEFAULT_SHARE;
+  if (!SHARE_PATTERN.test(raw)) return 0;
   return Math.round(Math.min(1, Math.max(0, Number(raw))) * SHARE_SCALE);
+}
+
+/** Why SUPPLIER_BUDGET_SHARE is not used as written, or null when it is (or is unset). */
+export function supplierBudgetShareProblem(env: Pick<SupplierEnv, 'SUPPLIER_BUDGET_SHARE'>): 'unreadable' | 'out_of_range' | null {
+  const raw = env.SUPPLIER_BUDGET_SHARE?.trim();
+  if (!raw) return null;
+  if (!SHARE_PATTERN.test(raw)) return 'unreadable';
+  const value = Number(raw);
+  return value < 0 || value > 1 ? 'out_of_range' : null;
 }
 
 /** Providers with a sellable model: enabled in the catalog, with a current cost rule. */
@@ -183,19 +223,65 @@ export function supplierBudgetProviders(env: SupplierEnv, models: SupplierModel[
   return PROVIDERS.filter((provider) => found.has(provider));
 }
 
+/** Sellable models whose price funds less allowance, at the configured share,
+ * than their requests use. A runtime allowance uses its whole hold however
+ * little the customer pays, so the share of the minimum price must cover the
+ * hold. A token rate needs the share of each customer rate to cover the
+ * supplier's. Funding from such sales falls behind spending: the budget runs
+ * out and the model is unavailable while customers still hold credit. */
+export function supplierShareShortfalls(env: SupplierEnv, models: Array<SupplierModel & { minimumMicro: number; inputRate: number; outputRate: number }>, now = seconds()): string[] {
+  const share = supplierBudgetShare(env);
+  if (!share) return [];
+  const funded = (micro: number) => Math.floor(micro * share / SHARE_SCALE);
+  return models.filter((model) => {
+    if (model.enabled === false) return false;
+    let quote: SupplierQuote;
+    try { quote = quoteSupplierCommitment(env, model, 1, now); } catch { return false; }
+    if (quote.basis === 'runtime_allowance') return funded(model.minimumMicro) < quote.holdMicro;
+    // Customer rates are whole US dollars per million tokens; supplier rates are microdollars per million.
+    return funded(model.inputRate * SHARE_SCALE) < (quote.inputMicroPerMillion ?? 0) || funded(model.outputRate * SHARE_SCALE) < (quote.outputMicroPerMillion ?? 0);
+  }).map((model) => model.id);
+}
+
+/** Models held back only by supplier allowance that a payment of `creditMicro`
+ * would itself restore. Each has a current cost rule, automatic funding is on,
+ * and its provider either has an enabled current window without room for one
+ * request, or no current window after earlier ones ended. A disabled window
+ * covering now (the operator's pause) and a provider that was never funded do
+ * not count: neither is fixed by a customer payment. */
+export async function supplierBudgetRefillable(env: SupplierEnv, models: SupplierModel[], creditMicro: number, now = seconds()): Promise<Set<string>> {
+  const found = new Set<string>();
+  const share = supplierBudgetShare(env);
+  if (!share || !models.length) return found;
+  const result = await env.DB.prepare(`SELECT provider, enabled, ends_at > ? AS is_current, limit_micro, reserved_micro, consumed_micro
+    FROM supplier_budget_windows WHERE starts_at <= ?`).bind(now, now)
+    .all<{ provider: Provider; enabled: number; is_current: number; limit_micro: number; reserved_micro: number; consumed_micro: number }>();
+  for (const model of models) {
+    if (model.enabled === false) continue;
+    let quote: SupplierQuote;
+    try { quote = quoteSupplierCommitment(env, model, 1, now); } catch { continue; }
+    const windows = result.results.filter((w) => w.provider === quote.provider);
+    const current = windows.filter((w) => w.is_current);
+    const open = current.find((w) => w.enabled === 1);
+    if (!open && (current.length || !windows.length)) continue;
+    const room = open ? Math.max(0, open.limit_micro - open.reserved_micro - open.consumed_micro) : 0;
+    if (room < quote.holdMicro && room + Math.floor(creditMicro * share / SHARE_SCALE) >= quote.holdMicro) found.add(model.id);
+  }
+  return found;
+}
+
 /** Opens a rolling window when none covers now and there is allowance for it:
- * a new positive credit or a carry. It ends early where a later window starts,
- * so it cannot trip the overlap guard and abort the customer credit with it. */
-function openWindowStatement(env: SupplierEnv, provider: Provider, now: number, ledgerId: string | null): D1PreparedStatement {
-  return env.DB.prepare(`WITH input AS (SELECT ? AS provider, CAST(? AS INTEGER) AS now, ? AS ledger_id)
+ * a credit that adds some, or a carry. It ends early where a later window
+ * starts, so it cannot trip the overlap guard and abort the customer credit. */
+function openWindowStatement(env: SupplierEnv, provider: Provider, now: number, change: CustomerCreditChange | null, share: number): D1PreparedStatement {
+  return env.DB.prepare(`WITH input AS (SELECT ? AS provider, CAST(? AS INTEGER) AS now, ? AS ledger_id, ? AS source, CAST(? AS INTEGER) AS share_ppm), ${GAIN}
     INSERT INTO supplier_budget_windows(id, provider, starts_at, ends_at, limit_micro, enabled, funding_reference, updated_at)
     SELECT ?, input.provider, input.now, MIN(input.now + ${AUTOMATIC_TERM}, COALESCE((SELECT MIN(w.starts_at) FROM supplier_budget_windows w
         WHERE w.provider = input.provider AND w.starts_at > input.now), input.now + ${AUTOMATIC_TERM})), 0, 1, ?, input.now
     FROM input WHERE NOT EXISTS (SELECT 1 FROM supplier_budget_windows w WHERE w.provider = input.provider AND w.starts_at <= input.now AND w.ends_at > input.now)
-      AND ((input.ledger_id IS NOT NULL AND EXISTS (SELECT 1 FROM api_ledger l WHERE l.id = input.ledger_id AND l.amount_micro > 0)
-          AND NOT EXISTS (SELECT 1 FROM supplier_budget_adjustments a WHERE a.ledger_id = input.ledger_id AND a.provider = input.provider))
+      AND (EXISTS (SELECT 1 FROM gain WHERE gain.micro > 0)
         OR EXISTS (SELECT 1 FROM supplier_budget_windows w WHERE w.provider = input.provider AND w.ends_at <= input.now AND ${CARRYABLE} > 0))`)
-    .bind(provider, now, ledgerId, `auto-${provider}-${now}-${crypto.randomUUID().slice(0, 8)}`, AUTOMATIC_REFERENCE);
+    .bind(provider, now, change?.ledgerId ?? null, change?.source ?? null, share, `auto-${provider}-${now}-${crypto.randomUUID().slice(0, 8)}`, AUTOMATIC_REFERENCE);
 }
 
 /** Customer-funded allowance outlives its window: whatever an ended window did
@@ -209,36 +295,43 @@ function carryStatement(env: SupplierEnv, provider: Provider, now: number): D1Pr
     .bind(provider, now, `carry:${crypto.randomUUID()}:`);
 }
 
-function sweepStatements(env: SupplierEnv, provider: Provider, now: number, ledgerId: string | null): D1PreparedStatement[] {
-  return [openWindowStatement(env, provider, now, ledgerId), carryStatement(env, provider, now)];
+function sweepStatements(env: SupplierEnv, provider: Provider, now: number, change: CustomerCreditChange | null, share: number): D1PreparedStatement[] {
+  return [openWindowStatement(env, provider, now, change, share), carryStatement(env, provider, now)];
 }
 
 function creditStatement(env: SupplierEnv, provider: Provider, change: CustomerCreditChange, share: number, now: number): D1PreparedStatement {
-  return env.DB.prepare(`WITH input AS (SELECT ? AS provider, CAST(? AS INTEGER) AS now, ? AS ledger_id, ? AS source, CAST(? AS INTEGER) AS share_ppm), ${TARGET}
+  return env.DB.prepare(`WITH input AS (SELECT ? AS provider, CAST(? AS INTEGER) AS now, ? AS ledger_id, ? AS source, CAST(? AS INTEGER) AS share_ppm), ${TARGET}, ${GAIN}
     INSERT INTO supplier_budget_adjustments(id, kind, provider, window_id, ledger_id, source, customer_micro, share_ppm, requested_micro, amount_micro, created_at)
-    SELECT l.id || ':' || input.provider, 'customer_credit', input.provider, target.id, l.id, input.source, l.amount_micro, input.share_ppm,
-      l.amount_micro * input.share_ppm / ${SHARE_SCALE}, CASE WHEN target.id IS NULL THEN 0 ELSE l.amount_micro * input.share_ppm / ${SHARE_SCALE} END, input.now
-    FROM input JOIN api_ledger l ON l.id = input.ledger_id LEFT JOIN target ON 1 = 1
-    WHERE l.amount_micro > 0
+    SELECT gain.id || ':' || input.provider, 'customer_credit', input.provider, target.id, gain.id, input.source, gain.amount_micro, gain.share_ppm,
+      gain.requested, CASE WHEN target.id IS NULL THEN 0 ELSE gain.micro END, input.now
+    FROM input, gain LEFT JOIN target ON 1 = 1
+    WHERE true
     ON CONFLICT DO NOTHING`).bind(provider, now, change.ledgerId, change.source, share);
 }
 
-/** Removes the share this payment added, at the share it was added with. It
- * never removes more than the payment added in total, and never takes a
- * window below the allowance already reserved or consumed. */
+/** Removes the share this payment added, at the share it was added with,
+ * whatever the share is now and whether or not the provider still sells. It
+ * never removes more than the payment still funds, and never takes a window
+ * below the allowance already reserved or consumed, nor below its operator
+ * funding. The allowance is taken wherever customer funding still sits,
+ * ended windows first, so a later carry cannot bring refunded allowance back:
+ * one row per window it is taken from, or one row of 0 when there is none. */
 function removalStatement(env: SupplierEnv, provider: Provider, change: CustomerCreditChange, now: number): D1PreparedStatement {
-  return env.DB.prepare(`WITH input AS (SELECT ? AS provider, CAST(? AS INTEGER) AS now, ? AS ledger_id, ? AS source), ${TARGET},
-    paid AS (SELECT
-      (SELECT a.share_ppm FROM supplier_budget_adjustments a WHERE a.source = input.source AND a.provider = input.provider
-        AND a.kind = 'customer_credit' AND a.customer_micro > 0 ORDER BY a.created_at, a.id LIMIT 1) AS share_ppm,
-      (SELECT COALESCE(SUM(a.amount_micro), 0) FROM supplier_budget_adjustments a WHERE a.source = input.source AND a.provider = input.provider
-        AND a.kind = 'customer_credit') AS net FROM input),
+  return env.DB.prepare(`WITH input AS (SELECT ? AS provider, CAST(? AS INTEGER) AS now, ? AS ledger_id, ? AS source), ${PAID},
     removal AS (SELECT l.id, l.amount_micro, paid.share_ppm, MAX(0, MIN(-l.amount_micro * paid.share_ppm / ${SHARE_SCALE}, paid.net)) AS micro
-      FROM input JOIN api_ledger l ON l.id = input.ledger_id, paid WHERE l.amount_micro < 0 AND paid.share_ppm IS NOT NULL)
+      FROM input JOIN api_ledger l ON l.id = input.ledger_id, paid WHERE l.amount_micro < 0 AND paid.share_ppm IS NOT NULL AND ${UNAPPLIED}),
+    holding AS (SELECT w.id, w.starts_at, w.starts_at <= input.now AND w.ends_at > input.now AS covering, ${CARRYABLE} AS room
+      FROM supplier_budget_windows w, input WHERE w.provider = input.provider),
+    ranked AS (SELECT id, room, ROW_NUMBER() OVER (ORDER BY covering, starts_at, id) AS n,
+        COALESCE(SUM(room) OVER (ORDER BY covering, starts_at, id ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING), 0) AS prior
+      FROM holding WHERE room > 0),
+    taken AS (SELECT ranked.id AS window_id, ranked.n, MIN(ranked.room, removal.micro - ranked.prior) AS micro
+      FROM ranked, removal WHERE removal.micro > ranked.prior),
+    parts AS (SELECT window_id, n, micro FROM taken UNION ALL SELECT NULL, 1, 0 WHERE NOT EXISTS (SELECT 1 FROM taken))
     INSERT INTO supplier_budget_adjustments(id, kind, provider, window_id, ledger_id, source, customer_micro, share_ppm, requested_micro, amount_micro, created_at)
-    SELECT removal.id || ':' || input.provider, 'customer_credit', input.provider, target.id, removal.id, input.source, removal.amount_micro, removal.share_ppm,
-      -removal.micro, -MIN(removal.micro, COALESCE(MAX(0, target.limit_micro - target.reserved_micro - target.consumed_micro), 0)), input.now
-    FROM input, removal LEFT JOIN target ON 1 = 1
+    SELECT removal.id || ':' || input.provider || CASE WHEN parts.n = 1 THEN '' ELSE ':' || parts.n END, 'customer_credit', input.provider, parts.window_id,
+      removal.id, input.source, removal.amount_micro, removal.share_ppm, -removal.micro, -parts.micro, input.now
+    FROM input, removal, parts
     WHERE true
     ON CONFLICT DO NOTHING`).bind(provider, now, change.ledgerId, change.source);
 }
@@ -254,15 +347,15 @@ export interface CustomerCreditChange {
 
 /** Batch these after the UPDATE whose trigger posts `change.ledgerId`. They
  * read that ledger row, so an UPDATE that lost its revision race or changed
- * no credit adds nothing, and UNIQUE(ledger_id, provider) makes a replayed
- * event or resync a no-op. A share of 0 stops new funding and new windows;
- * refunds still remove what earlier payments added. */
+ * no credit adds nothing, and an entry already applied is never applied again.
+ * A share of 0 stops new funding, new windows and carries; refunds still
+ * remove what earlier payments added, wherever it sits. */
 export function supplierBudgetCreditStatements(env: SupplierEnv, models: SupplierModel[], change: CustomerCreditChange, now = seconds()): D1PreparedStatement[] {
   if (!Number.isSafeInteger(change.deltaMicro) || change.deltaMicro === 0) return [];
   const share = supplierBudgetShare(env);
   const funded = share > 0 ? supplierBudgetProviders(env, models, now) : [];
   return PROVIDERS.flatMap((provider) => {
-    const statements = funded.includes(provider) ? sweepStatements(env, provider, now, change.deltaMicro > 0 ? change.ledgerId : null) : [];
+    const statements = funded.includes(provider) ? sweepStatements(env, provider, now, change.deltaMicro > 0 ? change : null, share) : [];
     if (change.deltaMicro > 0 && funded.includes(provider)) statements.push(creditStatement(env, provider, change, share, now));
     if (change.deltaMicro < 0) statements.push(removalStatement(env, provider, change, now));
     return statements;
@@ -272,8 +365,9 @@ export function supplierBudgetCreditStatements(env: SupplierEnv, models: Supplie
 /** Moves unspent customer-funded allowance out of ended windows, opening a
  * current window when there is any to move. Returns the rows written. */
 export async function sweepSupplierBudgets(env: SupplierEnv, providers: readonly Provider[], now = seconds()): Promise<number> {
-  if (!supplierBudgetShare(env) || !providers.length) return 0;
-  const results = await env.DB.batch(providers.flatMap((provider) => sweepStatements(env, provider, now, null)));
+  const share = supplierBudgetShare(env);
+  if (!share || !providers.length) return 0;
+  const results = await env.DB.batch(providers.flatMap((provider) => sweepStatements(env, provider, now, null, share)));
   return results.reduce((total, result) => total + (result.meta.changes ?? 0), 0);
 }
 
@@ -361,7 +455,7 @@ export async function supplierOperatingReport(env: SupplierEnv, start: number, e
   if (!Number.isSafeInteger(start) || !Number.isSafeInteger(end) || start < 0 || end <= start) throw new Error('Invalid operating report window');
   const [budgets, adjustments, commitments, costs, syncs, revenue, wallets] = await Promise.all([
     env.DB.prepare('SELECT * FROM supplier_budget_windows ORDER BY provider, starts_at').all(),
-    env.DB.prepare(`SELECT provider, kind, COUNT(*) AS entries, SUM(CASE WHEN amount_micro > 0 THEN amount_micro ELSE 0 END) AS added_micro,
+    env.DB.prepare(`SELECT provider, kind, COUNT(DISTINCT COALESCE(ledger_id, id)) AS entries, SUM(CASE WHEN amount_micro > 0 THEN amount_micro ELSE 0 END) AS added_micro,
       SUM(CASE WHEN amount_micro < 0 THEN -amount_micro ELSE 0 END) AS removed_micro
       FROM supplier_budget_adjustments WHERE created_at >= ? AND created_at < ? GROUP BY provider, kind ORDER BY provider, kind`).bind(start, end).all(),
     env.DB.prepare(`SELECT provider, resource_id, basis, state, COUNT(*) AS requests, SUM(hold_micro) AS allowance_micro,

@@ -82,30 +82,49 @@ individual status; `/v1/models` lists only available models. These budgets limit
 admitted work, not an upstream provider's actual bill, and nothing here refills a
 provider account.
 
-Supplier budgets grow automatically from confirmed customer credit. When a paid
-top-up (manual or automatic) or a monthly Operator credit grant is credited to a
-wallet, the same D1 transaction adds `SUPPLIER_BUDGET_SHARE` of that amount
-(a decimal from 0 to 1, default `0.9`) to the current budget window of every
-provider with a sellable model: one enabled in `INFERENCE_MODELS` with an
-unexpired cost rule. Each such provider receives the full share. With no window
-covering the present, the credit opens an enabled 30-day window, ended early
-where a later window starts. A disabled window covering the present is a pause:
-it receives the share and no automatic window opens beside it. A refund or
-dispute removes the share that payment added, at the rate it was added, but
-never takes a window below its reserved plus consumed allowance. Each change is
-recorded once per ledger entry and provider in `supplier_budget_adjustments`, so
-a replayed Stripe event or resync adds nothing. When a window ends, its unspent
-customer-funded allowance (reserved holds count as spent) moves into the current
-window, opening one if needed; operator-funded allowance still ends with its
-window. The move happens on the next credit, on the 15-minute scheduled run, or
-when a request finds no funded window. A share of `0` turns automatic funding and
-these moves off; refunds still remove what earlier payments added. Operator
-funding can still be added as a manually inserted window, and the very first
-window still needs either operator funding or a monthly grant, since top-ups
-stay closed while no model is available. Apply migration
-`0007_supplier_budget_from_credit.sql` before deploying a Worker that writes
-this table: without it every credit fails and waits for Stripe's retry, and
-`/api/health` reports `db: error`.
+Supplier budgets grow from confirmed customer credit. When a paid top-up (manual
+or automatic) or a monthly Operator credit grant reaches a wallet, the same D1
+transaction adds `SUPPLIER_BUDGET_SHARE` of it (a decimal from 0 to 1; unset
+means `0.9`) to the current budget window of every provider with a sellable
+model: one enabled in `INFERENCE_MODELS` with an unexpired cost rule. Each such
+provider receives the full share. With no window covering the present, the
+credit opens an enabled 30-day window, ended early where a later window starts.
+To add operator funding, raise `limit_micro` on the current window, or insert a
+window that starts when the current one ends; an enabled window that overlaps
+it is refused. Operator funding is spent first and ends with its window. The
+very first window still needs operator funding or a monthly grant.
+
+A disabled window covering the present is a pause: it receives the share and no
+automatic window opens beside it. The pause lasts until that window ends; sales
+then resume with the allowance it held. To stop a provider for longer, disable
+its models or set the share to `0`, which stops automatic funding and the
+carry-over described below. The share has to keep up with spending. A RunPod
+request uses its whole hold whatever the customer pays, so the share of each
+model's minimum price must cover its hold; for token-priced models the share of
+each customer rate must cover the supplier's rate. The 15-minute scheduled run
+logs the share in force and any model that falls short, and warns once when the
+setting is unreadable (it then counts as `0`) or outside 0 to 1. While the only
+reason no model is available is an exhausted budget that a payment would
+refill, manual top-ups stay open; every other reason closes them.
+
+A refund or dispute removes the share its payment added, at the share used
+then, whatever the setting is now and whether or not the provider still sells.
+It takes customer-funded allowance wherever it still sits, ended windows first,
+but never more than the payment still funds, never operator funding, and never
+below a window's reserved plus consumed allowance. A won dispute gives back
+only what its dispute took. Each change is recorded once per ledger entry and
+provider in `supplier_budget_adjustments`, so a replayed Stripe event or resync
+changes nothing. Payments made before this table existed have no rows, and
+their refunds take nothing.
+
+When a window ends, its unspent customer-funded allowance (reserved holds count
+as spent) moves into the current window, opening one if needed. The move
+happens on the next credit, on the 15-minute scheduled run, or when a request
+finds no funded window. Apply migration `0007_supplier_budget_from_credit.sql`
+before deploying a Worker that writes this table: without it every credit fails
+and waits for Stripe's retry, and `/api/health` reports `db: error`.
+`npm run deploy` lists the production database's migrations first and stops
+while any is pending.
 
 Back up D1 and apply migrations before enabling inference. Keep customer
 top-ups closed during model acceptance. Run the affected tests, type check,
@@ -122,7 +141,7 @@ of a real live settlement.
 
 ## Ongoing operation
 
-- `/api/inference/catalog` exposes service and per-model availability (`available`, `paused` or `unavailable`) and current rates. A RunPod funding pause blocks its models; an available direct provider can keep the service open. When no model is available, new manual and automatic customer purchases close. Paused requests return HTTP 503 (`inference_paused`) without charging or counting toward the caller's failure limit. The catalog contains no runtime secret or upstream endpoint.
+- `/api/inference/catalog` exposes service and per-model availability (`available`, `paused` or `unavailable`) and current rates. A RunPod funding pause blocks its models; an available direct provider can keep the service open. When no model is available, new automatic purchases close, and so do manual ones unless the only reason is an exhausted supplier budget that the payment refills. Paused requests return HTTP 503 (`inference_paused`) without charging or counting toward the caller's failure limit. The catalog contains no runtime secret or upstream endpoint.
 - `/v1/usage` reports wallet and key limits; the account's Model API section
   shows requests and credit entries without storing content.
 - The 15-minute scheduled task reaps expired request holds and reconciles

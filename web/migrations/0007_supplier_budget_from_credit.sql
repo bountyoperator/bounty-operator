@@ -1,9 +1,13 @@
 -- From this migration a confirmed customer payment funds a share of supplier
 -- allowance (SUPPLIER_BUDGET_SHARE, see src/supplier-costs.ts). The rows are
 -- appended in the same D1 batch as the customer credit and are never edited:
---   customer_credit: one row per provider for one api_ledger entry that added
---     or removed paid customer credit. UNIQUE(ledger_id, provider) makes a
---     replayed Stripe event or resync a no-op.
+--   customer_credit: the allowance one api_ledger entry that added or removed
+--     paid customer credit gave or took, per provider. A credit is one row with
+--     id <ledger id>:<provider>. A removal takes customer-funded allowance from
+--     every window that still holds some, ended ones included, one row per
+--     window: the first with that same id, the others suffixed :2, :3 and so on.
+--     The statements write nothing for an entry that already has rows for the
+--     provider, so a replayed Stripe event or resync is a no-op.
 --   carry: unspent customer-funded allowance moved from an ended window into
 --     the current one. Operator-funded allowance never carries over.
 -- A window's customer-funded part is the sum of the rows into it minus the
@@ -30,8 +34,12 @@ CREATE TABLE supplier_budget_adjustments (
       AND customer_micro IS NOT NULL AND share_ppm IS NOT NULL)
     OR (kind = 'carry' AND ledger_id IS NULL AND source IS NULL AND window_id IS NOT NULL AND from_window_id IS NOT NULL
       AND from_window_id != window_id AND amount_micro > 0)),
-  UNIQUE (ledger_id, provider)
+  -- A ledger entry's first row per provider always has the same id, so the
+  -- primary key also stops a second credit for one entry.
+  CHECK (kind = 'carry' OR id = ledger_id || ':' || provider
+    OR substr(id, 1, length(ledger_id) + length(provider) + 2) = ledger_id || ':' || provider || ':')
 );
+CREATE INDEX supplier_budget_adjustment_ledger ON supplier_budget_adjustments(ledger_id, provider) WHERE ledger_id IS NOT NULL;
 CREATE INDEX supplier_budget_adjustment_window ON supplier_budget_adjustments(window_id);
 CREATE INDEX supplier_budget_adjustment_from ON supplier_budget_adjustments(from_window_id) WHERE from_window_id IS NOT NULL;
 CREATE INDEX supplier_budget_adjustment_source ON supplier_budget_adjustments(source, provider) WHERE source IS NOT NULL;

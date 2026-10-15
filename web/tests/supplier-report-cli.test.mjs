@@ -170,7 +170,7 @@ test('runReport returns the module report unchanged with date boundaries, liabil
   const adjustment = DB.sqlite.prepare(`INSERT INTO supplier_budget_adjustments(id, kind, provider, window_id, ledger_id, source, customer_micro, share_ppm, requested_micro, amount_micro, created_at)
     VALUES(?, 'customer_credit', 'runpod', 'budget', ?, 'topup:fixture', ?, 900000, ?, ?, ?)`);
   for (const [id, amount, at] of [['before', 9000, start - 1], ['credit', 900, start], ['refund', -90, end - 1], ['after', 450, end]]) {
-    adjustment.run(id, id, amount * 10 / 9, amount, amount, at);
+    adjustment.run(`${id}:runpod`, id, amount * 10 / 9, amount, amount, at);
   }
   const cost = DB.sqlite.prepare(`INSERT INTO supplier_billing_buckets(provider, resource_type, resource_id, bucket_start, bucket_end, total_micro, fetched_at, source_hash)
     VALUES('runpod', 'serverless', 'fixture123', ?, ?, ?, ?, 'fixture')`);
