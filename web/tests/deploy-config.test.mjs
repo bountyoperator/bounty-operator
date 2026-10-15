@@ -174,9 +174,9 @@ test('owner alerts must be fully set up or fully off: the binding and ALERT_EMAI
   assert.equal(alertConfigRefusal({ vars: {} }), null);
   assert.equal(alertConfigRefusal({ vars: { ALERT_EMAIL_TO: '' } }), null);
   assert.equal(alertConfigRefusal({ vars: { ALERT_EMAIL_TO: '' }, send_email: [{ name: 'OTHER', destination_address: owner }] }), null);
-  // On: the same address on both sides; case and surrounding space do not matter.
+  // On: the same address on both sides. The Worker trims ALERT_EMAIL_TO, so space around it is allowed.
   assert.equal(alertConfigRefusal({ vars: { ALERT_EMAIL_TO: owner }, ...binding(owner) }), null);
-  assert.equal(alertConfigRefusal({ vars: { ALERT_EMAIL_TO: ' Owner@Example.com ' }, ...binding(owner) }), null);
+  assert.equal(alertConfigRefusal({ vars: { ALERT_EMAIL_TO: ` ${owner} ` }, ...binding(owner) }), null);
 
   // Half set up: each is refused with one line that names no address.
   const refusals = [
@@ -186,6 +186,13 @@ test('owner alerts must be fully set up or fully off: the binding and ALERT_EMAI
     alertConfigRefusal({ vars: { ALERT_EMAIL_TO: owner }, ...binding(undefined) }),
     alertConfigRefusal({ vars: { ALERT_EMAIL_TO: owner }, ...binding('') }),
     alertConfigRefusal({ vars: { ALERT_EMAIL_TO: 'support@bountyoperator.com' }, ...binding(owner) }),
+    // Cloudflare compares the recipient with destination_address byte for byte,
+    // so a difference in case or in the binding's own spacing is refused too.
+    alertConfigRefusal({ vars: { ALERT_EMAIL_TO: ' Owner@Example.com ' }, ...binding(owner) }),
+    alertConfigRefusal({ vars: { ALERT_EMAIL_TO: owner }, ...binding(`${owner} `) }),
+    // An address the Worker's own ADDRESS test rejects: it would log not_configured and send nothing.
+    alertConfigRefusal({ vars: { ALERT_EMAIL_TO: "o'brien@example.com" }, ...binding("o'brien@example.com") }),
+    alertConfigRefusal({ vars: { ALERT_EMAIL_TO: `Owner <${owner}>` }, ...binding(`Owner <${owner}>`) }),
   ];
   for (const refusal of refusals) {
     assert.match(refusal, /^Refusing to deploy: the owner alerts are half set up\. /);
@@ -196,6 +203,20 @@ test('owner alerts must be fully set up or fully off: the binding and ALERT_EMAI
   assert.match(refusals[1], /vars\.ALERT_EMAIL_TO is blank/);
   assert.match(refusals[3], /has no destination_address/);
   assert.match(refusals[5], /differs from the ALERT_EMAIL binding's destination_address/);
+  assert.match(refusals[6], /must match exactly, case and spacing included/);
+  assert.match(refusals[7], /must match exactly, case and spacing included/);
+  assert.match(refusals[8], /is not one plain address/);
+  assert.match(refusals[9], /is not one plain address/);
+});
+
+test('the deploy check uses the Worker\'s own ADDRESS pattern, so the two cannot drift apart', () => {
+  const pattern = (source, file) => {
+    const match = /^const ADDRESS = (\/.+\/);$/m.exec(source);
+    assert.ok(match, `${file} declares ADDRESS on one line`);
+    return match[1];
+  };
+  const alerts = readFileSync(path.join(WEB_DIR, 'src', 'alerts.ts'), 'utf8');
+  assert.equal(pattern(readFileSync(DEPLOY_SCRIPT, 'utf8'), 'deploy.mjs'), pattern(alerts, 'alerts.ts'));
 });
 
 test('a deploy whose file has the owner alerts half set up is refused before any gate runs', (t) => {

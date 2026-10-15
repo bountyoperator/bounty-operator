@@ -140,11 +140,12 @@ current RunPod balance.
 | RunPod balance is low | The balance is below `RUNPOD_ALERT_USD` (blank or unreadable means US$10) |
 | RunPod is out of funds | RunPod reports the account under its minimum balance; the subject says when this pauses sales |
 | Model sales have stopped | Inference is on but no model can sell. The email lists each model's reason: supplier budget used up, no current budget window (ended, disabled or never opened), cost rule expired or missing, the ten-minute usage hold, or no usable model at all |
-| Model sales are back | Sales return after a stop or a RunPod pause |
+| Model sales have stopped, RunPod is out of funds | A RunPod pause stops sales and the day's out-of-funds email has already gone out, so it could not say so. Only one of the two emails is sent for a stop |
+| Model sales are back | Sales return after a stop or a RunPod pause. The email names the time a new email about the same stop would wait for |
 | Cost rule expires soon / has expired | A configured model's `SUPPLIER_COST_RULES` entry ends within 7 days (one email per rule) |
 | Supplier budget ends soon | The current budget window ends within 7 days and no funded window starts when it ends |
 | Supplier budget nearly used up | Less than a fifth of the current window's `limit_micro` is left |
-| RunPod account cannot be read | Six hours of failed reads (a revoked key, an outage or a changed API) |
+| RunPod account cannot be read | An hour of failed reads (a revoked key, an outage or a changed API). With only RunPod-hosted models on sale, the email says sales and top-ups are closed while the read keeps failing |
 
 An unreadable RunPod answer (an error status, a timeout, GraphQL errors, or a
 missing or non-boolean `underBalance`) changes nothing. It never sends a paused
@@ -165,7 +166,9 @@ To turn the alerts on in production:
    and set `vars.ALERT_EMAIL_TO` to the same address. There is no default recipient.
    With the binding but a blank `ALERT_EMAIL_TO`, the watch logs
    `not_configured` and sends nothing. `npm run deploy` refuses a file where only
-   one of the two is set, or where the two addresses differ.
+   one of the two is set, where `ALERT_EMAIL_TO` is not one plain address, or
+   where the two addresses are not the same byte for byte: Cloudflare compares
+   the recipient with `destination_address` exactly, case included.
 4. Keep `vars.RUNPOD_ALERT_USD` (`"10"` unless another threshold is wanted). The
    production `vars` must have the same keys as the template's.
 5. Deploy, then read the next `Scheduled cleanup` log line. Its `alerts` field

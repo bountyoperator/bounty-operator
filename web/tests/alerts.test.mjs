@@ -270,7 +270,7 @@ test('an unreadable RunPod answer sends nothing and writes no balance row', asyn
   }
 });
 
-test('reads that keep failing send one "cannot be read" email after six hours, and a good read resets the count', async (t) => {
+test('reads that keep failing send one "cannot be read" email after an hour, and a good read resets the count', async (t) => {
   const binding = fakeBinding();
   const env = balanceEnv(binding);
   const state = { answer: () => new Response('down', { status: 503 }) };
@@ -278,24 +278,50 @@ test('reads that keep failing send one "cannot be read" email after six hours, a
 
   assert.deepEqual((await monitorRunpod(env, NOW)).sent, []);
   assert.deepEqual(row(env, 'runpod_read'), { last_sent: 0, note: String(NOW) });
-  assert.deepEqual((await monitorRunpod(env, NOW + 6 * HOUR - 1)).sent, []);
-  assert.deepEqual((await monitorRunpod(env, NOW + 6 * HOUR)).sent, ['runpod_unreadable']);
+  assert.deepEqual((await monitorRunpod(env, NOW + HOUR - 1)).sent, []);
+  assert.deepEqual((await monitorRunpod(env, NOW + HOUR)).sent, ['runpod_unreadable']);
   assert.deepEqual(subjects(binding), ['Bounty Operator: the RunPod account cannot be read']);
   const body = bodyOf(binding.sent[0]);
   assert.match(body, /since 2026-10-26 \d\d:\d\d UTC has failed/);
   assert.match(body, /RUNPOD_API_KEY/);
   assert.match(body, /Current RunPod balance: could not be read\./);
-  assert.deepEqual((await monitorRunpod(env, NOW + 7 * HOUR)).held, ['runpod_unreadable']);
+  assert.deepEqual((await monitorRunpod(env, NOW + 2 * HOUR)).held, ['runpod_unreadable']);
+  assert.deepEqual((await monitorRunpod(env, NOW + DAY + HOUR)).sent, ['runpod_unreadable'], 'one email per day while it lasts');
 
   // One good read clears the failing-since time.
   delete state.answer;
   Object.assign(state, { clientBalance: 50, underBalance: false });
-  assert.equal((await monitorRunpod(env, NOW + 8 * HOUR)).runpod, 'read');
+  assert.equal((await monitorRunpod(env, NOW + DAY + 2 * HOUR)).runpod, 'read');
   assert.equal(row(env, 'runpod_read').note, 'ok');
   state.answer = () => new Response('down', { status: 503 });
-  await monitorRunpod(env, NOW + 9 * HOUR);
-  assert.equal(row(env, 'runpod_read').note, String(NOW + 9 * HOUR));
-  assert.equal(binding.sent.length, 1);
+  await monitorRunpod(env, NOW + DAY + 3 * HOUR);
+  assert.equal(row(env, 'runpod_read').note, String(NOW + DAY + 3 * HOUR));
+  assert.equal(binding.sent.length, 2);
+});
+
+test('with only RunPod models on sale, the "cannot be read" email says sales and top-ups are closed', async (t) => {
+  const at = clock(t);
+  const binding = fakeBinding();
+  const env = salesEnv(binding);
+  const state = { answer: () => new Response('down', { status: 503 }) };
+  mockRunpod(t, state);
+
+  assert.equal((await monitorRunpod(env, at(NOW))).sales, 'unknown');
+  const result = await monitorRunpod(env, at(NOW + HOUR));
+  assert.equal(result.sales, 'unknown');
+  assert.deepEqual(result.sent, ['runpod_unreadable']);
+  const body = bodyOf(binding.sent[0]);
+  assert.match(body, /the Model API is selling nothing and taking no top-up while the read keeps failing/);
+  // No paused or recovery email comes out of a read that failed.
+  assert.equal(row(env, 'model_sales'), null);
+
+  // Once a model on another provider can sell, the email is the milder one again.
+  const mixed = fakeBinding();
+  const open = salesEnv(mixed, { models: [RUNPOD_MODEL, DIRECT_MODEL], rules: [runpodRule(), directRule()], INFRON_API_KEY: 'direct-key' });
+  addWindow(open, { id: 'infron-window', provider: 'infron' });
+  assert.equal((await monitorRunpod(open, at(NOW))).sales, 'available');
+  assert.deepEqual((await monitorRunpod(open, at(NOW + HOUR))).sent, ['runpod_unreadable']);
+  assert.match(bodyOf(mixed.sent[0]), /RunPod-hosted model sales may stop without a warning/);
 });
 
 // ---------------------------------------------------------------------------
@@ -394,6 +420,125 @@ test('a direct provider keeps sales open while RunPod is out of funds, and the e
   assert.deepEqual(result.sent, ['runpod_under_balance']);
   assert.deepEqual(subjects(binding), ['Bounty Operator: RunPod account is out of funds']);
   assert.match(bodyOf(binding.sent[0]), /Models on other providers still sell, but the RunPod-hosted models cannot run/);
+});
+
+test('a mixed catalog that stops selling after the day\'s out-of-funds email still gets one stop email', async (t) => {
+  const at = clock(t);
+  const binding = fakeBinding();
+  const env = salesEnv(binding, { models: [RUNPOD_MODEL, DIRECT_MODEL], rules: [runpodRule(), directRule()], INFRON_API_KEY: 'direct-key' });
+  addWindow(env, { id: 'infron-window', provider: 'infron' });
+  mockRunpod(t, { clientBalance: 0, underBalance: true });
+
+  // RunPod is out of funds while the direct model still sells, so that email cannot carry a stop.
+  let result = await monitorRunpod(env, at(NOW));
+  assert.equal(result.sales, 'available');
+  assert.deepEqual(result.sent, ['runpod_under_balance']);
+
+  // The direct budget runs down, then out: nothing sells, and the day's out-of-funds email is held.
+  env.DB.sqlite.prepare("UPDATE supplier_budget_windows SET consumed_micro = 85000000 WHERE id = 'infron-window'").run();
+  assert.deepEqual((await monitorRunpod(env, at(NOW + HOUR))).sent, ['budget_low:infron-window']);
+  env.DB.sqlite.prepare("UPDATE supplier_budget_windows SET consumed_micro = limit_micro WHERE id = 'infron-window'").run();
+  result = await monitorRunpod(env, at(NOW + 2 * HOUR));
+
+  assert.equal(result.sales, 'paused');
+  assert.deepEqual(result.sent, ['model_sales_paused']);
+  assert.deepEqual(result.held, ['runpod_under_balance', 'budget_low:infron-window']);
+  assert.equal(subjects(binding).at(-1), 'Bounty Operator: model sales have stopped, RunPod is out of funds');
+  const body = bodyOf(binding.sent.at(-1));
+  assert.match(body, /not selling: RunPod reports the account under its minimum balance and no model on another provider can sell/);
+  assert.match(body, /new top-ups are closed too/);
+  assert.match(body, /- direct-test: its provider's supplier budget window is used up\./);
+  assert.match(body, /https:\/\/console\.runpod\.io\/user\/billing/);
+  assert.deepEqual(row(env, 'model_sales'), { last_sent: 0, note: 'paused' });
+
+  // The stop is said once: the next run adds nothing.
+  assert.deepEqual((await monitorRunpod(env, at(NOW + 3 * HOUR))).sent, []);
+  assert.equal(binding.sent.length, 3);
+});
+
+test('a used-up budget while RunPod is paused does not say that other providers still sell', async (t) => {
+  const at = clock(t);
+  const binding = fakeBinding();
+  const env = salesEnv(binding, { models: [RUNPOD_MODEL, DIRECT_MODEL], rules: [runpodRule(), directRule()], INFRON_API_KEY: 'direct-key' });
+  addWindow(env, { id: 'infron-window', provider: 'infron' });
+  mockRunpod(t, { clientBalance: 0, underBalance: true });
+
+  await monitorRunpod(env, at(NOW));
+  env.DB.sqlite.prepare("UPDATE supplier_budget_windows SET consumed_micro = limit_micro WHERE id = 'infron-window'").run();
+  const result = await monitorRunpod(env, at(NOW + HOUR));
+
+  assert.equal(result.sales, 'paused');
+  assert.deepEqual(result.sent, ['model_sales_paused', 'budget_low:infron-window']);
+  assert.equal(subjects(binding).at(-1), 'Bounty Operator: the Infron supplier budget is used up');
+  const body = bodyOf(binding.sent.at(-1));
+  assert.match(body, /so the Infron models have stopped selling\. Nothing else is selling either: RunPod reports the account under its minimum balance\./);
+  assert.doesNotMatch(body, /Models on other providers still sell/);
+});
+
+test('a second RunPod pause the same day is announced, though the out-of-funds email is held', async (t) => {
+  const at = clock(t);
+  const binding = fakeBinding();
+  const env = salesEnv(binding);
+  const state = { clientBalance: 50, underBalance: false };
+  mockRunpod(t, state);
+
+  await monitorRunpod(env, at(NOW));
+  Object.assign(state, { clientBalance: 0, underBalance: true });
+  assert.deepEqual((await monitorRunpod(env, at(NOW + HOUR))).sent, ['runpod_under_balance']);
+  Object.assign(state, { clientBalance: 30, underBalance: false });
+  assert.deepEqual((await monitorRunpod(env, at(NOW + 2 * HOUR))).sent, ['model_sales_resumed']);
+
+  Object.assign(state, { clientBalance: 0, underBalance: true });
+  const result = await monitorRunpod(env, at(NOW + 3 * HOUR));
+  assert.equal(result.sales, 'paused');
+  assert.deepEqual(result.sent, ['model_sales_paused']);
+  assert.deepEqual(result.held, ['runpod_under_balance']);
+  assert.equal(subjects(binding).at(-1), 'Bounty Operator: model sales have stopped, RunPod is out of funds');
+  assert.deepEqual(row(env, 'model_sales'), { last_sent: 0, note: 'paused' });
+});
+
+test('a combined pause email that fails is retried and still carries the stop, so no second one is sent', async (t) => {
+  const at = clock(t);
+  const binding = fakeBinding();
+  const env = salesEnv(binding);
+  const state = { clientBalance: 50, underBalance: false };
+  mockRunpod(t, state);
+  t.mock.method(console, 'error', () => {});
+
+  await monitorRunpod(env, at(NOW));
+  Object.assign(state, { clientBalance: 0, underBalance: true });
+  binding.refuse = 'temporarily refused';
+  // The slot is handed back, so the same email goes out next run, stop and all.
+  assert.deepEqual((await monitorRunpod(env, at(NOW + HOUR))).failed, ['runpod_under_balance']);
+  assert.equal(row(env, 'runpod_under_balance').last_sent, 0);
+
+  binding.refuse = null;
+  assert.deepEqual((await monitorRunpod(env, at(NOW + 2 * HOUR))).sent, ['runpod_under_balance']);
+  assert.deepEqual(subjects(binding), ['Bounty Operator: RunPod is out of funds and model sales are paused']);
+  assert.deepEqual(row(env, 'model_sales'), { last_sent: 0, note: 'paused' });
+});
+
+test('the "sales are back" email names the time a new stop email would wait for', async (t) => {
+  const at = clock(t);
+  const binding = fakeBinding();
+  const env = salesEnv(binding);
+  mockRunpod(t, { clientBalance: 50, underBalance: false });
+
+  await monitorRunpod(env, at(NOW));
+  env.DB.sqlite.prepare("UPDATE supplier_budget_windows SET consumed_micro = limit_micro WHERE id = 'runpod-window'").run();
+  assert.deepEqual((await monitorRunpod(env, at(NOW + HOUR))).sent, ['model_sales_stopped']);
+  env.DB.sqlite.prepare("UPDATE supplier_budget_windows SET limit_micro = limit_micro * 2 WHERE id = 'runpod-window'").run();
+  assert.deepEqual((await monitorRunpod(env, at(NOW + 2 * HOUR))).sent, ['model_sales_resumed']);
+  assert.match(bodyOf(binding.sent.at(-1)), /If sales stop the same way again before 2026-10-27 \d\d:\d\d UTC, the email about it waits until then\./);
+
+  // And they do wait: the second stop inside the day is held, as the email said.
+  env.DB.sqlite.prepare("UPDATE supplier_budget_windows SET consumed_micro = limit_micro WHERE id = 'runpod-window'").run();
+  assert.deepEqual((await monitorRunpod(env, at(NOW + 3 * HOUR))).held, ['model_sales_stopped']);
+
+  // With the slot free again, the recovery email says nothing about a wait.
+  env.DB.sqlite.prepare("UPDATE supplier_budget_windows SET limit_micro = limit_micro * 2 WHERE id = 'runpod-window'").run();
+  assert.deepEqual((await monitorRunpod(env, at(NOW + 2 * DAY))).sent, ['model_sales_resumed']);
+  assert.doesNotMatch(bodyOf(binding.sent.at(-1)), /waits until then/);
 });
 
 // ---------------------------------------------------------------------------

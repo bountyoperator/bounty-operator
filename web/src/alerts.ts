@@ -23,7 +23,8 @@ const ENDING_WARNING = 7 * DAY;
 // Warn when a supplier budget window has less than this share of its limit left.
 const BUDGET_LOW_SHARE = 0.2;
 // Tell the owner the watch is blind after this long without one good RunPod read.
-const UNREADABLE_AFTER = 6 * 3600;
+// Short, because only RunPod-hosted models sell: a read that keeps failing is an outage.
+const UNREADABLE_AFTER = 3600;
 // Used when RUNPOD_ALERT_USD is unset, blank or unreadable. USD.
 const DEFAULT_THRESHOLD_USD = 10;
 // One plain address. It goes into a header, so no spaces, angle brackets or line breaks.
@@ -289,11 +290,32 @@ function stoppedEmail(report: SalesReport): Email {
   };
 }
 
-function resumedEmail(report: SalesReport): Email {
+/**
+ * A RunPod pause that stops sales, when the out-of-funds email for the day has
+ * already gone out and so cannot carry it. Same stop, said once.
+ */
+function pausedEmail(report: SalesReport): Email {
+  const also = report.blocked.length ? ['', 'Other models, and why they cannot sell:', ...blockedLines(report)] : [];
+  return {
+    subject: 'Bounty Operator: model sales have stopped, RunPod is out of funds',
+    lines: [
+      'The Model API is not selling: RunPod reports the account under its minimum balance and no model on another provider can sell, so no model can take a paid request and new top-ups are closed too.',
+      ...also,
+      '',
+      ADD_FUNDS,
+      '',
+      'You will get one email when sales resume.',
+    ],
+  };
+}
+
+function resumedEmail(report: SalesReport, heldUntil: number | null): Email {
   const still = report.blocked.length ? ['', 'Still not selling:', ...blockedLines(report)] : [];
+  // The stop that just ended holds its slot for the rest of the day, so say so rather than leave this the last word.
+  const held = heldUntil ? ['', `If sales stop the same way again before ${when(heldUntil)}, the email about it waits until then.`] : [];
   return {
     subject: 'Bounty Operator: model sales are back',
-    lines: ['The Model API is selling again: at least one model can take paid requests.', ...still],
+    lines: ['The Model API is selling again: at least one model can take paid requests.', ...still, ...held],
   };
 }
 
@@ -329,15 +351,23 @@ function budgetEndingEmail(budget: SupplierBudget, now: number): Email {
   };
 }
 
-function budgetLowEmail(budget: SupplierBudget, remaining: number, exhausted: boolean): Email {
+function budgetLowEmail(budget: SupplierBudget, remaining: number, exhausted: boolean, status: SalesReport['status']): Email {
   const name = provider(budget.provider);
   const share = budget.limit_micro > 0 ? Math.max(0, Math.floor((remaining / budget.limit_micro) * 100)) : 0;
+  // What is left on sale once this provider's models stop.
+  const rest = {
+    available: 'Models on other providers still sell.',
+    paused: 'Nothing else is selling either: RunPod reports the account under its minimum balance.',
+    unknown: 'Whether anything else still sells is not known: the RunPod account could not be read.',
+    unavailable: 'Nothing else is selling either; a separate email explains it.',
+    off: 'Model inference is switched off (INFERENCE_ENABLED), so nothing is on sale either way.',
+  }[status];
   return {
     subject: exhausted ? `Bounty Operator: the ${name} supplier budget is used up` : `Bounty Operator: the ${name} supplier budget is nearly used up`,
     lines: [
       `The ${name} supplier budget window ${budget.id} has ${micro(Math.max(0, remaining))} of ${micro(budget.limit_micro)} left (${share}%).`,
       exhausted
-        ? `That is too little to hold one more request, so the ${name} models have stopped selling. Models on other providers still sell.`
+        ? `That is too little to hold one more request, so the ${name} models have stopped selling. ${rest}`
         : `When too little is left to hold one more request, the ${name} models stop selling.`,
       '',
       'What to do: record the matching supplier funding, then raise limit_micro on this supplier_budget_windows row.',
@@ -345,12 +375,14 @@ function budgetLowEmail(budget: SupplierBudget, remaining: number, exhausted: bo
   };
 }
 
-function unreadableEmail(since: number): Email {
+function unreadableEmail(since: number, status: SalesReport['status']): Email {
   return {
     subject: 'Bounty Operator: the RunPod account cannot be read',
     lines: [
       `Every read of the RunPod account since ${when(since)} has failed, so the balance and pause alerts cannot see it.`,
-      'RunPod-hosted model sales may stop without a warning while this lasts.',
+      status === 'unknown'
+        ? 'Only RunPod-hosted models can sell, and a model whose funding cannot be read takes no paid request: the Model API is selling nothing and taking no top-up while the read keeps failing.'
+        : 'RunPod-hosted model sales may stop without a warning while this lasts.',
       '',
       'What to do: check that the RUNPOD_API_KEY secret is still valid (a rotated or revoked key fails) and that https://api.runpod.io/graphql answers.',
     ],
@@ -361,8 +393,8 @@ function unreadableEmail(since: number): Email {
 // The checks.
 // ---------------------------------------------------------------------------
 
-/** Remembers when RunPod reads started failing, and says so once the watch has been blind for six hours. */
-async function checkRunpodRead(pass: Pass, account: RunpodAccount | null): Promise<'read' | 'unreadable'> {
+/** Remembers when RunPod reads started failing, and says so once the watch has been blind for an hour. */
+async function checkRunpodRead(pass: Pass, account: RunpodAccount | null, status: SalesReport['status']): Promise<'read' | 'unreadable'> {
   const { env, now } = pass;
   const state = await readState(env, 'runpod_read');
   if (account) {
@@ -371,28 +403,48 @@ async function checkRunpodRead(pass: Pass, account: RunpodAccount | null): Promi
   }
   const since = state && /^\d{1,12}$/.test(state) ? Number(state) : null;
   if (since === null) await writeState(env, 'runpod_read', String(now), now);
-  else if (now - since >= UNREADABLE_AFTER) await notify(pass, 'runpod_unreadable', `failing since ${since}`, unreadableEmail(since));
+  else if (now - since >= UNREADABLE_AFTER) await notify(pass, 'runpod_unreadable', `failing since ${since}`, unreadableEmail(since, status));
   return 'unreadable';
 }
 
-/** Under its minimum balance, or below RUNPOD_ALERT_USD. Only a good read gets here. */
-async function checkBalance(pass: Pass, account: RunpodAccount, status: SalesReport['status']): Promise<void> {
+/**
+ * Under its minimum balance, or below RUNPOD_ALERT_USD. Only a good read gets
+ * here. True when the out-of-funds email of this pass carries the sales stop,
+ * so that checkSales does not send a second email about the same stop.
+ */
+async function checkBalance(pass: Pass, account: RunpodAccount, status: SalesReport['status']): Promise<boolean> {
   if (account.underBalance) {
-    await notify(pass, 'runpod_under_balance', 'under balance', underBalanceEmail(status));
-    return;
+    const outcome = await notify(pass, 'runpod_under_balance', 'under balance', underBalanceEmail(status));
+    // Held means an earlier email took the slot, and that one may have gone out while other models still sold.
+    // A failed send hands the slot back, and the next run sends this same email, stop and all.
+    return status === 'paused' && outcome !== 'held';
   }
   const threshold = balanceThreshold(pass.env);
   if (account.clientBalance !== null && account.clientBalance < threshold) {
     await notify(pass, 'runpod_balance_low', `below ${money(threshold)}`, lowBalanceEmail(threshold));
   }
+  return false;
+}
+
+/** When the email that announced this stop frees its slot, or null when it is free already. */
+async function stopHeldUntil(env: Env, prior: string, now: number): Promise<number | null> {
+  const ids = prior === 'paused' ? ['model_sales_paused', 'runpod_under_balance'] : ['model_sales_stopped'];
+  let latest = 0;
+  for (const id of ids) {
+    const row = await env.DB.prepare('SELECT last_sent FROM operator_alerts WHERE id = ?').bind(id).first<{ last_sent: number }>();
+    if (row && row.last_sent > latest) latest = row.last_sent;
+  }
+  return latest + DAY > now ? latest + DAY : null;
 }
 
 /**
- * Sales stopped (inference on, no model can sell) is reported once a day while
- * it lasts. When they come back after a stop or a RunPod pause, one email says
- * so. 'unknown' is no change: the last known status is kept.
+ * Sales stopped (inference on, no model can sell) and a move into a RunPod
+ * pause are each reported once a day while they last; a pause the combined
+ * out-of-funds email already carried is not repeated here. When sales come
+ * back after a stop or a pause, one email says so. 'unknown' is no change: the
+ * last known status is kept.
  */
-async function checkSales(pass: Pass, report: SalesReport): Promise<void> {
+async function checkSales(pass: Pass, report: SalesReport, announced: boolean): Promise<void> {
   const { env, now } = pass;
   if (report.status === 'unknown') return;
   const prior = await readState(env, 'model_sales');
@@ -400,10 +452,12 @@ async function checkSales(pass: Pass, report: SalesReport): Promise<void> {
   if (report.status === 'unavailable') {
     const note = report.noModels ? 'no models' : report.blocked.map((block) => `${block.id}:${block.reason}`).join(' ');
     await notify(pass, 'model_sales_stopped', note.slice(0, 500), stoppedEmail(report));
+  } else if (report.status === 'paused' && prior !== 'paused' && !announced) {
+    outcome = await notify(pass, 'model_sales_paused', 'runpod under balance', pausedEmail(report));
   } else if (report.status === 'available' && (prior === 'unavailable' || prior === 'paused')) {
-    outcome = await notify(pass, 'model_sales_resumed', `after ${prior}`, resumedEmail(report));
+    outcome = await notify(pass, 'model_sales_resumed', `after ${prior}`, resumedEmail(report, await stopHeldUntil(env, prior, now)));
   }
-  // A recovery email that failed to send keeps the old status, so the next run tries again.
+  // A stop or recovery email that failed to send keeps the old status, so the next run tries again.
   if (prior !== report.status && outcome !== 'failed') await writeState(env, 'model_sales', report.status, now);
 }
 
@@ -429,7 +483,7 @@ async function checkSupply(pass: Pass, report: SalesReport): Promise<void> {
     // With no model selling, the sales-stopped email already says a budget is used up.
     if (report.status !== 'unavailable' && budget.limit_micro > 0 && remaining < budget.limit_micro * BUDGET_LOW_SHARE) {
       const exhausted = report.blocked.some((block) => block.reason === 'budget_exhausted' && report.rules.some((rule) => rule.id === block.id && rule.provider === budget.provider));
-      await notify(pass, `budget_low:${budget.id}`, `${remaining} of ${budget.limit_micro} left`, budgetLowEmail(budget, remaining, exhausted));
+      await notify(pass, `budget_low:${budget.id}`, `${remaining} of ${budget.limit_micro} left`, budgetLowEmail(budget, remaining, exhausted, report.status));
     }
   }
 }
@@ -454,9 +508,9 @@ export async function monitorRunpod(env: Env, now: number): Promise<Record<strin
   const pass: Pass = { env: env as Pass['env'], to, now, balance, sent: [], held: [], failed: [] };
   const report = await inferenceSalesReport(env, !account ? 'unknown' : account.underBalance ? 'paused' : 'funded', now);
 
-  const runpod = env.RUNPOD_API_KEY ? await checkRunpodRead(pass, account) : 'not_configured';
-  if (account) await checkBalance(pass, account, report.status);
-  await checkSales(pass, report);
+  const runpod = env.RUNPOD_API_KEY ? await checkRunpodRead(pass, account, report.status) : 'not_configured';
+  const announced = account ? await checkBalance(pass, account, report.status) : false;
+  await checkSales(pass, report, announced);
   await checkSupply(pass, report);
 
   return {
