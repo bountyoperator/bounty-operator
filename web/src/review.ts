@@ -659,8 +659,13 @@ export async function streamHostedReview({ env, ctx, request }: Call, accountId:
     let finished = false;
     const deliver = async (text: string): Promise<void> => {
       if (!text) return;
-      await send(sseEvent('delta', { text }));
-      delivered += text.length;
+      // The browser shows the text as it arrives. Over MCP no review text leaves
+      // before `done`, only how much has been written: the MCP client keeps
+      // nothing but the outcome, and a caller that reads the stream directly and
+      // leaves before `done` has then been given nothing, so not counting it is fair.
+      const written = delivered + text.length;
+      await send(channel === 'web' ? sseEvent('delta', { text }) : sseEvent('progress', { chars: written }));
+      delivered = written;
     };
     try {
       const events = await whileOpening(opening, () => {
@@ -689,9 +694,9 @@ export async function streamHostedReview({ env, ctx, request }: Call, accountId:
       abort.abort();
       // Text the browser already holds is a review once it passes COUNTED_AFTER_CHARS,
       // whether the reader left or the provider failed after writing it. A policy
-      // block is never one. Over MCP the deltas are held back and only the
-      // outcome reaches the caller, so a stream that never reached `done` showed
-      // nothing and is not counted, as collectHostedReview does.
+      // block is never one. Over MCP only `progress` counts were sent and the text
+      // comes with `done`, so a stream that never reached `done` showed nothing
+      // and is not counted, as collectHostedReview does.
       const policy = error instanceof ProviderError && error.kind === 'policy';
       const seen = channel === 'web' && delivered >= COUNTED_AFTER_CHARS;
       settle(seen && !policy, failureReason(error, clientGone));

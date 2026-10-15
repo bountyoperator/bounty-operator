@@ -170,7 +170,7 @@ test('POST /api/client/review refuses verdict and panel for a free account and r
   assert.equal(paid.providerCalls.length, 2);
 });
 
-test('POST /api/client/review answers with a stream when asked, still gated and counted as an MCP review', async (t) => {
+test('POST /api/client/review streams only on a Bounty Operator model; on the caller’s own key it answers JSON, still gated and counted as an MCP review', async (t) => {
   const free = await setup(t, 'free');
   // The gate comes before the reservation, so its refusal is still JSON with its status.
   for (const profile of GATED) {
@@ -181,20 +181,14 @@ test('POST /api/client/review answers with a stream when asked, still gated and 
   }
   assert.equal(free.providerCalls.length, 0);
 
+  // A review on the caller's own key has no cold start to wait out, so `stream`
+  // is ignored there: a reader cannot take the text as deltas and leave uncounted.
   const answer = await free.client('scope', { stream: true });
   assert.equal(answer.status, 200);
-  assert.equal(answer.type, 'text/event-stream; charset=utf-8');
-  const events = answer.text.split('\n\n').filter((block) => block.startsWith('event:')).map((block) => {
-    const [name, data] = block.split('\n');
-    return { event: name.slice('event: '.length), data: JSON.parse(data.slice('data: '.length)) };
-  });
-  // A hosted profile's scanner may release the text in several pieces.
-  assert.deepEqual([...new Set(events.slice(0, -1).map((item) => item.event))], ['delta']);
-  assert.equal(events.slice(0, -1).map((item) => item.data.text).join(''), REVIEW);
-  const done = events.at(-1);
-  assert.equal(done.event, 'done');
-  assert.equal(done.data.review, REVIEW);
-  assert.equal(done.data.profile.id, 'scope');
+  assert.match(answer.type, /^application\/json/);
+  const body = JSON.parse(answer.text);
+  assert.equal(body.review, REVIEW);
+  assert.equal(body.profile.id, 'scope');
   assert.deepEqual(free.reviews(), [{ status: 'completed', profile: 'scope', channel: 'mcp' }]);
 });
 

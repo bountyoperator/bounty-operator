@@ -64,7 +64,8 @@ export function hostedConfig(env) {
  *
  * With `stream`, the body also carries `stream: true` and the Worker answers
  * with server-sent events once the review is reserved: `status` while a hosted
- * model starts, `delta` while it writes, then one `done` with the same body
+ * model starts, `progress` (characters written so far, no text) while it
+ * writes, then one `done` with the same body
  * the JSON route returns, or one `error` with the same body a JSON error has.
  * `onStatus(message)` receives the status message, and `onStatus(null)` comes
  * when the first text arrives after one. An answer that is not a stream (an
@@ -114,7 +115,7 @@ export async function hostedCall(ctx, path, body, { stream = false, onStatus } =
     if (timeout.aborted) {
       throw new ToolError(`Bounty Operator did not answer within ${limitMs / 1000} seconds. Call account to see whether the review was counted.`, 'timeout');
     }
-    if (stream && headersGaveUp(error, sentAt)) {
+    if (stream && !response && headersGaveUp(error, sentAt)) {
       // A server that answers this review as JSON instead of a stream: the
       // review was reserved and may be running, so the call waited rather than
       // failed to reach the server, and calling again would start a second one.
@@ -201,8 +202,11 @@ async function readEvents(response, onStatus) {
     if (!parsed) return null;
     const { event, data } = parsed;
     const isObject = Boolean(data) && typeof data === 'object' && !Array.isArray(data);
-    if (event === 'delta') {
-      if (isObject && typeof data.text === 'string' && data.text !== '') {
+    // `progress` is what the Worker sends over MCP; `delta` (with the text) is
+    // what an older Worker sent, and is read the same way.
+    if (event === 'progress' || event === 'delta') {
+      const wrote = isObject && (event === 'progress' ? Number(data.chars) > 0 : typeof data.text === 'string' && data.text !== '');
+      if (wrote) {
         writing = true;
         if (status) {
           status = false;

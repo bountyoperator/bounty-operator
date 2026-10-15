@@ -257,14 +257,15 @@ test('a warm Bounty Operator review the agent cancels mid-stream is not counted'
     globalThis.fetch = originalFetch;
   });
 
-  // What the Worker has written to this client, counted as it arrives.
-  let received = 0;
+  // What the Worker has written to this client, kept as it arrives.
+  let received = '';
+  const decoder = new TextDecoder();
   const readWorker = async (url, init) => {
     const response = await toWorker(url, init);
     if (!response.body) return response;
     const counting = new TransformStream({
       transform(chunk, controller) {
-        received += chunk.byteLength;
+        received += decoder.decode(chunk, { stream: true });
         controller.enqueue(chunk);
       },
     });
@@ -276,8 +277,13 @@ test('a warm Bounty Operator review the agent cancels mid-stream is not counted'
     jsonrpc: '2.0', id: 'cancel-1', method: 'tools/call',
     params: { name: 'run_review', arguments: { files: [{ name: 'src/Vault.sol', content: VAULT }], provider: 'bountyoperator', model: CYBER_MODEL.id, profile: 'solidity', mode: 'bounty' } },
   });
-  for (let turn = 0; turn < 200 && received <= 2500; turn += 1) await new Promise((resolve) => setImmediate(resolve));
-  assert.ok(received > 2500, `the deltas crossed the wire: ${received} bytes`);
+  const wrote = 'event: progress\ndata: {"chars":2500}';
+  for (let turn = 0; turn < 200 && !received.includes(wrote); turn += 1) await new Promise((resolve) => setImmediate(resolve));
+  assert.ok(received.includes(wrote), 'the Worker reported the 2,500 characters written');
+  // Over MCP the review text does not cross the wire before `done`, so a caller
+  // that reads the stream itself and leaves early has been given nothing.
+  assert.doesNotMatch(received, /x{100}/);
+  assert.doesNotMatch(received, /event: delta/);
   await instance.handle({ jsonrpc: '2.0', method: 'notifications/cancelled', params: { requestId: 'cancel-1' } });
 
   // A cancelled call is never answered: the agent saw none of those characters.

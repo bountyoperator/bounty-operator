@@ -197,7 +197,8 @@ async function clientReview(call: Call): Promise<Response> {
   // The local MCP server asks for the stream on a Bounty Operator model. Its
   // response then starts at once, and the keep-alives carry it through a cold
   // start longer than Node's fetch waits for response headers (300 seconds).
-  if (body.stream === true) return streamHostedReview(call, accountId, input, 'mcp');
+  // Only those models stream here: a review on the caller's own key has no cold start.
+  if (body.stream === true && input.provider === 'bountyoperator') return streamHostedReview(call, accountId, input, 'mcp');
   return json(await runHostedReview(call, accountId, input, 'mcp'));
 }
 
