@@ -5,7 +5,7 @@ import type { MeteredModel } from './api-credits.ts';
 import type { Call, Env } from './env.ts';
 import { ApiError, json, readJson } from './http.ts';
 import { rateLimit } from './rate.ts';
-import { markSupplierDispatched, supplierAvailability, supplierBudgetRefillable } from './supplier-costs.ts';
+import { markSupplierDispatched, supplierAvailability, supplierBudgetRefillable, supplierRuleExpiry } from './supplier-costs.ts';
 
 export interface InferenceModel extends MeteredModel {
   name: string;
@@ -337,6 +337,55 @@ async function usageFaultModels(env: Env): Promise<Set<string>> {
   const rows = await env.DB.prepare("SELECT DISTINCT model FROM inference_requests WHERE failure_code = 'usage_limit_exceeded' AND finished_at > ?")
     .bind(Math.floor(Date.now() / 1000) - 600).all<{ model: string }>();
   return new Set(rows.results.map((row) => row.model));
+}
+
+/** Why a configured model cannot take a paid request right now. */
+export type SalesBlock = 'no_cost_rule' | 'cost_rule_expired' | 'no_budget_window' | 'budget_exhausted' | 'usage_check';
+export interface SalesReport {
+  /**
+   * 'off': the operator switched inference off. 'unavailable': inference is on
+   * but no model can sell. 'paused': only RunPod models could sell and RunPod
+   * reports the account under its minimum balance. 'unknown': only RunPod
+   * models could sell and their funding could not be read.
+   */
+  status: 'off' | 'available' | 'paused' | 'unavailable' | 'unknown';
+  /** True when inference is on but no model is configured with a provider key. */
+  noModels: boolean;
+  /** Configured models that cannot sell, and why. */
+  blocked: { id: string; reason: SalesBlock }[];
+  /** The cost rule behind each configured model that has one, expired or not. */
+  rules: { id: string; provider: string; validUntil: number }[];
+}
+
+/**
+ * For the owner alerts: whether the Model API can sell, and why not. The
+ * caller passes its own read of RunPod funding, so this makes no network call,
+ * and an unreadable read stays 'unknown' instead of reading as funded. The
+ * decision otherwise follows inferenceStatus.
+ */
+export async function inferenceSalesReport(env: Env, hosting: 'funded' | 'paused' | 'unknown', now: number): Promise<SalesReport> {
+  if (env.INFERENCE_ENABLED !== 'true') return { status: 'off', noModels: false, blocked: [], rules: [] };
+  const configured = inferenceModels(env).filter((model) => model.enabled !== false && Boolean(backendKey(model.endpoint, env)));
+  if (!configured.length) return { status: 'unavailable', noModels: true, blocked: [], rules: [] };
+  const [supplier, faults] = await Promise.all([supplierAvailability(env, configured), usageFaultModels(env)]);
+  const blocked: SalesReport['blocked'] = [];
+  const rules: SalesReport['rules'] = [];
+  const sellable: InferenceModel[] = [];
+  for (const model of configured) {
+    const rule = supplierRuleExpiry(env, model);
+    if (rule) rules.push({ id: model.id, provider: rule.provider, validUntil: rule.validUntil });
+    const supply = supplier[model.id];
+    let reason: SalesBlock | null = null;
+    if (!supply?.available) {
+      reason = !rule ? 'no_cost_rule' : rule.validUntil <= now ? 'cost_rule_expired'
+        : supply?.code === 'supplier_budget_exhausted' ? 'budget_exhausted' : 'no_budget_window';
+    } else if (faults.has(model.id)) reason = 'usage_check';
+    if (reason) blocked.push({ id: model.id, reason });
+    else sellable.push(model);
+  }
+  if (!sellable.length) return { status: 'unavailable', noModels: false, blocked, rules };
+  if (sellable.some((model) => !isRunpod(model.endpoint))) return { status: 'available', noModels: false, blocked, rules };
+  return { status: hosting === 'funded' ? 'available' : hosting, noModels: false, blocked, rules };
 }
 
 function object(value: unknown): value is Record<string, unknown> { return Boolean(value) && typeof value === 'object' && !Array.isArray(value); }

@@ -55,6 +55,7 @@ import { apiCreditData, createInferenceKey, reapInferenceHolds, revokeInferenceK
 import { createApiTopup, reconcileApiTopup, resyncPendingTopups, topupsUnavailable } from './api-topups.ts';
 import { inferenceBilling, inferenceCatalog, inferenceEndpoint, inferenceModels, shownInferenceStatus, topupBilling } from './inference.ts';
 import { reconcileRunpodBilling, supplierBudgetProviders, supplierBudgetShare, supplierBudgetShareProblem, supplierShareShortfalls, sweepSupplierBudgets } from './supplier-costs.ts';
+import { monitorRunpod } from './alerts.ts';
 
 const AUTH_REQUESTS_PER_HOUR = 90;
 const BILLING_REQUESTS_PER_10_MIN = 6;
@@ -63,6 +64,7 @@ const EVENTS_PER_10_MIN = 60;
 const WEBHOOK_BODY_BYTES = 1000000;
 const WEBHOOK_PATH = '/api/stripe/webhook';
 const DAILY_CRON = '17 3 * * *';
+const FREQUENT_CRON = '*/15 * * * *';
 
 type Handler = (call: Call) => Promise<Response>;
 type SessionHandler = (call: Call, session: Session) => Promise<Response>;
@@ -154,6 +156,7 @@ async function health({ env }: Call): Promise<Response> {
       env.DB.prepare('SELECT limit_micro FROM supplier_budget_windows LIMIT 1'),
       env.DB.prepare('SELECT total_micro FROM supplier_billing_buckets LIMIT 1'),
       env.DB.prepare('SELECT amount_micro FROM supplier_budget_adjustments LIMIT 1'),
+      env.DB.prepare('SELECT last_sent FROM operator_alerts LIMIT 1'),
     ]);
     return json(body);
   } catch {
@@ -464,7 +467,16 @@ export default {
     });
     const purged = controller.cron === DAILY_CRON ? await purgeExpired(env, now) : {};
     const supplierBilling = controller.cron === DAILY_CRON ? await reconcileSupplierBilling(env, now) : null;
+    // Watch RunPod funding and whether the Model API can sell, and email the owner when either needs attention.
+    const alerts = controller.cron === FREQUENT_CRON
+      ? await monitorRunpod(env, now).catch((error: unknown) => {
+          // The message names a table or a binding, never a secret, and is what makes the failure fixable.
+          const message = (error instanceof Error ? error.message : String(error)).slice(0, 200);
+          console.error('Owner alert watch failed', { name: error instanceof Error ? error.name : 'unknown', message });
+          return { status: 'error', error: message };
+        })
+      : null;
     console.log('Scheduled cleanup', { cron: controller.cron, reapedLeases, reapedInference, supplierBudgetsSwept, supplierBudgetSharePpm,
-      ...(supplierShareShortfall.length ? { supplierShareShortfall } : {}), topupsResynced, resynced, ...purged, ...(supplierBilling ? { supplierBilling } : {}) });
+      ...(supplierShareShortfall.length ? { supplierShareShortfall } : {}), topupsResynced, resynced, ...purged, ...(supplierBilling ? { supplierBilling } : {}), ...(alerts ? { alerts } : {}) });
   },
 } satisfies ExportedHandler<Env>;

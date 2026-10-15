@@ -9,12 +9,12 @@
 
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 
-import { PRODUCTION_CONFIG, TEMPLATE_CONFIG, configRefusal, deploySteps, migrationRefusal, pagesOf, runSteps } from '../../scripts/deploy.mjs';
+import { PRODUCTION_CONFIG, TEMPLATE_CONFIG, alertConfigRefusal, configRefusal, deploySteps, migrationRefusal, pagesOf, runSteps } from '../../scripts/deploy.mjs';
 
 const WEB_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const REPO_DIR = path.resolve(WEB_DIR, '..');
@@ -73,7 +73,12 @@ test('the public template names no account, no route and no live database', () =
     INFERENCE_MODELS: '[]',
     SUPPLIER_COST_RULES: '[]',
     SUPPLIER_BUDGET_SHARE: '0.9',
+    RUNPOD_ALERT_USD: '10',
+    ALERT_EMAIL_TO: '',
   });
+  // No owner-alert binding and no recipient: the template sends no email.
+  assert.equal(Object.hasOwn(template, 'send_email'), false);
+  assert.equal(alertConfigRefusal(template), null);
 
   // No identifier of a live resource in any form: a 32-hex account id, a
   // database UUID other than the placeholder, a Stripe id, a custom domain.
@@ -219,6 +224,78 @@ test('a deploy without the production file is refused with one line, before any 
   assert.equal(spawnSync(process.execPath, [DEPLOY_SCRIPT, '--force'], { cwd: WEB_DIR, encoding: 'utf8' }).status, 1);
 });
 
+test('owner alerts must be fully set up or fully off: the binding and ALERT_EMAIL_TO name the same address', () => {
+  const owner = 'owner@example.com';
+  const binding = (destination) => ({ send_email: [{ name: 'ALERT_EMAIL', ...(destination === undefined ? {} : { destination_address: destination }) }] });
+
+  // Off: neither part, or only an unrelated binding.
+  assert.equal(alertConfigRefusal({ vars: {} }), null);
+  assert.equal(alertConfigRefusal({ vars: { ALERT_EMAIL_TO: '' } }), null);
+  assert.equal(alertConfigRefusal({ vars: { ALERT_EMAIL_TO: '' }, send_email: [{ name: 'OTHER', destination_address: owner }] }), null);
+  // On: the same address on both sides. The Worker trims ALERT_EMAIL_TO, so space around it is allowed.
+  assert.equal(alertConfigRefusal({ vars: { ALERT_EMAIL_TO: owner }, ...binding(owner) }), null);
+  assert.equal(alertConfigRefusal({ vars: { ALERT_EMAIL_TO: ` ${owner} ` }, ...binding(owner) }), null);
+
+  // Half set up: each is refused with one line that names no address.
+  const refusals = [
+    alertConfigRefusal({ vars: { ALERT_EMAIL_TO: owner } }),
+    alertConfigRefusal({ vars: { ALERT_EMAIL_TO: '' }, ...binding(owner) }),
+    alertConfigRefusal({ vars: {}, ...binding(owner) }),
+    alertConfigRefusal({ vars: { ALERT_EMAIL_TO: owner }, ...binding(undefined) }),
+    alertConfigRefusal({ vars: { ALERT_EMAIL_TO: owner }, ...binding('') }),
+    alertConfigRefusal({ vars: { ALERT_EMAIL_TO: 'support@bountyoperator.com' }, ...binding(owner) }),
+    // Cloudflare compares the recipient with destination_address byte for byte,
+    // so a difference in case or in the binding's own spacing is refused too.
+    alertConfigRefusal({ vars: { ALERT_EMAIL_TO: ' Owner@Example.com ' }, ...binding(owner) }),
+    alertConfigRefusal({ vars: { ALERT_EMAIL_TO: owner }, ...binding(`${owner} `) }),
+    // An address the Worker's own ADDRESS test rejects: it would log not_configured and send nothing.
+    alertConfigRefusal({ vars: { ALERT_EMAIL_TO: "o'brien@example.com" }, ...binding("o'brien@example.com") }),
+    alertConfigRefusal({ vars: { ALERT_EMAIL_TO: `Owner <${owner}>` }, ...binding(`Owner <${owner}>`) }),
+  ];
+  for (const refusal of refusals) {
+    assert.match(refusal, /^Refusing to deploy: the owner alerts are half set up\. /);
+    assert.equal(refusal.split('\n').length, 1);
+    assert.doesNotMatch(refusal, /@/);
+  }
+  assert.match(refusals[0], /no send_email binding named ALERT_EMAIL/);
+  assert.match(refusals[1], /vars\.ALERT_EMAIL_TO is blank/);
+  assert.match(refusals[3], /has no destination_address/);
+  assert.match(refusals[5], /differs from the ALERT_EMAIL binding's destination_address/);
+  assert.match(refusals[6], /must match exactly, case and spacing included/);
+  assert.match(refusals[7], /must match exactly, case and spacing included/);
+  assert.match(refusals[8], /is not one plain address/);
+  assert.match(refusals[9], /is not one plain address/);
+});
+
+test('the deploy check uses the Worker\'s own ADDRESS pattern, so the two cannot drift apart', () => {
+  const pattern = (source, file) => {
+    const match = /^const ADDRESS = (\/.+\/);$/m.exec(source);
+    assert.ok(match, `${file} declares ADDRESS on one line`);
+    return match[1];
+  };
+  const alerts = readFileSync(path.join(WEB_DIR, 'src', 'alerts.ts'), 'utf8');
+  assert.equal(pattern(readFileSync(DEPLOY_SCRIPT, 'utf8'), 'deploy.mjs'), pattern(alerts, 'alerts.ts'));
+});
+
+test('a deploy whose file has the owner alerts half set up is refused before any gate runs', (t) => {
+  const config = `wrangler.alert-check-${process.pid}.jsonc`;
+  const file = path.join(WEB_DIR, config);
+  t.after(() => rmSync(file, { force: true }));
+  writeFileSync(file, [
+    '{',
+    '  // A // inside a string is not a comment.',
+    '  "name": "alert-check",',
+    '  "vars": { "ALERT_EMAIL_TO": "someone@example.com", "NOTE": "a // b" },',
+    '  "send_email": [{ "name": "ALERT_EMAIL", "destination_address": "owner@example.com" }]',
+    '}',
+  ].join('\n'));
+
+  const run = spawnSync(process.execPath, [DEPLOY_SCRIPT, '--config', config], { cwd: WEB_DIR, encoding: 'utf8' });
+  assert.equal(run.status, 1);
+  assert.match(run.stderr.trim(), /^Refusing to deploy: the owner alerts are half set up\. vars\.ALERT_EMAIL_TO differs/);
+  assert.equal(run.stdout, '', 'no gate ran and Wrangler was not started');
+});
+
 test('the deploy script holds no production value', () => {
   const source = readFileSync(DEPLOY_SCRIPT, 'utf8');
   assert.doesNotMatch(source, /\b[0-9a-f]{32}\b|\b(?:price|bpc|whsec|sk|rk)_[A-Za-z0-9]{8,}|account_id|process\.env/);
@@ -230,8 +307,12 @@ test(
   () => {
     const production = parseJsonc(readFileSync(PRODUCTION_PATH, 'utf8'));
 
-    // What production adds, and what it changes.
-    assert.deepEqual(Object.keys(production).filter((key) => !Object.hasOwn(template, key)).sort(), ['account_id', 'routes']);
+    // What production adds, and what it changes. The owner-alert send_email
+    // binding is optional, and when it is there it must match ALERT_EMAIL_TO.
+    const added = Object.keys(production).filter((key) => !Object.hasOwn(template, key) && key !== 'send_email').sort();
+    assert.deepEqual(added, ['account_id', 'routes']);
+    assert.equal(alertConfigRefusal(production), null, 'the owner alerts are fully set up, or fully off');
+    if (production.send_email) assert.deepEqual(production.send_email.map((binding) => binding.name), ['ALERT_EMAIL']);
     assert.deepEqual(Object.keys(template).filter((key) => !Object.hasOwn(production, key)), []);
     assert.notEqual(production.name, template.name);
     assert.match(production.account_id, /^[0-9a-f]{32}$/);
@@ -250,7 +331,7 @@ test(
 
     // Everything else is the same Worker. Compared with the ids left out, so a failure prints none.
     const shared = (config) => {
-      const { name, account_id, routes, vars, d1_databases, $schema, ...rest } = config;
+      const { name, account_id, routes, vars, d1_databases, $schema, send_email, ...rest } = config;
       return { ...rest, d1: d1_databases.map(({ database_id, ...database }) => database) };
     };
     assert.deepEqual(shared(production), shared(template));

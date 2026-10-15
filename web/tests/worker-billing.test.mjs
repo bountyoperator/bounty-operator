@@ -481,7 +481,7 @@ test('every scheduled run reads the ending subscriptions and logs how many', asy
   await ctx.settled();
 
   assert.deepEqual(stored(env), { status: 'active', paid_until: nextEnd + RENEWAL_GRACE_SECONDS });
-  assert.deepEqual(logged.mock.calls[0].arguments, ['Scheduled cleanup', { cron: EVERY_15_MINUTES, reapedLeases: 0, reapedInference: 0, supplierBudgetsSwept: 0, supplierBudgetSharePpm: 900000, topupsResynced: 0, resynced: 1 }]);
+  assert.deepEqual(logged.mock.calls[0].arguments, ['Scheduled cleanup', { cron: EVERY_15_MINUTES, reapedLeases: 0, reapedInference: 0, supplierBudgetsSwept: 0, supplierBudgetSharePpm: 900000, topupsResynced: 0, resynced: 1, alerts: { status: 'disabled' } }]);
 });
 
 test('a read of subscriptions that cannot start does not stop the daily purge', async (t) => {
