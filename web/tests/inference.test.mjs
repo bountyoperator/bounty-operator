@@ -952,3 +952,37 @@ test('a hosted review with provider bountyoperator routes in-process to inferenc
   assert.match(result.review, /Verified via Bounty Operator API/);
   assert.equal(env.DB.sqlite.prepare('SELECT charge_micro FROM inference_requests ORDER BY created_at DESC LIMIT 1').get().charge_micro, 100000);
 });
+
+// /model-api prices a review or an agent session only on a model whose gateway
+// would admit the request. The estimate counts BYTES_PER_TOKEN bytes a token;
+// at that size the gateway's own rule, run here, decides exactly the same.
+test('the /model-api estimator says a workload fits exactly when the gateway would admit it', async () => {
+  const { BYTES_PER_TOKEN, DEFAULT_MODELS, WORKLOADS, admits, estimateRunCost } = await import('../public/app/model-api.mjs');
+  /** A request whose input is inputTokens x BYTES_PER_TOKEN bytes as the gateway counts them. */
+  const sized = (id, { inputTokens, messages }, maxTokens) => {
+    const list = Array.from({ length: messages }, (_, index) => ({ role: index === 0 ? 'system' : 'user', content: '' }));
+    const empty = new TextEncoder().encode(JSON.stringify({ messages: list })).byteLength;
+    list[list.length - 1].content = 'a'.repeat(inputTokens * BYTES_PER_TOKEN - empty);
+    return { model: id, messages: list, max_tokens: maxTokens };
+  };
+  let refusedCount = 0;
+  for (const listed of DEFAULT_MODELS) {
+    const gateway = { ...model, id: listed.id, upstreamModel: listed.id, context: listed.context_length, maxOutput: listed.max_output_tokens, capabilities: listed.capabilities, reasoningParameter: undefined };
+    for (const [key, workload] of Object.entries(WORKLOADS)) {
+      if (!workload.requests) continue;
+      const output = Math.min(workload.outputTokens, listed.max_output_tokens);
+      let refused = false;
+      try {
+        parseInference(sized(listed.id, workload, output), gateway);
+      } catch (error) {
+        assert.equal(error.code, 'context_length_exceeded', `${key}: ${listed.id}: ${error.message}`);
+        refused = true;
+      }
+      refusedCount += refused ? 1 : 0;
+      assert.equal(admits(listed, { ...workload, outputTokens: output }), !refused, `${key}: ${listed.id}`);
+      assert.equal(estimateRunCost(listed, workload).fits, !refused, `${key}: ${listed.id}`);
+    }
+  }
+  // Five models are too small for a review and four for an agent request.
+  assert.equal(refusedCount, 9);
+});

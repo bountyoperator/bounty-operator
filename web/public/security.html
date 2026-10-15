@@ -57,8 +57,8 @@ FINISH: Responsive layout, native video controls, captions, reduced motion and v
 <header class="page-head page-field">
 
 <h1>Security at Bounty Operator</h1>
-<p class="lede">Where your code and keys go during a review, what is stored, which headers are in force, and how to report a vulnerability.</p>
-<p class="meta">Last updated <time datetime="2026-10-07">7 October 2026</time></p>
+<p class="lede">Where your code and keys go during a review or a Model API request, what is stored, which headers are in force, and how to report a vulnerability.</p>
+<p class="meta">Last updated <time datetime="2026-10-15">15 October 2026</time></p>
 <div class="cluster page-head__actions"><a class="btn btn--primary btn--lg" href="#report"><span class="icon icon--shield" aria-hidden="true"></span><span class="btn__label">Report a vulnerability</span></a><a class="btn btn--secondary btn--lg" href="https://github.com/bountyoperator/bounty-operator" target="_blank" rel="noopener noreferrer"><span class="btn__label">Read the source</span><span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></div>
 </header>
 
@@ -91,6 +91,8 @@ FINISH: Responsive layout, native video controls, captions, reduced motion and v
 <p>The review engine is one set of modules. The browser, the Worker and the MCP server import the same files, and they are in the public repository with the three core profiles. The method of every other profile is not in the repository: the Worker adds it when a review runs.</p>
 <p>For a core profile the preview is the whole prompt your model receives. For a hosted profile it is the request: your focus, your context and the files, line by line. The Worker adds the method after that and sends it to the provider you chose and to no one else. With OpenRouter that is OpenRouter and the model host it passes the call to. No page, download or API response returns it.</p>
 <p>A review started from a coding agent takes the same path: <code>run_review</code> sends the files and your provider key to the Worker, and steps 2 and 3 are unchanged.</p>
+<h3 id="model-api-flow">Model API requests</h3>
+<p>A request to the Model API takes a shorter path. Your code sends it to <code>/v1</code> with your Bounty Operator API key (it starts <code>bo_api_</code>). The Worker checks the key, its spending limit and your credit, holds enough credit for the request, and passes it to the host of the model you chose: RunPod for the models we host ourselves, or Infron or OrcaRouter for a managed model. The catalog names the host of each model. The Worker keeps the token counts and the charge, never the prompt, the tool arguments or the answer.</p>
 </div>
 </section><section class="docs-section" aria-labelledby="stored">
 <h2 class="docs-section__title" id="stored">What is stored and what is not</h2>
@@ -101,10 +103,12 @@ FINISH: Responsive layout, native video controls, captions, reduced motion and v
 <ul class="ledger-split__list">
 <li>File contents and file names</li>
 <li>Instructions and evidence notes</li>
-<li>Model API keys and GitHub tokens</li>
+<li>Your own AI provider API keys (OpenRouter, Anthropic, OpenAI and the rest) and GitHub tokens</li>
 <li>Review output</li>
+<li>Model API prompts, tool arguments and answers</li>
+<li>A Bounty Operator API key itself: it is shown once, when you create it</li>
 <li>Raw IP addresses</li>
-<li>Card details</li>
+<li>Full card details</li>
 <li>Passkey private keys</li>
 </ul>
 </div>
@@ -116,6 +120,10 @@ FINISH: Responsive layout, native video controls, captions, reduced motion and v
 <li>SHA-256 hashes of the recovery code, session tokens and connection tokens</li>
 <li>Per review: status, profile, channel and time, for seven days</li>
 <li>Stripe customer and subscription IDs, status, paid-until time and receipt email</li>
+<li>Bounty Operator API keys: a SHA-256 hash, the visible prefix, the label, the spending limit and spend, and the expiry and revocation times</li>
+<li>Per Model API request: model, key, time, status, token counts, credit held and the charge, for 30 days</li>
+<li>The prepaid credit ledger and Stripe payment references, kept for accounting</li>
+<li>With automatic top-ups on: Stripe’s reference to the saved payment method, its type and masked details (for a card, the brand, the last four digits and the expiry month and year), your top-up settings and your consent</li>
 <li>A keyed hash of your IP address for rate limits, for up to a day</li>
 <li>Daily page and funnel totals with no account identifier</li>
 </ul>
@@ -149,20 +157,23 @@ FINISH: Responsive layout, native video controls, captions, reduced motion and v
 </span></code></pre></figure>
 </section><section class="docs-section" aria-labelledby="accounts">
 <h2 class="docs-section__title" id="accounts">Passkey-only accounts</h2>
-<ul class="facts"><li class="facts__item"><span class="icon icon--key" aria-hidden="true"></span><div><p class="facts__title">Passkeys only</p><p class="facts__text">No password exists to phish, reuse or leak. Sign-up asks for no email address. User verification is required on every sign-in.</p></div></li><li class="facts__item"><span class="icon icon--hash" aria-hidden="true"></span><div><p class="facts__title">Secrets stored as hashes</p><p class="facts__text">Session tokens, connection tokens and the recovery code are 256-bit random values. We keep their SHA-256.</p></div></li><li class="facts__item"><span class="icon icon--lock" aria-hidden="true"></span><div><p class="facts__title">Hardened cookies</p><p class="facts__text">The session cookie is __Host-prefixed, HttpOnly, Secure and SameSite=Lax. It lasts up to 30 days.</p></div></li><li class="facts__item"><span class="icon icon--shield" aria-hidden="true"></span><div><p class="facts__title">Origin and CSRF checks</p><p class="facts__text">A state-changing request from the browser has to come from this origin. Signed-in requests also carry a per-session CSRF token.</p></div></li><li class="facts__item"><span class="icon icon--clock" aria-hidden="true"></span><div><p class="facts__title">Fresh passkey for sensitive actions</p><p class="facts__text">Rotating the recovery code, adding or removing a passkey, creating a connection token and deleting the account need a passkey check from the last 10 minutes.</p></div></li><li class="facts__item"><span class="icon icon--refresh" aria-hidden="true"></span><div><p class="facts__title">Recovery resets everything</p><p class="facts__text">Using the recovery code replaces it and signs out every session and connection token. Removing a passkey signs out the other sessions and revokes every connection token.</p></div></li></ul>
+<ul class="facts"><li class="facts__item"><span class="icon icon--key" aria-hidden="true"></span><div><p class="facts__title">Passkeys only</p><p class="facts__text">No password exists to phish, reuse or leak. Sign-up asks for no email address. User verification is required on every sign-in.</p></div></li><li class="facts__item"><span class="icon icon--hash" aria-hidden="true"></span><div><p class="facts__title">Secrets stored as hashes</p><p class="facts__text">Session tokens, connection tokens, Model API keys and the recovery code are 256-bit random values. We keep their SHA-256.</p></div></li><li class="facts__item"><span class="icon icon--lock" aria-hidden="true"></span><div><p class="facts__title">Hardened cookies</p><p class="facts__text">The session cookie is __Host-prefixed, HttpOnly, Secure and SameSite=Lax. It lasts up to 30 days.</p></div></li><li class="facts__item"><span class="icon icon--shield" aria-hidden="true"></span><div><p class="facts__title">Origin and CSRF checks</p><p class="facts__text">A state-changing request from the browser has to come from this origin. Signed-in requests also carry a per-session CSRF token.</p></div></li><li class="facts__item"><span class="icon icon--clock" aria-hidden="true"></span><div><p class="facts__title">Fresh passkey for sensitive actions</p><p class="facts__text">Rotating the recovery code, adding or removing a passkey, creating a connection token or a Model API key and deleting the account need a passkey check from the last 10 minutes.</p></div></li><li class="facts__item"><span class="icon icon--refresh" aria-hidden="true"></span><div><p class="facts__title">Recovery resets everything</p><p class="facts__text">Using the recovery code replaces it and signs out every session and connection token. Removing a passkey signs out the other sessions and revokes every connection token.</p></div></li></ul>
 </section><section class="docs-section" aria-labelledby="requests">
 <h2 class="docs-section__title" id="requests">Tokens, provider calls and billing</h2>
 <div class="prose">
 <h3 id="connection-tokens">Connection tokens</h3>
 <p>A connection token starts with <code>bok_</code> and lets an AI client do two things: read your usage and run a review. It cannot reach billing, passkeys, recovery or deletion. A token lasts 90 days, an account holds three, and revoking one takes effect at once.</p>
 <h3 id="provider-calls">Provider calls</h3>
-<p>Each provider has one fixed endpoint. The Worker refuses redirects, stops a streamed answer when the provider has been silent for 180 seconds, and caps the answer at 2 MB. Your API key is used for that request and is redacted from any error message.</p>
+<p>Each provider has one fixed endpoint. The Worker refuses redirects, stops a streamed answer when the provider has been silent for 180 seconds (on a Bounty Operator model, up to 930 seconds for the first answer, while the model may still be starting), and caps the answer at 2 MB. Your API key is used for that request and is redacted from any error message.</p>
 <h3 id="hosted-profiles">Hosted profiles</h3>
 <p>The Worker reads the answer to a hosted profile as it streams, in memory, before it reaches you. An answer that repeats the method of the profile is stopped and the call ends with the code <code>output_withheld</code>. That includes a copy disguised with invisible characters, look-alike letters or spaced-out letters; a paraphrase, a translation or an encoded copy is beyond what a text match can catch. A file or a request that asks the model for its instructions is treated as data.</p>
 <h3 id="input-checks">Input checks</h3>
 <p>A review takes up to 50 text files and 240 KB in total. Before anything is sent, the engine scans every line for API keys, access tokens, wallet keys and seed phrases, and blocks the request when it finds one. Email addresses and IP addresses are warnings you confirm. A finding names the file, the line and the kind of match, and never the matched text.</p>
+<h3 id="model-api-keys">Model API keys</h3>
+<p>A Bounty Operator API key starts with <code>bo_api_</code> and can only spend your prepaid credit on model requests, up to the lifetime limit you set for it. It cannot buy credit, reach billing, passkeys or recovery, or run anything else on your account. A key lasts 7, 30, 90 or 365 days, an account holds up to ten at a time, and revoking one takes effect at once. We keep its hash and its first 15 characters, so the account panel can tell your keys apart.</p>
 <h3 id="billing">Billing</h3>
-<p>Payment runs on Stripe Checkout, so card details never touch our application. Webhooks are signature-checked, and paid access is recomputed from Stripe’s current state on every event, including refunds and disputes.</p></div>
+<p>Payment runs on Stripe Checkout, so card details never touch our application. Webhooks are signature-checked, and paid access is recomputed from Stripe’s current state on every event, including refunds and disputes.</p>
+<p>Model API credit is bought the same way. Each request holds credit before it starts. It is charged for its confirmed usage or the model’s minimum, whichever is higher, and never more than the amount held; the rest goes back to your balance. A request with no confirmed usage is not charged. Automatic top-ups are off unless you turn them on.</p></div>
 </section><section class="docs-section" aria-labelledby="report">
 <h2 class="docs-section__title" id="report">Report a vulnerability</h2>
 
@@ -181,13 +192,14 @@ FINISH: Responsive layout, native video controls, captions, reduced motion and v
 <p>Remove secrets and other people’s data from anything you attach.</p>
 <h3 id="scope">In scope</h3>
 </div>
-<dl class="kv scope-list"><div class="kv__row"><dt>The hosted site</dt><dd>The Worker and its API routes, passkey sign-in and recovery, sessions and CSRF, connection tokens, quota and concurrency limits, billing state, the MCP endpoint, the content security policy and the static pages.</dd></div><div class="kv__row"><dt>The review engine</dt><dd>Input checks, request assembly, review parsing and packet rendering. A way to make model output or pasted text execute script, load a remote resource or leave the page is a vulnerability.</dd></div><div class="kv__row"><dt>The MCP server</dt><dd>The <code>bounty-operator-mcp</code> package and the endpoint at <code>/api/mcp</code>.</dd></div><div class="kv__row"><dt>The CLI</dt><dd>The <code>bounty-operator-kit</code> Python package: the sanitizer, the <code>ai-review</code> request path, file reads and writes.</dd></div></dl>
+<dl class="kv scope-list"><div class="kv__row"><dt>The hosted site</dt><dd>The Worker and its API routes, passkey sign-in and recovery, sessions and CSRF, connection tokens, quota and concurrency limits, billing state, the MCP endpoint, the content security policy and the static pages.</dd></div><div class="kv__row"><dt>The Model API</dt><dd>The <code>/v1</code> endpoints, Bounty Operator API keys and their limits, credit holds and charges, top-ups and automatic top-ups.</dd></div><div class="kv__row"><dt>The review engine</dt><dd>Input checks, request assembly, review parsing and packet rendering. A way to make model output or pasted text execute script, load a remote resource or leave the page is a vulnerability.</dd></div><div class="kv__row"><dt>The MCP server</dt><dd>The <code>bounty-operator-mcp</code> package and the endpoint at <code>/api/mcp</code>.</dd></div><div class="kv__row"><dt>The CLI</dt><dd>The <code>bounty-operator-kit</code> Python package: the sanitizer, the <code>ai-review</code> request path, file reads and writes.</dd></div></dl>
 <div class="prose">
 <h3 id="testing-rules">Testing rules</h3>
 <ul>
 <li>Use accounts you created. Leave other accounts alone.</li>
 <li>Keep request volume low. No denial-of-service testing and no automated scanning of the production site.</li>
 <li>Do not test payments against the live checkout. The billing logic runs locally with billing disabled.</li>
+<li>Test the Model API with your own key and your own credit, a few small requests at a time. Never use a key that is not yours.</li>
 <li>Stop at the first proof of a problem and report it.</li>
 </ul>
 <p><a href="https://github.com/bountyoperator/bounty-operator/blob/main/SECURITY.md" target="_blank" rel="noopener noreferrer">The full policy is in SECURITY.md</a>. The machine-readable contact is at <a href="/.well-known/security.txt">/.well-known/security.txt</a>.</p>

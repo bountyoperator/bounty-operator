@@ -403,7 +403,7 @@ const token = html`
 </ol>
 <p>A token lasts 90 days. An account holds three at a time. Revoke one in the account panel and it stops working at once.</p>
 <h3 id="provider-key">Your provider key</h3>
-<p><code>run_review</code> runs on your own model key. The remote endpoint takes it in the <code class="nowrap">X-Provider-Key</code> header. The local server reads it from the provider’s environment variable:</p>
+<p><code>run_review</code> runs on your own AI provider API key. The remote endpoint takes it in the <code class="nowrap">X-Provider-Key</code> header. The local server reads it from the provider’s environment variable:</p>
 </div>
 ${table({
   label: 'Provider key variables',

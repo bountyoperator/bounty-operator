@@ -1,4 +1,15 @@
 /* A compact security-stack storefront; technical connection details open on request. */
+/* First under the head: what can be used today, how to start, and the first call. */
+.api-today { display: grid; gap: var(--sp-24); margin-block: var(--sp-8) var(--sp-32); padding: var(--sp-24); border: 1px solid var(--line-strong); border-radius: var(--r-card); background: var(--surface); }
+.api-today h2 { font-size: var(--fs-28); }
+.api-today__line { margin-top: var(--sp-8); max-width: 62ch; }
+.api-today__how { margin-top: var(--sp-24); font-size: var(--fs-18); }
+.api-steps { margin-top: var(--sp-12); }
+.api-today .help { margin-top: var(--sp-12); }
+.api-today__code { align-self: start; min-width: 0; margin: 0; }
+/* While nothing can be bought or called, the block says so and nothing more. */
+.api-today[data-open="false"] { grid-template-columns: minmax(0, 1fr); }
+.api-today[data-open="false"] :is(.api-today__start, .api-today__code) { display: none; }
 .model-api-page .api-highlights { display: flex; flex-wrap: wrap; gap: var(--sp-12) var(--sp-24); list-style: none; padding: 0 0 var(--sp-32); color: var(--muted); font-size: var(--fs-14); }
 .api-highlights li::before { content: '✓'; margin-right: var(--sp-8); color: var(--accent); }
 .api-content > * + * { margin-top: var(--sp-48); }
@@ -10,9 +21,14 @@
 .catalog-workload { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-8) var(--sp-12); margin-bottom: var(--sp-12); }
 .catalog-workload > .help { margin: 0; }
 .catalog-filter-buttons { display: flex; flex-wrap: wrap; align-items: end; gap: var(--sp-8); }
-.catalog-filter-buttons .btn { min-height: 2.5rem; }
+/* A label longer than the row wraps inside its button rather than push the page sideways on a 320px phone. */
+.catalog-filter-buttons .btn { min-height: 2.5rem; max-width: 100%; white-space: normal; text-align: center; }
 .catalog-filter-buttons [aria-pressed="true"] { color: var(--text); border-color: var(--accent); background: var(--surface-2); }
 .catalog-count { margin-bottom: var(--sp-12); }
+.catalog-hold { margin-bottom: var(--sp-12); max-width: 72ch; }
+/* Each group of the list opens with its state and size: Available (1), Not available yet (23). */
+.catalog-group { margin: 0; padding: var(--sp-8) var(--sp-24); border-bottom: 1px solid var(--line); background: var(--surface-2); color: var(--muted); font-family: var(--font-display); font-size: var(--fs-12); font-weight: 650; letter-spacing: 0.04em; text-transform: uppercase; }
+.catalog-group[data-availability="available"] { color: var(--accent); }
 .catalog-grid { border: 1px solid var(--line-strong); border-radius: var(--r-card); background: var(--surface); overflow: hidden; }
 .catalog-empty { padding: var(--sp-24); margin: 0; color: var(--muted); }
 .catalog-card { min-width: 0; padding: var(--sp-16) var(--sp-24); border-bottom: 1px solid var(--line); }
@@ -30,10 +46,13 @@
 .catalog-pill { display: inline-flex; align-items: center; min-height: 1.75rem; padding: 2px var(--sp-12); border: 1px solid var(--line-strong); border-radius: var(--r-ctl); font-family: var(--font-display); font-size: var(--fs-12); font-weight: 650; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text); background: var(--surface-2); }
 .catalog-pill[data-badge="cybersecurity"] { border-color: var(--observed); color: var(--observed); }
 .catalog-pill[data-badge="low-refusal"] { border-color: var(--gap); color: var(--gap); }
+.catalog-pill[data-availability="available"] { border-color: var(--accent); color: var(--accent); }
 .catalog-rates { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-8); margin: 0; }
 .catalog-rates--byok { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: var(--sp-12); }
 .catalog-rates__pair { display: grid; grid-template-columns: repeat(2, minmax(5.25rem, 1fr)); gap: var(--sp-8); margin: 0; }
 .catalog-rate { display: grid; gap: 2px; padding: var(--sp-8) var(--sp-12); border: 1px solid var(--line); border-radius: var(--r-ctl); background: var(--surface-2); }
+/* A workload too long for the model has no price: its one box takes the whole row. */
+.catalog-rate--wide { grid-column: 1 / -1; }
 .catalog-rates dt { color: var(--muted); font-family: var(--font-display); font-size: var(--fs-12); font-weight: 650; letter-spacing: 0.04em; text-transform: uppercase; }
 .catalog-rates dd { margin: 0; }
 .catalog-rates strong { font-family: var(--font-display); font-size: var(--fs-18); font-weight: 740; font-variant-numeric: tabular-nums; line-height: 1.2; color: var(--text); }
@@ -61,5 +80,7 @@
 @media (min-width: 56em) {
   .catalog-filters { grid-template-columns: minmax(0, 1fr) auto; }
   .catalog-card__main { grid-template-columns: minmax(0, 1.5fr) auto minmax(15rem, 18rem); gap: var(--sp-24); }
-  .catalog-connect, .api-start { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  /* Three pills wrap to two rows before they squeeze the model's name. */
+  .catalog-card__badges { max-width: 16rem; }
+  .catalog-connect, .api-start, .api-today { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }

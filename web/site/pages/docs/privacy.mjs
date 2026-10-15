@@ -10,12 +10,12 @@ import { DOCS_STYLES, docPage, facts, supportLink, time } from './_shared.mjs';
 
 const PATH = '/privacy';
 /** The day this page's own text last changed. */
-const PRIVACY_UPDATED = '2026-10-14';
+const PRIVACY_UPDATED = '2026-10-15';
 
 const glance = facts(
   [
     { icon: 'eye', title: 'No ad cookies. No tracking pixels.', text: 'No third-party analytics scripts either.' },
-    { icon: 'file', title: 'Your files are not stored', text: 'Files, instructions, API keys and review results are never written to our database or logs.' },
+    { icon: 'file', title: 'Your files are not stored', text: 'Files, instructions, your own AI provider API keys and review results are never written to our database or logs.' },
     { icon: 'lock', title: 'Two cookies', text: 'Both exist to sign you in. Nothing else is set.' },
     { icon: 'download', title: 'Export or delete', text: 'Download your account data or delete the account from the account panel.' },
   ],

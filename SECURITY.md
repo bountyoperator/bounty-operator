@@ -23,6 +23,8 @@ Remove secrets and other people's data from anything you attach.
   passkey sign-in and recovery, sessions and CSRF, connection tokens, quota and
   concurrency limits, billing state, the MCP endpoint at `/api/mcp`, the
   content security policy and the static pages.
+- **The Model API** at `/v1`: Bounty Operator API keys and their limits,
+  credit holds and charges, top-ups and automatic top-ups.
 - **The MCP server**, the `bounty-operator-mcp` package in `mcp/`.
 - **The CLI**, the `bounty-operator-kit` Python package: the sanitizer, the
   `ai-review` request path, file reads and writes.
@@ -38,6 +40,8 @@ Remove secrets and other people's data from anything you attach.
   scanning of the production site.
 - Do not test payments against the live checkout. Billing logic is in
   `web/src/` and runs locally with `BILLING_MODE="disabled"`.
+- Test the Model API with your own key and your own credit, a few small
+  requests at a time. Never use a key that is not yours.
 - Run everything else locally first. `docs/website.md` has the setup.
 - Stop at the first proof of a problem and report it.
 

@@ -10,7 +10,7 @@
       "type": "application/mcp-server-card+json",
       "url": "https://bountyoperator.com/api/mcp/server-card",
       "displayName": "Bounty Operator MCP server",
-      "description": "Pre-submission review of bug bounty reports and smart-contract findings on your own model key: a verdict, file-and-line citations and the next action.",
+      "description": "Pre-submission review of bug bounty reports and smart-contract findings on your own AI provider API key: a verdict, file-and-line citations and the next action.",
       "representativeQueries": [
         "review my draft bug bounty report against the code it cites",
         "check whether this Solidity finding holds before I file it",

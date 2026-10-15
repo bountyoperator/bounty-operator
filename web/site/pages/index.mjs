@@ -118,7 +118,7 @@ const hero = html`
         ${button({ label: 'View example', href: '#workspace', variant: 'secondary', size: 'lg', attrs: { 'data-demo': true, 'data-example': '' } })}
         <a class="link home-hero__film" href="#meet-spec">${icon('play')} Watch Spec in 20 seconds</a>
       </div>
-      <p class="home-hero__free">Free: 1 review a day on your own model key. The example needs no account.</p>
+      <p class="home-hero__free">Free: 1 review a day on your own AI provider API key (OpenRouter, OpenAI, Anthropic and others). The example needs no account.</p>
     </div>
     <div class="home-hero__shot">
       <figure class="spec-portrait">

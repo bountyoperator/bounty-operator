@@ -3323,7 +3323,10 @@ button.ref:hover {
 }
 
 /* Narrow screens: brand and actions on the first row, navigation on the
-   second. Keep horizontal scrolling as a fallback for enlarged text. */
+   second. Every link stays on screen, none scrolls out of sight: the links
+   share the row, each with a little padding and an equal share of the room
+   left over, so all six fit on one row of a 390px phone. Enlarged text wraps
+   onto a second row. */
 @media (max-width: 57.99em) {
   .site-header__inner {
     flex-wrap: wrap;
@@ -3339,30 +3342,35 @@ button.ref:hover {
     order: 3;
     flex: 0 0 calc(100% + 2 * var(--gutter));
     margin-inline: calc(-1 * var(--gutter));
-    overflow-x: auto;
     border-top: 1px solid var(--line);
-    scrollbar-width: none;
   }
 
   .site-nav ul {
-    width: max-content;
-    min-width: 100%;
-    justify-content: space-between;
+    flex-wrap: wrap;
     padding-inline: var(--sp-4);
     gap: 0;
   }
 
+  .site-nav li {
+    flex: 1 1 auto;
+  }
+
   .site-nav a {
+    padding-inline: var(--sp-4);
     border-radius: 0;
+  }
+}
+
+/* Under 384px one row would crowd the links: they take two even rows of three. */
+@media (max-width: 23.99em) {
+  .site-nav ul {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
 /* Under 360px the header keeps the mark and drops the wordmark to stay on one row. */
 @media (max-width: 22.49em) {
-  .site-nav a {
-    padding-inline: var(--sp-4);
-  }
-
   .site-header .brand__name {
     position: absolute;
     width: 1px;

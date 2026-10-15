@@ -319,7 +319,7 @@ ${stage.profile && html`<a class="stages__link" href="/?profile=${stage.profile}
 )}
 </ol>
 <div class="prose">
-<p>Every stage but the last is a review type you can run on its own, as a hosted review with your own model key. Free covers 1 hosted review a day, any review type, on this site or with <code>run_review</code> from a coding agent. The report stage is a core profile: as a copy-paste review in ChatGPT or Claude, or on your coding agent’s own model with <code>prepare_review</code>, it needs no account and is not counted. Operator runs all eight in order as one <a href="/gauntlet">Gauntlet</a> and ends with a single verdict:</p>
+<p>Every stage but the last is a review type you can run on its own, as a hosted review on your own AI provider API key. Free covers 1 hosted review a day, any review type, on this site or with <code>run_review</code> from a coding agent. The report stage is a core profile: as a copy-paste review in ChatGPT or Claude, or on your coding agent’s own model with <code>prepare_review</code>, it needs no account and is not counted. Operator runs all eight in order as one <a href="/gauntlet">Gauntlet</a> and ends with a single verdict:</p>
 </div>
 <p class="cluster cluster--tight guide-verdicts">${VERDICTS.map((verdict) => verdictChip(verdict))}</p>`;
 

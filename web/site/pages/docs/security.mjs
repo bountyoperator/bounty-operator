@@ -2,14 +2,20 @@
 //
 // Facts follow SPEC section 5 (Worker contracts, headers, CSP), SPEC section 4
 // (provider calls, input checks) and SECURITY.md (reporting and testing rules).
-// The header block below must stay identical to what the Worker sends.
+// The header block below must stay identical to what the Worker sends. What is
+// stored agrees with /privacy and with the code: Model API keys are kept as a
+// SHA-256 hash and a visible prefix (web/src/api-credits.ts), request rows for
+// 30 days (web/src/worker.ts), a saved payment method as its type and masked
+// details (web/src/api-autotopup.ts).
 
 import { LIMITS } from '../../../public/review-core.mjs';
 import { button, closingBand, codeBlock, html, icon, inline, kv } from '../../components.mjs';
 import { SITE, breadcrumbsLd } from '../../layout.mjs';
-import { DOCS_STYLES, UPDATED, checklist, docPage, ext, facts, securityLink, time } from './_shared.mjs';
+import { DOCS_STYLES, checklist, docPage, ext, facts, securityLink, time } from './_shared.mjs';
 
 const PATH = '/security';
+/** The day this page's own text last changed. */
+const SECURITY_UPDATED = '2026-10-15';
 const POLICY = `${SITE.source}/blob/main/SECURITY.md`;
 const ADVISORY = `${SITE.source}/security/advisories/new`;
 
@@ -74,6 +80,8 @@ ${FLOW.map(
 <p>The review engine is one set of modules. The browser, the Worker and the MCP server import the same files, and they are in the public repository with the three core profiles. The method of every other profile is not in the repository: the Worker adds it when a review runs.</p>
 <p>${inline('For a core profile the preview is the whole prompt your model receives. For a hosted profile it is the request: your focus, your context and the files, line by line. The Worker adds the method after that and sends it to the provider you chose and to no one else. With OpenRouter that is OpenRouter and the model host it passes the call to. No page, download or API response returns it.')}</p>
 <p>${inline('A review started from a coding agent takes the same path: `run_review` sends the files and your provider key to the Worker, and steps 2 and 3 are unchanged.')}</p>
+<h3 id="model-api-flow">Model API requests</h3>
+<p>${inline('A request to the Model API takes a shorter path. Your code sends it to `/v1` with your Bounty Operator API key (it starts `bo_api_`). The Worker checks the key, its spending limit and your credit, holds enough credit for the request, and passes it to the host of the model you chose: RunPod for the models we host ourselves, or Infron or OrcaRouter for a managed model. The catalog names the host of each model. The Worker keeps the token counts and the charge, never the prompt, the tool arguments or the answer.')}</p>
 </div>`;
 
 // ---------------------------------------------------------------------------
@@ -87,10 +95,12 @@ const stored = html`
 <ul class="ledger-split__list">
 <li>File contents and file names</li>
 <li>Instructions and evidence notes</li>
-<li>Model API keys and GitHub tokens</li>
+<li>Your own AI provider API keys (OpenRouter, Anthropic, OpenAI and the rest) and GitHub tokens</li>
 <li>Review output</li>
+<li>Model API prompts, tool arguments and answers</li>
+<li>A Bounty Operator API key itself: it is shown once, when you create it</li>
 <li>Raw IP addresses</li>
-<li>Card details</li>
+<li>Full card details</li>
 <li>Passkey private keys</li>
 </ul>
 </div>
@@ -102,6 +112,10 @@ const stored = html`
 <li>SHA-256 hashes of the recovery code, session tokens and connection tokens</li>
 <li>Per review: status, profile, channel and time, for seven days</li>
 <li>Stripe customer and subscription IDs, status, paid-until time and receipt email</li>
+<li>Bounty Operator API keys: a SHA-256 hash, the visible prefix, the label, the spending limit and spend, and the expiry and revocation times</li>
+<li>Per Model API request: model, key, time, status, token counts, credit held and the charge, for 30 days</li>
+<li>The prepaid credit ledger and Stripe payment references, kept for accounting</li>
+<li>With automatic top-ups on: Stripe’s reference to the saved payment method, its type and masked details (for a card, the brand, the last four digits and the expiry month and year), your top-up settings and your consent</li>
 <li>A keyed hash of your IP address for rate limits, for up to a day</li>
 <li>Daily page and funnel totals with no account identifier</li>
 </ul>
@@ -147,7 +161,7 @@ const accounts = facts([
   {
     icon: 'hash',
     title: 'Secrets stored as hashes',
-    text: 'Session tokens, connection tokens and the recovery code are 256-bit random values. We keep their SHA-256.',
+    text: 'Session tokens, connection tokens, Model API keys and the recovery code are 256-bit random values. We keep their SHA-256.',
   },
   {
     icon: 'lock',
@@ -162,7 +176,7 @@ const accounts = facts([
   {
     icon: 'clock',
     title: 'Fresh passkey for sensitive actions',
-    text: 'Rotating the recovery code, adding or removing a passkey, creating a connection token and deleting the account need a passkey check from the last 10 minutes.',
+    text: 'Rotating the recovery code, adding or removing a passkey, creating a connection token or a Model API key and deleting the account need a passkey check from the last 10 minutes.',
   },
   {
     icon: 'refresh',
@@ -179,13 +193,16 @@ const requests = html`
 <h3 id="connection-tokens">Connection tokens</h3>
 <p>${inline('A connection token starts with `bok_` and lets an AI client do two things: read your usage and run a review. It cannot reach billing, passkeys, recovery or deletion. A token lasts 90 days, an account holds three, and revoking one takes effect at once.')}</p>
 <h3 id="provider-calls">Provider calls</h3>
-<p>Each provider has one fixed endpoint. The Worker refuses redirects, stops a streamed answer when the provider has been silent for 180 seconds, and caps the answer at 2 MB. Your API key is used for that request and is redacted from any error message.</p>
+<p>Each provider has one fixed endpoint. The Worker refuses redirects, stops a streamed answer when the provider has been silent for 180 seconds (on a Bounty Operator model, up to 930 seconds for the first answer, while the model may still be starting), and caps the answer at 2 MB. Your API key is used for that request and is redacted from any error message.</p>
 <h3 id="hosted-profiles">Hosted profiles</h3>
 <p>${inline('The Worker reads the answer to a hosted profile as it streams, in memory, before it reaches you. An answer that repeats the method of the profile is stopped and the call ends with the code `output_withheld`. That includes a copy disguised with invisible characters, look-alike letters or spaced-out letters; a paraphrase, a translation or an encoded copy is beyond what a text match can catch. A file or a request that asks the model for its instructions is treated as data.')}</p>
 <h3 id="input-checks">Input checks</h3>
 <p>${inline(`A review takes up to ${LIMITS.files} text files and ${LIMITS.totalBytes / 1000} KB in total. Before anything is sent, the engine scans every line for API keys, access tokens, wallet keys and seed phrases, and blocks the request when it finds one. Email addresses and IP addresses are warnings you confirm. A finding names the file, the line and the kind of match, and never the matched text.`)}</p>
+<h3 id="model-api-keys">Model API keys</h3>
+<p>${inline('A Bounty Operator API key starts with `bo_api_` and can only spend your prepaid credit on model requests, up to the lifetime limit you set for it. It cannot buy credit, reach billing, passkeys or recovery, or run anything else on your account. A key lasts 7, 30, 90 or 365 days, an account holds up to ten at a time, and revoking one takes effect at once. We keep its hash and its first 15 characters, so the account panel can tell your keys apart.')}</p>
 <h3 id="billing">Billing</h3>
-<p>Payment runs on Stripe Checkout, so card details never touch our application. Webhooks are signature-checked, and paid access is recomputed from Stripe’s current state on every event, including refunds and disputes.</p>`;
+<p>Payment runs on Stripe Checkout, so card details never touch our application. Webhooks are signature-checked, and paid access is recomputed from Stripe’s current state on every event, including refunds and disputes.</p>
+<p>Model API credit is bought the same way. Each request holds credit before it starts. It is charged for its confirmed usage or the model’s minimum, whichever is higher, and never more than the amount held; the rest goes back to your balance. A request with no confirmed usage is not charged. Automatic top-ups are off unless you turn them on.</p>`;
 
 // ---------------------------------------------------------------------------
 // Reporting
@@ -210,6 +227,7 @@ const report = html`
 ${kv(
   [
     ['The hosted site', 'The Worker and its API routes, passkey sign-in and recovery, sessions and CSRF, connection tokens, quota and concurrency limits, billing state, the MCP endpoint, the content security policy and the static pages.'],
+    ['The Model API', inline('The `/v1` endpoints, Bounty Operator API keys and their limits, credit holds and charges, top-ups and automatic top-ups.')],
     ['The review engine', 'Input checks, request assembly, review parsing and packet rendering. A way to make model output or pasted text execute script, load a remote resource or leave the page is a vulnerability.'],
     ['The MCP server', inline('The `bounty-operator-mcp` package and the endpoint at `/api/mcp`.')],
     ['The CLI', inline('The `bounty-operator-kit` Python package: the sanitizer, the `ai-review` request path, file reads and writes.')],
@@ -222,6 +240,7 @@ ${kv(
 <li>Use accounts you created. Leave other accounts alone.</li>
 <li>Keep request volume low. No denial-of-service testing and no automated scanning of the production site.</li>
 <li>Do not test payments against the live checkout. The billing logic runs locally with billing disabled.</li>
+<li>Test the Model API with your own key and your own credit, a few small requests at a time. Never use a key that is not yours.</li>
 <li>Stop at the first proof of a problem and report it.</li>
 </ul>
 <p>${ext('The full policy is in SECURITY.md', POLICY)}. The machine-readable contact is at <a href="/.well-known/security.txt">/.well-known/security.txt</a>.</p>
@@ -235,8 +254,8 @@ const body = docPage({
   head: {
     crumbs: [{ label: 'Bounty Operator', href: '/' }, { label: 'Security' }],
     title: 'Security at Bounty Operator',
-    lede: 'Where your code and keys go during a review, what is stored, which headers are in force, and how to report a vulnerability.',
-    meta: html`Last updated ${time(UPDATED)}`,
+    lede: 'Where your code and keys go during a review or a Model API request, what is stored, which headers are in force, and how to report a vulnerability.',
+    meta: html`Last updated ${time(SECURITY_UPDATED)}`,
     actions: html`${button({ label: 'Report a vulnerability', href: '#report', variant: 'primary', size: 'lg', icon: 'shield' })}${button({ label: 'Read the source', href: SITE.source, size: 'lg', external: true, iconEnd: 'arrow-up-right' })}`,
   },
   sections: [
@@ -266,6 +285,6 @@ export default {
     'The data flow from browser to Worker to your provider, what is stored, the headers and CSP in force, and how to report a vulnerability.',
   styles: DOCS_STYLES,
   jsonld: [breadcrumbsLd([{ name: 'Security', path: PATH }])],
-  lastmod: UPDATED,
+  lastmod: SECURITY_UPDATED,
   body,
 };
