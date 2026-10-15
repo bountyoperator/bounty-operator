@@ -76,20 +76,43 @@ available, and payments already initiated continue to reconcile.
 
 Payments fail closed on the RunPod funding state. When every usable model is
 hosted on RunPod, a purchase needs the hosting API to confirm the account is
-funded (`underBalance: false`). A non-200 answer, a redirect, a network error, a
-five-second timeout, GraphQL errors, `myself: null`, a missing flag or a
-malformed body leaves the state unknown. Manual top-ups, automatic setup and
+funded (`underBalance: false`). A worker answering `/health` with 200 does not
+count, because a draining worker can answer on an account that has run out; a
+worker's 402 closes payments at once. A non-200 answer, a redirect, a network
+error, a five-second timeout, GraphQL errors, `myself: null`, a missing flag or
+a malformed body leaves the state unknown. Manual top-ups, automatic setup and
 automatic changes then answer HTTP 503 `topups_unavailable` with Retry-After 60
-before any Stripe request, and the scheduled task reserves nothing. The state
-is cached for one minute, but each automatic payment reads it again, uncached,
-just before it is sent. If that read is not funded, the unsent reservation is
-closed and the next run decides again from the current balance. Payments
-already sent to Stripe always reconcile. The catalog and model requests still
-show an unknown state as available, and the worker probe decides each request.
-A setup that completes during an outage turns the setting on, because that
-records consent and moves no money; its first charge waits until hosting is
-confirmed funded. An available direct provider keeps purchases open whatever
-the RunPod state.
+before any Stripe request. These decisions use an answer cached for one minute.
+The scheduled task never does: each run reads the hosting API before its first
+reservation or send, reuses that answer for ten seconds, and reads an unknown
+answer once more after one second. If the run's answer is not funded, it
+reserves nothing, and unsent reservations expire (status `expired`: nothing
+reached Stripe) so the next run decides again from the current balance. The
+send boundary also re-checks the consented trigger: a reservation left by a
+stopped Worker is sent only while available credit is still below the
+threshold and no request of that account is running. A reservation closed by a
+disable, a settings change or that re-check expires the same way; `failed` is
+kept for payments that reached Stripe. Payments already sent to
+Stripe always reconcile. The catalog and model requests still show an unknown
+state as available, and the worker probe decides each request. A setup that
+completes during an outage turns the setting on, because that records consent
+and moves no money; its first charge waits until hosting is confirmed funded.
+An available direct provider keeps purchases open whatever the RunPod state.
+
+Failing closed must not hide a sales outage. Each hosting read that leaves the
+state unknown logs `Hosting status unknown; payments closed` with a reason
+code: `http_<status>`, `redirect`, `network_error`, `timeout`,
+`graphql_errors` (with the error count and the first error's code),
+`no_account`, `no_flag` or `malformed_body`. A refused purchase logs
+`Top-up refused; hosting status unknown`, and an unsent automatic reservation
+logs `Automatic top-up not sent; purchases closed`. No log holds the key, a
+response body or an upstream message. `GET /api/health` reports `topups`
+(`open` or `closed`) and `topups_reason`: `disabled` (`API_TOPUPS_ENABLED` is
+not true), `billing_not_ready`, `inference_unavailable`, `hosting_paused` or
+`hosting_unknown:<reason>`. The purchase route, the catalog's
+`topups_enabled`, the account panel and health take this one decision.
+`npm run verify:live` fails when inference is available and top-ups are closed
+for any reason but `disabled`, or when the catalog disagrees with health.
 
 Model availability requires a configured provider credential, verified unexpired
 `SUPPLIER_COST_RULES` for that model and a funded current supplier budget window.
@@ -101,9 +124,13 @@ Supplier funding must be recorded separately; these budgets limit admitted work,
 not an upstream provider's actual bill.
 
 Back up D1 and apply migrations before enabling inference. Keep customer
-top-ups closed during model acceptance. Run the affected tests, type check,
+top-ups closed during model acceptance. Before opening top-ups on a RunPod-only
+catalog, confirm that the production `RUNPOD_API_KEY` answers
+`{ myself { underBalance } }` with HTTP 200, a boolean flag and no `errors`;
+otherwise every purchase stays closed. Run the affected tests, type check,
 private-profile checks, and `npm run deploy:check` from `web/`. Deploy using
-`npm run deploy`; then run `npm run verify:live -- --base-url YOUR_ORIGIN`.
+`npm run deploy`; then run `npm run verify:live -- --base-url YOUR_ORIGIN`,
+which also fails if top-ups closed after the deploy.
 Read back the public catalog and a real request through the deployed gateway.
 
 The payment acceptance test must cover settled payment, replay, wrong account,

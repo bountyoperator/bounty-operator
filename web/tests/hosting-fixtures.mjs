@@ -20,3 +20,16 @@ export const HOSTING_FAILURES = {
   timeout: () => Promise.reject(new DOMException('The operation was aborted due to timeout', 'TimeoutError')),
   redirect: () => new Response(null, { status: 302, headers: { Location: 'https://other.example/graphql' } }),
 };
+
+/** The reason code each failure reports: in the log, in billing and in /api/health. */
+export const HOSTING_REASONS = {
+  'fetch 500': 'http_500',
+  'network error': 'network_error',
+  'GraphQL errors': 'graphql_errors',
+  'GraphQL errors beside data': 'graphql_errors',
+  'myself null': 'no_account',
+  'underBalance missing': 'no_flag',
+  'malformed JSON': 'malformed_body',
+  timeout: 'timeout',
+  redirect: 'redirect',
+};

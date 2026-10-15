@@ -474,10 +474,21 @@ describe('automatic top-up authorization', () => {
     assert.equal(autoTopupAuthorization({ amount_usd: 50, threshold_usd: 10, monthly_cap_usd: 200 }), 'I authorize Bounty Operator to charge my saved payment method US$50 when available API credit falls below US$10, up to US$200 per calendar month (UTC), until I disable automatic top-ups.');
   });
 
-  test('a setting that is on says it waits, with no payment, while top-ups are unavailable', () => {
-    assert.equal(autoTopupUnavailableText({ available: true, enabled: true }), '');
-    assert.equal(autoTopupUnavailableText({ available: false, enabled: true }), 'No automatic payment is made while top-ups are unavailable. They resume when the model service is available again.');
-    assert.equal(autoTopupUnavailableText({ available: false, enabled: false }), 'Automatic top-up setup is currently unavailable.');
+  test('a setting that is on says it waits, with no payment, and names the cause the server reports', () => {
+    assert.equal(autoTopupUnavailableText({ available: true, closure: null, enabled: true }), '');
+    for (const closure of ['paused', 'unavailable']) {
+      assert.equal(autoTopupUnavailableText({ available: false, closure, enabled: true }), 'No automatic payment is made while the model service is unavailable. Automatic top-ups resume when it is available again.', closure);
+    }
+    assert.equal(autoTopupUnavailableText({ available: false, closure: 'unknown', enabled: true }), 'No automatic payment is made while the model service status is being confirmed. Automatic top-ups resume on their own once it is.');
+    // The operator's switch, Stripe configuration, or an older server without a closure field: never blame the model service.
+    for (const closure of ['closed', undefined]) {
+      const text = autoTopupUnavailableText({ available: false, closure, enabled: true });
+      assert.equal(text, 'No automatic payment is made while automatic top-ups are closed. They resume on their own when top-ups reopen.', String(closure));
+      assert.doesNotMatch(text, /model service/);
+    }
+    for (const closure of ['closed', 'paused', 'unknown']) {
+      assert.equal(autoTopupUnavailableText({ available: false, closure, enabled: false }), 'Automatic top-up setup is currently unavailable.', closure);
+    }
   });
 });
 

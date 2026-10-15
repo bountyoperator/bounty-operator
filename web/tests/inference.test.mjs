@@ -1,11 +1,11 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { apiCreditData, authenticateInference, createInferenceKey, hasApiLiability, reapInferenceHolds, reserveInference, settleInference } from '../src/api-credits.ts';
-import { clearHostingState, hostingState, inferenceBillingStatus, inferenceCatalog, inferenceEndpoint, inferenceModels, inferencePaused, inferenceStatus, parseInference, usageCounters } from '../src/inference.ts';
+import { clearHostingState, hostingRead, hostingState, inferenceBilling, inferenceBillingStatus, inferenceCatalog, inferenceEndpoint, inferenceModels, inferencePaused, inferenceStatus, parseInference, usageCounters } from '../src/inference.ts';
 import { parseReviewRequest, runHostedReview } from '../src/review.ts';
 import { addAccount, createCall, createContext, createEnv } from './worker-helpers.mjs';
 import { enableSupplierFixture } from './supplier-fixtures.mjs';
-import { HOSTING_API, HOSTING_FAILURES, fundedHosting, pausedHosting } from './hosting-fixtures.mjs';
+import { HOSTING_API, HOSTING_FAILURES, HOSTING_REASONS, fundedHosting, pausedHosting } from './hosting-fixtures.mjs';
 
 const model = { id: 'cyber-test', name: 'Cyber test', source: 'test/model', revision: 'abc', license: 'Apache-2.0', quantization: 'AWQ', endpoint: 'https://test123.api.runpod.ai', upstreamModel: 'cyber-test', inputRate: 2, outputRate: 8, minimumMicro: 10000, context: 32768, maxOutput: 8192 };
 async function setup(balance = 20000000) {
@@ -699,6 +699,85 @@ test('a hosting read with no answer in five seconds is unknown and closes billin
   } finally {
     clearTimeout(keepAlive);
   }
+});
+
+test('each unknown hosting read is logged once with a reason code, never with the key, the body or an upstream message', async (t) => {
+  const { env } = await setup();
+  assert.deepEqual(Object.keys(HOSTING_REASONS).sort(), Object.keys(HOSTING_FAILURES).sort(), 'every failure fixture has a reason');
+  let answer = fundedHosting;
+  t.mock.method(globalThis, 'fetch', async (url, options) => answer(url, options));
+  const warn = t.mock.method(console, 'warn', () => {});
+  assert.deepEqual(await hostingRead(env), { state: 'funded', reason: null });
+  assert.equal(warn.mock.callCount(), 0, 'a known answer logs nothing');
+  for (const [name, failure] of Object.entries(HOSTING_FAILURES)) {
+    clearHostingState();
+    warn.mock.resetCalls();
+    answer = failure;
+    assert.deepEqual(await hostingRead(env), { state: 'unknown', reason: HOSTING_REASONS[name] }, name);
+    assert.deepEqual(await inferenceBilling(env), { status: 'unknown', reason: HOSTING_REASONS[name] }, `${name}: billing carries the reason`);
+    assert.equal(warn.mock.callCount(), 1, `${name}: one line per read, none for the cached answer`);
+    const [message, fields] = warn.mock.calls[0].arguments;
+    assert.equal(message, 'Hosting status unknown; payments closed', name);
+    assert.equal(fields.reason, HOSTING_REASONS[name], name);
+    const logged = JSON.stringify(warn.mock.calls[0].arguments);
+    for (const secret of ['vendor-secret', 'Unauthorized', 'Field failed', 'Internal Server Error', 'other.example']) assert.ok(!logged.includes(secret), `${name} logged "${secret}"`);
+  }
+  // A GraphQL error code is kept when it is a plain code; its message never is.
+  clearHostingState();
+  warn.mock.resetCalls();
+  answer = () => Response.json({ errors: [{ message: 'Token vendor-secret has no access', extensions: { code: 'UNAUTHENTICATED' } }, { message: 'second' }] });
+  assert.deepEqual(await hostingRead(env), { state: 'unknown', reason: 'graphql_errors' });
+  assert.deepEqual(warn.mock.calls[0].arguments[1], { reason: 'graphql_errors', graphqlErrors: 2, firstCode: 'UNAUTHENTICATED' });
+  clearHostingState();
+  warn.mock.resetCalls();
+  answer = () => Response.json({ errors: [{ extensions: { code: 'not a code: vendor-secret' } }] });
+  await hostingRead(env);
+  assert.deepEqual(warn.mock.calls[0].arguments[1], { reason: 'graphql_errors', graphqlErrors: 1 });
+  // Without a credential nothing is read, and the reason says so.
+  env.RUNPOD_API_KEY = undefined;
+  assert.deepEqual(await hostingRead(env), { state: 'unknown', reason: 'no_credential' });
+});
+
+test('a worker /health 200 never opens payments; a worker 402 closes them until the hosting API answers again', async (t) => {
+  const { env, token } = await setup();
+  let answer = HOSTING_FAILURES['fetch 500'];
+  let health = 200;
+  let apiReads = 0;
+  t.mock.method(globalThis, 'fetch', async (url, options) => {
+    if (url === HOSTING_API) { apiReads++; return answer(url, options); }
+    if (url.endsWith('/health')) return new Response(null, { status: health });
+    return Response.json({ created: 1, choices: [{ message: { role: 'assistant', content: 'Ready' }, finish_reason: 'stop' }], usage: { prompt_tokens: 100, completion_tokens: 2 } });
+  });
+  t.mock.method(console, 'warn', () => {});
+  assert.deepEqual(await inferenceBilling(env), { status: 'unknown', reason: 'http_500' });
+
+  // A worker answers 200 and serves the request. Payments stay closed: the
+  // cached API answer is still unknown, and no API read was needed.
+  assert.equal((await inferenceEndpoint(createCall(request(token), env))).status, 200);
+  assert.deepEqual(await inferenceBilling(env), { status: 'unknown', reason: 'http_500' });
+  assert.equal(apiReads, 1);
+  clearHostingState();
+  assert.deepEqual(await inferenceBilling(env), { status: 'unknown', reason: 'http_500' }, 'with the cache gone, the API is read again, not the probe');
+  assert.equal(apiReads, 2);
+
+  // The API says funded, then a worker answers 402: payments close at once,
+  // requests fail fast and the catalog says paused, with no new API read.
+  answer = fundedHosting;
+  clearHostingState();
+  assert.equal(await inferenceBillingStatus(env), 'available');
+  health = 402;
+  const refused = await inferenceEndpoint(createCall(request(token), env));
+  assert.equal(refused.status, 503);
+  assert.equal((await refused.json()).error.code, 'inference_paused');
+  const reads = apiReads;
+  assert.deepEqual(await inferenceBilling(env), { status: 'paused', reason: null });
+  assert.equal(await inferenceStatus(env), 'paused');
+  assert.equal((await inferenceCatalog(env))[0].availability, 'paused');
+  assert.equal(apiReads, reads);
+
+  // An API answer newer than the 402 decides again.
+  assert.equal(await inferenceBillingStatus(env, true), 'available');
+  assert.equal((await inferenceCatalog(env))[0].availability, 'available');
 });
 
 test('serverless upstream gateways route with their own secret, skip the Runpod health probe and bill wallet usage', async (t) => {

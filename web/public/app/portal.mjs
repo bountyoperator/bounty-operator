@@ -1237,12 +1237,18 @@ export function autoTopupAuthorization(settings) {
   return `I authorize Bounty Operator to charge my saved payment method US$${amount_usd} when available API credit falls below US$${threshold_usd}, up to US$${monthly_cap_usd} per calendar month (UTC), until I disable automatic top-ups.`;
 }
 
-/** The line shown while automatic purchases are closed. A setting that is on stays on and simply waits. */
+/**
+ * The line shown while automatic purchases are closed. A setting that is on
+ * stays on and simply waits. `closure` says why: the model service ('paused',
+ * 'unavailable', 'unknown') or configuration ('closed'), so the model service
+ * is never blamed for a switch the operator turned off.
+ */
 export function autoTopupUnavailableText(auto) {
   if (auto.available) return '';
-  return auto.enabled
-    ? 'No automatic payment is made while top-ups are unavailable. They resume when the model service is available again.'
-    : 'Automatic top-up setup is currently unavailable.';
+  if (!auto.enabled) return 'Automatic top-up setup is currently unavailable.';
+  if (auto.closure === 'paused' || auto.closure === 'unavailable') return 'No automatic payment is made while the model service is unavailable. Automatic top-ups resume when it is available again.';
+  if (auto.closure === 'unknown') return 'No automatic payment is made while the model service status is being confirmed. Automatic top-ups resume on their own once it is.';
+  return 'No automatic payment is made while automatic top-ups are closed. They resume on their own when top-ups reopen.';
 }
 
 const AUTO_TOPUP_PAUSES = {

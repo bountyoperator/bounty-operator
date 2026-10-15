@@ -24,11 +24,14 @@ import {
   rotateRecovery,
 } from './auth.ts';
 import type { Session } from './auth.ts';
+import type { TopupsDecision } from './billing.ts';
 import {
   billingFailure,
   billingLogFields,
   billingReady,
   apiBillingReady,
+  apiTopupsConfigClosure,
+  apiTopupsDecision,
   createCheckout,
   createPortal,
   customerFor,
@@ -50,7 +53,7 @@ import { serveAsset } from './static.ts';
 import { autoTopupData, createAutoTopupSetup, disableAutoTopup, processAutoTopups, requireAutoTopupAvailable, updateAutoTopup } from './api-autotopup.ts';
 import { apiCreditData, createInferenceKey, reapInferenceHolds, revokeInferenceKey } from './api-credits.ts';
 import { createApiTopup, reconcileApiTopup, resyncPendingTopups, topupsUnavailable } from './api-topups.ts';
-import { inferenceBillingStatus, inferenceCatalog, inferenceEndpoint, inferenceModels, inferenceStatus, shownInferenceStatus } from './inference.ts';
+import { inferenceBilling, inferenceCatalog, inferenceEndpoint, inferenceModels, shownInferenceStatus } from './inference.ts';
 import { reconcileRunpodBilling } from './supplier-costs.ts';
 
 const AUTH_REQUESTS_PER_HOUR = 90;
@@ -112,12 +115,22 @@ async function health({ env }: Call): Promise<Response> {
   // On a public origin the address hashes need their secret key: without it
   // they fall back to a value derived from the origin, which anyone can compute.
   const ipKey = env.IP_HASH_KEY || !env.SITE_ORIGIN.startsWith('https:') ? 'ok' : 'missing';
+  // The cached hosting read (at most one RunPod request a minute), shared by
+  // the inference status and the top-ups decision. The status also reads D1;
+  // if that fails, the batch below reports it as a 503 instead of a crash.
+  const inferenceNow = await inferenceBilling(env).catch(() => null);
+  const topups: TopupsDecision = inferenceNow ? apiTopupsDecision(env, inferenceNow) : { open: false, reason: 'check_failed' };
   const body = {
     status: ipKey === 'ok' ? 'ok' : 'degraded',
     version: VERSION,
     billing: billingReady(env) ? 'live' : 'unavailable',
     reviews: env.AI_REVIEW_ENABLED === 'true',
-    inference: await inferenceStatus(env),
+    inference: inferenceNow ? shownInferenceStatus(inferenceNow.status) : 'unknown',
+    // Whether a manual top-up would be accepted now, and a reason code when
+    // not: an unknown hosting state shows inference as available but closes
+    // top-ups, and this is where that becomes visible. No secret is exposed.
+    topups: topups.open ? 'open' : 'closed',
+    topups_reason: topups.reason,
     // 'hosted' when the Worker was built with the production method. A build
     // from the community stub, or one that lacks a profile, says so here.
     profiles: METHOD_SOURCE === 'private' && missingMethods().length === 0 ? 'hosted' : 'community',
@@ -217,11 +230,13 @@ const billingPortal = billingRoute('billing', BILLING_REQUESTS_PER_10_MIN, async
 );
 
 const apiTopup = billingRoute('api-topup', BILLING_REQUESTS_PER_10_MIN, async ({ env, request }, session) => {
-  if (env.API_TOPUPS_ENABLED !== 'true') throw topupsUnavailable('closed');
+  // The same decision as topups_enabled and /api/health. Configuration is
+  // checked first, so a closed configuration reads nothing.
+  if (apiTopupsConfigClosure(env)) throw topupsUnavailable('closed');
   // Fails closed: credit is sold only while it can be spent, so a hosting
   // state that cannot be read refuses the purchase before Stripe is called.
-  const status = await inferenceBillingStatus(env);
-  if (status !== 'available') throw topupsUnavailable(status);
+  const billing = await inferenceBilling(env);
+  if (!apiTopupsDecision(env, billing).open) throw topupsUnavailable(billing.status === 'available' ? 'closed' : billing.status, false, billing.reason);
   const body = await readJson(request, 1000);
   const api = stripeClient(env);
   const customer = await customerFor(env, api, session.account_id);
@@ -286,9 +301,9 @@ const ROUTES: Readonly<Record<string, Readonly<Record<string, Handler>>>> = {
   '/api/profiles': { GET: profiles },
   '/api/inference/catalog': { GET: async ({ env }) => {
     // The catalog shows an unknown hosting state as available; top-ups open only on a known one.
-    const billing = await inferenceBillingStatus(env);
-    const status = shownInferenceStatus(billing);
-    return json({ enabled: status === 'available', status, topups_enabled: billing === 'available' && env.API_TOPUPS_ENABLED === 'true' && apiBillingReady(env), models: await inferenceCatalog(env) });
+    const billing = await inferenceBilling(env);
+    const status = shownInferenceStatus(billing.status);
+    return json({ enabled: status === 'available', status, topups_enabled: apiTopupsDecision(env, billing).open, models: await inferenceCatalog(env) });
   } },
   '/api/account': { GET: accountStatus },
   '/api/portal': { GET: signedInRead(portal) },

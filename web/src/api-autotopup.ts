@@ -8,7 +8,8 @@ import { sha256 } from './crypto.ts';
 import { seconds } from './env.ts';
 import type { Env } from './env.ts';
 import { ApiError } from './http.ts';
-import { inferenceBillingStatus } from './inference.ts';
+import { inferenceBilling } from './inference.ts';
+import type { InferenceBilling } from './inference.ts';
 
 const SETUP_TAG = 'bounty-operator-api-autotopup';
 const CONSENT_VERSION = 'api-autotopup-2026-10-14';
@@ -29,16 +30,19 @@ interface Setup {
 }
 interface Configuration { amount: number; threshold: number; cap: number }
 
-/** 'available', or why automatic purchases are closed. An unknown hosting state closes them. */
-async function autoTopupState(env: Env, fresh = false): Promise<'available' | TopupClosure> {
-  const live = env.BILLING_MODE === 'live' && /^(sk|rk)_live_/.test(env.STRIPE_SECRET_KEY ?? '') && Boolean(env.STRIPE_PRICE_ID);
-  if (!(env.API_AUTOTOPUPS_ENABLED === 'true' && env.API_TOPUPS_ENABLED === 'true' && Boolean(env.STRIPE_WEBHOOK_SECRET) && (live || localStripeTest(env)))) return 'closed';
-  return inferenceBillingStatus(env, fresh);
-}
+/** 'available', or why automatic purchases are closed; `reason` says why an unknown hosting read failed. */
+interface AutoState { state: 'available' | TopupClosure; reason: string | null }
 
-/** `fresh` reads the hosting state again instead of using the one-minute cache. */
-export async function autoTopupAvailable(env: Env, fresh = false): Promise<boolean> {
-  return (await autoTopupState(env, fresh)) === 'available';
+/**
+ * Whether automatic purchases are open. An unknown hosting state closes them.
+ * `fresh` reads the hosting state again instead of using the one-minute cache;
+ * `billing` is a status this request already started to read.
+ */
+async function autoTopupState(env: Env, { fresh = false, billing }: { fresh?: boolean; billing?: Promise<InferenceBilling> } = {}): Promise<AutoState> {
+  const live = env.BILLING_MODE === 'live' && /^(sk|rk)_live_/.test(env.STRIPE_SECRET_KEY ?? '') && Boolean(env.STRIPE_PRICE_ID);
+  if (!(env.API_AUTOTOPUPS_ENABLED === 'true' && env.API_TOPUPS_ENABLED === 'true' && Boolean(env.STRIPE_WEBHOOK_SECRET) && (live || localStripeTest(env)))) return { state: 'closed', reason: null };
+  const { status, reason } = await (billing ?? inferenceBilling(env, fresh));
+  return { state: status, reason };
 }
 
 function configuration(body: Record<string, unknown>): Configuration {
@@ -52,8 +56,8 @@ function configuration(body: Record<string, unknown>): Configuration {
 
 /** Throws the refusal, before any Stripe request, unless automatic purchases are available. */
 export async function requireAutoTopupAvailable(env: Env): Promise<void> {
-  const state = await autoTopupState(env);
-  if (state !== 'available') throw topupsUnavailable(state, true);
+  const { state, reason } = await autoTopupState(env);
+  if (state !== 'available') throw topupsUnavailable(state, true, reason);
 }
 
 function methodSummary(method: Stripe.PaymentMethod): string {
@@ -62,18 +66,25 @@ function methodSummary(method: Stripe.PaymentMethod): string {
     exp_month: method.card?.exp_month ?? null, exp_year: method.card?.exp_year ?? null });
 }
 
-export async function autoTopupData(env: Env, accountId: string): Promise<Record<string, unknown>> {
+/**
+ * What the account panel shows. `closure` is null while automatic purchases
+ * are open, otherwise why not: 'closed' (configuration), 'unavailable',
+ * 'paused' or 'unknown' (the model service). `billing` is a status this
+ * request already started to read, so the panel reads hosting once.
+ */
+export async function autoTopupData(env: Env, accountId: string, billing?: Promise<InferenceBilling>): Promise<Record<string, unknown>> {
   const month = utcMonth(seconds());
-  const [settings, usage, available] = await Promise.all([
+  const [settings, usage, open] = await Promise.all([
     env.DB.prepare('SELECT * FROM api_autotopup_settings WHERE account_id = ?').bind(accountId).first<Settings>(),
     env.DB.prepare(`SELECT COALESCE(SUM(CASE WHEN auto_month = ? AND status IN ('pending', 'paid') THEN amount_micro ELSE 0 END), 0) AS spent,
       COALESCE(MAX(CASE WHEN status = 'pending' THEN 1 ELSE 0 END), 0) AS pending FROM api_topups WHERE account_id = ? AND source = 'automatic'`)
       .bind(month, accountId).first<{ spent: number; pending: number }>(),
-    autoTopupAvailable(env),
+    autoTopupState(env, { billing }),
   ]);
+  const available = open.state === 'available';
   const amount = settings?.amount_micro ?? 20 * MICRO_USD;
   const cap = settings?.monthly_cap_micro ?? 100 * MICRO_USD;
-  return { available, enabled: Boolean(settings?.enabled),
+  return { available, closure: available ? null : open.state, enabled: Boolean(settings?.enabled),
     status: settings?.enabled ? 'enabled' : settings?.pause_reason ? 'paused' : settings?.setup_id ? 'setup_pending' : 'off',
     amount_usd: amount / MICRO_USD, threshold_usd: (settings?.threshold_micro ?? 5 * MICRO_USD) / MICRO_USD,
     monthly_cap_usd: cap / MICRO_USD, spent_this_month_usd: (usage?.spent ?? 0) / MICRO_USD, month,
@@ -147,7 +158,9 @@ export async function disableAutoTopup(env: Env, accountId: string): Promise<voi
   await env.DB.batch([
     env.DB.prepare('UPDATE api_autotopup_settings SET enabled = 0, setup_id = NULL, pause_reason = NULL, revision = revision + 1, updated_at = ? WHERE account_id = ?').bind(now, accountId),
     env.DB.prepare("UPDATE api_autotopup_setups SET status = 'cancelled', updated_at = ? WHERE account_id = ? AND status = 'pending'").bind(now, accountId),
-    env.DB.prepare("UPDATE api_topups SET status = 'failed', updated_at = ? WHERE account_id = ? AND source = 'automatic' AND status = 'pending' AND initiated_at = 0").bind(now, accountId),
+    // A reservation never sent to Stripe charged nothing, so it expires.
+    // 'failed' is kept for payments that reached Stripe or could not be found.
+    env.DB.prepare("UPDATE api_topups SET status = 'expired', updated_at = ? WHERE account_id = ? AND source = 'automatic' AND status = 'pending' AND initiated_at = 0").bind(now, accountId),
   ]);
 }
 
@@ -223,28 +236,78 @@ async function pause(env: Env, row: Topup, reason = 'reconciliation_required'): 
     .bind(reason, seconds(), row.account_id, row.auto_revision).run();
 }
 
+/** Options for one scheduled run. Production uses the defaults; tests shorten them. */
+export interface AutoTopupRunOptions {
+  /** How long to wait before reading an unknown hosting state once more. */
+  unknownRetryMs?: number;
+  /** How long a hosting read made by this run stays usable for the next send. */
+  reuseMs?: number;
+}
+type RunGate = () => Promise<AutoState>;
+
+/**
+ * One scheduled run's answer to "may a payment be sent now?". Every answer
+ * comes from a hosting read this run made, never from the one-minute cache: a
+ * reservation may have waited for this run, and no payment may leave while
+ * credit cannot be spent. A later send reuses the answer while it is under
+ * `reuseMs` old, so a run reads once instead of once per send. An unknown
+ * answer is read once more after `unknownRetryMs`, so one dropped request does
+ * not close a customer's reservation: at most two five-second reads. Once
+ * closed, the run stays closed and reads nothing more.
+ */
+function runGate(env: Env, { unknownRetryMs = 1000, reuseMs = 10000 }: AutoTopupRunOptions): RunGate {
+  let last: (AutoState & { at: number }) | null = null;
+  const read = async (): Promise<AutoState> => {
+    try {
+      return await autoTopupState(env, { fresh: true });
+    } catch (error) {
+      console.error('Automatic top-up check failed', { name: error instanceof Error ? error.name : 'unknown' });
+      return { state: 'unknown', reason: 'check_failed' };
+    }
+  };
+  return async () => {
+    if (last && (last.state !== 'available' || Date.now() - last.at < reuseMs)) return last;
+    let at = Date.now();
+    let answer = await read();
+    if (answer.state === 'unknown') {
+      await new Promise<void>((resolve) => { setTimeout(resolve, unknownRetryMs); });
+      at = Date.now();
+      answer = await read();
+    }
+    last = { ...answer, at };
+    return last;
+  };
+}
+
 /** Returns false when automatic purchases are unavailable, so the caller sends nothing more in this run. */
-async function sendAttempt(env: Env, api: Stripe, row: Topup, now: number, closed = false): Promise<boolean> {
+async function sendAttempt(env: Env, api: Stripe, row: Topup, now: number, gate: RunGate): Promise<boolean> {
   if (!row.account_id || !row.payment_method) return true;
-  // The last check before Stripe reads the hosting state again, skipping the
-  // one-minute cache: a reservation may have waited for this run, and no
-  // payment may leave while credit cannot be spent. Unknown counts as
-  // unavailable. The read comes before the claim, not after it, so a Worker
-  // stopped during the read leaves an unsent reservation, never an initiated
-  // payment whose outcome must be recovered.
-  if (closed || !(await autoTopupAvailable(env, true))) {
-    // Nothing reached Stripe. Close the unsent reservation, so the next run
+  // The last check before Stripe. Unknown counts as unavailable. It comes
+  // before the claim, not after it, so a Worker stopped during the read
+  // leaves an unsent reservation, never an initiated payment whose outcome
+  // must be recovered.
+  const { state, reason } = await gate();
+  if (state !== 'available') {
+    // Nothing reached Stripe. The unsent reservation expires, so the next run
     // decides again from the balance, cap and settings current then.
-    await env.DB.prepare("UPDATE api_topups SET status = 'failed', updated_at = ? WHERE id = ? AND initiated_at = 0 AND status = 'pending'").bind(now, row.id).run();
+    const closed = await env.DB.prepare("UPDATE api_topups SET status = 'expired', updated_at = ? WHERE id = ? AND initiated_at = 0 AND status = 'pending'").bind(now, row.id).run();
+    console.warn('Automatic top-up not sent; purchases closed', { state, reason, expired: closed.meta.changes });
     return false;
   }
   // This compare-and-set is the send boundary. A disable before it wins; a
   // disable after it sees a payment already in progress, which may settle.
+  // It also re-checks the balance trigger the customer consented to, as the
+  // reservation did: a reservation left by a stopped Worker can wait for a
+  // later run, and a top-up or grant in between means none is due.
   const claimed = await env.DB.prepare(`UPDATE api_topups SET initiated_at = ?, updated_at = ? WHERE id = ? AND initiated_at = 0 AND status = 'pending' AND auto_month = ?
-    AND EXISTS(SELECT 1 FROM api_autotopup_settings WHERE account_id = ? AND enabled = 1 AND revision = ? AND payment_method = ?)`)
-    .bind(now, now, row.id, utcMonth(now), row.account_id, row.auto_revision, row.payment_method).run();
+    AND EXISTS(SELECT 1 FROM api_autotopup_settings s LEFT JOIN api_wallets w ON w.account_id = s.account_id
+      WHERE s.account_id = ? AND s.enabled = 1 AND s.revision = ? AND s.payment_method = ?
+      AND COALESCE(w.balance_micro, 0) >= 0 AND COALESCE(w.balance_micro, 0) - COALESCE(w.reserved_micro, 0) < s.threshold_micro)
+    AND NOT EXISTS(SELECT 1 FROM inference_requests WHERE account_id = ? AND status = 'running')`)
+    .bind(now, now, row.id, utcMonth(now), row.account_id, row.auto_revision, row.payment_method, row.account_id).run();
   if (!claimed.meta.changes) {
-    await env.DB.prepare("UPDATE api_topups SET status = 'failed', updated_at = ? WHERE id = ? AND initiated_at = 0 AND status = 'pending'").bind(now, row.id).run();
+    // The settings or the balance changed before the send boundary, so nothing reached Stripe.
+    await env.DB.prepare("UPDATE api_topups SET status = 'expired', updated_at = ? WHERE id = ? AND initiated_at = 0 AND status = 'pending'").bind(now, row.id).run();
     return true;
   }
   try {
@@ -273,7 +336,7 @@ async function sendAttempt(env: Env, api: Stripe, row: Topup, now: number, close
 
 /** Bounded cron work. Settlements mark accounts due; new purchases never run
  * while inference holds make the available balance temporarily look lower. */
-export async function processAutoTopups(env: Env, api: Stripe, now = seconds()): Promise<number> {
+export async function processAutoTopups(env: Env, api: Stripe, now = seconds(), options: AutoTopupRunOptions = {}): Promise<number> {
   const setups = await env.DB.prepare("SELECT * FROM api_autotopup_setups WHERE status = 'pending' AND checkout_id IS NOT NULL AND updated_at <= ? ORDER BY updated_at LIMIT 4")
     .bind(now - 60).all<Setup>();
   for (const setup of setups.results) {
@@ -282,15 +345,14 @@ export async function processAutoTopups(env: Env, api: Stripe, now = seconds()):
   }
   const pending = await env.DB.prepare("SELECT * FROM api_topups WHERE source = 'automatic' AND status = 'pending' AND updated_at <= ? ORDER BY updated_at LIMIT 4")
     .bind(now - 60).all<Topup>();
-  // Payments already at Stripe always reconcile below. Once an uncached read
-  // finds purchases unavailable, nothing else is sent or reserved this run.
-  let closed = false;
+  // Payments already at Stripe always reconcile below. New sends ask the run's
+  // gate; once it finds purchases unavailable, nothing else is sent or reserved.
+  const gate = runGate(env, options);
   for (const row of pending.results) {
     try {
       if (row.payment_intent) await syncApiTopup(env, api, row.id);
-      else if (!row.initiated_at) {
-        if (!(await sendAttempt(env, api, row, now, closed))) closed = true;
-      } else {
+      else if (!row.initiated_at) await sendAttempt(env, api, row, now, gate);
+      else {
         const intents = await api.paymentIntents.list({ customer: row.customer_id, limit: 100, created: { gte: row.created_at - 60, lte: row.initiated_at + 3600 } });
         const found = intents.data.find((intent) => intent.metadata?.app === API_PAYMENT_TAG && intent.metadata?.source === 'automatic' && intent.metadata?.topup_id === row.id && intent.metadata?.account_id === row.account_id);
         if (found) {
@@ -306,11 +368,11 @@ export async function processAutoTopups(env: Env, api: Stripe, now = seconds()):
     }
     await env.DB.prepare('UPDATE api_topups SET updated_at = ? WHERE id = ?').bind(now, row.id).run();
   }
-  // A reservation needs purchases to be available. An unknown hosting state
-  // reserves nothing, and each send below reads the state again.
-  if (closed || !(await autoTopupAvailable(env))) return pending.results.length;
   const due = await env.DB.prepare(`SELECT account_id FROM api_autotopup_settings WHERE enabled = 1 AND payment_method IS NOT NULL AND next_check_at <= ? ORDER BY next_check_at LIMIT 4`)
     .bind(now).all<{ account_id: string }>();
+  // A reservation needs this run's gate to allow purchases. An unknown hosting
+  // state reserves nothing. A run with no due account reads nothing.
+  if (!due.results.length || (await gate()).state !== 'available') return pending.results.length;
   for (const { account_id: accountId } of due.results) {
     const id = `auto-${crypto.randomUUID()}`;
     // SQLite executes this as a single atomic statement. The sum includes
@@ -329,7 +391,7 @@ export async function processAutoTopups(env: Env, api: Stripe, now = seconds()):
     await env.DB.prepare('UPDATE api_autotopup_settings SET next_check_at = ? WHERE account_id = ?').bind(now + 300, accountId).run();
     if (!reserved.meta.changes) continue;
     const row = await env.DB.prepare('SELECT * FROM api_topups WHERE id = ?').bind(id).first<Topup>();
-    if (row && !(await sendAttempt(env, api, row, now))) break;
+    if (row && !(await sendAttempt(env, api, row, now, gate))) break;
   }
   return pending.results.length + due.results.length;
 }

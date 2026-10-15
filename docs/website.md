@@ -230,7 +230,7 @@ profile.
 
 | Route | Purpose |
 | --- | --- |
-| `GET /api/health` | Version, the state of billing, reviews and D1, and `profiles`: `hosted` or `community`. Returns 503 when D1 is down. |
+| `GET /api/health` | Version, the state of billing, reviews, inference and D1, `profiles` (`hosted` or `community`), and `topups` (`open` or `closed`) with a `topups_reason` code when closed. Returns 503 when D1 is down. |
 | `GET /api/profiles` | The listed profiles: name, description, inputs, output section titles and `hosted`. |
 | `GET /api/account` | Session state, usage, plan, limits and the CSRF token. |
 | `POST /api/review` | Run a review. JSON, or server-sent events when `stream` is true. |
@@ -289,8 +289,10 @@ pages match their sources, then runs
 runs the same gates and builds the production bundle without deploying it.
 
 `npm run verify:live` reads a running site from the outside and exits 1 when a
-check fails: `/api/health` (version, database, `"profiles": "hosted"`), the
-security headers and the content security policy on `/` and `/guide`,
+check fails: `/api/health` (version, database, `"profiles": "hosted"`), top-ups
+(`topups_enabled` in `/api/inference/catalog` matches health's `topups`, and
+top-ups are not closed for any reason but `disabled` while inference is
+available), the security headers and the content security policy on `/` and `/guide`,
 `security.txt`, `robots.txt` and the sitemap, every sitemap page (200, a
 `<title>`, no script from another origin), the redirect from an alias host,
 `/api/profiles` as metadata only, the MCP endpoint, and the checksum of the

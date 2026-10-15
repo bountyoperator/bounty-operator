@@ -11,6 +11,7 @@ import { seconds } from './env.ts';
 import type { Env } from './env.ts';
 import { count } from './funnel.ts';
 import { ApiError } from './http.ts';
+import type { InferenceBilling } from './inference.ts';
 import { RENEWAL_GRACE_SECONDS } from './quota.mjs';
 
 const PRICE_CENTS = 1000;
@@ -43,6 +44,36 @@ export function billingReady(env: Env): boolean {
 
 export function apiBillingReady(env: Env): boolean {
   return billingReady(env) || (localStripeTest(env) && Boolean(env.STRIPE_WEBHOOK_SECRET));
+}
+
+/**
+ * Why manual API top-ups are closed: 'disabled' (API_TOPUPS_ENABLED is not
+ * true), 'billing_not_ready' (Stripe is not configured for live API payments),
+ * 'inference_unavailable', 'hosting_paused', 'hosting_unknown:<reason>' when
+ * the RunPod funding state could not be read, or 'check_failed' when /api/health
+ * could not compute the billing status at all. Codes only, never a secret.
+ */
+export type TopupsReason = 'disabled' | 'billing_not_ready' | 'inference_unavailable' | 'hosting_paused' | `hosting_unknown:${string}` | 'check_failed';
+export interface TopupsDecision { open: boolean; reason: TopupsReason | null }
+
+/** Why configuration alone keeps manual API top-ups closed, or null when it allows them. Reads nothing. */
+export function apiTopupsConfigClosure(env: Env): 'disabled' | 'billing_not_ready' | null {
+  if (env.API_TOPUPS_ENABLED !== 'true') return 'disabled';
+  return apiBillingReady(env) ? null : 'billing_not_ready';
+}
+
+/**
+ * Whether manual API top-ups are open, and why not. The purchase route, the
+ * catalog, the account panel and /api/health all take this one decision from
+ * the same billing status, so what they say cannot drift apart.
+ */
+export function apiTopupsDecision(env: Env, billing: InferenceBilling): TopupsDecision {
+  const closed = apiTopupsConfigClosure(env);
+  if (closed) return { open: false, reason: closed };
+  if (billing.status === 'available') return { open: true, reason: null };
+  if (billing.status === 'paused') return { open: false, reason: 'hosting_paused' };
+  if (billing.status === 'unknown') return { open: false, reason: `hosting_unknown:${billing.reason ?? 'unread'}` };
+  return { open: false, reason: 'inference_unavailable' };
 }
 
 function unavailable(message = 'Subscriptions are not open right now. The free plan works as usual.'): ApiError {

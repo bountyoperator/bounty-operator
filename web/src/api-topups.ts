@@ -14,10 +14,16 @@ const idOf = (value: string | { id: string } | null | undefined): string | null 
 /** Why a purchase is closed: the model service's billing status, or 'closed' when configuration does not allow it. */
 export type TopupClosure = 'closed' | 'unavailable' | 'paused' | 'unknown';
 
-/** The refusal for a new purchase. It is thrown before any Stripe request, so nothing has been charged. */
-export function topupsUnavailable(reason: TopupClosure, automatic = false): ApiError {
+/**
+ * The refusal for a new purchase. It is thrown before any Stripe request, so
+ * nothing has been charged. A refusal for an unknown hosting state is logged
+ * with `detail`, the short code of why the read failed, so a sales outage
+ * caused by failing closed shows in the Worker logs.
+ */
+export function topupsUnavailable(reason: TopupClosure, automatic = false, detail: string | null = null): ApiError {
   const kind = automatic ? 'Automatic API top-ups' : 'API top-ups';
   if (reason === 'unknown') {
+    console.warn('Top-up refused; hosting status unknown', { automatic, reason: detail ?? 'unread' });
     return new ApiError(`${kind} are unavailable because the model hosting status could not be confirmed. No charge was made. Try again in a few minutes.`, 503, 'topups_unavailable', { retryAfter: 60 });
   }
   if (reason === 'paused') return new ApiError(`${kind} are closed while model inference is paused.`, 503, 'topups_unavailable');
