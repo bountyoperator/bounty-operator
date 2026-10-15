@@ -14,10 +14,18 @@
 // "bo-motion" as "on" or "off"; choosing what the system already asks for
 // removes the key. Other code listens for "motionchange" on document.
 //
-// It also wires the two behaviours the shared components promise on every
-// page, so static pages need no script of their own:
+// Account label. A browser that has signed in here before (localStorage
+// "bo:known", written by app/account.mjs) gets [data-known] on <html>, and the
+// header's account control reads Sign in instead of Sign up from the first paint.
+//
+// It also wires the behaviours the shared components promise on every page, so
+// static pages need no script of their own:
 //   [data-copy]          copies the code block it sits in
 //   [data-close-dialog]  closes the dialog it sits in
+//   [data-menu-toggle]   the phone header's Menu button: opens and closes the
+//                        navigation its aria-controls names. The stylesheet folds
+//                        that navigation away only under [data-js], so without
+//                        this script every link stays on screen.
 //
 // Counting people. Once the page has loaded and is on screen, it reports the
 // name page_seen to POST /api/event, once per page load, with nothing else in
@@ -30,16 +38,24 @@
 
   var COPIED_MS = 2000;
   var MOTION_KEY = 'bo-motion';
+  var KNOWN_KEY = 'bo:known';
+  var MENU_OPEN = 'data-menu-open';
   var root = document.documentElement;
   // Scripts run on this page. CSS reads [data-js] to lay out, from the first
-  // paint, what a script will arrange later (the /mcp client tabs), so the page
-  // does not jump when that script runs.
+  // paint, what a script will arrange later (the /mcp client tabs, the phone
+  // header's menu), so the page does not jump when that script runs.
   root.setAttribute('data-js', '');
 
   try {
     window.localStorage.removeItem('bo-theme');
   } catch (error) {
     // Storage can be blocked. There is nothing to remove then.
+  }
+
+  try {
+    if (window.localStorage.getItem(KNOWN_KEY) === '1') root.setAttribute('data-known', '');
+  } catch (error) {
+    // Storage can be blocked. The control then reads Sign up, and the dialog still offers Sign in.
   }
 
   var lessMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -120,6 +136,40 @@
     });
   }
 
+  // The menu a Menu button controls, or null.
+  function menuOf(toggle) {
+    var id = toggle.getAttribute('aria-controls');
+    return id ? document.getElementById(id) : null;
+  }
+
+  function setMenu(toggle, open) {
+    var menu = menuOf(toggle);
+    if (!menu) return null;
+    toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    if (open) menu.setAttribute(MENU_OPEN, '');
+    else menu.removeAttribute(MENU_OPEN);
+    return menu;
+  }
+
+  // The Menu button whose open menu holds the node, or which is the node.
+  function openMenuToggle(node) {
+    var toggles = document.querySelectorAll('[data-menu-toggle][aria-expanded="true"]');
+    for (var index = 0; index < toggles.length; index += 1) {
+      var menu = menuOf(toggles[index]);
+      if (toggles[index].contains(node) || (menu && menu.contains(node))) return toggles[index];
+    }
+    return null;
+  }
+
+  // The links come before the button in the page, so opening moves focus to
+  // the first one; Tab then runs through the links and on to the account control.
+  function toggleMenu(toggle) {
+    var opening = toggle.getAttribute('aria-expanded') !== 'true';
+    var menu = setMenu(toggle, opening);
+    var first = opening && menu && menu.querySelector('a[href]');
+    if (first) first.focus();
+  }
+
   function onClick(event) {
     var target = event.target;
     if (!target || !target.closest) return;
@@ -132,9 +182,28 @@
     var closeButton = target.closest('[data-close-dialog]');
     var dialog = closeButton && closeButton.closest('dialog');
     if (dialog) dialog.close();
+
+    var menuToggle = target.closest('[data-menu-toggle]');
+    if (menuToggle) {
+      toggleMenu(menuToggle);
+    } else if (target.closest('a[href]')) {
+      // A link in the menu was chosen: on this page (a #section) the menu has done its job.
+      var owner = openMenuToggle(target);
+      if (owner) setMenu(owner, false);
+    }
+  }
+
+  // Escape inside an open menu, or on its button, closes it and puts focus back on the button.
+  function onKeydown(event) {
+    if (event.key !== 'Escape' || event.defaultPrevented || !event.target) return;
+    var owner = openMenuToggle(event.target);
+    if (!owner) return;
+    setMenu(owner, false);
+    owner.focus();
   }
 
   document.addEventListener('click', onClick);
+  document.addEventListener('keydown', onKeydown);
 
   // The motion button is parsed after this script runs, so label it once the DOM is ready.
   document.addEventListener('DOMContentLoaded', function () {

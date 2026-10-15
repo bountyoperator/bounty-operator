@@ -191,9 +191,14 @@ test('renderPage emits the head contract and no markup the CSP would block', () 
   assert.equal(markup.split('fetchpriority="low"').length - 1, markup.split('rel="modulepreload"').length - 1 + markup.split('<script type="module"').length - 1, 'only the modules carry it');
   assert.match(markup, /<a href="\/tools" aria-current="page">Tools<\/a>/);
   assert.match(markup, /<a href="\/benchmark">Benchmark<\/a>/);
-  // One label for a signed-out visitor on every page: the link here, the button on the home page.
-  assert.match(markup, /<a class="btn btn--secondary btn--sm" href="\/#account">Sign in<\/a>/);
+  // The same labels for a signed-out visitor on every page: the link here, the button on the home page.
+  // Sign up for a new browser, Sign in for one that has signed in before; the stylesheet shows one.
+  const labels = '<span class="account-label account-label--new">Sign up</span><span class="account-label account-label--known">Sign in</span>';
+  assert.ok(markup.includes(`<a class="btn btn--secondary btn--sm" href="/#account">${labels}</a>`));
   assert.doesNotMatch(markup, /id="account-button"/);
+  // The phone header's Menu button names the navigation it opens.
+  assert.match(markup, /<nav class="site-nav" id="site-nav" aria-label="Main">/);
+  assert.ok(markup.includes('<button class="btn btn--quiet btn--icon site-header__menu" type="button" aria-expanded="false" aria-controls="site-nav" data-menu-toggle><span class="icon icon--menu" aria-hidden="true"></span><span class="visually-hidden">Menu</span></button>'));
   assert.match(markup, /support@bountyoperator\.com/);
   assert.match(markup, /Built by <a href="https:\/\/immunefi\.com\/profile\/Tradi3\/"/);
   assert.doesNotMatch(markup, /Q <\/script>/);
@@ -202,7 +207,7 @@ test('renderPage emits the head contract and no markup the CSP would block', () 
   assert.deepEqual(errors, []);
 
   const home = renderPage({ ...page, path: '/', nav: undefined }, { has: () => false, pages: [] });
-  assert.match(home, /<button id="account-button" class="btn btn--secondary btn--sm" type="button">Sign in<\/button>/);
+  assert.ok(home.includes(`<button id="account-button" class="btn btn--secondary btn--sm" type="button">${labels}</button>`));
   assert.match(home, /<meta name="twitter:creator" content="@Tradi3_">/);
   assert.doesNotMatch(home, /Benchmark/);
 });
@@ -230,8 +235,10 @@ test('the header and footer link the method, the pricing page and the security p
 });
 
 // At 390px the nav used to be a row that scrolled sideways with no hint, and
-// Pricing sat wholly off the screen. Now no link can leave the screen.
-test('on a phone every header link is on screen: one shared row, two rows of three under 384px, never a sideways scroll', async () => {
+// Pricing sat wholly off the screen. Now no link can leave the screen. With
+// scripts running, a phone folds the links behind Menu (the next test); these
+// rules are what a phone shows without them, and what a tablet shows.
+test('without scripts every header link is on a phone screen: one shared row, two rows of three under 384px, never a sideways scroll', async () => {
   const css = (await readFile(path.join(WEB_DIR, 'public', 'css', 'base.css'), 'utf8')).replace(/\/\*[\s\S]*?\*\//g, '');
   /** The body of the media block that opens with `open`, braces balanced. */
   const block = (open) => {
@@ -264,6 +271,131 @@ test('on a phone every header link is on screen: one shared row, two rows of thr
   const nav = renderPage({ path: '/guide', title: 'Guide | Bounty Operator', description: DESCRIPTION, nav: 'guide', body: html`<h1>Guide</h1>` }, { has: () => true, pages: [] });
   const labels = [...nav.slice(nav.indexOf('<nav class="site-nav"'), nav.indexOf('</nav>')).matchAll(/<a [^>]*>([^<]+)<\/a>/g)].map((match) => match[1]);
   assert.deepEqual(labels, ['Review', 'Benchmark', 'Model API', 'Tools', 'Guide', 'Pricing']);
+});
+
+// The two-row phone header pushed every headline down: at 390px the h1 of the
+// home page and of /templates/immunefi started 166 and 167px down. One row
+// (the brand, the account control, Menu) starts them at 129 and 130.
+test('on a phone with scripts the header is one row, and Menu opens the links under it', async () => {
+  const css = (await readFile(path.join(WEB_DIR, 'public', 'css', 'base.css'), 'utf8')).replace(/\/\*[\s\S]*?\*\//g, '');
+  const start = css.indexOf('@media (max-width: 39.99em) {\n  :root[data-js] .site-header__inner {');
+  assert.ok(start >= 0, 'the phone header block');
+  let depth = 0;
+  let end = css.indexOf('{', start);
+  for (; end < css.length; end += 1) {
+    if (css[end] === '{') depth += 1;
+    else if (css[end] === '}' && (depth -= 1) === 0) break;
+  }
+  const phone = css.slice(start, end);
+  assert.match(phone, /:root\[data-js\] \.site-header__menu \{\s*display: inline-flex;\s*\}/);
+  assert.match(phone, /:root\[data-js\] \.site-nav:not\(\[data-menu-open\]\) \{\s*display: none;\s*\}/);
+  // The open list is ruled rows, the current page marked by its label, never a stripe.
+  assert.match(phone, /:root\[data-js\] \.site-nav li \+ li \{\s*border-top: 1px solid var\(--line\);\s*\}/);
+  assert.match(phone, /\.site-header__menu\[aria-expanded="true"\] \.icon \{\s*--icon: var\(--icon-x\);\s*\}/);
+  // Its entrance runs only while the page's motion is on.
+  assert.match(phone, /:root\[data-motion="on"\] \.site-nav\[data-menu-open\] \{\s*animation: rise /);
+  assert.doesNotMatch(phone, /prefers-reduced-motion/);
+  // Wider screens never show the button, and nothing folds the links away where no script runs.
+  assert.match(css, /\n\.site-header__menu \{\s*display: none;\s*\}/);
+  // (Print hides the whole header with !important; that rule is not a screen layout.)
+  for (const rule of css.matchAll(/([^{}]*\.site-nav[^{}]*)\{([^{}]*)\}/g)) {
+    if (/display:\s*none/.test(rule[2]) && !/!important/.test(rule[2])) assert.match(rule[1], /:root\[data-js\]/, rule[1].trim());
+  }
+  // A new browser reads Sign up, one that has signed in before Sign in: one label shows.
+  assert.match(css, /:root\[data-known\] \.account-label--new,\s*:root:not\(\[data-known\]\) \.account-label--known \{\s*display: none;\s*\}/);
+});
+
+test('theme.js: Menu opens and closes the navigation, moves focus into it, and Escape or a link closes it', async () => {
+  const vm = await import('node:vm');
+  const source = await readFile(path.join(WEB_DIR, 'public', 'theme.js'), 'utf8');
+  const listeners = new Map();
+  const rootAttributes = new Map();
+  const node = (name, parent = null) => {
+    const attributes = new Map();
+    const self = {
+      name,
+      parent,
+      focused: false,
+      getAttribute: (key) => (attributes.has(key) ? attributes.get(key) : null),
+      setAttribute: (key, value) => attributes.set(key, String(value)),
+      removeAttribute: (key) => attributes.delete(key),
+      hasAttribute: (key) => attributes.has(key),
+      contains: (other) => {
+        for (let at = other; at; at = at.parent) if (at === self) return true;
+        return false;
+      },
+      focus: () => {
+        document.activeElement = self;
+      },
+      closest: (selector) => {
+        for (let at = self; at; at = at.parent) if (at.matches(selector)) return at;
+        return null;
+      },
+      matches: () => false,
+    };
+    return self;
+  };
+  const nav = node('nav');
+  const first = node('first link', nav);
+  const second = node('second link', nav);
+  const toggle = node('toggle');
+  const elsewhere = node('link elsewhere');
+  toggle.setAttribute('aria-controls', 'site-nav');
+  toggle.setAttribute('aria-expanded', 'false');
+  toggle.matches = (selector) => selector === '[data-menu-toggle]';
+  for (const link of [first, second, elsewhere]) link.matches = (selector) => selector === 'a[href]';
+  nav.querySelector = (selector) => (selector === 'a[href]' ? first : null);
+  const document = {
+    activeElement: null,
+    documentElement: { setAttribute: (key, value) => rootAttributes.set(key, value), getAttribute: (key) => rootAttributes.get(key) ?? null },
+    getElementById: (id) => (id === 'site-nav' ? nav : null),
+    querySelectorAll: (selector) => (selector === '[data-menu-toggle][aria-expanded="true"]' && toggle.getAttribute('aria-expanded') === 'true' ? [toggle] : []),
+    querySelector: () => null,
+    addEventListener: (type, handler) => listeners.set(type, handler),
+    dispatchEvent: () => {},
+  };
+  const store = new Map([['bo:known', '1']]);
+  const window = {
+    localStorage: { getItem: (key) => store.get(key) ?? null, setItem: (key, value) => store.set(key, value), removeItem: (key) => store.delete(key) },
+    matchMedia: () => ({ matches: false, addEventListener() {} }),
+    addEventListener() {},
+    setTimeout,
+  };
+  vm.runInNewContext(source, { window, document, navigator: {}, CustomEvent: class {} });
+  const click = (target) => listeners.get('click')({ target });
+  const key = (target, name) => listeners.get('keydown')({ target, key: name, defaultPrevented: false });
+  const open = () => [toggle.getAttribute('aria-expanded'), nav.hasAttribute('data-menu-open')];
+
+  // Before the first paint: scripts run, and this browser has signed in before.
+  assert.ok(rootAttributes.has('data-js'));
+  assert.ok(rootAttributes.has('data-known'));
+
+  click(toggle);
+  assert.deepEqual(open(), ['true', true]);
+  assert.equal(document.activeElement, first, 'focus moves to the first link, which comes before the button in the page');
+  key(second, 'Escape');
+  assert.deepEqual(open(), ['false', false]);
+  assert.equal(document.activeElement, toggle, 'Escape puts focus back on the button');
+  // Escape anywhere else, a dialog for one, leaves the closed menu and the focus alone.
+  document.activeElement = elsewhere;
+  key(elsewhere, 'Escape');
+  assert.equal(document.activeElement, elsewhere);
+
+  click(toggle);
+  click(toggle);
+  assert.deepEqual(open(), ['false', false], 'the button closes what it opened');
+  click(toggle);
+  click(elsewhere);
+  assert.deepEqual(open(), ['true', true], 'a link outside the menu leaves it open');
+  click(second);
+  assert.deepEqual(open(), ['false', false], 'choosing a link in the menu closes it');
+
+  // A new browser, or blocked storage, gets no data-known: the control reads Sign up.
+  rootAttributes.clear();
+  store.clear();
+  vm.runInNewContext(source, { window, document, navigator: {}, CustomEvent: class {} });
+  assert.ok(rootAttributes.has('data-js'));
+  assert.ok(!rootAttributes.has('data-known'));
 });
 
 // At 320px the price-view button 'Agent session (8 requests, 12.5K in · 2K out

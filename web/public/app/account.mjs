@@ -8,7 +8,7 @@
  *   runTheReview();
  *
  * Exports
- *   openAccount({ tab }?)            -> Promise<void>      signed out: the sign-in dialog; signed in: the account sheet
+ *   openAccount({ tab, reason }?)    -> Promise<void>      signed out: the sign-in dialog; signed in: the account sheet
  *   requireSignIn({ reason }?)       -> Promise<boolean>   true once the visitor is signed in (at once when they already are);
  *                                                          false when they close the dialog. After a new account it
  *                                                          resolves when the recovery code has been saved.
@@ -17,9 +17,12 @@
  *                                                          false when nothing was opened; the reason is shown in Billing.
  *   openBillingPortal()              -> Promise<boolean>   the same for the Stripe customer portal
  *   initAccount()                    -> void               wires the page; runs by itself when the module loads in a browser
- *   REASONS                          the built-in reasons: 'review', 'operator', 'billing', 'account'
+ *   REASONS                          the built-in reasons: 'review', 'operator', 'billing', 'account', 'token'
  *   reasonText(reason, returning)    -> string             the line the dialog shows for a reason
- *   headerControl(account)           -> { label, chip, tone, name }    what the header button says for an account
+ *   opensOnSignIn(reason, known?)    -> boolean            the dialog leads with Sign in, not Create account
+ *   ACCOUNT_LINKS                    the account links besides /#account: { tab, reason? } for each
+ *   headerControl(account, known?)   -> { label, chip, tone, name }    what the header button says for an account;
+ *                                                          known: this browser has signed in before
  *   inAppBrowser(userAgent)          -> '' | 'X' | 'Facebook' | 'Instagram' | 'LinkedIn' | 'TikTok'   the app whose in-app browser this is
  *   capabilityMessage(support, userAgent) -> { tone, title, body, copyLink } | null   what the dialog says about passkeys here
  *
@@ -27,12 +30,17 @@
  * line of the dialog:
  *   'review'    "Create a free account to run this review. One passkey prompt, no email."
  *   'operator'  "Operator is US$10 a month. Account first, then Stripe."
+ * A new browser sees the create line and Create account first, whatever the
+ * reason but 'billing'. A browser that has signed in before sees Sign in first.
  *
  * What the module wires without being asked
- *   #account-button                       the header control: "Sign in", or the plan chip and "Account"
+ *   #account-button                       the header control: "Sign up" in a new browser, "Sign in" in one
+ *                                         that has signed in before, or the plan chip and "Account"
  *   a[href="/#account"], a[href="#account"]   open the panel in place
  *   [data-account-action="open|signin|checkout|billing"]   buttons on any page; data-account-reason names the reason
  *   location.hash === '#account'          opens the panel on load
+ *   location.hash === '#account/connections'   the same with the reason 'token', then the Connections tab
+ *                                         (the "Create a free account and token" buttons on /mcp)
  *   ?checkout=complete                    confirms the payment (POST /api/billing/reconcile, up to five times),
  *                                         shows the bar at the top of the page and puts the visitor back where they were
  *   ?checkout=cancelled                   a quiet line in the pricing section
@@ -47,7 +55,9 @@
  *   The signed-in sheet's ids are listed in portal.mjs.
  *
  * Nothing sensitive is stored: localStorage["bo:known"] = "1" says only that
- * this browser has signed in before, and decides which button comes first.
+ * this browser has signed in before. It decides which button comes first and
+ * whether the header control reads Sign in or Sign up; theme.js reads it too,
+ * for the pages that do not load this module.
  */
 
 import { ApiError, account as loadAccount, currentAccount, planOf, request, setReauthHandler, subscribeAccount, track } from './api.mjs';
@@ -97,10 +107,17 @@ export const REASONS = Object.freeze({
     signin: 'Sign in to manage billing. Stripe holds the card and the invoices.',
     next: 'open billing',
   },
+  // "Six more": the eight listed review types that run only on our server (profiles.mjs; a test counts them).
   account: {
-    create: 'A free account runs 1 review a day on your own key. One passkey prompt, no email.',
+    create:
+      'A free account runs Triager simulation, Prior-art overlap and six more checks a chat app can’t, one a day on your own AI key, plus a token for your coding agent. One passkey prompt, no email, no card.',
     signin: 'Sign in with the passkey on this device. No password, no email.',
     next: '',
+  },
+  token: {
+    create: 'Create a free account to get your MCP token. One passkey prompt, no email. The token is shown once, with the setup command for your client.',
+    signin: 'Sign in to create your MCP token. One passkey prompt. The token is shown once, with the setup command for your client.',
+    next: 'open Connections',
   },
 });
 
@@ -117,19 +134,38 @@ export function reasonText(reason, returning = false) {
   return REASONS.account[returning ? 'signin' : 'create'];
 }
 
+/**
+ * Whether the dialog leads with Sign in rather than Create account. A new
+ * browser is offered an account first, whatever opened the dialog: the
+ * header's Sign up, a first review, an upgrade or the /mcp token. Billing
+ * exists only on an account, so it means sign in.
+ *
+ * @param {string} [reason]  Why the dialog opened.
+ * @param {boolean} [known]  This browser has signed in before.
+ * @returns {boolean}
+ */
+export function opensOnSignIn(reason, known = false) {
+  return known || reason === 'billing';
+}
+
 function nextStep(reason) {
   return typeof reason === 'string' && Object.hasOwn(REASONS, reason) ? REASONS[reason].next : '';
 }
 
 /**
- * What the header control shows for an account.
+ * What the header control shows for an account. Signed out, a new browser is
+ * asked to sign up and one that has signed in before to sign in.
  *
  * @param {import('./api.mjs').Account} value
+ * @param {boolean} [known]  This browser has signed in before.
  * @returns {{ label: string, chip: string, tone: 'neutral' | 'operator' | 'danger', name: string }}  `name` is the accessible name.
  */
-export function headerControl(value) {
+export function headerControl(value, known = false) {
   const plan = planOf(value);
-  if (plan === 'anon') return { label: 'Sign in', chip: '', tone: 'neutral', name: 'Sign in' };
+  if (plan === 'anon') {
+    const label = known ? 'Sign in' : 'Sign up';
+    return { label, chip: '', tone: 'neutral', name: label };
+  }
   if (plan === 'past_due') return { label: 'Account', chip: 'Past due', tone: 'danger', name: 'Account, payment failed' };
   if (plan === 'operator') return { label: 'Account', chip: 'Operator', tone: 'operator', name: 'Account, Operator plan' };
   return { label: 'Account', chip: 'Free', tone: 'neutral', name: 'Account, Free plan' };
@@ -148,6 +184,8 @@ function isKnown() {
 }
 
 function markKnown() {
+  // theme.js sets this from storage on the next page; set it here for this one.
+  globalThis.document?.documentElement?.setAttribute('data-known', '');
   try {
     globalThis.localStorage?.setItem(KNOWN_KEY, '1');
   } catch {
@@ -362,11 +400,12 @@ export function capabilityMessage(capability, userAgent) {
       copyLink: true,
     };
   }
+  // Many Linux laptops and virtual machines have no built-in authenticator: a phone, a password manager or a key does the job.
   if (!capability.platform) {
     return {
       tone: 'info',
-      title: 'No passkey provider is set up on this device.',
-      body: 'Turn on Windows Hello or Touch ID, or use iCloud Keychain, Google Password Manager, 1Password, Bitwarden or a security key with a PIN.',
+      title: 'No built-in passkey on this computer.',
+      body: 'Choose the phone or tablet option in the passkey prompt and scan the QR code with your phone. Or use 1Password, Bitwarden or a security key. You get a recovery code to save once.',
       copyLink: false,
     };
   }
@@ -398,9 +437,7 @@ function capabilityNotice() {
 
 function renderEntry() {
   view = 'entry';
-  // An explicit account or billing visit means sign in, even on a new browser.
-  // Starting a first review or upgrade still introduces account creation.
-  const returning = isKnown() || reason === 'account' || reason === 'billing';
+  const returning = opensOnSignIn(reason, isKnown());
   signIn.title.textContent = returning ? 'Sign in' : 'Create your account';
   signIn.close.hidden = false;
 
@@ -652,17 +689,18 @@ export async function requireSignIn({ reason: why } = {}) {
  * Opens the account panel: the sign-in dialog for a signed-out visitor (the
  * sheet follows once they are in), the sheet for a signed-in one.
  *
- * @param {{ tab?: 'overview' | 'reviews' | 'connections' | 'security' | 'billing' }} [options]
+ * @param {{ tab?: 'overview' | 'reviews' | 'connections' | 'api' | 'security' | 'billing', reason?: string }} [options]
+ *   `reason` is the dialog's first line for a signed-out visitor: a REASONS key or a sentence.
  * @returns {Promise<void>}
  */
-export async function openAccount({ tab } = {}) {
+export async function openAccount({ tab, reason: why } = {}) {
   const current = await loaded();
   if (current.signedIn) {
     // The header control always lands on Overview: the plan and today's usage.
     if (!isPortalOpen() || tab) openPortal({ tab: tab ?? 'overview' });
     return;
   }
-  openSignIn('account', { then: 'portal', tab: tab ?? '' });
+  openSignIn(why ?? 'account', { then: 'portal', tab: tab ?? '' });
 }
 
 /**
@@ -733,7 +771,7 @@ function headerControls() {
 }
 
 function renderHeader(value = currentAccount()) {
-  const model = headerControl(value);
+  const model = headerControl(value, isKnown());
   for (const control of headerControls()) {
     control.classList.add('account-control');
     control.dataset.plan = planOf(value);
@@ -837,13 +875,20 @@ function ensureStyles() {
   document.head.append(el('link', { rel: 'stylesheet', href: STYLESHEET }));
 }
 
+/** The account links besides /#account: the tab each one lands on, and the dialog's reason on the way. */
+export const ACCOUNT_LINKS = Object.freeze({
+  '#account/api': Object.freeze({ tab: 'api' }),
+  // From /mcp: an account, then the token. A new browser is offered Create account first.
+  '#account/connections': Object.freeze({ tab: 'connections', reason: 'token' }),
+});
+
 function openFromHash() {
-  if (location.hash !== '#account' && location.hash !== '#account/api') return;
-  const apiTab = location.hash === '#account/api';
+  const hash = location.hash;
+  if (hash !== '#account' && !Object.hasOwn(ACCOUNT_LINKS, hash)) return;
   // Stripe's customer portal returns to /#account: show Billing, where the change is.
   const fromStripe = /^https:\/\/([a-z0-9-]+\.)*stripe\.com\//.test(document.referrer);
   history.replaceState(history.state, '', `${location.pathname}${location.search}`);
-  openAccount(apiTab ? { tab: 'api' } : fromStripe ? { tab: 'billing' } : {});
+  openAccount(ACCOUNT_LINKS[hash] ?? (fromStripe ? { tab: 'billing' } : {}));
 }
 
 const ACTIONS = {
@@ -879,7 +924,7 @@ export function initAccount() {
   });
   on(window, 'hashchange', openFromHash);
 
-  // The page ships with "Sign in" on the control; it changes once the account is known.
+  // The page ships with "Sign up" and "Sign in" on the control; one label stays once the account is known.
   subscribeAccount((value, previous) => {
     renderHeader(value);
     if (value.signedIn) markKnown();

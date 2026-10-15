@@ -392,7 +392,8 @@
    6. Account sheet: pieces
    ========================================================================== */
 
-/* Where the account stands, and the one thing to do about it. */
+/* Where the account stands, and what to do next: on Free, upgrade or run a
+   check only an account runs. The buttons wrap on a narrow sheet. */
 .portal-hero {
   display: flex;
   flex-wrap: wrap;
@@ -407,7 +408,11 @@
 }
 
 .portal-hero__action {
-  flex: none;
+  display: flex;
+  flex: 0 1 auto;
+  flex-wrap: wrap;
+  gap: var(--sp-8);
+  min-width: 0;
 }
 
 .portal-hero__title {

@@ -33,7 +33,7 @@
  * DOM ids
  *   #portal-dialog  #portal-dialog-title  #portal-plan  #portal-tabs  #portal-status
  *   #portal-tab-<id> and #portal-panel-<id> for overview, reviews, connections, security, billing
- *   Overview     #overview-upgrade  #overview-manage  #overview-update-card
+ *   Overview     #overview-upgrade  #overview-triage  #overview-manage  #overview-update-card
  *   Connections  #connection-label  #connection-create  #connection-secret  #connection-token  #connection-done
  *   Security     #passkey-add  #recovery-rotate  #signout  #signout-all  #data-export  #account-delete
  *   Billing      #billing-checkout  #billing-manage
@@ -711,15 +711,15 @@ function renderOverview() {
     top = pastDueNotice();
   } else {
     const [headline, line] = PLAN_LINES[summary.plan];
-    const action =
+    const actions =
       summary.plan === 'operator'
-        ? button({ label: 'Manage or cancel', id: 'overview-manage', iconEnd: 'arrow-up-right', onClick: (event) => manage(event.currentTarget) })
-        : upgradeButton('overview-upgrade');
+        ? [button({ label: 'Manage or cancel', id: 'overview-manage', iconEnd: 'arrow-up-right', onClick: (event) => manage(event.currentTarget) })]
+        : [upgradeButton('overview-upgrade'), triageLink()];
     top = el(
       'div',
       { class: 'portal-hero' },
       el('div', { class: 'portal-hero__text' }, el('h3', { class: 'portal-hero__title', text: headline }), el('p', { class: 'portal-hero__line', text: line })),
-      el('div', { class: 'portal-hero__action' }, action),
+      el('div', { class: 'portal-hero__action' }, actions),
     );
   }
 
@@ -750,6 +750,15 @@ function renderOverview() {
 
 function workbenchLink() {
   return el('a', { class: 'btn btn--secondary btn--sm', href: '/#workspace', onClick: () => closePortal() }, el('span', { class: 'btn__label', text: 'Open the workbench' }));
+}
+
+/** A free account's first step: a check only an account runs, opened in the workbench. */
+function triageLink() {
+  return el(
+    'a',
+    { class: 'btn btn--secondary', id: 'overview-triage', href: '/?profile=triage#workspace', onClick: () => closePortal() },
+    el('span', { class: 'btn__label', text: 'Run Triager simulation' }),
+  );
 }
 
 // ---------------------------------------------------------------------------

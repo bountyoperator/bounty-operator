@@ -51,9 +51,10 @@ FINISH: Responsive layout, native video controls, captions, reduced motion and v
 <header class="site-header">
 <div class="wrap site-header__inner">
 <a class="brand" href="/"><svg class="brand__mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect width="64" height="64" rx="14" fill="#f6e7cc"/><path d="M23 19 20 9 14 7M40 19 44 8 50 10" fill="none" stroke="#18232d" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 37c0-15 7-22 20-22s20 7 20 22v20H12Z" fill="#f16343"/><path d="M32 16v12" fill="none" stroke="#18232d" stroke-width="2"/><rect x="17" y="29" width="30" height="21" rx="9" fill="#18232d"/><path d="M21 37h10c0 10-10 10-10 0Zm12 0h10c0 10-10 10-10 0Z" fill="#f6e7cc"/><path d="m20 33 10 1m4-1 8-3" fill="none" stroke="#f6e7cc" stroke-width="2.3" stroke-linecap="round"/><circle cx="27" cy="38" r="2.3" fill="#18232d"/><circle cx="39" cy="38" r="2.3" fill="#18232d"/><path d="m12 48 12 4v8H10Zm40 0-12 4v8h14Z" fill="#284b73"/></svg><span class="brand__name">Bounty Operator</span></a>
-<nav class="site-nav" aria-label="Main"><ul><li><a href="/#workspace">Review</a></li><li><a href="/benchmark">Benchmark</a></li><li><a href="/model-api">Model API</a></li><li><a href="/tools">Tools</a></li><li><a href="/guide">Guide</a></li><li><a href="/pricing">Pricing</a></li></ul></nav>
+<nav class="site-nav" id="site-nav" aria-label="Main"><ul><li><a href="/#workspace">Review</a></li><li><a href="/benchmark">Benchmark</a></li><li><a href="/model-api">Model API</a></li><li><a href="/tools">Tools</a></li><li><a href="/guide">Guide</a></li><li><a href="/pricing">Pricing</a></li></ul></nav>
 <div class="site-header__actions">
-<a class="btn btn--secondary btn--sm" href="/#account">Sign in</a>
+<a class="btn btn--secondary btn--sm" href="/#account"><span class="account-label account-label--new">Sign up</span><span class="account-label account-label--known">Sign in</span></a>
+<button class="btn btn--quiet btn--icon site-header__menu" type="button" aria-expanded="false" aria-controls="site-nav" data-menu-toggle><span class="icon icon--menu" aria-hidden="true"></span><span class="visually-hidden">Menu</span></button>
 </div>
 </div>
 </header>
@@ -61,8 +62,8 @@ FINISH: Responsive layout, native video controls, captions, reduced motion and v
 <article class="docs wrap">
 <header class="page-head page-field">
 
-<h1>Connect your coding agent</h1>
-<p class="lede">Choose your app and copy the setup command. Core reviews need no Bounty Operator account.</p>
+<h1>Bug report review in your coding agent</h1>
+<p class="lede">Your agent checks a bug report against the code before you submit. Code, Solidity and draft-report reviews run on your agent’s own model with no account. A free account adds <code>run_review</code> for all 11 review types, one a day on your own key.</p>
 
 
 </header>
@@ -79,7 +80,7 @@ FINISH: Responsive layout, native video controls, captions, reduced motion and v
 <details class="disclosure"><summary class="disclosure__summary">Run a local server instead<span class="disclosure__hint">Node 22 or later</span></summary><div class="disclosure__body"><figure class="code code--wrap"><figcaption class="code__bar"><span class="code__name">Terminal</span><button class="code__copy" type="button" data-copy><span class="icon icon--copy" aria-hidden="true"></span><span data-copy-label>Copy</span></button></figcaption><pre class="code__pre" tabindex="0" role="region" aria-label="Claude Code: add the local server"><code><span class="code__line">claude mcp add --transport stdio bounty-operator -- npx -y https://bountyoperator.com/dl/bounty-operator-mcp.tgz
 </span></code></pre></figure>
 <p class="fine">On Windows outside WSL, start it through <code>cmd</code>: end the command with <code>-- cmd /c npx -y</code> and the same address.</p></div></details>
-<details class="disclosure"><summary class="disclosure__summary">Add your account token<span class="disclosure__hint">for account and run_review</span></summary><div class="disclosure__body"><div class="install__token">
+<details class="disclosure"><summary class="disclosure__summary">Add your account token<span class="disclosure__hint">for account and run_review</span></summary><div class="disclosure__body"><div class="install__token"><div class="install__alt"><a class="btn btn--secondary btn--sm" href="/#account/connections"><span class="icon icon--key" aria-hidden="true"></span><span class="btn__label">Create a free account and token</span></a><span class="fine">One passkey prompt, no email, no card.</span></div>
 <p>Remote endpoint, in <code>.mcp.json</code> at the root of your project. The two headers carry your account token and your provider key, and Claude Code fills in each <code>${NAME}</code> from your environment:</p>
 <figure class="code"><figcaption class="code__bar"><span class="code__name">.mcp.json</span><button class="code__copy" type="button" data-copy><span class="icon icon--copy" aria-hidden="true"></span><span data-copy-label>Copy</span></button></figcaption><pre class="code__pre" tabindex="0" role="region" aria-label="Claude Code: remote endpoint with a token"><code><span class="code__line">{
 </span><span class="code__line">  &quot;mcpServers&quot;: {
@@ -123,7 +124,7 @@ FINISH: Responsive layout, native video controls, captions, reduced motion and v
 </div>
 <details class="disclosure"><summary class="disclosure__summary">Run a local server instead<span class="disclosure__hint">Node 22 or later</span></summary><div class="disclosure__body"><figure class="code code--wrap"><figcaption class="code__bar"><span class="code__name">Terminal</span><button class="code__copy" type="button" data-copy><span class="icon icon--copy" aria-hidden="true"></span><span data-copy-label>Copy</span></button></figcaption><pre class="code__pre" tabindex="0" role="region" aria-label="Codex: add the local server"><code><span class="code__line">codex mcp add bounty-operator -- npx -y https://bountyoperator.com/dl/bounty-operator-mcp.tgz
 </span></code></pre></figure></div></details>
-<details class="disclosure"><summary class="disclosure__summary">Add your account token<span class="disclosure__hint">for account and run_review</span></summary><div class="disclosure__body"><div class="install__token">
+<details class="disclosure"><summary class="disclosure__summary">Add your account token<span class="disclosure__hint">for account and run_review</span></summary><div class="disclosure__body"><div class="install__token"><div class="install__alt"><a class="btn btn--secondary btn--sm" href="/#account/connections"><span class="icon icon--key" aria-hidden="true"></span><span class="btn__label">Create a free account and token</span></a><span class="fine">One passkey prompt, no email, no card.</span></div>
 <p>Remote endpoint, in <code>~/.codex/config.toml</code>. Codex reads both values from your environment:</p>
 <figure class="code"><figcaption class="code__bar"><span class="code__name">~/.codex/config.toml</span><button class="code__copy" type="button" data-copy><span class="icon icon--copy" aria-hidden="true"></span><span data-copy-label>Copy</span></button></figcaption><pre class="code__pre" tabindex="0" role="region" aria-label="Codex: remote endpoint with a token"><code><span class="code__line">[mcp_servers.bounty-operator]
 </span><span class="code__line">url = &quot;https://bountyoperator.com/api/mcp&quot;
@@ -166,7 +167,7 @@ FINISH: Responsive layout, native video controls, captions, reduced motion and v
 </span><span class="code__line">  }
 </span><span class="code__line">}
 </span></code></pre></figure></div></details>
-<details class="disclosure"><summary class="disclosure__summary">Add your account token<span class="disclosure__hint">for account and run_review</span></summary><div class="disclosure__body"><div class="install__token">
+<details class="disclosure"><summary class="disclosure__summary">Add your account token<span class="disclosure__hint">for account and run_review</span></summary><div class="disclosure__body"><div class="install__token"><div class="install__alt"><a class="btn btn--secondary btn--sm" href="/#account/connections"><span class="icon icon--key" aria-hidden="true"></span><span class="btn__label">Create a free account and token</span></a><span class="fine">One passkey prompt, no email, no card.</span></div>
 <p>Remote endpoint. Cursor fills <code>${env:NAME}</code> from your environment:</p>
 <figure class="code"><figcaption class="code__bar"><span class="code__name">~/.cursor/mcp.json</span><button class="code__copy" type="button" data-copy><span class="icon icon--copy" aria-hidden="true"></span><span data-copy-label>Copy</span></button></figcaption><pre class="code__pre" tabindex="0" role="region" aria-label="Cursor: remote endpoint with a token"><code><span class="code__line">{
 </span><span class="code__line">  &quot;mcpServers&quot;: {
@@ -390,9 +391,10 @@ FINISH: Responsive layout, native video controls, captions, reduced motion and v
 </div>
 <div class="prose">
 <h3 id="create-token">Create a token</h3>
+<div class="install__alt"><a class="btn btn--secondary btn--sm" href="/#account/connections"><span class="icon icon--key" aria-hidden="true"></span><span class="btn__label">Create a free account and token</span></a><span class="fine">One passkey prompt, no email, no card.</span></div>
 <ol>
-<li>Sign in at <a href="/#account">bountyoperator.com</a> with your passkey and open the account panel.</li>
-<li>Under Connections, name the connection after the client that will use it, and create it.</li>
+<li>Create a free account at <a href="/#account/connections">bountyoperator.com</a> with a passkey, or sign in with yours. The account panel opens on Connections.</li>
+<li>Name the connection after the client that will use it, and create it.</li>
 <li>Copy the token. It starts with <code>bok_</code> and is shown once.</li>
 <li>Set it as <code>BOUNTY_OPERATOR_TOKEN</code> in your environment and add the server with the token command for your client.</li>
 </ol>

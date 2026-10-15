@@ -63,6 +63,9 @@ export const NAV = [
   { id: 'pricing', label: 'Pricing', href: '/#pricing', page: '/pricing' },
 ];
 
+/** The id of the header navigation: the phone header's Menu button names it in aria-controls. */
+export const NAV_ID = 'site-nav';
+
 /** Where the Pricing links of a page point: the pricing page, or the home section while that page does not exist. */
 function pricingHref(page, site) {
   return page.path !== '/' && site.has('/pricing') ? '/pricing' : '/#pricing';
@@ -283,19 +286,35 @@ function siteHeader(page, site) {
   });
 
   // The home page hosts the account dialog, so its control is a button the app wires up.
-  // Both ship with the same label, the one a signed-out visitor needs. A page that
-  // loads /app/account.mjs relabels it "Account" once it knows the visitor is signed in.
+  // Both ship with the labels a signed-out visitor needs: Sign up for a new browser,
+  // Sign in for one that has signed in here before. theme.js marks that browser with
+  // [data-known] before the first paint and the stylesheet shows one of the two. A page
+  // that loads /app/account.mjs relabels it "Account" once it knows the visitor is signed in.
+  const label = html`<span class="account-label account-label--new">Sign up</span><span class="account-label account-label--known">Sign in</span>`;
   const account =
     page.path === '/'
-      ? html`<button id="account-button" class="btn btn--secondary btn--sm" type="button">Sign in</button>`
-      : html`<a class="btn btn--secondary btn--sm" href="/#account">Sign in</a>`;
+      ? html`<button id="account-button" class="btn btn--secondary btn--sm" type="button">${label}</button>`
+      : html`<a class="btn btn--secondary btn--sm" href="/#account">${label}</a>`;
+
+  // On a phone the navigation folds behind this button (base.css, theme.js): a
+  // 44px square with the menu icon, named Menu. It is not shown on wider screens,
+  // or where no script runs: the links then stay on screen.
+  const menu = button({
+    label: 'Menu',
+    variant: 'quiet',
+    icon: 'menu',
+    iconOnly: true,
+    className: 'site-header__menu',
+    attrs: { 'aria-expanded': 'false', 'aria-controls': NAV_ID, 'data-menu-toggle': true },
+  });
 
   return html`<header class="site-header">
 <div class="wrap site-header__inner">
 <a class="brand" href="/">${brandMark()}<span class="brand__name">${SITE.name}</span></a>
-<nav class="site-nav" aria-label="Main"><ul>${items}</ul></nav>
+<nav class="site-nav" id="${NAV_ID}" aria-label="Main"><ul>${items}</ul></nav>
 <div class="site-header__actions">
 ${account}
+${menu}
 </div>
 </div>
 </header>`;
