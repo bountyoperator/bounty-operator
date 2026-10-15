@@ -16,6 +16,7 @@ export const PING_EVENTS = Object.freeze([
   'tool_verify',
   'tool_acceptance_rates',
   'template_copied',
+  'template_handoff',
   'mcp_command_copied',
 ]);
 

@@ -8,8 +8,9 @@
 //    data-handoff-go button hands it over, each with its own
 //    data-handoff-profile and data-handoff-focus where it has them.
 //
-// One request: the first copy is counted by name (/tools/ping.mjs). It carries
-// the event name and nothing of a draft. The DOM is built with createElement
+// Two counts, each made once per page load by name (/tools/ping.mjs): the
+// first copy (template_copied) and the first press of a hand-off button
+// (template_handoff). Each carries the event name and nothing of a draft. The DOM is built with createElement
 // and textContent only.
 
 import { ping } from '../tools/ping.mjs';
@@ -181,6 +182,8 @@ function wireHandoff(root) {
   describe();
 
   const handOver = (event, button) => {
+    // Every press counts, whether the draft goes along or the link opens the review empty.
+    ping('template_handoff');
     const draft = input.value;
     // With nothing pasted the link opens the workbench on the profile, as it does without script.
     // The same goes for a browser that refused the handoff once: the link still works.
