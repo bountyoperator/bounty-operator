@@ -426,15 +426,22 @@ async function checkBalance(pass: Pass, account: RunpodAccount, status: SalesRep
   return false;
 }
 
-/** When the email that announced this stop frees its slot, or null when it is free already. */
+/**
+ * When the next email about a stop like this one could go out, or null when it
+ * could go out now. A budget stop has one slot. A RunPod pause is announced by
+ * whichever of its two slots is free, so it waits only while both are held,
+ * and then until the earlier of the two frees.
+ */
 async function stopHeldUntil(env: Env, prior: string, now: number): Promise<number | null> {
   const ids = prior === 'paused' ? ['model_sales_paused', 'runpod_under_balance'] : ['model_sales_stopped'];
-  let latest = 0;
+  let earliest = Infinity;
   for (const id of ids) {
     const row = await env.DB.prepare('SELECT last_sent FROM operator_alerts WHERE id = ?').bind(id).first<{ last_sent: number }>();
-    if (row && row.last_sent > latest) latest = row.last_sent;
+    const free = row ? row.last_sent + DAY : 0;
+    if (free <= now) return null;
+    earliest = Math.min(earliest, free);
   }
-  return latest + DAY > now ? latest + DAY : null;
+  return earliest;
 }
 
 /**

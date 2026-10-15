@@ -487,6 +487,8 @@ test('a second RunPod pause the same day is announced, though the out-of-funds e
   assert.deepEqual((await monitorRunpod(env, at(NOW + HOUR))).sent, ['runpod_under_balance']);
   Object.assign(state, { clientBalance: 30, underBalance: false });
   assert.deepEqual((await monitorRunpod(env, at(NOW + 2 * HOUR))).sent, ['model_sales_resumed']);
+  // The pause slot is still free, so a second pause would be announced at once: the email promises no wait.
+  assert.doesNotMatch(bodyOf(binding.sent.at(-1)), /waits until then/);
 
   Object.assign(state, { clientBalance: 0, underBalance: true });
   const result = await monitorRunpod(env, at(NOW + 3 * HOUR));
@@ -494,6 +496,33 @@ test('a second RunPod pause the same day is announced, though the out-of-funds e
   assert.deepEqual(result.sent, ['model_sales_paused']);
   assert.deepEqual(result.held, ['runpod_under_balance']);
   assert.equal(subjects(binding).at(-1), 'Bounty Operator: model sales have stopped, RunPod is out of funds');
+  assert.deepEqual(row(env, 'model_sales'), { last_sent: 0, note: 'paused' });
+});
+
+test('a pause email that fails keeps the last sales status, so the next run sends it', async (t) => {
+  const at = clock(t);
+  const binding = fakeBinding();
+  const env = salesEnv(binding);
+  const state = { clientBalance: 50, underBalance: false };
+  mockRunpod(t, state);
+  t.mock.method(console, 'error', () => {});
+
+  await monitorRunpod(env, at(NOW));
+  Object.assign(state, { clientBalance: 0, underBalance: true });
+  assert.deepEqual((await monitorRunpod(env, at(NOW + HOUR))).sent, ['runpod_under_balance']);
+  Object.assign(state, { clientBalance: 30, underBalance: false });
+  assert.deepEqual((await monitorRunpod(env, at(NOW + 2 * HOUR))).sent, ['model_sales_resumed']);
+
+  // The out-of-funds slot is held, so model_sales_paused alone carries this pause; its send fails.
+  Object.assign(state, { clientBalance: 0, underBalance: true });
+  binding.refuse = 'temporarily refused';
+  const failed = await monitorRunpod(env, at(NOW + 3 * HOUR));
+  assert.deepEqual(failed.failed, ['model_sales_paused']);
+  assert.notEqual(row(env, 'model_sales').note, 'paused');
+
+  binding.refuse = null;
+  const retried = await monitorRunpod(env, at(NOW + 3 * HOUR + 15 * 60));
+  assert.deepEqual(retried.sent, ['model_sales_paused']);
   assert.deepEqual(row(env, 'model_sales'), { last_sent: 0, note: 'paused' });
 });
 

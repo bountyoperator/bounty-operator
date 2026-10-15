@@ -104,9 +104,11 @@ An available direct provider keeps purchases open whatever the RunPod state.
 
 Failing closed must not hide a sales outage. Each hosting read that leaves the
 state unknown logs `Hosting status unknown` with a reason code:
-`no_credential`, `http_<status>`, `redirect`, `network_error`, `timeout`,
+`http_<status>`, `redirect`, `network_error`, `timeout`,
 `graphql_errors` (with the error count and the first error's code),
-`no_account`, `no_flag` or `malformed_body`. The line says what the read
+`no_account`, `no_flag` or `malformed_body`. A missing `RUNPOD_API_KEY`
+(`no_credential`) reads nothing and logs nothing; it shows as
+`hosting_unknown:no_credential` in `/api/health` and in `verify:live`. The line says what the read
 found, not that payments closed, because a usable direct provider keeps them
 open whatever RunPod's state is. A refused purchase logs
 `Top-up refused; hosting status unknown`, an unsent automatic reservation logs
