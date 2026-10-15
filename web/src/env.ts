@@ -1,6 +1,6 @@
 // Bindings and constants shared by every Worker module.
 
-export const VERSION = '0.9.16';
+export const VERSION = '0.9.17';
 export const SUPPORT_EMAIL = 'support@bountyoperator.com';
 export const PRICE = Object.freeze({ usd: 10, interval: 'month', included_api_credit_usd: 2 });
 

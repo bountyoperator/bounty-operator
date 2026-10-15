@@ -10,9 +10,24 @@ from urllib.error import HTTPError
 
 from bounty_operator_kit.ai_review import AIReviewConfig, prepare_review, send_review
 from bounty_operator_kit.cli import main
-from bounty_operator_kit.file_io import read_text_limited, write_text
+from bounty_operator_kit.file_io import InputFileError, read_bytes_limited, read_text_limited, write_text
 from bounty_operator_kit.sanitize import scan_report, scan_text
 from bounty_operator_kit.slither_focus import format_text
+
+
+def _link_directory(link: Path, target: Path) -> bool:
+    """A directory link, or a junction where symlinks need a privilege (Windows)."""
+    try:
+        link.symlink_to(target, target_is_directory=True)
+        return True
+    except OSError:
+        pass
+    try:
+        import _winapi
+        _winapi.CreateJunction(str(target), str(link))
+        return True
+    except (ImportError, OSError):
+        return False
 
 
 class InputSafetyTests(unittest.TestCase):
@@ -87,6 +102,37 @@ class InputSafetyTests(unittest.TestCase):
                 write_text(link, "replacement", force=True)
             self.assertEqual(target.read_text(encoding="utf-8"), "original")
             self.assertEqual(scan_report([link]).findings[0].kind, "symlink")
+
+    def test_a_linked_parent_directory_cannot_hide_a_private_directory(self):
+        # GHSA-7p9h-3mfj-9vrj: with project/references -> ../.kube, selecting
+        # references/config read ~/.kube/config although the given path names no .kube.
+        with TemporaryDirectory() as tmp:
+            private = Path(tmp) / ".kube"
+            private.mkdir()
+            (private / "config").write_text("token: opaque-synthetic-value\n", encoding="utf-8")
+            project = Path(tmp) / "project"
+            project.mkdir()
+            if not _link_directory(project / "references", private):
+                self.skipTest("Creating directory links is not enabled on this host")
+            selected = project / "references" / "config"
+            with self.assertRaisesRegex(ValueError, r"blocked by the local sanitizer: input-1:0 \(sensitive-path\)"):
+                prepare_review([selected], "", AIReviewConfig())
+            self.assertEqual([f.kind for f in scan_report([selected]).findings], ["sensitive-path"])
+            # The override still lets a user send it on purpose.
+            prepared = prepare_review([selected], "", AIReviewConfig(allow_sensitive=True))
+            self.assertIn("opaque-synthetic-value", prepared.messages[1]["content"])
+
+    def test_the_file_opened_must_be_the_file_checked(self):
+        with TemporaryDirectory() as tmp:
+            checked, other = Path(tmp) / "checked.txt", Path(tmp) / "other.txt"
+            checked.write_text("checked", encoding="utf-8")
+            other.write_text("other", encoding="utf-8")
+            swapped = other.stat()
+            with self.assertRaises(InputFileError) as caught:
+                read_bytes_limited(checked, 100, expect=(swapped.st_dev, swapped.st_ino))
+            self.assertEqual(caught.exception.kind, "changed-file")
+            same = checked.stat()
+            self.assertEqual(read_bytes_limited(checked, 100, expect=(same.st_dev, same.st_ino)), b"checked")
 
     def test_preview_is_network_free_and_snapshot_hash_matches_uploaded_text(self):
         with TemporaryDirectory() as tmp:

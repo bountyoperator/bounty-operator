@@ -259,9 +259,15 @@ def prepare_review(files: list[Path], prompt: str, config: AIReviewConfig) -> Pr
     for path in files:
         if remaining <= 0:
             raise ValueError("selected prompt and files exceed the total byte limit")
-        if path_findings(path) and not config.allow_sensitive:
+        # Check the file the path really reaches as well as the path as given: a
+        # linked parent directory (references -> ../.kube) keeps the private
+        # directory out of the given path. The file then opened must be the one
+        # checked, so a link changed in between cannot swap in another file.
+        resolved = path.resolve(strict=True)
+        if (path_findings(path) or path_findings(resolved)) and not config.allow_sensitive:
             raise _sensitive_input_error([Finding(f"input-{len(inputs) + 1}", 0, "sensitive-path", "private file")])
-        data = read_bytes_limited(path, min(config.max_bytes, remaining))
+        target = resolved.stat()
+        data = read_bytes_limited(path, min(config.max_bytes, remaining), expect=(target.st_dev, target.st_ino))
         remaining -= len(data)
         inputs.append((path.name, decode_text(data, path)))
     return prepare_text_review(inputs, prompt, config)

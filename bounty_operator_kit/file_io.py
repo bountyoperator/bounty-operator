@@ -22,7 +22,13 @@ def is_link(info: os.stat_result) -> bool:
     )
 
 
-def read_bytes_limited(path: Path, max_bytes: int) -> bytes:
+def read_bytes_limited(path: Path, max_bytes: int, expect: tuple[int, int] | None = None) -> bytes:
+    """Read a regular file, never through a link at its last component.
+
+    `expect` is the (st_dev, st_ino) of the file a caller already checked; the
+    file actually opened must be that one, so a directory swapped in between the
+    check and the read cannot substitute another file.
+    """
     if max_bytes <= 0:
         raise ValueError("maximum file size must be greater than zero")
     info = path.lstat()
@@ -41,6 +47,8 @@ def read_bytes_limited(path: Path, max_bytes: int) -> bytes:
             raise InputFileError("not-file", f"{path}: expected a regular file")
         if (info.st_dev, info.st_ino) != (opened.st_dev, opened.st_ino):
             raise InputFileError("changed-file", f"{path}: input changed while being opened; retry")
+        if expect is not None and (opened.st_dev, opened.st_ino) != expect:
+            raise InputFileError("changed-file", f"{path}: input changed after it was checked; retry")
         data = handle.read(max_bytes + 1)
     if len(data) > max_bytes:
         raise InputFileError("oversized-file", f"{path}: exceeds the {max_bytes}-byte file limit")

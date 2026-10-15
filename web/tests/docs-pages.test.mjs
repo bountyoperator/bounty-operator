@@ -243,7 +243,8 @@ test('the Model API page says at the top what can be used today and how to start
   const selling = ['cyber-qwen-27b-awq', 'deephat-v1-7b', 'foundation-sec-8b', 'hermes-4-14b', 'orca-nex-mini', 'orca-qwen-27b', 'hermes-4.3-36b'];
   const open = { enabled: true, topups_enabled: true, models: DEFAULT_MODELS.filter((model) => selling.includes(model.id)).map((model) => ({ ...model, availability: 'available' })) };
   const block = todayBlock(open, mergeCatalog(open));
-  const built = /<p class="api-today__line" id="model-api-today">([\s\S]*?)<\/p>/.exec(markup)[1].replace(/<[^>]+>/g, '');
+  // The line for several models is plain text, so it is compared as built, with no markup to strip.
+  const built = /<p class="api-today__line" id="model-api-today">([\s\S]*?)<\/p>/.exec(markup)[1];
   assert.equal(built, block.line);
   assert.equal(/<h2 id="start">([^<]*)<\/h2>/.exec(markup)[1], block.heading);
 

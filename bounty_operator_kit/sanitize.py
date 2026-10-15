@@ -200,7 +200,13 @@ def scan_report(
         if is_link(info):
             report.findings.append(Finding(str(path), 0, "symlink", "linked paths are not followed"))
             continue
-        blocked = path_findings(path)
+        # The path as given and the path it really reaches: a linked parent
+        # directory can hide a private directory from the given path.
+        try:
+            real = Path(os.path.realpath(path))
+        except OSError:
+            real = path
+        blocked = path_findings(path) or ([Finding(str(path), 0, "sensitive-path", "credential, browser, or private-data file")] if path_findings(real) else [])
         if blocked:
             report.findings.extend(blocked)
             continue

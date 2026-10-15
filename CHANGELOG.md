@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.9.17 — 2026-10-15
+
+Security
+
+- The `ai-review` command and the sanitizer scan now check the file a path
+  really reaches, not only the path as typed. A folder link inside a project
+  (for example `references -> ../.kube`) could make a file in `~/.kube`,
+  `~/.ssh`, `~/.aws` or another blocked folder pass the private-folder check.
+  The file read must also be the very file that was checked. Reported privately
+  through GitHub (GHSA-7p9h-3mfj-9vrj), low severity: the text could only go to
+  the AI provider you configured, and only for a file you selected yourself.
+
 ## 0.9.16 — 2026-10-15
 
 Model API

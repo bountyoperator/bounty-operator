@@ -6,35 +6,35 @@
       "type": "skill-md",
       "description": "Checks a draft bug bounty report against the code it cites before it is filed. Marks every claim confirmed, overstated, contradicted or unverifiable with the line that decides it, runs the submission checks and ends in one verdict: submit, rewrite-then-submit, prove-first, hold-duplicate or drop. Use before filing a bug bounty or audit-contest report on Immunefi, Cantina, Sherlock, HackerOne or a similar platform, and whenever the user asks whether a finding write-up is ready to submit. Runs on your own model with no account.",
       "url": "/.well-known/agent-skills/challenge-report/SKILL.md",
-      "digest": "sha256:882315b0b96f3c771296a6c907cbdc7ada01d814db01aed57d92ea3c2c7033f7"
+      "digest": "sha256:c61a9b2aa2c6c336a658787efe12b53b290bd4fbda8686e206c04757e927b1af"
     },
     {
       "name": "solidity-review",
       "type": "skill-md",
       "description": "Security review of Solidity contracts. Maps who can call what, compares sibling functions, checks every writer of each accounting invariant, then sweeps rounding, checkpoints, external calls, signatures, oracles, upgrade paths and edge inputs, citing file and line for every finding. Use when asked to review Solidity or other EVM smart contracts for security issues, before deploying a contract, or to test a suspected smart-contract finding against the code. Runs on your own model with no account.",
       "url": "/.well-known/agent-skills/solidity-review/SKILL.md",
-      "digest": "sha256:aef4c664f10a0cb3bd67f73c799f4c458e79a2996b4f2f5dfd09a6f44d4f2bc0"
+      "digest": "sha256:9ff63cea3bcea68c1d1851e8d120b68f899d4a28112eadc36e7e476c3e4f883b"
     },
     {
       "name": "code-security-review",
       "type": "skill-md",
       "description": "Security review of any codebase that is not Solidity. Traces each reachable handler from input to effect and reports the access-control, injection, data-exposure and failure-path bugs the code proves, each with file, line and fix. Use when asked to review a web app, API, service, CLI or library for security vulnerabilities, before a release, or to test a suspected web or backend finding against the code. Runs on your own model with no account.",
       "url": "/.well-known/agent-skills/code-security-review/SKILL.md",
-      "digest": "sha256:04e7c5ffc4c300cd5e2924a75b9e59716138acdf136e7367f2723c63d45b6147"
+      "digest": "sha256:076e079c0afb32e1b24ec3fd46fe926f220dff42b6c47ba61a2f4e53f9eff809"
     },
     {
       "name": "gauntlet",
       "type": "skill-md",
       "description": "Runs a security finding through Bounty Operator's eight pre-submission stages in order (scope, provenance, prior art, proof, severity, triager, report, verdict) on the bounty-operator MCP server, stops at a drop or duplicate gate, then builds the evidence packet and reports the verdict, the blocker and the cheapest action that removes it. Use when the user wants the full pre-submission check on a bug bounty finding and has a Bounty Operator connection token and a provider key. Without them, use challenge-report.",
       "url": "/.well-known/agent-skills/gauntlet/SKILL.md",
-      "digest": "sha256:d4f3ccabda025270af4b953882f72a57abc6b109a02f769b611738dea178a2d9"
+      "digest": "sha256:a039571a421e1e376a7e04aa48b20a969317a0ffa7cbda1fcd7cf6c5abaef7c1"
     },
     {
       "name": "hunt-with-gate",
       "type": "skill-md",
       "description": "Manual invocation only: run it when the user calls hunt-with-gate by name. Puts a gate between a finding and its report: before any report is written it runs challenge-report on the finding, and the hosted gauntlet when a Bounty Operator token is configured, and stops at the first drop or duplicate. Works on a finding from the user or from any other tool. It never submits, posts or sends a report anywhere and ships no bug-finding prompts.",
       "url": "/.well-known/agent-skills/hunt-with-gate/SKILL.md",
-      "digest": "sha256:792b63fc5e402141a1e104fc5f2ad00a2e62a37992f7b513acb83ad30b42566b"
+      "digest": "sha256:eb56bdb4170affb71dd73ee878b6d6e436094baac1c5b804cde0ac02338abdd9"
     }
   ]
 }

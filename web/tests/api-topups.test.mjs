@@ -917,7 +917,8 @@ test('a worker that answers /health while the hosting read is unknown opens no p
     body: JSON.stringify({ model: automaticModel.id, messages: [{ role: 'user', content: 'Hello' }], max_tokens: 20 }),
   }), a.env));
   assert.equal(response.status, 200);
-  assert.ok(upstream.includes('https://autotest.api.runpod.ai/health'), 'the worker answered its health probe');
+  // An exact URL match, not a substring.
+  assert.ok(upstream.some((url) => url === 'https://autotest.api.runpod.ai/health'), 'the worker answered its health probe');
 
   // That 200 says the worker answers, not that the account is funded.
   assert.deepEqual(await inferenceBilling(a.env), { status: 'unknown', reason: 'graphql_errors' });
