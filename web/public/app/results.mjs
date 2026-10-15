@@ -34,22 +34,29 @@
  * DOM this module owns: everything inside #wb-result. Stable hooks for other
  * modules and tests: .wb-result[data-source][data-parsed], #wb-result-tabs,
  * #panel-findings, #panel-raw, [data-action="copy|packet|manifest|issue|print"],
- * [data-next="<profile id>"], button.ref[data-ref], .finding[data-sev].
+ * [data-next="<profile id>"], [data-signup-prompt], button.ref[data-ref], .finding[data-sev].
+ *
+ * The ask for the free account: after the example, and under a finished review
+ * whose next checks run only here, a signed-out visitor is told what a free
+ * account runs and gets a "Create a free account" button. It opens the account
+ * dialog (./account.mjs, requireSignIn) with the reason 'review'. The row is
+ * redrawn when the visitor signs in or out.
  */
 
 import { VERIFY_URL, reviewPacket } from '../evidence.mjs';
 import { checkRefs, defang, extractRefs, parseReview } from '../parse.mjs';
-import { reviewProfile } from '../profiles.mjs';
+import { PROFILES, reviewProfile } from '../profiles.mjs';
 import { PROVIDERS } from '../providers.mjs';
-import { track } from './api.mjs';
+import { currentAccount, subscribeAccount, track } from './api.mjs';
 import { blockedNotice } from './blocked.mjs';
 import { EVENTS } from './events.mjs';
 import { addEntries } from './files.mjs';
 import { historyEnabled, saveReview } from './history.mjs';
+import { setVia } from './providers-ui.mjs';
 import { openSource } from './source-pane.mjs';
 import { workbench } from './state.mjs';
 import { button, clear, copyText, download, el, formatBytes, formatDate, icon, notice, on, qs, qsa } from './ui.mjs';
-import { leaveExample, say, setStep, view } from './workbench.mjs';
+import { leaveExample, say, setStep, signupPromptClicked, view } from './workbench.mjs';
 
 // ---------------------------------------------------------------------------
 // Labels
@@ -908,13 +915,65 @@ function toggleMoreExports(control) {
   if (open) more.querySelector('button')?.focus();
 }
 
-function nextRow(result, shown) {
-  if (shown.readOnly) return null;
-  if (result.source === 'example') {
-    return el('div', { class: 'wb-next no-print' },
-      el('p', { class: 'wb-next__text', text: 'This is the bundled example. Your own files replace it.' }),
-      el('div', { class: 'wb-actions' }, button({ label: 'Start my own review', variant: 'primary', iconEnd: 'arrow-right', attrs: { 'data-action': 'own' } })));
+// ---------------------------------------------------------------------------
+// What follows a result: the next check, and the ask for the free account
+// ---------------------------------------------------------------------------
+
+/** 'A', 'A and B', 'A, B and C'. */
+function namesList(names) {
+  return names.length < 2 ? names.join('') : `${names.slice(0, -1).join(', ')} and ${names.at(-1)}`;
+}
+
+// The review types that run only on our server, read from the engine.
+const SERVER_ONLY = PROFILES.filter((profile) => profile.listed && profile.hosted);
+const serverOnlyName = (id) => SERVER_ONLY.find((profile) => profile.id === id)?.name ?? '';
+const ACCOUNT_TERMS = 'A free account runs one a day: one passkey prompt, no email, no card.';
+
+/**
+ * What the row under the example says. Signed out, it names the route that
+ * needs no account and what a free account adds.
+ *
+ * @param {boolean} signedIn
+ * @returns {string}
+ */
+export function exampleNextText(signedIn) {
+  if (signedIn) return 'This is the bundled example. Your own files replace it.';
+  const report = reviewProfile('report').name;
+  const examples = namesList([serverOnlyName('triage'), serverOnlyName('prior-art')].filter(Boolean));
+  return `That was the bundled example. For your own draft, ${report} runs free in ChatGPT or Claude with no account. A free account adds the ${SERVER_ONLY.length} checks a chat app does not run, like ${examples}: one a day on your own API key.`;
+}
+
+/**
+ * What the "Run next" row says. Signed out, when a next check runs only here,
+ * it says so and what the free account costs.
+ *
+ * @param {Array<{ name: string, hosted?: boolean }>} next
+ * @param {boolean} signedIn
+ * @returns {{ text: string, ask: boolean }}
+ */
+export function runNextText(next, signedIn) {
+  const travels = 'This review travels with the next one as a stage file.';
+  const hosted = next.filter((entry) => entry.hosted);
+  if (signedIn || !hosted.length) return { text: travels, ask: false };
+  if (hosted.length === next.length) {
+    return { text: `These checks do not run in a chat app. They run here on your own API key, and this review goes with them as a stage file. ${ACCOUNT_TERMS}`, ask: true };
   }
+  const verb = hosted.length === 1 ? 'runs' : 'run';
+  return { text: `${travels} ${namesList(hosted.map((entry) => entry.name))} ${verb} here on your own API key, not in a chat app. ${ACCOUNT_TERMS}`, ask: true };
+}
+
+/**
+ * The button that opens the account dialog, to create the free account. It is
+ * drawn wherever the row can ask, and hidden while the visitor is signed in.
+ */
+function createAccountButton(variant, ask) {
+  const control = button({ label: 'Create a free account', variant, attrs: { 'data-signup-prompt': 'review' } });
+  control.hidden = !ask;
+  return control;
+}
+
+/** The checks offered after a review: the profile's next ones the workbench lists. Null when there are none. */
+function nextChecks(result) {
   let profile;
   try {
     profile = reviewProfile(result.profile?.id);
@@ -928,11 +987,88 @@ function nextRow(result, shown) {
       return null;
     }
   }).filter((entry) => entry && entry.listed);
-  if (!next.length) return null;
+  return next.length ? next : null;
+}
+
+/** The row's line as nodes: a hyphenated name such as Prior-art overlap is not broken at its hyphen. */
+function lineNodes(text) {
+  const nodes = [];
+  let last = 0;
+  for (const match of text.matchAll(/\S+-\S+/g)) {
+    if (match.index > last) nodes.push(text.slice(last, match.index));
+    nodes.push(el('span', { class: 'nowrap', text: match[0] }));
+    last = match.index + match[0].length;
+  }
+  if (last < text.length) nodes.push(text.slice(last));
+  return nodes;
+}
+
+/** What the row says for this result and account, and whether it asks for the account. */
+function rowText(result, signedIn) {
+  if (result.source === 'example') return { text: exampleNextText(signedIn), ask: !signedIn };
+  return runNextText(nextChecks(result) ?? [], signedIn);
+}
+
+function nextRow(result, shown) {
+  if (shown.readOnly) return null;
+  const { signedIn } = currentAccount();
+  const { text, ask } = rowText(result, signedIn);
+  const line = el('p', { class: ['wb-next__text', ask && 'wb-next__text--ask'] }, lineNodes(text));
+  if (result.source === 'example') {
+    return el('div', { class: 'wb-next no-print' },
+      line,
+      el('div', { class: 'wb-actions' },
+        button({ label: 'Start my own review', variant: 'primary', iconEnd: 'arrow-right', attrs: { 'data-action': 'own' } }),
+        createAccountButton('secondary', ask)));
+  }
+  const next = nextChecks(result);
+  if (!next) return null;
   return el('div', { class: 'wb-next no-print' },
     el('p', { class: 'meta', text: 'Run next' }),
-    el('p', { class: 'wb-next__text', text: 'This review travels with the next one as a stage file.' }),
-    el('div', { class: 'wb-actions' }, next.map((entry) => button({ label: entry.name, iconEnd: 'arrow-right', attrs: { 'data-next': entry.id, title: entry.tagline } }))));
+    line,
+    el('div', { class: 'wb-actions' },
+      next.map((entry) => button({ label: entry.name, iconEnd: 'arrow-right', attrs: { 'data-next': entry.id, title: entry.tagline } })),
+      next.some((entry) => entry.hosted) ? createAccountButton('quiet', ask) : null));
+}
+
+/** Runs `fn` once no dialog is open, so the row does not change under the account dialog a button in it opened. */
+function whenNoDialog(fn) {
+  const open = typeof document !== 'undefined' ? document.querySelector?.('dialog[open]') : null;
+  if (open) open.addEventListener('close', () => whenNoDialog(fn), { once: true });
+  else fn();
+}
+
+/**
+ * Brings the row under the result up to date with the account the tab now
+ * knows: its line, and whether "Create a free account" shows. The row stays,
+ * with the controls other modules added to it (./dossier.mjs). A hidden
+ * button hands its focus to the first control of the row.
+ */
+function refreshNext() {
+  const row = qs('#wb-result')?.querySelector?.('.wb-next:not(.gd-next)');
+  if (!row || !shownResult || shownResult.readOnly) return;
+  const { text, ask } = rowText(shownResult.result, currentAccount().signedIn);
+  const line = row.querySelector('.wb-next__text');
+  if (line) {
+    clear(line).append(...lineNodes(text));
+    line.classList.toggle('wb-next__text--ask', ask);
+  }
+  const control = row.querySelector('[data-signup-prompt]');
+  if (!control) return;
+  const focused = control === document.activeElement;
+  control.hidden = !ask;
+  if (focused && !ask) row.querySelector('button:not([hidden])')?.focus({ preventScroll: true });
+}
+
+/** "Create a free account": the account dialog, as account.mjs opens it before a review. */
+async function askForAccount(reason) {
+  signupPromptClicked();
+  try {
+    const { requireSignIn } = await import('./account.mjs');
+    await requireSignIn({ reason });
+  } catch {
+    say('The account panel did not load. Reload the page and try again.', { error: true });
+  }
 }
 
 function render() {
@@ -1026,8 +1162,12 @@ function runNext(profileId) {
     return;
   }
   workbench.set((latest) => ({ profile: profile.id, mode: profile.mode === 'either' ? latest.mode : profile.mode, focus: '' }));
+  // A chat app has no prompt for a check that runs only here: the run moves to an API key.
+  const toKey = profile.hosted === true && view.get().via === 'export';
+  if (toKey) setVia('key');
   setStep('files');
-  say(`${profile.name} is selected. This review travels with it as ${name}.`, { tone: 'success', hold: true });
+  const where = toKey ? ' It runs on your own API key, so Run is set to that.' : '';
+  say(`${profile.name} is selected. This review travels with it as ${name}.${where}`, { tone: 'success', hold: true });
 }
 
 /** Hides every sibling branch of the workbench while printing, wherever the page puts it. */
@@ -1098,6 +1238,7 @@ export function initResults() {
     act(control.dataset.action);
   });
   on(target, 'click', '[data-next]', (event, control) => runNext(control.dataset.next));
+  on(target, 'click', '[data-signup-prompt]', (event, control) => askForAccount(control.dataset.signupPrompt));
   on(target, 'click', '[role="tab"]', (event, control) => selectTab(control.dataset.tab));
   on(target, 'keydown', '[role="tab"]', (event, control) => {
     if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft' && event.key !== 'Home' && event.key !== 'End') return;
@@ -1127,6 +1268,10 @@ export function initResults() {
   view.select((state) => state.history, () => {
     tab = 'findings';
     render();
+  });
+  // The ask for the free account goes once the visitor has one, and comes back after a sign-out.
+  subscribeAccount((value, previous) => {
+    if (value.signedIn !== previous.signedIn) whenNoDialog(refreshNext);
   });
   render();
 }

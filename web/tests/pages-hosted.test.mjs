@@ -331,10 +331,13 @@ test('the two plans read the same wherever they are summarised', () => {
     assert.ok(pricing.includes(line), line);
   }
 
-  // Free: 1 review a day, any review type.
-  assert.ok(pricing.includes('1 review a day, any review type'));
-  assert.ok(home.includes('1 review a day, any of the 11 review types'));
-  assert.ok(text('terms.html').includes('1 review a day, any review type. No payment method.'));
+  // Free: 1 review a day, any review type, with a free account; and what only that account runs.
+  const freeLine = '1 review a day, any of the 11 review types, on your API key with a free account';
+  assert.ok(pricing.includes(freeLine));
+  assert.ok(home.includes(freeLine));
+  assert.ok(text('terms.html').includes(`${freeLine}. No payment method.`));
+  for (const body of [home, pricing]) assert.ok(body.includes('Triager simulation, Prior-art overlap and 6 more checks a chat app does not run'));
+  assert.ok(pricing.includes('Review types on your API key All 11, with a free account All 11'));
   assert.ok(text('terms.html').includes('1 a day, any review type'));
   assert.ok(llms.includes('Free gives you 1 review a day, any review type (reset at 00:00 UTC).'));
   assert.ok(readme.includes('**Free:** 1 review a day, any review type.'));

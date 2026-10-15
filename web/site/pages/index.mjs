@@ -35,10 +35,10 @@ import { PROVIDERS } from '../../public/providers.mjs';
 import { reportSlip } from '../social/example.mjs';
 import { IMMUNEFI, LEADERBOARDS, VERDICTS } from './method/_shared.mjs';
 import { BENCH_TEASER } from './benchmark/_teaser.mjs';
-import { AGENT_TICK, CHAT_TICK, INCLUDED_API_CREDIT, RENEWAL, WHY_PAY } from '../plans.mjs';
+import { ACCOUNT_TICK, AGENT_TICK, CHAT_TICK, FREE_LINE, INCLUDED_API_CREDIT, RENEWAL, SERVER_ONLY_EXAMPLES, SERVER_ONLY_TYPES, WHY_PAY } from '../plans.mjs';
 import { walkthrough } from '../walkthroughs.mjs';
 
-const LASTMOD = '2026-10-12';
+const LASTMOD = '2026-10-15';
 const DEV_BUILD = process.argv.includes('--dev');
 
 // ---------------------------------------------------------------------------
@@ -102,6 +102,9 @@ const PROFILE_TOTAL = PROFILES.filter((profile) => profile.listed).length;
 const PROVIDER_NAMES = PROVIDERS.map((provider) => provider.label);
 const PROVIDER_SENTENCE = `${PROVIDER_NAMES.slice(0, -1).join(', ')} or ${PROVIDER_NAMES.at(-1)}`;
 
+// A review type's name is not broken at its hyphen at the end of a line.
+const keepTogether = (name) => html`<span class="nowrap">${name}</span>`;
+
 // ---------------------------------------------------------------------------
 // A short introduction, the review itself, and optional supporting pages.
 // ---------------------------------------------------------------------------
@@ -118,7 +121,10 @@ const hero = html`
         ${button({ label: 'View example', href: '#workspace', variant: 'secondary', size: 'lg', attrs: { 'data-demo': true, 'data-example': '' } })}
         <a class="link home-hero__film" href="#meet-spec">${icon('play')} Watch Spec in 20 seconds</a>
       </div>
-      <p class="home-hero__free">Free: 1 review a day on your own AI provider API key (OpenRouter, OpenAI, Anthropic and others). The example needs no account.</p>
+      <dl class="home-hero__free">
+        <div><dt>No account</dt><dd>The example, and code, Solidity and draft-report reviews in your ChatGPT or Claude chat.</dd></div>
+        <div><dt>Free account</dt><dd>All ${PROFILE_TOTAL} review types on this site, ${keepTogether(SERVER_ONLY_EXAMPLES[0])} and ${keepTogether(SERVER_ONLY_EXAMPLES[1])} included: 1 a day on your own API key from OpenRouter, OpenAI, Anthropic or another provider.</dd></div>
+      </dl>
     </div>
     <div class="home-hero__shot">
       <figure class="spec-portrait">
@@ -193,8 +199,8 @@ const pricing = html`
       <article class="home-plan" aria-labelledby="plan-free">
         <h3 class="home-plan__name" id="plan-free">Free</h3>
         <p class="home-plan__price"><span class="home-plan__amount">US$0</span></p>
-        <p class="home-plan__for">No card needed.</p>
-        ${ticks([`1 review a day, any of the ${PROFILE_TOTAL} review types`, CHAT_TICK, AGENT_TICK])}
+        <p class="home-plan__for">No card or email.</p>
+        ${ticks([FREE_LINE.replace(/\.$/, ''), ACCOUNT_TICK, CHAT_TICK, AGENT_TICK])}
         <div class="home-plan__cta">${button({ label: 'Start a free review', href: '#workspace', size: 'lg', block: true })}</div>
       </article>
       <article class="home-plan home-plan--operator" aria-labelledby="plan-operator">
@@ -221,7 +227,7 @@ const FAQ_ITEMS = [
   },
   {
     q: 'Can I use my ChatGPT or Claude subscription?',
-    a: html`Yes, for 3 review types: code security, Solidity and draft reports. Copy the prompt into your chat and paste the answer back here. The other review types need an API key. <a class="link" href="/your-model-your-key">Model options</a>`,
+    a: html`Yes, for 3 review types: code security, Solidity and draft reports. Copy the prompt into your chat and paste the answer back here. The other ${SERVER_ONLY_TYPES} review types need an API key and a free account. <a class="link" href="/your-model-your-key">Model options</a>`,
   },
   {
     q: 'Where do my files go?',

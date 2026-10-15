@@ -71,12 +71,43 @@
   margin-top: var(--sp-24);
 }
 
+/* What is free, in body print: the one place a first visit learns it. Two
+   ruled rows, the condition in the margin and what it opens beside it. */
 .home-hero__free {
   order: 3;
-  margin-top: var(--sp-16);
-  color: var(--muted);
-  font-size: var(--fs-14);
-  line-height: 1.5;
+  display: grid;
+  max-width: 36rem;
+  margin: var(--sp-24) 0 0;
+  border-top: 1px solid var(--line);
+  color: var(--text);
+  font-size: var(--fs-16);
+  line-height: 1.55;
+}
+
+.home-hero__free > div {
+  display: grid;
+  grid-template-columns: 7.5rem minmax(0, 1fr);
+  gap: var(--sp-4) var(--sp-16);
+  padding-block: var(--sp-12);
+  border-bottom: 1px solid var(--line);
+}
+
+.home-hero__free dt {
+  font-family: var(--font-display);
+  font-stretch: 100%;
+  font-weight: 700;
+}
+
+.home-hero__free dd {
+  margin: 0;
+  text-wrap: pretty;
+}
+
+/* On a phone the condition stands above what it opens. */
+@media (max-width: 29.99em) {
+  .home-hero__free > div {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 .home-hero__shot {
@@ -204,11 +235,14 @@
   line-height: 1.6;
 }
 
+/* The figures stand clear of the line that introduces them. A margin, because
+   base.css zeroes the padding of every list with a class (ul[class] outranks
+   .home-stats), so a padding here never reached the page. */
 .home-stats {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: var(--sp-24);
-  padding-block: var(--sp-24) clamp(var(--sp-32), 5vw, var(--sp-72));
+  margin-top: var(--sp-24);
 }
 
 .home-stats__item {
@@ -251,6 +285,7 @@
   .home-stats {
     grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr) minmax(0, 1fr);
     gap: var(--sp-32);
+    margin-top: var(--sp-32);
   }
 
   .home-stats__item {
@@ -871,6 +906,7 @@
   margin-top: var(--sp-16);
   font-size: var(--fs-14);
   line-height: 1.5;
+  text-wrap: pretty;
 }
 
 .home-ticks li {

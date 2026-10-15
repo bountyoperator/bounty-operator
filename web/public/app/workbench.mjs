@@ -35,7 +35,9 @@
  *     buildPrompt()                    -> Promise<{ text, prepared } | null>   reports the failure itself; core profiles only
  *     buildPreview()                   -> Promise<{ text, hosted } | null>     the prompt, or for a hosted profile the request that leaves
  *     isHosted(profileId)              -> boolean   the server adds the profile's method at run time
- *     hostedLine(profileId)            -> string    the one line shown where a prompt would be offered
+ *     hostedLine(profileId, { signedIn }?) -> string  the one line shown where a prompt would be offered;
+ *                                                  signed out it says what a free account runs
+ *     signupPromptClicked()            count a press on a control that asks for the free account
  *     reportInputError(error)          show a prepare()/scan() failure and take the user to it
  *     promptFileName(profileId)        -> 'bounty-operator-prompt-<profile>.md'
  *   Work
@@ -68,7 +70,7 @@ import { CONTEXT_FIELDS, evidenceStatus, profileNeeds } from '../evidence.mjs';
 import { CORE_PROFILE_IDS, PROFILES, reviewProfile } from '../profiles.mjs';
 import { PROVIDERS } from '../providers.mjs';
 import { LIMITS, checkInputs, describeFinding, prepareRequest, prepareReview, promptExport, splitLines, textBytes } from '../review-core.mjs';
-import { track } from './api.mjs';
+import { currentAccount, track } from './api.mjs';
 import { EVENTS } from './events.mjs';
 import { STEPS, createStore, initialState, readSession, removeSession, workbench, writeSession } from './state.mjs';
 import { announce, button, clear, copyText, dialogController, download, el, formatBytes, icon, notice, on, qs, qsa } from './ui.mjs';
@@ -768,13 +770,28 @@ export function isHosted(profileId) {
 
 /**
  * The one line shown for a hosted profile wherever a prompt would be offered.
+ * Signed out, it says what a free account runs instead of listing the
+ * profiles that can be exported: the next step for that visitor is the account.
  *
  * @param {string} profileId
+ * @param {{ signedIn?: boolean }} [options]  Defaults to the account this tab knows.
  * @returns {string}
  */
-export function hostedLine(profileId) {
+export function hostedLine(profileId, { signedIn = currentAccount().signedIn } = {}) {
+  const { name } = safeProfile(profileId);
+  if (!signedIn) return `${name} runs here on your own API key, not in a chat app. A free account runs one a day: one passkey prompt, no email, no card.`;
   const names = CORE_PROFILE_IDS.map((id) => reviewProfile(id).name);
-  return `${safeProfile(profileId).name} runs on our server with your key. Copy-paste prompts cover ${names.slice(0, -1).join(', ')} and ${names.at(-1)}.`;
+  return `${name} runs on our server with your key. Copy-paste prompts cover ${names.slice(0, -1).join(', ')} and ${names.at(-1)}.`;
+}
+
+// The client event for a press on a control that asks for the free account.
+// POST /api/event takes it once the Worker lists it (CLIENT_EVENTS in
+// web/src/funnel.ts) and events.mjs carries it; until then track() drops it.
+const SIGNUP_PROMPT_CLICKED = 'signup_prompt_clicked';
+
+/** Counts a press on a control that asks for the free account. Nothing about the visitor travels with it. */
+export function signupPromptClicked() {
+  track(SIGNUP_PROMPT_CLICKED);
 }
 
 /** True when the current work can be sent: files are there and the privacy check lets them through. Reports the reason when not. */

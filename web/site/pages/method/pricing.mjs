@@ -11,7 +11,7 @@ import { button, faq, html, icon, sectionHeading, table } from '../../components
 import { breadcrumbsLd, faqPageLd, softwareApplicationLd } from '../../layout.mjs';
 import { ACCOUNT_SCRIPTS, ACCOUNT_STYLES, accountDialog } from '../../fragments/account-dialog.mjs';
 import { PROFILES } from '../../../public/profiles.mjs';
-import { AGENT_TICK, CHAT_TICK, COUNTED, FREE_LINE, INCLUDED_API_CREDIT, NOT_COUNTED, RENEWAL, RESET_LINE, WHY_PAY } from '../../plans.mjs';
+import { ACCOUNT_TICK, AGENT_TICK, CHAT_TICK, COUNTED, FREE_LINE, INCLUDED_API_CREDIT, NOT_COUNTED, RENEWAL, RESET_LINE, WHY_PAY } from '../../plans.mjs';
 import { CLAUDE_CREDITS_FAQ, STYLES, pageHero, relatedLinks, tickList, workbenchLink } from './_shared.mjs';
 
 const PATH = '/pricing';
@@ -34,7 +34,8 @@ const planTable = table({
   columns: [{ label: 'What you get' }, { label: 'Free' }, { label: 'Operator · US$10/month' }],
   rows: [
     [html`Reviews on your API key, on this site or with <code>run_review</code> from Claude Code, Codex or Cursor`, '1 a day', 'Unlimited'],
-    ['Review types', 'All 11', 'All 11'],
+    ['Review types on your API key', `All ${LISTED.length}, with a free account`, `All ${LISTED.length}`],
+    ['Review types in ChatGPT, Claude or your coding agent, with no account', String(CORE.length), String(CORE.length)],
     [html`<a class="link" href="/gauntlet">Gauntlet</a>: eight stages on one finding, then a verdict`, no(), yes()],
     [html`<a class="link" href="/panel-review">Panel review</a>: 2 to 4 models, then a cross-check`, no(), yes()],
     ['Reviews running at once', '1', '4'],
@@ -74,7 +75,7 @@ const body = html`
 ${pageHero({
   trail: [{ label: 'Bounty Operator', href: '/' }, { label: 'Pricing' }],
   title: 'Free, or US$10 a month.',
-  lede: 'Start with one free review a day. Operator adds unlimited reviews, the gauntlet, model panels and US$2 in Bounty Operator API credit per paid month.',
+  lede: `A free account runs one review a day, any of the ${LISTED.length} review types, on your own API key. Operator adds unlimited reviews, the gauntlet, model panels and US$2 in Bounty Operator API credit per paid month.`,
 })}
 
 <section class="section section--tight wrap" aria-labelledby="plans">
@@ -86,9 +87,10 @@ ${pageHero({
         <h3 class="plan__name" id="plan-free">Free</h3>
       </div>
       <p class="plan__price"><span class="plan__amount">US$0</span></p>
-      <p class="plan__for">To try it on your next report. No card.</p>
+      <p class="plan__for">For your next report. No card or email.</p>
       ${tickList([
         FREE_LINE.replace(/\.$/, ''),
+        ACCOUNT_TICK,
         CHAT_TICK,
         AGENT_TICK,
         'Free tools and GitHub import',
@@ -148,6 +150,6 @@ export default {
   scripts: ACCOUNT_SCRIPTS,
   overlays: accountDialog(),
   jsonld: [breadcrumbsLd([{ name: 'Pricing', path: PATH }]), softwareApplicationLd(), faqPageLd(FAQ_ITEMS)],
-  lastmod: '2026-10-14',
+  lastmod: '2026-10-15',
   body,
 };

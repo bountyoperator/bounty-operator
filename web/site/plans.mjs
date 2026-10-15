@@ -11,11 +11,30 @@
 //
 // Plan cards and /pricing are buyer-facing: they say "on your API key", not
 // "hosted review" or "core profile" (web/tests/pages-hosted.test.mjs).
+//
+// What a free account adds is said by name: the review types that run only on
+// our server, read from the engine, so a count or a name cannot drift.
+
+import { PROFILES } from '../public/profiles.mjs';
+
+const LISTED = PROFILES.filter((profile) => profile.listed);
+const SERVER_ONLY = LISTED.filter((profile) => profile.hosted);
+const named = (id) => SERVER_ONLY.find((profile) => profile.id === id).name;
+
+/** How many review types a free account runs, and how many of them a chat app does not. */
+export const REVIEW_TYPES = LISTED.length;
+export const SERVER_ONLY_TYPES = SERVER_ONLY.length;
+
+/** Two of the server-only review types, the ones a hunter asks for first. */
+export const SERVER_ONLY_EXAMPLES = Object.freeze([named('triage'), named('prior-art')]);
 
 export const PRICE = 'US$10 per month';
 
 /** Free plan, one line. */
-export const FREE_LINE = '1 review a day, any review type.';
+export const FREE_LINE = `1 review a day, any of the ${REVIEW_TYPES} review types, on your API key with a free account.`;
+
+/** What only the free account runs, as a plan bullet. Never in the same bullet as a copy-paste route. */
+export const ACCOUNT_TICK = `${SERVER_ONLY_EXAMPLES.join(', ')} and ${SERVER_ONLY_TYPES - SERVER_ONLY_EXAMPLES.length} more checks a chat app does not run`;
 
 /** Operator plan, one line. */
 export const OPERATOR_LINE = 'Unlimited reviews, the Gauntlet, Panel review and 4 reviews at once.';
@@ -30,8 +49,8 @@ export const CHAT_LINE = 'Unlimited copy-paste reviews in ChatGPT or Claude for 
 export const AGENT_LINE = 'Unlimited reviews by your coding agent’s own model for code, Solidity and draft reports';
 
 /** The two uncounted routes as ticks on the Free cards of the home page and /pricing. */
-export const CHAT_TICK = 'Unlimited copy-paste reviews in ChatGPT or Claude (3 review types)';
-export const AGENT_TICK = 'Unlimited reviews by your coding agent’s own model (3 review types)';
+export const CHAT_TICK = 'Unlimited copy-paste reviews in ChatGPT or Claude (3 review types), no account';
+export const AGENT_TICK = 'Unlimited reviews by your coding agent’s own model (3 review types), no account';
 
 /** What uses the review of the day. Said with NOT_COUNTED on /pricing, /terms, /mcp and /guide. */
 export const COUNTED = 'Only a review that runs on your API key through Bounty Operator counts: on this site, or from your coding agent with `run_review`.';

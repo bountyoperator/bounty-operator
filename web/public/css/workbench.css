@@ -1130,6 +1130,16 @@ button.ref {
   font-size: var(--fs-14);
 }
 
+/* The ask for the free account is read, not skimmed: body print. */
+.wb-next__text--ask {
+  max-width: 62ch;
+  margin-bottom: var(--sp-4);
+  color: var(--text);
+  font-size: var(--fs-16);
+  line-height: 1.55;
+  text-wrap: pretty;
+}
+
 .wb-empty {
   display: grid;
   justify-items: center;
