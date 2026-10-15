@@ -65,14 +65,46 @@ export function supplierTokenCost(input: number, output: number, inputRate: numb
   return Number(amount);
 }
 
+/** The configured rule that prices this model, expired or not. */
+function ruleFor(env: SupplierEnv, model: SupplierModel): SupplierRule | undefined {
+  return rules(env).find((r) => r.model === model.id && r.endpoint === model.endpoint && r.upstreamModel === (model.upstreamModel ?? model.id));
+}
+
 /** A quote authorizes no spending. Its source and expiry must be configured by the operator. */
 export function quoteSupplierCommitment(env: SupplierEnv, model: SupplierModel, maxOutput: number, now = seconds()): SupplierQuote {
-  const rule = rules(env).find((r) => r.model === model.id && r.endpoint === model.endpoint && r.upstreamModel === (model.upstreamModel ?? model.id));
+  const rule = ruleFor(env, model);
   if (!rule || rule.validUntil <= now || !positive(model.context) || !positive(maxOutput) || maxOutput > model.maxOutput) throw unavailable();
   const holdMicro = rule.basis === 'runtime_allowance' ? rule.holdMicro! : supplierTokenCost(model.context, maxOutput,
     rule.inputMicroPerMillion!, rule.outputMicroPerMillion!, rule.fixedMicro ?? 0);
   if (!positive(holdMicro)) throw unavailable();
   return { ...rule, holdMicro };
+}
+
+/**
+ * For the owner alerts: the provider and expiry of the rule that prices this
+ * model, or null when no valid rule does (none matches, or the list as a whole
+ * is invalid and so ignored). An expired rule is still returned.
+ */
+export function supplierRuleExpiry(env: SupplierEnv, model: SupplierModel): { provider: Provider; validUntil: number } | null {
+  const rule = ruleFor(env, model);
+  return rule ? { provider: rule.provider, validUntil: rule.validUntil } : null;
+}
+
+export interface SupplierBudget {
+  id: string; provider: string; ends_at: number; limit_micro: number; reserved_micro: number; consumed_micro: number;
+  /** 1 when another enabled, funded window for the provider starts by the time this one ends. */
+  continued: number;
+}
+
+/** For the owner alerts: the enabled budget window covering now for each provider, as admission picks it. */
+export async function currentSupplierBudgets(env: SupplierEnv, now: number): Promise<SupplierBudget[]> {
+  const result = await env.DB.prepare(`SELECT w.id, w.provider, w.ends_at, w.limit_micro, w.reserved_micro, w.consumed_micro,
+      EXISTS (SELECT 1 FROM supplier_budget_windows n WHERE n.provider = w.provider AND n.id != w.id AND n.enabled = 1
+        AND n.limit_micro > 0 AND n.starts_at <= w.ends_at AND n.ends_at > w.ends_at) AS continued
+    FROM supplier_budget_windows w WHERE w.enabled = 1 AND w.starts_at <= ? AND w.ends_at > ? ORDER BY w.starts_at DESC`).bind(now, now).all<SupplierBudget>();
+  const current = new Map<string, SupplierBudget>();
+  for (const budget of result.results) if (!current.has(budget.provider)) current.set(budget.provider, budget);
+  return [...current.values()];
 }
 
 /** Batch this after the customer request INSERT; D1 rolls both back if either fails. */

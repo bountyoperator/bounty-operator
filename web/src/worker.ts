@@ -425,11 +425,13 @@ export default {
     });
     const purged = controller.cron === DAILY_CRON ? await purgeExpired(env, now) : {};
     const supplierBilling = controller.cron === DAILY_CRON ? await reconcileSupplierBilling(env, now) : null;
-    // Watch the RunPod balance and whether inference is selling, and email the owner when it needs attention.
+    // Watch RunPod funding and whether the Model API can sell, and email the owner when either needs attention.
     const alerts = controller.cron === FREQUENT_CRON
       ? await monitorRunpod(env, now).catch((error: unknown) => {
-          console.error('RunPod monitor failed', { name: error instanceof Error ? error.name : 'unknown' });
-          return { status: 'error' };
+          // The message names a table or a binding, never a secret, and is what makes the failure fixable.
+          const message = (error instanceof Error ? error.message : String(error)).slice(0, 200);
+          console.error('Owner alert watch failed', { name: error instanceof Error ? error.name : 'unknown', message });
+          return { status: 'error', error: message };
         })
       : null;
     console.log('Scheduled cleanup', { cron: controller.cron, reapedLeases, reapedInference, topupsResynced, resynced, ...purged, ...(supplierBilling ? { supplierBilling } : {}), ...(alerts ? { alerts } : {}) });

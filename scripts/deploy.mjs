@@ -8,6 +8,9 @@
 //   1. The production configuration must exist. It is web/wrangler.production.jsonc,
 //      which git does not track: it holds the account, the routes, the database
 //      id and the Stripe ids. Without it the script stops here with one line.
+//      It also stops when the owner alerts are half set up: an ALERT_EMAIL
+//      send_email binding and vars.ALERT_EMAIL_TO must both be there and name
+//      the same address, or both be absent.
 //   2. scripts/select-profiles.mjs --require-private: the Worker is built with
 //      the hosted method, never with the community stub.
 //   3. scripts/leak-audit.mjs: no text of the hosted method is in a file git
@@ -20,7 +23,7 @@
 // This script holds no secret and no production value.
 
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdtempSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
@@ -46,6 +49,67 @@ export function configRefusal(config = PRODUCTION_CONFIG, exists = existsSync) {
   }
   if (exists(join(WEB_DIR, config))) return null;
   return `Refusing to deploy: web/${config} does not exist. It holds the production account, routes and ids and is not in the repository.`;
+}
+
+/** JSON with // comments, as Wrangler reads it. A // inside a string is kept. */
+export function parseJsonc(text) {
+  let out = '';
+  let inString = false;
+  for (let index = 0; index < text.length; index += 1) {
+    const char = text[index];
+    if (inString) {
+      out += char;
+      if (char === '\\') {
+        index += 1;
+        out += text[index];
+      } else if (char === '"') inString = false;
+    } else if (char === '"') {
+      inString = true;
+      out += char;
+    } else if (char === '/' && text[index + 1] === '/') {
+      while (index < text.length && text[index] !== '\n') index += 1;
+      out += '\n';
+    } else {
+      out += char;
+    }
+  }
+  return JSON.parse(out);
+}
+
+/**
+ * Why the owner-alert settings in a parsed Wrangler config cannot work, as one
+ * line, or null when they can (or are off: no ALERT_EMAIL binding and a blank
+ * ALERT_EMAIL_TO). Cloudflare only delivers to the binding's
+ * destination_address, so the Worker must address exactly that. The line never
+ * prints an address.
+ *
+ * @param {{ vars?: Record<string, unknown>, send_email?: Array<Record<string, unknown>> }} config
+ * @returns {string | null}
+ */
+export function alertConfigRefusal(config) {
+  const binding = (Array.isArray(config.send_email) ? config.send_email : []).find((entry) => entry?.name === 'ALERT_EMAIL');
+  const raw = config.vars?.ALERT_EMAIL_TO;
+  const to = typeof raw === 'string' ? raw.trim() : '';
+  if (!binding && !to) return null;
+  const prefix = 'Refusing to deploy: the owner alerts are half set up.';
+  if (!binding) return `${prefix} vars.ALERT_EMAIL_TO is set, but there is no send_email binding named ALERT_EMAIL.`;
+  const destination = typeof binding.destination_address === 'string' ? binding.destination_address.trim() : '';
+  if (!destination) return `${prefix} The ALERT_EMAIL send_email binding has no destination_address; pin it to the owner's verified Email Routing address.`;
+  if (!to) return `${prefix} The ALERT_EMAIL binding is there, but vars.ALERT_EMAIL_TO is blank; set it to the binding's destination_address.`;
+  if (destination.toLowerCase() !== to.toLowerCase()) return `${prefix} vars.ALERT_EMAIL_TO differs from the ALERT_EMAIL binding's destination_address, so every alert would be refused.`;
+  return null;
+}
+
+/** The alert check on the file being deployed. A file this parser cannot read is left to Wrangler, which reports it. */
+function productionAlertRefusal(config) {
+  let parsed;
+  try {
+    parsed = parseJsonc(readFileSync(join(WEB_DIR, config), 'utf8'));
+  } catch {
+    console.error(`Note: web/${config} could not be parsed here, so the owner-alert settings were not checked. Wrangler checks the file itself.`);
+    return null;
+  }
+  return alertConfigRefusal(parsed);
 }
 
 /** Wrangler's own entry script, so it runs under this Node without a shell. */
@@ -113,7 +177,7 @@ function parseArguments(argv) {
 function main(argv) {
   const options = parseArguments(argv);
 
-  const refusal = configRefusal(options.config);
+  const refusal = configRefusal(options.config) ?? productionAlertRefusal(options.config);
   if (refusal) {
     console.error(refusal);
     return 1;

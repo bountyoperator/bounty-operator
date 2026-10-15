@@ -31,11 +31,15 @@ export interface Env {
   RUNPOD_API_KEY?: string;
   INFRON_API_KEY?: string;
   ORCAROUTER_API_KEY?: string;
-  /** The cron emails the owner once the RunPod balance drops below this many USD. Defaults to 10. */
+  /** The cron emails the owner once the RunPod balance drops below this many USD. Unset, blank or unreadable means 10. */
   RUNPOD_ALERT_USD?: string;
-  /** send_email binding for owner alerts. Absent (as in the template) means alerts are off. */
+  /** send_email binding for owner alerts, pinned with destination_address. Absent (as in the template) means alerts are off. */
   ALERT_EMAIL?: SendEmail;
-  /** Who owner alerts go to. Must match the binding's destination_address. Defaults to the support address. */
+  /**
+   * Where owner alerts go: exactly the binding's destination_address, a verified
+   * Email Routing destination (the owner's own inbox, not a routing rule such as
+   * support@). No default: blank with the binding bound means not configured.
+   */
   ALERT_EMAIL_TO?: string;
   /** Secret for the keyed hash that turns an IP address into a rate-limit key. */
   IP_HASH_KEY?: string;
