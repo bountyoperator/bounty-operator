@@ -211,7 +211,7 @@ function buildSnippetText(markup) {
   return textOf(markup.slice(markup.indexOf('api-today__code')));
 }
 
-// The Model API opened in 0.9.15 with one model. A first-time visitor reads what
+// The Model API sells seven models since 0.9.16. A first-time visitor reads what
 // can be used today and how to start before the catalog of everything else.
 test('the Model API page says at the top what can be used today and how to start, before the full catalog', async () => {
   const markup = rendered.get('/model-api');
@@ -220,7 +220,7 @@ test('the Model API page says at the top what can be used today and how to start
   const { DEFAULT_MODELS, mergeCatalog, todayBlock } = await import('../public/app/model-api.mjs');
 
   // Available today, the price, then the three steps in order, then the first call.
-  const order = ['Available today', 'Qwen Cyber 27B AWQ ( cyber-qwen-27b-awq ): US$3 per million input tokens, US$36 per million output tokens, at least US$0.30 a request. The other 23 models below are not available yet.', 'How to start', 'Buy credit.', 'Create a key.', 'Call it.', 'Your first call'];
+  const order = ['Available today', 'Qwen Cyber 27B AWQ, DeepHat V1 7B, Orca Qwen 3.8 27B, Orca Nex N2.5 Mini, Hermes 4 14B, Hermes 4.3 36B, Foundation-Sec 1.1 8B. Each card below shows its price. The other 17 models below are not available yet.', 'How to start', 'Buy credit.', 'Create a key.', 'Call it.', 'Your first call'];
   const positions = order.map((needle) => text.indexOf(needle));
   assert.ok(positions.every((position) => position >= 0), `missing: ${order.filter((_, index) => positions[index] < 0).join(', ')}`);
   assert.deepEqual([...positions].sort((a, b) => a - b), positions);
@@ -240,7 +240,8 @@ test('the Model API page says at the top what can be used today and how to start
 
   // The built heading and line are the ones the script writes for today's catalog, so on load the script
   // leaves them, markup and all. Paused, closed and unchecked states rewrite both (app-core tests).
-  const open = { enabled: true, topups_enabled: true, models: [{ ...DEFAULT_MODELS[0], availability: 'available' }] };
+  const selling = ['cyber-qwen-27b-awq', 'deephat-v1-7b', 'foundation-sec-8b', 'hermes-4-14b', 'orca-nex-mini', 'orca-qwen-27b', 'hermes-4.3-36b'];
+  const open = { enabled: true, topups_enabled: true, models: DEFAULT_MODELS.filter((model) => selling.includes(model.id)).map((model) => ({ ...model, availability: 'available' })) };
   const block = todayBlock(open, mergeCatalog(open));
   const built = /<p class="api-today__line" id="model-api-today">([\s\S]*?)<\/p>/.exec(markup)[1].replace(/<[^>]+>/g, '');
   assert.equal(built, block.line);

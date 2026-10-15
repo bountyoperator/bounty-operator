@@ -1,5 +1,45 @@
 # Changelog
 
+## 0.9.16 — 2026-10-15
+
+Model API
+
+- Seven models are on sale: Qwen Cyber 27B AWQ, DeepHat V1 7B,
+  Foundation-Sec 1.1 8B, Hermes 4 14B and Orca Nex N2.5 Mini at a minimum of
+  US$0.30 a request, and Orca Qwen 3.8 27B and Hermes 4.3 36B at a minimum of
+  US$0.60. Each passed a live test request on 15 October.
+- The catalog shows all 24 models again, each marked available, paused or not
+  available yet. 0.9.15 listed only the usable ones; that was undone the same
+  day so nothing disappears from view.
+- Until the live catalog loaded, the page showed lower minimum charges for six
+  models than they cost. It now shows what is charged.
+- A paused model says "Paused" rather than "Not available yet". When every
+  model is at capacity, the page says buying credit stays open, because new
+  credit adds capacity.
+- Credit is sold only when it can be spent: a top-up is refused, before any
+  card is charged, whenever the model host's funding cannot be confirmed.
+- The account panel says why top-ups are closed: paused, unavailable, being
+  checked, or switched off on our side.
+
+Reviews and MCP
+
+- A review on a Bounty Operator model waits out a cold start, in the browser
+  and from the local MCP server, instead of failing after five minutes. If you
+  installed the 0.9.15 MCP package, install it again (npx may keep serving
+  its cached copy).
+- A review that is cancelled before it finishes is not counted against your
+  allowance, and over MCP no review text is sent until the review is complete.
+
+Operating safeguards
+
+- Part of every confirmed top-up and monthly API credit now funds the model
+  host's budget automatically, so sales no longer wait on a manual budget
+  change. A refund or dispute takes back only what that payment funded.
+- The service can email its operator when the RunPod balance runs low, when
+  model sales stop for any reason, and when they resume.
+- A deploy stops while a database migration is pending or the alert settings
+  are half set up.
+
 ## 0.9.15 — 2026-10-15
 
 Model API

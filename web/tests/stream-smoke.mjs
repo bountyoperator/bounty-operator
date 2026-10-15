@@ -253,8 +253,12 @@ try {
   // The slot is free again long before the lease would have run out.
   const again = await review();
   assert.equal(again.status, 200);
+  // The stream opens once the review is reserved, before the provider has the
+  // request; its first delta means the provider does, so finish() reaches it.
+  const againReader = again.body.getReader();
+  assert.match(new TextDecoder().decode((await againReader.read()).value), /^event: delta\n/);
   provider.finish();
-  await again.text();
+  while (!(await againReader.read()).done);
   await waitForStatuses(['failed', 'completed']);
 
   const counters = (await db.prepare('SELECT event, n FROM funnel_daily ORDER BY event').all()).results;

@@ -4,25 +4,23 @@ import { ACCOUNT_SCRIPTS, ACCOUNT_STYLES, accountDialog } from '../../fragments/
 import { DEFAULT_MODELS, buildSnippet, mergeCatalog, todayBlock } from '../../../public/app/model-api.mjs';
 import { DOCS_STYLES, docHead } from './_shared.mjs';
 
-// The model production sells today (0.9.15: the only one with a passing live
-// test). The page is built with this model named at the top; on load,
-// /app/model-api.mjs rewrites that line and the steps from the live catalog,
-// so a pause, a closure or a newly opened model shows without a rebuild.
+// The models production sells today (0.9.16: the seven that passed a live test
+// request on 15 October 2026). The page is built with them named at the top; on
+// load, /app/model-api.mjs rewrites that line and the steps from the live
+// catalog, so a pause, a closure or a newly opened model shows without a rebuild.
+const SELLING = ['cyber-qwen-27b-awq', 'deephat-v1-7b', 'foundation-sec-8b', 'hermes-4-14b', 'orca-nex-mini', 'orca-qwen-27b', 'hermes-4.3-36b'];
 const OPEN_MODEL = DEFAULT_MODELS.find((model) => model.id === 'cyber-qwen-27b-awq');
-const OTHERS = DEFAULT_MODELS.length - 1;
-// The heading the script writes for that catalog, so the built page and the script agree.
-const OPEN_CATALOG = { enabled: true, status: 'available', topups_enabled: true, models: [{ ...OPEN_MODEL, availability: 'available' }] };
-const OPEN_HEADING = todayBlock(OPEN_CATALOG, mergeCatalog(OPEN_CATALOG)).heading;
-
-/** A catalog rate as written on the page: 3 -> 'US$3', 0.3 -> 'US$0.30'. */
-const usd = (amount) => `US$${Number.isInteger(amount) ? amount : amount.toFixed(2)}`;
+// The heading and line the script writes for that catalog, so the built page and the script agree.
+const OPEN_CATALOG = { enabled: true, status: 'available', topups_enabled: true, models: DEFAULT_MODELS.filter((model) => SELLING.includes(model.id)).map((model) => ({ ...model, availability: 'available' })) };
+const OPEN_TODAY = todayBlock(OPEN_CATALOG, mergeCatalog(OPEN_CATALOG));
+const OPEN_HEADING = OPEN_TODAY.heading;
 
 // data-open says whether the steps and the first call lead anywhere, data-state which state the
 // heading and line tell (open, paused, closed, unknown): the script sets all three from the live catalog.
 const today = html`<section class="api-today" id="model-api-start" data-open="true" data-state="open" aria-labelledby="start">
 <div class="api-today__text">
 <h2 id="start">${OPEN_HEADING}</h2>
-<p class="api-today__line" id="model-api-today"><strong>${OPEN_MODEL.name}</strong> (<code>${OPEN_MODEL.id}</code>): ${usd(OPEN_MODEL.pricing.input_per_million)} per million input tokens, ${usd(OPEN_MODEL.pricing.output_per_million)} per million output tokens, at least ${usd(OPEN_MODEL.pricing.minimum_request)} a request. The other ${OTHERS} models below are not available yet.</p>
+<p class="api-today__line" id="model-api-today">${OPEN_TODAY.line}</p>
 <div class="api-today__start">
 <h3 class="api-today__how">How to start</h3>
 <ol class="steps api-steps">
