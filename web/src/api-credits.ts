@@ -5,6 +5,7 @@ import { seconds } from './env.ts';
 import type { Call, Env } from './env.ts';
 import type { Session } from './auth.ts';
 import { ApiError, json, readJson } from './http.ts';
+import type { InferenceBilling } from './inference.ts';
 import { quoteSupplierCommitment, supplierReservationStatement, supplierSettlementStatements, reapSupplierCommitmentsStatement, sweepSupplierBudgets } from './supplier-costs.ts';
 
 export const MICRO_USD = 1_000_000;
@@ -12,14 +13,15 @@ export const TOPUP_USD = [20, 50, 100] as const;
 export interface InferenceKey { id: string; account_id: string; budget_micro: number; spent_micro: number; reserved_micro: number }
 export interface MeteredModel { id: string; inputRate: number; outputRate: number; minimumMicro: number; context: number; maxOutput: number }
 
-export async function apiCreditData(env: Env, accountId: string, full = false): Promise<Record<string, unknown>> {
+/** `billing` is a hosting status this request already started to read; the automatic top-up summary reuses it. */
+export async function apiCreditData(env: Env, accountId: string, full = false, billing?: Promise<InferenceBilling>): Promise<Record<string, unknown>> {
   const [wallet, keys, ledger, requests, topups, autoTopup, monthlyGrants] = await Promise.all([
     env.DB.prepare('SELECT balance_micro, reserved_micro FROM api_wallets WHERE account_id = ?').bind(accountId).first<{ balance_micro: number; reserved_micro: number }>(),
     env.DB.prepare('SELECT id, prefix, label, budget_micro, spent_micro, reserved_micro, created_at, expires, last_used, revoked_at FROM inference_keys WHERE account_id = ? ORDER BY created_at DESC').bind(accountId).all(),
     env.DB.prepare(`SELECT id, amount_micro, kind, reference, created_at FROM api_ledger WHERE account_id = ? ORDER BY created_at DESC${full ? '' : ' LIMIT 50'}`).bind(accountId).all(),
     env.DB.prepare(`SELECT id, key_id, model, status, charge_micro, input_tokens, output_tokens, created_at, finished_at, failure_code FROM inference_requests WHERE account_id = ? ORDER BY created_at DESC${full ? '' : ' LIMIT 50'}`).bind(accountId).all(),
     env.DB.prepare(`SELECT id, amount_micro, credited_micro, status, source, auto_month, created_at FROM api_topups WHERE account_id = ? ORDER BY created_at DESC${full ? '' : ' LIMIT 20'}`).bind(accountId).all(),
-    autoTopupData(env, accountId),
+    autoTopupData(env, accountId, billing),
     full ? env.DB.prepare('SELECT invoice_id, subscription_id, price_id, period_start, period_end, amount_micro, credited_micro, refunded_micro, created_at, updated_at FROM api_monthly_grants WHERE account_id = ? ORDER BY created_at DESC').bind(accountId).all() : Promise.resolve(null),
   ]);
   const balance = wallet?.balance_micro ?? 0;

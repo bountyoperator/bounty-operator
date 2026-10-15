@@ -38,7 +38,7 @@ import {
   toBase64Url,
   toBytes,
 } from '../public/app/passkey.mjs';
-import { MCP_ENDPOINT, MCP_PACKAGE, TABS, TOKEN_VAR, apiPanelCopy, autoTopupAuthorization, autoTopupSettings, connectionCommands, reviewRows, usageSummary } from '../public/app/portal.mjs';
+import { MCP_ENDPOINT, MCP_PACKAGE, TABS, TOKEN_VAR, apiPanelCopy, autoTopupAuthorization, autoTopupSettings, autoTopupUnavailableText, connectionCommands, reviewRows, topupsUnavailableText, usageSummary } from '../public/app/portal.mjs';
 import { ACCOUNT_SCRIPTS, ACCOUNT_STYLES, accountDialog } from '../site/fragments/account-dialog.mjs';
 import { assertNoBannedNames } from './private-lists.mjs';
 
@@ -473,6 +473,38 @@ describe('automatic top-up authorization', () => {
   test('consent names the exact charge, trigger, cap, and ongoing authorization', () => {
     assert.equal(autoTopupAuthorization({ amount_usd: 50, threshold_usd: 10, monthly_cap_usd: 200 }), 'I authorize Bounty Operator to charge my saved payment method US$50 when available API credit falls below US$10, up to US$200 per calendar month (UTC), until I disable automatic top-ups.');
   });
+
+  test('a setting that is on says it waits, with no payment, and names the cause the server reports', () => {
+    assert.equal(autoTopupUnavailableText({ available: true, closure: null, enabled: true }), '');
+    for (const closure of ['paused', 'unavailable']) {
+      assert.equal(autoTopupUnavailableText({ available: false, closure, enabled: true }), 'No automatic payment is made while the model service is unavailable. Automatic top-ups resume when it is available again.', closure);
+    }
+    assert.equal(autoTopupUnavailableText({ available: false, closure: 'unknown', enabled: true }), 'No automatic payment is made while the model service status is being confirmed. Automatic top-ups resume on their own once it is.');
+    // The operator's switch, Stripe configuration, or an older server without a closure field: never blame the model service.
+    for (const closure of ['closed', undefined]) {
+      const text = autoTopupUnavailableText({ available: false, closure, enabled: true });
+      assert.equal(text, 'No automatic payment is made while automatic top-ups are closed. They resume on their own when top-ups reopen.', String(closure));
+      assert.doesNotMatch(text, /model service/);
+    }
+    for (const closure of ['closed', 'paused', 'unknown']) {
+      assert.equal(autoTopupUnavailableText({ available: false, closure, enabled: false }), 'Automatic top-up setup is currently unavailable.', closure);
+    }
+  });
+
+  test('the manual top-up line names the cause too, and never blames the model service for a switch or Stripe', () => {
+    assert.equal(topupsUnavailableText({ topups_enabled: true, topups_closure: null }), '');
+    assert.equal(topupsUnavailableText({ topups_enabled: false, topups_closure: 'paused' }), 'Top-ups are closed while model inference is paused. Existing credit stays available and is spent only on confirmed usage.');
+    assert.equal(topupsUnavailableText({ topups_enabled: false, topups_closure: 'unknown' }), 'Top-ups are closed while the model service is being verified. Existing credit stays available and is spent only on confirmed usage.');
+    assert.equal(topupsUnavailableText({ topups_enabled: false, topups_closure: 'unavailable' }), 'Top-ups are closed while the model service is unavailable. Existing credit stays available and is spent only on confirmed usage.');
+    for (const closure of ['disabled', 'billing_not_ready']) {
+      const text = topupsUnavailableText({ topups_enabled: false, topups_closure: closure });
+      assert.equal(text, 'Top-ups are closed right now. Existing credit stays available and is spent only on confirmed usage.', closure);
+      assert.doesNotMatch(text, /model service|inference/);
+    }
+    // An older server sends no closure field: fall back to the status, then to neutral text.
+    assert.equal(topupsUnavailableText({ topups_enabled: false, status: 'paused' }), 'Top-ups are closed while model inference is paused. Existing credit stays available and is spent only on confirmed usage.');
+    assert.doesNotMatch(topupsUnavailableText({ topups_enabled: false, status: 'available' }), /model service|inference/);
+  });
 });
 
 describe('the Model API panel copy', () => {
@@ -485,9 +517,12 @@ describe('the Model API panel copy', () => {
   });
 
   test('every other state keeps its own copy', () => {
-    const closed = apiPanelCopy({ enabled: false, status: 'unavailable', topups_enabled: false });
+    // The top-ups line comes from topupsUnavailableText, so it names the closure the server sent.
+    const closed = apiPanelCopy({ enabled: false, status: 'unavailable', topups_enabled: false, topups_closure: 'unavailable' });
     assert.deepEqual([closed.topupsOpen, closed.modelsNote], [false, 'Model inference is not available yet.']);
-    assert.match(closed.topupsNote, /being verified/);
+    assert.match(closed.topupsNote, /closed while the model service is unavailable/);
+    const unknown = apiPanelCopy({ enabled: true, status: 'available', topups_enabled: false, topups_closure: 'unknown' });
+    assert.match(unknown.topupsNote, /being verified/);
     const paused = apiPanelCopy({ enabled: false, status: 'paused', topups_enabled: false });
     assert.match(paused.topupsNote, /closed while model inference is paused/);
     assert.match(paused.modelsNote, /^Model inference is paused right now/);

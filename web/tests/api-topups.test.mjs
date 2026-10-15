@@ -10,10 +10,12 @@ import {
 } from '../src/api-autotopup.ts';
 import { syncMonthlyCredit, syncMonthlyCreditForCharge } from '../src/api-monthly-credit.ts';
 import { applyApiPaymentEvent, createApiTopup, localStripeTest, reconcileApiTopup, resyncPendingTopups, syncApiTopup } from '../src/api-topups.ts';
+import { apiCreditData, createInferenceKey } from '../src/api-credits.ts';
 import { subscriptionSummary } from '../src/billing.ts';
-import { clearHostingState, inferencePaused } from '../src/inference.ts';
-import { addAccount, createEnv } from './worker-helpers.mjs';
+import { clearHostingState, inferenceBilling, inferenceEndpoint, inferencePaused } from '../src/inference.ts';
+import { addAccount, createCall, createEnv } from './worker-helpers.mjs';
 import { enableSupplierFixture } from './supplier-fixtures.mjs';
+import { HOSTING_API, HOSTING_FAILURES, fundedHosting } from './hosting-fixtures.mjs';
 
 function setup() {
   const env = createEnv();
@@ -516,6 +518,13 @@ async function enableAutomatic(a) {
   await applyAutoTopupSetupEvent(a.env, a.api, { type: 'checkout.session.completed', created: 100, data: { object: a.checkoutSession } });
 }
 
+/** A reservation a Worker made and then stopped before sending to Stripe. */
+function strandedReservation(a, id, now, account = a.account) {
+  a.env.DB.sqlite.prepare(`INSERT INTO api_topups(id, account_id, customer_id, amount_micro, source, auto_month, auto_revision, payment_method, created_at, updated_at)
+    SELECT ?, account_id, customer_id, amount_micro, 'automatic', ?, revision, payment_method, ?, ? FROM api_autotopup_settings WHERE account_id = ?`)
+    .run(id, new Date(now * 1000).toISOString().slice(0, 7), now - 120, now - 120, account);
+}
+
 function useRunpod(a) {
   a.env.INFRON_API_KEY = undefined;
   a.env.RUNPOD_API_KEY = 'fixture-runpod-key';
@@ -560,7 +569,8 @@ test('paused hosting blocks automatic setup, updates and both new and reserved p
   await enableAutomatic(a);
   useRunpod(a);
   t.mock.method(globalThis, 'fetch', async () => Response.json({ data: { myself: { underBalance: true } } }));
-  assert.equal((await autoTopupData(a.env, a.account)).available, false);
+  const closedState = await autoTopupData(a.env, a.account);
+  assert.deepEqual([closedState.available, closedState.closure], [false, 'paused']);
   await assert.rejects(createAutoTopupSetup(a.env, a.api, a.account, 'cus_1', { ...autoSettings, request_id: 'req-auto-paused-0001' }), { code: 'topups_unavailable' });
   await assert.rejects(updateAutoTopup(a.env, a.api, a.account, autoSettings), { code: 'topups_unavailable' });
   const now = Math.floor(Date.now() / 1000) + 5;
@@ -568,15 +578,20 @@ test('paused hosting blocks automatic setup, updates and both new and reserved p
   assert.equal(a.env.DB.sqlite.prepare('SELECT COUNT(*) AS n FROM api_topups').get().n, 0);
 
   // A Worker may stop after reserving a top-up and before sending it to Stripe.
-  a.env.DB.sqlite.prepare(`INSERT INTO api_topups(id, account_id, customer_id, amount_micro, source, auto_month, auto_revision, payment_method, created_at, updated_at)
-    SELECT 'pending-before-pause', account_id, customer_id, amount_micro, 'automatic', ?, revision, payment_method, ?, ? FROM api_autotopup_settings`)
-    .run(new Date(now * 1000).toISOString().slice(0, 7), now - 120, now - 120);
+  strandedReservation(a, 'pending-before-pause', now);
   await processAutoTopups(a.env, a.api, now);
   assert.equal(a.intents.size, 0);
-  assert.deepEqual({ ...a.env.DB.sqlite.prepare('SELECT status, initiated_at FROM api_topups').get() }, { status: 'pending', initiated_at: 0 });
+  // Nothing reached Stripe, so the unsent reservation expires. A later run
+  // reserves again from the balance and settings current then.
+  assert.deepEqual({ ...a.env.DB.sqlite.prepare('SELECT status, initiated_at FROM api_topups').get() }, { status: 'expired', initiated_at: 0 });
+  assert.equal((await autoTopupData(a.env, a.account)).enabled, true, 'the customer setting is untouched');
+  // Disabling also expires an unsent reservation: no charge was ever started.
+  strandedReservation(a, 'pending-before-disable', now);
   await disableAutoTopup(a.env, a.account);
   assert.equal((await autoTopupData(a.env, a.account)).enabled, false);
-  assert.equal(a.env.DB.sqlite.prepare('SELECT status FROM api_topups').get().status, 'failed');
+  assert.deepEqual(a.env.DB.sqlite.prepare('SELECT id, status FROM api_topups ORDER BY id').all().map((row) => [row.id, row.status]), [['pending-before-disable', 'expired'], ['pending-before-pause', 'expired']]);
+  // The customer's export does not list them as failed payments.
+  assert.deepEqual((await apiCreditData(a.env, a.account, true)).topups.map((row) => row.status), ['expired', 'expired']);
 });
 
 test('payments already sent reconcile while hosting is paused or automatic top-ups are disabled', async (t) => {
@@ -595,6 +610,323 @@ test('payments already sent reconcile while hosting is paused or automatic top-u
     assert.equal(a.env.DB.sqlite.prepare('SELECT status FROM api_topups').get().status, 'paid');
     assert.equal(a.intents.size, 1);
   }
+});
+
+/** Counts the Stripe calls that could start a payment or a setup. */
+function countStripe(api) {
+  const calls = { checkout: 0, methods: 0, intents: 0 };
+  const wrap = (owner, name, key) => {
+    const original = owner[name];
+    owner[name] = async (...args) => { calls[key]++; return original(...args); };
+  };
+  wrap(api.checkout.sessions, 'create', 'checkout');
+  wrap(api.paymentMethods, 'retrieve', 'methods');
+  wrap(api.paymentIntents, 'create', 'intents');
+  return calls;
+}
+
+const autoTopupCount = (a) => a.env.DB.sqlite.prepare('SELECT COUNT(*) AS n FROM api_topups').get().n;
+
+/** Production waits a second before reading an unknown state again; most tests do not. */
+const FAST = { unknownRetryMs: 0 };
+
+/** A second account with the same automatic settings, due one second after the first. */
+function addAutoAccount(a, id, customer) {
+  addAccount(a.env.DB, id);
+  a.env.DB.sqlite.prepare('UPDATE accounts SET stripe_customer = ? WHERE id = ?').run(customer, id);
+  a.env.DB.sqlite.prepare(`INSERT INTO api_autotopup_settings(account_id, customer_id, enabled, amount_micro, threshold_micro, monthly_cap_micro, payment_method, payment_method_summary, revision, consent_at, consent_version, next_check_at, updated_at)
+    SELECT ?, ?, enabled, amount_micro, threshold_micro, monthly_cap_micro, payment_method, payment_method_summary, revision, consent_at, consent_version, next_check_at + 1, updated_at FROM api_autotopup_settings WHERE account_id = ?`)
+    .run(id, customer, a.account);
+  return id;
+}
+
+test('an unreadable hosting state creates no PaymentIntent; a funded state pays and sent payments still reconcile', async (t) => {
+  let answer = fundedHosting;
+  const reads = [];
+  t.mock.method(globalThis, 'fetch', async (url, options) => {
+    assert.equal(url, HOSTING_API, 'only the hosting API is read; Stripe goes through the client stub');
+    reads.push(url);
+    return answer(url, options);
+  });
+  for (const [name, failure] of Object.entries(HOSTING_FAILURES)) {
+    const a = setupAuto();
+    useRunpod(a);
+    answer = fundedHosting;
+    await enableAutomatic(a);
+    const stripe = countStripe(a.api);
+    assert.equal((await autoTopupData(a.env, a.account)).available, true, name);
+
+    // A reservation waited for this run while the one-minute cache still says
+    // funded. The send skips the cache, finds the state unknown, reads once
+    // more, and sends nothing.
+    const now = Math.floor(Date.now() / 1000) + 5;
+    strandedReservation(a, 'stranded', now);
+    answer = failure;
+    const before = reads.length;
+    await processAutoTopups(a.env, a.api, now, FAST);
+    assert.equal(reads.length, before + 2, `${name}: the send skips the cache, and an unknown answer is read once more`);
+    assert.equal(stripe.intents, 0, name);
+    assert.equal(a.intents.size, 0, name);
+    assert.deepEqual({ ...a.env.DB.sqlite.prepare('SELECT status, initiated_at, payment_intent FROM api_topups').get() }, { status: 'expired', initiated_at: 0, payment_intent: null }, `${name}: nothing reached Stripe, so the reservation expires`);
+    assert.equal(autoTopupCount(a), 1, `${name}: the due account reserves nothing once the run is closed`);
+    const waiting = await autoTopupData(a.env, a.account);
+    assert.deepEqual([waiting.enabled, waiting.available, waiting.closure, waiting.pending, waiting.pause_reason], [true, false, 'unknown', false, null], `${name}: nothing to reconcile, so the setting stays on`);
+
+    // Setup, changes and new reservations are refused with a clear error.
+    await assert.rejects(createAutoTopupSetup(a.env, a.api, a.account, 'cus_1', { ...autoSettings, request_id: 'req-auto-unknown-0001' }), { code: 'topups_unavailable', message: /hosting status could not be confirmed\. No charge was made\./ }, name);
+    await assert.rejects(updateAutoTopup(a.env, a.api, a.account, autoSettings), { code: 'topups_unavailable', message: /hosting status could not be confirmed/ }, name);
+    await processAutoTopups(a.env, a.api, now + 400, FAST);
+    assert.equal(autoTopupCount(a), 1, `${name}: no reservation while the state is unknown`);
+    assert.deepEqual(stripe, { checkout: 0, methods: 0, intents: 0 }, name);
+
+    // A funded answer pays again, whatever the cache holds. One read made by
+    // the run covers both its reservation and its send.
+    answer = fundedHosting;
+    const funded = reads.length;
+    await processAutoTopups(a.env, a.api, now + 800, FAST);
+    assert.equal(reads.length, funded + 1, `${name}: one read for the reservation and the send`);
+    assert.equal(a.intents.size, 1, `${name}: a confirmed funded state pays`);
+    assert.equal(a.balance(), 0, 'the create response alone grants no credit');
+
+    // A payment already at Stripe reconciles whatever the hosting state.
+    answer = failure;
+    clearHostingState();
+    const pi = [...a.intents.values()][0];
+    await applyApiPaymentEvent(a.env, a.api, { type: 'payment_intent.succeeded', created: now + 805, data: { object: pi } });
+    await processAutoTopups(a.env, a.api, now + 1200, FAST);
+    assert.equal(a.balance(), 20000000, name);
+    assert.equal(a.env.DB.sqlite.prepare('SELECT status FROM api_topups WHERE payment_intent IS NOT NULL').get().status, 'paid', name);
+    assert.equal(a.intents.size, 1, name);
+  }
+});
+
+test('an initiated payment with a lost response is recovered from Stripe while the hosting state is unknown', async (t) => {
+  let answer = fundedHosting;
+  t.mock.method(globalThis, 'fetch', async (url, options) => answer(url, options));
+  const a = setupAuto();
+  useRunpod(a);
+  await enableAutomatic(a);
+  const now = Math.floor(Date.now() / 1000) + 5;
+  // Stripe creates the payment but the response never arrives.
+  const create = a.api.paymentIntents.create;
+  a.api.paymentIntents.create = async (...args) => { await create(...args); throw new Error('Connection lost'); };
+  await processAutoTopups(a.env, a.api, now);
+  assert.equal(a.intents.size, 1);
+  assert.equal(a.env.DB.sqlite.prepare('SELECT payment_intent FROM api_topups').get().payment_intent, null);
+  answer = HOSTING_FAILURES['network error'];
+  clearHostingState();
+  await processAutoTopups(a.env, a.api, now + 120);
+  assert.equal(a.env.DB.sqlite.prepare('SELECT status FROM api_topups').get().status, 'paid');
+  assert.equal(a.balance(), 20000000);
+  assert.equal(a.intents.size, 1, 'recovery never sends a second payment');
+});
+
+test('a setup completed while the hosting state is unknown turns on but charges nothing until hosting is confirmed funded', async (t) => {
+  let answer = fundedHosting;
+  t.mock.method(globalThis, 'fetch', async (url, options) => answer(url, options));
+  const a = setupAuto();
+  useRunpod(a);
+  await createAutoTopupSetup(a.env, a.api, a.account, 'cus_1', autoSettings);
+  answer = HOSTING_FAILURES['GraphQL errors'];
+  clearHostingState();
+  await applyAutoTopupSetupEvent(a.env, a.api, { type: 'checkout.session.completed', created: 100, data: { object: a.checkoutSession } });
+  const saved = await autoTopupData(a.env, a.account);
+  assert.deepEqual([saved.enabled, saved.available, saved.closure, saved.payment_method.last4], [true, false, 'unknown', '4242']);
+  const now = Math.floor(Date.now() / 1000) + 5;
+  await processAutoTopups(a.env, a.api, now, FAST);
+  assert.equal(autoTopupCount(a), 0);
+  assert.equal(a.intents.size, 0);
+  answer = fundedHosting;
+  clearHostingState();
+  await processAutoTopups(a.env, a.api, now + 400);
+  assert.equal(a.intents.size, 1, 'the consent given at setup applies once hosting is confirmed funded');
+});
+
+test('one dropped hosting read is read again after a second, and the reservation is then sent', async (t) => {
+  let answers = [];
+  const reads = t.mock.method(globalThis, 'fetch', async () => (answers.shift() ?? fundedHosting)());
+  const a = setupAuto();
+  useRunpod(a);
+  await enableAutomatic(a);
+  const now = Math.floor(Date.now() / 1000) + 5;
+  strandedReservation(a, 'stranded', now);
+  answers = [HOSTING_FAILURES['network error'], fundedHosting];
+  const before = reads.mock.callCount();
+  const started = Date.now();
+  // The production default: one second between the two reads.
+  await processAutoTopups(a.env, a.api, now);
+  assert.ok(Date.now() - started >= 950, 'the second read waits about a second');
+  assert.equal(reads.mock.callCount(), before + 2);
+  assert.equal(a.intents.size, 1, 'a funded second read sends the reservation');
+  assert.equal(a.env.DB.sqlite.prepare("SELECT payment_intent FROM api_topups WHERE id = 'stranded'").get().payment_intent, 'pi_auto_1', 'the stranded reservation itself was sent');
+});
+
+test('a stranded reservation is sent later only while credit is still below the consented threshold', async (t) => {
+  t.mock.method(globalThis, 'fetch', async () => fundedHosting());
+  const a = setupAuto();
+  useRunpod(a);
+  await enableAutomatic(a);
+  const now = Math.floor(Date.now() / 1000) + 5;
+  // A Worker reserved at a zero balance and stopped. Credit arrived before the next run.
+  strandedReservation(a, 'stranded-credited', now);
+  a.env.DB.sqlite.prepare("INSERT INTO api_ledger(id, account_id, amount_micro, kind, reference, created_at) VALUES('manual-credit', ?, 20000000, 'topup', 'fixture', ?)").run(a.account, now - 30);
+  a.env.DB.sqlite.prepare('UPDATE api_autotopup_settings SET next_check_at = ?').run(now + 3600);
+  await processAutoTopups(a.env, a.api, now);
+  assert.equal(a.intents.size, 0, 'the consent covers a top-up only below the threshold');
+  assert.deepEqual({ ...a.env.DB.sqlite.prepare("SELECT status, initiated_at FROM api_topups WHERE id = 'stranded-credited'").get() }, { status: 'expired', initiated_at: 0 });
+
+  // US$7 left, US$3 of it held by a running request: credit looks below the
+  // US$5 threshold only because of the hold, so the send waits, as the reservation does.
+  a.env.DB.sqlite.prepare("INSERT INTO api_ledger(id, account_id, amount_micro, kind, reference, created_at) VALUES('usage-13', ?, -13000000, 'usage', 'fixture', ?)").run(a.account, now - 20);
+  await createInferenceKey(createCall(new Request('https://bountyoperator.com/api/inference/keys/create', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ label: 'Agent', budget_usd: 20 }) }), a.env), { account_id: a.account });
+  const keyId = a.env.DB.sqlite.prepare('SELECT id FROM inference_keys').get().id;
+  a.env.DB.sqlite.prepare(`INSERT INTO inference_requests(id, account_id, key_id, model, hold_micro, input_rate, output_rate, minimum_micro, created_at, lease_until)
+    VALUES('running-1', ?, ?, 'auto-test', 3000000, 2, 8, 10000, ?, ?)`).run(a.account, keyId, now - 10, now + 600);
+  strandedReservation(a, 'stranded-running', now);
+  await processAutoTopups(a.env, a.api, now);
+  assert.equal(a.intents.size, 0);
+  assert.equal(a.env.DB.sqlite.prepare("SELECT status FROM api_topups WHERE id = 'stranded-running'").get().status, 'expired');
+
+  // The request ends and the credit is spent: below the threshold with nothing running, the stranded reservation is sent.
+  a.env.DB.sqlite.prepare("UPDATE inference_requests SET status = 'cancelled', finished_at = ? WHERE id = 'running-1'").run(now - 5);
+  a.env.DB.sqlite.prepare("INSERT INTO api_ledger(id, account_id, amount_micro, kind, reference, created_at) VALUES('usage-7', ?, -7000000, 'usage', 'fixture', ?)").run(a.account, now - 4);
+  strandedReservation(a, 'stranded-due', now);
+  await processAutoTopups(a.env, a.api, now);
+  assert.equal(a.intents.size, 1);
+  assert.equal(a.env.DB.sqlite.prepare("SELECT payment_intent FROM api_topups WHERE id = 'stranded-due'").get().payment_intent, 'pi_auto_1');
+});
+
+test('once a run finds purchases closed, other reservations expire without another read and nothing is reserved', async (t) => {
+  let answer = fundedHosting;
+  const reads = t.mock.method(globalThis, 'fetch', async () => answer());
+  const warn = t.mock.method(console, 'warn', () => {});
+  const a = setupAuto();
+  useRunpod(a);
+  await enableAutomatic(a);
+  const second = addAutoAccount(a, 'account-2', 'cus_2');
+  const now = Math.floor(Date.now() / 1000) + 5;
+  strandedReservation(a, 'stranded-1', now);
+  strandedReservation(a, 'stranded-2', now, second);
+  answer = HOSTING_FAILURES['fetch 500'];
+  const before = reads.mock.callCount();
+  await processAutoTopups(a.env, a.api, now, FAST);
+  assert.equal(reads.mock.callCount(), before + 2, 'one read and one retry, then the run stays closed');
+  assert.equal(a.intents.size, 0);
+  assert.deepEqual(a.env.DB.sqlite.prepare('SELECT id, status, initiated_at FROM api_topups ORDER BY id').all().map((row) => [row.id, row.status, row.initiated_at]),
+    [['stranded-1', 'expired', 0], ['stranded-2', 'expired', 0]], 'both due accounts reserve nothing');
+  // Each unsent reservation is logged with the run's answer, so a fail-closed
+  // stop is visible in production. The key and the body never are.
+  const unsent = warn.mock.calls.filter((call) => call.arguments[0] === 'Automatic top-up not sent; purchases closed');
+  assert.deepEqual(unsent.map((call) => call.arguments[1]),
+    [{ state: 'unknown', reason: 'http_500', expired: 1 }, { state: 'unknown', reason: 'http_500', expired: 1 }]);
+  const logged = JSON.stringify(unsent.map((call) => call.arguments));
+  for (const secret of ['fixture-runpod-key', 'Internal Server Error']) assert.ok(!logged.includes(secret), `the log holds "${secret}"`);
+});
+
+test('a billing status that cannot be read closes the run, is logged by name alone, and sends nothing', async (t) => {
+  const reads = t.mock.method(globalThis, 'fetch', async () => fundedHosting());
+  const a = setupAuto();
+  useRunpod(a);
+  await enableAutomatic(a);
+  const now = Math.floor(Date.now() / 1000) + 5;
+  strandedReservation(a, 'stranded-unreadable', now);
+  // D1 fails inside the billing read itself, for the first read and the retry.
+  const query = a.env.DB.prepare.bind(a.env.DB);
+  a.env.DB.prepare = (sql) => {
+    if (sql.includes("failure_code = 'usage_limit_exceeded'")) throw new RangeError('D1 unavailable');
+    return query(sql);
+  };
+  const warn = t.mock.method(console, 'warn', () => {});
+  const failed = t.mock.method(console, 'error', () => {});
+  const before = reads.mock.callCount();
+  await processAutoTopups(a.env, a.api, now, FAST);
+  assert.equal(a.intents.size, 0, 'a status that cannot be worked out never opens a payment');
+  assert.equal(a.env.DB.sqlite.prepare("SELECT status FROM api_topups WHERE id = 'stranded-unreadable'").get().status, 'expired');
+  assert.equal(autoTopupCount(a), 1, 'the due account reserves nothing either');
+  const checks = failed.mock.calls.filter((call) => call.arguments[0] === 'Automatic top-up check failed');
+  assert.deepEqual(checks.map((call) => call.arguments[1]), [{ name: 'RangeError' }, { name: 'RangeError' }], 'the read and its retry each report, with the error name alone');
+  assert.ok(!JSON.stringify(checks.map((call) => call.arguments)).includes('D1 unavailable'));
+  assert.deepEqual(warn.mock.calls.filter((call) => call.arguments[0] === 'Automatic top-up not sent; purchases closed').map((call) => call.arguments[1]),
+    [{ state: 'unknown', reason: 'check_failed', expired: 1 }]);
+  assert.equal(reads.mock.callCount(), before, 'a status that failed before the hosting read reads nothing from it');
+});
+
+test('a stranded reservation is not sent once a dispute is open on the account, as a new one could not be reserved', async (t) => {
+  t.mock.method(globalThis, 'fetch', async () => fundedHosting());
+  for (const disputed of ['a top-up', 'a monthly grant']) {
+    const a = setupAuto();
+    useRunpod(a);
+    await enableAutomatic(a);
+    const now = Math.floor(Date.now() / 1000) + 5;
+    strandedReservation(a, 'stranded-disputed', now);
+    if (disputed === 'a top-up') {
+      a.env.DB.sqlite.prepare("INSERT INTO api_topups(id, account_id, customer_id, amount_micro, status, dispute_open, created_at, updated_at) VALUES('disputed-checkout', ?, 'cus_1', 20000000, 'paid', 1, ?, ?)")
+        .run(a.account, now - 600, now - 600);
+    } else {
+      a.env.DB.sqlite.prepare(`INSERT INTO api_monthly_grants(invoice_id, account_id, customer_id, subscription_id, price_id, period_start, period_end, dispute_open, created_at, updated_at)
+        VALUES('in_disputed', ?, 'cus_1', 'sub_1', 'price_monthly', ?, ?, 1, ?, ?)`).run(a.account, now - 86400, now + 86400, now - 600, now - 600);
+    }
+    await processAutoTopups(a.env, a.api, now, FAST);
+    assert.equal(a.intents.size, 0, disputed);
+    assert.deepEqual({ ...a.env.DB.sqlite.prepare("SELECT status, initiated_at FROM api_topups WHERE id = 'stranded-disputed'").get() }, { status: 'expired', initiated_at: 0 }, disputed);
+  }
+});
+
+test('a send that finds purchases closed stops the run before the next due account is reserved', async (t) => {
+  let answers = [];
+  const reads = t.mock.method(globalThis, 'fetch', async () => (answers.shift() ?? fundedHosting)());
+  const a = setupAuto();
+  useRunpod(a);
+  await enableAutomatic(a);
+  const second = addAutoAccount(a, 'account-2', 'cus_2');
+  const secondCheck = a.env.DB.sqlite.prepare('SELECT next_check_at FROM api_autotopup_settings WHERE account_id = ?').get(second).next_check_at;
+  const now = Math.floor(Date.now() / 1000) + 5;
+  // The reservation check is funded; the first send, made after the reuse
+  // window (zero here, as when Stripe is slow), reads unknown twice.
+  answers = [fundedHosting, HOSTING_FAILURES.timeout, HOSTING_FAILURES.timeout];
+  const before = reads.mock.callCount();
+  await processAutoTopups(a.env, a.api, now, { unknownRetryMs: 0, reuseMs: 0 });
+  assert.equal(reads.mock.callCount(), before + 3);
+  assert.equal(a.intents.size, 0);
+  assert.deepEqual(a.env.DB.sqlite.prepare('SELECT account_id, status FROM api_topups').all().map((row) => [row.account_id, row.status]), [[a.account, 'expired']]);
+  assert.equal(a.env.DB.sqlite.prepare('SELECT next_check_at FROM api_autotopup_settings WHERE account_id = ?').get(second).next_check_at, secondCheck, 'the second account is left for the next run');
+});
+
+test('a worker that answers /health while the hosting read is unknown opens no purchase', async (t) => {
+  let answer = fundedHosting;
+  const upstream = [];
+  t.mock.method(globalThis, 'fetch', async (url, options) => {
+    if (url === HOSTING_API) return answer(url, options);
+    upstream.push(url);
+    if (url.endsWith('/health')) return new Response(null, { status: 200 });
+    return Response.json({ created: 1, choices: [{ message: { role: 'assistant', content: 'Ready' }, finish_reason: 'stop' }], usage: { prompt_tokens: 10, completion_tokens: 2 } });
+  });
+  const a = setupAuto();
+  useRunpod(a);
+  await enableAutomatic(a);
+
+  // Another customer, with credit, makes a request while the funding read fails.
+  answer = HOSTING_FAILURES['GraphQL errors'];
+  clearHostingState();
+  const other = addAccount(a.env.DB, 'account-with-credit');
+  a.env.DB.sqlite.prepare("INSERT INTO api_ledger(id, account_id, amount_micro, kind, reference, created_at) VALUES('fund-other', ?, 20000000, 'topup', 'fixture', 1)").run(other);
+  const created = await createInferenceKey(createCall(new Request('https://bountyoperator.com/api/inference/keys/create', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ label: 'Other', budget_usd: 20 }) }), a.env), { account_id: other });
+  const { key } = await created.json();
+  const response = await inferenceEndpoint(createCall(new Request('https://bountyoperator.com/v1/chat/completions', {
+    method: 'POST', headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ model: automaticModel.id, messages: [{ role: 'user', content: 'Hello' }], max_tokens: 20 }),
+  }), a.env));
+  assert.equal(response.status, 200);
+  assert.ok(upstream.includes('https://autotest.api.runpod.ai/health'), 'the worker answered its health probe');
+
+  // That 200 says the worker answers, not that the account is funded.
+  assert.deepEqual(await inferenceBilling(a.env), { status: 'unknown', reason: 'graphql_errors' });
+  const data = await autoTopupData(a.env, a.account);
+  assert.deepEqual([data.available, data.closure], [false, 'unknown']);
+  await assert.rejects(updateAutoTopup(a.env, a.api, a.account, autoSettings), { code: 'topups_unavailable' });
+  await processAutoTopups(a.env, a.api, Math.floor(Date.now() / 1000) + 5, FAST);
+  assert.equal(autoTopupCount(a), 0);
+  assert.equal(a.intents.size, 0);
 });
 
 test('a usable direct provider keeps automatic top-ups available when Runpod is paused', async (t) => {

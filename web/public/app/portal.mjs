@@ -1237,6 +1237,37 @@ export function autoTopupAuthorization(settings) {
   return `I authorize Bounty Operator to charge my saved payment method US$${amount_usd} when available API credit falls below US$${threshold_usd}, up to US$${monthly_cap_usd} per calendar month (UTC), until I disable automatic top-ups.`;
 }
 
+/**
+ * The line shown while automatic purchases are closed. A setting that is on
+ * stays on and simply waits. `closure` says why: the model service ('paused',
+ * 'unavailable', 'unknown') or configuration ('closed'), so the model service
+ * is never blamed for a switch the operator turned off.
+ */
+export function autoTopupUnavailableText(auto) {
+  if (auto.available) return '';
+  if (!auto.enabled) return 'Automatic top-up setup is currently unavailable.';
+  if (auto.closure === 'paused' || auto.closure === 'unavailable') return 'No automatic payment is made while the model service is unavailable. Automatic top-ups resume when it is available again.';
+  if (auto.closure === 'unknown') return 'No automatic payment is made while the model service status is being confirmed. Automatic top-ups resume on their own once it is.';
+  return 'No automatic payment is made while automatic top-ups are closed. They resume on their own when top-ups reopen.';
+}
+
+/**
+ * The line shown while manual top-ups are closed. `topups_closure` says why:
+ * the model service ('paused', 'unavailable', 'unknown') or our own
+ * configuration ('disabled', 'billing_not_ready'), so an operator's switch and
+ * an unfinished Stripe setup are never read as a model outage. An older server
+ * sends no closure, so the status stands in and anything else reads neutrally.
+ */
+export function topupsUnavailableText(api) {
+  if (api.topups_enabled) return '';
+  const tail = ' Existing credit stays available and is spent only on confirmed usage.';
+  const closure = api.topups_closure ?? (api.status === 'paused' ? 'paused' : null);
+  if (closure === 'paused') return `Top-ups are closed while model inference is paused.${tail}`;
+  if (closure === 'unknown') return `Top-ups are closed while the model service is being verified.${tail}`;
+  if (closure === 'unavailable') return `Top-ups are closed while the model service is unavailable.${tail}`;
+  return `Top-ups are closed right now.${tail}`;
+}
+
 /** The Model API panel's copy, and whether the Add credit buttons are live.
  * Every model can be at capacity while top-ups stay open, because the payment
  * itself restores the capacity; that state says so rather than reading as a
@@ -1245,9 +1276,7 @@ export function apiPanelCopy(api) {
   const topupsOpen = Boolean(api.topups_enabled);
   return {
     topupsOpen,
-    topupsNote: topupsOpen ? null
-      : api.status === 'paused' ? 'Top-ups are closed while model inference is paused. Existing credit stays available and is spent only on confirmed usage.'
-        : 'Top-ups are closed while the model service is being verified.',
+    topupsNote: topupsOpen ? null : topupsUnavailableText(api),
     modelsNote: api.enabled ? 'Choose a model in your harness. Fetch the full catalog with GET /v1/models; supported capabilities vary by model.'
       : api.status === 'paused' ? 'Model inference is paused right now. Requests return 503 without a charge until it resumes.'
         : topupsOpen ? 'Every model is at capacity right now, so requests return 503 without a charge. Top-ups stay open: new credit adds capacity.'
@@ -1349,7 +1378,7 @@ function autoTopupPanel(auto) {
       el('p', null, el('strong', { text: 'Automatic top-ups' }), ` · ${state}`),
       disable ? button({ label: 'Disable automatic top-ups', variant: 'secondary', size: 'sm', id: 'api-auto-disable', onClick: (event) => disableAutoTopup(event.currentTarget) }) : null),
     auto.enabled ? el('p', { class: 'help', text: `Add US$${auto.amount_usd} below US$${auto.threshold_usd}. US$${auto.spent_this_month_usd ?? 0} of US$${auto.monthly_cap_usd} used this UTC month.${methodText ? ` ${methodText}.` : ''}` }) : null,
-    !auto.available ? el('p', { class: 'help', text: 'Automatic top-up setup is currently unavailable.' }) : null,
+    !auto.available ? el('p', { class: 'help', text: autoTopupUnavailableText(auto) }) : null,
     auto.status === 'paused' ? el('p', { class: 'help', text: AUTO_TOPUP_PAUSES[auto.pause_reason] ?? 'Automatic top-ups are paused. Review your settings to resume.' }) : null,
     auto.cap_reached ? el('p', { class: 'help', text: 'The monthly cap has been reached. Add credit manually or authorize a higher cap.' }) : null,
     auto.pending ? el('p', { class: 'help', text: 'A top-up is processing. Its charge may still settle if you disable automatic top-ups.' }) : null,

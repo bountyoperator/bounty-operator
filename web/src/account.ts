@@ -6,14 +6,14 @@ import { LIMITS } from '../public/review-core.mjs';
 
 import { clearSessionCookie, currentSession } from './auth.ts';
 import type { Session } from './auth.ts';
-import { apiBillingReady, billingReady, hasLiveSubscription, mayStillBill, subscriptionSummary } from './billing.ts';
+import { apiTopupsClosure, apiTopupsDecision, billingReady, hasLiveSubscription, mayStillBill, subscriptionSummary } from './billing.ts';
 import { PRICE, VERSION, seconds } from './env.ts';
 import type { Call, Env } from './env.ts';
 import { currentProfileId } from './hosted.ts';
 import { ApiError, json } from './http.ts';
 import { usage } from './quota.mjs';
 import { apiCreditData, hasApiLiability } from './api-credits.ts';
-import { inferenceCatalog, inferenceStatus, manualTopupsOpen } from './inference.ts';
+import { inferenceBilling, inferenceCatalog, shownInferenceStatus, topupBilling } from './inference.ts';
 
 const HISTORY_ROWS = 30;
 
@@ -59,7 +59,11 @@ export async function clientStatus(env: Env, accountId: string): Promise<Record<
 /** What the account panel shows. Exported for tests. */
 export async function portalData(env: Env, accountId: string): Promise<Record<string, unknown>> {
   const now = seconds();
-  const [account, passkeys, connections, reviews, hasSubscription, subscription, currentUsage, apiData, apiStatus, models] = await Promise.all([
+  // One hosting read for the whole panel. The manual buttons, the automatic
+  // top-up summary and the catalog all wait for it, so they cannot disagree
+  // and a cold cache costs one RunPod request instead of three.
+  const billing = inferenceBilling(env);
+  const [account, passkeys, connections, reviews, hasSubscription, subscription, currentUsage, apiData, apiBilling, models] = await Promise.all([
     env.DB.prepare('SELECT id, created_at, email FROM accounts WHERE id = ?').bind(accountId).first(),
     env.DB.prepare('SELECT id, label, created_at FROM passkeys WHERE account_id = ? ORDER BY created_at').bind(accountId).all(),
     env.DB.prepare('SELECT id, label, created_at, expires, last_used FROM api_tokens WHERE account_id = ? AND expires > ? ORDER BY created_at DESC')
@@ -71,11 +75,15 @@ export async function portalData(env: Env, accountId: string): Promise<Record<st
     hasLiveSubscription(env.DB, accountId),
     subscriptionSummary(env.DB, accountId),
     usage(env.DB, accountId, now),
-    apiCreditData(env, accountId),
-    inferenceStatus(env),
-    inferenceCatalog(env),
+    apiCreditData(env, accountId, false, billing),
+    billing,
+    inferenceCatalog(env, billing),
   ]);
-  const topups = env.API_TOPUPS_ENABLED === 'true' && apiBillingReady(env) && await manualTopupsOpen(env, apiStatus);
+  // An unknown hosting state is shown as available, but closes top-ups. The
+  // panel is given the closure as well, so its text names the actual cause.
+  // Top-ups stay open while only a payment-refilled supplier budget is short.
+  const apiStatus = shownInferenceStatus(apiBilling.status);
+  const topups = apiTopupsDecision(env, await topupBilling(env, apiBilling));
   return {
     account: { ...account, hasSubscription },
     subscription,
@@ -85,7 +93,7 @@ export async function portalData(env: Env, accountId: string): Promise<Record<st
     reviews: reviews.results.map((row) => (typeof row.profile === 'string' ? { ...row, profile: currentProfileId(row.profile) } : row)),
     usage: currentUsage,
     profiles: PROFILES.map((profile) => ({ id: profile.id, name: profile.name })),
-    api: { ...apiData, enabled: apiStatus === 'available', status: apiStatus, topups_enabled: topups, models },
+    api: { ...apiData, enabled: apiStatus === 'available', status: apiStatus, topups_enabled: topups.open, topups_closure: apiTopupsClosure(topups), models },
   };
 }
 

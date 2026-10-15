@@ -272,7 +272,7 @@ test('the health check is documented with the field that tells a hosted build fr
   assert.match(text('mcp.html'), /profiles reads hosted when the service carries the full method of every hosted profile\. A Worker built from the public repository reads community/);
   assert.match(text('security.html'), /its \/api\/health reads "profiles": "community"\. On this site it reads "profiles": "hosted"\./);
   assert.match(llms, /https:\/\/bountyoperator\.com\/api\/health returns `status`, `version`, `reviews` and `profiles` \(`hosted` on this site\)/);
-  assert.match(websiteDoc, /\| `GET \/api\/health` \| Version, the state of billing, reviews and D1, and `profiles`: `hosted` or `community`\./);
+  assert.match(websiteDoc, /\| `GET \/api\/health` \| Version, the state of billing, reviews, inference \(`available`, `paused`, `unavailable`, or `unknown` when it could not be worked out\) and D1, `profiles` \(`hosted` or `community`\), and `topups` \(`open` or `closed`\) with a `topups_reason` code when closed, including `check_failed`\./);
   assert.match(websiteDoc, /\| `GET \/api\/profiles` \|/);
 });
 

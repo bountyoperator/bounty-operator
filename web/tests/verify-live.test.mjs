@@ -10,11 +10,14 @@ import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 
 import { CONTENT_SECURITY_POLICY, HTML_CACHE, SECURITY_HEADERS } from '../src/http.ts';
+import { clearHostingState } from '../src/inference.ts';
 import { PROFILE_SOURCE } from '../src/operator-profiles.generated.mjs';
 import worker from '../src/worker.ts';
 import {
-  EXPECTED_CSP, EXPECTED_HEADERS, EXPECTED_HTML_CACHE, MCP_TOOLS, foreignScripts, headerProblems, parseSums, profilesProblems, sitemapLocations, titleOf, verifyLive,
+  EXPECTED_CSP, EXPECTED_HEADERS, EXPECTED_HTML_CACHE, MCP_TOOLS, foreignScripts, headerProblems, parseSums, profilesProblems, sitemapLocations, titleOf, topupsProblems, verifyLive,
 } from '../../scripts/verify-live.mjs';
+import { HOSTING_FAILURES, HOSTING_REASONS, fundedHosting } from './hosting-fixtures.mjs';
+import { enableSupplierFixture } from './supplier-fixtures.mjs';
 import { SITE_ORIGIN, createContext, createEnv, funnelCounts } from './worker-helpers.mjs';
 
 const WEB_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -45,8 +48,9 @@ function assets() {
 }
 
 /** A fetch that reaches the Worker in this process. `change(url, response)` may replace an answer. */
-function siteFetch(change = null) {
-  const env = createEnv({ ASSETS: assets() });
+function siteFetch(change = null, overrides = {}) {
+  const env = createEnv({ ASSETS: assets(), ...overrides });
+  if (overrides.INFERENCE_MODELS) enableSupplierFixture(env);
   const seen = [];
   const fetch = async (url, init = {}) => {
     seen.push(`${init.method ?? 'GET'} ${url}`);
@@ -79,6 +83,7 @@ test('the site as this checkout builds it passes every check', async () => {
     results.map((result) => result.name.replace(/^\d+ sitemap pages/, 'N sitemap pages')),
     [
       '/api/health',
+      'top-ups: /api/inference/catalog agrees with /api/health',
       'security headers on /',
       'security headers on /guide',
       '/.well-known/security.txt',
@@ -176,6 +181,67 @@ test('each thing that can be wrong on a live site fails its own check', async ()
     }),
     ['MCP initialize', 'MCP tools/list'],
   );
+});
+
+// A site selling RunPod-hosted credit: inference is available and top-ups
+// depend on the hosting API's funding answer.
+const SELLING = {
+  BILLING_MODE: 'live', STRIPE_SECRET_KEY: 'rk_live_fixture', STRIPE_WEBHOOK_SECRET: 'whsec_fixture', STRIPE_PRICE_ID: 'price_monthly',
+  INFERENCE_ENABLED: 'true', API_TOPUPS_ENABLED: 'true', RUNPOD_API_KEY: 'fixture-runpod-key',
+  INFERENCE_MODELS: JSON.stringify([{ id: 'live-test', name: 'Live test', source: 'test/model', revision: 'abc', license: 'MIT', quantization: 'FP8', endpoint: 'https://livetest.api.runpod.ai', upstreamModel: 'test/model', inputRate: 2, outputRate: 8, minimumMicro: 10000, context: 32768, maxOutput: 8192 }]),
+};
+
+test('top-ups closed by an unreadable hosting state fail the run, with the reason; a funded site passes', async (t) => {
+  let answer = fundedHosting;
+  t.mock.method(globalThis, 'fetch', async (input, options) => {
+    const url = new URL(typeof input === 'string' ? input : input.url);
+    assert.equal(url.host, 'api.runpod.io', 'the Worker reads only the hosting API');
+    return answer(url, options);
+  });
+  t.mock.method(console, 'warn', () => {});
+  const name = 'top-ups: /api/inference/catalog agrees with /api/health';
+  const run = async (change = null) => verifyLive({ baseUrl: SITE_ORIGIN, profiles: EDITION, version: VERSION, fetch: siteFetch(change, SELLING).fetch });
+
+  clearHostingState();
+  assert.deepEqual(failed(await run()), [], 'a funded site with top-ups open passes');
+
+  for (const [fixture, failure] of Object.entries(HOSTING_FAILURES)) {
+    clearHostingState();
+    answer = failure;
+    const results = await run();
+    assert.deepEqual(failed(results), [name], fixture);
+    assert.match(results.find((result) => result.name === name).detail, new RegExp(`top-ups are closed while inference is available: hosting_unknown:${HOSTING_REASONS[fixture]}`), fixture);
+  }
+
+  // The catalog and health disagreeing is its own failure.
+  clearHostingState();
+  answer = fundedHosting;
+  const disagree = await run(async (url, response) => (url.pathname === '/api/inference/catalog' ? Response.json({ ...(await response.json()), topups_enabled: false }) : null));
+  assert.deepEqual(failed(disagree), [name]);
+  assert.match(disagree.find((result) => result.name === name).detail, /the catalog says topups_enabled false, \/api\/health says topups open/);
+});
+
+test('the top-ups check compares health and the catalog only while inference is available', () => {
+  const open = { inference: 'available', topups: 'open', topups_reason: null };
+  assert.deepEqual(topupsProblems(open, { topups_enabled: true }), []);
+  // The operator's own switch is not an outage.
+  assert.deepEqual(topupsProblems({ inference: 'available', topups: 'closed', topups_reason: 'disabled' }, { topups_enabled: false }), []);
+  assert.deepEqual(topupsProblems({ inference: 'available', topups: 'closed', topups_reason: 'billing_not_ready' }, { topups_enabled: false }), ['top-ups are closed while inference is available: billing_not_ready']);
+  assert.deepEqual(topupsProblems({ inference: 'available', topups: 'closed', topups_reason: 'hosting_unknown:http_401' }, { topups_enabled: true }), [
+    'the catalog says topups_enabled true, /api/health says topups closed (hosting_unknown:http_401)',
+    'top-ups are closed while inference is available: hosting_unknown:http_401',
+  ]);
+  assert.deepEqual(topupsProblems(open, { topups_enabled: false }), ['the catalog says topups_enabled false, /api/health says topups open']);
+  // A paused or unavailable service closes top-ups by design.
+  assert.deepEqual(topupsProblems({ inference: 'paused', topups: 'closed', topups_reason: 'hosting_paused' }, { topups_enabled: false }), []);
+  assert.deepEqual(topupsProblems({ inference: 'unavailable', topups: 'closed', topups_reason: 'disabled' }, { topups_enabled: false }), []);
+  assert.deepEqual(topupsProblems({ inference: 'paused', topups: 'open', topups_reason: null }, { topups_enabled: false }), ['top-ups are open while inference is "paused"']);
+  assert.deepEqual(topupsProblems({ inference: 'unavailable', topups: 'closed', topups_reason: 'disabled' }, { topups_enabled: true }), ['top-ups are open while inference is "unavailable"']);
+  // Malformed answers.
+  assert.deepEqual(topupsProblems({ inference: 'available' }, { topups_enabled: true }), ['/api/health has no topups field (it is undefined)']);
+  assert.deepEqual(topupsProblems(open, {}), ['/api/inference/catalog has no topups_enabled']);
+  assert.deepEqual(topupsProblems({ inference: 'available', topups: 'open', topups_reason: 'disabled' }, { topups_enabled: true }), ['topups is open with reason "disabled"']);
+  assert.deepEqual(topupsProblems({ inference: 'paused', topups: 'closed', topups_reason: null }, { topups_enabled: false }), ['topups is closed with no reason']);
 });
 
 test('the page checks read markup the way a browser loads it', () => {

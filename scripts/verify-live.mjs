@@ -10,6 +10,10 @@
 // What it checks:
 //   1. /api/health: status ok, the version of web/package.json, the database
 //      answers, and profiles is "hosted" (or what --profiles names).
+//      Top-ups: while inference is available, topups_enabled in
+//      /api/inference/catalog matches health's "topups", and top-ups closed
+//      for any reason but "disabled" (the operator's own switch) fails: a
+//      hosting status that cannot be read, or Stripe not ready, stops sales.
 //   2. / and /guide carry every security header and the one content security policy.
 //   3. /.well-known/security.txt, /robots.txt and /sitemap.xml are served and well-formed.
 //   4. Every page in the sitemap answers 200 with a <title>, and its HTML loads
@@ -117,6 +121,28 @@ export function headerProblems(headers) {
   return problems;
 }
 
+/**
+ * What is wrong with top-ups, from the bodies of GET /api/health and GET
+ * /api/inference/catalog. Payments fail closed when the RunPod funding state
+ * cannot be read, while inference is still shown as available; this is the
+ * check that makes that visible.
+ */
+export function topupsProblems(health, catalog) {
+  if (!['open', 'closed'].includes(health?.topups)) return [`/api/health has no topups field (it is ${JSON.stringify(health?.topups)})`];
+  if (typeof catalog?.topups_enabled !== 'boolean') return ['/api/inference/catalog has no topups_enabled'];
+  const reason = health.topups_reason ?? null;
+  const problems = [];
+  if (health.topups === 'open' && reason !== null) problems.push(`topups is open with reason "${reason}"`);
+  if (health.topups === 'closed' && (typeof reason !== 'string' || !reason)) problems.push('topups is closed with no reason');
+  if (health.inference === 'available') {
+    if (catalog.topups_enabled !== (health.topups === 'open')) problems.push(`the catalog says topups_enabled ${catalog.topups_enabled}, /api/health says topups ${health.topups}${reason ? ` (${reason})` : ''}`);
+    if (health.topups === 'closed' && reason && reason !== 'disabled') problems.push(`top-ups are closed while inference is available: ${reason}`);
+  } else if (health.topups === 'open' || catalog.topups_enabled) {
+    problems.push(`top-ups are open while inference is "${health.inference}"`);
+  }
+  return problems;
+}
+
 /** What is wrong with the body of GET /api/profiles. */
 export function profilesProblems(text) {
   let body;
@@ -200,16 +226,25 @@ export async function verifyLive({ baseUrl, alias = '', profiles = 'hosted', ver
   };
 
   // 1. Health
+  let health = null;
   await check('/api/health', async () => {
     const response = await get(`${baseUrl}/api/health`);
     if (response.status !== 200) return `HTTP ${response.status}`;
-    const health = await response.json();
+    health = await response.json();
     const problems = [];
     if (health.status !== 'ok') problems.push(`status is "${health.status}"`);
     if (health.version !== version) problems.push(`version is "${health.version}", web/package.json says "${version}"`);
     if (health.db !== 'ok') problems.push(`db is "${health.db}"`);
     if (health.profiles !== profiles) problems.push(`profiles is "${health.profiles}", expected "${profiles}"`);
     return problems;
+  });
+
+  // 1b. Top-ups: the catalog and health agree, and sales are not closed by accident
+  await check('top-ups: /api/inference/catalog agrees with /api/health', async () => {
+    if (!health) return 'no /api/health answer to compare with';
+    const response = await get(`${baseUrl}/api/inference/catalog`);
+    if (response.status !== 200) return `/api/inference/catalog: HTTP ${response.status}`;
+    return topupsProblems(health, await response.json());
   });
 
   // 2. Headers on the two pages most visitors load first
