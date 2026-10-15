@@ -47,10 +47,25 @@
     "API_AUTOTOPUPS_ENABLED": "false",
     "INFERENCE_MODELS": "[]",
     // Verified, expiring supplier cost rules. A funded D1 budget is also required.
-    "SUPPLIER_COST_RULES": "[]"
+    "SUPPLIER_COST_RULES": "[]",
+    // The */15 cron emails the owner when the RunPod balance drops below this
+    // many USD (or the account is underBalance). The code defaults to 10 when
+    // this is unset or unreadable.
+    "RUNPOD_ALERT_USD": "10"
   },
   // Secrets, set with `wrangler secret put`: STRIPE_SECRET_KEY,
   // STRIPE_WEBHOOK_SECRET, IP_HASH_KEY, RUNPOD_API_KEY.
+  //
+  // Owner alerts (RunPod balance low, inference paused/recovered) need a
+  // send_email binding named ALERT_EMAIL. It is left out here on purpose: with
+  // no binding the cron sends nothing, so local development and a fork stay
+  // quiet. Production adds it, pinned to one verified recipient, for example:
+  //   "send_email": [
+  //     { "name": "ALERT_EMAIL", "destination_address": "owner@example.com" }
+  //   ]
+  // The message is sent from alerts@bountyoperator.com to the support address;
+  // set the ALERT_EMAIL_TO var to a different recipient (it must match the
+  // binding's destination_address).
   "observability": {
     "enabled": true,
     "head_sampling_rate": 1,

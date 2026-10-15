@@ -52,6 +52,7 @@ import { apiCreditData, createInferenceKey, reapInferenceHolds, revokeInferenceK
 import { createApiTopup, reconcileApiTopup, resyncPendingTopups } from './api-topups.ts';
 import { inferenceCatalog, inferenceEndpoint, inferenceModels, inferenceStatus } from './inference.ts';
 import { reconcileRunpodBilling } from './supplier-costs.ts';
+import { monitorRunpod } from './alerts.ts';
 
 const AUTH_REQUESTS_PER_HOUR = 90;
 const BILLING_REQUESTS_PER_10_MIN = 6;
@@ -60,6 +61,7 @@ const EVENTS_PER_10_MIN = 60;
 const WEBHOOK_BODY_BYTES = 1000000;
 const WEBHOOK_PATH = '/api/stripe/webhook';
 const DAILY_CRON = '17 3 * * *';
+const FREQUENT_CRON = '*/15 * * * *';
 
 type Handler = (call: Call) => Promise<Response>;
 type SessionHandler = (call: Call, session: Session) => Promise<Response>;
@@ -139,6 +141,7 @@ async function health({ env }: Call): Promise<Response> {
       env.DB.prepare('SELECT credited_micro FROM api_monthly_grants LIMIT 1'),
       env.DB.prepare('SELECT limit_micro FROM supplier_budget_windows LIMIT 1'),
       env.DB.prepare('SELECT total_micro FROM supplier_billing_buckets LIMIT 1'),
+      env.DB.prepare('SELECT last_sent FROM operator_alerts LIMIT 1'),
     ]);
     return json(body);
   } catch {
@@ -422,6 +425,13 @@ export default {
     });
     const purged = controller.cron === DAILY_CRON ? await purgeExpired(env, now) : {};
     const supplierBilling = controller.cron === DAILY_CRON ? await reconcileSupplierBilling(env, now) : null;
-    console.log('Scheduled cleanup', { cron: controller.cron, reapedLeases, reapedInference, topupsResynced, resynced, ...purged, ...(supplierBilling ? { supplierBilling } : {}) });
+    // Watch the RunPod balance and whether inference is selling, and email the owner when it needs attention.
+    const alerts = controller.cron === FREQUENT_CRON
+      ? await monitorRunpod(env, now).catch((error: unknown) => {
+          console.error('RunPod monitor failed', { name: error instanceof Error ? error.name : 'unknown' });
+          return { status: 'error' };
+        })
+      : null;
+    console.log('Scheduled cleanup', { cron: controller.cron, reapedLeases, reapedInference, topupsResynced, resynced, ...purged, ...(supplierBilling ? { supplierBilling } : {}), ...(alerts ? { alerts } : {}) });
   },
 } satisfies ExportedHandler<Env>;
