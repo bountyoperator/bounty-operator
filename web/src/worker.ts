@@ -47,10 +47,10 @@ import { reapStaleLeases, usage } from './quota.mjs';
 import { clientKey, edgeLimit, rateLimit } from './rate.ts';
 import { REVIEWS_PER_10_MIN, REVIEW_BODY_BYTES, parseReviewRequest, runHostedReview, streamHostedReview } from './review.ts';
 import { serveAsset } from './static.ts';
-import { autoTopupAvailable, autoTopupData, createAutoTopupSetup, disableAutoTopup, processAutoTopups, updateAutoTopup } from './api-autotopup.ts';
+import { autoTopupData, createAutoTopupSetup, disableAutoTopup, processAutoTopups, requireAutoTopupAvailable, updateAutoTopup } from './api-autotopup.ts';
 import { apiCreditData, createInferenceKey, reapInferenceHolds, revokeInferenceKey } from './api-credits.ts';
-import { createApiTopup, reconcileApiTopup, resyncPendingTopups } from './api-topups.ts';
-import { inferenceCatalog, inferenceEndpoint, inferenceModels, inferenceStatus } from './inference.ts';
+import { createApiTopup, reconcileApiTopup, resyncPendingTopups, topupsUnavailable } from './api-topups.ts';
+import { inferenceBillingStatus, inferenceCatalog, inferenceEndpoint, inferenceModels, inferenceStatus, shownInferenceStatus } from './inference.ts';
 import { reconcileRunpodBilling } from './supplier-costs.ts';
 
 const AUTH_REQUESTS_PER_HOUR = 90;
@@ -217,9 +217,11 @@ const billingPortal = billingRoute('billing', BILLING_REQUESTS_PER_10_MIN, async
 );
 
 const apiTopup = billingRoute('api-topup', BILLING_REQUESTS_PER_10_MIN, async ({ env, request }, session) => {
-  if (env.API_TOPUPS_ENABLED !== 'true') throw new ApiError('API top-ups are not open right now.', 503, 'topups_unavailable');
-  const status = await inferenceStatus(env);
-  if (status !== 'available') throw new ApiError(status === 'paused' ? 'API top-ups are closed while model inference is paused.' : 'API top-ups are not open right now.', 503, 'topups_unavailable');
+  if (env.API_TOPUPS_ENABLED !== 'true') throw topupsUnavailable('closed');
+  // Fails closed: credit is sold only while it can be spent, so a hosting
+  // state that cannot be read refuses the purchase before Stripe is called.
+  const status = await inferenceBillingStatus(env);
+  if (status !== 'available') throw topupsUnavailable(status);
   const body = await readJson(request, 1000);
   const api = stripeClient(env);
   const customer = await customerFor(env, api, session.account_id);
@@ -228,7 +230,7 @@ const apiTopup = billingRoute('api-topup', BILLING_REQUESTS_PER_10_MIN, async ({
 
 const apiAutoTopupSetup = billingRoute('api-autotopup', BILLING_REQUESTS_PER_10_MIN, async ({ env, request }, session) => {
   requireRecentAuth(session);
-  if (!(await autoTopupAvailable(env))) throw new ApiError('Automatic API top-ups are not open right now.', 503, 'topups_unavailable');
+  await requireAutoTopupAvailable(env);
   const body = await readJson(request, 1000);
   const api = stripeClient(env);
   const customer = await customerFor(env, api, session.account_id);
@@ -283,8 +285,10 @@ const ROUTES: Readonly<Record<string, Readonly<Record<string, Handler>>>> = {
   '/api/health': { GET: health },
   '/api/profiles': { GET: profiles },
   '/api/inference/catalog': { GET: async ({ env }) => {
-    const status = await inferenceStatus(env);
-    return json({ enabled: status === 'available', status, topups_enabled: status === 'available' && env.API_TOPUPS_ENABLED === 'true' && apiBillingReady(env), models: await inferenceCatalog(env) });
+    // The catalog shows an unknown hosting state as available; top-ups open only on a known one.
+    const billing = await inferenceBillingStatus(env);
+    const status = shownInferenceStatus(billing);
+    return json({ enabled: status === 'available', status, topups_enabled: billing === 'available' && env.API_TOPUPS_ENABLED === 'true' && apiBillingReady(env), models: await inferenceCatalog(env) });
   } },
   '/api/account': { GET: accountStatus },
   '/api/portal': { GET: signedInRead(portal) },

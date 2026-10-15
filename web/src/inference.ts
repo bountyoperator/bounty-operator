@@ -107,55 +107,117 @@ export function inferenceReady(env: Env): boolean {
 // worker answers /health with 402 and nothing can start. That state is read
 // from the hosting API once a minute, so the catalog, the account panel and
 // top-ups say "paused" instead of selling credit nothing can spend, and a
-// request fails at once instead of after a reservation and a probe.
+// request fails at once instead of after a reservation and a probe. Payments
+// fail closed: when the state cannot be read, no top-up is sold or sent.
 const HOSTING_CHECK_MS = 60000;
+const HOSTING_TIMEOUT_MS = 5000;
 const HOSTING_API = 'https://api.runpod.io/graphql';
 const PAUSED_MESSAGE = 'Model inference is paused right now. No charge was made. Try again later.';
-let hosting = { at: 0, key: '', paused: false };
 
-function noteHosting(env: Env, paused: boolean): void {
-  hosting = { at: Date.now(), key: env.RUNPOD_API_KEY ?? '', paused };
+/**
+ * 'funded' and 'paused' are answers: from the hosting API, or from a worker's
+ * /health (200 or 402). 'unknown' is everything else: an error status, a
+ * network failure, a timeout, GraphQL errors, no account or a malformed body.
+ */
+export type HostingState = 'funded' | 'paused' | 'unknown';
+let hosting: { at: number; key: string; state: HostingState } = { at: 0, key: '', state: 'unknown' };
+
+function noteHosting(env: Env, state: HostingState): void {
+  hosting = { at: Date.now(), key: env.RUNPOD_API_KEY ?? '', state };
+}
+
+/** The state noted in the last minute for this account's key, or null when there is none. */
+function recentHosting(env: Env): HostingState | null {
+  return hosting.key === env.RUNPOD_API_KEY && Date.now() - hosting.at < HOSTING_CHECK_MS ? hosting.state : null;
 }
 
 /** Forgets the last hosting state, so the next question asks the hosting API again. */
 export function clearHostingState(): void {
-  hosting = { at: 0, key: '', paused: false };
+  hosting = { at: 0, key: '', state: 'unknown' };
 }
 
-/** True when the hosting account reports that it can start no worker. Unknown reads as not paused: the worker probe decides. */
-export async function inferencePaused(env: Env): Promise<boolean> {
-  if (!env.RUNPOD_API_KEY) return false;
-  if (hosting.key === env.RUNPOD_API_KEY && Date.now() - hosting.at < HOSTING_CHECK_MS) return hosting.paused;
-  let paused = false;
+/** One read of the hosting API. Only a 200 answer naming the account and a boolean balance flag counts. */
+async function readHosting(env: Env): Promise<HostingState> {
   try {
     const response = await fetch(HOSTING_API, {
-      method: 'POST', redirect: 'manual', signal: AbortSignal.timeout(5000),
+      method: 'POST', redirect: 'manual', signal: AbortSignal.timeout(HOSTING_TIMEOUT_MS),
       headers: { Authorization: `Bearer ${env.RUNPOD_API_KEY}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ query: '{ myself { underBalance } }' }),
     });
-    const result = response.status === 200 ? await response.json() as { data?: { myself?: { underBalance?: unknown } } } : null;
-    if (!result) await response.body?.cancel();
-    paused = result?.data?.myself?.underBalance === true;
-  } catch { paused = false; }
-  noteHosting(env, paused);
-  return paused;
+    if (response.status !== 200) {
+      await response.body?.cancel();
+      return 'unknown';
+    }
+    const result: unknown = await response.json();
+    // GraphQL can answer 200 with errors beside partial data. Any error makes the answer unknown.
+    if (!object(result) || (result.errors != null && !(Array.isArray(result.errors) && result.errors.length === 0))) return 'unknown';
+    const myself = object(result.data) ? result.data.myself : undefined;
+    if (!object(myself)) return 'unknown';
+    return myself.underBalance === true ? 'paused' : myself.underBalance === false ? 'funded' : 'unknown';
+  } catch {
+    return 'unknown';
+  }
 }
 
-export async function inferenceStatus(env: Env): Promise<'unavailable' | 'paused' | 'available'> {
+/**
+ * The hosting account's funding, read at most once a minute. `fresh` skips the
+ * one-minute cache; its answer then replaces the cached one.
+ */
+export async function hostingState(env: Env, fresh = false): Promise<HostingState> {
+  if (!env.RUNPOD_API_KEY) return 'unknown';
+  const recent = fresh ? null : recentHosting(env);
+  if (recent) return recent;
+  const state = await readHosting(env);
+  noteHosting(env, state);
+  return state;
+}
+
+/**
+ * True when the hosting account reports that it can start no worker. Unknown
+ * reads as not paused here: the catalog stays up and the worker probe decides
+ * each request. Payment decisions use inferenceBillingStatus, where unknown
+ * means closed.
+ */
+export async function inferencePaused(env: Env): Promise<boolean> {
+  return (await hostingState(env)) === 'paused';
+}
+
+export type InferenceStatus = 'unavailable' | 'paused' | 'available';
+/** As InferenceStatus, plus 'unknown' when only RunPod models are usable and its funding could not be read. */
+export type InferenceBillingStatus = InferenceStatus | 'unknown';
+
+/**
+ * Whether credit sold now could be spent. Every payment decision uses this:
+ * manual top-ups, automatic setup, changes, reservations and sends. Only
+ * 'available' allows a payment; an unknown hosting state never does. `fresh`
+ * reads the hosting state again instead of using the one-minute cache.
+ */
+export async function inferenceBillingStatus(env: Env, fresh = false): Promise<InferenceBillingStatus> {
   if (!inferenceReady(env)) return 'unavailable';
   const configured = inferenceModels(env).filter((model) => model.enabled !== false && Boolean(backendKey(model.endpoint, env)));
   const [supplier, faults] = await Promise.all([supplierAvailability(env, configured), usageFaultModels(env)]);
   const models = configured.filter((model) => supplier[model.id]?.available && !faults.has(model.id));
   if (!models.length) return 'unavailable';
+  // A usable direct provider can spend credit whatever RunPod's state is.
   const hasDirectGateway = models.some((m) => m.enabled !== false && !isRunpod(m.endpoint) && Boolean(backendKey(m.endpoint, env)));
   if (hasDirectGateway) return 'available';
-  return (await inferencePaused(env)) ? 'paused' : 'available';
+  const state = await hostingState(env, fresh);
+  return state === 'funded' ? 'available' : state;
+}
+
+/** What the catalog, account panel and health show: an unknown hosting state is shown as available, and the worker probe decides. */
+export function shownInferenceStatus(status: InferenceBillingStatus): InferenceStatus {
+  return status === 'unknown' ? 'available' : status;
+}
+
+export async function inferenceStatus(env: Env): Promise<InferenceStatus> {
+  return shownInferenceStatus(await inferenceBillingStatus(env));
 }
 
 export function publicModel(model: InferenceModel, env?: Env, supplierAvailable = false): Record<string, unknown> {
   const runpod = isRunpod(model.endpoint);
   const available = Boolean(env && env.INFERENCE_ENABLED === 'true' && model.enabled !== false && backendKey(model.endpoint, env) && supplierAvailable);
-  const paused = available && runpod && hosting.key === env?.RUNPOD_API_KEY && Date.now() - hosting.at < HOSTING_CHECK_MS && hosting.paused;
+  const paused = available && runpod && env !== undefined && recentHosting(env) === 'paused';
   const sourceUrl = runpod ? `https://huggingface.co/${model.source.split('/').map(encodeURIComponent).join('/')}`
     : model.endpoint === 'https://api.infron.ai' ? 'https://api.infron.ai/v1/models'
       : `https://www.orcarouter.ai/api/public/models/${model.upstreamModel.split('/').map(encodeURIComponent).join('/')}`;
@@ -313,7 +375,7 @@ export async function inferenceEndpoint(call: Call): Promise<Response> {
     const model = inferenceModels(call.env).find((m) => m.id === body.model);
     if (!model) throw new ApiError('Choose a model returned by /v1/models.', 404, 'model_not_found');
     if (model.enabled === false || !backendKey(model.endpoint, call.env)) throw new ApiError('This model is not available right now. No charge was made.', 503, 'model_unavailable', { retryAfter: 60 });
-    if (isRunpod(model.endpoint) && hosting.key === call.env.RUNPOD_API_KEY && Date.now() - hosting.at < HOSTING_CHECK_MS && hosting.paused) throw new ApiError(PAUSED_MESSAGE, 503, 'inference_paused', { retryAfter: 300 });
+    if (isRunpod(model.endpoint) && recentHosting(call.env) === 'paused') throw new ApiError(PAUSED_MESSAGE, 503, 'inference_paused', { retryAfter: 300 });
     const parsed = parseInference(body, model);
     const usageFault = await call.env.DB.prepare("SELECT 1 AS found FROM inference_requests WHERE model = ? AND failure_code = 'usage_limit_exceeded' AND finished_at > ? LIMIT 1").bind(model.id, Math.floor(Date.now() / 1000) - 600).first();
     if (usageFault) throw new ApiError('This model is temporarily unavailable while its usage limits are checked. No charge was made.', 503, 'model_usage_unavailable', { retryAfter: 600 });
@@ -473,9 +535,9 @@ async function readyWorker(model: InferenceModel, env: Env, signal: AbortSignal)
       await response.body?.cancel();
       status = response.status;
     } catch { if (signal.aborted) break; }
-    if (status === 200) { noteHosting(env, false); return; }
+    if (status === 200) { noteHosting(env, 'funded'); return; }
     // The hosting account has run out: no worker will start until it is replenished.
-    if (status === 402) { noteHosting(env, true); throw new ApiError(PAUSED_MESSAGE, 503, 'inference_paused', { retryAfter: 300 }); }
+    if (status === 402) { noteHosting(env, 'paused'); throw new ApiError(PAUSED_MESSAGE, 503, 'inference_paused', { retryAfter: 300 }); }
     // Wrong credentials or a changed URL cannot be repaired by warming.
     if (status > 0 && status < 500 && status !== 429 && status !== 408) break;
     if (!signal.aborted) await new Promise<void>((resolve) => {

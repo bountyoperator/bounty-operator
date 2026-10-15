@@ -1237,6 +1237,14 @@ export function autoTopupAuthorization(settings) {
   return `I authorize Bounty Operator to charge my saved payment method US$${amount_usd} when available API credit falls below US$${threshold_usd}, up to US$${monthly_cap_usd} per calendar month (UTC), until I disable automatic top-ups.`;
 }
 
+/** The line shown while automatic purchases are closed. A setting that is on stays on and simply waits. */
+export function autoTopupUnavailableText(auto) {
+  if (auto.available) return '';
+  return auto.enabled
+    ? 'No automatic payment is made while top-ups are unavailable. They resume when the model service is available again.'
+    : 'Automatic top-up setup is currently unavailable.';
+}
+
 const AUTO_TOPUP_PAUSES = {
   payment_failed: 'The last payment failed. Update your payment method to resume.',
   authentication_required: 'Your payment needs confirmation. Save your payment method in Stripe again.',
@@ -1331,7 +1339,7 @@ function autoTopupPanel(auto) {
       el('p', null, el('strong', { text: 'Automatic top-ups' }), ` · ${state}`),
       disable ? button({ label: 'Disable automatic top-ups', variant: 'secondary', size: 'sm', id: 'api-auto-disable', onClick: (event) => disableAutoTopup(event.currentTarget) }) : null),
     auto.enabled ? el('p', { class: 'help', text: `Add US$${auto.amount_usd} below US$${auto.threshold_usd}. US$${auto.spent_this_month_usd ?? 0} of US$${auto.monthly_cap_usd} used this UTC month.${methodText ? ` ${methodText}.` : ''}` }) : null,
-    !auto.available ? el('p', { class: 'help', text: 'Automatic top-up setup is currently unavailable.' }) : null,
+    !auto.available ? el('p', { class: 'help', text: autoTopupUnavailableText(auto) }) : null,
     auto.status === 'paused' ? el('p', { class: 'help', text: AUTO_TOPUP_PAUSES[auto.pause_reason] ?? 'Automatic top-ups are paused. Review your settings to resume.' }) : null,
     auto.cap_reached ? el('p', { class: 'help', text: 'The monthly cap has been reached. Add credit manually or authorize a higher cap.' }) : null,
     auto.pending ? el('p', { class: 'help', text: 'A top-up is processing. Its charge may still settle if you disable automatic top-ups.' }) : null,

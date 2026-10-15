@@ -6,6 +6,7 @@ import { clearHostingState, inferencePaused } from '../src/inference.ts';
 import worker from '../src/worker.ts';
 import { addAccount, createContext, createEnv, SITE_ORIGIN } from './worker-helpers.mjs';
 import { enableSupplierFixture } from './supplier-fixtures.mjs';
+import { HOSTING_FAILURES, fundedHosting } from './hosting-fixtures.mjs';
 
 const model = { id: 'billing-test', name: 'Billing test', source: 'test/model', revision: 'abc', license: 'MIT', quantization: 'FP8', endpoint: 'https://api.infron.ai', upstreamModel: 'test/model', inputRate: 2, outputRate: 8, minimumMicro: 10000, context: 32768, maxOutput: 8192 };
 const session = 's'.repeat(43);
@@ -75,6 +76,49 @@ test('paused or unavailable inference rejects manual and automatic purchases bef
     assert.equal(env.DB.sqlite.prepare('SELECT stripe_customer FROM accounts').get().stripe_customer, null);
   }
   assert.equal(stripeCalls.length, 0);
+});
+
+test('purchase routes say top-ups are unavailable, before any Stripe request, when the hosting state cannot be read', async (t) => {
+  let answer = fundedHosting;
+  const stripeCalls = [];
+  t.mock.method(globalThis, 'fetch', async (input, options) => {
+    const url = new URL(typeof input === 'string' ? input : input.url);
+    if (url.host === 'api.runpod.io') return answer(url, options);
+    assert.equal(url.host, 'api.stripe.com');
+    assert.equal(url.pathname, '/v1/checkout/sessions');
+    stripeCalls.push(url.pathname);
+    return Response.json({ id: 'cs_live_fixture', url: 'https://checkout.stripe.com/c/pay/cs_live_fixture', payment_intent: null });
+  });
+  const runpodOnly = { INFRON_API_KEY: undefined, RUNPOD_API_KEY: 'fixture-runpod-key', INFERENCE_MODELS: JSON.stringify([{ ...model, endpoint: 'https://billingtest.api.runpod.ai' }]) };
+  for (const [name, failure] of Object.entries(HOSTING_FAILURES)) {
+    const { env, account, post } = await setup(runpodOnly);
+    env.DB.sqlite.prepare('UPDATE accounts SET stripe_customer = ? WHERE id = ?').run('cus_fixture', account);
+    answer = failure;
+    for (const path of ['/api/inference/topup', '/api/inference/autotopup/setup', '/api/inference/autotopup/update']) {
+      const response = await post(path);
+      assert.equal(response.status, 503, `${name} ${path}`);
+      assert.equal(response.headers.get('Retry-After'), '60', `${name} ${path}`);
+      const body = await response.json();
+      assert.equal(body.code, 'topups_unavailable', `${name} ${path}`);
+      assert.match(body.error, /top-ups are unavailable because the model hosting status could not be confirmed\. No charge was made\./, `${name} ${path}`);
+    }
+    assert.equal(stripeCalls.length, 0, name);
+    assert.equal(env.DB.sqlite.prepare('SELECT COUNT(*) AS n FROM api_topups').get().n, 0, name);
+
+    // The catalog keeps showing the model; only purchases close.
+    const catalog = await (await worker.fetch(new Request(`${SITE_ORIGIN}/api/inference/catalog`), env, createContext())).json();
+    assert.deepEqual([catalog.status, catalog.models[0].availability, catalog.topups_enabled], ['available', 'available', false], name);
+    const portal = await portalData(env, account);
+    assert.deepEqual([portal.api.status, portal.api.topups_enabled, portal.api.auto_topup.available], ['available', false, false], name);
+
+    // Once hosting is confirmed funded, the same purchase opens a checkout.
+    answer = fundedHosting;
+    clearHostingState();
+    const opened = await post('/api/inference/topup');
+    assert.equal(opened.status, 200, name);
+    assert.equal(stripeCalls.length, 1, name);
+    stripeCalls.length = 0;
+  }
 });
 
 test('automatic setup requires explicit configuration but disabling stays available without it', async (t) => {

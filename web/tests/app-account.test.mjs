@@ -38,7 +38,7 @@ import {
   toBase64Url,
   toBytes,
 } from '../public/app/passkey.mjs';
-import { MCP_ENDPOINT, MCP_PACKAGE, TABS, TOKEN_VAR, autoTopupAuthorization, autoTopupSettings, connectionCommands, reviewRows, usageSummary } from '../public/app/portal.mjs';
+import { MCP_ENDPOINT, MCP_PACKAGE, TABS, TOKEN_VAR, autoTopupAuthorization, autoTopupSettings, autoTopupUnavailableText, connectionCommands, reviewRows, usageSummary } from '../public/app/portal.mjs';
 import { ACCOUNT_SCRIPTS, ACCOUNT_STYLES, accountDialog } from '../site/fragments/account-dialog.mjs';
 import { assertNoBannedNames } from './private-lists.mjs';
 
@@ -472,6 +472,12 @@ describe('automatic top-up authorization', () => {
 
   test('consent names the exact charge, trigger, cap, and ongoing authorization', () => {
     assert.equal(autoTopupAuthorization({ amount_usd: 50, threshold_usd: 10, monthly_cap_usd: 200 }), 'I authorize Bounty Operator to charge my saved payment method US$50 when available API credit falls below US$10, up to US$200 per calendar month (UTC), until I disable automatic top-ups.');
+  });
+
+  test('a setting that is on says it waits, with no payment, while top-ups are unavailable', () => {
+    assert.equal(autoTopupUnavailableText({ available: true, enabled: true }), '');
+    assert.equal(autoTopupUnavailableText({ available: false, enabled: true }), 'No automatic payment is made while top-ups are unavailable. They resume when the model service is available again.');
+    assert.equal(autoTopupUnavailableText({ available: false, enabled: false }), 'Automatic top-up setup is currently unavailable.');
   });
 });
 

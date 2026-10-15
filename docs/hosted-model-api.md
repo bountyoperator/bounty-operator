@@ -74,6 +74,23 @@ value keeps new automatic setups, changes and payments closed. Set it only after
 the required Stripe permissions and webhook events are verified. Disabling stays
 available, and payments already initiated continue to reconcile.
 
+Payments fail closed on the RunPod funding state. When every usable model is
+hosted on RunPod, a purchase needs the hosting API to confirm the account is
+funded (`underBalance: false`). A non-200 answer, a redirect, a network error, a
+five-second timeout, GraphQL errors, `myself: null`, a missing flag or a
+malformed body leaves the state unknown. Manual top-ups, automatic setup and
+automatic changes then answer HTTP 503 `topups_unavailable` with Retry-After 60
+before any Stripe request, and the scheduled task reserves nothing. The state
+is cached for one minute, but each automatic payment reads it again, uncached,
+just before it is sent. If that read is not funded, the unsent reservation is
+closed and the next run decides again from the current balance. Payments
+already sent to Stripe always reconcile. The catalog and model requests still
+show an unknown state as available, and the worker probe decides each request.
+A setup that completes during an outage turns the setting on, because that
+records consent and moves no money; its first charge waits until hosting is
+confirmed funded. An available direct provider keeps purchases open whatever
+the RunPod state.
+
 Model availability requires a configured provider credential, verified unexpired
 `SUPPLIER_COST_RULES` for that model and a funded current supplier budget window.
 No pricing rule or no remaining supplier allowance means unavailable, even when

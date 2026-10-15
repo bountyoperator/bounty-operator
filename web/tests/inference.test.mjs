@@ -1,10 +1,11 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { apiCreditData, authenticateInference, createInferenceKey, hasApiLiability, reapInferenceHolds, reserveInference, settleInference } from '../src/api-credits.ts';
-import { clearHostingState, inferenceCatalog, inferenceEndpoint, inferenceModels, inferencePaused, inferenceStatus, parseInference, usageCounters } from '../src/inference.ts';
+import { clearHostingState, hostingState, inferenceBillingStatus, inferenceCatalog, inferenceEndpoint, inferenceModels, inferencePaused, inferenceStatus, parseInference, usageCounters } from '../src/inference.ts';
 import { parseReviewRequest, runHostedReview } from '../src/review.ts';
 import { addAccount, createCall, createContext, createEnv } from './worker-helpers.mjs';
 import { enableSupplierFixture } from './supplier-fixtures.mjs';
+import { HOSTING_API, HOSTING_FAILURES, fundedHosting, pausedHosting } from './hosting-fixtures.mjs';
 
 const model = { id: 'cyber-test', name: 'Cyber test', source: 'test/model', revision: 'abc', license: 'Apache-2.0', quantization: 'AWQ', endpoint: 'https://test123.api.runpod.ai', upstreamModel: 'cyber-test', inputRate: 2, outputRate: 8, minimumMicro: 10000, context: 32768, maxOutput: 8192 };
 async function setup(balance = 20000000) {
@@ -630,6 +631,74 @@ test('a paused hosting account reports paused status, releases holds with no cha
   assert.equal(env.DB.sqlite.prepare("SELECT COUNT(*) AS n FROM inference_requests WHERE failure_code = 'hosting_paused'").get().n, 6);
   assert.equal(env.DB.sqlite.prepare('SELECT reserved_micro, balance_micro FROM api_wallets').get().reserved_micro, 0);
   assert.equal(env.DB.sqlite.prepare('SELECT balance_micro FROM api_wallets').get().balance_micro, 20000000);
+});
+
+test('only a well-formed hosting answer is known; an unknown state keeps the catalog open but closes billing', async (t) => {
+  const { env } = await setup();
+  let answer = fundedHosting;
+  const reads = [];
+  t.mock.method(globalThis, 'fetch', async (url, options) => {
+    reads.push(url);
+    assert.equal(url, HOSTING_API, 'a status read must not start or probe a worker');
+    assert.equal(options.redirect, 'manual');
+    assert.ok(options.signal instanceof AbortSignal, 'every read carries a timeout');
+    return answer(url, options);
+  });
+  assert.equal(await hostingState(env), 'funded');
+  assert.equal(await inferenceBillingStatus(env), 'available');
+  for (const [name, failure] of Object.entries(HOSTING_FAILURES)) {
+    clearHostingState();
+    answer = failure;
+    assert.equal(await hostingState(env), 'unknown', name);
+    // Requests and the catalog keep their behaviour: the worker probe decides.
+    assert.equal(await inferencePaused(env), false, name);
+    assert.equal(await inferenceStatus(env), 'available', name);
+    assert.equal((await inferenceCatalog(env))[0].availability, 'available', name);
+    // Payments do not: an unknown state is never available for billing.
+    assert.equal(await inferenceBillingStatus(env), 'unknown', name);
+  }
+  clearHostingState();
+  answer = pausedHosting;
+  assert.equal(await hostingState(env), 'paused');
+  assert.equal(await inferenceBillingStatus(env), 'paused');
+  assert.equal(reads.length, Object.keys(HOSTING_FAILURES).length + 2, 'each state is read once and then cached for the minute');
+  env.RUNPOD_API_KEY = undefined;
+  assert.equal(await hostingState(env), 'unknown', 'no credential means no known state');
+});
+
+test('a fresh hosting read skips the one-minute cache and replaces the cached state', async (t) => {
+  const { env } = await setup();
+  let answer = fundedHosting;
+  const reads = t.mock.method(globalThis, 'fetch', async () => answer());
+  assert.equal(await inferenceBillingStatus(env), 'available');
+  answer = HOSTING_FAILURES['fetch 500'];
+  assert.equal(await inferenceBillingStatus(env), 'available', 'a cached funded state is used within the minute');
+  assert.equal(reads.mock.callCount(), 1);
+  assert.equal(await inferenceBillingStatus(env, true), 'unknown');
+  assert.equal(reads.mock.callCount(), 2);
+  assert.equal(await inferenceBillingStatus(env), 'unknown', 'the fresh answer replaces the cached one');
+  assert.equal(reads.mock.callCount(), 2);
+  answer = fundedHosting;
+  assert.equal(await hostingState(env, true), 'funded');
+  assert.equal(await inferenceBillingStatus(env), 'available');
+  assert.equal(reads.mock.callCount(), 3);
+});
+
+test('a hosting read with no answer in five seconds is unknown and closes billing', async (t) => {
+  const { env } = await setup();
+  t.mock.method(globalThis, 'fetch', (url, options) => new Promise((_resolve, reject) => {
+    options.signal.addEventListener('abort', () => reject(options.signal.reason), { once: true });
+  }));
+  // The timeout's own timer does not keep Node running; this one does.
+  const keepAlive = setTimeout(() => {}, 10000);
+  try {
+    const started = Date.now();
+    assert.equal(await inferenceBillingStatus(env), 'unknown');
+    assert.ok(Date.now() - started >= 4500, 'the read waits for the timeout before giving up');
+    assert.equal(await inferenceStatus(env), 'available');
+  } finally {
+    clearTimeout(keepAlive);
+  }
 });
 
 test('serverless upstream gateways route with their own secret, skip the Runpod health probe and bill wallet usage', async (t) => {

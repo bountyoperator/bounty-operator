@@ -11,6 +11,19 @@ const TAG = API_PAYMENT_TAG;
 export interface Topup { id: string; account_id: string | null; customer_id: string; checkout_id: string | null; payment_intent: string | null; amount_micro: number; credited_micro: number; refunded_micro: number; dispute_at: number; dispute_blocked: number; dispute_open: number; revision: number; status: string; created_at: number; source: 'checkout' | 'automatic'; auto_month: string | null; auto_revision: number | null; payment_method: string | null; initiated_at: number; payment_verified_at: number }
 const idOf = (value: string | { id: string } | null | undefined): string | null => typeof value === 'string' ? value : value?.id ?? null;
 
+/** Why a purchase is closed: the model service's billing status, or 'closed' when configuration does not allow it. */
+export type TopupClosure = 'closed' | 'unavailable' | 'paused' | 'unknown';
+
+/** The refusal for a new purchase. It is thrown before any Stripe request, so nothing has been charged. */
+export function topupsUnavailable(reason: TopupClosure, automatic = false): ApiError {
+  const kind = automatic ? 'Automatic API top-ups' : 'API top-ups';
+  if (reason === 'unknown') {
+    return new ApiError(`${kind} are unavailable because the model hosting status could not be confirmed. No charge was made. Try again in a few minutes.`, 503, 'topups_unavailable', { retryAfter: 60 });
+  }
+  if (reason === 'paused') return new ApiError(`${kind} are closed while model inference is paused.`, 503, 'topups_unavailable');
+  return new ApiError(`${kind} are not open right now.`, 503, 'topups_unavailable');
+}
+
 /** Test money is accepted only by an explicitly configured localhost Worker. */
 export function localStripeTest(env: Env): boolean {
   try { return env.BILLING_MODE === 'test' && ['localhost', '127.0.0.1', '[::1]'].includes(new URL(env.SITE_ORIGIN).hostname) && /^(sk|rk)_test_/.test(env.STRIPE_SECRET_KEY ?? ''); }

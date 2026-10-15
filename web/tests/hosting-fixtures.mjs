@@ -1,0 +1,22 @@
+// Answers the RunPod hosting API can give to { myself { underBalance } }.
+// Each failure must leave the funding state unknown, which closes payments.
+
+export const HOSTING_API = 'https://api.runpod.io/graphql';
+
+export const fundedHosting = () => Response.json({ data: { myself: { underBalance: false } } });
+export const pausedHosting = () => Response.json({ data: { myself: { underBalance: true } } });
+
+/** Each returns what a mocked fetch would: a Response, or a rejection. */
+export const HOSTING_FAILURES = {
+  'fetch 500': () => new Response('Internal Server Error', { status: 500 }),
+  'network error': () => Promise.reject(new TypeError('fetch failed')),
+  'GraphQL errors': () => Response.json({ errors: [{ message: 'Unauthorized' }], data: null }),
+  'GraphQL errors beside data': () => Response.json({ errors: [{ message: 'Field failed' }], data: { myself: { underBalance: false } } }),
+  'myself null': () => Response.json({ data: { myself: null } }),
+  'underBalance missing': () => Response.json({ data: { myself: {} } }),
+  'malformed JSON': () => new Response('{"data": {"myself": ', { status: 200, headers: { 'Content-Type': 'application/json' } }),
+  // AbortSignal.timeout rejects the fetch with this error. hosting-state tests
+  // also wait for the real five-second signal once.
+  timeout: () => Promise.reject(new DOMException('The operation was aborted due to timeout', 'TimeoutError')),
+  redirect: () => new Response(null, { status: 302, headers: { Location: 'https://other.example/graphql' } }),
+};
