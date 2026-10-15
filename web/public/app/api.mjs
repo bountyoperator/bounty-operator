@@ -16,7 +16,7 @@
  *   planOf(account?)                                 -> 'anon' | 'free' | 'operator' | 'past_due'
  *
  *   request(path, { method, body, signal }?)         -> Promise<any>       parsed JSON, or null for 204
- *   streamReview(body, { onDelta, onDone, onError, signal }?) -> Promise<ReviewResult | null>
+ *   streamReview(body, { onDelta, onStatus, onDone, onError, signal }?) -> Promise<ReviewResult | null>
  *   createSseParser(onEvent)                         -> { feed(text), end() }
  *
  *   setReauthHandler(handler)                        -> unregister()
@@ -58,6 +58,9 @@
  *     so nobody has to call refreshAccount() after those calls.
  *   - streamReview() reloads the account when it settles, because a review
  *     changes `usage`.
+ *   - streamReview() waits as long as the Worker allows a hosted model to
+ *     start and write: 16 minutes for the first bytes, then up to a minute
+ *     between them while the Worker's keep-alive comments arrive.
  *   - The account is reloaded when the tab becomes visible after a minute away.
  *
  * @typedef {object} Usage
@@ -103,6 +106,10 @@
  * @property {'anthropic-cyber' | 'anthropic-reasoning' | 'openai-cyber' | 'guardrail' | 'policy'} [blocked]   the provider blocked the review; never counted. See ./blocked.mjs
  * @property {{ input: number | null, output: number | null }} usage   provider token counts
  *
+ * @typedef {object} ReviewStatus    the `status` event: what the Worker says before the review starts
+ * @property {'starting'} state      `starting`: a hosted model is starting up
+ * @property {string} message         one sentence written for the user
+ *
  * @typedef {{ event: string, data: string }} SseEvent
  */
 
@@ -114,10 +121,15 @@ const EVENT_PATH = '/api/event';
 const DELETE_PATH = '/api/account/delete';
 const RECONCILE_PATH = '/api/billing/reconcile';
 
-// The Worker waits up to 180 seconds for the provider's first byte.
-const FIRST_BYTE_MS = 300000;
-// The Worker writes a keep-alive comment every 5 seconds. Once the first bytes
-// have arrived the path is known to stream, and a minute of silence means the
+// The Worker opens the stream at once and writes a keep-alive comment every 15
+// seconds until the provider answers, so the first bytes normally arrive within
+// seconds. A proxy that buffers delivers everything at the end, so this limit
+// covers the Worker's whole allowance: 930 seconds for a hosted model to start
+// (600) and write (300), 900 seconds for any other provider, and room to spare.
+const FIRST_BYTE_MS = 960000;
+// The Worker writes a keep-alive comment every 15 seconds while a hosted model
+// starts and every 5 seconds while the model writes. Once the first bytes have
+// arrived the path is known to stream, and a minute of silence means the
 // connection is dead.
 const IDLE_MS = 60000;
 // One SSE line. The `done` event carries the whole review and the manifest.
@@ -588,19 +600,31 @@ async function signedInAccount() {
   return current;
 }
 
-async function readEventStream(response, { onDelta, progress, arm }) {
+async function readEventStream(response, { onDelta, onStatus, progress, arm }) {
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
   let result = null;
   let failure = null;
+  let status = false;
 
   const parser = createSseParser(({ event, data }) => {
     if (result || failure) return;
     const payload = parseEventData(data);
     if (event === 'delta') {
       if (payload && typeof payload.text === 'string' && payload.text !== '') {
+        // The review has started: a status the caller shows no longer applies.
+        if (status) {
+          status = false;
+          safely(onStatus, null);
+        }
         progress.partial += payload.text;
         safely(onDelta, payload.text);
+      }
+    } else if (event === 'status') {
+      // Only news from before the review starts is passed on.
+      if (payload && typeof payload.state === 'string' && typeof payload.message === 'string' && payload.message !== '' && progress.partial === '') {
+        status = true;
+        safely(onStatus, { state: payload.state, message: payload.message });
       }
     } else if (event === 'done') {
       // A `done` that does not parse was cut off; the stream then ends without a result.
@@ -634,7 +658,7 @@ async function readEventStream(response, { onDelta, progress, arm }) {
   return result;
 }
 
-async function runReview(body, { onDelta, signal }, progress, limits) {
+async function runReview(body, { onDelta, onStatus, signal }, progress, limits) {
   await signedInAccount();
   if (signal?.aborted) throw abortedError();
 
@@ -642,8 +666,8 @@ async function runReview(body, { onDelta, signal }, progress, limits) {
   const onAbort = () => controller.abort();
   signal?.addEventListener('abort', onAbort, { once: true });
 
-  // Until the first bytes arrive the limit is long: the provider may think
-  // before it writes, and a proxy that buffers delivers everything at the end.
+  // Until the first bytes arrive the limit is long: a hosted model may be
+  // starting, and a proxy that buffers delivers everything at the end.
   const waits = { first: limits.firstByteMs ?? FIRST_BYTE_MS, idle: limits.idleMs ?? IDLE_MS };
   let quiet = '';
   let timer = null;
@@ -670,10 +694,10 @@ async function runReview(body, { onDelta, signal }, progress, limits) {
 
       const type = (response.headers.get('content-type') ?? '').toLowerCase();
       if (response.ok && type.startsWith('text/event-stream') && response.body) {
-        return await readEventStream(response, { onDelta, progress, arm });
+        return await readEventStream(response, { onDelta, onStatus, progress, arm });
       }
 
-      // Not a stream: an error the Worker found before the first token, or a whole review as JSON.
+      // Not a stream: an error the Worker found before it reserved the review, or a whole review as JSON.
       const parsed = await readJsonBody(response);
       if (!response.ok) {
         const failure = toApiError(response.status, parsed, { retryAfter: response.headers.get('retry-after') });
@@ -707,14 +731,21 @@ async function runReview(body, { onDelta, signal }, progress, limits) {
  * Runs a hosted review and reports the answer as it is written.
  *
  * POSTs `{ ...body, stream: true }` to /api/review. `onDelta(text)` receives
- * each piece of the review. Then exactly one of these happens:
+ * each piece of the review. `onStatus(status)` receives what the Worker says
+ * before the review starts, a ReviewStatus: today only that a hosted model is
+ * starting, which can take minutes. Show `status.message` while waiting. When
+ * the first piece of the review follows a status, `onStatus(null)` comes just
+ * before it: the status no longer applies. Then exactly one of these happens:
  *   - `onDone(result)` and the promise resolves with `result`;
  *   - the call fails: with `onError` given, `onError(apiError)` is called and
  *     the promise resolves with null; without it, the promise rejects with the
  *     ApiError.
  *
  * When the Worker answers with JSON in place of an event stream, a whole
- * review is delivered as one `onDelta` and then `onDone`.
+ * review is delivered as one `onDelta` and then `onDone`. An error found
+ * after the stream opened, such as a provider that refused the key or a model
+ * that did not start, arrives as an `error` event and fails the same way, with
+ * `error.status` 0.
  *
  * Aborting `signal` stops the review: the error has code `aborted`. Any text
  * that arrived before a failure is in `error.data.partial`.
@@ -726,15 +757,15 @@ async function runReview(body, { onDelta, signal }, progress, limits) {
  * The API key in `body` is sent and then forgotten: this module keeps no copy.
  *
  * @param {ReviewBody} body
- * @param {{ onDelta?: (text: string) => void, onDone?: (result: ReviewResult) => void, onError?: (error: ApiError) => void, signal?: AbortSignal }} [handlers]
- * @param {{ firstByteMs?: number, idleMs?: number }} [limits]  Silence limits; the defaults are 300 s and 60 s. For tests.
+ * @param {{ onDelta?: (text: string) => void, onStatus?: (status: ReviewStatus | null) => void, onDone?: (result: ReviewResult) => void, onError?: (error: ApiError) => void, signal?: AbortSignal }} [handlers]
+ * @param {{ firstByteMs?: number, idleMs?: number }} [limits]  Silence limits; the defaults are 960 s and 60 s. For tests.
  * @returns {Promise<ReviewResult | null>}
  */
-export async function streamReview(body, { onDelta, onDone, onError, signal } = {}, limits = {}) {
+export async function streamReview(body, { onDelta, onStatus, onDone, onError, signal } = {}, limits = {}) {
   const progress = { partial: '' };
   let result;
   try {
-    result = await runReview(body, { onDelta, signal }, progress, limits);
+    result = await runReview(body, { onDelta, onStatus, signal }, progress, limits);
   } catch (error) {
     const failure = signal?.aborted ? abortedError() : asApiError(error);
     if (progress.partial !== '' && failure.data.partial === undefined) failure.data.partial = progress.partial;

@@ -112,8 +112,21 @@ refuse redirects and accept at most 2 MB of review text. Streamed calls normally
 300 seconds for generation and 30 seconds of transport margin. Headers alone do not
 shorten that initial wait; after the first body bytes, the usual 180-second inactivity
 limit applies. The review reservation is renewed while the model warms, and caller
-cancellation stops the provider request. The separate single-answer hosted route keeps
-its 270-second limit.
+cancellation stops the provider request. The single-answer hosted route keeps its
+270-second limit for other providers; a Bounty Operator review on it is collected from
+the stream.
+
+The browser's streamed review (`stream: true`) opens its `text/event-stream` as soon
+as the review is reserved, without waiting for the provider. Until the provider accepts
+the request the Worker writes a `: keep-alive` comment every 15 seconds, and a Bounty
+Operator review on a self-hosted model, one whose worker starts on demand, that has not
+answered after 5 seconds gets one `status` event,
+`{ state: 'starting', message }`, which the app shows as its status line until the
+first text arrives. From then on a provider error, including a model that did not
+start, is an `error` event; problems found before the reservation (inputs, privacy,
+plan, allowance) are still JSON errors. The browser waits up to 960 seconds for the
+first bytes, which covers the 930-second allowance behind a proxy that buffers, then
+60 seconds between them.
 
 Source files, instructions, provider keys and review text are held in memory for
 the length of the request. D1 stores accounts, passkey public keys, hashed

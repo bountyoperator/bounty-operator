@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { apiCreditData, authenticateInference, createInferenceKey, hasApiLiability, reapInferenceHolds, reserveInference, settleInference } from '../src/api-credits.ts';
-import { clearHostingState, inferenceCatalog, inferenceEndpoint, inferenceModels, inferencePaused, inferenceStatus, parseInference, usageCounters } from '../src/inference.ts';
+import { clearHostingState, inferenceCatalog, inferenceEndpoint, inferenceModels, inferencePaused, inferenceStatus, parseInference, startsOnDemand, usageCounters } from '../src/inference.ts';
 import { parseReviewRequest, runHostedReview } from '../src/review.ts';
 import { addAccount, createCall, createContext, createEnv } from './worker-helpers.mjs';
 import { enableSupplierFixture } from './supplier-fixtures.mjs';
@@ -19,6 +19,15 @@ async function setup(balance = 20000000) {
   return { env, account, key, token: credentials.key };
 }
 const request = (token, body) => new Request('https://bountyoperator.com/v1/chat/completions', { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ model: model.id, messages: [{ role: 'user', content: 'Explain this test.' }], max_tokens: 20, ...body }) });
+
+test('only a model on a worker started on demand is said to need a start', () => {
+  const gateway = { ...model, id: 'gateway-model', endpoint: 'https://api.infron.ai', upstreamModel: 'z-ai/glm-5.3-flash-cybersecurity' };
+  const env = createEnv({ INFERENCE_MODELS: JSON.stringify([model, gateway]) });
+  assert.equal(startsOnDemand(env, model.id), true);
+  assert.equal(startsOnDemand(env, gateway.id), false, 'a provider gateway is always running');
+  assert.equal(startsOnDemand(env, 'not-configured'), false);
+  assert.equal(startsOnDemand(createEnv(), model.id), false, 'no catalog, no start');
+});
 
 test('harness discovery lists each configured model and retrieves its actual capabilities without starting workers', async (t) => {
   const { env, token } = await setup();

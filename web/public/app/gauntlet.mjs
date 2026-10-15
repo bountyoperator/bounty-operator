@@ -265,6 +265,7 @@ const LIVE_STATES = Object.freeze({ running: 'Running', done: 'Done', failed: 'F
 export function liveController({ box, chip, clock, what, text, cancel = null }) {
   let node = null;
   let stopClock = null;
+  let current = '';
   const setChip = (status, label) => {
     if (!chip) return;
     chip.dataset.status = status;
@@ -276,6 +277,7 @@ export function liveController({ box, chip, clock, what, text, cancel = null }) 
     start(label) {
       box.hidden = false;
       setChip('running');
+      current = label;
       if (what) what.textContent = label;
       node = document.createTextNode('');
       if (text) clear(text).append(node);
@@ -284,6 +286,10 @@ export function liveController({ box, chip, clock, what, text, cancel = null }) 
       stopClock = startTimer((elapsed) => {
         if (clock) clock.textContent = formatElapsed(elapsed);
       });
+    },
+    /** What the Worker said before the answer started (see streamReview's onStatus); null puts the label back. */
+    status(status) {
+      if (what) what.textContent = status?.state === 'starting' ? `${current} · starting the model` : current;
     },
     write(delta) {
       if (!node) return;
@@ -845,7 +851,8 @@ export async function runGauntlet(options = {}) {
     run.sent = inputs.extras;
 
     live.start(`Stage ${index + 1} of ${TOTAL} · ${name} · ${request.model}`);
-    say(`Gauntlet running: stage ${index + 1} of ${TOTAL}, ${name}.`, { hold: true });
+    const running = `Gauntlet running: stage ${index + 1} of ${TOTAL}, ${name}.`;
+    say(running, { hold: true });
     const began = Date.now();
     let result;
     try {
@@ -860,7 +867,15 @@ export async function runGauntlet(options = {}) {
         mode: 'bounty',
         // A stage answer can hold an address the check flags; the user's own lines were accepted before the run.
         acknowledgeWarnings: acknowledge || inputs.warnings > 0,
-      }, { signal: controller.signal, onDelta: live.write });
+      }, {
+        signal: controller.signal,
+        // A hosted model that is starting can take minutes: the Worker says so until the stage starts arriving.
+        onStatus: (status) => {
+          live.status(status);
+          say(status ? `${running} ${status.message}` : running, { hold: true });
+        },
+        onDelta: live.write,
+      });
     } catch (error) {
       stop = { kind: error?.code === 'aborted' ? 'aborted' : 'error', error };
       break;

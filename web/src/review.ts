@@ -10,7 +10,7 @@ import type { Call, Env } from './env.ts';
 import { count } from './funnel.ts';
 import { instructionsFor, outputScanner } from './hosted.ts';
 import { ApiError, errorBody } from './http.ts';
-import { inferenceEndpoint } from './inference.ts';
+import { STARTUP_MS, inferenceEndpoint, startsOnDemand } from './inference.ts';
 import { LEASE_SECONDS, extendLease, finishReview, paidAccess, reserveReview } from './quota.mjs';
 
 export type Channel = 'web' | 'mcp';
@@ -62,6 +62,18 @@ const LEASE_RENEW_SECONDS = 60;
 // proxies from closing an idle stream, and a failed write is how the Worker
 // learns that the reader has gone when no abort signal arrives.
 const KEEP_ALIVE_MS = 5000;
+// Until the provider accepts a streamed review, a comment line is written this
+// often. A hosted model can take ten minutes to start, far longer than a
+// browser or a proxy waits on a silent request.
+const WARMING_KEEP_ALIVE_MS = 15000;
+// A Bounty Operator model that has not accepted the review by then is starting,
+// and the reader is told so once.
+const STARTING_NOTICE_MS = 5000;
+/** The `status` event a streamed review sends while a hosted model starts. */
+export const STARTING_STATUS = Object.freeze({
+  state: 'starting',
+  message: `Starting the model. The first request after a quiet spell can take up to ${STARTUP_MS / 60000} minutes; you are not charged for the wait.`,
+});
 // A reader that disconnects after this much of a streamed review has had a review.
 // The same length decides whether an answer the provider cut short counts.
 const COUNTED_AFTER_CHARS = 2000;
@@ -536,14 +548,41 @@ async function* withKeepAlive<T>(source: AsyncIterable<T>, intervalMs: number): 
 }
 
 /**
+ * Waits for the provider to accept a streamed review. Until it does, `beat`
+ * runs every WARMING_KEEP_ALIVE_MS and `notice`, when given, runs once after
+ * STARTING_NOTICE_MS. Neither runs after the provider has answered or failed.
+ */
+async function whileOpening<T>(opening: Promise<T>, beat: () => void, notice: (() => void) | null): Promise<T> {
+  // Both timers stay inside this function, so their types are whatever
+  // setInterval and setTimeout return; see withKeepAlive.
+  const beats = setInterval(beat, WARMING_KEEP_ALIVE_MS);
+  const noticeTimer = notice ? setTimeout(notice, STARTING_NOTICE_MS) : null;
+  try {
+    return await opening;
+  } finally {
+    clearInterval(beats);
+    if (noticeTimer !== null) clearTimeout(noticeTimer);
+  }
+}
+
+/**
  * Runs a hosted review as server-sent events: `delta` {text} while the model
  * writes, then one `done` with the same body the JSON route returns, or one
  * `error` {error, code}. A review the provider blocked is a `done` with
  * `refused` and `blocked` set when the block came as an answer, and an error
  * with code `provider_policy` when it came as an error; neither is counted.
  *
- * Errors the provider reports before its first token (bad key, unknown model,
- * rate limit) are thrown, so the caller answers them as ordinary JSON errors.
+ * The stream opens as soon as the review is reserved, before the provider has
+ * answered: a hosted model can take ten minutes to start. Until the provider
+ * accepts the request a `: keep-alive` comment goes out every 15 seconds, and
+ * a Bounty Operator review on a model started on demand that has not answered
+ * after 5 seconds gets one `status` event, STARTING_STATUS. An error the
+ * provider reports before its first token (bad key, unknown model, rate limit,
+ * a model that did not start) is therefore an `error` event too.
+ *
+ * Errors found before anything is reserved or sent (paused reviews, the plan,
+ * the inputs, the allowance) are thrown, so the caller answers them as
+ * ordinary JSON errors.
  */
 export async function streamHostedReview({ env, ctx, request }: Call, accountId: string, input: ReviewRequest, channel: Channel): Promise<Response> {
   assertReviewsEnabled(env);
@@ -569,15 +608,12 @@ export async function streamHostedReview({ env, ctx, request }: Call, accountId:
     ctx.waitUntil(extendLease(env.DB, accountId, reviewId, now).catch(() => {}));
   };
 
-  let events: Awaited<ReturnType<typeof providerStream>>;
-  try {
-    events = await openProviderStream({ env, ctx, request, url: new URL(request.url) }, input, prepared, abort.signal, keepLease);
-  } catch (error) {
-    abort.abort();
-    request.signal.removeEventListener('abort', onDisconnect);
-    settle(false, failureReason(error, clientGone));
-    throw reviewFailure(error);
-  }
+  // The provider call starts now, and the response does not wait for it. The
+  // pump reads the outcome; until then a failure is not an unhandled rejection.
+  const opening = openProviderStream({ env, ctx, request, url: new URL(request.url) }, input, prepared, abort.signal, keepLease);
+  opening.catch(() => {});
+  // Only a Bounty Operator model on a worker started on demand can be starting.
+  const coldStart = input.provider === 'bountyoperator' && startsOnDemand(env, input.model);
 
   const { readable, writable } = new TransformStream<Uint8Array, Uint8Array>();
   const writer = writable.getWriter();
@@ -612,7 +648,20 @@ export async function streamHostedReview({ env, ctx, request }: Call, accountId:
       await send(sseEvent('delta', { text }));
       delivered += text.length;
     };
+    // Not awaited: a write resolves only once the reader takes it, and the
+    // provider call must not wait for that. A write that fails still stops it.
+    const sendNow = (text: string): void => {
+      void send(text).catch(() => {});
+    };
     try {
+      const events = await whileOpening(
+        opening,
+        () => {
+          keepLease();
+          sendNow(': keep-alive\n\n');
+        },
+        coldStart ? () => sendNow(sseEvent('status', STARTING_STATUS)) : null,
+      );
       for await (const event of withKeepAlive(events, KEEP_ALIVE_MS)) {
         keepLease();
         if (event === KEEP_ALIVE) {

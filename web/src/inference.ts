@@ -25,7 +25,9 @@ const CAPABILITIES = ['text', 'tools', 'streaming', 'reasoning', 'structured_out
 const BODY_BYTES = 8 * 1024 * 1024;
 const RESPONSE_BYTES = 8 * 1024 * 1024;
 const REQUEST_MS = 300000;
-const STARTUP_MS = 600000;
+// How long a hosted worker may take to start. A streamed review tells the
+// reader this figure while it waits.
+export const STARTUP_MS = 600000;
 const encoder = new TextEncoder();
 
 // Managed alias metadata was checked against the providers' public catalogs
@@ -98,6 +100,12 @@ export function inferenceModels(env: Env): InferenceModel[] {
     if (new Set(models.map((m) => m.id)).size !== models.length) return [];
     return models;
   } catch { return []; }
+}
+
+/** True when the model runs on a worker this service starts on demand, so its first request after a quiet spell waits for a start. */
+export function startsOnDemand(env: Env, modelId: string): boolean {
+  const model = inferenceModels(env).find((m) => m.id === modelId);
+  return Boolean(model && isRunpod(model.endpoint));
 }
 
 export function inferenceReady(env: Env): boolean {

@@ -9,7 +9,7 @@ import { ANTHROPIC_CYBER_NOTICE, ProviderError } from '../public/providers.mjs';
 import { createInferenceKey } from '../src/api-credits.ts';
 import { ApiError } from '../src/http.ts';
 import { reserveReview } from '../src/quota.mjs';
-import { collectHostedReview, failureReason, parseReviewRequest, reviewFailure, runHostedReview, streamHostedReview } from '../src/review.ts';
+import { STARTING_STATUS, collectHostedReview, failureReason, parseReviewRequest, reviewFailure, runHostedReview, streamHostedReview } from '../src/review.ts';
 import { SITE_ORIGIN, addAccount, addSubscription, createCall, createContext, createEnv, funnelCounts } from './worker-helpers.mjs';
 import { enableSupplierFixture } from './supplier-fixtures.mjs';
 
@@ -375,6 +375,11 @@ function parseEvents(text) {
     });
 }
 
+/** Lets queued promise work and database writes run. setImmediate is never mocked here. */
+async function turns(count) {
+  for (let turn = 0; turn < count; turn += 1) await new Promise((resolve) => setImmediate(resolve));
+}
+
 /** Hold the in-process Model API at its health probe, without any real inference. */
 async function coldReview(t, fail = false) {
   let started;
@@ -436,11 +441,20 @@ for (const [name, run] of [['JSON', runHostedReview], ['collected', collectHoste
       });
       const pending = run(call, ACCOUNT, input, 'web').then((value) => ({ value }), (error) => ({ error }));
       t.after(() => disconnect.abort());
-      await Promise.race([warming, pending.then((result) => { throw result.error ?? new Error('The review finished before warming'); })]);
-      // A startup outlasts the original five-minute review lease.
+      // The JSON routes answer at the end. The stream opens at once, before the model has started.
+      const opened = name === 'SSE' ? await pending : null;
+      if (opened) {
+        assert.equal(opened.error, undefined);
+        assert.match(opened.value.headers.get('content-type'), /^text\/event-stream/);
+        await warming;
+      } else {
+        await Promise.race([warming, pending.then((result) => { throw result.error ?? new Error('The review finished before warming'); })]);
+      }
+      // A startup outlasts the original five-minute review lease. The stream's
+      // pump waits for the model, so only the work queued around it is awaited.
       for (let minute = 0; minute < 6; minute += 1) {
         t.mock.timers.tick(60000);
-        await ctx.settled();
+        await (opened ? turns(10) : ctx.settled());
       }
       const now = Math.floor(Date.now() / 1000);
       const held = env.DB.sqlite.prepare('SELECT status, lease_until FROM reviews').get();
@@ -453,13 +467,30 @@ for (const [name, run] of [['JSON', runHostedReview], ['collected', collectHoste
 
       if (ending === 'disconnect') disconnect.abort();
       else warm();
-      const result = await pending;
-      if (ending === 'success') {
-        assert.equal(result.error, undefined);
-        const answer = name === 'SSE' ? parseEvents(await result.value.text()).at(-1).data : result.value;
-        assert.equal(answer.review, REVIEW_TEXT);
+      if (opened) {
+        // Anything after the stream opened arrives in it: the status, the keep-alives, then the outcome.
+        const text = await opened.value.text();
+        const events = parseEvents(text);
+        assert.deepEqual(events[0], { event: 'status', data: STARTING_STATUS });
+        assert.equal(text.split(': keep-alive\n\n').length - 1, 24, 'one keep-alive every 15 seconds for six minutes');
+        const last = events.at(-1);
+        if (ending === 'success') {
+          assert.equal(last.event, 'done');
+          assert.equal(last.data.review, REVIEW_TEXT);
+        } else if (ending === 'failure') {
+          assert.equal(last.event, 'error');
+          assert.equal(last.data.code, 'provider');
+        } else {
+          assert.deepEqual(events.map((item) => item.event), ['status'], 'a reader that left is sent no outcome');
+        }
       } else {
-        assert(result.error instanceof ApiError);
+        const result = await pending;
+        if (ending === 'success') {
+          assert.equal(result.error, undefined);
+          assert.equal(result.value.review, REVIEW_TEXT);
+        } else {
+          assert(result.error instanceof ApiError);
+        }
       }
       await ctx.settled();
       assert.equal(reviews(env)[0].status, ending === 'success' ? 'completed' : 'failed');
@@ -480,6 +511,150 @@ for (const [name, run] of [['JSON', runHostedReview], ['collected', collectHoste
     });
   }
 }
+
+/** Reads a response body in the background. Each write of the Worker is one entry. */
+function collect(response) {
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  const received = [];
+  const finished = (async () => {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) return received;
+      received.push(decoder.decode(value));
+    }
+  })();
+  return { received, finished };
+}
+
+const KEEP_ALIVE_LINE = ': keep-alive\n\n';
+
+test('a cold Bounty Operator stream opens at once, says the model is starting, and writes a keep-alive every 15 seconds', async (t) => {
+  t.mock.timers.enable({ apis: ['Date', 'setTimeout', 'setInterval'], now: Date.now() });
+  const { ctx, call, disconnect, input, warming, warm } = await coldReview(t);
+  t.after(() => disconnect.abort());
+
+  const response = await streamHostedReview(call, ACCOUNT, input, 'web');
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get('Content-Type'), 'text/event-stream; charset=utf-8');
+  await warming;
+  const { received, finished } = collect(response);
+
+  t.mock.timers.tick(4999);
+  await turns(10);
+  assert.deepEqual(received, [], 'nothing is said in the first five seconds');
+
+  t.mock.timers.tick(1);
+  await turns(10);
+  const status = `event: status\ndata: ${JSON.stringify(STARTING_STATUS)}\n\n`;
+  assert.deepEqual(received, [status]);
+  assert.deepEqual(STARTING_STATUS, {
+    state: 'starting',
+    message: 'Starting the model. The first request after a quiet spell can take up to 10 minutes; you are not charged for the wait.',
+  });
+
+  t.mock.timers.tick(10000);
+  await turns(10);
+  assert.deepEqual(received, [status, KEEP_ALIVE_LINE], 'the first keep-alive at 15 seconds');
+  for (let beat = 0; beat < 3; beat += 1) {
+    t.mock.timers.tick(15000);
+    await turns(10);
+  }
+  assert.deepEqual(received, [status, ...Array(4).fill(KEEP_ALIVE_LINE)], 'one comment line every 15 seconds, and the status only once');
+
+  warm();
+  await finished;
+  const events = parseEvents(received.join(''));
+  assert.deepEqual(events.map((item) => item.event), ['status', 'delta', 'done']);
+  assert.equal(events[2].data.review, REVIEW_TEXT);
+  assert.equal(received.slice(5).some((part) => part === KEEP_ALIVE_LINE), false, 'the warm-up beat stops once the model answers');
+
+  t.mock.timers.tick(60000);
+  await ctx.settled();
+  assert.equal(received.length, 7, 'nothing is written after the stream closed');
+});
+
+test('another provider that is slow to accept a stream gets keep-alives and no status', async (t) => {
+  t.mock.timers.enable({ apis: ['setTimeout', 'setInterval'] });
+  let provider;
+  let accept;
+  const { env, ctx, call } = setup(t, (init) => new Promise((resolve) => {
+    accept = () => {
+      provider = providerStream(init);
+      resolve(provider.response);
+    };
+  }));
+
+  const response = await streamHostedReview(call, ACCOUNT, parseReviewRequest(body()), 'web');
+  const { received, finished } = collect(response);
+  t.mock.timers.tick(30000);
+  await turns(10);
+  assert.deepEqual(received, [KEEP_ALIVE_LINE, KEEP_ALIVE_LINE]);
+
+  accept();
+  await turns(10);
+  provider.push(chunk('# Review\n'));
+  provider.push(chunk(null, 'stop'));
+  provider.push('data: [DONE]\n\n');
+  provider.close();
+  await finished;
+  assert.deepEqual(parseEvents(received.join('')).map((item) => item.event), ['delta', 'done']);
+
+  await ctx.settled();
+  assert.deepEqual(reviews(env), [{ status: 'completed', profile: 'solidity', channel: 'web' }]);
+});
+
+test('a Bounty Operator model that takes eight minutes to start still reaches the browser client', async (t) => {
+  t.mock.timers.enable({ apis: ['Date', 'setTimeout', 'setInterval'], now: Date.now() });
+  const { env, ctx, call, disconnect, input, warming, warm } = await coldReview(t);
+  t.after(() => disconnect.abort());
+  const api = await import('../public/app/api.mjs');
+
+  // The browser's fetch reaches this Worker; everything else is the stubbed hosting API.
+  // The setup puts the real fetch back after the test.
+  const upstream = globalThis.fetch;
+  globalThis.fetch = async (url, init = {}) => {
+    if (url === '/api/account') {
+      return Response.json({ signedIn: true, csrf: 'csrf-1', usage: { plan: 'free', usedToday: 0, remainingToday: 1, running: 0, concurrency: 1 } });
+    }
+    if (url === '/api/review') {
+      init.signal?.addEventListener('abort', () => disconnect.abort(), { once: true });
+      return streamHostedReview(call, ACCOUNT, parseReviewRequest(JSON.parse(init.body)), 'web');
+    }
+    return upstream(url, init);
+  };
+
+  const statuses = [];
+  const pieces = [];
+  const pending = api.streamReview(body({ provider: 'bountyoperator', model: input.model, apiKey: input.apiKey }), {
+    onStatus: (status) => statuses.push(status),
+    onDelta: (text) => pieces.push(text),
+  }).then((value) => ({ value }), (error) => ({ error }));
+  await warming;
+
+  // Eight minutes: longer than the browser's old five-minute wait, inside the
+  // Worker's ten-minute start allowance. Time moves in steps so that the
+  // client reads each keep-alive as it would.
+  let outcome = null;
+  void pending.then((value) => { outcome = value; });
+  for (let elapsed = 0; elapsed < 480000; elapsed += 5000) {
+    t.mock.timers.tick(5000);
+    await turns(5);
+  }
+  assert.equal(outcome, null, 'the client is still waiting');
+  assert.deepEqual(statuses, [STARTING_STATUS]);
+  assert.deepEqual(pieces, []);
+
+  warm();
+  const { value, error } = await pending;
+  assert.equal(error, undefined);
+  assert.equal(value.review, REVIEW_TEXT);
+  assert.deepEqual(pieces, [REVIEW_TEXT]);
+  assert.deepEqual(statuses, [STARTING_STATUS, null], 'the status is withdrawn when the review starts');
+
+  await ctx.settled();
+  assert.equal(reviews(env)[0].status, 'completed');
+});
 
 test('a streamed review sends deltas, then done with the whole review', async (t) => {
   let provider;
@@ -677,15 +852,16 @@ test('a policy block the provider sends as an error is provider_policy, is not c
         const input = parseReviewRequest(body(overrides));
 
         let failure;
-        if (streamed && status === 200) {
-          // The provider accepted the stream and answered with one JSON error body: an `error` event.
+        if (streamed) {
+          // The stream opens before the provider answers, so a block it reports, as an
+          // HTTP error or as one JSON error body on a 200, is an `error` event.
           const response = await streamHostedReview(call, ACCOUNT, input, 'web');
           assert.match(response.headers.get('content-type'), /^text\/event-stream/);
           const events = parseEvents(await response.text());
           assert.deepEqual(events.map((item) => item.event), ['error']);
           failure = { message: events[0].data.error, code: events[0].data.code, extra: events[0].data };
         } else {
-          const error = await rejection(streamed ? streamHostedReview(call, ACCOUNT, input, 'web') : runHostedReview(call, ACCOUNT, input, 'web'));
+          const error = await rejection(runHostedReview(call, ACCOUNT, input, 'web'));
           assert(error instanceof ApiError);
           assert.equal(error.status, 502);
           failure = error;
@@ -722,16 +898,50 @@ test('a plain 403 from the provider is still a rejected key', async (t) => {
   assert.deepEqual(funnelCounts(env.DB), { review_fail: 1, 'review_fail:provider_auth': 1 });
 });
 
-test('a key the provider rejects fails a streamed review before any event, as a plain error', async (t) => {
-  const { env, ctx, call } = setup(t, () => Response.json({ error: { message: 'Invalid key' } }, { status: 401 }));
+test('a key the provider rejects is the only event of a stream that opened before the provider answered', async (t) => {
+  let answer;
+  const { env, ctx, call, calls } = setup(t, () => new Promise((resolve) => { answer = resolve; }));
 
-  const error = await rejection(streamHostedReview(call, ACCOUNT, parseReviewRequest(body()), 'web'));
-  assert(error instanceof ApiError);
-  assert.equal(error.code, 'provider');
-  assert.equal(error.extra.kind, 'auth');
+  // The response does not wait for the provider.
+  const response = await streamHostedReview(call, ACCOUNT, parseReviewRequest(body()), 'web');
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get('Content-Type'), 'text/event-stream; charset=utf-8');
+  assert.equal(calls.length, 1, 'the provider call is already on its way');
+
+  answer(Response.json({ error: { message: `Invalid key ${KEY}` } }, { status: 401 }));
+  const text = await response.text();
+  const events = parseEvents(text);
+  assert.deepEqual(events.map((item) => item.event), ['error']);
+  assert.equal(events[0].data.code, 'provider');
+  assert.equal(events[0].data.kind, 'auth');
+  assert.match(events[0].data.error, /^Provider rejected the API key \(HTTP 401\)/);
+  assert(!text.includes(KEY), 'the key is never echoed');
+  assert(!text.includes('event: status'), 'only a Bounty Operator model is said to be starting');
 
   await ctx.settled();
   assert.deepEqual(reviews(env), [{ status: 'failed', profile: 'solidity', channel: 'web' }]);
+  assert.deepEqual(funnelCounts(env.DB), { review_fail: 1, 'review_fail:provider_auth': 1 });
+  assert.equal(getEventListeners(call.request.signal, 'abort').length, 0, 'the caller abort listener is removed');
+});
+
+test('errors found before the review is reserved are still plain JSON errors on the stream route', async (t) => {
+  const { env, call, calls } = setup(t, () => completion());
+  env.AI_REVIEW_ENABLED = 'false';
+  assert.equal((await rejection(streamHostedReview(call, ACCOUNT, parseReviewRequest(body()), 'web'))).code, 'reviews_paused');
+  env.AI_REVIEW_ENABLED = 'true';
+  const files = [{ name: 'deploy.sh', content: 'echo ok\nexport AWS=AKIAIOSFODNN7EXAMPLE\n' }];
+  const blocked = await rejection(streamHostedReview(call, ACCOUNT, parseReviewRequest(body({ files })), 'web'));
+  assert(blocked instanceof ApiError);
+  assert.equal(blocked.status, 422);
+  assert.equal(blocked.code, 'privacy_block');
+  assert.equal(calls.length, 0, 'nothing reached the provider');
+  assert.deepEqual(reviews(env), [], 'nothing was reserved');
+
+  await reserveReview(env.DB, ACCOUNT, 'running-elsewhere', Math.floor(Date.now() / 1000), { profile: 'solidity', channel: 'web' });
+  const busy = await rejection(streamHostedReview(call, ACCOUNT, parseReviewRequest(body()), 'web'));
+  assert.equal(busy.status, 409);
+  assert.equal(busy.code, 'review_running');
+  assert.equal(calls.length, 0);
 });
 
 test('a provider error before any text becomes an error event and frees the allowance', async (t) => {

@@ -39,7 +39,7 @@ import {
   stopsRun,
   sumUsage,
 } from '../public/app/dossier.mjs';
-import { compactStage, effectiveMode, extraInputs, signatureOf, stageInputs, stageStates } from '../public/app/gauntlet.mjs';
+import { compactStage, effectiveMode, extraInputs, liveController, signatureOf, stageInputs, stageStates } from '../public/app/gauntlet.mjs';
 import { historyRecord } from '../public/app/history.mjs';
 import { exampleList } from '../public/app/main.mjs';
 import { MAX_SEATS, MIN_SEATS, cleanSeats, defaultSeats, pickJudge, runPool, seatKey, seatProblems } from '../public/app/panel.mjs';
@@ -776,6 +776,46 @@ describe('rules', () => {
     // One price, in the words the account panel uses. No dash in a button label.
     assert.deepEqual([...new Set(gauntlet.match(/US\$\d+(?:\/| a | per )\w+/g))], ['US$10 a month']);
     for (const source of sources) assert.doesNotMatch(source, /label: [`'"][^`'"\n]*—/);
+  });
+
+  test('a live box says its model is starting until the Worker withdraws the status', () => {
+    const previous = globalThis.document;
+    globalThis.document = { createTextNode: (data) => ({ data, appendData(more) { this.data += more; } }) };
+    const what = { textContent: '' };
+    const live = liveController({ box: { hidden: true }, chip: null, clock: null, what, text: null });
+    try {
+      live.start('Stage 1 of 8 · Scope · cyber-qwen-27b-awq');
+      live.status({ state: 'starting', message: 'Starting the model.' });
+      assert.equal(what.textContent, 'Stage 1 of 8 · Scope · cyber-qwen-27b-awq · starting the model');
+      live.status(null);
+      assert.equal(what.textContent, 'Stage 1 of 8 · Scope · cyber-qwen-27b-awq');
+      live.status({ state: 'something new', message: 'Not known here.' });
+      assert.equal(what.textContent, 'Stage 1 of 8 · Scope · cyber-qwen-27b-awq', 'an unknown state leaves the label alone');
+    } finally {
+      live.hide();
+      if (previous === undefined) delete globalThis.document;
+      else globalThis.document = previous;
+    }
+  });
+
+  test('every review a runner starts shows what the Worker says while a hosted model starts', async () => {
+    const sources = {
+      'run.mjs': await readFile(new URL('run.mjs', APP_DIR), 'utf8'),
+      'gauntlet.mjs': await readFile(new URL('gauntlet.mjs', APP_DIR), 'utf8'),
+      'panel.mjs': await readFile(new URL('panel.mjs', APP_DIR), 'utf8'),
+    };
+    for (const [name, source] of Object.entries(sources)) {
+      const calls = source.split('streamReview({').slice(1);
+      assert.ok(calls.length > 0, name);
+      for (const call of calls) {
+        // The handlers follow the body: the status line is set from status.message and put back on null.
+        const handlers = call.slice(call.indexOf('}, {'), call.indexOf('onDelta'));
+        assert.match(handlers, /onStatus: \(status\) => \{/, `${name}: a streamReview call without onStatus`);
+        assert.match(handlers, /status\.message|onStatus\?\.\(status\)/, `${name}: the status message is not shown`);
+      }
+    }
+    // A panel seat that fails while its model starts takes the status off the shared line.
+    assert.match(sources['panel.mjs'], /\} catch \(error\) \{\n\s+onStatus\?\.\(null\);/);
   });
 
   test('the two unlisted profiles are the ones the runs end with', () => {
