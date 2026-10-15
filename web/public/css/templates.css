@@ -30,10 +30,24 @@
   }
 }
 
-/* "Copied", next to the two actions of the head. */
+/* "Copied" and the next step, next to the two actions of the head. */
 .tpl-actions__status {
   color: var(--muted);
   font-size: var(--fs-13);
+}
+
+/* Under the actions: what the review does with the filled template, and the
+   way down to the page's own check. The shared notice, kept to a readable measure. */
+.tpl-handoff {
+  max-width: 40rem;
+}
+
+.tpl-handoff .notice__body > p {
+  text-wrap: pretty;
+}
+
+.tpl-handoff .notice__body > .btn {
+  margin-top: var(--sp-12);
 }
 
 .tpl-layout {
@@ -468,6 +482,23 @@
   color: var(--ok);
 }
 
+/* The second hand-off of the same draft, to a review that needs an account. */
+.tpl-check__more {
+  display: grid;
+  justify-items: start;
+  gap: var(--sp-12);
+  padding-top: var(--sp-16);
+  border-top: 1px solid var(--line);
+}
+
+.tpl-check__more > p {
+  max-width: 68ch;
+  color: var(--muted);
+  font-size: var(--fs-14);
+  line-height: 1.6;
+  text-wrap: pretty;
+}
+
 /* ==========================================================================
    5. Hub
    ========================================================================== */
@@ -702,7 +733,7 @@
   line-height: 1.6;
 }
 
-/* The hub ends on the closing band (.closing-band in base.css), a section below the last block. */
+/* The hub and the template pages end on the closing band (.closing-band in base.css), a section below the last block. */
 .tpl-page > .closing-band {
   margin-top: var(--sp-72);
 }

@@ -1,5 +1,6 @@
-> HackerOne report template from https://bountyoperator.com/templates/hackerone. Platform rules checked 2 Oct 2026.
+> HackerOne bug report template from https://bountyoperator.com/templates/hackerone. Platform rules checked 2 Oct 2026.
 > Replace every {placeholder}. Delete this note before you submit.
+> Before you submit, paste the filled draft at https://bountyoperator.com/templates/hackerone?ref=template#check for a free check.
 
 # {Vulnerability type} in {feature or endpoint} allows {what the attacker does}
 

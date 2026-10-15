@@ -7,8 +7,8 @@ import { readFileSync } from 'node:fs';
 
 import { button, codeBlock, html, stackTable } from '../../components.mjs';
 import { breadcrumbsLd } from '../../layout.mjs';
-import { CHECKED, PLATFORMS } from './data.mjs';
-import { checkDraft, crumbs, pageIndex, plain, sourceList } from './shared.mjs';
+import { CHECKED, TEMPLATES } from './data.mjs';
+import { checkDraft, crumbs, headHandoff, pageIndex, plain, sourceList } from './shared.mjs';
 
 const FILE = 'ImpactPoC.t.sol';
 const scaffold = readFileSync(new URL(`../../../public/templates/${FILE}`, import.meta.url), 'utf8').replace(/\r\n/g, '\n');
@@ -159,8 +159,12 @@ const body = html`
     <div class="cluster page-head__actions">
       ${button({ label: 'Copy the scaffold', variant: 'primary', size: 'lg', icon: 'copy', attrs: { 'data-template-copy': true } })}
       ${button({ label: `Download ${FILE}`, href: `/templates/${FILE}`, size: 'lg', icon: 'download', attrs: { download: FILE } })}
-      <span class="tpl-actions__status" role="status" data-template-status></span>
+      <span class="tpl-actions__status" role="status" data-template-status data-template-copied="Copied. Once it is filled in and run, paste it with its output under Have the proof reviewed."></span>
     </div>
+    ${headHandoff({
+      text: 'Proof review goes through the test step by step: executed, mocked or narrated, and whether the end state is the one the impact row names. It runs on your own AI key with a free account: one passkey prompt, no email, no card.',
+      label: 'Review this proof',
+    })}
     <p class="meta">Compiled and run with forge 1.7.1, forge-std 1.9.5 · checked ${CHECKED.label}</p>
   </header>
 
@@ -253,7 +257,7 @@ const body = html`
       <nav class="tpl-next" aria-label="Report templates">
         <p class="meta">Put the proof in a report</p>
         <ul>
-          ${PLATFORMS.map((platform) => html`<li><a href="${platform.path}">${platform.name}</a></li>`)}
+          ${TEMPLATES.map((platform) => html`<li><a href="${platform.path}">${platform.name}</a></li>`)}
           <li><a href="/templates">All templates</a></li>
         </ul>
       </nav>
@@ -275,7 +279,8 @@ export default {
       { name: 'Foundry PoC', path: '/templates/foundry-poc' },
     ]),
   ],
-  // The Sherlock link in its sources was re-pointed and re-read after CHECKED.
-  lastmod: '2026-10-09',
+  // The Sherlock link in its sources was re-pointed and re-read after CHECKED,
+  // and the hand-off under the head's actions came on 15 Oct 2026.
+  lastmod: '2026-10-15',
   body,
 };

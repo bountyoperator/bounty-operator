@@ -1,5 +1,6 @@
-> Immunefi report template from https://bountyoperator.com/templates/immunefi. Platform rules checked 2 Oct 2026.
+> Immunefi bug report template from https://bountyoperator.com/templates/immunefi. Platform rules checked 2 Oct 2026.
 > Replace every {placeholder}. Delete this note before you submit.
+> Before you submit, paste the filled draft at https://bountyoperator.com/templates/immunefi?ref=template#check for a free check.
 
 # {Vulnerability class} in `{function}` lets {actor} {consequence, worded as the programme words the impact}
 

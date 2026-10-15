@@ -5,7 +5,8 @@
 // read on the date in CHECKED. When a platform changes its rules, update the
 // entry, bump CHECKED, and run `node web/site/pages/templates/write-md.mjs`.
 // A source read on a later day carries its own `checked` label, and a source
-// its platform has retired carries `dated` saying so.
+// its platform has retired carries `dated` saying so. A template added after
+// CHECKED carries its own `checked` date for the whole page.
 //
 // Template bodies use a small Markdown subset: paragraphs, "- " and "1. " lists,
 // fenced code, `inline code` and {placeholders}. Never nest braces.
@@ -24,11 +25,14 @@ const immunefi = {
   id: 'immunefi',
   name: 'Immunefi',
   path: '/templates/immunefi',
-  title: 'Immunefi bug report template | Bounty Operator',
+  // The per-report fee item and its sources were read on 15 Oct 2026, after CHECKED.
+  lastmod: '2026-10-15',
+  sourcesNote: 'The Rules page, the three audit competitions and the Lombard Finance bug bounty were read again on 15 Oct 2026 for the per-report fee.',
+  title: 'Immunefi bug report template (bug bounties and audit competitions) | Bounty Operator',
   h1: 'Immunefi bug report template',
   description:
-    'Immunefi report template in Markdown: title rule, impact quoted from the programme list, runnable PoC with output, and the rules that get reports closed.',
-  lede: 'Ten sections in the order Immunefi asks for them, with the impact quoted from the programme and a proof of concept that runs on a local fork. Copy it, fill every placeholder, then have the draft reviewed before the triager sees it.',
+    'Immunefi report template for bug bounties and audit competitions: impact quoted from the programme, a runnable PoC, the per-report fee and what closes reports.',
+  lede: 'Ten sections in the order Immunefi asks for them, with the impact quoted from the programme and a proof of concept that runs on a local fork. Recent audit competitions and some bug bounties charge a fee for every report, so have the draft reviewed before you pay to submit it.',
   card: 'Bug bounties and audit competitions. Impact is picked from the programme’s own list.',
   cardClosed: ['No runnable PoC where the programme requires one', 'An impact that is not on the programme’s list', 'Known issues and unfixed audit findings'],
   file: 'immunefi.md',
@@ -196,13 +200,18 @@ After the fix: {the same test on the patched build, and its failing line}`,
       sources: ['rules'],
     },
     {
+      title: 'A fee on every report, in recent audit competitions and some bug bounties',
+      body: 'The ENS, Firelight and Quantus audit competitions, the three that started in August 2026, each charge a submission fee on every report, set by Immunefi and shown when you submit. Asking for mediation after a closure costs a fee too. The Lombard Finance bug bounty charges a non-refundable fee on every report, at every severity, collected by Immunefi and due before the report is reviewed. None of these pages states the amount. The earlier 2026 competitions, Firedancer V1 and Base Azul, list no fee.',
+      sources: ['comp-ens', 'comp-firelight', 'comp-quantus', 'lombard'],
+    },
+    {
       title: 'Penalties',
-      body: 'The rules page publishes no submission fee. Breaking the rules costs a temporary suspension or a permanent ban, loss of access to the report, and zero payout.',
+      body: 'The rules page publishes no fee. Audit competitions, and some bug bounties, now charge one per report, shown at submission. Breaking the rules costs a temporary suspension or a permanent ban, loss of access to the report, and zero payout.',
       sources: ['rules'],
     },
   ],
   sources: [
-    { id: 'rules', label: 'Immunefi Rules', href: 'https://immunefi.com/rules/', note: 'Prohibited behaviour for whitehats and the penalties.' },
+    { id: 'rules', label: 'Immunefi Rules', href: 'https://immunefi.com/rules/', note: 'Prohibited behaviour for whitehats and the penalties. No fee is listed.', checked: '15 Oct 2026' },
     {
       id: 'guide',
       label: 'How to Submit Bug Reports That Get Paid',
@@ -224,6 +233,38 @@ After the fix: {the same test on the patched build, and its failing line}`,
       dated: 'Updated 9 Sep 2026',
     },
     {
+      id: 'comp-ens',
+      label: 'Audit Competition | ENS',
+      href: 'https://immunefi.com/audit-competition/audit-competition-ens/information/',
+      note: 'Submission Fees: a fee on each report, set and managed by Immunefi and shown at submission, and a fee to start a mediation.',
+      dated: 'Started 18 Aug 2026',
+      checked: '15 Oct 2026',
+    },
+    {
+      id: 'comp-firelight',
+      label: 'Firelight Audit Competition',
+      href: 'https://immunefi.com/audit-competition/audit-comp-firelight-1/information/',
+      note: 'The same Submission Fees section, word for word.',
+      dated: 'Started 12 Aug 2026',
+      checked: '15 Oct 2026',
+    },
+    {
+      id: 'comp-quantus',
+      label: 'Quantus Audit Competition',
+      href: 'https://immunefi.com/audit-competition/audit-comp-quantus/information/',
+      note: 'The same Submission Fees section, word for word.',
+      dated: 'Started 12 Aug 2026',
+      checked: '15 Oct 2026',
+    },
+    {
+      id: 'lombard',
+      label: 'Lombard Finance Bug Bounty',
+      href: 'https://immunefi.com/bug-bounty/lombard-finance/information/',
+      note: 'A non-refundable fee on every report, at every severity, collected by Immunefi and not paid to the project.',
+      dated: 'Updated 11 Sep 2026',
+      checked: '15 Oct 2026',
+    },
+    {
       id: 'poc-rules',
       label: 'Proof of Concept (PoC) Guidelines and Rules',
       href: 'https://immunefisupport.zendesk.com/hc/en-us/articles/9946217628561-Proof-of-Concept-PoC-Guidelines-and-Rules',
@@ -242,7 +283,7 @@ const sherlock = {
   path: '/templates/sherlock',
   // Its sources were re-pointed and re-read after CHECKED: see `checked` on each.
   lastmod: '2026-10-09',
-  title: 'Sherlock audit contest report template | Bounty Operator',
+  title: 'Sherlock report template: audit contests and bug bounties | Bounty Operator',
   h1: 'Sherlock audit contest report template',
   description:
     'Sherlock report template in Markdown: root cause, pre-conditions, attack path and impact against the High and Medium thresholds, plus what judges invalidate.',
@@ -694,7 +735,7 @@ const hackerone = {
   id: 'hackerone',
   name: 'HackerOne',
   path: '/templates/hackerone',
-  title: 'HackerOne bug report template | Bounty Operator',
+  title: 'HackerOne report template for hackers (Markdown) | Bounty Operator',
   h1: 'HackerOne bug report template',
   description:
     'HackerOne report template in Markdown: numbered reproduction steps, expected against actual, impact, a CVSS vector, and the report states that cost reputation.',
@@ -877,7 +918,237 @@ Attached: {file names of screenshots or the recording}`,
   ],
 };
 
+// ---------------------------------------------------------------------------
+// GitHub private vulnerability reporting
+// ---------------------------------------------------------------------------
+
+// Every source below was read on 15 Oct 2026: the two changelog entries of
+// 1 Oct 2026, the reporter's and the maintainer's docs pages, the
+// configuration page and the REST API reference. GitHub is not a bug bounty
+// platform, so it is not a column of the hub's comparison: see TEMPLATES.
+const github = {
+  id: 'github',
+  name: 'GitHub',
+  path: '/templates/github-private-vulnerability-report',
+  checked: { iso: '2026-10-15', label: '15 Oct 2026' },
+  title: 'GitHub private vulnerability report template | Bounty Operator',
+  h1: 'GitHub private vulnerability report template',
+  description:
+    'GitHub private vulnerability report template: summary, details, a proof of concept of 150 characters or more, impact and CWE, as the form asks since 1 Oct 2026.',
+  lede: 'Since 1 Oct 2026 GitHub’s report form asks for four things by default: a summary, the details, a proof of concept of at least 150 characters, and the impact. This template fills those four boxes, with the CWE and the AI-assistance box after them. Copy it, fill every placeholder, then have the draft challenged before the maintainer reads it.',
+  card: 'Open-source repositories with private vulnerability reporting turned on. The default form has four required boxes.',
+  cardClosed: ['Closed as not a security risk', 'A required box left out, or a proof under 150 characters', 'Daily per-account limits on new reports'],
+  file: 'github-private-vulnerability-report.md',
+  download: 'github-private-vulnerability-report-template.md',
+  // Who reads the report first: a maintainer, not a platform triager.
+  reader: 'maintainer',
+  closedNote: 'Each reason comes from a page GitHub publishes. The repository’s own security policy and report form add rules on top, and those win.',
+  sourcesLede: 'Primary sources only, read on 15 Oct 2026. Rules change. Read the repository’s security policy on the day you submit.',
+  formNote:
+    'The title line is the advisory’s short summary. Summary, Details, Proof of concept and Impact each go in their own box of the default form. Sections 6 to 10 have no box of their own: put the CWE in its field, tick the AI box if it applies, and paste the rest at the end of Impact. A repository’s own form can ask for more. Answer every box it shows.',
+  focus: 'GitHub private vulnerability report draft. Check the summary, details, proof of concept and impact against the code, and whether a maintainer can reproduce it from the proof alone.',
+  sections: [
+    {
+      id: 'title',
+      heading: 'Title',
+      origin: 'platform',
+      rule: 'A report is filed as an advisory with a short summary line of its own, apart from the description: the REST API calls it `summary`. One line: the weakness, where it is, what it lets an attacker do.',
+      body: '{Weakness} in `{function, endpoint or file}` lets {attacker} {what they can do}',
+    },
+    {
+      id: 'summary',
+      heading: 'Summary',
+      origin: 'platform',
+      rule: 'One of the four boxes the default form requires. GitHub joins the four answers into the advisory description, so this paragraph opens what the maintainer reads.',
+      body: '{What is wrong, in which component and versions, and who is affected. Two or three sentences, no code.}',
+    },
+    {
+      id: 'details',
+      heading: 'Details',
+      origin: 'platform',
+      rule: 'Required. Pin the code: the package, the affected and patched versions, and the file and lines at a release tag or commit. Then the root cause and the path from input to effect. The REST API takes the ecosystem, the package, the version range and the affected functions as fields of their own.',
+      body: `- Package: {ecosystem} \`{package name}\`
+- Affected versions: \`{range in Advisory Database syntax, for example < 2.4.1}\`
+- Patched versions: {version, or "no fix released"}
+- Source: {repository URL} at \`{release tag or 40-character commit}\`
+- Location: \`{path/to/file}\` lines {start}-{end}, function \`{name}\`
+
+Root cause: {the line or missing check that opens the path, and why the surrounding code does not stop it}
+
+\`\`\`
+{The smallest excerpt that shows the root cause, with its line numbers}
+\`\`\`
+
+Path:
+
+1. {Attacker} sends {exact input} to \`{entry point}\`. {What the code does with it.}
+2. {The next step, with the value it carries.}
+3. {The effect: the data read, the command run, the check skipped.}`,
+    },
+    {
+      id: 'poc',
+      heading: 'Proof of concept',
+      origin: 'platform',
+      rule: 'Required, with at least 150 characters in the default form, and a repository’s own form can set a higher minimum. GitHub added the field to get a reproducible proof of concept: the exact input, the command and the output, on a version the maintainer can install.',
+      body: `Tested on {package} {version}, {operating system and runtime version}, with {configuration: the defaults, or the setting that has to be on}.
+
+1. {Install or check out the affected version: the exact command}
+2. {Start it with the configuration above}
+3. {Send the input: the exact request, file or call}
+
+\`\`\`
+{The script, request or test that triggers it}
+\`\`\`
+
+Output:
+
+\`\`\`text
+{Pasted output that shows the effect}
+\`\`\`
+
+On the patched version: {the same steps, and what they show now}`,
+    },
+    {
+      id: 'impact',
+      heading: 'Impact',
+      origin: 'platform',
+      rule: 'Required. Who is affected and how, in the setup they actually run: GitHub’s own example form asks exactly that. Name every precondition, such as a setting that is off by default, a role or an action by the victim.',
+      body: `- Who is affected: {users of which feature, in which configuration}
+- What an attacker gains: {read, write, run code or deny service: the concrete effect}
+- Preconditions: {none, or each one: a setting, a role, an action by the victim}
+- Not affected: {the configurations or versions where this does not apply}`,
+    },
+    {
+      id: 'weakness',
+      heading: 'Weakness and severity',
+      origin: 'platform',
+      rule: 'Fields of their own on the advisory. A repository can require a CWE before you submit, on the web form and over the API. Pick the CWE for the root cause, not the symptom. The API takes a severity or a CVSS vector, not both.',
+      body: `- CWE: CWE-{number}, {name}
+- Severity: {critical, high, medium or low}, or the CVSS vector \`{CVSS:3.1/AV:N/AC:L/...}\``,
+    },
+    {
+      id: 'ai',
+      heading: 'AI assistance',
+      origin: 'platform',
+      rule: 'A checkbox near the end of the form reads: I used AI assistance to find or write up this report. Maintainers are told to review the report together with any disclosure of AI assistance. Tick it when a model found the bug or wrote the text, and say what you checked by hand.',
+      body: `- AI assistance: {none, or what the model did: found the bug, wrote the text, wrote the proof}
+- Checked by hand: {what you ran or read yourself to confirm each claim}`,
+    },
+    {
+      id: 'fix',
+      heading: 'Suggested fix',
+      origin: 'platform',
+      rule: 'Optional. After you submit you can start a temporary private fork to work on the fix, and only the maintainer can merge from it. A diff here shows you found the root cause.',
+      body: `{The change, in the file and function it belongs to.}
+
+\`\`\`diff
+- {vulnerable line}
++ {fixed line}
+\`\`\``,
+    },
+    {
+      id: 'limits',
+      heading: 'Limits and non-claims',
+      origin: 'added',
+      rule: 'State what the report does not claim before the maintainer asks. A claim kept inside what the proof shows leaves nothing to argue down.',
+      body: `- Not claimed: {what this report does not say, for example no effect on the default configuration}
+- Mocked or assumed: {each mock and assumption, or "nothing: every step runs the released code"}
+- Stops working when: {the condition that breaks the path}`,
+    },
+    {
+      id: 'known',
+      heading: 'Known issues checked',
+      origin: 'added',
+      rule: 'Search the repository before you file: its published advisories, issues, pull requests and changelog. Name the nearest one and say why this is a different root cause.',
+      body: `- Published advisories for this repository: {what you searched, the nearest one, why this differs}
+- Issues, pull requests and commits: {what you searched, the nearest match, the difference}
+- Security policy: {the rule in SECURITY.md this report falls under, for example the supported versions}`,
+    },
+  ],
+  closed: [
+    {
+      title: 'Closed as not a security risk',
+      body: 'A maintainer who decides the problem is not a security risk closes the advisory, and GitHub asks them to comment why where they can. A report that reads as a bug, a hardening wish or a misconfiguration ends here. Show the security boundary that breaks and who stands on the other side of it.',
+      sources: ['manage'],
+    },
+    {
+      title: 'A required box left out, or a proof under the minimum',
+      body: 'The default form takes no report without a summary, details, a proof of concept of at least 150 characters and an impact. A repository’s own form can require more boxes and longer answers with `min_length`, and a report sent through the REST API has to match that form.',
+      sources: ['forms', 'configure'],
+    },
+    {
+      title: 'No CWE where the repository requires one',
+      body: 'A repository can require at least one CWE on every new report, on the web form and over the API. Name the weakness behind the root cause.',
+      sources: ['configure', 'forms'],
+    },
+    {
+      title: 'Too many new reports in a day',
+      body: 'Each account has a daily limit on new reports, to one repository and across GitHub, and administrators can set their own daily limit for a repository. A reporter at the limit is asked to try again later. Comments on an advisory you already filed are not limited, and trusted reporters can be put on an allow list.',
+      sources: ['rate-limits'],
+    },
+    {
+      title: 'A report that reads as generated',
+      body: 'GitHub replaced the single free-text box because it made low-quality and AI-generated reports easy to send. Maintainers are told to review any disclosure of AI assistance with the report. Tick the box when a model helped, and send a proof they can run.',
+      sources: ['forms', 'manage'],
+    },
+    {
+      title: 'Skipping the security policy',
+      body: 'If the repository has a `SECURITY.md`, GitHub shows it above the form so you read the maintainer’s guidance before you submit. It is that repository’s own rulebook. Read it before you write.',
+      sources: ['report', 'forms'],
+    },
+    {
+      title: 'Private reporting is turned off',
+      body: 'You can report privately only where the maintainers turned the feature on. Elsewhere, follow the repository’s security policy, or open an issue that asks for a security contact and nothing more.',
+      sources: ['report'],
+    },
+  ],
+  sources: [
+    {
+      id: 'forms',
+      label: 'Structured forms for private vulnerability reports',
+      href: 'https://github.blog/changelog/2026-10-01-structured-forms-for-private-vulnerability-reports/',
+      note: 'The four required fields, the 150-character proof of concept, custom forms, the CWE setting and the AI-assistance box.',
+      dated: 'GitHub Changelog, 1 Oct 2026',
+    },
+    {
+      id: 'rate-limits',
+      label: 'Rate limits for private vulnerability reports',
+      href: 'https://github.blog/changelog/2026-10-01-rate-limits-for-private-vulnerability-reports/',
+      note: 'Daily per-account limits on new reports, the repository’s own limit and the allow list.',
+      dated: 'GitHub Changelog, 1 Oct 2026',
+    },
+    {
+      id: 'report',
+      label: 'Privately reporting a security vulnerability',
+      href: 'https://docs.github.com/en/code-security/how-tos/report-and-fix-vulnerabilities/report-privately',
+      note: 'The reporter’s steps: the security policy above the form, the default fields, the AI box, credit and the temporary private fork.',
+    },
+    {
+      id: 'manage',
+      label: 'Managing privately reported security vulnerabilities',
+      href: 'https://docs.github.com/en/code-security/how-tos/report-and-fix-vulnerabilities/fix-reported-vulnerabilities/manage-vulnerability-reports',
+      note: 'What a maintainer does with a report: accept it, ask for more, or close it as not a security risk.',
+    },
+    {
+      id: 'configure',
+      label: 'Configuring private vulnerability reporting for a repository',
+      href: 'https://docs.github.com/en/code-security/how-tos/report-and-fix-vulnerabilities/configure-vulnerability-reporting/configure-for-a-repository',
+      note: 'Custom forms and `min_length`, the CWE requirement, and API reports against a custom form.',
+    },
+    {
+      id: 'api',
+      label: 'REST API endpoints for repository security advisories',
+      href: 'https://docs.github.com/en/rest/security-advisories/repository-advisories',
+      note: 'The fields of a report sent by API: summary, description, affected packages, CWE ids, and a severity or a CVSS vector.',
+    },
+  ],
+};
+
 export const PLATFORMS = [immunefi, sherlock, cantina, hackerone];
+
+/** Every Markdown report template: the four platforms, then GitHub. */
+export const GITHUB = github;
+export const TEMPLATES = [...PLATFORMS, github];
 
 /** The eight parts every template carries, and why each one is there. */
 export const PARTS = [
@@ -932,7 +1203,7 @@ export const COMPARISON = [
   {
     question: 'Fee or penalty',
     cells: [
-      'Suspension or permanent ban, and zero payout.',
+      'A fee per report in recent competitions and some bounties. Suspension or permanent ban, and zero payout.',
       'Payouts withheld below a 20% valid ratio. Escalation costs Signal.',
       '$100 for an invalid escalation. Deposits slashed for spam.',
       '−5 for Not Applicable, −10 for Spam.',

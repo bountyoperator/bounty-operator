@@ -1,8 +1,12 @@
 // Behaviour for the report-template pages (/templates/*).
 //
-// 1. "Copy as Markdown": copies the template source that is already on the page.
+// 1. "Copy as Markdown": copies the template source that is already on the page,
+//    then says where the filled draft goes next (data-template-copied) until
+//    the next copy.
 // 2. "Challenge the draft": hands a pasted draft to the workbench through
-//    sessionStorage key "bo:handoff" and opens /#workspace.
+//    sessionStorage key "bo:handoff" and opens /#workspace. Every
+//    data-handoff-go button hands it over, each with its own
+//    data-handoff-profile and data-handoff-focus where it has them.
 //
 // One request: the first copy is counted by name (/tools/ping.mjs). It carries
 // the event name and nothing of a draft. The DOM is built with createElement
@@ -25,9 +29,16 @@ export function sourceText(block) {
   return text.endsWith('\n') ? text.slice(0, -1) : text;
 }
 
+const COPIED_NOTE = 'Copied to the clipboard.';
+
 function setStatus(root, message) {
   const status = root.querySelector('[data-template-status]');
   if (status) status.textContent = message;
+}
+
+/** What the status line says after a copy: the page's own next step, or the plain note. */
+export function copiedNote(status) {
+  return status?.dataset?.templateCopied || COPIED_NOTE;
 }
 
 function selectContents(node) {
@@ -56,10 +67,12 @@ function wireCopy(root) {
       try {
         await navigator.clipboard.writeText(sourceText(block));
         if (label) label.textContent = 'Copied';
-        setStatus(root, 'Copied to the clipboard.');
+        // The next step stays on screen until the next copy, which clears it
+        // and writes it again.
+        setStatus(root, '');
+        setStatus(root, copiedNote(root.querySelector('[data-template-status]')));
         window.setTimeout(() => {
           if (label) label.textContent = original;
-          setStatus(root, '');
         }, COPIED_MS);
       } catch {
         // Clipboard access can be refused. Show the source and select it instead.
@@ -120,15 +133,23 @@ function showError(box, title, detail) {
   box.append(icon, content);
 }
 
+/** The profile and focus a hand-off button sends: its own where it has them, else the panel's. */
+export function handoffTarget(button, panel) {
+  return {
+    profile: button?.dataset?.handoffProfile || panel.dataset.handoffProfile,
+    focus: button?.dataset?.handoffFocus || panel.dataset.handoffFocus,
+  };
+}
+
 function wireHandoff(root) {
   const panel = root.querySelector('[data-handoff]');
   if (!panel) return;
 
   const input = panel.querySelector('[data-handoff-input]');
-  const go = panel.querySelector('[data-handoff-go]');
+  const buttons = [...panel.querySelectorAll('[data-handoff-go]')];
   const state = panel.querySelector('[data-handoff-state]');
   const error = panel.querySelector('.tpl-check__error');
-  if (!input || !go) return;
+  if (!input || buttons.length === 0) return;
 
   // The report pages mark what is left to fill with {placeholders}; the Foundry
   // scaffold marks it with TODO, and its braces are Solidity.
@@ -159,7 +180,7 @@ function wireHandoff(root) {
   input.addEventListener('input', describe);
   describe();
 
-  go.addEventListener('click', (event) => {
+  const handOver = (event, button) => {
     const draft = input.value;
     // With nothing pasted the link opens the workbench on the profile, as it does without script.
     // The same goes for a browser that refused the handoff once: the link still works.
@@ -180,8 +201,7 @@ function wireHandoff(root) {
     const handoff = buildHandoff({
       name: panel.dataset.handoffName,
       content: draft,
-      profile: panel.dataset.handoffProfile,
-      focus: panel.dataset.handoffFocus,
+      ...handoffTarget(button, panel),
       note: panel.dataset.handoffNote,
     });
     try {
@@ -194,7 +214,9 @@ function wireHandoff(root) {
     }
     showError(error, '', '');
     window.location.assign(WORKBENCH);
-  });
+  };
+
+  for (const button of buttons) button.addEventListener('click', (event) => handOver(event, button));
 }
 
 if (typeof document !== 'undefined') {
