@@ -115,6 +115,17 @@ const catalog = async (env) => (await worker.fetch(new Request(`${SITE_ORIGIN}/a
 /** Every window's allowance used up: no room for one more request. */
 const exhaust = (env) => env.DB.sqlite.prepare('UPDATE supplier_budget_windows SET consumed_micro = limit_micro').run();
 
+/** A request that finished moments ago over its usage limit. The wallet and
+ * key only satisfy the reservation triggers; the fault itself is the point. */
+function addUsageFault(env, account) {
+  const at = Math.floor(Date.now() / 1000);
+  env.DB.sqlite.prepare('INSERT INTO api_wallets(account_id, balance_micro) VALUES(?, 1000000)').run(account);
+  env.DB.sqlite.prepare("INSERT INTO inference_keys(id, account_id, token_hash, prefix, label, budget_micro, created_at, expires) VALUES('fault-key', ?, 'fault-hash', 'bo_fault', 'fault', 1000000, ?, ?)")
+    .run(account, at, at + 3600);
+  env.DB.sqlite.prepare(`INSERT INTO inference_requests(id, account_id, key_id, model, status, hold_micro, input_rate, output_rate, minimum_micro, created_at, lease_until, finished_at, failure_code)
+    VALUES('fault-request', ?, 'fault-key', ?, 'completed', 1, 0, 0, 0, ?, ?, ?, 'usage_limit_exceeded')`).run(account, model.id, at, at + 1200, at);
+}
+
 test('manual top-ups stay open while only an exhausted supplier budget blocks inference, since the payment refills it', async (t) => {
   let underBalance = false;
   const stripeCalls = [];
@@ -174,10 +185,13 @@ test('every other reason inference is unavailable keeps manual top-ups closed', 
     ['a disabled model', { INFERENCE_MODELS: JSON.stringify([{ ...model, enabled: false }]) }, exhaust],
     ['inference switched off', { INFERENCE_ENABLED: 'false' }, exhaust],
     ['a hosting pause', runpodOnly, exhaust],
+    // A model that just exceeded its usage limit is held back by more than
+    // allowance, so the payment would not bring it back.
+    ['a recent usage fault', {}, (env, account) => { exhaust(env); addUsageFault(env, account); }],
   ];
   for (const [reason, overrides, arrange] of cases) {
     const { env, account, post } = await setup(overrides);
-    arrange(env);
+    arrange(env, account);
     assert.equal((await catalog(env)).topups_enabled, false, reason);
     assert.equal((await portalData(env, account)).api.topups_enabled, false, reason);
     const response = await post('/api/inference/topup');

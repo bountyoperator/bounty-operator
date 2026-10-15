@@ -38,7 +38,7 @@ import {
   toBase64Url,
   toBytes,
 } from '../public/app/passkey.mjs';
-import { MCP_ENDPOINT, MCP_PACKAGE, TABS, TOKEN_VAR, autoTopupAuthorization, autoTopupSettings, connectionCommands, reviewRows, usageSummary } from '../public/app/portal.mjs';
+import { MCP_ENDPOINT, MCP_PACKAGE, TABS, TOKEN_VAR, apiPanelCopy, autoTopupAuthorization, autoTopupSettings, connectionCommands, reviewRows, usageSummary } from '../public/app/portal.mjs';
 import { ACCOUNT_SCRIPTS, ACCOUNT_STYLES, accountDialog } from '../site/fragments/account-dialog.mjs';
 import { assertNoBannedNames } from './private-lists.mjs';
 
@@ -472,6 +472,28 @@ describe('automatic top-up authorization', () => {
 
   test('consent names the exact charge, trigger, cap, and ongoing authorization', () => {
     assert.equal(autoTopupAuthorization({ amount_usd: 50, threshold_usd: 10, monthly_cap_usd: 200 }), 'I authorize Bounty Operator to charge my saved payment method US$50 when available API credit falls below US$10, up to US$200 per calendar month (UTC), until I disable automatic top-ups.');
+  });
+});
+
+describe('the Model API panel copy', () => {
+  test('at capacity with top-ups open the Add credit buttons stay live and the panel says why', () => {
+    const capacity = apiPanelCopy({ enabled: false, status: 'unavailable', topups_enabled: true });
+    assert.equal(capacity.topupsOpen, true, 'the Add $20/$50/$100 buttons are not disabled');
+    assert.equal(capacity.topupsNote, null);
+    assert.match(capacity.modelsNote, /^Every model is at capacity right now/);
+    assert.match(capacity.modelsNote, /Top-ups stay open: new credit adds capacity\.$/);
+  });
+
+  test('every other state keeps its own copy', () => {
+    const closed = apiPanelCopy({ enabled: false, status: 'unavailable', topups_enabled: false });
+    assert.deepEqual([closed.topupsOpen, closed.modelsNote], [false, 'Model inference is not available yet.']);
+    assert.match(closed.topupsNote, /being verified/);
+    const paused = apiPanelCopy({ enabled: false, status: 'paused', topups_enabled: false });
+    assert.match(paused.topupsNote, /closed while model inference is paused/);
+    assert.match(paused.modelsNote, /^Model inference is paused right now/);
+    const live = apiPanelCopy({ enabled: true, status: 'available', topups_enabled: true });
+    assert.equal(live.topupsNote, null);
+    assert.match(live.modelsNote, /^Choose a model in your harness/);
   });
 });
 

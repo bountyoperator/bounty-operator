@@ -1237,6 +1237,24 @@ export function autoTopupAuthorization(settings) {
   return `I authorize Bounty Operator to charge my saved payment method US$${amount_usd} when available API credit falls below US$${threshold_usd}, up to US$${monthly_cap_usd} per calendar month (UTC), until I disable automatic top-ups.`;
 }
 
+/** The Model API panel's copy, and whether the Add credit buttons are live.
+ * Every model can be at capacity while top-ups stay open, because the payment
+ * itself restores the capacity; that state says so rather than reading as a
+ * service that is closed. */
+export function apiPanelCopy(api) {
+  const topupsOpen = Boolean(api.topups_enabled);
+  return {
+    topupsOpen,
+    topupsNote: topupsOpen ? null
+      : api.status === 'paused' ? 'Top-ups are closed while model inference is paused. Existing credit stays available and is spent only on confirmed usage.'
+        : 'Top-ups are closed while the model service is being verified.',
+    modelsNote: api.enabled ? 'Choose a model in your harness. Fetch the full catalog with GET /v1/models; supported capabilities vary by model.'
+      : api.status === 'paused' ? 'Model inference is paused right now. Requests return 503 without a charge until it resumes.'
+        : topupsOpen ? 'Every model is at capacity right now, so requests return 503 without a charge. Top-ups stay open: new credit adds capacity.'
+          : 'Model inference is not available yet.',
+  };
+}
+
 const AUTO_TOPUP_PAUSES = {
   payment_failed: 'The last payment failed. Update your payment method to resume.',
   authentication_required: 'Your payment needs confirmation. Save your payment method in Stripe again.',
@@ -1368,15 +1386,16 @@ function renderApi() {
   const api = data.api ?? {};
   const keys = api.keys ?? [];
   const models = api.models ?? [];
+  const copy = apiPanelCopy(api);
   return [
     section('Prepaid API credit', 'One balance for every model. Add credit manually or choose optional automatic top-ups.',
       el('dl', { class: 'stats' }, stat('Available', { value: usd(api.available_micro), note: 'USD available for new requests' }), stat('Reserved', { value: usd(api.reserved_micro), note: 'Unused credit returns when a request ends' })),
-      el('div', { class: 'portal-row__actions' }, [20, 50, 100].map((amount) => button({ label: `Add $${amount}`, variant: 'secondary', disabled: !api.topups_enabled, onClick: (event) => openApiTopup(event.currentTarget, amount) })),
+      el('div', { class: 'portal-row__actions' }, [20, 50, 100].map((amount) => button({ label: `Add $${amount}`, variant: 'secondary', disabled: !copy.topupsOpen, onClick: (event) => openApiTopup(event.currentTarget, amount) })),
         button({ label: 'Refresh balance', variant: 'quiet', onClick: () => load() })),
-      !api.topups_enabled ? el('p', { class: 'help', text: api.status === 'paused' ? 'Top-ups are closed while model inference is paused. Existing credit stays available and is spent only on confirmed usage.' : 'Top-ups are closed while the model service is being verified.' }) : null,
+      copy.topupsNote ? el('p', { class: 'help', text: copy.topupsNote }) : null,
       Number(api.balance_micro) < 0 ? el('p', { class: 'help', text: 'A payment reversal left an outstanding balance. Contact support before making more requests.' }) : null,
       autoTopupPanel(api.auto_topup)),
-    section('Models and rates', api.enabled ? 'Choose a model in your harness. Fetch the full catalog with GET /v1/models; supported capabilities vary by model.' : api.status === 'paused' ? 'Model inference is paused right now. Requests return 503 without a charge until it resumes.' : api.topups_enabled ? 'Every model is at capacity right now, so requests return 503 without a charge. Top-ups stay open: new credit adds capacity.' : 'Model inference is not available yet.',
+    section('Models and rates', copy.modelsNote,
       models.length ? el('ul', { class: 'portal-list' }, models.map((model) => row({ title: model.name, meta: `${model.id} · ${(model.capabilities ?? ['text']).join(', ')} · ${model.context_length.toLocaleString()} context · $${model.pricing.input_per_million}/million input tokens · $${model.pricing.output_per_million}/million output tokens · ${usd(model.pricing.minimum_request * 1000000)} minimum per request`, actions: [button({ label: 'Copy model ID', variant: 'quiet', size: 'sm', onClick: async () => { announce(await copyText(model.id) ? 'Model ID copied.' : 'Copy the model ID shown above.'); } })] }))) : empty('Models will appear here after verification.'),
       el('p', { class: 'help', text: 'Output tokens include reasoning. Interrupted streams are charged only for confirmed usage. A temporary reservation covers the model’s maximum input and your requested output limit.' }),
       el('a', { class: 'link', href: '/docs/model-api', text: 'API reference and examples' })),

@@ -100,6 +100,40 @@ export function deploySteps({ config = PRODUCTION_CONFIG, dryRun = false, outDir
 }
 
 /**
+ * Runs the steps in order under this Node and returns the exit status. A step
+ * with `checkOutput` is read as well as shown, because its output decides; any
+ * other step is judged by its status. Nothing after a stop is run.
+ *
+ * @param {ReturnType<typeof deploySteps>} steps
+ * @param {{ dryRun?: boolean, run?: typeof spawnSync }} [options]  `run` is the spawn, so a test can stand in for Wrangler.
+ * @returns {number}
+ */
+export function runSteps(steps, { dryRun = false, run = spawnSync } = {}) {
+  for (const [index, step] of steps.entries()) {
+    console.log(`\n[${index + 1}/${steps.length}] ${step.name}`);
+    if (step.checkOutput) {
+      const listed = run(process.execPath, step.args, { cwd: step.cwd, stdio: ['inherit', 'pipe', 'inherit'], encoding: 'utf8' });
+      process.stdout.write(listed.stdout ?? '');
+      const refusal = step.checkOutput(listed.status, listed.stdout ?? '');
+      if (!refusal) continue;
+      console.error(refusal);
+      return 1;
+    }
+    const result = run(process.execPath, step.args, { cwd: step.cwd, stdio: 'inherit' });
+    if (result.status !== 0) {
+      const deploying = index === steps.length - 1 && !dryRun;
+      console.error(
+        deploying
+          ? 'Wrangler stopped with an error. Check what is live: npm run verify:live -- --base-url https://bountyoperator.com'
+          : `Stopped at "${step.name}". Nothing was deployed.`,
+      );
+      return result.status ?? 1;
+    }
+  }
+  return 0;
+}
+
+/**
  * The site paths of the pages among `files`, as git prints them: web/public/guide.html is
  * /guide, and the home page is /. The 404 page has no address of its own.
  *
@@ -146,30 +180,10 @@ function main(argv) {
 
   const outDir = options.dryRun ? mkdtempSync(join(tmpdir(), 'bounty-operator-deploy-')) : '';
   const steps = deploySteps({ ...options, outDir, wrangler: wranglerEntry() });
-  for (const [index, step] of steps.entries()) {
-    console.log(`\n[${index + 1}/${steps.length}] ${step.name}`);
-    if (step.checkOutput) {
-      // Read as well as shown, because the output decides.
-      const listed = spawnSync(process.execPath, step.args, { cwd: step.cwd, stdio: ['inherit', 'pipe', 'inherit'], encoding: 'utf8' });
-      process.stdout.write(listed.stdout ?? '');
-      const refusal = step.checkOutput(listed.status, listed.stdout ?? '');
-      if (refusal) {
-        console.error(refusal);
-        return 1;
-      }
-      continue;
-    }
-    const result = spawnSync(process.execPath, step.args, { cwd: step.cwd, stdio: 'inherit' });
-    if (result.status !== 0) {
-      const deploying = index === steps.length - 1 && !options.dryRun;
-      console.error(
-        deploying
-          ? 'Wrangler stopped with an error. Check what is live: npm run verify:live -- --base-url https://bountyoperator.com'
-          : `Stopped at "${step.name}". Nothing was deployed.`,
-      );
-      if (outDir) rmSync(outDir, { recursive: true, force: true });
-      return result.status ?? 1;
-    }
+  const stopped = runSteps(steps, { dryRun: options.dryRun });
+  if (stopped !== 0) {
+    if (outDir) rmSync(outDir, { recursive: true, force: true });
+    return stopped;
   }
   if (options.dryRun) {
     // The bundle holds the hosted method: it is built to prove that it builds, then removed.

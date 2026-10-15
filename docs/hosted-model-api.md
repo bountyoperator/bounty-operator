@@ -94,11 +94,14 @@ window that starts when the current one ends; an enabled window that overlaps
 it is refused. Operator funding is spent first and ends with its window. The
 very first window still needs operator funding or a monthly grant.
 
-A disabled window covering the present is a pause: it receives the share and no
-automatic window opens beside it. The pause lasts until that window ends; sales
-then resume with the allowance it held. To stop a provider for longer, disable
-its models or set the share to `0`, which stops automatic funding and the
-carry-over described below. The share has to keep up with spending. A RunPod
+To pause a provider, set `enabled = 0` on the window that covers the present.
+It still receives the share, no automatic window opens beside it, and no
+request is admitted. Inserting a separate disabled window beside an enabled one
+pauses nothing: the enabled window keeps taking the share and admitting
+requests. The pause lasts until the disabled window ends; sales then resume
+with the allowance it held. To stop a provider for longer, disable its models
+or set the share to `0`, which stops automatic funding and the carry-over
+described below. The share has to keep up with spending. A RunPod
 request uses its whole hold whatever the customer pays, so the share of each
 model's minimum price must cover its hold; for token-priced models the share of
 each customer rate must cover the supplier's rate. The 15-minute scheduled run

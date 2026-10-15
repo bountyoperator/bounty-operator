@@ -154,9 +154,10 @@ const DEFAULT_SHARE = 900_000;
 const SHARE_PATTERN = /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/;
 const AUTOMATIC_TERM = 30 * 86400;
 const AUTOMATIC_REFERENCE = 'automatic: share of confirmed customer API credit';
-// The window covering now, preferring an enabled one. A disabled window that
-// covers now is the operator's pause: it still receives allowance, and no
-// automatic window is opened beside it.
+// The window covering now, preferring an enabled one. Disabling the window
+// that covers now is the operator's pause: it still receives allowance, and no
+// automatic window is opened beside it. A separate disabled window beside an
+// enabled one pauses nothing, since the enabled one is preferred here too.
 const TARGET = `target AS (SELECT w.id, w.limit_micro, w.reserved_micro, w.consumed_micro FROM supplier_budget_windows w, input
   WHERE w.provider = input.provider AND w.starts_at <= input.now AND w.ends_at > input.now ORDER BY w.enabled DESC, w.starts_at DESC LIMIT 1)`;
 // The customer-funded allowance a window can still give up, to a carry or a
@@ -355,8 +356,11 @@ export function supplierBudgetCreditStatements(env: SupplierEnv, models: Supplie
   const share = supplierBudgetShare(env);
   const funded = share > 0 ? supplierBudgetProviders(env, models, now) : [];
   return PROVIDERS.flatMap((provider) => {
-    const statements = funded.includes(provider) ? sweepStatements(env, provider, now, change.deltaMicro > 0 ? change : null, share) : [];
-    if (change.deltaMicro > 0 && funded.includes(provider)) statements.push(creditStatement(env, provider, change, share, now));
+    // Only a credit sweeps. A removal already takes from ended windows, so
+    // sweeping first would carry the allowance into a window it then empties,
+    // leaving an automatic window of 0 that blocks an overlapping one for 30 days.
+    const statements = change.deltaMicro > 0 && funded.includes(provider)
+      ? [...sweepStatements(env, provider, now, change, share), creditStatement(env, provider, change, share, now)] : [];
     if (change.deltaMicro < 0) statements.push(removalStatement(env, provider, change, now));
     return statements;
   });

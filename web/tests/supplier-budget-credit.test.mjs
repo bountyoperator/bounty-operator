@@ -5,7 +5,7 @@ import { test } from 'node:test';
 import { reserveInference } from '../src/api-credits.ts';
 import { syncMonthlyCredit, syncMonthlyCreditForCharge } from '../src/api-monthly-credit.ts';
 import { applyApiPaymentEvent, reconcileApiTopup, syncApiTopup } from '../src/api-topups.ts';
-import { supplierBudgetCreditStatements, supplierBudgetProviders, supplierBudgetShare, supplierBudgetShareProblem, supplierOperatingReport, supplierShareShortfalls, sweepSupplierBudgets } from '../src/supplier-costs.ts';
+import { supplierAvailability, supplierBudgetCreditStatements, supplierBudgetProviders, supplierBudgetRefillable, supplierBudgetShare, supplierBudgetShareProblem, supplierOperatingReport, supplierShareShortfalls, sweepSupplierBudgets } from '../src/supplier-costs.ts';
 import worker from '../src/worker.ts';
 import { addAccount, createContext, createEnv } from './worker-helpers.mjs';
 
@@ -166,6 +166,29 @@ test('a disabled window covering now is a pause: it keeps the allowance and no w
   assert.equal(windows(f.env).length, 1);
   assert.equal(windowById(f.env, 'paused').limit_micro, 18000000);
   assert.equal(windowById(f.env, 'paused').enabled, 0);
+});
+
+test('the pause is enabled = 0 on the window covering now; a disabled window beside an enabled one pauses nothing', async () => {
+  // Disabling the window that covers now: the credit still lands in it, no
+  // window opens beside it, no request is admitted and top-ups close.
+  const paused = topup();
+  addWindow(paused.env, { id: 'current', limit: 5000000 });
+  paused.env.DB.sqlite.prepare("UPDATE supplier_budget_windows SET enabled = 0 WHERE id = 'current'").run();
+  await paused.sync();
+  assert.deepEqual(windows(paused.env).map((row) => row.id), ['current']);
+  assert.equal(windowById(paused.env, 'current').limit_micro, 23000000);
+  assert.equal((await supplierAvailability(paused.env, [runpodModel]))[runpodModel.id].code, 'supplier_unavailable');
+  assert.deepEqual([...await supplierBudgetRefillable(paused.env, [runpodModel], 20000000)], []);
+
+  // A separate disabled window beside an enabled one is not a pause: the
+  // enabled window takes the share and keeps admitting requests.
+  const beside = topup();
+  addWindow(beside.env, { id: 'selling', limit: 5000000 });
+  addWindow(beside.env, { id: 'ignored', enabled: 0, starts: now() - DAY + 1 });
+  await beside.sync();
+  assert.equal(windowById(beside.env, 'selling').limit_micro, 23000000);
+  assert.equal(windowById(beside.env, 'ignored').limit_micro, 0);
+  assert.equal((await supplierAvailability(beside.env, [runpodModel]))[runpodModel.id].code, 'available');
 });
 
 test('a share of zero or an unreadable share adds nothing and opens no window', async () => {
@@ -348,15 +371,22 @@ test('customer-funded allowance left in an ended window carries into a current o
   assert.equal(await sweepSupplierBudgets(f.env, ['runpod']), 0);
 });
 
-test('a refund after the window ended takes its share from the carried allowance', async () => {
+test('a refund after the window ended takes its share from that window and opens none', async () => {
   const f = topup();
   addWindow(f.env, { id: 'first' });
   await f.sync();
   f.env.DB.sqlite.prepare("UPDATE supplier_budget_windows SET ends_at = ? WHERE id = 'first'").run(now() - 1);
   f.charge.amount_refunded = 1000;
   await f.sync();
-  const next = automaticWindow(f.env);
-  assert.equal(next.limit_micro, 9000000);
+  // A removal does not sweep: carrying first and taking it back afterwards
+  // would leave an automatic window of 0 standing in the way for 30 days.
+  assert.equal(automaticWindow(f.env), undefined);
+  assert.equal(windowById(f.env, 'first').limit_micro, 9000000);
+  const removal = adjustments(f.env).at(-1);
+  assert.deepEqual([removal.window_id, removal.requested_micro, removal.amount_micro], ['first', -9000000, -9000000]);
+  // What the payment still funds carries on the next credit or scheduled run.
+  assert.equal(await sweepSupplierBudgets(f.env, ['runpod']), 2);
+  assert.equal(automaticWindow(f.env).limit_micro, 9000000);
   assert.equal(windowById(f.env, 'first').limit_micro, 0);
 });
 

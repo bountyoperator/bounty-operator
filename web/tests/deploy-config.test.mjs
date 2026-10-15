@@ -14,7 +14,7 @@ import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 
-import { PRODUCTION_CONFIG, TEMPLATE_CONFIG, configRefusal, deploySteps, migrationRefusal, pagesOf } from '../../scripts/deploy.mjs';
+import { PRODUCTION_CONFIG, TEMPLATE_CONFIG, configRefusal, deploySteps, migrationRefusal, pagesOf, runSteps } from '../../scripts/deploy.mjs';
 
 const WEB_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const REPO_DIR = path.resolve(WEB_DIR, '..');
@@ -155,6 +155,42 @@ test('the deploy stops unless Wrangler reports every production migration applie
   assert.match(migrationRefusal(null, ''), /could not be listed/);
   assert.match(migrationRefusal(0, ''), /not applied/);
   for (const output of ['', 'x']) assert.equal(migrationRefusal(0, output).split('\n').length, 1);
+});
+
+test('the run reads the migration step’s output and never reaches Wrangler deploy while one is pending', (t) => {
+  t.mock.method(console, 'log', () => {});
+  const errors = t.mock.method(console, 'error', () => {});
+  const shown = t.mock.method(process.stdout, 'write', () => true);
+  const steps = deploySteps();
+  const of = (args) => steps.find((step) => step.args === args);
+  // `wrangler d1 migrations list DB --remote` against a database behind the repository.
+  const pending = 'Migrations to be applied:\n│ 0007_supplier_budget_from_credit.sql │\n';
+  const applied = '✅ No migrations to apply!\n';
+  const record = (output, failing) => {
+    const names = [];
+    const status = runSteps(steps, { run: (executable, args, options) => {
+      const step = of(args);
+      assert.equal(executable, process.execPath);
+      assert.equal(options.cwd, step.cwd);
+      names.push(step.name);
+      return step.name === failing ? { status: 2 } : { status: 0, stdout: step.checkOutput ? output : undefined };
+    } });
+    return { status, names };
+  };
+
+  const stopped = record(pending);
+  assert.equal(stopped.status, 1);
+  assert.deepEqual(stopped.names, ['hosted profiles', 'leak audit', 'page check', 'database migrations']);
+  assert.equal(shown.mock.calls.at(-1).arguments[0], pending, 'what Wrangler printed is shown as well as read');
+  assert.match(errors.mock.calls.at(-1).arguments[0], /migrations that are not applied/);
+
+  const deployed = record(applied);
+  assert.deepEqual([deployed.status, deployed.names.at(-1)], [0, 'deploy']);
+
+  // An ordinary gate failure stops with that step's name, before the migration read.
+  const failed = record(applied, 'leak audit');
+  assert.deepEqual([failed.status, failed.names], [2, ['hosted profiles', 'leak audit']]);
+  assert.match(errors.mock.calls.at(-1).arguments[0], /Stopped at "leak audit"\. Nothing was deployed\./);
 });
 
 test('a deploy without the production file is refused with one line, before any gate runs', () => {
