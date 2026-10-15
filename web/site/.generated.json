@@ -29,6 +29,7 @@
     "templates.html",
     "templates/cantina.html",
     "templates/foundry-poc.html",
+    "templates/github-private-vulnerability-report.html",
     "templates/hackerone.html",
     "templates/immunefi.html",
     "templates/sherlock.html",

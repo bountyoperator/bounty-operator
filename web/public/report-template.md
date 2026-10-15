@@ -10,6 +10,9 @@ The single generic template that used to live here is replaced by one template p
 | Sherlock | https://bountyoperator.com/templates/sherlock | https://bountyoperator.com/templates/sherlock.md |
 | Cantina | https://bountyoperator.com/templates/cantina | https://bountyoperator.com/templates/cantina.md |
 | HackerOne | https://bountyoperator.com/templates/hackerone | https://bountyoperator.com/templates/hackerone.md |
+| GitHub private vulnerability report | https://bountyoperator.com/templates/github-private-vulnerability-report | https://bountyoperator.com/templates/github-private-vulnerability-report.md |
+
+The GitHub template follows the structured form GitHub added on 1 Oct 2026. Its sources were read on 15 Oct 2026.
 
 Foundry proof-of-concept scaffold: https://bountyoperator.com/templates/foundry-poc
 Scaffold file: https://bountyoperator.com/templates/ImpactPoC.t.sol

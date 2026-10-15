@@ -42,11 +42,12 @@ A hosted review sends the user's files and provider key through bountyoperator.c
 
 ## Report templates
 
-- [Report templates](https://bountyoperator.com/templates): Templates for four platforms and a Foundry PoC scaffold.
-- [Immunefi](https://bountyoperator.com/templates/immunefi): Immunefi bug report template in Markdown.
+- [Report templates](https://bountyoperator.com/templates): Templates for four platforms, GitHub private vulnerability reports and a Foundry PoC scaffold.
+- [Immunefi](https://bountyoperator.com/templates/immunefi): Immunefi bug report template in Markdown, for bug bounties and audit competitions, with the per-report fee.
 - [Sherlock](https://bountyoperator.com/templates/sherlock): Sherlock audit contest report template in Markdown.
 - [Cantina](https://bountyoperator.com/templates/cantina): Cantina finding report template in Markdown.
 - [HackerOne](https://bountyoperator.com/templates/hackerone): HackerOne bug report template in Markdown.
+- [GitHub private vulnerability report](https://bountyoperator.com/templates/github-private-vulnerability-report): Template for the structured form GitHub uses since 1 Oct 2026: summary, details, proof of concept, impact.
 - [Foundry PoC](https://bountyoperator.com/templates/foundry-poc): Foundry fork-test scaffold with a control run and a final assertion.
 
 ## Guides

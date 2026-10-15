@@ -1,4 +1,4 @@
-// Writes web/public/templates/<platform>.md from data.mjs.
+// Writes web/public/templates/<template>.md from data.mjs, one per entry of TEMPLATES.
 //
 //   node web/site/pages/templates/write-md.mjs
 //
@@ -10,7 +10,7 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { PLATFORMS } from './data.mjs';
+import { TEMPLATES } from './data.mjs';
 import { toMarkdown } from './shared.mjs';
 
 const here = fileURLToPath(import.meta.url);
@@ -19,7 +19,7 @@ export const TEMPLATE_DIR = path.resolve(path.dirname(here), '..', '..', '..', '
 export async function writeTemplates(directory = TEMPLATE_DIR) {
   await mkdir(directory, { recursive: true });
   const written = [];
-  for (const platform of PLATFORMS) {
+  for (const platform of TEMPLATES) {
     const file = path.join(directory, platform.file);
     await writeFile(file, toMarkdown(platform));
     written.push(file);

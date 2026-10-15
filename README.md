@@ -174,8 +174,8 @@ the same check on your own machine.
 | [Slither triage queue](https://bountyoperator.com/tools/slither-focus) | Cuts `slither.json` down to 13 high-signal detectors with `file:line`. | `bounty-kit slither-focus` |
 
 [Report templates](https://bountyoperator.com/templates) for Immunefi,
-Sherlock, Cantina and HackerOne, and a Foundry PoC scaffold that ends on the
-impact assertion.
+Sherlock, Cantina, HackerOne and GitHub private vulnerability reports, and a
+Foundry PoC scaffold that ends on the impact assertion.
 
 ## Skills and Claude Code plugin
 

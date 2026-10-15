@@ -239,15 +239,15 @@ describe('tool browser modules', () => {
     }
     // Acceptance rates takes no input: its first sort or copy is what counts as a use.
     assert.equal([...read('acceptance-rates.mjs').matchAll(/\bping\('tool_acceptance_rates'\)/g)].length, 2);
+    // The template pages count a copy and a hand-off, each by its own literal.
     const others = {
-      'templates/template.mjs': "'template_copied'",
-      'docs/copy-ping.mjs': "'mcp_command_copied'",
+      'templates/template.mjs': ["'template_copied'", "'template_handoff'"],
+      'docs/copy-ping.mjs': ["'mcp_command_copied'"],
     };
-    for (const [file, literal] of Object.entries(others)) {
+    for (const [file, literals] of Object.entries(others)) {
       const source = readFileSync(path.join(PUBLIC_DIR, file), 'utf8');
       const calls = [...source.matchAll(/\bping\(([^)]*)\)/g)].map((match) => match[1]);
-      assert.ok(calls.length >= 1, file);
-      for (const call of calls) assert.equal(call, literal, file);
+      assert.deepEqual([...new Set(calls)].sort(), [...literals].sort(), file);
       assert.doesNotMatch(source, NETWORK, `${file} makes no request of its own`);
     }
   });

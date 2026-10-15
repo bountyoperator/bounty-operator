@@ -1,10 +1,11 @@
-// /templates — the hub: four platform templates, the Foundry scaffold, and what
-// each platform's judges close reports for.
+// /templates — the hub: four platform templates, the GitHub private
+// vulnerability report, the Foundry scaffold, and what each platform's judges
+// close reports for.
 
 import { button, closingBand, html, icon, stackTable } from '../../components.mjs';
 import { absoluteUrl, breadcrumbsLd } from '../../layout.mjs';
 import { RECORD_CLAIM } from '../method/_shared.mjs';
-import { CHECKED, COMPARISON, PARTS, PLATFORMS } from './data.mjs';
+import { CHECKED, COMPARISON, GITHUB, PARTS, PLATFORMS } from './data.mjs';
 import { crumbs, plain } from './shared.mjs';
 
 const FOUNDRY = {
@@ -38,6 +39,22 @@ function platformCard(platform) {
   </article>`;
 }
 
+// GitHub is no bug bounty platform, so it spans the row like the Foundry card
+// and stays out of the comparison below.
+const githubCard = html`<article class="tpl-card tpl-card--wide">
+  <header class="tpl-card__head">
+    <h3 class="tpl-card__title"><a href="${GITHUB.path}">${GITHUB.name}</a></h3>
+    <span class="tpl-card__meta">Private vulnerability report · ${GITHUB.sections.length} sections</span>
+  </header>
+  <p class="tpl-card__about">${GITHUB.card}</p>
+  <ul class="tpl-card__closed">
+    ${GITHUB.cardClosed.map((reason) => html`<li>${icon('x')}<span>${reason}</span></li>`)}
+  </ul>
+  <div class="tpl-card__foot">
+    ${button({ label: openLabel('GitHub private vulnerability report'), href: GITHUB.path, block: true })}
+  </div>
+</article>`;
+
 const foundryCard = html`<article class="tpl-card tpl-card--wide">
   <header class="tpl-card__head">
     <h3 class="tpl-card__title"><a href="${FOUNDRY.path}">${FOUNDRY.name}</a></h3>
@@ -66,7 +83,7 @@ const body = html`
   <header class="page-head page-field">
     ${crumbs([])}
     <h1>Bug bounty report templates</h1>
-    <p class="lede">Four report templates built from what each platform publishes about submissions and judging, and one Foundry scaffold for the proof. Every page lists what that platform’s judges close reports for, with the source.</p>
+    <p class="lede">Four bug bounty report templates built from what each platform publishes about submissions and judging, one for GitHub’s private vulnerability reports, and one Foundry scaffold for the proof. Every page lists what gets that report closed, with the source.</p>
     <p class="meta">Rules checked ${CHECKED.label} · Markdown, free to copy</p>
   </header>
 
@@ -74,6 +91,7 @@ const body = html`
     <h2 id="platforms" class="visually-hidden">Templates by platform</h2>
     <div class="tpl-cards">
       ${PLATFORMS.map(platformCard)}
+      ${githubCard}
       ${foundryCard}
     </div>
   </section>
@@ -107,7 +125,7 @@ export default {
   path: '/templates',
   title: 'Bug bounty report templates | Bounty Operator',
   description:
-    'Report templates for Immunefi, Sherlock, Cantina and HackerOne, plus a Foundry PoC scaffold. Each lists what that platform’s judges close reports for.',
+    'Report templates for Immunefi, Sherlock, Cantina, HackerOne and GitHub private vulnerability reports, and a Foundry PoC scaffold, each with what gets it closed.',
   label: 'Report templates',
   styles: ['/css/templates.css'],
   jsonld: [
@@ -116,7 +134,7 @@ export default {
       '@context': 'https://schema.org',
       '@type': 'ItemList',
       name: 'Bug bounty report templates',
-      itemListElement: [...PLATFORMS, FOUNDRY].map((entry, index) => ({
+      itemListElement: [...PLATFORMS, GITHUB, FOUNDRY].map((entry, index) => ({
         '@type': 'ListItem',
         position: index + 1,
         name: entry.h1 ?? 'Foundry PoC template',
@@ -124,6 +142,7 @@ export default {
       })),
     },
   ],
-  lastmod: CHECKED.iso,
+  // The GitHub template joined the hub on 15 Oct 2026.
+  lastmod: GITHUB.checked.iso,
   body,
 };

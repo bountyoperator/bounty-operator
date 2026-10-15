@@ -102,11 +102,20 @@ export function renderBody(source, { heading } = {}) {
   return blocks;
 }
 
-/** The downloadable Markdown for one platform template. */
+/** The date a template's rules were read: its own, or the one all four platforms share. */
+export function checkedOf(platform) {
+  return platform.checked ?? CHECKED;
+}
+
+/**
+ * The downloadable Markdown for one platform template. Its note points back to
+ * the page's check, with ?ref=template so a return from the file is counted.
+ */
 export function toMarkdown(platform) {
   const out = [
-    `> ${platform.name} report template from ${SITE_ORIGIN}${platform.path}. Platform rules checked ${CHECKED.label}.`,
+    `> ${platform.h1} from ${SITE_ORIGIN}${platform.path}. Platform rules checked ${checkedOf(platform).label}.`,
     '> Replace every {placeholder}. Delete this note before you submit.',
+    `> Before you submit, paste the filled draft at ${SITE_ORIGIN}${platform.path}?ref=template#check for a free check.`,
     '',
   ];
   const marks = '#'.repeat(platform.headingLevel ?? 2);
@@ -127,13 +136,29 @@ export function originChip(origin) {
   return origin === 'platform' ? chip(ORIGIN_LABEL.platform, { tone: 'observed' }) : chip(ORIGIN_LABEL.added, { dashed: true });
 }
 
-/** The two action buttons under a page heading. */
-export function templateActions({ copyLabel = 'Copy as Markdown', file, download, downloadLabel = 'Download .md' }) {
+/**
+ * The two action buttons under a page heading. `copied` is what the status
+ * line says after a copy, and it stays until the next one (/templates/template.mjs).
+ */
+export function templateActions({ copyLabel = 'Copy as Markdown', file, download, downloadLabel = 'Download .md', copied }) {
   return html`<div class="cluster page-head__actions">
     ${button({ label: copyLabel, variant: 'primary', size: 'lg', icon: 'copy', attrs: { 'data-template-copy': true } })}
     ${button({ label: downloadLabel, href: `/templates/${file}`, size: 'lg', icon: 'download', attrs: { download } })}
-    <span class="tpl-actions__status" role="status" data-template-status></span>
+    <span class="tpl-actions__status" role="status" data-template-status data-template-copied="${copied}"></span>
   </div>`;
+}
+
+/**
+ * The hand-off under the head's actions: what the review does with a filled
+ * template, what it costs, and a button down to the page's own check.
+ */
+export function headHandoff({ text, label, href = '#check' }) {
+  return notice({
+    tone: 'info',
+    title: 'Filled it in?',
+    body: html`<p>${text}</p>${button({ label, href })}`,
+    className: 'tpl-handoff',
+  });
 }
 
 /** The template as a ledger: one row per report section. */
@@ -188,12 +213,12 @@ export function closedList(platform) {
 }
 
 /** The primary sources, each with the date it was read: its own `checked`, or the page's. */
-export function sourceList(sources) {
+export function sourceList(sources, { checked = CHECKED.label } = {}) {
   const items = sources.map(
     (source) => html`<li class="sources__item">
       <p class="sources__link">${link({ label: source.label, href: source.href, external: true })}</p>
       <p class="sources__note">${source.note}</p>
-      <p class="sources__date meta">${source.dated ? `${source.dated} · ` : ''}checked ${source.checked ?? CHECKED.label}</p>
+      <p class="sources__date meta">${source.dated ? `${source.dated} · ` : ''}checked ${source.checked ?? checked}</p>
     </li>`,
   );
   return html`<ul class="sources">${items}</ul>`;
@@ -203,8 +228,11 @@ export function sourceList(sources) {
  * The call to action: paste the filled draft, send it to the workbench.
  * The link works without script. With script, /templates/template.mjs writes
  * the handoff to sessionStorage and opens the workbench.
+ *
+ * `more` adds a second hand-off of the same draft under its own line: a button
+ * whose data-handoff-profile and data-handoff-focus win over the panel's.
  */
-export function checkDraft({ id = 'draft', profile, focus, fileName, note, label, placeholder, primary, secondary, intro, markers = 'slots' }) {
+export function checkDraft({ id = 'draft', profile, focus, fileName, note, label, placeholder, primary, secondary, more, intro, markers = 'slots' }) {
   return html`<div class="tpl-check" data-handoff data-handoff-profile="${profile}" data-handoff-focus="${focus}" data-handoff-name="${fileName}" data-handoff-note="${note}" data-handoff-markers="${markers}">
     ${intro}
     ${field({
@@ -219,6 +247,11 @@ export function checkDraft({ id = 'draft', profile, focus, fileName, note, label
       ${button({ label: primary.label, href: primary.href, variant: 'primary', attrs: { 'data-handoff-go': true } })}
       ${secondary && button({ label: secondary.label, href: secondary.href })}
     </div>
+    ${more &&
+    html`<div class="tpl-check__more">
+      <p>${more.text}</p>
+      ${button({ label: more.label, href: more.href, attrs: { 'data-handoff-go': true, 'data-handoff-profile': more.profile, 'data-handoff-focus': more.focus } })}
+    </div>`}
   </div>`;
 }
 

@@ -1,5 +1,6 @@
-> Cantina report template from https://bountyoperator.com/templates/cantina. Platform rules checked 2 Oct 2026.
+> Cantina finding report template from https://bountyoperator.com/templates/cantina. Platform rules checked 2 Oct 2026.
 > Replace every {placeholder}. Delete this note before you submit.
+> Before you submit, paste the filled draft at https://bountyoperator.com/templates/cantina?ref=template#check for a free check.
 
 # {Mechanism} in `{function}` lets {actor} {consequence}
 

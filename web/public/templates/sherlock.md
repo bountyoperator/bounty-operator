@@ -1,5 +1,6 @@
-> Sherlock report template from https://bountyoperator.com/templates/sherlock. Platform rules checked 2 Oct 2026.
+> Sherlock audit contest report template from https://bountyoperator.com/templates/sherlock. Platform rules checked 2 Oct 2026.
 > Replace every {placeholder}. Delete this note before you submit.
+> Before you submit, paste the filled draft at https://bountyoperator.com/templates/sherlock?ref=template#check for a free check.
 
 # {Actor} will {impact} {affected party}
 

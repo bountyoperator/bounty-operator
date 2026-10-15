@@ -3,15 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Immunefi bug report template | Bounty Operator</title>
-<meta name="description" content="Immunefi report template in Markdown: title rule, impact quoted from the programme list, runnable PoC with output, and the rules that get reports closed.">
+<title>Immunefi bug report template (bug bounties and audit competitions) | Bounty Operator</title>
+<meta name="description" content="Immunefi report template for bug bounties and audit competitions: impact quoted from the programme, a runnable PoC, the per-report fee and what closes reports.">
 <link rel="canonical" href="https://bountyoperator.com/templates/immunefi">
 <meta name="color-scheme" content="dark">
 <meta name="theme-color" content="#18232d">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Bounty Operator">
-<meta property="og:title" content="Immunefi bug report template | Bounty Operator">
-<meta property="og:description" content="Immunefi report template in Markdown: title rule, impact quoted from the programme list, runnable PoC with output, and the rules that get reports closed.">
+<meta property="og:title" content="Immunefi bug report template (bug bounties and audit competitions) | Bounty Operator">
+<meta property="og:description" content="Immunefi report template for bug bounties and audit competitions: impact quoted from the programme, a runnable PoC, the per-report fee and what closes reports.">
 <meta property="og:url" content="https://bountyoperator.com/templates/immunefi">
 <meta property="og:image" content="https://bountyoperator.com/social-spec-v2.png">
 <meta property="og:image:width" content="1200">
@@ -19,8 +19,8 @@
 <meta property="og:image:alt" content="Bounty Operator. Find the hole in your report before the triager does. Spec, our coral bug mascot, holds a magnifying glass.">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:creator" content="@Tradi3_">
-<meta name="twitter:title" content="Immunefi bug report template | Bounty Operator">
-<meta name="twitter:description" content="Immunefi report template in Markdown: title rule, impact quoted from the programme list, runnable PoC with output, and the rules that get reports closed.">
+<meta name="twitter:title" content="Immunefi bug report template (bug bounties and audit competitions) | Bounty Operator">
+<meta name="twitter:description" content="Immunefi report template for bug bounties and audit competitions: impact quoted from the programme, a runnable PoC, the per-report fee and what closes reports.">
 <meta name="twitter:image" content="https://bountyoperator.com/social-spec-v2.png">
 <meta name="twitter:image:alt" content="Bounty Operator. Find the hole in your report before the triager does. Spec, our coral bug mascot, holds a magnifying glass.">
 <link rel="icon" href="/favicon.ico?v=spec-v1" sizes="48x48">
@@ -61,13 +61,14 @@ FINISH: Responsive layout, native video controls, captions, reduced motion and v
   <header class="page-head page-field">
     <nav class="breadcrumbs" aria-label="Breadcrumb"><ol><li><a href="/">Bounty Operator</a></li><li><a href="/templates">Templates</a></li><li aria-current="page">Immunefi</li></ol></nav>
     <h1>Immunefi bug report template</h1>
-    <p class="lede">Ten sections in the order Immunefi asks for them, with the impact quoted from the programme and a proof of concept that runs on a local fork. Copy it, fill every placeholder, then have the draft reviewed before the triager sees it.</p>
+    <p class="lede">Ten sections in the order Immunefi asks for them, with the impact quoted from the programme and a proof of concept that runs on a local fork. Recent audit competitions and some bug bounties charge a fee for every report, so have the draft reviewed before you pay to submit it.</p>
     <div class="cluster page-head__actions">
     <button class="btn btn--primary btn--lg" type="button" data-template-copy><span class="icon icon--copy" aria-hidden="true"></span><span class="btn__label">Copy as Markdown</span></button>
     <a class="btn btn--secondary btn--lg" href="/templates/immunefi.md" download="immunefi-report-template.md"><span class="icon icon--download" aria-hidden="true"></span><span class="btn__label">Download .md</span></a>
-    <span class="tpl-actions__status" role="status" data-template-status></span>
+    <span class="tpl-actions__status" role="status" data-template-status data-template-copied="Copied. Once it is filled in, paste it under Challenge the filled draft for a free check before you submit."></span>
   </div>
-    <p class="meta">Rules checked 2 Oct 2026 · 5 sources</p>
+    <div class="notice notice--info tpl-handoff"><span class="icon icon--info" aria-hidden="true"></span><div class="notice__content"><p class="notice__title">Filled it in?</p><div class="notice__body"><p>Bounty Operator argues against the draft the way a triager would, every claim tied to a file and line. Free in ChatGPT or Claude with no account, or once a day on your own AI key.</p><a class="btn btn--secondary" href="#check"><span class="btn__label">Challenge my draft</span></a></div></div></div>
+    <p class="meta">Rules checked 2 Oct 2026 · 9 sources</p>
   </header>
 
   <div class="tpl-layout">
@@ -163,8 +164,9 @@ FINISH: Responsive layout, native video controls, captions, reduced motion and v
       </div>
     </section>
     <div class="tpl__source" data-template-source>
-      <details class="disclosure"><summary class="disclosure__summary">Markdown source<span class="disclosure__hint">immunefi.md</span></summary><div class="disclosure__body"><figure class="code code--wrap"><figcaption class="code__bar"><span class="code__name">immunefi.md</span><button class="code__copy" type="button" data-copy><span class="icon icon--copy" aria-hidden="true"></span><span data-copy-label>Copy</span></button></figcaption><pre class="code__pre" tabindex="0" role="region" aria-label="Markdown source: immunefi.md"><code><span class="code__line">&gt; Immunefi report template from https://bountyoperator.com/templates/immunefi. Platform rules checked 2 Oct 2026.
+      <details class="disclosure"><summary class="disclosure__summary">Markdown source<span class="disclosure__hint">immunefi.md</span></summary><div class="disclosure__body"><figure class="code code--wrap"><figcaption class="code__bar"><span class="code__name">immunefi.md</span><button class="code__copy" type="button" data-copy><span class="icon icon--copy" aria-hidden="true"></span><span data-copy-label>Copy</span></button></figcaption><pre class="code__pre" tabindex="0" role="region" aria-label="Markdown source: immunefi.md"><code><span class="code__line">&gt; Immunefi bug report template from https://bountyoperator.com/templates/immunefi. Platform rules checked 2 Oct 2026.
 </span><span class="code__line">&gt; Replace every {placeholder}. Delete this note before you submit.
+</span><span class="code__line">&gt; Before you submit, paste the filled draft at https://bountyoperator.com/templates/immunefi?ref=template#check for a free check.
 </span><span class="code__line">
 </span><span class="code__line"># {Vulnerability class} in `{function}` lets {actor} {consequence, worded as the programme words the impact}
 </span><span class="code__line">
@@ -292,15 +294,19 @@ FINISH: Responsive layout, native video controls, captions, reduced motion and v
       <p>A vague title, few details and no reproducible steps is a placeholder submission. AI-generated or scanner output that does not show the impact on the reported asset is prohibited, and so is a second report of your own bug filed to claim another reward.</p>
       <p class="closed__refs"><span class="meta">Source</span> <a class="link" href="https://immunefi.com/rules/" target="_blank" rel="noopener noreferrer">Immunefi Rules</a></p>
     </li><li class="closed__item">
+      <h3 class="closed__title">A fee on every report, in recent audit competitions and some bug bounties</h3>
+      <p>The ENS, Firelight and Quantus audit competitions, the three that started in August 2026, each charge a submission fee on every report, set by Immunefi and shown when you submit. Asking for mediation after a closure costs a fee too. The Lombard Finance bug bounty charges a non-refundable fee on every report, at every severity, collected by Immunefi and due before the report is reviewed. None of these pages states the amount. The earlier 2026 competitions, Firedancer V1 and Base Azul, list no fee.</p>
+      <p class="closed__refs"><span class="meta">Source</span> <a class="link" href="https://immunefi.com/audit-competition/audit-competition-ens/information/" target="_blank" rel="noopener noreferrer">Audit Competition | ENS</a>, <a class="link" href="https://immunefi.com/audit-competition/audit-comp-firelight-1/information/" target="_blank" rel="noopener noreferrer">Firelight Audit Competition</a>, <a class="link" href="https://immunefi.com/audit-competition/audit-comp-quantus/information/" target="_blank" rel="noopener noreferrer">Quantus Audit Competition</a>, <a class="link" href="https://immunefi.com/bug-bounty/lombard-finance/information/" target="_blank" rel="noopener noreferrer">Lombard Finance Bug Bounty</a></p>
+    </li><li class="closed__item">
       <h3 class="closed__title">Penalties</h3>
-      <p>The rules page publishes no submission fee. Breaking the rules costs a temporary suspension or a permanent ban, loss of access to the report, and zero payout.</p>
+      <p>The rules page publishes no fee. Audit competitions, and some bug bounties, now charge one per report, shown at submission. Breaking the rules costs a temporary suspension or a permanent ban, loss of access to the report, and zero payout.</p>
       <p class="closed__refs"><span class="meta">Source</span> <a class="link" href="https://immunefi.com/rules/" target="_blank" rel="noopener noreferrer">Immunefi Rules</a></p>
     </li></ol>
       </section>
 
       <section class="tpl-block" aria-labelledby="check">
         <h2 id="check">Challenge the filled draft</h2>
-        <div class="tpl-check" data-handoff data-handoff-profile="report" data-handoff-focus="Immunefi report draft. Check the impact against the programme’s Impacts in Scope, the PoC rule and the known-issue list." data-handoff-name="immunefi-report-draft.md" data-handoff-note="Draft written from the Immunefi report template at bountyoperator.com/templates/immunefi. Platform rules checked 2 Oct 2026." data-handoff-markers="slots">
+        <div class="tpl-check" data-handoff data-handoff-profile="report" data-handoff-focus="Immunefi report draft. Check the impact against the programme’s Impacts in Scope, the PoC rule and the known-issue list." data-handoff-name="immunefi-report-draft.md" data-handoff-note="Draft written from the Immunefi bug report template at bountyoperator.com/templates/immunefi. Platform rules checked 2 Oct 2026." data-handoff-markers="slots">
     <p class="tpl-block__lede">Paste the report once every placeholder is replaced. The button below opens a review with <a class="link" href="/challenge-report">Challenge a draft report</a> selected. It argues against each claim: the impact row, the proof, the severity, the known issues. You decide what to rewrite.</p>
     <div class="field"><label class="label" for="draft">Your filled draft</label><textarea class="textarea mono" id="draft" name="draft" rows="8" placeholder="Paste the report with every placeholder replaced." spellcheck="false" data-handoff-input aria-describedby="draft-help draft-state"></textarea><p class="help" id="draft-help">The draft stays in this browser. It is sent only when you run a review.</p></div>
     <p class="tpl-check__state" id="draft-state" aria-live="polite" data-handoff-state></p>
@@ -309,17 +315,21 @@ FINISH: Responsive layout, native video controls, captions, reduced motion and v
       <a class="btn btn--primary" href="/?profile=report#workspace" data-handoff-go><span class="btn__label">Challenge this draft</span></a>
       <a class="btn btn--secondary" href="/tools/report-check"><span class="btn__label">Run the report check</span></a>
     </div>
+    <div class="tpl-check__more">
+      <p><a class="link" href="/triager-simulation">Triager simulation</a> ranks the three reasons a triager would close this report. It needs a free account: one passkey prompt, no email, no card.</p>
+      <a class="btn btn--secondary" href="/?profile=triage#workspace" data-handoff-go data-handoff-profile="triage" data-handoff-focus="Immunefi bug report draft. Act as the triager who reads it first: give the three likeliest reasons to close this report and the evidence that flips each one."><span class="btn__label">Run the Triager simulation</span></a>
+    </div>
   </div>
       </section>
 
       <section class="tpl-block" aria-labelledby="sources">
         <h2 id="sources">Sources</h2>
         <p class="tpl-block__lede">Primary sources only, read on 2 Oct 2026. Rules change. Read the programme page on the day you submit.</p>
-        
+        <p class="tpl-block__lede">The Rules page, the three audit competitions and the Lombard Finance bug bounty were read again on 15 Oct 2026 for the per-report fee.</p>
         <ul class="sources"><li class="sources__item">
       <p class="sources__link"><a class="link link--external" href="https://immunefi.com/rules/" target="_blank" rel="noopener noreferrer">Immunefi Rules<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></p>
-      <p class="sources__note">Prohibited behaviour for whitehats and the penalties.</p>
-      <p class="sources__date meta">checked 2 Oct 2026</p>
+      <p class="sources__note">Prohibited behaviour for whitehats and the penalties. No fee is listed.</p>
+      <p class="sources__date meta">checked 15 Oct 2026</p>
     </li><li class="sources__item">
       <p class="sources__link"><a class="link link--external" href="https://immunefi.com/blog/security-guides/how-to-submit-bug-reports-that-get-paid/" target="_blank" rel="noopener noreferrer">How to Submit Bug Reports That Get Paid<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></p>
       <p class="sources__note">The report sections and what counts as a PoC.</p>
@@ -333,6 +343,22 @@ FINISH: Responsive layout, native video controls, captions, reduced motion and v
       <p class="sources__note">A live example of programme terms: PoC requirement, known issues, previous audits, feasibility limits.</p>
       <p class="sources__date meta">Updated 9 Sep 2026 · checked 2 Oct 2026</p>
     </li><li class="sources__item">
+      <p class="sources__link"><a class="link link--external" href="https://immunefi.com/audit-competition/audit-competition-ens/information/" target="_blank" rel="noopener noreferrer">Audit Competition | ENS<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></p>
+      <p class="sources__note">Submission Fees: a fee on each report, set and managed by Immunefi and shown at submission, and a fee to start a mediation.</p>
+      <p class="sources__date meta">Started 18 Aug 2026 · checked 15 Oct 2026</p>
+    </li><li class="sources__item">
+      <p class="sources__link"><a class="link link--external" href="https://immunefi.com/audit-competition/audit-comp-firelight-1/information/" target="_blank" rel="noopener noreferrer">Firelight Audit Competition<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></p>
+      <p class="sources__note">The same Submission Fees section, word for word.</p>
+      <p class="sources__date meta">Started 12 Aug 2026 · checked 15 Oct 2026</p>
+    </li><li class="sources__item">
+      <p class="sources__link"><a class="link link--external" href="https://immunefi.com/audit-competition/audit-comp-quantus/information/" target="_blank" rel="noopener noreferrer">Quantus Audit Competition<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></p>
+      <p class="sources__note">The same Submission Fees section, word for word.</p>
+      <p class="sources__date meta">Started 12 Aug 2026 · checked 15 Oct 2026</p>
+    </li><li class="sources__item">
+      <p class="sources__link"><a class="link link--external" href="https://immunefi.com/bug-bounty/lombard-finance/information/" target="_blank" rel="noopener noreferrer">Lombard Finance Bug Bounty<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></p>
+      <p class="sources__note">A non-refundable fee on every report, at every severity, collected by Immunefi and not paid to the project.</p>
+      <p class="sources__date meta">Updated 11 Sep 2026 · checked 15 Oct 2026</p>
+    </li><li class="sources__item">
       <p class="sources__link"><a class="link link--external" href="https://immunefisupport.zendesk.com/hc/en-us/articles/9946217628561-Proof-of-Concept-PoC-Guidelines-and-Rules" target="_blank" rel="noopener noreferrer">Proof of Concept (PoC) Guidelines and Rules<span class="icon icon--arrow-up-right" aria-hidden="true"></span></a></p>
       <p class="sources__note">Help-centre article behind an Immunefi sign-in. Linked for reference. Nothing on this page is taken from it.</p>
       <p class="sources__date meta">checked 2 Oct 2026</p>
@@ -342,13 +368,18 @@ FINISH: Responsive layout, native video controls, captions, reduced motion and v
       <nav class="tpl-next" aria-label="Other templates">
         <p class="meta">Other templates</p>
         <ul>
-          <li><a href="/templates/sherlock">Sherlock</a></li><li><a href="/templates/cantina">Cantina</a></li><li><a href="/templates/hackerone">HackerOne</a></li>
+          <li><a href="/templates/sherlock">Sherlock</a></li><li><a href="/templates/cantina">Cantina</a></li><li><a href="/templates/hackerone">HackerOne</a></li><li><a href="/templates/github-private-vulnerability-report">GitHub</a></li>
           <li><a href="/templates/foundry-poc">Foundry PoC</a></li>
           <li><a href="/templates">All templates</a></li>
         </ul>
       </nav>
     </div>
   </div>
+
+  <section class="closing-band" aria-labelledby="next-step">
+<div class="closing-band__text"><h2 class="closing-band__title" id="next-step">Check the filled draft before you submit</h2><p class="closing-band__lede">Paste it under <a class="link" href="#check">Challenge the filled draft</a>. The review marks each claim confirmed, overstated, contradicted or unverifiable, with the line that decides it.</p></div>
+<div class="closing-band__actions"><div class="cluster"><a class="btn btn--primary btn--lg" href="#check"><span class="btn__label">Challenge my draft</span></a><a class="btn btn--secondary btn--lg" href="/tools/report-check"><span class="btn__label">Run the report check</span></a></div></div>
+</section>
 </div>
 </main>
 <footer class="site-footer theme-dark">

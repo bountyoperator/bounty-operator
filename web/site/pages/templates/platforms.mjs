@@ -1,14 +1,24 @@
 // /templates/immunefi, /templates/sherlock, /templates/cantina, /templates/hackerone
+// and /templates/github-private-vulnerability-report
 //
-// One page per platform, all rendered from data.mjs.
+// One page per template, all rendered from data.mjs.
 
-import { chip, html } from '../../components.mjs';
+import { chip, closingBand, html } from '../../components.mjs';
 import { breadcrumbsLd } from '../../layout.mjs';
-import { CHECKED, PLATFORMS } from './data.mjs';
-import { checkDraft, closedList, crumbs, pageIndex, sourceList, templateActions, templateArticle } from './shared.mjs';
+import { TEMPLATES } from './data.mjs';
+import { checkDraft, checkedOf, closedList, crumbs, headHandoff, pageIndex, plain, sourceList, templateActions, templateArticle } from './shared.mjs';
+
+// The hand-off at the head and the second one in "Challenge the filled draft"
+// went onto every template page on this day.
+const HANDOFF_ADDED = '2026-10-15';
+
+const later = (a, b) => (a > b ? a : b);
 
 function platformPage(platform) {
-  const others = PLATFORMS.filter((other) => other.id !== platform.id);
+  const others = TEMPLATES.filter((other) => other.id !== platform.id);
+  const checked = checkedOf(platform);
+  // Who reads the report first: a platform's triager, or a repository's maintainer.
+  const reader = platform.reader ?? 'triager';
 
   const body = html`
 <div class="wrap tpl-page">
@@ -16,8 +26,16 @@ function platformPage(platform) {
     ${crumbs([{ label: platform.name }])}
     <h1>${platform.h1}</h1>
     <p class="lede">${platform.lede}</p>
-    ${templateActions({ file: platform.file, download: platform.download })}
-    <p class="meta">Rules checked ${CHECKED.label} · ${platform.sources.length} sources</p>
+    ${templateActions({
+      file: platform.file,
+      download: platform.download,
+      copied: 'Copied. Once it is filled in, paste it under Challenge the filled draft for a free check before you submit.',
+    })}
+    ${headHandoff({
+      text: `Bounty Operator argues against the draft the way a ${reader} would, every claim tied to a file and line. Free in ChatGPT or Claude with no account, or once a day on your own AI key.`,
+      label: 'Challenge my draft',
+    })}
+    <p class="meta">Rules checked ${checked.label} · ${platform.sources.length} sources</p>
   </header>
 
   <div class="tpl-layout">
@@ -41,7 +59,7 @@ function platformPage(platform) {
 
       <section class="tpl-block" aria-labelledby="closed">
         <h2 id="closed">What gets this closed on ${platform.name}</h2>
-        <p class="tpl-block__lede">Each reason comes from a page ${platform.name} publishes. The programme or contest page adds its own rules on top, and those win.</p>
+        <p class="tpl-block__lede">${platform.closedNote ?? html`Each reason comes from a page ${platform.name} publishes. The programme or contest page adds its own rules on top, and those win.`}</p>
         ${closedList(platform)}
       </section>
 
@@ -51,20 +69,30 @@ function platformPage(platform) {
           profile: 'report',
           focus: platform.focus,
           fileName: `${platform.id}-report-draft.md`,
-          note: `Draft written from the ${platform.name} report template at bountyoperator.com${platform.path}. Platform rules checked ${CHECKED.label}.`,
+          note: `Draft written from the ${platform.h1} at bountyoperator.com${platform.path}. Platform rules checked ${checked.label}.`,
           label: 'Your filled draft',
           placeholder: 'Paste the report with every placeholder replaced.',
           primary: { label: 'Challenge this draft', href: '/?profile=report#workspace' },
           secondary: { label: 'Run the report check', href: '/tools/report-check' },
+          more: {
+            text: html`<a class="link" href="/triager-simulation">Triager simulation</a> ranks the three reasons a ${reader} would close this report. It needs a free account: one passkey prompt, no email, no card.`,
+            label: 'Run the Triager simulation',
+            href: '/?profile=triage#workspace',
+            profile: 'triage',
+            focus: `${platform.h1.replace(/ template$/, '')} draft. Act as the ${reader} who reads it first: give the three likeliest reasons to close this report and the evidence that flips each one.`,
+          },
           intro: html`<p class="tpl-block__lede">Paste the report once every placeholder is replaced. The button below opens a review with <a class="link" href="/challenge-report">Challenge a draft report</a> selected. It argues against each claim: the impact row, the proof, the severity, the known issues. You decide what to rewrite.</p>`,
         })}
       </section>
 
       <section class="tpl-block" aria-labelledby="sources">
         <h2 id="sources">Sources</h2>
-        <p class="tpl-block__lede">Primary sources only, read on ${CHECKED.label}. Rules change. Read the programme page on the day you submit.</p>
+        <p class="tpl-block__lede">${platform.sourcesLede ?? `Primary sources only, read on ${checked.label}. Rules change. Read the programme page on the day you submit.`}</p>
         ${platform.sourcesNote && html`<p class="tpl-block__lede">${platform.sourcesNote}</p>`}
-        ${sourceList(platform.sources)}
+        ${sourceList(
+          platform.sources.map((source) => ({ ...source, note: html`${plain(source.note)}` })),
+          { checked: checked.label },
+        )}
       </section>
 
       <nav class="tpl-next" aria-label="Other templates">
@@ -77,6 +105,15 @@ function platformPage(platform) {
       </nav>
     </div>
   </div>
+
+  ${closingBand({
+    title: 'Check the filled draft before you submit',
+    text: html`Paste it under <a class="link" href="#check">Challenge the filled draft</a>. The review marks each claim confirmed, overstated, contradicted or unverifiable, with the line that decides it.`,
+    actions: [
+      { label: 'Challenge my draft', href: '#check' },
+      { label: 'Run the report check', href: '/tools/report-check' },
+    ],
+  })}
 </div>`;
 
   return {
@@ -92,9 +129,9 @@ function platformPage(platform) {
         { name: platform.name, path: platform.path },
       ]),
     ],
-    lastmod: platform.lastmod ?? CHECKED.iso,
+    lastmod: later(platform.lastmod ?? checked.iso, HANDOFF_ADDED),
     body,
   };
 }
 
-export default PLATFORMS.map(platformPage);
+export default TEMPLATES.map(platformPage);
