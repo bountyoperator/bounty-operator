@@ -1,7 +1,36 @@
-import { button, closingBand, html } from '../../components.mjs';
+import { button, closingBand, codeBlock, html } from '../../components.mjs';
 import { breadcrumbsLd } from '../../layout.mjs';
 import { ACCOUNT_SCRIPTS, ACCOUNT_STYLES, accountDialog } from '../../fragments/account-dialog.mjs';
+import { DEFAULT_MODELS, buildSnippet } from '../../../public/app/model-api.mjs';
 import { DOCS_STYLES, docHead } from './_shared.mjs';
+
+// The model production sells today (0.9.15: the only one with a passing live
+// test). The page is built with this model named at the top; on load,
+// /app/model-api.mjs rewrites that line and the steps from the live catalog,
+// so a pause, a closure or a newly opened model shows without a rebuild.
+const OPEN_MODEL = DEFAULT_MODELS.find((model) => model.id === 'cyber-qwen-27b-awq');
+const OTHERS = DEFAULT_MODELS.length - 1;
+
+/** A catalog rate as written on the page: 3 -> 'US$3', 0.3 -> 'US$0.30'. */
+const usd = (amount) => `US$${Number.isInteger(amount) ? amount : amount.toFixed(2)}`;
+
+// data-open says whether the steps and the first call lead anywhere: the script sets it from the live catalog.
+const today = html`<section class="api-today" id="model-api-start" data-open="true" aria-labelledby="start">
+<div class="api-today__text">
+<h2 id="start">Available today</h2>
+<p class="api-today__line" id="model-api-today"><strong>${OPEN_MODEL.name}</strong> (<code>${OPEN_MODEL.id}</code>): ${usd(OPEN_MODEL.pricing.input_per_million)} per million input tokens, ${usd(OPEN_MODEL.pricing.output_per_million)} per million output tokens, at least ${usd(OPEN_MODEL.pricing.minimum_request)} a request. The other ${OTHERS} models below are not available yet.</p>
+<div class="api-today__start">
+<h3 class="api-today__how">How to start</h3>
+<ol class="steps api-steps">
+<li><strong>Buy credit.</strong> Sign in with a passkey (no email needed), open Account, then Model API, and add US$20, US$50 or US$100. There is no subscription.</li>
+<li><strong>Create a key.</strong> Name it and give it a spending limit. The key starts with <code>bo_api_</code> and is shown once, so save it.</li>
+<li><strong>Call it.</strong> Send a chat request to <code>https://bountyoperator.com/v1/chat/completions</code> with your key and the model ID, from your own code or any tool that uses the OpenAI chat API.</li>
+</ol>
+<p class="help">After an idle spell the first request waits up to 10 minutes while the model starts. You are not charged for the wait.</p>
+</div>
+</div>
+${codeBlock({ code: buildSnippet(OPEN_MODEL, 'curl'), name: 'Your first call', numbers: false, wrap: true, copy: true, label: 'Your first call: curl', className: 'api-today__code' })}
+</section>`;
 
 const INFRON_STACK = [
   { mark: 'Z', name: 'GLM-5.3 Flash Cybersecurity', id: 'z-ai/glm-5.3-flash-cybersecurity', badge: 'cybersecurity', badgeLabel: 'Cybersecurity', role: 'Fast security triage & tool use', input: '0.75', output: '12.50' },
@@ -17,14 +46,15 @@ const body = html`<article class="docs wrap model-api-page">
 ${docHead({
   crumbs: [{ label: 'Bounty Operator', href: '/' }, { label: 'Model API' }],
   title: 'Cybersecurity model API.',
-  lede: 'Cybersecurity fine-tunes and lower-refusal variants through one OpenAI-compatible API. One key. Prepaid credit.',
-  actions: html`${button({ label: 'Get an API key', href: '/#account/api', variant: 'primary', size: 'lg' })}${button({ label: 'Browse models', href: '#models', variant: 'secondary', size: 'lg' })}${button({ label: 'Setup guide', href: '/docs/model-api', variant: 'secondary', size: 'lg' })}`,
+  lede: 'Call a security-tuned model from your own code or agent through an OpenAI-compatible API. Pay with prepaid credit. There is no subscription.',
+  actions: html`${button({ label: 'Get an API key', href: '/#account/api', variant: 'primary', size: 'lg' })}${button({ label: 'See all models', href: '#models', variant: 'secondary', size: 'lg' })}${button({ label: 'Setup guide', href: '/docs/model-api', variant: 'secondary', size: 'lg' })}`,
 })}
-<ul class="api-highlights" aria-label="API features"><li>OpenAI-compatible <code>/v1</code></li><li>Prepaid credit or US$2/mo on Operator</li><li>Per-key spending caps</li><li>No prompt or response storage in our application</li></ul>
+${today}
+<ul class="api-highlights" aria-label="API features"><li>Works with tools that use the OpenAI chat API</li><li>Prepaid credit, no subscription</li><li>A spending limit on every key</li><li>We don’t store your prompts or answers</li></ul>
 <p class="help">Requests also pass to the selected hosting provider, whose data policies apply. Read the <a href="/privacy#model-api">provider and data handling details</a>.</p>
 <div class="api-content">
 <section class="docs-section" aria-labelledby="models">
-<div class="catalog-heading"><h2 id="models">Hosted security catalog</h2><p class="help">USD per 1M tokens · minimum per request · switch workload view to estimate run cost</p></div>
+<div class="catalog-heading"><h2 id="models">All models and prices</h2><p class="help">USD per million tokens. Every request costs at least the model’s minimum. Switch the price view to estimate a review or an agent session.</p></div>
 <p class="help catalog-status" role="status" id="model-api-status">Checking model availability…</p>
 <div id="model-api-catalog"></div>
 <div id="model-api-quickstart" class="catalog-quickstart" aria-label="Interactive quickstart"></div>
@@ -32,7 +62,7 @@ ${docHead({
 <p class="help catalog-footnote">When a model has been idle, its first request waits up to 10 minutes while a GPU starts and loads it. Requests after that answer in seconds while it stays warm. You are not charged for the wait. <a href="/docs/model-api#cost">What to expect</a></p>
 </section>
 <section class="docs-section" aria-labelledby="infron-stack">
-<div class="catalog-heading"><h2 id="infron-stack">Infron cybersecurity stack (BYO key)</h2><p class="help">Infron’s own USD rates per 1M tokens with your Infron key · separate from the prepaid catalog above</p></div>
+<div class="catalog-heading"><h2 id="infron-stack">Use Infron’s models with your own Infron key</h2><p class="help">Infron’s own USD rates per million tokens, billed by Infron. Separate from the prepaid catalog above.</p></div>
 <p class="lede catalog-section-lede">Already have an <a href="https://infron.ai/dashboard/apiKeys" target="_blank" rel="noopener noreferrer">Infron API key</a>? All seven models in Infron’s cybersecurity stack are wired directly into Bounty Operator. Open any model in the review workbench with one click, or pass <code>--provider infron</code> in the CLI and MCP server.</p>
 <div class="catalog-grid">
 ${INFRON_STACK.map((m) => html`<section class="catalog-card" aria-label="${m.name}">
@@ -67,7 +97,7 @@ ${button({ label: 'Use in review', href: `/?provider=infron&model=${encodeURICom
 </div>
 ${closingBand({
   title: 'Ready to connect your agent or run a review?',
-  text: 'Create a prepaid Model API key for /v1/chat/completions, or start a free review with your own provider key.',
+  text: 'Buy credit, create a key and call the Model API from your own code or agent. Or start a free review on your own AI provider API key.',
   actions: [
     { label: 'Get an API key', href: '/#account/api' },
     { label: 'Start a free review', href: '/#workspace' },
@@ -79,7 +109,7 @@ ${closingBand({
 
 export default {
   path: '/model-api', title: 'Cyber model API with prepaid credit | Bounty Operator', label: 'Model API', nav: 'model-api',
-  description: 'Use cyber models in your own agents and chat tools. Browse live prices, add prepaid credit and set spending limits for each API key.',
+  description: 'Call a security-tuned model from your own code or agent through an OpenAI-compatible API. Prepaid credit and a spending limit on every key.',
   styles: [...DOCS_STYLES, ...ACCOUNT_STYLES, '/css/catalog.css'], scripts: [...ACCOUNT_SCRIPTS, '/app/model-api.mjs'], overlays: accountDialog(),
-  jsonld: [breadcrumbsLd([{ name: 'Model API', path: '/model-api' }])], lastmod: '2026-10-14', body,
+  jsonld: [breadcrumbsLd([{ name: 'Model API', path: '/model-api' }])], lastmod: '2026-10-15', body,
 };

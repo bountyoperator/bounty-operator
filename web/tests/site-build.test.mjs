@@ -229,6 +229,43 @@ test('the header and footer link the method, the pricing page and the security p
   assert.match(bare, /<a href="\/#pricing">Pricing<\/a>/);
 });
 
+// At 390px the nav used to be a row that scrolled sideways with no hint, and
+// Pricing sat wholly off the screen. Now no link can leave the screen.
+test('on a phone every header link is on screen: one shared row, two rows of three under 384px, never a sideways scroll', async () => {
+  const css = (await readFile(path.join(WEB_DIR, 'public', 'css', 'base.css'), 'utf8')).replace(/\/\*[\s\S]*?\*\//g, '');
+  /** The body of the media block that opens with `open`, braces balanced. */
+  const block = (open) => {
+    const start = css.indexOf(open);
+    assert.ok(start >= 0, `no block opens with ${open}`);
+    let depth = 0;
+    for (let index = css.indexOf('{', start); index < css.length; index += 1) {
+      if (css[index] === '{') depth += 1;
+      else if (css[index] === '}' && (depth -= 1) === 0) return css.slice(css.indexOf('{', start) + 1, index);
+    }
+    throw new Error(`the block ${open} does not close`);
+  };
+  const narrow = block('@media (max-width: 57.99em) {\n  .site-header__inner {');
+  // The links share the row: each keeps a little padding and takes an equal share of what is left.
+  assert.match(narrow, /\.site-nav ul \{\s*flex-wrap: wrap;\s*padding-inline: var\(--sp-4\);\s*gap: 0;\s*\}/);
+  assert.match(narrow, /\.site-nav li \{\s*flex: 1 1 auto;\s*\}/);
+  assert.match(narrow, /\.site-nav a \{\s*padding-inline: var\(--sp-4\);\s*border-radius: 0;\s*\}/);
+  // Nothing in the header can scroll sideways or size the row past the screen.
+  for (const rule of css.matchAll(/([^{}]*\.site-(?:nav|header)[^{}]*)\{([^{}]*)\}/g)) {
+    assert.doesNotMatch(rule[2], /overflow(?:-x)?:\s*(?:auto|scroll)|width:\s*max-content|scrollbar-width/, rule[1].trim());
+  }
+  // Under 384px the six links take two even rows of three.
+  assert.match(block('@media (max-width: 23.99em) {'), /^\s*\.site-nav ul \{\s*display: grid;\s*grid-template-columns: repeat\(3, minmax\(0, 1fr\)\);\s*\}\s*$/);
+
+  // The script that scrolled the current link into view is gone with the scroll.
+  assert.doesNotMatch(await readFile(path.join(WEB_DIR, 'public', 'theme.js'), 'utf8'), /site-nav|scrollLeft/);
+
+  // One row of a 390px phone holds these six labels: in Archivo at the nav size
+  // they measured 307px of the 382px row. A new or longer label needs a fresh look at 390px.
+  const nav = renderPage({ path: '/guide', title: 'Guide | Bounty Operator', description: DESCRIPTION, nav: 'guide', body: html`<h1>Guide</h1>` }, { has: () => true, pages: [] });
+  const labels = [...nav.slice(nav.indexOf('<nav class="site-nav"'), nav.indexOf('</nav>')).matchAll(/<a [^>]*>([^<]+)<\/a>/g)].map((match) => match[1]);
+  assert.deepEqual(labels, ['Review', 'Benchmark', 'Model API', 'Tools', 'Guide', 'Pricing']);
+});
+
 test('softwareApplicationLd carries the two fixed offers', () => {
   const offers = softwareApplicationLd().offers;
   assert.deepEqual(offers.map((offer) => [offer.name, offer.price, offer.priceCurrency]), [

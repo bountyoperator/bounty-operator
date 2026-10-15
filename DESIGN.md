@@ -238,7 +238,7 @@ The home page pairs the product promise and review actions with Spec's portrait.
 
 Forms are ledgers. The finding card and the workbench sheet print a 9.75rem caption margin, one 1px rule and the content to its right, and under 704px the caption moves above its content. Grids of cells are ruled by 1px gaps over the hairline ground inside a 1px frame, like the rack of verdict stamps.
 
-The header keeps the brand at left and the nav and account control at right. Under 928px the nav becomes a second row that scrolls sideways with no link hidden. The footer uses the shared Spec mark, the product promise and useful navigation, without a second oversized wordmark.
+The header keeps the brand at left and the nav and account control at right. Under 928px the nav becomes a second row with every link on screen: one row from 384px, two even rows of three below that, and a wrapped row for enlarged text. Nothing scrolls sideways. The footer uses the shared Spec mark, the product promise and useful navigation, without a second oversized wordmark.
 
 Print is black on white whatever the screen shows: deeper inks, flat cards and panels, no header, footer, field or buttons, code wrapped.
 

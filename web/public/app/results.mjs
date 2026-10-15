@@ -21,6 +21,8 @@
  *     sectionColumns(title, width)             -> string[] | null
  *     cellLabel(name)                          -> the column name inside a cell of a stacked table
  *     cellTone(text)                           -> 'observed' | 'unproven' | 'danger' | ''
+ *     valueLabel(text)                         -> 'Not supplied'   a fixed value in words
+ *     checkLabel(text)                         -> 'Proof inline with command and output'
  *     splitInline(text, labels)                -> [{ type: 'text' | 'code' | 'strong' | 'ref', … }]
  *     textBlocks(text)                         -> [{ type: 'p' | 'code', … }]
  *     issueMarkdown(result, analysis)          -> string
@@ -134,6 +136,23 @@ const CELL_TONES = Object.freeze({
   unproven: ['overstated', 'unverifiable', 'not-supplied', 'not-shown', 'absent', 'mocked', 'narrated', 'open', 'not-stated', 'same-symptom-different-root', 'unproven'],
 });
 
+// A fixed value whose words need more than spaces for its hyphens.
+const VALUE_LABELS = Object.freeze({ 'same-symptom-different-root': 'Same symptom, different root' });
+
+// The submission checks of "Challenge a draft report" (profiles.mjs) as a
+// person reads them. Where the free Report check runs the same check, this is
+// its label word for word (web/public/tools/report-check-core.mjs). The model
+// writes the ids, and the ids stay in Raw and in the packet.
+const CHECK_LABELS = Object.freeze({
+  'proof-inline': 'Proof inline with command and output',
+  'form-matches-body': 'Severity and impact row on the form match the body',
+  'limits-stated': 'Limits and non-claims stated',
+  title: 'Title states mechanism and consequence',
+  'steps-separate': 'Attack steps in a numbered list of their own',
+  'read-back': 'Submitted report matches the draft',
+  'concrete-detail': 'Root cause, path and proof name checkable details',
+});
+
 // ---------------------------------------------------------------------------
 // Pure helpers
 // ---------------------------------------------------------------------------
@@ -192,6 +211,21 @@ export function cellTone(text) {
     if (values.includes(value)) return tone;
   }
   return '';
+}
+
+/** One of the format's fixed values in words: 'not-supplied' -> 'Not supplied'. Any other text is returned as it is. */
+export function valueLabel(text) {
+  const value = String(text).trim().toLowerCase();
+  if (!cellTone(value)) return String(text);
+  if (Object.hasOwn(VALUE_LABELS, value)) return VALUE_LABELS[value];
+  const words = value.replaceAll('-', ' ');
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
+
+/** The name of a submission check as a person reads it: 'proof-inline' -> 'Proof inline with command and output'. Other text is returned as it is. */
+export function checkLabel(text) {
+  const id = String(text).trim().replace(/^`(.*)`$/, '$1').trim().toLowerCase().replace(/\s+/g, '-');
+  return Object.hasOwn(CHECK_LABELS, id) ? CHECK_LABELS[id] : String(text);
 }
 
 const FENCE_OPEN = /^ {0,3}(`{3,}|~{3,})\s*([\w+#.-]*)\s*$/;
@@ -588,7 +622,7 @@ function dossier(parsed) {
 
 function cell(text, context, first, label) {
   const tone = cellTone(text);
-  const content = tone ? chip(text.trim(), tone) : inline(text, context);
+  const content = tone ? chip(valueLabel(text), tone) : inline(text, context);
   if (first) return el('th', { scope: 'row' }, content);
   // An empty cell stays empty, so it takes no room where the table is stacked.
   return el('td', {}, label && text.trim() ? cellLabel(label) : null, content);
@@ -601,15 +635,17 @@ export function cellLabel(name) {
 
 // On a phone the table reads as one block per row, each cell under its column
 // name (.stack-table in base.css). A table without a header row stacks plain.
+// The submission checks name each check by its id; the row shows its name in words.
 function tableNode(title, shape, context) {
   const columns = shape.columns;
+  const checks = sectionKey(title) === 'submission checks';
   return el('div', { class: 'table-wrap', tabindex: '0', role: 'region', 'aria-label': regionName(title, context) },
     el('table', { class: ['table', 'table--dense', 'stack-table', !columns && 'stack-table--plain'] },
       columns ? el('thead', {}, el('tr', {}, columns.map((name) => el('th', { scope: 'col', text: name })))) : null,
       el('tbody', {}, shape.rows.map((row) => (isNoteRow(row)
         // A line the model wrote under the table, with no cells: it runs the width of the table.
         ? el('tr', {}, el('td', { colspan: String(row.length) }, inline(row[0], context)))
-        : el('tr', {}, row.map((value, index) => cell(value, context, index === 0, columns?.[index]))))))));
+        : el('tr', {}, row.map((value, index) => cell(checks && index === 0 ? checkLabel(value) : value, context, index === 0, columns?.[index]))))))));
 }
 
 /** A row that holds one cell of text in a table of several columns. */
@@ -630,7 +666,7 @@ function proseNode(text, context) {
 function fieldsNode(fields, context) {
   return el('dl', { class: 'kv' }, fields.map(([label, value]) => el('div', { class: 'kv__row' },
     el('dt', { text: label }),
-    el('dd', {}, cellTone(value) ? chip(value, cellTone(value)) : inline(value, context)))));
+    el('dd', {}, cellTone(value) ? chip(valueLabel(value), cellTone(value)) : inline(value, context)))));
 }
 
 function sectionNode(section, context) {

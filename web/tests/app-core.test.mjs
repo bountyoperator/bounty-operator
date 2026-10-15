@@ -38,12 +38,13 @@ import {
 } from '../public/app/github-ui.mjs';
 import { historyRecord } from '../public/app/history.mjs';
 import { PLACEHOLDER_EXAMPLE, deepLink, exampleList } from '../public/app/main.mjs';
-import { DEFAULT_MODELS, buildSnippet, estimateRunCost, loadCatalog } from '../public/app/model-api.mjs';
+import { DEFAULT_MODELS, WORKLOADS, availabilityLabel, buildSnippet, estimateRunCost, loadCatalog, mergeCatalog, todayLine } from '../public/app/model-api.mjs';
 import { cleanReply, pastedResult } from '../public/app/pasteback.mjs';
 import { authUrl, challengeFor, newVerifier, reconcileVia } from '../public/app/providers-ui.mjs';
 import {
   analyse,
   cellTone,
+  checkLabel,
   issueMarkdown,
   manifestJson,
   orderSections,
@@ -52,10 +53,13 @@ import {
   sectionColumns,
   sectionKey,
   sectionShape,
+  reviewNodes,
   splitInline,
   stageFileName,
   textBlocks,
+  valueLabel,
 } from '../public/app/results.mjs';
+import { CHECKS as REPORT_CHECKS } from '../public/tools/report-check-core.mjs';
 import { failureFor, listedProfile, quotaLine } from '../public/app/run.mjs';
 import { excerpt, fileForLabel } from '../public/app/source-pane.mjs';
 import { snapshot } from '../public/app/state.mjs';
@@ -633,17 +637,62 @@ describe('deep links', () => {
     assert.equal(DEFAULT_MODELS.length, 24);
     const qwen = DEFAULT_MODELS.find((m) => m.id === 'cyber-qwen-27b-awq');
     // 24K in and 4K out is US$0.216 of tokens, under the US$0.30 floor that covers a cold start.
-    const est = estimateRunCost(qwen.pricing, 24000, 4000);
+    const est = estimateRunCost(qwen, WORKLOADS.review);
+    assert.equal(est.fits, true);
     assert.equal(Number(est.cost.toFixed(4)), 0.3);
-    assert.equal(est.runsPer20, 66);
-    assert.equal(est.runsPer2, 6);
+    // Before it runs, a request holds the whole 262,144-token context at US$3 per million plus
+    // 4,000 output tokens at US$36: US$0.930432. A balance starts a request only while it covers that,
+    // so US$20 runs 64 reviews and US$2 runs 4, not 66 and 6.
+    assert.equal(est.hold, 0.930432);
+    assert.equal(est.runsPer20, 64);
+    assert.equal(est.runsPer2, 4);
     // Short workload stays at the model's minimum_request floor.
-    const minEst = estimateRunCost(qwen.pricing, 1000, 500);
+    const minEst = estimateRunCost(qwen, { inputTokens: 1000, outputTokens: 500 });
     assert.equal(minEst.cost, 0.3);
     assert.match(buildSnippet(qwen, 'curl'), /"chat_template_kwargs": \{ "enable_thinking": false \}/);
     const nex = DEFAULT_MODELS.find((m) => m.id === 'orca-nex-mini');
     assert.match(buildSnippet(nex, 'ts'), /"reasoning_effort": "low"/);
     assert.match(buildSnippet(qwen, 'agent'), /context_window = 262144/);
+    // No snippet puts a key in the source, and the tool settings name no tool that cannot use this API.
+    for (const tab of ['curl', 'python', 'ts', 'agent']) assert.doesNotMatch(buildSnippet(qwen, tab), /bo_api_\.\.\.|Codex/, tab);
+    assert.match(buildSnippet(qwen, 'python'), /api_key=os\.environ\["BOUNTY_OPERATOR_API_KEY"\]/);
+  });
+
+  test('the estimator never assumes more output than a model allows or more input than its context', () => {
+    // Every price view stays inside every model's limits, so every card gets a price.
+    for (const [key, workload] of Object.entries(WORKLOADS)) {
+      if (!workload.requests) continue;
+      for (const model of DEFAULT_MODELS) {
+        assert.ok(workload.outputTokens <= model.max_output_tokens, `${key}: ${model.id} output`);
+        assert.ok(workload.inputTokens + workload.outputTokens <= model.context_length, `${key}: ${model.id} context`);
+        const est = estimateRunCost(model, workload);
+        assert.equal(est.fits, true, `${key}: ${model.id}`);
+        assert.equal(est.capped, false, `${key}: ${model.id}`);
+      }
+    }
+    // The old agent view asked one request for 100K in and 16K out: more output than any model
+    // gives (8,192), and more input than a 32,768-token model holds. It is now refused, not priced.
+    const hermes = DEFAULT_MODELS.find((m) => m.id === 'hermes-4.3-36b');
+    const tooBig = estimateRunCost(hermes, { inputTokens: 100000, outputTokens: 16000 });
+    assert.deepEqual([tooBig.fits, tooBig.output, tooBig.capped, tooBig.runsPer20], [false, 8192, true, 0]);
+    // Output past the model's maximum is capped at it, and the price is for what it can return.
+    const qwen = DEFAULT_MODELS.find((m) => m.id === 'cyber-qwen-27b-awq');
+    const capped = estimateRunCost(qwen, { inputTokens: 10000, outputTokens: 20000 });
+    assert.deepEqual([capped.fits, capped.output, capped.capped], [true, 8192, true]);
+    assert.equal(capped.cost, (10000 * 3 + 8192 * 36) / 1000000);
+    // An agent session is eight requests, each charged at least the minimum: 8 x US$0.30.
+    const session = estimateRunCost(qwen, WORKLOADS.agent);
+    assert.equal(Number(session.cost.toFixed(4)), 2.4);
+    assert.equal(session.runsPer20, 8);
+    // US$2 starts no whole session: one needs seven charges and the hold for the eighth.
+    assert.equal(session.runsPer2, 0);
+    assert.equal(Number(session.needed.toFixed(6)), Number((7 * 0.3 + (262144 * 3 + 2000 * 36) / 1000000).toFixed(6)));
+    // A model whose hold is above US$2 starts nothing on US$2, however cheap one request is.
+    const orca = DEFAULT_MODELS.find((m) => m.id === 'orca-cyber-zero-1.5');
+    const big = estimateRunCost(orca, WORKLOADS.review);
+    assert.ok(big.hold > 2);
+    assert.equal(big.runsPer2, 0);
+    assert.equal(big.needed, big.hold);
   });
 });
 
@@ -719,6 +768,11 @@ describe('model catalog availability and provenance', () => {
     assert.equal(reviewLinks(catalog).length, 0);
     assert.equal(descendants(catalog).filter((node) => node.className === 'catalog-card').length, 24);
     assert.match(nodes.get('model-api-status').textContent, /Availability could not be checked/);
+    // Unknown is not "not available": no card claims a state, and no group heading sorts them.
+    const states = descendants(catalog).filter((node) => node.className === 'catalog-pill' && node.dataset.availability).map((node) => node.textContent);
+    assert.equal(states.length, 24);
+    assert.ok(states.every((text) => text === 'Not checked'));
+    assert.equal(descendants(catalog).filter((node) => node.className === 'catalog-group').length, 0);
     const kimi = descendants(catalog).find((node) => node.attributes.get('aria-label') === 'Use Kimi K3 Cybersecurity Two-Stage in quickstart snippet');
     kimi.listeners.get('click')();
     assert.match(nodes.get('model-api-quickstart').textContent, /kimi-k3-cyber/);
@@ -731,10 +785,14 @@ describe('model catalog availability and provenance', () => {
     await loadCatalog();
     const catalog = nodes.get('model-api-catalog');
     assert.deepEqual(reviewLinks(catalog).map((node) => node.attributes.get('href')), ['/?provider=bountyoperator&model=kimi-k3-cyber#workspace']);
-    assert.match(nodes.get('model-api-status').textContent, /1 of 3 models available/);
+    // The three live rows and the 22 other known models: one of 25 can be used.
+    assert.match(nodes.get('model-api-status').textContent, /^1 of 25 models available now\.$/);
     assert.ok(descendants(catalog).some((node) => node.attributes.get('href') === orca.source_url));
     assert.ok(descendants(catalog).some((node) => node.attributes.get('href') === kimi.source_url));
-    assert.doesNotMatch(catalog.textContent, /FP8|BF16|NVFP4/);
+    // The managed models claim no weight format of their own.
+    const managed = descendants(catalog).filter((node) => node.className === 'catalog-card' && ['Kimi K3 Cybersecurity Two-Stage', 'OrcaCyber Zero 1.5'].includes(node.attributes.get('aria-label')));
+    assert.equal(managed.length, 3);
+    for (const card of managed) assert.doesNotMatch(card.textContent, /FP8|BF16|NVFP4/);
     assert.match(catalog.textContent, /License: Not disclosed by provider/);
     assert.match(catalog.textContent, /Revision: Not disclosed by provider/);
   });
@@ -744,6 +802,74 @@ describe('model catalog availability and provenance', () => {
     await loadCatalog();
     assert.equal(reviewLinks(nodes.get('model-api-catalog')).length, 0);
     assert.match(nodes.get('model-api-status').textContent, /inference is paused/);
+  });
+
+  // Production lists one model (0.9.15). The page keeps the whole catalog in view and says which can be used.
+  const OPEN = { enabled: true, status: 'available', topups_enabled: true, models: [{ ...DEFAULT_MODELS[0], availability: 'available' }] };
+
+  test('the live catalog lists what production serves; every other known model stays in view, marked not available yet', () => {
+    const merged = mergeCatalog(OPEN);
+    assert.equal(merged.length, 24);
+    assert.deepEqual(merged.filter((model) => model.availability === 'available').map((model) => model.id), ['cyber-qwen-27b-awq']);
+    assert.ok(merged.slice(1).every((model) => model.availability === 'unavailable'));
+    // Available models come first, whatever order the live catalog uses.
+    const kimi = DEFAULT_MODELS.find((model) => model.id === 'kimi-k3-cyber');
+    const order = mergeCatalog({ enabled: true, models: [DEFAULT_MODELS[0], { ...kimi, availability: 'available' }, { ...DEFAULT_MODELS[1], availability: 'paused' }] });
+    assert.deepEqual(order.slice(0, 3).map((model) => [model.id, model.availability]), [['kimi-k3-cyber', 'available'], ['orca-cyber-zero-1.5', 'paused'], ['cyber-qwen-27b-awq', 'unavailable']]);
+    // A catalog that is switched off sells nothing.
+    assert.ok(mergeCatalog({ ...OPEN, enabled: false }).every((model) => model.availability === 'unavailable'));
+    assert.deepEqual(['available', 'paused', 'unavailable', undefined].map((state) => availabilityLabel(state)), ['Available', 'Paused', 'Not available yet', 'Not available yet']);
+    assert.equal(availabilityLabel('available', false), 'Not checked');
+  });
+
+  test('the top of the page says what can be used today, from the live catalog', () => {
+    const open = todayLine(OPEN, mergeCatalog(OPEN));
+    assert.equal(open, 'Qwen Cyber 27B AWQ (cyber-qwen-27b-awq): US$3 per million input tokens, US$36 per million output tokens, at least US$0.30 a request. The other 23 models below are not available yet.');
+    assert.match(todayLine({ ...OPEN, topups_enabled: false }, mergeCatalog(OPEN)), /Buying credit is closed right now; credit you already hold still works\.$/);
+    assert.match(todayLine({ enabled: false, status: 'paused' }, mergeCatalog({ enabled: false, models: [] })), /^Paused right now/);
+    assert.match(todayLine({ enabled: false, status: 'unavailable' }, mergeCatalog({ enabled: false, models: [] })), /^Not open right now: no model can be bought or called\. Reviews on your own AI provider API key work today\.$/);
+    const two = { enabled: true, topups_enabled: true, models: [OPEN.models[0], { ...DEFAULT_MODELS[1], availability: 'available' }] };
+    assert.match(todayLine(two, mergeCatalog(two)), /^Qwen Cyber 27B AWQ, OrcaCyber Zero 1\.5\. Each card below shows its price\. The other 22 models below are not available yet\.$/);
+    assert.equal(todayLine(null, []), null);
+  });
+
+  test('an open catalog leads with what can be used: group headings, one pill per state, the quickstart on a callable model', async (t) => {
+    const nodes = setup(t, OPEN);
+    const today = new Node('p');
+    today.textContent = 'built line';
+    const start = new Node('section');
+    nodes.set('model-api-today', today);
+    nodes.set('model-api-start', start);
+    await loadCatalog();
+    const catalog = nodes.get('model-api-catalog');
+    const groups = descendants(catalog).filter((node) => node.className === 'catalog-group').map((node) => node.textContent);
+    assert.deepEqual(groups, ['Available (1)', 'Not available yet (23)']);
+    const cards = descendants(catalog).filter((node) => node.className === 'catalog-card');
+    assert.equal(cards.length, 24);
+    assert.equal(cards[0].attributes.get('aria-label'), 'Qwen Cyber 27B AWQ');
+    // A card that cannot be used says so once, in its pill: no disabled button repeats it.
+    const pills = (card) => descendants(card).filter((node) => node.className === 'catalog-pill' && node.dataset.availability).map((node) => node.textContent);
+    assert.deepEqual(pills(cards[0]), ['Available']);
+    assert.deepEqual(pills(cards[1]), ['Not available yet']);
+    assert.ok(descendants(catalog).every((node) => !(node.tagName === 'button' && node.disabled)), 'no disabled button');
+    assert.deepEqual(reviewLinks(catalog).map((node) => node.attributes.get('href')), ['/?provider=bountyoperator&model=cyber-qwen-27b-awq#workspace']);
+    assert.match(nodes.get('model-api-quickstart').textContent, /Qwen Cyber 27B AWQ \(cyber-qwen-27b-awq\) · \$3\/\$36 per 1M/);
+    assert.match(nodes.get('model-api-status').textContent, /^1 of 24 models available now\.$/);
+    assert.match(today.textContent, /^Qwen Cyber 27B AWQ \(cyber-qwen-27b-awq\): US\$3 per million input tokens/);
+    assert.equal(start.dataset.open, 'true');
+  });
+
+  test('a closed catalog says so at the top and hides the steps and the first call', async (t) => {
+    const nodes = setup(t, { enabled: false, status: 'unavailable', topups_enabled: false, models: [{ ...DEFAULT_MODELS[0], availability: 'unavailable' }] });
+    const today = new Node('p');
+    const start = new Node('section');
+    nodes.set('model-api-today', today);
+    nodes.set('model-api-start', start);
+    await loadCatalog();
+    assert.match(today.textContent, /^Not open right now/);
+    assert.equal(start.dataset.open, 'false');
+    assert.match(nodes.get('model-api-status').textContent, /^Not open right now, so no model below can be bought or called\. Reviews on your own AI provider API key work today\.$/);
+    assert.doesNotMatch(nodes.get('model-api-status').textContent, /model key/);
   });
 });
 
@@ -828,6 +954,77 @@ describe('result analysis', () => {
     assert.equal(cellTone('not-supplied'), 'unproven');
     assert.equal(cellTone('Mint uses the post-deposit balance'), '');
     assert.equal(cellTone(''), '');
+  });
+
+  test('a fixed value reads as words, and prose is left as written', () => {
+    assert.equal(valueLabel('pass'), 'Pass');
+    assert.equal(valueLabel(' fail '), 'Fail');
+    assert.equal(valueLabel('not-supplied'), 'Not supplied');
+    assert.equal(valueLabel('Not-Met'), 'Not met');
+    assert.equal(valueLabel('same-symptom-different-root'), 'Same symptom, different root');
+    assert.equal(valueLabel('Mint uses the post-deposit balance'), 'Mint uses the post-deposit balance');
+    assert.equal(valueLabel(''), '');
+  });
+
+  test('every submission check of a draft-report review has a name in words, taken from the free Report check where it runs the same check', () => {
+    const report = PROFILES.find((profile) => profile.id === 'report');
+    const ids = /- <(proof-inline\|[^>]+)> \| <pass\|fail\|not-supplied>/.exec(report.extraFormat)[1].split('|');
+    assert.equal(ids.length, 7);
+    for (const id of ids) {
+      assert.notEqual(checkLabel(id), id, id);
+      assert.match(checkLabel(id), /^[A-Z][a-z]* [a-z-]+/, `${id}: a sentence, not a slug`);
+    }
+    const free = Object.fromEntries(REPORT_CHECKS.map((check) => [check.id, check.label]));
+    assert.equal(checkLabel('proof-inline'), free.proof);
+    assert.equal(checkLabel('limits-stated'), free.limits);
+    assert.equal(checkLabel('title'), free.title);
+    // The model's spelling varies; the name does not.
+    assert.equal(checkLabel(' `Read-back` '), checkLabel('read-back'));
+    assert.equal(checkLabel('Steps separate'), checkLabel('steps-separate'));
+    // Anything else stays as the model wrote it.
+    assert.equal(checkLabel('A check of its own'), 'A check of its own');
+  });
+
+  test('the result shows check names and results in words, and Raw and the packet keep the ids', (t) => {
+    class Element {
+      constructor(tag) { this.tagName = tag; this.nodeType = 1; this.children = []; this.attributes = {}; this.dataset = {}; this.className = ''; }
+      set textContent(value) { this.children = [String(value)]; }
+      get textContent() { return this.children.map((child) => typeof child === 'string' ? child : child.textContent).join(''); }
+      append(...nodes) { this.children.push(...nodes); }
+      replaceChildren(...nodes) { this.children = nodes; }
+      setAttribute(name, value) { this.attributes[name] = String(value); }
+      addEventListener() {}
+    }
+    const all = (node) => node.children.filter((child) => child instanceof Element).flatMap((child) => [child, ...all(child)]);
+    const previous = globalThis.document;
+    globalThis.document = { createElement: (tag) => new Element(tag) };
+    t.after(() => {
+      if (previous === undefined) delete globalThis.document;
+      else globalThis.document = previous;
+    });
+    const result = {
+      profile: { id: 'report' },
+      manifest,
+      review: [
+        '# Review', 'Verdict: rewrite-then-submit', 'Mode: bounty', 'Counts: critical=0 high=0 medium=1 hardening=0 checked-safe=0', 'Headline: Real, but Medium.', '',
+        '## Submission checks', '- proof-inline | fail | Paste the forge output into the body', '- read-back | not-supplied | Nothing stored to compare', '- title | pass | input-1/Vault.sol:9', '',
+      ].join('\n'),
+    };
+    const { nodes } = reviewNodes(result);
+    const section = nodes.flatMap((node) => [node, ...all(node)]).find((node) => node.dataset.section === 'submission checks');
+    const rows = all(section).filter((node) => node.tagName === 'tr').slice(1);
+    const cells = rows.map((row) => row.children.map((cell) => cell.children.filter((child) => !(child instanceof Element && child.className === 'cell-label')).map((child) => typeof child === 'string' ? child : child.textContent).join('')));
+    assert.deepEqual(cells.map((row) => row.slice(0, 2)), [
+      ['Proof inline with command and output', 'Fail'],
+      ['Submitted report matches the draft', 'Not supplied'],
+      ['Title states mechanism and consequence', 'Pass'],
+    ]);
+    // The tone still comes from the value the model wrote.
+    const chips = all(section).filter((node) => node.className.startsWith('chip'));
+    assert.deepEqual(chips.map((node) => node.dataset.tone), ['danger', 'unproven', 'observed']);
+    assert.doesNotMatch(section.textContent, /proof-inline|not-supplied|read-back/);
+    // The packet and the issue text carry the review as written.
+    assert.match(issueMarkdown(result, analyse(result)), /proof-inline \| fail/);
   });
 
   test('inline text is split into text, code, strong and cited locations, and nothing else', () => {

@@ -32,16 +32,98 @@ export const DEFAULT_MODELS = Object.freeze([
   availability: 'unavailable',
 })));
 
-const WORKLOADS = Object.freeze({
-  rates: { label: 'Per 1M tokens', inputTokens: 0, outputTokens: 0 },
-  review: { label: 'Review run (24K in · 4K out)', inputTokens: 24000, outputTokens: 4000 },
-  agent: { label: 'Agent session (100K in · 16K out)', inputTokens: 100000, outputTokens: 16000 },
+// The price views. Every request in a workload stays inside every model's
+// limits: no more output than a model allows (8,192 tokens), and input plus
+// output within the smallest context window (32,768 tokens). estimateRunCost
+// checks both per model all the same. An agent session is several requests,
+// and each one costs at least the model's minimum.
+export const WORKLOADS = Object.freeze({
+  rates: { label: 'Per 1M tokens', unit: '', requests: 0, inputTokens: 0, outputTokens: 0 },
+  review: { label: 'One review (24K in · 4K out)', unit: 'review', requests: 1, inputTokens: 24000, outputTokens: 4000 },
+  agent: { label: 'Agent session (8 requests, 12.5K in · 2K out each)', unit: 'session', requests: 8, inputTokens: 12500, outputTokens: 2000 },
 });
 
-export function estimateRunCost(pricing, inputTokens, outputTokens) {
-  const metered = (inputTokens / 1000000) * pricing.input_per_million + (outputTokens / 1000000) * pricing.output_per_million;
-  const cost = Math.max(pricing.minimum_request, metered);
-  return { cost, runsPer20: Math.floor(20 / cost), runsPer2: Math.floor(2 / cost) };
+/**
+ * What a workload costs on one model, the way the gateway charges it
+ * (web/src/inference.ts and web/src/api-credits.ts). A request asks for no
+ * more output than the model's maximum and must fit, with its output, in the
+ * model's context; one that does not fit is refused, so it gets no price.
+ * Before a request runs, the gateway holds credit for the model's whole
+ * context plus the requested output, and refuses the request when the free
+ * balance is smaller than that hold. So a balance runs requests only while it
+ * still covers the hold, and a workload of several requests needs the hold
+ * plus the cost of the requests before the last. Amounts are counted in
+ * millionths of a dollar, as the gateway counts them: tokens times the
+ * per-million rate.
+ *
+ * @returns {{ fits: boolean, output: number, capped: boolean, cost: number, hold: number, needed: number, runsPer20: number, runsPer2: number }}
+ */
+export function estimateRunCost(model, { inputTokens, outputTokens, requests = 1 }) {
+  const { pricing } = model;
+  const output = Math.min(outputTokens, model.max_output_tokens ?? 8192);
+  const capped = output < outputTokens;
+  const context = model.context_length ?? Infinity;
+  if (inputTokens + output > context) return { fits: false, output, capped, cost: NaN, hold: NaN, needed: NaN, runsPer20: 0, runsPer2: 0 };
+  const minimum = Math.round(pricing.minimum_request * 1000000);
+  const perRequest = Math.max(minimum, Math.ceil(inputTokens * pricing.input_per_million + output * pricing.output_per_million));
+  const hold = Math.max(minimum, Math.ceil(context * pricing.input_per_million + output * pricing.output_per_million));
+  const runs = (budget) => (budget < hold ? 0 : Math.floor(Math.floor((budget - hold) / perRequest + 1) / requests));
+  const needed = (requests - 1) * perRequest + hold;
+  return { fits: true, output, capped, cost: (perRequest * requests) / 1000000, hold: hold / 1000000, needed: needed / 1000000, runsPer20: runs(20000000), runsPer2: runs(2000000) };
+}
+
+/** Two decimals of a dollar: 0.3 -> '$0.30'. */
+function dollars(amount) {
+  return `$${amount.toFixed(2)}`;
+}
+
+/** The catalog rate as written: 3 -> 'US$3', 0.75 -> 'US$0.75'. */
+function rateText(amount) {
+  return `US$${Number.isInteger(amount) ? amount : amount.toFixed(2)}`;
+}
+
+/** What a card calls a model's state. Until the live catalog answers, nobody knows: 'Not checked'. */
+export function availabilityLabel(availability, checked = true) {
+  if (!checked) return 'Not checked';
+  return availability === 'available' ? 'Available' : availability === 'paused' ? 'Paused' : 'Not available yet';
+}
+
+/**
+ * The catalog the page shows: the live catalog, which lists only what
+ * production is set up to serve, followed by every other known model marked
+ * not available yet. A catalog that is switched off sells nothing, whatever a
+ * model row says. Available models come first, then paused ones, each group
+ * in catalog order.
+ */
+export function mergeCatalog(result) {
+  const enabled = result?.enabled === true;
+  const live = (Array.isArray(result?.models) ? result.models : []).map((model) => ({ ...model, availability: enabled ? model.availability : 'unavailable' }));
+  const listed = new Set(live.map((model) => model.id));
+  const rest = DEFAULT_MODELS.filter((model) => !listed.has(model.id)).map((model) => ({ ...model, availability: 'unavailable' }));
+  const rank = (model) => (model.availability === 'available' ? 0 : model.availability === 'paused' ? 1 : 2);
+  return [...live, ...rest].map((model, index) => ({ model, index })).sort((a, b) => rank(a.model) - rank(b.model) || a.index - b.index).map(({ model }) => model);
+}
+
+/**
+ * The line at the top of the page that says what can be used today, from the
+ * live catalog. null leaves the line the page was built with.
+ *
+ * @param {{ enabled?: boolean, status?: string, topups_enabled?: boolean } | null} result
+ * @param {object[]} models  mergeCatalog(result)
+ */
+export function todayLine(result, models) {
+  if (!result) return null;
+  if (!result.enabled && result.status === 'paused') return 'Paused right now: no request runs and no credit can be bought until it resumes. Credit you already hold is kept.';
+  const available = models.filter((model) => model.availability === 'available');
+  if (!result.enabled || !available.length) return 'Not open right now: no model can be bought or called. Reviews on your own AI provider API key work today.';
+  const others = models.length - available.length;
+  const rest = others ? ` The other ${others} model${others === 1 ? '' : 's'} below ${others === 1 ? 'is' : 'are'} not available yet.` : '';
+  const closed = result.topups_enabled ? '' : ' Buying credit is closed right now; credit you already hold still works.';
+  if (available.length === 1) {
+    const [model] = available;
+    return `${model.name} (${model.id}): ${rateText(model.pricing.input_per_million)} per million input tokens, ${rateText(model.pricing.output_per_million)} per million output tokens, at least ${rateText(model.pricing.minimum_request)} a request.${rest}${closed}`;
+  }
+  return `${available.map((model) => model.name).join(', ')}. Each card below shows its price.${rest}${closed}`;
 }
 
 export function buildSnippet(model, tab = 'curl') {
@@ -53,13 +135,13 @@ export function buildSnippet(model, tab = 'curl') {
       ? `,\n  "chat_template_kwargs": { "${param.slice('chat_template_kwargs.'.length)}": false }`
       : '';
   if (tab === 'python') {
-    return `from openai import OpenAI\n\nclient = OpenAI(\n    base_url="https://bountyoperator.com/v1",\n    api_key="bo_api_...",\n)\n\nres = client.chat.completions.create(\n    model="${id}",\n    messages=[\n        {"role": "system", "content": "Focus on concrete security bugs and proof paths."},\n        {"role": "user", "content": "Review withdraw() for re-entrancy and accounting invariants."},\n    ],\n    max_tokens=2048,\n)\nprint(res.choices[0].message.content)`;
+    return `import os\nfrom openai import OpenAI\n\nclient = OpenAI(\n    base_url="https://bountyoperator.com/v1",\n    api_key=os.environ["BOUNTY_OPERATOR_API_KEY"],\n)\n\nres = client.chat.completions.create(\n    model="${id}",\n    messages=[\n        {"role": "system", "content": "Focus on concrete security bugs and proof paths."},\n        {"role": "user", "content": "Review withdraw() for re-entrancy and accounting invariants."},\n    ],\n    max_tokens=2048,\n)\nprint(res.choices[0].message.content)`;
   }
   if (tab === 'ts') {
     return `const res = await fetch("https://bountyoperator.com/v1/chat/completions", {\n  method: "POST",\n  headers: {\n    "Authorization": \`Bearer \${process.env.BOUNTY_OPERATOR_API_KEY}\`,\n    "Content-Type": "application/json",\n  },\n  body: JSON.stringify({\n    model: "${id}",\n    messages: [\n      { role: "user", content: "Check this diff for broken invariants and exploit paths." }\n    ],\n    max_tokens: 2048${extra ? extra.replace(/\n  /g, '\n    ') : ''}\n  }),\n});\nconst data = await res.json();\nconsole.log(data.choices[0].message.content);`;
   }
   if (tab === 'agent') {
-    return `# OpenAI-compatible harness settings (Codex / OpenCode / Continue)\nbase_url = "https://bountyoperator.com/v1"\napi_key_env = "BOUNTY_OPERATOR_API_KEY"\nmodel = "${id}"\ncontext_window = ${model?.context_length ?? 262144}\nmax_output_tokens = ${model?.max_output_tokens ?? 8192}`;
+    return `# Settings for a tool that takes an OpenAI-compatible base URL\nbase_url = "https://bountyoperator.com/v1"\napi_key_env = "BOUNTY_OPERATOR_API_KEY"\nmodel = "${id}"\ncontext_window = ${model?.context_length ?? 262144}\nmax_output_tokens = ${model?.max_output_tokens ?? 8192}`;
   }
   return `curl https://bountyoperator.com/v1/chat/completions \\\n  -H "Authorization: Bearer $BOUNTY_OPERATOR_API_KEY" \\\n  -H "Content-Type: application/json" \\\n  -d '{\n  "model": "${id}",\n  "messages": [\n    { "role": "user", "content": "Trace every external call and state update in withdraw()." }\n  ],\n  "max_tokens": 2048${extra}\n}'`;
 }
@@ -88,29 +170,32 @@ function categoryPills(model) {
   return pills;
 }
 
-function modelCard(model, { workload, activeId, onSelect }) {
+function modelCard(model, { workload, activeId, onSelect, checked }) {
   const copied = el('span', { role: 'status', class: 'help catalog-copied' });
   const copyButton = (label, value) => button({ label, size: 'sm', variant: 'secondary', attrs: { 'aria-label': `${label} for ${model.name}` }, onClick: async () => { copied.textContent = await copyText(value) ? `${label === 'Copy model ID' ? 'Model ID' : 'Base URL'} copied.` : 'Select and copy the value above.'; } });
   const rate = (label, value) => el('div', { class: 'catalog-rate' }, el('dt', { text: label }), el('dd', null, el('strong', { text: value })));
   const hasTools = (model.capabilities ?? []).includes('tools');
   const spec = WORKLOADS[workload] ?? WORKLOADS.rates;
-  const rateBoxes = spec.inputTokens > 0
+  const rateBoxes = spec.requests > 0
     ? (() => {
-      const est = estimateRunCost(model.pricing, spec.inputTokens, spec.outputTokens);
+      const est = estimateRunCost(model, spec);
+      if (!est.fits) return [rate(`Per ${spec.unit}`, 'Too long for this model')];
+      // A balance too small for one whole workload runs none: say what one takes.
+      const runs = (count) => (count > 0 ? `${count} ${spec.unit}${count === 1 ? '' : 's'}` : `Needs ${dollars(est.needed)}`);
       return [
-        rate('Est / run', `$${est.cost.toFixed(2)}`),
-        rate('$20 credit', `${est.runsPer20} runs`),
-        rate('$2 plan', `${est.runsPer2} runs`),
+        rate(est.capped ? `Per ${spec.unit} (${est.output.toLocaleString()} out)` : `Per ${spec.unit}`, dollars(est.cost)),
+        rate('With US$20', runs(est.runsPer20)),
+        rate('With US$2', runs(est.runsPer2)),
       ];
     })()
     : [
       rate('Input', `$${model.pricing.input_per_million}`),
       rate('Output', `$${model.pricing.output_per_million}`),
-      rate('Min', `$${model.pricing.minimum_request.toFixed(2)}`),
+      rate('Min', dollars(model.pricing.minimum_request)),
     ];
   const isSelected = activeId === model.id;
   const available = model.availability === 'available';
-  const availability = available ? 'Available' : model.availability === 'paused' ? 'Paused' : 'Unavailable';
+  const availability = availabilityLabel(model.availability, checked);
   const undisclosed = 'Not disclosed by provider';
   const source = model.source_url
     ? el('a', { href: model.source_url, text: model.source, target: '_blank', rel: 'noopener noreferrer' })
@@ -127,7 +212,7 @@ function modelCard(model, { workload, activeId, onSelect }) {
           ),
         ),
       ),
-      el('div', { class: 'catalog-card__badges', 'aria-label': 'Model category and availability' }, ...categoryPills(model), el('span', { class: 'catalog-pill', text: availability })),
+      el('div', { class: 'catalog-card__badges', 'aria-label': 'Model category and availability' }, ...categoryPills(model), el('span', { class: 'catalog-pill', dataset: { availability: model.availability ?? 'unavailable' }, text: availability })),
       el('dl', { class: 'catalog-rates' }, ...rateBoxes),
     ),
     el('div', { class: 'catalog-card__bar' },
@@ -156,13 +241,14 @@ function modelCard(model, { workload, activeId, onSelect }) {
           class: 'btn btn--secondary btn--sm',
           href: `/?provider=bountyoperator&model=${encodeURIComponent(model.id)}#workspace`,
           'aria-label': `Use ${model.name} in review`,
-        }, el('span', { class: 'btn__label', text: 'Use in review' })) : button({ label: availability, size: 'sm', variant: 'secondary', disabled: true, attrs: { 'aria-label': `${model.name} is ${availability.toLowerCase()} for review` } }),
+        }, el('span', { class: 'btn__label', text: 'Use in review' })) : null,
       ),
     ),
   );
 }
 
-function mountCatalog(modelsList) {
+// checked is false until the live catalog answers: the cards are shown, their state is not claimed.
+function mountCatalog(modelsList, { checked = true } = {}) {
   const catalog = document.getElementById('model-api-catalog');
   const quickstart = document.getElementById('model-api-quickstart');
   if (!catalog) return;
@@ -171,7 +257,8 @@ function mountCatalog(modelsList) {
   const search = el('input', { id: 'catalog-search', class: 'input', type: 'search', placeholder: 'Search by model name, ID or family' });
   let selectedFilter = '';
   let selectedWorkload = 'rates';
-  let activeModelId = modelsList[0]?.id ?? 'cyber-qwen-27b-awq';
+  // The quickstart starts on a model that can be called, when there is one.
+  let activeModelId = (modelsList.find((model) => model.availability === 'available') ?? modelsList[0])?.id ?? 'cyber-qwen-27b-awq';
   let activeTab = 'curl';
   const filters = [['', 'All'], ['cybersecurity', 'Cybersecurity'], ['uncensored', 'Low refusal'], ['tools', 'Agent tools']];
   const filterButtons = filters.map(([value, label]) => button({ label: `${label} (${modelsList.filter((model) => !value || [...(model.tags ?? []), ...(model.capabilities ?? [])].includes(value)).length})`, size: 'sm', variant: 'secondary', attrs: { 'aria-pressed': value === '' ? 'true' : 'false' }, onClick: () => {
@@ -179,6 +266,7 @@ function mountCatalog(modelsList) {
     filterButtons.forEach((item, index) => item.setAttribute('aria-pressed', filters[index][0] === value ? 'true' : 'false'));
     render();
   } }));
+  const holdNote = el('p', { class: 'help catalog-hold', hidden: true, text: 'Before each request runs, credit is held for a full context window of input plus the output asked for, and what is not used comes back when it ends. So a small balance starts fewer requests than its size suggests.' });
   const workloadEntries = Object.entries(WORKLOADS);
   const workloadButtons = workloadEntries.map(([key, spec]) => button({ label: spec.label, size: 'sm', variant: 'secondary', attrs: { 'aria-pressed': key === selectedWorkload ? 'true' : 'false' }, onClick: () => {
     selectedWorkload = key;
@@ -189,7 +277,7 @@ function mountCatalog(modelsList) {
   const snippetCode = el('pre', { class: 'catalog-quickstart__code' });
   const snippetModel = el('code', { class: 'catalog-slug' });
   const snippetStatus = el('span', { role: 'status', class: 'help catalog-copied' });
-  const tabs = [['curl', 'curl'], ['python', 'Python'], ['ts', 'TypeScript'], ['agent', 'Agent config']];
+  const tabs = [['curl', 'curl'], ['python', 'Python'], ['ts', 'TypeScript'], ['agent', 'Tool settings']];
   const tabButtons = tabs.map(([id, label]) => button({ label, size: 'sm', variant: 'secondary', attrs: { 'aria-pressed': id === activeTab ? 'true' : 'false' }, onClick: () => {
     activeTab = id;
     tabButtons.forEach((item, index) => item.setAttribute('aria-pressed', tabs[index][0] === id ? 'true' : 'false'));
@@ -200,7 +288,7 @@ function mountCatalog(modelsList) {
     if (!quickstart) return;
     const chosen = modelsList.find((entry) => entry.id === activeModelId) ?? modelsList[0];
     if (!chosen) return;
-    snippetModel.textContent = `${chosen.name} (${chosen.id}) · $${chosen.pricing.input_per_million}/$${chosen.pricing.output_per_million} per 1M`;
+    snippetModel.textContent = `${chosen.name} (${chosen.id}) · $${chosen.pricing.input_per_million}/$${chosen.pricing.output_per_million} per 1M${!checked || chosen.availability === 'available' ? '' : ` · ${availabilityLabel(chosen.availability).toLowerCase()}`}`;
     snippetCode.textContent = buildSnippet(chosen, activeTab);
     snippetStatus.textContent = '';
   };
@@ -219,7 +307,18 @@ function mountCatalog(modelsList) {
       return (!selectedFilter || labels.includes(selectedFilter)) && [model.id, model.name, model.source, model.description, ...labels].join(' ').toLowerCase().includes(query);
     });
     count.textContent = `${filtered.length} of ${modelsList.length} models · ${WORKLOADS[selectedWorkload].label}`;
-    list.replaceChildren(...(filtered.length ? filtered.map((model) => modelCard(model, { workload: selectedWorkload, activeId: activeModelId, onSelect: selectModel })) : [el('p', { class: 'catalog-empty', text: 'No models match these filters.' })]));
+    holdNote.hidden = selectedWorkload === 'rates';
+    // Once the live catalog has answered, a heading opens each group, so where the models that can be used end is plain.
+    const cards = [];
+    for (const [index, model] of filtered.entries()) {
+      const label = availabilityLabel(model.availability);
+      if (checked && (index === 0 || availabilityLabel(filtered[index - 1].availability) !== label)) {
+        const size = filtered.filter((entry) => availabilityLabel(entry.availability) === label).length;
+        cards.push(el('p', { class: 'catalog-group', dataset: { availability: model.availability ?? 'unavailable' }, text: `${label} (${size})` }));
+      }
+      cards.push(modelCard(model, { workload: selectedWorkload, activeId: activeModelId, onSelect: selectModel, checked }));
+    }
+    list.replaceChildren(...(cards.length ? cards : [el('p', { class: 'catalog-empty', text: 'No models match these filters.' })]));
   };
 
   search.addEventListener('input', render);
@@ -232,6 +331,7 @@ function mountCatalog(modelsList) {
       el('span', { class: 'help', text: 'Price view:' }),
       el('div', { class: 'catalog-filter-buttons', role: 'group', 'aria-label': 'Price view' }, ...workloadButtons),
     ),
+    holdNote,
     count,
     list,
   );
@@ -256,16 +356,24 @@ function mountCatalog(modelsList) {
 
 export async function loadCatalog() {
   const status = document.getElementById('model-api-status');
-  mountCatalog(DEFAULT_MODELS);
+  mountCatalog(DEFAULT_MODELS, { checked: false });
   try {
     const response = await fetch('/api/inference/catalog');
     if (!response.ok) throw new Error('Catalog unavailable');
     const result = await response.json();
     if (!Array.isArray(result.models)) throw new Error('Catalog unavailable');
-    const models = result.models.map((model) => ({ ...model, availability: result.enabled === true ? model.availability : 'unavailable' }));
+    const models = mergeCatalog(result);
     mountCatalog(models);
     const available = models.filter((model) => model.availability === 'available').length;
-    if (status) status.textContent = result.enabled ? `${available} of ${models.length} model${models.length === 1 ? '' : 's'} available.${result.topups_enabled ? '' : ' Customer top-ups are currently closed.'}` : result.status === 'paused' ? 'Model inference is paused right now. Top-ups are closed until it resumes; existing credit is unaffected.' : 'Not open for purchases yet, so no model below can be used today. Reviews with your own model key work now. Check back here: this line changes when the API opens.';
+    if (status) status.textContent = result.enabled ? `${available} of ${models.length} model${models.length === 1 ? '' : 's'} available now.${result.topups_enabled ? '' : ' Buying credit is closed right now.'}` : result.status === 'paused' ? 'Model inference is paused right now. Top-ups are closed until it resumes; existing credit is unaffected.' : 'Not open right now, so no model below can be bought or called. Reviews on your own AI provider API key work today.';
+    // The top of the page follows the live catalog: what is available today, and
+    // the steps and the first call only while they lead somewhere.
+    const today = document.getElementById('model-api-today');
+    const line = todayLine(result, models);
+    // The built line says the same thing while nothing has changed; it keeps its markup then.
+    if (today && line && today.textContent.trim() !== line) today.textContent = line;
+    const start = document.getElementById('model-api-start');
+    if (start) start.dataset.open = String(Boolean(result.enabled && available > 0));
   } catch {
     if (status) status.textContent = 'Availability could not be checked. Refresh this page before adding credit.';
   }

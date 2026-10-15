@@ -133,7 +133,7 @@ safe.
 
 The three core profiles, the free tools, the CLI and the MCP server are MIT and
 in this repository. The gauntlet and the panel run on the hosted service, on
-your own model key.
+your own AI provider API key.
 
 - **Core** profiles run anywhere: hosted, exported as a prompt to a chat
   subscription or a local model with paste-back, or prepared over MCP for your

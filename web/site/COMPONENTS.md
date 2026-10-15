@@ -458,7 +458,7 @@ Every page that ends on a call to action ends on this band: the landing pages th
 
 ### Site header and footer
 
-Emitted by the layout. Classes: `.site-header`, `.site-header__inner`, `.brand` (`.brand__mark`, `.brand__name`), `.site-nav`, `.site-header__actions`, `.site-footer`, `.site-footer__grid`, `.site-footer__col`, `.site-footer__base`, `.site-footer__cta`. The current page's nav link is filled with vermilion. The footer closes every page with the promise, the Review my report action. Under 928px the nav becomes a second row that scrolls sideways; no link is hidden.
+Emitted by the layout. Classes: `.site-header`, `.site-header__inner`, `.brand` (`.brand__mark`, `.brand__name`), `.site-nav`, `.site-header__actions`, `.site-footer`, `.site-footer__grid`, `.site-footer__col`, `.site-footer__base`, `.site-footer__cta`. The current page's nav link is filled with vermilion. The footer closes every page with the promise, the Review my report action. Under 928px the nav becomes a second row with every link on screen: the links share one row from 384px and take two rows of three below it. The row wraps for enlarged text; it never scrolls sideways.
 
 `brandMark()` returns the "b/" mark as inline SVG paths.
 

@@ -122,7 +122,7 @@ test('the proof strip links the three leaderboards and the method', async () => 
 test('the hero says what a review costs under its two buttons, and a phone shows it before the slip', async () => {
   const hero = main.slice(main.indexOf('class="wrap home-hero"'), main.indexOf('class="home-hero__shot"'));
   // The kicker, the headline, the lede, the actions, then the price line: in that order in the markup.
-  const order = ['class="home-hero__kicker"', 'id="hero-title"', 'class="lede home-hero__lede"', 'class="home-hero__actions"', '<p class="home-hero__free">Free: 1 review a day on your own model key. The example needs no account.</p>'];
+  const order = ['class="home-hero__kicker"', 'id="hero-title"', 'class="lede home-hero__lede"', 'class="home-hero__actions"', '<p class="home-hero__free">Free: 1 review a day on your own AI provider API key (OpenRouter, OpenAI, Anthropic and others). The example needs no account.</p>'];
   const positions = order.map((needle) => hero.indexOf(needle));
   assert.ok(positions.every((position) => position > 0), 'missing: ' + order.filter((_, index) => positions[index] < 0).join(', '));
   assert.deepEqual([...positions].sort((a, b) => a - b), positions);

@@ -129,20 +129,9 @@
 
   document.addEventListener('click', onClick);
 
-  // On narrow screens the nav row scrolls sideways; bring the current page's link
-  // into view when it would start under the faded right edge.
-  function revealCurrentNavLink() {
-    var current = document.querySelector('.site-nav a[aria-current="page"]');
-    var nav = current && current.closest('.site-nav');
-    if (!nav || nav.scrollWidth <= nav.clientWidth) return;
-    var overflow = current.getBoundingClientRect().right - (nav.getBoundingClientRect().right - 48);
-    if (overflow > 0) nav.scrollLeft += overflow;
-  }
-
   // The motion button is parsed after this script runs, so label it once the DOM is ready.
   document.addEventListener('DOMContentLoaded', function () {
     syncMotionToggles(currentMotion());
-    revealCurrentNavLink();
   });
 
   // Follow a system change while the visitor has made no choice of their own.

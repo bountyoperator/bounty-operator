@@ -206,6 +206,76 @@ test('the security page prints the content security policy from the specificatio
   assert.match(security, /security@bountyoperator\.com/);
 });
 
+// The Model API opened in 0.9.15 with one model. A first-time visitor reads what
+// can be used today and how to start before the catalog of everything else.
+test('the Model API page says at the top what can be used today and how to start, before the full catalog', async () => {
+  const markup = rendered.get('/model-api');
+  const top = markup.slice(markup.indexOf('<h1'), markup.indexOf('id="models"'));
+  const text = textOf(top);
+  const { DEFAULT_MODELS, mergeCatalog, todayLine } = await import('../public/app/model-api.mjs');
+
+  // Available today, the price, then the three steps in order, then the first call.
+  const order = ['Available today', 'Qwen Cyber 27B AWQ ( cyber-qwen-27b-awq ): US$3 per million input tokens, US$36 per million output tokens, at least US$0.30 a request. The other 23 models below are not available yet.', 'How to start', 'Buy credit.', 'Create a key.', 'Call it.', 'Your first call'];
+  const positions = order.map((needle) => text.indexOf(needle));
+  assert.ok(positions.every((position) => position >= 0), `missing: ${order.filter((_, index) => positions[index] < 0).join(', ')}`);
+  assert.deepEqual([...positions].sort((a, b) => a - b), positions);
+  assert.match(text, /add US\$20, US\$50 or US\$100\. There is no subscription\./);
+  assert.match(text, /The key starts with bo_api_ and is shown once/);
+  assert.match(text, /"model": "cyber-qwen-27b-awq"/);
+  assert.match(top, /<section class="api-today" id="model-api-start" data-open="true" aria-labelledby="start">/);
+
+  // The built line is the one the script writes for today's catalog, so on load the script leaves it, markup and all.
+  const open = { enabled: true, topups_enabled: true, models: [{ ...DEFAULT_MODELS[0], availability: 'available' }] };
+  const built = /<p class="api-today__line" id="model-api-today">([\s\S]*?)<\/p>/.exec(markup)[1].replace(/<[^>]+>/g, '');
+  assert.equal(built, todayLine(open, mergeCatalog(open)));
+
+  // The whole catalog follows, and the page speaks of your own AI provider API key, never a "model key".
+  assert.ok(markup.indexOf('id="model-api-catalog"') > markup.indexOf('id="model-api-start"'));
+  assert.match(textOf(markup), /All models and prices/);
+  assert.doesNotMatch(textOf(markup), /model key|Hosted security catalog|BYO key/);
+});
+
+// /security once said Model API keys are never stored, while /privacy said
+// their hashes and prefixes are. What the code keeps decides both pages.
+test('the security page, the privacy page and the code agree on what is kept of a Model API key, request and card', async () => {
+  const security = textOf(rendered.get('/security'));
+  const privacy = textOf(rendered.get('/privacy'));
+  const credits = await readFile(path.join(WEB_DIR, 'src', 'api-credits.ts'), 'utf8');
+  const worker = await readFile(path.join(WEB_DIR, 'src', 'worker.ts'), 'utf8');
+  const autoTopup = await readFile(path.join(WEB_DIR, 'src', 'api-autotopup.ts'), 'utf8');
+
+  // A key is kept as its SHA-256 and its first 15 characters, and is shown once.
+  assert.ok(credits.includes('await sha256(token), token.slice(0, 15), label'));
+  assert.match(security, /Bounty Operator API keys: a SHA-256 hash, the visible prefix, the label, the spending limit/);
+  assert.match(security, /We keep its hash and its first 15 characters/);
+  assert.match(security, /A Bounty Operator API key itself: it is shown once, when you create it/);
+  assert.match(privacy, /We store hashes of API keys, their visible prefixes and labels/);
+  // What is never stored is the visitor's own provider key, on both pages.
+  assert.doesNotMatch(security, /Model API keys and GitHub tokens/);
+  assert.match(security, /Never stored .*Your own AI provider API keys \(OpenRouter, Anthropic, OpenAI and the rest\) and GitHub tokens/);
+  assert.match(privacy, /Files, instructions, your own AI provider API keys and review results are never written to our database or logs\./);
+
+  // Request rows go after 30 days; the ledger stays.
+  assert.ok(worker.includes("DELETE FROM inference_requests WHERE status != 'running' AND created_at < ?\").bind(now - 30 * day)"));
+  assert.match(security, /Per Model API request: model, key, time, status, token counts, credit held and the charge, for 30 days/);
+  assert.match(privacy, /Request metadata is deleted after 30 days\./);
+  assert.match(security, /The prepaid credit ledger and Stripe payment references, kept for accounting/);
+
+  // A saved payment method is kept as its type and masked details, never the full card.
+  assert.match(autoTopup, /type: method\.type, brand: method\.card\?\.brand \?\? null,/);
+  assert.match(security, /its type and masked details \(for a card, the brand and last four digits\)/);
+  assert.match(privacy, /we retain the method type and masked details/);
+  assert.match(security, /Full card details/);
+  assert.doesNotMatch(rendered.get('/security'), /<li>Card details<\/li>/);
+
+  // The Model API is in scope, and its testing rule is in SECURITY.md too.
+  assert.match(security, /The Model API The `?\/v1`? endpoints, Bounty Operator API keys and their limits/);
+  const policy = await readFile(path.join(WEB_DIR, '..', 'SECURITY.md'), 'utf8');
+  assert.match(policy, /\*\*The Model API\*\* at `\/v1`/);
+  for (const text of [security, policy.replace(/\s+/g, ' ')]) assert.match(text, /Test the Model API with your own key and your own credit, a few small requests at a time\./);
+  assert.match(rendered.get('/security'), /Last updated <time datetime="2026-10-15">15 October 2026<\/time>/);
+});
+
 test('parseChangelog reads releases, group labels, wrapped items and drops comments', () => {
   const releases = parseChangelog(
     [
@@ -294,7 +364,7 @@ test('the privacy policy says page views and named actions are counted in aggreg
   assert.match(privacy, /named actions a page reports from a fixed list: an example loaded, a prompt exported, a reply pasted, a packet saved, a repository imported, the sign-in opened, the upgrade button pressed, a gauntlet or a panel started and finished, a free tool run, a template copied, an MCP command copied/);
   assert.match(privacy, /A page reports an action by its name and sends nothing with it\./);
   assert.match(privacy, /what you paste or drop there never leaves the browser\./);
-  assert.match(privacy, /Last updated 14 October 2026/);
+  assert.match(privacy, /Last updated 15 October 2026/);
 });
 
 test('the privacy policy names every counter the Worker keeps', async () => {
