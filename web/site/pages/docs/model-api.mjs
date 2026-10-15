@@ -1,7 +1,7 @@
 import { button, closingBand, codeBlock, html } from '../../components.mjs';
 import { breadcrumbsLd } from '../../layout.mjs';
 import { ACCOUNT_SCRIPTS, ACCOUNT_STYLES, accountDialog } from '../../fragments/account-dialog.mjs';
-import { DEFAULT_MODELS, buildSnippet } from '../../../public/app/model-api.mjs';
+import { DEFAULT_MODELS, buildSnippet, mergeCatalog, todayBlock } from '../../../public/app/model-api.mjs';
 import { DOCS_STYLES, docHead } from './_shared.mjs';
 
 // The model production sells today (0.9.15: the only one with a passing live
@@ -10,20 +10,24 @@ import { DOCS_STYLES, docHead } from './_shared.mjs';
 // so a pause, a closure or a newly opened model shows without a rebuild.
 const OPEN_MODEL = DEFAULT_MODELS.find((model) => model.id === 'cyber-qwen-27b-awq');
 const OTHERS = DEFAULT_MODELS.length - 1;
+// The heading the script writes for that catalog, so the built page and the script agree.
+const OPEN_CATALOG = { enabled: true, status: 'available', topups_enabled: true, models: [{ ...OPEN_MODEL, availability: 'available' }] };
+const OPEN_HEADING = todayBlock(OPEN_CATALOG, mergeCatalog(OPEN_CATALOG)).heading;
 
 /** A catalog rate as written on the page: 3 -> 'US$3', 0.3 -> 'US$0.30'. */
 const usd = (amount) => `US$${Number.isInteger(amount) ? amount : amount.toFixed(2)}`;
 
-// data-open says whether the steps and the first call lead anywhere: the script sets it from the live catalog.
-const today = html`<section class="api-today" id="model-api-start" data-open="true" aria-labelledby="start">
+// data-open says whether the steps and the first call lead anywhere, data-state which state the
+// heading and line tell (open, paused, closed, unknown): the script sets all three from the live catalog.
+const today = html`<section class="api-today" id="model-api-start" data-open="true" data-state="open" aria-labelledby="start">
 <div class="api-today__text">
-<h2 id="start">Available today</h2>
+<h2 id="start">${OPEN_HEADING}</h2>
 <p class="api-today__line" id="model-api-today"><strong>${OPEN_MODEL.name}</strong> (<code>${OPEN_MODEL.id}</code>): ${usd(OPEN_MODEL.pricing.input_per_million)} per million input tokens, ${usd(OPEN_MODEL.pricing.output_per_million)} per million output tokens, at least ${usd(OPEN_MODEL.pricing.minimum_request)} a request. The other ${OTHERS} models below are not available yet.</p>
 <div class="api-today__start">
 <h3 class="api-today__how">How to start</h3>
 <ol class="steps api-steps">
-<li><strong>Buy credit.</strong> Sign in with a passkey (no email needed), open Account, then Model API, and add US$20, US$50 or US$100. There is no subscription.</li>
-<li><strong>Create a key.</strong> Name it and give it a spending limit. The key starts with <code>bo_api_</code> and is shown once, so save it.</li>
+<li id="model-api-step-buy"><strong>Buy credit.</strong> Sign in with a passkey (no email needed), open Account, then Model API, and add US$20, US$50 or US$100.</li>
+<li><strong>Create a key.</strong> Name it and give it a spending limit. The key starts with <code>bo_api_</code> and is shown once, so save it in your environment as <code>BOUNTY_OPERATOR_API_KEY</code>: the call below reads it from there.</li>
 <li><strong>Call it.</strong> Send a chat request to <code>https://bountyoperator.com/v1/chat/completions</code> with your key and the model ID, from your own code or any tool that uses the OpenAI chat API.</li>
 </ol>
 <p class="help">After an idle spell the first request waits up to 10 minutes while the model starts. You are not charged for the wait.</p>
@@ -46,7 +50,7 @@ const body = html`<article class="docs wrap model-api-page">
 ${docHead({
   crumbs: [{ label: 'Bounty Operator', href: '/' }, { label: 'Model API' }],
   title: 'Cybersecurity model API.',
-  lede: 'Call a security-tuned model from your own code or agent through an OpenAI-compatible API. Pay with prepaid credit. There is no subscription.',
+  lede: 'Call a security-tuned model from your own code or agent through an OpenAI-compatible API, and pay for it with prepaid credit.',
   actions: html`${button({ label: 'Get an API key', href: '/#account/api', variant: 'primary', size: 'lg' })}${button({ label: 'See all models', href: '#models', variant: 'secondary', size: 'lg' })}${button({ label: 'Setup guide', href: '/docs/model-api', variant: 'secondary', size: 'lg' })}`,
 })}
 ${today}

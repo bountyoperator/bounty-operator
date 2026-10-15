@@ -67,19 +67,19 @@ FINISH: Responsive layout, native video controls, captions, reduced motion and v
 <header class="page-head page-field">
 
 <h1>Cybersecurity model API.</h1>
-<p class="lede">Call a security-tuned model from your own code or agent through an OpenAI-compatible API. Pay with prepaid credit. There is no subscription.</p>
+<p class="lede">Call a security-tuned model from your own code or agent through an OpenAI-compatible API, and pay for it with prepaid credit.</p>
 
 <div class="cluster page-head__actions"><a class="btn btn--primary btn--lg" href="/#account/api"><span class="btn__label">Get an API key</span></a><a class="btn btn--secondary btn--lg" href="#models"><span class="btn__label">See all models</span></a><a class="btn btn--secondary btn--lg" href="/docs/model-api"><span class="btn__label">Setup guide</span></a></div>
 </header>
-<section class="api-today" id="model-api-start" data-open="true" aria-labelledby="start">
+<section class="api-today" id="model-api-start" data-open="true" data-state="open" aria-labelledby="start">
 <div class="api-today__text">
 <h2 id="start">Available today</h2>
 <p class="api-today__line" id="model-api-today"><strong>Qwen Cyber 27B AWQ</strong> (<code>cyber-qwen-27b-awq</code>): US$3 per million input tokens, US$36 per million output tokens, at least US$0.30 a request. The other 23 models below are not available yet.</p>
 <div class="api-today__start">
 <h3 class="api-today__how">How to start</h3>
 <ol class="steps api-steps">
-<li><strong>Buy credit.</strong> Sign in with a passkey (no email needed), open Account, then Model API, and add US$20, US$50 or US$100. There is no subscription.</li>
-<li><strong>Create a key.</strong> Name it and give it a spending limit. The key starts with <code>bo_api_</code> and is shown once, so save it.</li>
+<li id="model-api-step-buy"><strong>Buy credit.</strong> Sign in with a passkey (no email needed), open Account, then Model API, and add US$20, US$50 or US$100.</li>
+<li><strong>Create a key.</strong> Name it and give it a spending limit. The key starts with <code>bo_api_</code> and is shown once, so save it in your environment as <code>BOUNTY_OPERATOR_API_KEY</code>: the call below reads it from there.</li>
 <li><strong>Call it.</strong> Send a chat request to <code>https://bountyoperator.com/v1/chat/completions</code> with your key and the model ID, from your own code or any tool that uses the OpenAI chat API.</li>
 </ol>
 <p class="help">After an idle spell the first request waits up to 10 minutes while the model starts. You are not charged for the wait.</p>

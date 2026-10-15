@@ -206,28 +206,45 @@ test('the security page prints the content security policy from the specificatio
   assert.match(security, /security@bountyoperator\.com/);
 });
 
+/** The text of the first-call code block in a slice of /model-api markup. */
+function buildSnippetText(markup) {
+  return textOf(markup.slice(markup.indexOf('api-today__code')));
+}
+
 // The Model API opened in 0.9.15 with one model. A first-time visitor reads what
 // can be used today and how to start before the catalog of everything else.
 test('the Model API page says at the top what can be used today and how to start, before the full catalog', async () => {
   const markup = rendered.get('/model-api');
   const top = markup.slice(markup.indexOf('<h1'), markup.indexOf('id="models"'));
   const text = textOf(top);
-  const { DEFAULT_MODELS, mergeCatalog, todayLine } = await import('../public/app/model-api.mjs');
+  const { DEFAULT_MODELS, mergeCatalog, todayBlock } = await import('../public/app/model-api.mjs');
 
   // Available today, the price, then the three steps in order, then the first call.
   const order = ['Available today', 'Qwen Cyber 27B AWQ ( cyber-qwen-27b-awq ): US$3 per million input tokens, US$36 per million output tokens, at least US$0.30 a request. The other 23 models below are not available yet.', 'How to start', 'Buy credit.', 'Create a key.', 'Call it.', 'Your first call'];
   const positions = order.map((needle) => text.indexOf(needle));
   assert.ok(positions.every((position) => position >= 0), `missing: ${order.filter((_, index) => positions[index] < 0).join(', ')}`);
   assert.deepEqual([...positions].sort((a, b) => a - b), positions);
-  assert.match(text, /add US\$20, US\$50 or US\$100\. There is no subscription\./);
+  assert.match(text, /add US\$20, US\$50 or US\$100\./);
   assert.match(text, /The key starts with bo_api_ and is shown once/);
   assert.match(text, /"model": "cyber-qwen-27b-awq"/);
-  assert.match(top, /<section class="api-today" id="model-api-start" data-open="true" aria-labelledby="start">/);
+  assert.match(top, /<section class="api-today" id="model-api-start" data-open="true" data-state="open" aria-labelledby="start">/);
+  // Step 1 has an id: while buying credit is closed, the script swaps it for the credit already held.
+  assert.match(top, /<li id="model-api-step-buy"><strong>Buy credit\.<\/strong>/);
+  // The first call reads the key from BOUNTY_OPERATOR_API_KEY, and step 2 says to put it there.
+  assert.match(buildSnippetText(top), /\$BOUNTY_OPERATOR_API_KEY/);
+  assert.match(text, /shown once, so save it in your environment as BOUNTY_OPERATOR_API_KEY : the call below reads it from there\./);
+  // "No subscription" is said once above the catalog, in the highlights, not three times.
+  const aboveCatalog = textOf(markup.slice(markup.indexOf('<h1'), markup.indexOf('id="models"')));
+  assert.equal(aboveCatalog.match(/subscription/gi)?.length, 1, aboveCatalog);
+  assert.match(aboveCatalog, /Prepaid credit, no subscription/);
 
-  // The built line is the one the script writes for today's catalog, so on load the script leaves it, markup and all.
+  // The built heading and line are the ones the script writes for today's catalog, so on load the script
+  // leaves them, markup and all. Paused, closed and unchecked states rewrite both (app-core tests).
   const open = { enabled: true, topups_enabled: true, models: [{ ...DEFAULT_MODELS[0], availability: 'available' }] };
+  const block = todayBlock(open, mergeCatalog(open));
   const built = /<p class="api-today__line" id="model-api-today">([\s\S]*?)<\/p>/.exec(markup)[1].replace(/<[^>]+>/g, '');
-  assert.equal(built, todayLine(open, mergeCatalog(open)));
+  assert.equal(built, block.line);
+  assert.equal(/<h2 id="start">([^<]*)<\/h2>/.exec(markup)[1], block.heading);
 
   // The whole catalog follows, and the page speaks of your own AI provider API key, never a "model key".
   assert.ok(markup.indexOf('id="model-api-catalog"') > markup.indexOf('id="model-api-start"'));
@@ -263,7 +280,11 @@ test('the security page, the privacy page and the code agree on what is kept of 
 
   // A saved payment method is kept as its type and masked details, never the full card.
   assert.match(autoTopup, /type: method\.type, brand: method\.card\?\.brand \?\? null,/);
-  assert.match(security, /its type and masked details \(for a card, the brand and last four digits\)/);
+  assert.match(autoTopup, /exp_month: method\.card\?\.exp_month \?\? null, exp_year: method\.card\?\.exp_year \?\? null/);
+  assert.match(security, /its type and masked details \(for a card, the brand, the last four digits and the expiry month and year\)/);
+  // A key's life is one of the four the code accepts.
+  assert.ok(credits.includes('if (![7, 30, 90, 365].includes(Number(days)))'));
+  assert.match(security, /A key lasts 7, 30, 90 or 365 days/);
   assert.match(privacy, /we retain the method type and masked details/);
   assert.match(security, /Full card details/);
   assert.doesNotMatch(rendered.get('/security'), /<li>Card details<\/li>/);

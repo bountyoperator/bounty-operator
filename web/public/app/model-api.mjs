@@ -32,22 +32,37 @@ export const DEFAULT_MODELS = Object.freeze([
   availability: 'unavailable',
 })));
 
-// The price views. Every request in a workload stays inside every model's
-// limits: no more output than a model allows (8,192 tokens), and input plus
-// output within the smallest context window (32,768 tokens). estimateRunCost
-// checks both per model all the same. An agent session is several requests,
-// and each one costs at least the model's minimum.
+// The price views. No request asks for more output than a model allows (8,192
+// tokens). Whether a request fits a model's context is checked per model, by
+// the gateway's rule (see admits), so a small-context model says a workload is
+// too long for it. An agent session is several requests, and each one costs at
+// least the model's minimum. A label is a button on a 320px phone: keep it
+// short (the details go in `summary`, the line above the cards).
 export const WORKLOADS = Object.freeze({
-  rates: { label: 'Per 1M tokens', unit: '', requests: 0, inputTokens: 0, outputTokens: 0 },
-  review: { label: 'One review (24K in · 4K out)', unit: 'review', requests: 1, inputTokens: 24000, outputTokens: 4000 },
-  agent: { label: 'Agent session (8 requests, 12.5K in · 2K out each)', unit: 'session', requests: 8, inputTokens: 12500, outputTokens: 2000 },
+  rates: { label: 'Per 1M tokens', summary: 'USD per million tokens', unit: '', requests: 0, inputTokens: 0, outputTokens: 0, messages: 0 },
+  review: { label: 'One review (24K in · 4K out)', summary: 'One review: 24K tokens in, 4K out', unit: 'review', requests: 1, inputTokens: 24000, outputTokens: 4000, messages: 2 },
+  agent: { label: 'Agent session (8 requests)', summary: 'Agent session: 8 requests, each 12.5K tokens in and 2K out', unit: 'session', requests: 8, inputTokens: 12500, outputTokens: 2000, messages: 6 },
 });
+
+// The gateway admits a request only when its input counted in UTF-8 bytes, a
+// template reserve (1,024 bytes, 64 a message) and the output asked for fit in
+// the model's context, counted in tokens (parseInference, web/src/inference.ts).
+// A token of English text or code is about four bytes, so the estimate counts four.
+export const BYTES_PER_TOKEN = 4;
+const TEMPLATE_RESERVE = 1024;
+const MESSAGE_RESERVE = 64;
+
+/** Would the gateway admit a request of this size on this model? */
+export function admits(model, { inputTokens, outputTokens, messages = 2 }) {
+  const bytes = inputTokens * BYTES_PER_TOKEN + TEMPLATE_RESERVE + messages * MESSAGE_RESERVE;
+  return bytes + outputTokens <= (model.context_length ?? Infinity);
+}
 
 /**
  * What a workload costs on one model, the way the gateway charges it
  * (web/src/inference.ts and web/src/api-credits.ts). A request asks for no
- * more output than the model's maximum and must fit, with its output, in the
- * model's context; one that does not fit is refused, so it gets no price.
+ * more output than the model's maximum and must pass the gateway's size rule
+ * (admits); one that does not is refused, so it gets no price.
  * Before a request runs, the gateway holds credit for the model's whole
  * context plus the requested output, and refuses the request when the free
  * balance is smaller than that hold. So a balance runs requests only while it
@@ -58,12 +73,12 @@ export const WORKLOADS = Object.freeze({
  *
  * @returns {{ fits: boolean, output: number, capped: boolean, cost: number, hold: number, needed: number, runsPer20: number, runsPer2: number }}
  */
-export function estimateRunCost(model, { inputTokens, outputTokens, requests = 1 }) {
+export function estimateRunCost(model, { inputTokens, outputTokens, requests = 1, messages = 2 }) {
   const { pricing } = model;
   const output = Math.min(outputTokens, model.max_output_tokens ?? 8192);
   const capped = output < outputTokens;
   const context = model.context_length ?? Infinity;
-  if (inputTokens + output > context) return { fits: false, output, capped, cost: NaN, hold: NaN, needed: NaN, runsPer20: 0, runsPer2: 0 };
+  if (!admits(model, { inputTokens, outputTokens: output, messages })) return { fits: false, output, capped, cost: NaN, hold: NaN, needed: NaN, runsPer20: 0, runsPer2: 0 };
   const minimum = Math.round(pricing.minimum_request * 1000000);
   const perRequest = Math.max(minimum, Math.ceil(inputTokens * pricing.input_per_million + output * pricing.output_per_million));
   const hold = Math.max(minimum, Math.ceil(context * pricing.input_per_million + output * pricing.output_per_million));
@@ -75,6 +90,13 @@ export function estimateRunCost(model, { inputTokens, outputTokens, requests = 1
 /** Two decimals of a dollar: 0.3 -> '$0.30'. */
 function dollars(amount) {
   return `$${amount.toFixed(2)}`;
+}
+
+/** An amount someone must hold, rounded up to the cent so it is never short: 2.193152 -> '$2.20'. */
+export function dollarsUp(amount) {
+  // Counted in millionths first, as the gateway counts, so float noise cannot add a cent.
+  const cents = Math.ceil(Math.round(amount * 1000000) / 10000);
+  return `$${(cents / 100).toFixed(2)}`;
 }
 
 /** The catalog rate as written: 3 -> 'US$3', 0.75 -> 'US$0.75'. */
@@ -104,26 +126,54 @@ export function mergeCatalog(result) {
   return [...live, ...rest].map((model, index) => ({ model, index })).sort((a, b) => rank(a.model) - rank(b.model) || a.index - b.index).map(({ model }) => model);
 }
 
+/** Step 1 of "How to start" while buying credit is closed but the API is open. */
+export const BUYING_CLOSED_STEP = Object.freeze({ title: 'Use credit you already hold.', text: 'Buying credit is closed right now. A balance you already have still pays for requests.' });
+
 /**
- * The line at the top of the page that says what can be used today, from the
- * live catalog. null leaves the line the page was built with.
+ * The block at the top of the page, from the live catalog: its heading, the
+ * line under it, whether the steps and the first call show (`open`), and
+ * whether step 1 can offer to buy credit (`buying`). The heading and the line
+ * always tell the same state: open, paused, closed, or unknown when the live
+ * check did not answer (result null).
  *
  * @param {{ enabled?: boolean, status?: string, topups_enabled?: boolean } | null} result
  * @param {object[]} models  mergeCatalog(result)
+ * @returns {{ state: 'open' | 'paused' | 'closed' | 'unknown', heading: string, line: string, open: boolean, buying: boolean }}
  */
-export function todayLine(result, models) {
-  if (!result) return null;
-  if (!result.enabled && result.status === 'paused') return 'Paused right now: no request runs and no credit can be bought until it resumes. Credit you already hold is kept.';
-  const available = models.filter((model) => model.availability === 'available');
-  if (!result.enabled || !available.length) return 'Not open right now: no model can be bought or called. Reviews on your own AI provider API key work today.';
-  const others = models.length - available.length;
-  const rest = others ? ` The other ${others} model${others === 1 ? '' : 's'} below ${others === 1 ? 'is' : 'are'} not available yet.` : '';
-  const closed = result.topups_enabled ? '' : ' Buying credit is closed right now; credit you already hold still works.';
-  if (available.length === 1) {
-    const [model] = available;
-    return `${model.name} (${model.id}): ${rateText(model.pricing.input_per_million)} per million input tokens, ${rateText(model.pricing.output_per_million)} per million output tokens, at least ${rateText(model.pricing.minimum_request)} a request.${rest}${closed}`;
+export function todayBlock(result, models = []) {
+  if (!result) {
+    return { state: 'unknown', heading: 'Availability not checked', line: 'The live check did not answer, so this page cannot say what can be bought or called right now. Refresh the page before adding credit.', open: false, buying: false };
   }
-  return `${available.map((model) => model.name).join(', ')}. Each card below shows its price.${rest}${closed}`;
+  const available = models.filter((model) => model.availability === 'available');
+  if (result.enabled && available.length) {
+    const others = models.length - available.length;
+    const rest = others ? ` The other ${others} model${others === 1 ? '' : 's'} below ${others === 1 ? 'is' : 'are'} not available yet.` : '';
+    const [model] = available;
+    const line = available.length === 1
+      ? `${model.name} (${model.id}): ${rateText(model.pricing.input_per_million)} per million input tokens, ${rateText(model.pricing.output_per_million)} per million output tokens, at least ${rateText(model.pricing.minimum_request)} a request.${rest}`
+      : `${available.map((entry) => entry.name).join(', ')}. Each card below shows its price.${rest}`;
+    return { state: 'open', heading: 'Available today', line, open: true, buying: result.topups_enabled === true };
+  }
+  if (result.status === 'paused' || models.some((entry) => entry.availability === 'paused')) {
+    return { state: 'paused', heading: 'Paused right now', line: 'No request runs and no credit can be bought until it resumes. Credit you already hold is kept.', open: false, buying: false };
+  }
+  return { state: 'closed', heading: 'Not open right now', line: 'No model can be bought or called. Reviews on your own AI provider API key work today.', open: false, buying: false };
+}
+
+/** Puts todayBlock on the page: heading, line, steps and step 1. */
+function showToday(block) {
+  const start = document.getElementById('model-api-start');
+  const heading = document.getElementById('start');
+  const line = document.getElementById('model-api-today');
+  const buy = document.getElementById('model-api-step-buy');
+  if (heading) heading.textContent = block.heading;
+  // The built line says the same thing while nothing has changed; it keeps its markup then.
+  if (line && line.textContent.trim() !== block.line) line.textContent = block.line;
+  if (start) {
+    start.dataset.state = block.state;
+    start.dataset.open = String(block.open);
+  }
+  if (buy && block.open && !block.buying) buy.replaceChildren(el('strong', { text: BUYING_CLOSED_STEP.title }), ` ${BUYING_CLOSED_STEP.text}`);
 }
 
 export function buildSnippet(model, tab = 'curl') {
@@ -173,15 +223,15 @@ function categoryPills(model) {
 function modelCard(model, { workload, activeId, onSelect, checked }) {
   const copied = el('span', { role: 'status', class: 'help catalog-copied' });
   const copyButton = (label, value) => button({ label, size: 'sm', variant: 'secondary', attrs: { 'aria-label': `${label} for ${model.name}` }, onClick: async () => { copied.textContent = await copyText(value) ? `${label === 'Copy model ID' ? 'Model ID' : 'Base URL'} copied.` : 'Select and copy the value above.'; } });
-  const rate = (label, value) => el('div', { class: 'catalog-rate' }, el('dt', { text: label }), el('dd', null, el('strong', { text: value })));
+  const rate = (label, value, wide = false) => el('div', { class: wide ? 'catalog-rate catalog-rate--wide' : 'catalog-rate' }, el('dt', { text: label }), el('dd', null, el('strong', { text: value })));
   const hasTools = (model.capabilities ?? []).includes('tools');
   const spec = WORKLOADS[workload] ?? WORKLOADS.rates;
   const rateBoxes = spec.requests > 0
     ? (() => {
       const est = estimateRunCost(model, spec);
-      if (!est.fits) return [rate(`Per ${spec.unit}`, 'Too long for this model')];
+      if (!est.fits) return [rate(`Per ${spec.unit}`, 'Too long for this model', true)];
       // A balance too small for one whole workload runs none: say what one takes.
-      const runs = (count) => (count > 0 ? `${count} ${spec.unit}${count === 1 ? '' : 's'}` : `Needs ${dollars(est.needed)}`);
+      const runs = (count) => (count > 0 ? `${count} ${spec.unit}${count === 1 ? '' : 's'}` : `Needs ${dollarsUp(est.needed)}`);
       return [
         rate(est.capped ? `Per ${spec.unit} (${est.output.toLocaleString()} out)` : `Per ${spec.unit}`, dollars(est.cost)),
         rate('With US$20', runs(est.runsPer20)),
@@ -306,7 +356,7 @@ function mountCatalog(modelsList, { checked = true } = {}) {
       const labels = [...(model.tags ?? []), ...(model.capabilities ?? [])];
       return (!selectedFilter || labels.includes(selectedFilter)) && [model.id, model.name, model.source, model.description, ...labels].join(' ').toLowerCase().includes(query);
     });
-    count.textContent = `${filtered.length} of ${modelsList.length} models · ${WORKLOADS[selectedWorkload].label}`;
+    count.textContent = `${filtered.length} of ${modelsList.length} models · ${WORKLOADS[selectedWorkload].summary}`;
     holdNote.hidden = selectedWorkload === 'rates';
     // Once the live catalog has answered, a heading opens each group, so where the models that can be used end is plain.
     const cards = [];
@@ -366,16 +416,12 @@ export async function loadCatalog() {
     mountCatalog(models);
     const available = models.filter((model) => model.availability === 'available').length;
     if (status) status.textContent = result.enabled ? `${available} of ${models.length} model${models.length === 1 ? '' : 's'} available now.${result.topups_enabled ? '' : ' Buying credit is closed right now.'}` : result.status === 'paused' ? 'Model inference is paused right now. Top-ups are closed until it resumes; existing credit is unaffected.' : 'Not open right now, so no model below can be bought or called. Reviews on your own AI provider API key work today.';
-    // The top of the page follows the live catalog: what is available today, and
-    // the steps and the first call only while they lead somewhere.
-    const today = document.getElementById('model-api-today');
-    const line = todayLine(result, models);
-    // The built line says the same thing while nothing has changed; it keeps its markup then.
-    if (today && line && today.textContent.trim() !== line) today.textContent = line;
-    const start = document.getElementById('model-api-start');
-    if (start) start.dataset.open = String(Boolean(result.enabled && available > 0));
+    // The top of the page follows the live catalog: its heading and line say the
+    // same state, and the steps and the first call show only while they lead somewhere.
+    showToday(todayBlock(result, models));
   } catch {
     if (status) status.textContent = 'Availability could not be checked. Refresh this page before adding credit.';
+    showToday(todayBlock(null));
   }
 }
 if (typeof document !== 'undefined') loadCatalog();

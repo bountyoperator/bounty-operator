@@ -21,7 +21,8 @@
 .catalog-workload { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-8) var(--sp-12); margin-bottom: var(--sp-12); }
 .catalog-workload > .help { margin: 0; }
 .catalog-filter-buttons { display: flex; flex-wrap: wrap; align-items: end; gap: var(--sp-8); }
-.catalog-filter-buttons .btn { min-height: 2.5rem; }
+/* A label longer than the row wraps inside its button rather than push the page sideways on a 320px phone. */
+.catalog-filter-buttons .btn { min-height: 2.5rem; max-width: 100%; white-space: normal; text-align: center; }
 .catalog-filter-buttons [aria-pressed="true"] { color: var(--text); border-color: var(--accent); background: var(--surface-2); }
 .catalog-count { margin-bottom: var(--sp-12); }
 .catalog-hold { margin-bottom: var(--sp-12); max-width: 72ch; }
@@ -50,6 +51,8 @@
 .catalog-rates--byok { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: var(--sp-12); }
 .catalog-rates__pair { display: grid; grid-template-columns: repeat(2, minmax(5.25rem, 1fr)); gap: var(--sp-8); margin: 0; }
 .catalog-rate { display: grid; gap: 2px; padding: var(--sp-8) var(--sp-12); border: 1px solid var(--line); border-radius: var(--r-ctl); background: var(--surface-2); }
+/* A workload too long for the model has no price: its one box takes the whole row. */
+.catalog-rate--wide { grid-column: 1 / -1; }
 .catalog-rates dt { color: var(--muted); font-family: var(--font-display); font-size: var(--fs-12); font-weight: 650; letter-spacing: 0.04em; text-transform: uppercase; }
 .catalog-rates dd { margin: 0; }
 .catalog-rates strong { font-family: var(--font-display); font-size: var(--fs-18); font-weight: 740; font-variant-numeric: tabular-nums; line-height: 1.2; color: var(--text); }

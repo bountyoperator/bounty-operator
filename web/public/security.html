@@ -123,7 +123,7 @@ FINISH: Responsive layout, native video controls, captions, reduced motion and v
 <li>Bounty Operator API keys: a SHA-256 hash, the visible prefix, the label, the spending limit and spend, and the expiry and revocation times</li>
 <li>Per Model API request: model, key, time, status, token counts, credit held and the charge, for 30 days</li>
 <li>The prepaid credit ledger and Stripe payment references, kept for accounting</li>
-<li>With automatic top-ups on: Stripe’s reference to the saved payment method, its type and masked details (for a card, the brand and last four digits), your top-up settings and your consent</li>
+<li>With automatic top-ups on: Stripe’s reference to the saved payment method, its type and masked details (for a card, the brand, the last four digits and the expiry month and year), your top-up settings and your consent</li>
 <li>A keyed hash of your IP address for rate limits, for up to a day</li>
 <li>Daily page and funnel totals with no account identifier</li>
 </ul>
@@ -170,7 +170,7 @@ FINISH: Responsive layout, native video controls, captions, reduced motion and v
 <h3 id="input-checks">Input checks</h3>
 <p>A review takes up to 50 text files and 240 KB in total. Before anything is sent, the engine scans every line for API keys, access tokens, wallet keys and seed phrases, and blocks the request when it finds one. Email addresses and IP addresses are warnings you confirm. A finding names the file, the line and the kind of match, and never the matched text.</p>
 <h3 id="model-api-keys">Model API keys</h3>
-<p>A Bounty Operator API key starts with <code>bo_api_</code> and can only spend your prepaid credit on model requests, up to the lifetime limit you set for it. It cannot buy credit, reach billing, passkeys or recovery, or run anything else on your account. A key lasts 7 to 365 days, an account holds up to ten at a time, and revoking one takes effect at once. We keep its hash and its first 15 characters, so the account panel can tell your keys apart.</p>
+<p>A Bounty Operator API key starts with <code>bo_api_</code> and can only spend your prepaid credit on model requests, up to the lifetime limit you set for it. It cannot buy credit, reach billing, passkeys or recovery, or run anything else on your account. A key lasts 7, 30, 90 or 365 days, an account holds up to ten at a time, and revoking one takes effect at once. We keep its hash and its first 15 characters, so the account panel can tell your keys apart.</p>
 <h3 id="billing">Billing</h3>
 <p>Payment runs on Stripe Checkout, so card details never touch our application. Webhooks are signature-checked, and paid access is recomputed from Stripe’s current state on every event, including refunds and disputes.</p>
 <p>Model API credit is bought the same way. Each request holds credit before it starts. It is charged for its confirmed usage or the model’s minimum, whichever is higher, and never more than the amount held; the rest goes back to your balance. A request with no confirmed usage is not charged. Automatic top-ups are off unless you turn them on.</p></div>

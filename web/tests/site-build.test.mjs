@@ -266,6 +266,24 @@ test('on a phone every header link is on screen: one shared row, two rows of thr
   assert.deepEqual(labels, ['Review', 'Benchmark', 'Model API', 'Tools', 'Guide', 'Pricing']);
 });
 
+// At 320px the price-view button 'Agent session (8 requests, 12.5K in · 2K out
+// each)' was 332px wide and could not wrap, so /model-api scrolled 28px
+// sideways. The labels are short now (app-core tests), and a label that is
+// still too long for the row wraps inside its button.
+test('on /model-api a catalog button wraps its label rather than push a phone page sideways', async () => {
+  const css = (await readFile(path.join(WEB_DIR, 'public', 'css', 'catalog.css'), 'utf8')).replace(/\/\*[\s\S]*?\*\//g, '');
+  const rule = /(?:^|\n)\.catalog-filter-buttons \.btn \{([^}]*)\}/.exec(css);
+  assert.ok(rule, 'a rule for the catalog buttons');
+  assert.match(rule[1], /white-space: normal;/);
+  assert.match(rule[1], /max-width: 100%;/);
+  // No later catalog rule puts nowrap back on a button.
+  for (const later of css.matchAll(/([^{}]*\.btn[^{}]*)\{([^{}]*)\}/g)) {
+    assert.doesNotMatch(later[2], /white-space: nowrap/, later[1].trim());
+  }
+  // A workload too long for a model shows one box across the whole row, not a squeezed third.
+  assert.match(css, /\.catalog-rate--wide \{ grid-column: 1 \/ -1; \}/);
+});
+
 test('softwareApplicationLd carries the two fixed offers', () => {
   const offers = softwareApplicationLd().offers;
   assert.deepEqual(offers.map((offer) => [offer.name, offer.price, offer.priceCurrency]), [
