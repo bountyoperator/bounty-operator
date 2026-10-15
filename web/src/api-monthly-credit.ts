@@ -3,6 +3,8 @@ import type Stripe from 'stripe';
 import { localStripeTest } from './api-topups.ts';
 import { seconds } from './env.ts';
 import type { Env } from './env.ts';
+import { inferenceModels } from './inference.ts';
+import { supplierBudgetCreditStatements } from './supplier-costs.ts';
 
 const PRICE_CENTS = 1000;
 const CREDIT_MICRO = 2000000;
@@ -163,12 +165,17 @@ export async function syncMonthlyCredit(env: Env, api: Stripe, invoiceId: string
     const blocked = freshDispute ? observed.blocked : row.dispute_blocked;
     const open = freshDispute ? observed.open : row.dispute_open;
     const credit = refund || blocked ? 0 : CREDIT_MICRO;
+    const now = seconds();
     const result = await env.DB.batch([
-      // The trigger posts the adjustment and wallet balance in this transaction.
+      // The trigger posts the adjustment and wallet balance in this transaction,
+      // as ledger entry monthly:<invoice>:<new revision>.
       env.DB.prepare(`UPDATE api_monthly_grants SET credited_micro = ?, refunded_micro = ?, dispute_blocked = ?, dispute_open = ?,
         dispute_at = ?, revision = revision + 1, updated_at = ? WHERE invoice_id = ? AND revision = ?`)
-        .bind(credit, refund, blocked, open, Math.max(row.dispute_at, eventTime), seconds(), invoiceId, row.revision),
+        .bind(credit, refund, blocked, open, Math.max(row.dispute_at, eventTime), now, invoiceId, row.revision),
       ...observed.charges.map((charge) => env.DB.prepare('INSERT OR IGNORE INTO api_monthly_grant_charges(invoice_id, charge_id) VALUES(?, ?)').bind(invoiceId, charge)),
+      // The supplier budget follows that ledger entry; a lost revision race adds nothing.
+      ...supplierBudgetCreditStatements(env, inferenceModels(env),
+        { ledgerId: `monthly:${invoiceId}:${row.revision + 1}`, source: `monthly:${invoiceId}`, deltaMicro: credit - row.credited_micro }, now),
     ]);
     if (result[0].meta.changes) return;
   }

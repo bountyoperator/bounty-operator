@@ -78,10 +78,34 @@ Model availability requires a configured provider credential, verified unexpired
 `SUPPLIER_COST_RULES` for that model and a funded current supplier budget window.
 No pricing rule or no remaining supplier allowance means unavailable, even when
 a customer has credit. The website catalog retains unavailable models with their
-individual status; `/v1/models` lists only available models. Customer payments and
-monthly credit grants do not create supplier budgets or refill provider accounts.
-Supplier funding must be recorded separately; these budgets limit admitted work,
-not an upstream provider's actual bill.
+individual status; `/v1/models` lists only available models. These budgets limit
+admitted work, not an upstream provider's actual bill, and nothing here refills a
+provider account.
+
+Supplier budgets grow automatically from confirmed customer credit. When a paid
+top-up (manual or automatic) or a monthly Operator credit grant is credited to a
+wallet, the same D1 transaction adds `SUPPLIER_BUDGET_SHARE` of that amount
+(a decimal from 0 to 1, default `0.9`) to the current budget window of every
+provider with a sellable model: one enabled in `INFERENCE_MODELS` with an
+unexpired cost rule. Each such provider receives the full share. With no window
+covering the present, the credit opens an enabled 30-day window, ended early
+where a later window starts. A disabled window covering the present is a pause:
+it receives the share and no automatic window opens beside it. A refund or
+dispute removes the share that payment added, at the rate it was added, but
+never takes a window below its reserved plus consumed allowance. Each change is
+recorded once per ledger entry and provider in `supplier_budget_adjustments`, so
+a replayed Stripe event or resync adds nothing. When a window ends, its unspent
+customer-funded allowance (reserved holds count as spent) moves into the current
+window, opening one if needed; operator-funded allowance still ends with its
+window. The move happens on the next credit, on the 15-minute scheduled run, or
+when a request finds no funded window. A share of `0` turns automatic funding and
+these moves off; refunds still remove what earlier payments added. Operator
+funding can still be added as a manually inserted window, and the very first
+window still needs either operator funding or a monthly grant, since top-ups
+stay closed while no model is available. Apply migration
+`0007_supplier_budget_from_credit.sql` before deploying a Worker that writes
+this table: without it every credit fails and waits for Stripe's retry, and
+`/api/health` reports `db: error`.
 
 Back up D1 and apply migrations before enabling inference. Keep customer
 top-ups closed during model acceptance. Run the affected tests, type check,

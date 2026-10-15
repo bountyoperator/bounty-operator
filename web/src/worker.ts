@@ -51,7 +51,7 @@ import { autoTopupAvailable, autoTopupData, createAutoTopupSetup, disableAutoTop
 import { apiCreditData, createInferenceKey, reapInferenceHolds, revokeInferenceKey } from './api-credits.ts';
 import { createApiTopup, reconcileApiTopup, resyncPendingTopups } from './api-topups.ts';
 import { inferenceCatalog, inferenceEndpoint, inferenceModels, inferenceStatus } from './inference.ts';
-import { reconcileRunpodBilling } from './supplier-costs.ts';
+import { reconcileRunpodBilling, supplierBudgetProviders, sweepSupplierBudgets } from './supplier-costs.ts';
 
 const AUTH_REQUESTS_PER_HOUR = 90;
 const BILLING_REQUESTS_PER_10_MIN = 6;
@@ -139,6 +139,7 @@ async function health({ env }: Call): Promise<Response> {
       env.DB.prepare('SELECT credited_micro FROM api_monthly_grants LIMIT 1'),
       env.DB.prepare('SELECT limit_micro FROM supplier_budget_windows LIMIT 1'),
       env.DB.prepare('SELECT total_micro FROM supplier_billing_buckets LIMIT 1'),
+      env.DB.prepare('SELECT amount_micro FROM supplier_budget_adjustments LIMIT 1'),
     ]);
     return json(body);
   } catch {
@@ -413,6 +414,12 @@ export default {
     // Stripe the subscriptions whose paid period is ending. The daily run also purges expired rows.
     const reapedLeases = await reapStaleLeases(env.DB, now);
     const reapedInference = await reapInferenceHolds(env, now);
+    // After the reaper has released expired holds: customer-funded allowance
+    // left in an ended budget window moves into a current one.
+    const supplierBudgetsSwept = await sweepSupplierBudgets(env, supplierBudgetProviders(env, inferenceModels(env), now), now).catch((error: unknown) => {
+      console.error('Supplier budget sweep failed', { name: error instanceof Error ? error.name : 'unknown' });
+      return 0;
+    });
     const topupsResynced = apiBillingReady(env)
       ? (await resyncPendingTopups(env, stripeClient(env)).catch(() => 0)) + (await processAutoTopups(env, stripeClient(env), now).catch(() => 0))
       : 0;
@@ -422,6 +429,6 @@ export default {
     });
     const purged = controller.cron === DAILY_CRON ? await purgeExpired(env, now) : {};
     const supplierBilling = controller.cron === DAILY_CRON ? await reconcileSupplierBilling(env, now) : null;
-    console.log('Scheduled cleanup', { cron: controller.cron, reapedLeases, reapedInference, topupsResynced, resynced, ...purged, ...(supplierBilling ? { supplierBilling } : {}) });
+    console.log('Scheduled cleanup', { cron: controller.cron, reapedLeases, reapedInference, supplierBudgetsSwept, topupsResynced, resynced, ...purged, ...(supplierBilling ? { supplierBilling } : {}) });
   },
 } satisfies ExportedHandler<Env>;

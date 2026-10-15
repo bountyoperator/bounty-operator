@@ -47,6 +47,11 @@
     "API_AUTOTOPUPS_ENABLED": "false",
     "INFERENCE_MODELS": "[]",
     // Verified, expiring supplier cost rules. A funded D1 budget is also required.
+    // Confirmed customer credit funds that budget: SUPPLIER_BUDGET_SHARE, a
+    // decimal string from "0" to "1", is the share of each paid top-up or
+    // monthly credit grant added to every selling provider's current window.
+    // Unset means "0.9"; "0" turns automatic funding off; an unreadable value
+    // counts as "0". Add it here and in the production file together.
     "SUPPLIER_COST_RULES": "[]"
   },
   // Secrets, set with `wrangler secret put`: STRIPE_SECRET_KEY,

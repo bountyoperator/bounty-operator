@@ -5,7 +5,7 @@ import { seconds } from './env.ts';
 import type { Call, Env } from './env.ts';
 import type { Session } from './auth.ts';
 import { ApiError, json, readJson } from './http.ts';
-import { quoteSupplierCommitment, supplierReservationStatement, supplierSettlementStatements, reapSupplierCommitmentsStatement } from './supplier-costs.ts';
+import { quoteSupplierCommitment, supplierReservationStatement, supplierSettlementStatements, reapSupplierCommitmentsStatement, sweepSupplierBudgets } from './supplier-costs.ts';
 
 export const MICRO_USD = 1_000_000;
 export const TOPUP_USD = [20, 50, 100] as const;
@@ -73,6 +73,11 @@ export async function authenticateInference({ env, request }: Call): Promise<Inf
   return key;
 }
 
+/** D1 reports a trigger's RAISE in the message or in its cause. */
+function errorText(error: unknown): string {
+  return error instanceof Error ? `${error.message} ${error.cause instanceof Error ? error.cause.message : ''}` : '';
+}
+
 export async function reserveInference(env: Env, key: InferenceKey, model: MeteredModel & { endpoint?: string; upstreamModel?: string }, maxOutput: number, idempotency: string | null): Promise<string> {
   const id = `chatcmpl-${crypto.randomUUID()}`;
   const now = seconds();
@@ -81,13 +86,24 @@ export async function reserveInference(env: Env, key: InferenceKey, model: Meter
   const hold = Math.max(model.minimumMicro, model.context * model.inputRate + maxOutput * model.outputRate);
   const hash = idempotency ? await sha256(`${key.id}:${idempotency}`) : null;
   const supplier = quoteSupplierCommitment(env, model, maxOutput, now);
-  try {
-    const request = env.DB.prepare(`INSERT INTO inference_requests(id, account_id, key_id, model, idempotency_hash, hold_micro, input_rate, output_rate, minimum_micro, created_at, lease_until)
+  const admit = () => env.DB.batch([
+    env.DB.prepare(`INSERT INTO inference_requests(id, account_id, key_id, model, idempotency_hash, hold_micro, input_rate, output_rate, minimum_micro, created_at, lease_until)
       VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
-      .bind(id, key.account_id, key.id, model.id, hash, hold, model.inputRate, model.outputRate, model.minimumMicro, now, now + 1200);
-    await env.DB.batch([request, supplierReservationStatement(env, id, supplier, now)]);
+      .bind(id, key.account_id, key.id, model.id, hash, hold, model.inputRate, model.outputRate, model.minimumMicro, now, now + 1200),
+    supplierReservationStatement(env, id, supplier, now),
+  ]);
+  try {
+    try {
+      await admit();
+    } catch (error) {
+      // The window may have just ended with customer-funded allowance left in
+      // it. The failed batch rolled back; retry once only if a sweep moved some.
+      if (!/supplier_(?:unavailable|budget_exhausted)/.test(errorText(error)) ||
+        !(await sweepSupplierBudgets(env, [supplier.provider], now).catch(() => 0))) throw error;
+      await admit();
+    }
   } catch (error) {
-    const message = error instanceof Error ? `${error.message} ${error.cause instanceof Error ? error.cause.message : ''}` : '';
+    const message = errorText(error);
     if (message.includes('api_insufficient_credit')) throw new ApiError('Add API credit to cover this request. Any unused reservation is released.', 402, 'insufficient_quota');
     if (message.includes('api_key_budget')) throw new ApiError('This request exceeds the API key’s remaining limit, or the key has been revoked.', 402, 'key_budget_exceeded');
     if (message.includes('api_concurrency')) throw new ApiError('Two requests are already running on this account.', 429, 'concurrency_limit', { retryAfter: 10 });

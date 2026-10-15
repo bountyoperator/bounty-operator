@@ -7,10 +7,11 @@ import type { Env } from './env.ts';
 import { ApiError } from './http.ts';
 import { boundedBody } from '../public/review-core.mjs';
 
-type Provider = 'runpod' | 'infron' | 'orcarouter';
-type SupplierEnv = Pick<Env, 'DB'> & { SUPPLIER_COST_RULES?: string; RUNPOD_API_KEY?: string };
+export type Provider = 'runpod' | 'infron' | 'orcarouter';
+const PROVIDERS: readonly Provider[] = ['runpod', 'infron', 'orcarouter'];
+type SupplierEnv = Pick<Env, 'DB'> & { SUPPLIER_COST_RULES?: string; SUPPLIER_BUDGET_SHARE?: string; RUNPOD_API_KEY?: string };
 export interface SupplierModel {
-  id: string; context: number; maxOutput: number; endpoint?: string; upstreamModel?: string;
+  id: string; context: number; maxOutput: number; endpoint?: string; upstreamModel?: string; enabled?: boolean;
 }
 interface SupplierRule {
   model: string; endpoint: string; upstreamModel: string; provider: Provider; resourceId: string;
@@ -145,6 +146,137 @@ export async function supplierAvailability(env: SupplierEnv, models: SupplierMod
   }));
 }
 
+// Confirmed customer credit funds a share of supplier allowance, in the same
+// D1 batch as the credit itself. Each provider with a sellable model receives
+// the share separately, so the share caps each provider, not their total.
+const SHARE_SCALE = 1_000_000;
+const AUTOMATIC_TERM = 30 * 86400;
+const AUTOMATIC_REFERENCE = 'automatic: share of confirmed customer API credit';
+// The window covering now, preferring an enabled one. A disabled window that
+// covers now is the operator's pause: it still receives allowance, and no
+// automatic window is opened beside it.
+const TARGET = `target AS (SELECT w.id, w.limit_micro, w.reserved_micro, w.consumed_micro FROM supplier_budget_windows w, input
+  WHERE w.provider = input.provider AND w.starts_at <= input.now AND w.ends_at > input.now ORDER BY w.enabled DESC, w.starts_at DESC LIMIT 1)`;
+// What an ended window can pass on: its unspent allowance, counting reserved
+// holds as spent, and never more than its customer-funded part.
+const CARRYABLE = `MIN(w.limit_micro - w.reserved_micro - w.consumed_micro,
+  (SELECT COALESCE(SUM(CASE WHEN a.window_id = w.id THEN a.amount_micro ELSE -a.amount_micro END), 0)
+    FROM supplier_budget_adjustments a WHERE a.window_id = w.id OR a.from_window_id = w.id))`;
+
+/** SUPPLIER_BUDGET_SHARE in parts per million, clamped to 0..1. Unset means
+ * 0.9. A value that is not a plain decimal means 0, so a typo can only stop
+ * automatic funding, never multiply it. */
+export function supplierBudgetShare(env: Pick<SupplierEnv, 'SUPPLIER_BUDGET_SHARE'>): number {
+  const raw = env.SUPPLIER_BUDGET_SHARE?.trim();
+  if (!raw) return 900_000;
+  if (!/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(raw)) return 0;
+  return Math.round(Math.min(1, Math.max(0, Number(raw))) * SHARE_SCALE);
+}
+
+/** Providers with a sellable model: enabled in the catalog, with a current cost rule. */
+export function supplierBudgetProviders(env: SupplierEnv, models: SupplierModel[], now = seconds()): Provider[] {
+  const found = new Set<Provider>();
+  for (const model of models) {
+    if (model.enabled === false) continue;
+    try { found.add(quoteSupplierCommitment(env, model, 1, now).provider); } catch { /* not sellable */ }
+  }
+  return PROVIDERS.filter((provider) => found.has(provider));
+}
+
+/** Opens a rolling window when none covers now and there is allowance for it:
+ * a new positive credit or a carry. It ends early where a later window starts,
+ * so it cannot trip the overlap guard and abort the customer credit with it. */
+function openWindowStatement(env: SupplierEnv, provider: Provider, now: number, ledgerId: string | null): D1PreparedStatement {
+  return env.DB.prepare(`WITH input AS (SELECT ? AS provider, CAST(? AS INTEGER) AS now, ? AS ledger_id)
+    INSERT INTO supplier_budget_windows(id, provider, starts_at, ends_at, limit_micro, enabled, funding_reference, updated_at)
+    SELECT ?, input.provider, input.now, MIN(input.now + ${AUTOMATIC_TERM}, COALESCE((SELECT MIN(w.starts_at) FROM supplier_budget_windows w
+        WHERE w.provider = input.provider AND w.starts_at > input.now), input.now + ${AUTOMATIC_TERM})), 0, 1, ?, input.now
+    FROM input WHERE NOT EXISTS (SELECT 1 FROM supplier_budget_windows w WHERE w.provider = input.provider AND w.starts_at <= input.now AND w.ends_at > input.now)
+      AND ((input.ledger_id IS NOT NULL AND EXISTS (SELECT 1 FROM api_ledger l WHERE l.id = input.ledger_id AND l.amount_micro > 0)
+          AND NOT EXISTS (SELECT 1 FROM supplier_budget_adjustments a WHERE a.ledger_id = input.ledger_id AND a.provider = input.provider))
+        OR EXISTS (SELECT 1 FROM supplier_budget_windows w WHERE w.provider = input.provider AND w.ends_at <= input.now AND ${CARRYABLE} > 0))`)
+    .bind(provider, now, ledgerId, `auto-${provider}-${now}-${crypto.randomUUID().slice(0, 8)}`, AUTOMATIC_REFERENCE);
+}
+
+/** Customer-funded allowance outlives its window: whatever an ended window did
+ * not spend moves into the current one. Operator funding still ends with its window. */
+function carryStatement(env: SupplierEnv, provider: Provider, now: number): D1PreparedStatement {
+  return env.DB.prepare(`WITH input AS (SELECT ? AS provider, CAST(? AS INTEGER) AS now, ? AS prefix), ${TARGET},
+    ended AS (SELECT w.id, ${CARRYABLE} AS carry FROM supplier_budget_windows w, input WHERE w.provider = input.provider AND w.ends_at <= input.now)
+    INSERT INTO supplier_budget_adjustments(id, kind, provider, window_id, from_window_id, requested_micro, amount_micro, created_at)
+    SELECT input.prefix || ended.id, 'carry', input.provider, target.id, ended.id, ended.carry, ended.carry, input.now
+    FROM input, target, ended WHERE ended.carry > 0`)
+    .bind(provider, now, `carry:${crypto.randomUUID()}:`);
+}
+
+function sweepStatements(env: SupplierEnv, provider: Provider, now: number, ledgerId: string | null): D1PreparedStatement[] {
+  return [openWindowStatement(env, provider, now, ledgerId), carryStatement(env, provider, now)];
+}
+
+function creditStatement(env: SupplierEnv, provider: Provider, change: CustomerCreditChange, share: number, now: number): D1PreparedStatement {
+  return env.DB.prepare(`WITH input AS (SELECT ? AS provider, CAST(? AS INTEGER) AS now, ? AS ledger_id, ? AS source, CAST(? AS INTEGER) AS share_ppm), ${TARGET}
+    INSERT INTO supplier_budget_adjustments(id, kind, provider, window_id, ledger_id, source, customer_micro, share_ppm, requested_micro, amount_micro, created_at)
+    SELECT l.id || ':' || input.provider, 'customer_credit', input.provider, target.id, l.id, input.source, l.amount_micro, input.share_ppm,
+      l.amount_micro * input.share_ppm / ${SHARE_SCALE}, CASE WHEN target.id IS NULL THEN 0 ELSE l.amount_micro * input.share_ppm / ${SHARE_SCALE} END, input.now
+    FROM input JOIN api_ledger l ON l.id = input.ledger_id LEFT JOIN target ON 1 = 1
+    WHERE l.amount_micro > 0
+    ON CONFLICT DO NOTHING`).bind(provider, now, change.ledgerId, change.source, share);
+}
+
+/** Removes the share this payment added, at the share it was added with. It
+ * never removes more than the payment added in total, and never takes a
+ * window below the allowance already reserved or consumed. */
+function removalStatement(env: SupplierEnv, provider: Provider, change: CustomerCreditChange, now: number): D1PreparedStatement {
+  return env.DB.prepare(`WITH input AS (SELECT ? AS provider, CAST(? AS INTEGER) AS now, ? AS ledger_id, ? AS source), ${TARGET},
+    paid AS (SELECT
+      (SELECT a.share_ppm FROM supplier_budget_adjustments a WHERE a.source = input.source AND a.provider = input.provider
+        AND a.kind = 'customer_credit' AND a.customer_micro > 0 ORDER BY a.created_at, a.id LIMIT 1) AS share_ppm,
+      (SELECT COALESCE(SUM(a.amount_micro), 0) FROM supplier_budget_adjustments a WHERE a.source = input.source AND a.provider = input.provider
+        AND a.kind = 'customer_credit') AS net FROM input),
+    removal AS (SELECT l.id, l.amount_micro, paid.share_ppm, MAX(0, MIN(-l.amount_micro * paid.share_ppm / ${SHARE_SCALE}, paid.net)) AS micro
+      FROM input JOIN api_ledger l ON l.id = input.ledger_id, paid WHERE l.amount_micro < 0 AND paid.share_ppm IS NOT NULL)
+    INSERT INTO supplier_budget_adjustments(id, kind, provider, window_id, ledger_id, source, customer_micro, share_ppm, requested_micro, amount_micro, created_at)
+    SELECT removal.id || ':' || input.provider, 'customer_credit', input.provider, target.id, removal.id, input.source, removal.amount_micro, removal.share_ppm,
+      -removal.micro, -MIN(removal.micro, COALESCE(MAX(0, target.limit_micro - target.reserved_micro - target.consumed_micro), 0)), input.now
+    FROM input, removal LEFT JOIN target ON 1 = 1
+    WHERE true
+    ON CONFLICT DO NOTHING`).bind(provider, now, change.ledgerId, change.source);
+}
+
+export interface CustomerCreditChange {
+  /** The api_ledger id that the credit's trigger posts in the same batch. */
+  ledgerId: string;
+  /** The payment the credit belongs to: 'topup:<id>' or 'monthly:<invoice>'. */
+  source: string;
+  /** New minus old credited amount, as the caller is about to write it. */
+  deltaMicro: number;
+}
+
+/** Batch these after the UPDATE whose trigger posts `change.ledgerId`. They
+ * read that ledger row, so an UPDATE that lost its revision race or changed
+ * no credit adds nothing, and UNIQUE(ledger_id, provider) makes a replayed
+ * event or resync a no-op. A share of 0 stops new funding and new windows;
+ * refunds still remove what earlier payments added. */
+export function supplierBudgetCreditStatements(env: SupplierEnv, models: SupplierModel[], change: CustomerCreditChange, now = seconds()): D1PreparedStatement[] {
+  if (!Number.isSafeInteger(change.deltaMicro) || change.deltaMicro === 0) return [];
+  const share = supplierBudgetShare(env);
+  const funded = share > 0 ? supplierBudgetProviders(env, models, now) : [];
+  return PROVIDERS.flatMap((provider) => {
+    const statements = funded.includes(provider) ? sweepStatements(env, provider, now, change.deltaMicro > 0 ? change.ledgerId : null) : [];
+    if (change.deltaMicro > 0 && funded.includes(provider)) statements.push(creditStatement(env, provider, change, share, now));
+    if (change.deltaMicro < 0) statements.push(removalStatement(env, provider, change, now));
+    return statements;
+  });
+}
+
+/** Moves unspent customer-funded allowance out of ended windows, opening a
+ * current window when there is any to move. Returns the rows written. */
+export async function sweepSupplierBudgets(env: SupplierEnv, providers: readonly Provider[], now = seconds()): Promise<number> {
+  if (!supplierBudgetShare(env) || !providers.length) return 0;
+  const results = await env.DB.batch(providers.flatMap((provider) => sweepStatements(env, provider, now, null)));
+  return results.reduce((total, result) => total + (result.meta.changes ?? 0), 0);
+}
+
 interface BillingRecord { startTime: string; endTime: string; serverlessId: string; totalAmount: number; gpuAmount: number; cpuAmount: number; diskAmount: number }
 function dollarMicro(value: unknown): number {
   if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) throw new Error('Invalid supplier billing amount');
@@ -227,8 +359,11 @@ export async function reconcileRunpodBilling(env: SupplierEnv, window: { start: 
 /** Operator-only data. Quotes/allowances and actual vendor costs are never summed as if both were expenses. */
 export async function supplierOperatingReport(env: SupplierEnv, start: number, end: number): Promise<Record<string, unknown>> {
   if (!Number.isSafeInteger(start) || !Number.isSafeInteger(end) || start < 0 || end <= start) throw new Error('Invalid operating report window');
-  const [budgets, commitments, costs, syncs, revenue, wallets] = await Promise.all([
+  const [budgets, adjustments, commitments, costs, syncs, revenue, wallets] = await Promise.all([
     env.DB.prepare('SELECT * FROM supplier_budget_windows ORDER BY provider, starts_at').all(),
+    env.DB.prepare(`SELECT provider, kind, COUNT(*) AS entries, SUM(CASE WHEN amount_micro > 0 THEN amount_micro ELSE 0 END) AS added_micro,
+      SUM(CASE WHEN amount_micro < 0 THEN -amount_micro ELSE 0 END) AS removed_micro
+      FROM supplier_budget_adjustments WHERE created_at >= ? AND created_at < ? GROUP BY provider, kind ORDER BY provider, kind`).bind(start, end).all(),
     env.DB.prepare(`SELECT provider, resource_id, basis, state, COUNT(*) AS requests, SUM(hold_micro) AS allowance_micro,
       SUM(expense_micro) AS consumed_allowance_micro, SUM(estimated_cost_micro) AS estimated_cost_micro
       FROM supplier_commitments WHERE created_at >= ? AND created_at < ? GROUP BY provider, resource_id, basis, state`).bind(start, end).all(),
@@ -241,7 +376,7 @@ export async function supplierOperatingReport(env: SupplierEnv, start: number, e
       COALESCE(SUM(MAX(-balance_micro, 0)), 0) AS customer_deficit_micro,
       COALESCE(SUM(reserved_micro), 0) AS customer_reserved_micro FROM api_wallets`).first(),
   ]);
-  return { currency: 'usd', unit: 'microdollar', start, end, budgets: budgets.results, commitments: commitments.results,
+  return { currency: 'usd', unit: 'microdollar', start, end, budgets: budgets.results, budget_adjustments: adjustments.results, commitments: commitments.results,
     actual_supplier_costs: costs.results, successful_billing_reads: syncs.results, revenue, current_customer_wallets: wallets,
     stripe_fees_micro: null, net_profit_micro: null, owner_withdrawable_micro: null,
     note: 'Allowances cap admitted commitments, not actual vendor bills. Missing reconciliation and payment fees remain unknown. Customer credit is a service liability.' };

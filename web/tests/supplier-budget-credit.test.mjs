@@ -1,0 +1,406 @@
+// Confirmed customer credit funds a share of supplier allowance in the same
+// D1 batch as the credit. Stripe is a stand-in; nothing leaves the process.
+import assert from 'node:assert/strict';
+import { test } from 'node:test';
+import { reserveInference } from '../src/api-credits.ts';
+import { syncMonthlyCredit, syncMonthlyCreditForCharge } from '../src/api-monthly-credit.ts';
+import { applyApiPaymentEvent, reconcileApiTopup, syncApiTopup } from '../src/api-topups.ts';
+import { supplierBudgetProviders, supplierBudgetShare, supplierOperatingReport, sweepSupplierBudgets } from '../src/supplier-costs.ts';
+import worker from '../src/worker.ts';
+import { addAccount, createContext, createEnv } from './worker-helpers.mjs';
+
+const DAY = 86400;
+const TERM = 30 * DAY;
+const now = () => Math.floor(Date.now() / 1000);
+const runpodModel = { id: 'budget-runpod', name: 'Budget test', source: 'test/budget-model', revision: 'abc', license: 'MIT', quantization: 'FP8',
+  endpoint: 'https://budget123.api.runpod.ai', upstreamModel: 'budget-runpod', inputRate: 2, outputRate: 8, minimumMicro: 10, context: 100, maxOutput: 20 };
+const infronModel = { ...runpodModel, id: 'budget-infron', endpoint: 'https://api.infron.ai', upstreamModel: 'test/budget-infron' };
+const orcaModel = { ...runpodModel, id: 'budget-orca', endpoint: 'https://api.orcarouter.ai', upstreamModel: 'test/budget-orca' };
+
+function rule(model) {
+  const runpod = /^https:\/\/([a-z0-9]+)\.api\.runpod\.ai$/.exec(model.endpoint);
+  const provider = runpod ? 'runpod' : model.endpoint === 'https://api.infron.ai' ? 'infron' : 'orcarouter';
+  return { model: model.id, endpoint: model.endpoint, upstreamModel: model.upstreamModel, provider, resourceId: runpod ? runpod[1] : model.upstreamModel,
+    basis: runpod ? 'runtime_allowance' : 'token_rate', revision: 'test-only-quote', source: 'https://fixtures.invalid/pricing', validUntil: now() + DAY,
+    ...(runpod ? { holdMicro: 1000 } : { inputMicroPerMillion: 1000000, outputMicroPerMillion: 1000000, fixedMicro: 0 }) };
+}
+
+function baseEnv({ share, models = [runpodModel], overrides = {} } = {}) {
+  return createEnv({ INFERENCE_MODELS: JSON.stringify(models), SUPPLIER_COST_RULES: JSON.stringify(models.map(rule)), RUNPOD_API_KEY: 'test-only',
+    ...(share === undefined ? {} : { SUPPLIER_BUDGET_SHARE: share }), ...overrides });
+}
+
+function addWindow(env, { id = 'operator', provider = 'runpod', starts = now() - DAY, ends = now() + DAY, limit = 0, enabled = 1, reserved = 0, consumed = 0 } = {}) {
+  env.DB.sqlite.prepare(`INSERT INTO supplier_budget_windows(id, provider, starts_at, ends_at, limit_micro, reserved_micro, consumed_micro, enabled, funding_reference, updated_at)
+    VALUES(?, ?, ?, ?, ?, ?, ?, ?, 'operator fixture', ?)`).run(id, provider, starts, ends, limit, reserved, consumed, enabled, now());
+}
+const windows = (env) => env.DB.sqlite.prepare('SELECT * FROM supplier_budget_windows ORDER BY provider, starts_at, id').all().map((row) => ({ ...row }));
+const windowById = (env, id) => ({ ...env.DB.sqlite.prepare('SELECT * FROM supplier_budget_windows WHERE id = ?').get(id) });
+const adjustments = (env) => env.DB.sqlite.prepare('SELECT * FROM supplier_budget_adjustments ORDER BY created_at, rowid').all().map((row) => ({ ...row }));
+const automaticWindow = (env, provider = 'runpod') => windows(env).find((row) => row.provider === provider && row.funding_reference.startsWith('automatic'));
+
+/** A paid US$20 Checkout top-up, as Stripe reports it. */
+function topup(options = {}) {
+  const env = baseEnv(options);
+  const account = addAccount(env.DB);
+  const charge = { id: 'ch_1', paid: true, captured: true, amount: 2000, amount_refunded: 0, currency: 'usd', customer: 'cus_1', disputed: false, payment_intent: 'pi_1' };
+  const intent = { id: 'pi_1', livemode: true, status: 'succeeded', currency: 'usd', amount_received: 2000, customer: 'cus_1', latest_charge: charge, metadata: { app: 'bounty-operator-api', topup_id: 'topup-1' } };
+  const session = { id: 'cs_live_1', livemode: true, mode: 'payment', currency: 'usd', amount_total: 2000, amount_subtotal: 2000, customer: 'cus_1', client_reference_id: account,
+    metadata: { app: 'bounty-operator-api', topup_id: 'topup-1', account_id: account }, status: 'complete', payment_status: 'paid', payment_intent: intent };
+  env.DB.sqlite.prepare('INSERT INTO api_topups(id, account_id, customer_id, checkout_id, amount_micro, created_at, updated_at) VALUES(?, ?, ?, ?, ?, ?, ?)')
+    .run('topup-1', account, 'cus_1', 'cs_live_1', 20000000, 1, 1);
+  const disputes = [];
+  const api = { checkout: { sessions: { retrieve: async () => structuredClone(session) } }, charges: { retrieve: async () => structuredClone(charge) },
+    paymentIntents: { retrieve: async () => structuredClone(intent) }, disputes: { list: async () => ({ data: structuredClone(disputes), has_more: false }) } };
+  const balance = () => env.DB.sqlite.prepare('SELECT balance_micro FROM api_wallets').get()?.balance_micro ?? 0;
+  const sync = (eventTime = 0) => syncApiTopup(env, api, 'topup-1', eventTime);
+  return { env, account, charge, intent, session, disputes, api, balance, sync };
+}
+
+test('the share setting is a plain decimal clamped to 0..1, defaulting to 0.9 and failing closed', () => {
+  const cases = [[undefined, 900000], ['', 900000], ['  ', 900000], ['0.9', 900000], ['0.5', 500000], [' 0.25 ', 250000], ['.5', 500000], ['1', 1000000],
+    ['1.5', 1000000], ['0', 0], ['-0.5', 0], ['0.3333333', 333333], ['abc', 0], ['0.9.1', 0], ['1e-1', 0], ['NaN', 0], ['Infinity', 0], ['90%', 0]];
+  for (const [value, ppm] of cases) assert.equal(supplierBudgetShare({ SUPPLIER_BUDGET_SHARE: value }), ppm, String(value));
+});
+
+test('a paid top-up adds the configured share to the current window exactly once', async () => {
+  const f = topup();
+  addWindow(f.env, { limit: 5000000 });
+  await Promise.all([f.sync(), f.sync()]);
+  await f.sync();
+  assert.equal(f.balance(), 20000000);
+  assert.equal(windowById(f.env, 'operator').limit_micro, 5000000 + 18000000);
+  const [row] = adjustments(f.env);
+  assert.equal(adjustments(f.env).length, 1);
+  assert.deepEqual({ kind: row.kind, provider: row.provider, window_id: row.window_id, ledger_id: row.ledger_id, source: row.source, customer_micro: row.customer_micro,
+    share_ppm: row.share_ppm, requested_micro: row.requested_micro, amount_micro: row.amount_micro },
+  { kind: 'customer_credit', provider: 'runpod', window_id: 'operator', ledger_id: 'topup:topup-1:1', source: 'topup:topup-1', customer_micro: 20000000,
+    share_ppm: 900000, requested_micro: 18000000, amount_micro: 18000000 });
+
+  // Replayed Stripe events and the customer's return page change nothing.
+  for (const type of ['checkout.session.completed', 'checkout.session.completed', 'checkout.session.async_payment_succeeded']) {
+    assert.equal(await applyApiPaymentEvent(f.env, f.api, { type, created: 5, data: { object: f.session } }), true);
+  }
+  await reconcileApiTopup(f.env, f.api, f.account, 'cs_live_1');
+  assert.equal(windowById(f.env, 'operator').limit_micro, 23000000);
+  assert.equal(adjustments(f.env).length, 1);
+  assert.equal(windows(f.env).length, 1);
+});
+
+test('refunds remove the share the payment added, never below the reserved and consumed allowance', async () => {
+  const f = topup();
+  await f.sync();
+  const id = automaticWindow(f.env).id;
+  assert.equal(windowById(f.env, id).limit_micro, 18000000);
+  f.charge.amount_refunded = 500;
+  await f.sync();
+  await f.sync();
+  assert.equal(f.balance(), 15000000);
+  assert.equal(windowById(f.env, id).limit_micro, 13500000);
+  // A stale refund total cannot restore credit, so it cannot restore allowance.
+  f.charge.amount_refunded = 0;
+  await f.sync();
+  assert.equal(windowById(f.env, id).limit_micro, 13500000);
+
+  // 12 of the 13.5 left is already spent: a full refund can only take 1.5.
+  f.env.DB.sqlite.prepare('UPDATE supplier_budget_windows SET reserved_micro = 1000000, consumed_micro = 11000000 WHERE id = ?').run(id);
+  f.charge.amount_refunded = 2000;
+  await f.sync();
+  assert.equal(f.balance(), 0);
+  const window = windowById(f.env, id);
+  assert.equal(window.limit_micro, window.reserved_micro + window.consumed_micro);
+  const last = adjustments(f.env).at(-1);
+  assert.deepEqual([last.customer_micro, last.requested_micro, last.amount_micro], [-15000000, -13500000, -1500000]);
+  assert.equal(adjustments(f.env).length, 3);
+});
+
+test('a dispute removes the share and a won dispute restores it', async () => {
+  const f = topup();
+  addWindow(f.env);
+  await f.sync(1);
+  f.charge.disputed = true;
+  f.disputes.push({ status: 'needs_response' });
+  await f.sync(20);
+  assert.equal(f.balance(), 0);
+  assert.equal(windowById(f.env, 'operator').limit_micro, 0);
+  f.disputes[0].status = 'won';
+  await f.sync(30);
+  assert.equal(f.balance(), 20000000);
+  assert.equal(windowById(f.env, 'operator').limit_micro, 18000000);
+  assert.deepEqual(adjustments(f.env).map((row) => row.amount_micro), [18000000, -18000000, 18000000]);
+});
+
+test('with no current window a credit opens an enabled rolling 30-day window', async () => {
+  const f = topup();
+  // An ended operator window holds no customer funds and passes nothing on.
+  addWindow(f.env, { id: 'ended', starts: now() - 40 * DAY, ends: now() - 10 * DAY, limit: 7000000 });
+  const before = now();
+  await f.sync();
+  const created = automaticWindow(f.env);
+  assert.ok(created.starts_at >= before && created.starts_at <= now());
+  assert.equal(created.ends_at - created.starts_at, TERM);
+  assert.equal(created.enabled, 1);
+  assert.equal(created.limit_micro, 18000000);
+  assert.equal(windowById(f.env, 'ended').limit_micro, 7000000);
+  assert.equal(adjustments(f.env).length, 1);
+});
+
+test('an opened window ends where a later window starts, so the overlap guard cannot abort the credit', async () => {
+  for (const enabled of [1, 0]) {
+    const f = topup();
+    const later = now() + 10 * DAY;
+    addWindow(f.env, { id: 'later', starts: later, ends: later + TERM, enabled });
+    await f.sync();
+    assert.equal(f.balance(), 20000000);
+    const created = automaticWindow(f.env);
+    assert.equal(created.ends_at, later);
+    assert.equal(created.limit_micro, 18000000);
+    assert.equal(windowById(f.env, 'later').limit_micro, 0);
+  }
+});
+
+test('a disabled window covering now is a pause: it keeps the allowance and no window opens beside it', async () => {
+  const f = topup();
+  addWindow(f.env, { id: 'paused', enabled: 0 });
+  await f.sync();
+  assert.equal(windows(f.env).length, 1);
+  assert.equal(windowById(f.env, 'paused').limit_micro, 18000000);
+  assert.equal(windowById(f.env, 'paused').enabled, 0);
+});
+
+test('a share of zero or an unreadable share adds nothing and opens no window', async () => {
+  for (const share of ['0', 'ninety percent']) {
+    const f = topup({ share });
+    await f.sync();
+    assert.equal(f.balance(), 20000000);
+    assert.deepEqual(windows(f.env), []);
+    assert.deepEqual(adjustments(f.env), []);
+  }
+  const f = topup({ share: '0' });
+  addWindow(f.env, { limit: 5000000 });
+  await f.sync();
+  assert.equal(windowById(f.env, 'operator').limit_micro, 5000000);
+});
+
+test('refunds remove the share at the rate it was added, even after the setting changes or funding stops', async () => {
+  for (const later of ['0.5', '0']) {
+    const f = topup();
+    addWindow(f.env);
+    await f.sync();
+    f.env.SUPPLIER_BUDGET_SHARE = later;
+    f.charge.amount_refunded = 1000;
+    await f.sync();
+    assert.equal(windowById(f.env, 'operator').limit_micro, 9000000, later);
+    f.charge.amount_refunded = 2000;
+    await f.sync();
+    assert.equal(windowById(f.env, 'operator').limit_micro, 0, later);
+  }
+});
+
+test('a refund of a payment that added no share never reduces operator allowance', async () => {
+  const f = topup({ share: '0' });
+  addWindow(f.env, { limit: 5000000 });
+  await f.sync();
+  f.env.SUPPLIER_BUDGET_SHARE = '0.9';
+  f.charge.amount_refunded = 2000;
+  await f.sync();
+  assert.equal(f.balance(), 0);
+  assert.equal(windowById(f.env, 'operator').limit_micro, 5000000);
+  assert.deepEqual(adjustments(f.env), []);
+});
+
+test('every provider with a sellable model receives the share; others receive nothing', async () => {
+  const models = [runpodModel, infronModel, { ...orcaModel, enabled: false }];
+  const f = topup({ models });
+  assert.deepEqual(supplierBudgetProviders(f.env, models), ['runpod', 'infron']);
+  await f.sync();
+  assert.equal(automaticWindow(f.env, 'runpod').limit_micro, 18000000);
+  assert.equal(automaticWindow(f.env, 'infron').limit_micro, 18000000);
+  assert.equal(automaticWindow(f.env, 'orcarouter'), undefined);
+  assert.deepEqual(adjustments(f.env).map((row) => row.provider).sort(), ['infron', 'runpod']);
+
+  // A provider whose model stopped selling still gives back its share on refund.
+  f.env.INFERENCE_MODELS = JSON.stringify([runpodModel]);
+  f.charge.amount_refunded = 2000;
+  await f.sync();
+  assert.equal(automaticWindow(f.env, 'runpod').limit_micro, 0);
+  assert.equal(automaticWindow(f.env, 'infron').limit_micro, 0);
+});
+
+test('a provider without a current cost rule is not funded', async () => {
+  const f = topup({ models: [runpodModel, infronModel] });
+  f.env.SUPPLIER_COST_RULES = JSON.stringify([rule(infronModel)]);
+  await f.sync();
+  assert.equal(automaticWindow(f.env, 'runpod'), undefined);
+  assert.equal(automaticWindow(f.env, 'infron').limit_micro, 18000000);
+});
+
+test('a budget write failure rolls the customer credit back with it', async () => {
+  const f = topup();
+  f.env.DB.sqlite.exec("CREATE TRIGGER test_budget_failure BEFORE INSERT ON supplier_budget_adjustments BEGIN SELECT RAISE(ABORT, 'budget failure'); END");
+  await assert.rejects(f.sync(), /budget failure/);
+  assert.equal(f.balance(), 0);
+  assert.deepEqual({ ...f.env.DB.sqlite.prepare('SELECT status, credited_micro, revision FROM api_topups').get() }, { status: 'pending', credited_micro: 0, revision: 0 });
+  assert.deepEqual(windows(f.env), []);
+  f.env.DB.sqlite.exec('DROP TRIGGER test_budget_failure');
+  await f.sync();
+  assert.equal(f.balance(), 20000000);
+  assert.equal(automaticWindow(f.env).limit_micro, 18000000);
+});
+
+test('budget adjustments cannot be edited or deleted', async () => {
+  const f = topup();
+  await f.sync();
+  assert.throws(() => f.env.DB.sqlite.exec('UPDATE supplier_budget_adjustments SET amount_micro = 1'), /supplier_budget_adjustment_immutable/);
+  assert.throws(() => f.env.DB.sqlite.exec('DELETE FROM supplier_budget_adjustments'), /supplier_budget_adjustment_immutable/);
+});
+
+test('an automatic top-up adds the share when its verified payment succeeds, once', async () => {
+  const f = topup();
+  const charge = { ...f.charge, id: 'ch_auto', payment_intent: 'pi_auto' };
+  const intent = { id: 'pi_auto', livemode: true, status: 'succeeded', currency: 'usd', amount: 2000, amount_received: 2000, customer: 'cus_1', payment_method: 'pm_1',
+    latest_charge: charge, metadata: { app: 'bounty-operator-api', source: 'automatic', topup_id: 'auto-1', account_id: f.account } };
+  f.env.DB.sqlite.prepare(`INSERT INTO api_topups(id, account_id, customer_id, payment_intent, amount_micro, source, auto_month, auto_revision, payment_method, initiated_at, created_at, updated_at)
+    VALUES('auto-1', ?, 'cus_1', 'pi_auto', 20000000, 'automatic', '2026-10', 1, 'pm_1', 1, 1, 1)`).run(f.account);
+  f.api.paymentIntents.retrieve = async () => structuredClone(intent);
+  const event = { type: 'payment_intent.succeeded', created: now(), data: { object: intent } };
+  await applyApiPaymentEvent(f.env, f.api, event);
+  await applyApiPaymentEvent(f.env, f.api, event);
+  assert.equal(f.balance(), 20000000);
+  assert.equal(automaticWindow(f.env).limit_micro, 18000000);
+  assert.deepEqual(adjustments(f.env).map((row) => row.source), ['topup:auto-1']);
+});
+
+test('a monthly Operator credit grant adds the share once and a refund removes it', async () => {
+  const env = baseEnv({ overrides: { BILLING_MODE: 'live', STRIPE_SECRET_KEY: 'rk_live_fixture', STRIPE_WEBHOOK_SECRET: 'whsec_fixture', STRIPE_PRICE_ID: 'price_monthly' } });
+  const account = addAccount(env.DB);
+  env.DB.sqlite.prepare('UPDATE accounts SET stripe_customer = ? WHERE id = ?').run('cus_1', account);
+  const price = { id: 'price_monthly', livemode: true, currency: 'usd', unit_amount: 1000, type: 'recurring', billing_scheme: 'per_unit', transform_quantity: null,
+    recurring: { interval: 'month', interval_count: 1, usage_type: 'licensed' } };
+  const line = { livemode: true, invoice: 'in_m1', currency: 'usd', amount: 1000, subtotal: 1000, quantity: 1, quantity_decimal: '1',
+    parent: { type: 'subscription_item_details', subscription_item_details: { proration: false, subscription: 'sub_m1' } }, subscription: 'sub_m1',
+    pricing: { type: 'price_details', price_details: { price: 'price_monthly' }, unit_amount_decimal: '1000' }, discount_amounts: [], pretax_credit_amounts: [],
+    period: { start: 1790899200, end: 1793577600 } };
+  const invoice = { id: 'in_m1', livemode: true, status: 'paid', currency: 'usd', customer: 'cus_1', billing_reason: 'subscription_create',
+    parent: { type: 'subscription_details', subscription_details: { subscription: 'sub_m1' } }, amount_due: 1000, amount_paid: 1000, amount_remaining: 0,
+    subtotal: 1000, total: 1000, total_discount_amounts: [], total_pretax_credit_amounts: [], pre_payment_credit_notes_amount: 0, post_payment_credit_notes_amount: 0,
+    lines: { data: [line], has_more: false } };
+  const charge = { id: 'ch_m1', livemode: true, status: 'succeeded', paid: true, captured: true, refunded: false, disputed: false, currency: 'usd', amount: 1000,
+    amount_captured: 1000, amount_refunded: 0, customer: 'cus_1', payment_intent: 'pi_m1' };
+  const api = {
+    invoices: { retrieve: async () => structuredClone(invoice) },
+    prices: { retrieve: async () => structuredClone(price) },
+    subscriptions: { retrieve: async () => ({ id: 'sub_m1', livemode: true, customer: 'cus_1', status: 'active' }) },
+    invoicePayments: { list: async () => ({ data: [{ id: 'inpay_1', livemode: true, status: 'paid', currency: 'usd', invoice: 'in_m1', amount_paid: 1000,
+      payment: { type: 'payment_intent', payment_intent: 'pi_m1' } }], has_more: false }) },
+    paymentIntents: { retrieve: async () => ({ id: 'pi_m1', livemode: true, status: 'succeeded', currency: 'usd', amount_received: 1000, customer: 'cus_1', latest_charge: 'ch_m1' }) },
+    charges: { retrieve: async () => structuredClone(charge) },
+    disputes: { list: async () => ({ data: [], has_more: false }) },
+  };
+  await Promise.all([syncMonthlyCredit(env, api, 'in_m1', 10), syncMonthlyCredit(env, api, 'in_m1', 10)]);
+  await syncMonthlyCredit(env, api, 'in_m1', 10);
+  assert.equal(automaticWindow(env).limit_micro, 1800000);
+  assert.deepEqual(adjustments(env).map((row) => [row.ledger_id, row.source, row.amount_micro]), [['monthly:in_m1:1', 'monthly:in_m1', 1800000]]);
+  charge.amount_refunded = 100;
+  await syncMonthlyCreditForCharge(env, api, 'ch_m1', 20);
+  await syncMonthlyCreditForCharge(env, api, 'ch_m1', 20);
+  assert.equal(automaticWindow(env).limit_micro, 0);
+  assert.equal(adjustments(env).length, 2);
+});
+
+test('customer-funded allowance left in an ended window carries into a current one; operator funding does not', async () => {
+  const f = topup();
+  addWindow(f.env, { id: 'first', limit: 5000000 });
+  await f.sync();
+  // 23 in the window: 5 from the operator, 18 from the payment. 7 is spent
+  // and 1 is held for a running request, so 15 can carry.
+  f.env.DB.sqlite.prepare("UPDATE supplier_budget_windows SET consumed_micro = 7000000, reserved_micro = 1000000, ends_at = ? WHERE id = 'first'").run(now() - 1);
+  assert.equal(await sweepSupplierBudgets(f.env, ['runpod']), 2);
+  const next = automaticWindow(f.env);
+  assert.equal(next.limit_micro, 15000000);
+  assert.equal(next.enabled, 1);
+  assert.equal(windowById(f.env, 'first').limit_micro, 8000000);
+  assert.equal(await sweepSupplierBudgets(f.env, ['runpod']), 0, 'a second sweep moves nothing');
+  const carry = adjustments(f.env).at(-1);
+  assert.deepEqual([carry.kind, carry.from_window_id, carry.window_id, carry.amount_micro], ['carry', 'first', next.id, 15000000]);
+
+  // The held request is released later: that allowance carries too. The 7
+  // spent comes out of the operator's 5 first, so 16 of the 18 moved in all.
+  f.env.DB.sqlite.prepare("UPDATE supplier_budget_windows SET reserved_micro = 0 WHERE id = 'first'").run();
+  assert.equal(await sweepSupplierBudgets(f.env, ['runpod']), 1);
+  assert.equal(automaticWindow(f.env).limit_micro, 16000000);
+  assert.equal(windowById(f.env, 'first').limit_micro, 7000000);
+
+  // A window that held only operator funding passes nothing on.
+  const operatorOnly = baseEnv();
+  addWindow(operatorOnly, { id: 'operator-only', starts: now() - 2 * DAY, ends: now() - 1, limit: 5000000 });
+  assert.equal(await sweepSupplierBudgets(operatorOnly, ['runpod']), 0);
+  assert.equal(windows(operatorOnly).length, 1);
+  // A share of 0 turns the sweep off.
+  f.env.SUPPLIER_BUDGET_SHARE = '0';
+  assert.equal(await sweepSupplierBudgets(f.env, ['runpod']), 0);
+});
+
+test('a refund after the window ended takes its share from the carried allowance', async () => {
+  const f = topup();
+  addWindow(f.env, { id: 'first' });
+  await f.sync();
+  f.env.DB.sqlite.prepare("UPDATE supplier_budget_windows SET ends_at = ? WHERE id = 'first'").run(now() - 1);
+  f.charge.amount_refunded = 1000;
+  await f.sync();
+  const next = automaticWindow(f.env);
+  assert.equal(next.limit_micro, 9000000);
+  assert.equal(windowById(f.env, 'first').limit_micro, 0);
+});
+
+test('a request after its window ended rolls customer allowance over and is admitted', async () => {
+  const f = topup();
+  addWindow(f.env, { id: 'first' });
+  await f.sync();
+  f.env.DB.sqlite.prepare("UPDATE supplier_budget_windows SET ends_at = ? WHERE id = 'first'").run(now() - 1);
+  f.env.DB.sqlite.prepare(`INSERT INTO inference_keys(id, account_id, token_hash, prefix, label, budget_micro, created_at, expires)
+    VALUES('key', ?, 'hash', 'prefix', 'test', 1000000, ?, ?)`).run(f.account, now(), now() + 3600);
+  const id = await reserveInference(f.env, { id: 'key', account_id: f.account }, runpodModel, 20, null);
+  const next = automaticWindow(f.env);
+  assert.equal(f.env.DB.sqlite.prepare('SELECT budget_id FROM supplier_commitments WHERE request_id = ?').get(id).budget_id, next.id);
+  assert.equal(next.limit_micro, 18000000);
+  assert.equal(next.reserved_micro, 1000);
+});
+
+test('the 15-minute scheduled run sweeps ended windows for providers with sellable models', async (t) => {
+  t.mock.method(console, 'log', () => {});
+  const f = topup();
+  addWindow(f.env, { id: 'first' });
+  await f.sync();
+  f.env.DB.sqlite.prepare("UPDATE supplier_budget_windows SET ends_at = ? WHERE id = 'first'").run(now() - 1);
+  await worker.scheduled({ cron: '*/15 * * * *' }, f.env, createContext());
+  assert.equal(automaticWindow(f.env).limit_micro, 18000000);
+  assert.equal(console.log.mock.calls[0].arguments[1].supplierBudgetsSwept, 2);
+});
+
+test('the operating report lists budget additions, removals and carries for its window', async () => {
+  const f = topup();
+  addWindow(f.env, { id: 'first' });
+  await f.sync();
+  f.charge.amount_refunded = 500;
+  await f.sync();
+  f.env.DB.sqlite.prepare("UPDATE supplier_budget_windows SET ends_at = ? WHERE id = 'first'").run(now() - 1);
+  await sweepSupplierBudgets(f.env, ['runpod']);
+  const report = await supplierOperatingReport(f.env, now() - DAY, now() + DAY);
+  assert.deepEqual(report.budget_adjustments.map((row) => ({ ...row })), [
+    { provider: 'runpod', kind: 'carry', entries: 1, added_micro: 13500000, removed_micro: 0 },
+    { provider: 'runpod', kind: 'customer_credit', entries: 2, added_micro: 18000000, removed_micro: 4500000 },
+  ]);
+  assert.deepEqual((await supplierOperatingReport(f.env, now() + DAY, now() + 2 * DAY)).budget_adjustments, []);
+});
+
+test('health reports a database that has not applied the budget migration', async () => {
+  const env = baseEnv();
+  const health = async () => {
+    const response = await worker.fetch(new Request(`${env.SITE_ORIGIN}/api/health`), env, createContext());
+    return [response.status, (await response.json()).db];
+  };
+  assert.deepEqual(await health(), [200, 'ok']);
+  env.DB.sqlite.exec('DROP TABLE supplier_budget_adjustments');
+  assert.deepEqual(await health(), [503, 'error']);
+});
