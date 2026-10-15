@@ -308,10 +308,11 @@ function addUsageFault(env, account) {
 
 test('manual top-ups stay open while only an exhausted supplier budget blocks inference, since the payment refills it', async (t) => {
   let underBalance = false;
+  let runpodDown = false;
   const stripeCalls = [];
   t.mock.method(globalThis, 'fetch', async (input) => {
     const url = new URL(typeof input === 'string' ? input : input.url);
-    if (url.host === 'api.runpod.io') return Response.json({ data: { myself: { underBalance } } });
+    if (url.host === 'api.runpod.io') return runpodDown ? new Response('upstream error', { status: 502 }) : Response.json({ data: { myself: { underBalance } } });
     assert.equal(url.host, 'api.stripe.com');
     stripeCalls.push(url.pathname);
     return Response.json({ id: 'cs_live_fixture', url: 'https://checkout.stripe.com/c/pay/cs_live_fixture', payment_intent: null });
@@ -344,6 +345,14 @@ test('manual top-ups stay open while only an exhausted supplier budget blocks in
   clearHostingState();
   underBalance = true;
   assert.equal((await catalog(runpod.env)).topups_enabled, false);
+  // An unreadable hosting state keeps them closed as well: only a known funded state allows a payment.
+  clearHostingState();
+  underBalance = false;
+  runpodDown = true;
+  assert.equal((await catalog(runpod.env)).topups_enabled, false);
+  const refused = await runpod.post('/api/inference/topup');
+  assert.equal(refused.status, 503);
+  assert.equal(stripeCalls.length, 1);
 });
 
 test('every other reason inference is unavailable keeps manual top-ups closed', async (t) => {
