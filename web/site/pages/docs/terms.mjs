@@ -11,7 +11,7 @@ import { DOCS_STYLES, docPage, facts, supportLink, time } from './_shared.mjs';
 import { FREE_LINE, INCLUDED_API_CREDIT, NOT_COUNTED, OPERATOR_LINE } from '../../plans.mjs';
 
 const PATH = '/terms';
-const UPDATED = '2026-10-14';
+const UPDATED = '2026-10-15';
 
 const kb = (bytes) => `${bytes / 1000} KB`;
 const thousands = (value) => value.toLocaleString('en-US');

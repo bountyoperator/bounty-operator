@@ -11,7 +11,7 @@ import { reviewPacket } from '../public/evidence.mjs';
 import { parseReview } from '../public/parse.mjs';
 import { CORE_PROFILE_IDS, PROFILES } from '../public/profiles.mjs';
 import { prepareRequest, prepareReview, promptExport } from '../public/review-core.mjs';
-import { issueMarkdown, sectionColumns } from '../public/app/results.mjs';
+import { exampleNextText, issueMarkdown, runNextText, sectionColumns } from '../public/app/results.mjs';
 import { hostedLine, isHosted } from '../public/app/workbench.mjs';
 
 const APP = new URL('../public/app/', import.meta.url);
@@ -27,16 +27,31 @@ describe('hosted profiles in the workbench', () => {
 
   test('the one line names the profile, says where it runs and lists the three that can be exported', () => {
     assert.equal(
-      hostedLine('scope'),
+      hostedLine('scope', { signedIn: true }),
       'Scope and impact fit runs on our server with your key. Copy-paste prompts cover Code security review, Solidity review and Challenge a draft report.',
     );
     for (const profile of PROFILES.filter((entry) => entry.hosted)) {
-      const line = hostedLine(profile.id);
+      const line = hostedLine(profile.id, { signedIn: true });
       assert.ok(line.startsWith(`${profile.name} runs on our server with your key.`), profile.id);
       for (const id of CORE_PROFILE_IDS) assert.ok(line.includes(PROFILES.find((entry) => entry.id === id).name), id);
       // One plain line: no hedging, no second sentence about limits.
       assert.equal(line.split('. ').length, 2);
       assert.ok(!/\b(?:may|might|cannot|unfortunately|sorry)\b/i.test(line));
+    }
+  });
+
+  test('signed out, the line says the profile runs on an API key and what a free account costs', () => {
+    assert.equal(
+      hostedLine('triage', { signedIn: false }),
+      'Triager simulation runs here on your own API key, not in a chat app. A free account runs one a day: one passkey prompt, no email, no card.',
+    );
+    // Under node no account is loaded: the tab knows a signed-out visitor.
+    assert.equal(hostedLine('scope'), hostedLine('scope', { signedIn: false }));
+    for (const profile of PROFILES.filter((entry) => entry.hosted)) {
+      const line = hostedLine(profile.id, { signedIn: false });
+      assert.ok(line.startsWith(`${profile.name} runs here on your own API key, not in a chat app.`), profile.id);
+      assert.equal(line.split('. ').length, 2);
+      assert.ok(!/\b(?:may|might|cannot|unfortunately|sorry|hosted|core)\b/i.test(line));
     }
   });
 
@@ -72,6 +87,14 @@ describe('hosted profiles in the workbench', () => {
     // Chat-subscription rows: the reply field goes, and the line stands where the buttons were.
     assert.match(providers, /const exportable = !isHosted\(profileId\);\s+show\('#wb-row-reply', exportable\);/);
     assert.match(providers, /line\.textContent = exportable \? '' : hostedLine\(profileId\);/);
+    // Beside the line, two ways on: the API key, or the draft-report profile a chat app runs.
+    assert.match(providers, /choices\.hidden = exportable;/);
+    assert.match(providers, /label: 'Run it on my API key',[\s\S]*?setVia\('key', \{ focus: true \}\);/);
+    assert.match(providers, /const CHAT_PROFILE = 'report';/);
+    assert.ok(!isHosted('report'));
+    // A Run next check that runs only here moves the chat route to an API key.
+    const results = await source('results.mjs');
+    assert.match(results, /const toKey = profile\.hosted === true && view\.get\(\)\.via === 'export';\s+if \(toKey\) setVia\('key'\);/);
     assert.match(providers, /workbench\.select\(\(current\) => current\.profile, \(\) => \{\s+if \(view\.get\(\)\.via === 'export'\) paintExport\(\);/);
 
     const pasteback = await source('pasteback.mjs');
@@ -95,6 +118,53 @@ describe('hosted profiles in the workbench', () => {
       const exported = promptExport(await prepareReview(files, '', id));
       assert.ok(exported.includes(PROFILES.find((profile) => profile.id === id).instructions), id);
     }
+  });
+});
+
+describe('the ask for the free account after a result', () => {
+  const plain = (text) => !/\b(?:may|might|cannot|unfortunately|sorry|hosted|core)\b|!/i.test(text);
+  const nextOf = (id) => PROFILES.find((profile) => profile.id === id).next.map((next) => PROFILES.find((profile) => profile.id === next));
+
+  test('after the example: the route with no account, then what a free account adds, by name', () => {
+    assert.equal(exampleNextText(true), 'This is the bundled example. Your own files replace it.');
+    assert.equal(
+      exampleNextText(false),
+      'That was the bundled example. For your own draft, Challenge a draft report runs free in ChatGPT or Claude with no account. A free account adds the 8 checks a chat app does not run, like Triager simulation and Prior-art overlap: one a day on your own API key.',
+    );
+    // The count is the engine's.
+    assert.equal(PROFILES.filter((profile) => profile.listed && profile.hosted).length, 8);
+    assert.ok(plain(exampleNextText(false)));
+  });
+
+  test('under a review, the row says when the next checks run only here, and nothing extra once signed in', () => {
+    const travels = 'This review travels with the next one as a stage file.';
+    // Every check after Challenge a draft report runs only here.
+    assert.ok(nextOf('report').every((profile) => profile.hosted));
+    assert.deepEqual(runNextText(nextOf('report'), false), {
+      text: 'These checks do not run in a chat app. They run here on your own API key, and this review goes with them as a stage file. A free account runs one a day: one passkey prompt, no email, no card.',
+      ask: true,
+    });
+    assert.deepEqual(runNextText(nextOf('report'), true), { text: travels, ask: false });
+    // A mix names the one that runs only here.
+    assert.deepEqual(nextOf('general').map((profile) => profile.id), ['poc', 'report']);
+    assert.deepEqual(runNextText(nextOf('general'), false), {
+      text: `${travels} Proof review runs here on your own API key, not in a chat app. A free account runs one a day: one passkey prompt, no email, no card.`,
+      ask: true,
+    });
+    // Next checks a chat app runs ask for nothing.
+    assert.deepEqual(runNextText(nextOf('scanner'), false), { text: travels, ask: false });
+    for (const id of ['report', 'general', 'scope']) assert.ok(plain(runNextText(nextOf(id), false).text), id);
+  });
+
+  test('the button opens the account dialog with the reason review, and the row follows the account', async () => {
+    const results = await source('results.mjs');
+    assert.match(results, /label: 'Create a free account', variant, attrs: \{ 'data-signup-prompt': 'review' \}/);
+    assert.match(results, /const \{ requireSignIn \} = await import\('\.\/account\.mjs'\);\s+await requireSignIn\(\{ reason \}\);/);
+    assert.match(results, /subscribeAccount\(\(value, previous\) => \{\s+if \(value\.signedIn !== previous\.signedIn\) whenNoDialog\(refreshNext\);/);
+    // The press is counted by name, and nothing about the visitor travels with it.
+    const workbench = await source('workbench.mjs');
+    assert.match(workbench, /const SIGNUP_PROMPT_CLICKED = 'signup_prompt_clicked';/);
+    assert.match(workbench, /export function signupPromptClicked\(\) \{\s+track\(SIGNUP_PROMPT_CLICKED\);\s+\}/);
   });
 });
 

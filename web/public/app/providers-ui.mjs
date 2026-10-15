@@ -28,10 +28,12 @@
  * visibility of #wb-row-model, #wb-row-run, #wb-row-prompt, #wb-row-reply.
  */
 
+import { reviewProfile } from '../profiles.mjs';
 import { PROVIDERS, outputTokenLimit, provider as findProvider, validateProviderRequest } from '../providers.mjs';
+import { currentAccount, subscribeAccount } from './api.mjs';
 import { EXPORT_PROVIDER, readSession, removeSession, saveWorkbench, workbench, writeSession } from './state.mjs';
-import { clear, el, icon, on, qs, qsa, setBusy } from './ui.mjs';
-import { hostedLine, isHosted, say, view } from './workbench.mjs';
+import { button, clear, el, icon, on, qs, qsa, setBusy } from './ui.mjs';
+import { hostedLine, isHosted, say, signupPromptClicked, view } from './workbench.mjs';
 
 const PKCE_KEY = 'bo:openrouter:pkce';
 const KEPT_KEY = 'bo:openrouter:kept';
@@ -319,10 +321,38 @@ function paintConnect() {
   }
 }
 
+// The profile a chat app can run that a hosted choice is swapped for.
+const CHAT_PROFILE = 'report';
+
+/** Picks the chat-app profile in place of a hosted one, as if it were chosen on Load. */
+function useChatProfile() {
+  const profile = reviewProfile(CHAT_PROFILE);
+  workbench.set((state) => ({ profile: profile.id, mode: profile.mode === 'either' ? state.mode : profile.mode }));
+  say(`${profile.name} is selected. Copy the prompt into your chat.`, { tone: 'success' });
+  qs('#wb-copy-prompt')?.focus();
+}
+
+/** The two ways on from a hosted profile on the chat route: the API key, or a profile a chat app runs. */
+function hostedChoices() {
+  return el('div', { class: 'wb-actions', dataset: { exportHosted: '' } },
+    button({
+      label: 'Run it on my API key',
+      variant: 'primary',
+      iconEnd: 'arrow-right',
+      onClick: () => {
+        // Signed out, the line above it is the ask for the free account.
+        if (!currentAccount().signedIn) signupPromptClicked();
+        setVia('key', { focus: true });
+      },
+    }),
+    button({ label: `Use ${reviewProfile(CHAT_PROFILE).name} instead`, onClick: useChatProfile }));
+}
+
 /**
  * The chat-subscription rows for the chosen profile. A core profile gets the
  * prompt buttons and the reply field. A hosted profile gets one line in their
- * place: it runs on our server, and these are the profiles that can be exported.
+ * place, saying it runs here on an API key, and two buttons: run it on a key,
+ * or take a profile a chat app runs.
  */
 function paintExport() {
   const profileId = workbench.get().profile;
@@ -336,11 +366,17 @@ function paintExport() {
     line = el('p', { class: 'wb-lead', id: 'wb-export-hosted' });
     actions.before(line);
   }
+  let choices = line.nextElementSibling?.matches?.('[data-export-hosted]') ? line.nextElementSibling : null;
+  if (!choices) {
+    choices = hostedChoices();
+    line.after(choices);
+  }
   // Everything else in the row is the prompt export: its lead and its buttons.
   for (const node of actions.parentElement.children) {
-    if (node !== line) node.hidden = !exportable;
+    if (node !== line && node !== choices) node.hidden = !exportable;
   }
   line.hidden = exportable;
+  choices.hidden = exportable;
   line.textContent = exportable ? '' : hostedLine(profileId);
 }
 
@@ -556,6 +592,10 @@ export function initProviders() {
   // The chat-subscription rows depend on the profile: a hosted one has no prompt to export.
   workbench.select((current) => current.profile, () => {
     if (view.get().via === 'export') paintExport();
+  });
+  // Its line says what a free account runs while the visitor is signed out.
+  subscribeAccount((value, previous) => {
+    if (value.signedIn !== previous.signedIn && view.get().via === 'export') paintExport();
   });
 
   // A provider set from outside (a restored tab, a handoff) moves the controls with it.

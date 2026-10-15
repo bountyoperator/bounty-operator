@@ -1406,6 +1406,7 @@
   align-content: start;
   padding-top: var(--sp-16);
   border-top: 1px solid var(--line);
+  text-wrap: pretty;
 }
 
 .plan__cta {
