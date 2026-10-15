@@ -935,7 +935,7 @@ const github = {
   h1: 'GitHub private vulnerability report template',
   description:
     'GitHub private vulnerability report template: summary, details, a proof of concept of 150 characters or more, impact and CWE, as the form asks since 1 Oct 2026.',
-  lede: 'Since 1 Oct 2026 GitHub’s report form asks for four things by default: a summary, the details, a proof of concept of at least 150 characters, and the impact. This template fills those four boxes, with the CWE and the AI-assistance box after them. Copy it, fill every placeholder, then have the draft challenged before the maintainer reads it.',
+  lede: 'Since 1 Oct 2026 GitHub’s report form asks for four things by default: a summary, the details, a proof of concept of at least 150 characters, and the impact. This template fills those four boxes, then the CWE and the AI-assistance box.',
   card: 'Open-source repositories with private vulnerability reporting turned on. The default form has four required boxes.',
   cardClosed: ['Closed as not a security risk', 'A required box left out, or a proof under 150 characters', 'Daily per-account limits on new reports'],
   file: 'github-private-vulnerability-report.md',
