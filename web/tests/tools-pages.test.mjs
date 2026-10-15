@@ -1,8 +1,9 @@
 // Tests for the free-tool pages: the page modules render under the site's
 // rules, the embedded dataset matches its source, and the browser modules keep
 // the promise the pages make ("Your content never leaves the browser."): the
-// one request a tool page makes after loading is a counter that carries an
-// event name from a fixed list and nothing else.
+// one request a tool module makes is a counter that carries an event name from
+// a fixed list and nothing else. The other request a page makes after loading
+// is the page_seen counter of /theme.js, tested in site-build.test.mjs.
 
 import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -221,7 +222,7 @@ describe('tool browser modules', () => {
   test('every name the counter may send is one the Worker accepts, and each tool sends its own', async () => {
     const { CLIENT_EVENTS } = await import('../src/funnel.ts');
     for (const name of PING_EVENTS) assert.ok(CLIENT_EVENTS.has(name), name);
-    assert.deepEqual([...PING_EVENTS], ['tool_report_check', 'tool_secret_check', 'tool_slither_focus', 'tool_verify', 'tool_acceptance_rates', 'template_copied', 'mcp_command_copied']);
+    assert.deepEqual([...PING_EVENTS], ['tool_report_check', 'tool_secret_check', 'tool_slither_focus', 'tool_verify', 'tool_acceptance_rates', 'template_copied', 'template_handoff', 'mcp_command_copied']);
 
     // A page script calls ping with a string literal from the list, never with a value it computed.
     const expected = {

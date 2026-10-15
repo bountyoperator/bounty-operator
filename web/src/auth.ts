@@ -12,7 +12,7 @@ import type { AuthenticationResponseJSON, RegistrationResponseJSON } from '@simp
 import { base64url, fromBase64url, isToken, randomToken, sha256 } from './crypto.ts';
 import { seconds } from './env.ts';
 import type { Call, Env } from './env.ts';
-import { count } from './funnel.ts';
+import { count, isOwnCheck } from './funnel.ts';
 import { ApiError, json, readJson } from './http.ts';
 import { assertBelowLimit, clientKey, rateLimit } from './rate.ts';
 
@@ -248,7 +248,8 @@ export async function registerVerify({ env, ctx, request }: Call): Promise<Respo
   ]);
 
   const issued = await issueSession(env, challenge.account_id);
-  count(env, ctx, 'register');
+  // Our own account audit signs up on the live site too; it is not a sign-up.
+  if (!isOwnCheck(request.headers.get('user-agent'))) count(env, ctx, 'register');
   return json({ signedIn: true, csrf: issued.csrf, recoveryCode }, 200, { cookies: [issued.cookie, clearChallengeCookie(env)] });
 }
 
@@ -306,7 +307,7 @@ export async function loginVerify({ env, ctx, request }: Call): Promise<Response
   if (!verification.verified) throw passkeyError();
 
   await env.DB.prepare('UPDATE passkeys SET counter = ? WHERE id = ?').bind(verification.authenticationInfo.newCounter, passkey.id).run();
-  count(env, ctx, 'login');
+  if (!isOwnCheck(request.headers.get('user-agent'))) count(env, ctx, 'login');
 
   // A signed-in user confirming with their passkey keeps the session they
   // have; only its passkey-check time moves.

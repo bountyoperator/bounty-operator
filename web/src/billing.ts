@@ -534,8 +534,11 @@ export async function customerFor(env: Env, api: Stripe, accountId: string): Pro
   return stored!.stripe_customer;
 }
 
-/** Returns the Stripe Checkout URL for the Operator plan. */
-export async function createCheckout(env: Env, ctx: ExecutionContext, accountId: string): Promise<string> {
+/**
+ * Returns the Stripe Checkout URL for the Operator plan. `ownCheck` marks a
+ * request from one of our own checks, whose checkout is not counted.
+ */
+export async function createCheckout(env: Env, ctx: ExecutionContext, accountId: string, ownCheck = false): Promise<string> {
   const api = await verifiedClient(env);
 
   const active = await env.DB.prepare("SELECT 1 FROM subscriptions WHERE account_id = ? AND status = 'active' AND paid_until > ? LIMIT 1")
@@ -590,7 +593,7 @@ export async function createCheckout(env: Env, ctx: ExecutionContext, accountId:
   );
   if (!session.url) throw unavailable();
 
-  count(env, ctx, 'checkout_created');
+  if (!ownCheck) count(env, ctx, 'checkout_created');
   return session.url;
 }
 
