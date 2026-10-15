@@ -148,7 +148,7 @@ test('every template page hands the visitor to a review near the top, after a co
   for (const page of platformPages) {
     const markup = renderPage(page);
     const head = markup.slice(markup.indexOf('<header class="page-head'), markup.indexOf('</header>', markup.indexOf('<header class="page-head')));
-    assert.match(head, /Free in ChatGPT or Claude with no account, or once a day on your own AI key\./, `${page.path}: the head says what is free`);
+    assert.match(head, /Free in ChatGPT or Claude with no account, or once a day on your own AI key with a free account\./, `${page.path}: the head says what is free`);
     // The second hand-off sends the same draft to Triager simulation, and says it needs an account.
     const check = markup.slice(markup.indexOf('<h2 id="check">'), markup.indexOf('<h2 id="sources">'));
     assert.match(check, /<a class="btn btn--secondary" href="\/\?profile=triage#workspace" data-handoff-go data-handoff-profile="triage" data-handoff-focus="[^"]+"><span class="btn__label">Run the Triager simulation<\/span><\/a>/, `${page.path}: the Triager simulation hand-off`);

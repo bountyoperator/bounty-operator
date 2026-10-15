@@ -48,7 +48,7 @@ export const BROWSER_STORAGE = [
   { keys: ['bo-motion'], where: 'This browser', what: 'Whether you pressed Pause motion or Play motion, when that differs from what your system asks for.' },
   { keys: ['bo-theme'], where: 'This browser', what: 'Nothing now. An earlier version of the site kept your colour theme here; the site removes it when a page loads.' },
   { keys: ['bo:history', 'bo-history'], where: 'This browser', what: 'Review history, when you turn it on: the packet, manifest and text of each finished review, with its profile, model, verdict and time.' },
-  { keys: ['bo:known'], where: 'This browser', what: 'The value 1 once you have signed in here, so the sign-in dialog offers Sign in first. Deleting the account removes it.' },
+  { keys: ['bo:known'], where: 'This browser', what: 'The value 1 once you have signed in here, so the sign-in dialog offers Sign in first and the header button reads Sign in rather than Sign up. Deleting the account removes it.' },
   { keys: ['bo-bench-hidden'], where: 'This browser', what: 'The leaderboard columns you hid on the benchmark page.' },
   { keys: ['bo:workbench'], where: 'This tab', what: 'The files you loaded, your focus and context, the review type, provider and model you chose, the step you are on and the last result.' },
   { keys: ['bo:workbench:view', 'bo:workbench:stash'], where: 'This tab', what: 'Whether an example is open, how the review runs, which provider’s key field is open and the privacy warnings you accepted; and your own work while an example is shown.' },
@@ -97,7 +97,7 @@ const counters = html`
 <li>on the MCP endpoint: sessions opened, tool calls per tool, and calls turned away at the limit. A session is counted under the kind of agent that opened it, from a fixed list: Claude, Codex, Cursor, or “other”. A registry or a monitor is counted apart</li>
 </ul>
 <p>A page reports an action by its name and sends nothing with it, and it reports that it was seen the same way. On a free tool, a template page and the MCP page that counter is the only request your action causes: what you paste or drop there never leaves the browser.</p>
-<p>Our own automated checks name themselves in each request. Their page views, named actions, MCP sessions and tool calls, sign-ups, sign-ins and checkouts are not counted.</p>
+<p>Our release checks and our account audit name themselves in each request. Their page views, named actions, MCP sessions and tool calls, sign-ups, sign-ins and checkouts are not counted.</p>
 <p>A counter holds a date, a name and a total. It holds no account identifier, no IP address and no cookie value. Counters older than 400 days are deleted.</p>`;
 
 const thirdParties = html`

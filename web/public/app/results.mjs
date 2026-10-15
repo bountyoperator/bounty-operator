@@ -967,7 +967,7 @@ export function runNextText(next, signedIn) {
  * drawn wherever the row can ask, and hidden while the visitor is signed in.
  */
 function createAccountButton(variant, ask) {
-  const control = button({ label: 'Create a free account', variant, attrs: { 'data-signup-prompt': 'review' } });
+  const control = button({ label: 'Create a free account', variant, attrs: { 'data-signup-prompt': 'signup' } });
   control.hidden = !ask;
   return control;
 }

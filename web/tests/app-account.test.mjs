@@ -862,7 +862,10 @@ describe('account.mjs', () => {
 
   test('the /mcp token link opens the dialog for a token and lands on Connections', () => {
     assert.deepEqual(ACCOUNT_LINKS['#account/connections'], { tab: 'connections', reason: 'token' });
-    assert.deepEqual(ACCOUNT_LINKS['#account/api'], { tab: 'api' });
+    // The Model API's key link has its own line, not the review account's sales line.
+    assert.deepEqual(ACCOUNT_LINKS['#account/api'], { tab: 'api', reason: 'api' });
+    assert.match(reasonText('api'), /^Create a free account to get a Model API key\./);
+    assert.match(reasonText('signup'), /Triager simulation/);
     assert.ok(TABS.some((tab) => tab.id === 'connections'));
     assert.equal(reasonText('token'), 'Create a free account to get your MCP token. One passkey prompt, no email. The token is shown once, with the setup command for your client.');
     assert.equal(reasonText('token', true), 'Sign in to create your MCP token. One passkey prompt. The token is shown once, with the setup command for your client.');

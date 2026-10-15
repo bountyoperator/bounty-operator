@@ -114,6 +114,19 @@ export const REASONS = Object.freeze({
     signin: 'Sign in with the passkey on this device. No password, no email.',
     next: '',
   },
+  // An in-page "Create a free account" after the example or a review: nothing is queued, so no next step.
+  signup: {
+    create:
+      'A free account runs Triager simulation, Prior-art overlap and six more checks a chat app can’t, one a day on your own AI key, plus a token for your coding agent. One passkey prompt, no email, no card.',
+    signin: 'Sign in with the passkey on this device. No password, no email.',
+    next: '',
+  },
+  // The Model API's "Get an API key" (/#account/api).
+  api: {
+    create: 'Create a free account to get a Model API key. One passkey prompt, no email. Add credit when you are ready.',
+    signin: 'Sign in to open your Model API keys and credit. One passkey prompt.',
+    next: 'open Model API',
+  },
   token: {
     create: 'Create a free account to get your MCP token. One passkey prompt, no email. The token is shown once, with the setup command for your client.',
     signin: 'Sign in to create your MCP token. One passkey prompt. The token is shown once, with the setup command for your client.',
@@ -877,7 +890,7 @@ function ensureStyles() {
 
 /** The account links besides /#account: the tab each one lands on, and the dialog's reason on the way. */
 export const ACCOUNT_LINKS = Object.freeze({
-  '#account/api': Object.freeze({ tab: 'api' }),
+  '#account/api': Object.freeze({ tab: 'api', reason: 'api' }),
   // From /mcp: an account, then the token. A new browser is offered Create account first.
   '#account/connections': Object.freeze({ tab: 'connections', reason: 'token' }),
 });

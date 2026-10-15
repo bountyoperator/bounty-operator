@@ -32,7 +32,7 @@ function platformPage(platform) {
       copied: 'Copied. Once it is filled in, paste it under Challenge the filled draft for a free check before you submit.',
     })}
     ${headHandoff({
-      text: `Bounty Operator argues against the draft the way a ${reader} would, every claim tied to a file and line. Free in ChatGPT or Claude with no account, or once a day on your own AI key.`,
+      text: `Bounty Operator argues against the draft the way a ${reader} would, every claim checked against the code you add. Free in ChatGPT or Claude with no account, or once a day on your own AI key with a free account.`,
       label: 'Challenge my draft',
     })}
     <p class="meta">Rules checked ${checked.label} · ${platform.sources.length} sources</p>

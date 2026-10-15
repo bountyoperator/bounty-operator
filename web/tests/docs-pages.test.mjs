@@ -444,7 +444,7 @@ test('the privacy policy names every counter the Worker keeps', async () => {
     assert.notEqual(referrerBucket(`https://${host}/`, 'https://bountyoperator.com'), 'other', host);
   }
   // What our own checks send is not counted, and the page says which counters leave it out.
-  assert.match(privacy, /Our own automated checks name themselves in each request\. Their page views, named actions, MCP sessions and tool calls, sign-ups, sign-ins and checkouts are not counted\./);
+  assert.match(privacy, /Our release checks and our account audit name themselves in each request\. Their page views, named actions, MCP sessions and tool calls, sign-ups, sign-ins and checkouts are not counted\./);
   assert.match(privacy, /completed reviews per profile, failed reviews per kind of failure, and answers withheld per profile/);
   assert.match(privacy, /on the MCP endpoint: sessions opened, tool calls per tool, and calls turned away at the limit\. A session is counted under the kind of agent that opened it, from a fixed list: Claude, Codex, Cursor, or “other”\. A registry or a monitor is counted apart/);
   assert.match(privacy, /A counter holds a date, a name and a total\. It holds no account identifier, no IP address and no cookie value\./);

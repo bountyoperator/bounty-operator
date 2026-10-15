@@ -8,7 +8,7 @@
 
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { existsSync, readFileSync, statSync } from 'node:fs';
+import { readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
 import test from 'node:test';
 
@@ -24,13 +24,19 @@ function git(args) {
 function publishableFiles() {
   const files = git(['ls-files', '-co', '--exclude-standard', '-z']).toString('utf8').split('\0').filter(Boolean);
   assert.ok(files.length > 100, 'git lists the files of this repository');
-  return files
-    .filter((file) => {
-      const full = path.join(REPO_DIR, file);
-      return existsSync(full) && statSync(full).size <= MAX_FILE_BYTES;
-    })
-    // Decoding never throws: bytes that are not text become replacement characters.
-    .map((file) => ({ file, text: `${file}\n${readFileSync(path.join(REPO_DIR, file), 'utf8')}` }));
+  // Other test files run at the same time and write short-lived files here (deploy-config's
+  // wrangler.alert-check-<pid>.jsonc); one that vanishes between the listing and the read is skipped.
+  return files.flatMap((file) => {
+    const full = path.join(REPO_DIR, file);
+    try {
+      if (statSync(full).size > MAX_FILE_BYTES) return [];
+      // Decoding never throws: bytes that are not text become replacement characters.
+      return [{ file, text: `${file}\n${readFileSync(full, 'utf8')}` }];
+    } catch (error) {
+      if (error.code === 'ENOENT') return [];
+      throw error;
+    }
+  });
 }
 
 const names = privateNames();

@@ -207,11 +207,14 @@ async function clientAccount(call: Call): Promise<Response> {
 }
 
 async function event({ env, ctx, request }: Call): Promise<Response> {
-  await rateLimit(env.DB, `event:${await clientKey(env, request)}`, EVENTS_PER_10_MIN, 600);
   const body = await readJson(request, 200, true);
   if (typeof body.event !== 'string' || !CLIENT_EVENTS.has(body.event)) {
     throw new ApiError('Unknown event.', 400, 'bad_event');
   }
+  // page_seen comes with every page load, so it has its own allowance: a visitor
+  // who opens many pages, or shares an address, keeps the named actions' budget.
+  const bucket = body.event === 'page_seen' ? 'seen' : 'event';
+  await rateLimit(env.DB, `${bucket}:${await clientKey(env, request)}`, EVENTS_PER_10_MIN, 600);
   // A headless browser driving the page is a test of it, not a person using it.
   if (!isBot(request.headers.get('user-agent'))) count(env, ctx, body.event);
   return new Response(null, { status: 204 });

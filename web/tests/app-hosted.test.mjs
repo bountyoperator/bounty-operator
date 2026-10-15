@@ -156,9 +156,9 @@ describe('the ask for the free account after a result', () => {
     for (const id of ['report', 'general', 'scope']) assert.ok(plain(runNextText(nextOf(id), false).text), id);
   });
 
-  test('the button opens the account dialog with the reason review, and the row follows the account', async () => {
+  test('the button opens the account dialog with the reason signup (nothing is queued to run), and the row follows the account', async () => {
     const results = await source('results.mjs');
-    assert.match(results, /label: 'Create a free account', variant, attrs: \{ 'data-signup-prompt': 'review' \}/);
+    assert.match(results, /label: 'Create a free account', variant, attrs: \{ 'data-signup-prompt': 'signup' \}/);
     assert.match(results, /const \{ requireSignIn \} = await import\('\.\/account\.mjs'\);\s+await requireSignIn\(\{ reason \}\);/);
     assert.match(results, /subscribeAccount\(\(value, previous\) => \{\s+if \(value\.signedIn !== previous\.signedIn\) whenNoDialog\(refreshNext\);/);
     // The press is counted by name, and nothing about the visitor travels with it.
