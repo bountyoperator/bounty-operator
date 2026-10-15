@@ -18,6 +18,13 @@
 // page, so static pages need no script of their own:
 //   [data-copy]          copies the code block it sits in
 //   [data-close-dialog]  closes the dialog it sits in
+//
+// Counting people. Once the page has loaded and is on screen, it reports the
+// name page_seen to POST /api/event, once per page load, with nothing else in
+// the request: no address, no cookie, nothing from the page. A script that
+// fetches the address never runs this, and a browser driven by automation says
+// so in navigator.webdriver and sends nothing. The server counts the name like
+// any other named action (CLIENT_EVENTS in web/src/funnel.ts).
 (function () {
   'use strict';
 
@@ -141,4 +148,35 @@
   window.addEventListener('storage', function (event) {
     if (event.key === MOTION_KEY) applyMotion();
   });
+
+  var seenSent = false;
+
+  function reportSeen() {
+    // A page opened in a background tab, or prerendered, has not been seen yet.
+    if (seenSent || document.visibilityState === 'hidden' || document.prerendering) return;
+    seenSent = true;
+    document.removeEventListener('visibilitychange', reportSeen);
+    document.removeEventListener('prerenderingchange', reportSeen);
+    try {
+      window.fetch('/api/event', {
+        method: 'POST',
+        credentials: 'omit',
+        keepalive: true,
+        cache: 'no-store',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ event: 'page_seen' })
+      }).catch(function () {});
+    } catch (error) {
+      // A lost count changes nothing on the page.
+    }
+  }
+
+  if (typeof window.fetch === 'function' && !navigator.webdriver) {
+    window.addEventListener('load', function () {
+      reportSeen();
+      if (seenSent) return;
+      document.addEventListener('visibilitychange', reportSeen);
+      document.addEventListener('prerenderingchange', reportSeen);
+    });
+  }
 })();

@@ -33,7 +33,11 @@
  *   TOOL_SLITHER_FOCUS   the Slither focus tool ran
  *   TOOL_VERIFY          the packet verifier ran
  *   TEMPLATE_COPIED      a report template was copied
+ *   TEMPLATE_HANDOFF     a template page passed its draft to the review
  *   MCP_COMMAND_COPIED   an MCP install command was copied
+ *   SIGNUP_PROMPT_CLICKED  an in-page Create a free account button was pressed
+ *   PAGE_SEEN            a page loaded and was on screen. /theme.js sends this
+ *                        one itself, once per page load; nothing else sends it
  */
 
 /** @type {Readonly<Record<string, string>>} */
@@ -55,7 +59,10 @@ export const EVENTS = Object.freeze({
   TOOL_VERIFY: 'tool_verify',
   TOOL_ACCEPTANCE_RATES: 'tool_acceptance_rates',
   TEMPLATE_COPIED: 'template_copied',
+  TEMPLATE_HANDOFF: 'template_handoff',
   MCP_COMMAND_COPIED: 'mcp_command_copied',
+  SIGNUP_PROMPT_CLICKED: 'signup_prompt_clicked',
+  PAGE_SEEN: 'page_seen',
 });
 
 /** @type {readonly string[]} */

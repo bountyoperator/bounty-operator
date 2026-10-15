@@ -384,8 +384,8 @@ test('llms.txt links only to canonical, extensionless pages on the site', async 
 test('the privacy policy says page views and named actions are counted in aggregate', () => {
   const privacy = textOf(rendered.get('/privacy'));
   assert.match(privacy, /Page views and named actions are counted in aggregate\./);
-  assert.match(privacy, /named actions a page reports from a fixed list: an example loaded, a prompt exported, a reply pasted, a packet saved, a repository imported, the sign-in opened, the upgrade button pressed, a gauntlet or a panel started and finished, a free tool run, a template copied, an MCP command copied/);
-  assert.match(privacy, /A page reports an action by its name and sends nothing with it\./);
+  assert.match(privacy, /named actions a page reports from a fixed list: an example loaded, a prompt exported, a reply pasted, a packet saved, a repository imported, the sign-in opened, the upgrade button pressed, a gauntlet or a panel started and finished, a free tool run, a template copied, an MCP command copied, a template draft passed to the review, a Create a free account button pressed/);
+  assert.match(privacy, /A page reports an action by its name and sends nothing with it, and it reports that it was seen the same way\./);
   assert.match(privacy, /what you paste or drop there never leaves the browser\./);
   assert.match(privacy, /Last updated 15 October 2026/);
 });
@@ -401,11 +401,23 @@ test('the privacy policy names every counter the Worker keeps', async () => {
     panel_started: 'a gauntlet or a panel started and finished', panel_finished: 'a gauntlet or a panel started and finished',
     tool_report_check: 'a free tool run', tool_secret_check: 'a free tool run', tool_slither_focus: 'a free tool run', tool_verify: 'a free tool run',
     tool_acceptance_rates: 'a free tool run', template_copied: 'a template copied', mcp_command_copied: 'an MCP command copied',
+    template_handoff: 'a template draft passed to the review', signup_prompt_clicked: 'a Create a free account button pressed',
+    page_seen: 'pages seen: each page reports once that it has loaded and is on screen, unless the browser says automation is driving it',
   };
   assert.deepEqual(Object.keys(words).sort(), [...CLIENT_EVENTS].sort(), 'a new named action needs its words on /privacy');
   for (const phrase of new Set(Object.values(words))) assert.ok(privacy.includes(phrase), phrase);
 
   assert.match(privacy, /page views per path, and each day’s total of the views a browser asked for as a page, which the request’s own headers say/);
+  // Each referrer bucket the Worker can write has its words: the directories by domain, and Google split three ways.
+  assert.match(privacy, /the MCP and skills directories glama\.ai, mcpnav\.net, mcpservers\.org, mcpmarket\.com, skillsmp\.com and skillsdirectory\.com, the Disclosed newsletter,/);
+  assert.match(privacy, /Google Search, Google Search Console and Google’s other sites each count apart\./);
+  const { referrerBucket } = await import('../src/funnel.ts');
+  for (const host of ['glama.ai', 'mcpnav.net', 'mcpservers.org', 'mcpmarket.com', 'skillsmp.com', 'skillsdirectory.com']) {
+    assert.ok(privacy.includes(host), host);
+    assert.notEqual(referrerBucket(`https://${host}/`, 'https://bountyoperator.com'), 'other', host);
+  }
+  // What our own checks send is not counted, and the page says which counters leave it out.
+  assert.match(privacy, /Our own automated checks name themselves in each request\. Their page views, named actions, MCP sessions and tool calls, sign-ups, sign-ins and checkouts are not counted\./);
   assert.match(privacy, /completed reviews per profile, failed reviews per kind of failure, and answers withheld per profile/);
   assert.match(privacy, /on the MCP endpoint: sessions opened, tool calls per tool, and calls turned away at the limit\. A session is counted under the kind of agent that opened it, from a fixed list: Claude, Codex, Cursor, or “other”\. A registry or a monitor is counted apart/);
   assert.match(privacy, /A counter holds a date, a name and a total\. It holds no account identifier, no IP address and no cookie value\./);

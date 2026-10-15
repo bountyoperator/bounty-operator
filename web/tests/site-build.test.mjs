@@ -659,6 +659,96 @@ test('the motion switch: on unless the system asks for less, and the visitor\'s 
   assert.equal(blocked.motion(), 'on');
 });
 
+test('every page reports page_seen once, after it has loaded and while it is on screen, and nothing with it', async () => {
+  const vm = await import('node:vm');
+  const source = await readFile(path.join(WEB_DIR, 'public', 'theme.js'), 'utf8');
+
+  /** Runs theme.js in a page whose visibility, automation flag and fetch the test sets. */
+  const page = ({ visibility = 'visible', prerendering = false, webdriver = false, fetch = 'ok' } = {}) => {
+    const calls = [];
+    const listeners = { window: {}, document: {} };
+    const add = (target) => (type, handler) => { (listeners[target][type] ??= []).push(handler); };
+    const document = {
+      visibilityState: visibility,
+      prerendering,
+      documentElement: { setAttribute() {}, getAttribute: () => null },
+      querySelectorAll: () => [],
+      addEventListener: add('document'),
+      removeEventListener: (type, handler) => { listeners.document[type] = (listeners.document[type] ?? []).filter((each) => each !== handler); },
+      dispatchEvent() {},
+    };
+    const send = (url, init) => {
+      calls.push({ url, init });
+      if (fetch === 'throws') throw new TypeError('blocked');
+      return fetch === 'rejects' ? Promise.reject(new TypeError('offline')) : Promise.resolve(new Response(null, { status: 204 }));
+    };
+    const window = {
+      localStorage: { getItem: () => null, setItem() {}, removeItem() {} },
+      matchMedia: () => ({ matches: false, addEventListener() {} }),
+      addEventListener: add('window'),
+      setTimeout,
+      ...(fetch ? { fetch: send } : {}),
+    };
+    class CustomEvent { constructor(type, init) { this.type = type; this.detail = init.detail; } }
+    vm.runInNewContext(source, { window, document, navigator: { webdriver }, CustomEvent });
+    const fire = (target, type) => { for (const handler of listeners[target][type] ?? []) handler({ type }); };
+    return { calls, document, load: () => fire('window', 'load'), change: (type) => fire('document', type) };
+  };
+
+  // Nothing is sent while the page loads; once it has loaded, one name, and nothing else.
+  const shown = page();
+  assert.equal(shown.calls.length, 0);
+  shown.load();
+  assert.equal(shown.calls.length, 1);
+  const [{ url, init }] = shown.calls;
+  assert.equal(url, '/api/event');
+  assert.deepEqual(Object.keys(init).sort(), ['body', 'cache', 'credentials', 'headers', 'keepalive', 'method']);
+  assert.deepEqual({ ...init, headers: { ...init.headers } }, {
+    method: 'POST', credentials: 'omit', keepalive: true, cache: 'no-store', headers: { 'Content-Type': 'application/json' }, body: '{"event":"page_seen"}',
+  });
+  // Once per page load, whatever happens next.
+  shown.change('visibilitychange');
+  shown.load();
+  assert.equal(shown.calls.length, 1);
+
+  // A page opened in a background tab is counted when it is first shown.
+  const background = page({ visibility: 'hidden' });
+  background.load();
+  assert.equal(background.calls.length, 0);
+  background.change('visibilitychange');
+  assert.equal(background.calls.length, 0, 'still hidden');
+  background.document.visibilityState = 'visible';
+  background.change('visibilitychange');
+  background.change('visibilitychange');
+  assert.equal(background.calls.length, 1);
+
+  // A prerendered page is counted only when the visitor goes to it.
+  const prerendered = page({ prerendering: true });
+  prerendered.load();
+  assert.equal(prerendered.calls.length, 0);
+  prerendered.document.prerendering = false;
+  prerendered.change('prerenderingchange');
+  assert.equal(prerendered.calls.length, 1);
+
+  // A browser driven by automation sends nothing, and neither does one without fetch.
+  const driven = page({ webdriver: true });
+  driven.load();
+  driven.change('visibilitychange');
+  assert.equal(driven.calls.length, 0);
+  page({ fetch: null }).load();
+
+  // A request that fails, at once or later, changes nothing on the page.
+  assert.doesNotThrow(() => page({ fetch: 'throws' }).load());
+  const offline = page({ fetch: 'rejects' });
+  offline.load();
+  assert.equal(offline.calls.length, 1);
+  await new Promise((resolve) => setImmediate(resolve));
+
+  // The name is one the Worker accepts and counts.
+  const { CLIENT_EVENTS } = await import('../src/funnel.ts');
+  assert.ok(CLIENT_EVENTS.has(JSON.parse(init.body).event));
+});
+
 test('every animation and transition of motion in the stylesheets waits for the motion switch', async () => {
   const { readdir } = await import('node:fs/promises');
   const dir = path.join(WEB_DIR, 'public', 'css');

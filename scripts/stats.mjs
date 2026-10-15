@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-// Prints page views, referrers and the sign-up to subscription funnel from the
-// funnel_daily table, for the last N days, under a line that counts the
-// accounts and the paying subscribers there are now.
+// Prints the pages people saw, page views, referrers and the sign-up to
+// subscription funnel from the funnel_daily table, for the last N days, under a
+// line that counts the accounts and the paying subscribers there are now.
 //
 //   node scripts/stats.mjs            last 7 days, production database
 //   node scripts/stats.mjs 30         last 30 days
@@ -16,7 +16,7 @@ import { spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, join, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 import { RENEWAL_GRACE_SECONDS } from '../web/src/quota.mjs';
 
@@ -141,7 +141,7 @@ function printTable(title, entries, note = () => '') {
   }
 }
 
-function report(rows, options, range, standing) {
+export function report(rows, options, range, standing) {
   const sums = totals(rows);
   const count = (event) => sums.get(event) ?? 0;
 
@@ -151,11 +151,17 @@ function report(rows, options, range, standing) {
   const failuresByReason = withPrefix(sums, 'review_fail:');
   const withheldByProfile = withPrefix(sums, 'review_withheld:');
   const pageviews = sum(pages);
+  const seen = count('page_seen');
   const reviews = sum(reviewsByProfile);
 
   const where = options.local ? 'local database' : 'production';
   console.log(`Bounty Operator, last ${options.days} days (${range.first} to ${range.last} UTC, ${where})`);
   console.log(standingLine(standing));
+
+  // Counted after 0.9.17: every page reports page_seen once it has loaded and is on
+  // screen. A script that fetches a page never runs it, so this is the number to read
+  // first; most page views below are scripts. Days before it was counted show 0.
+  console.log(`\nPages seen by people: ${seen} (page_seen; the page views below include scripts)`);
 
   // Counted since 0.9.7: the page views a browser asked for as a page. The rest are scripts under a browser's name.
   printTable(`Page views: ${pageviews}, of which a browser navigated to ${count('browser_view')} (counted since 0.9.7)`, pages, (_name, n) => percent(n, pageviews));
@@ -164,7 +170,11 @@ function report(rows, options, range, standing) {
   const registers = count('register');
   const checkouts = count('checkout_created');
   const subscriptions = count('sub_active');
+  // After 0.9.17, register, login and checkout_created leave out our own checks
+  // (scripts/check-agent.mjs and the account audit). sub_active is written when
+  // Stripe reports a payment, and Stripe does not say who started the checkout.
   printTable('Funnel', [
+    ['pages seen', seen],
     ['page views', pageviews],
     ['register', registers],
     ['login', count('login')],
@@ -174,7 +184,7 @@ function report(rows, options, range, standing) {
     ['checkout_created', checkouts],
     ['sub_active', subscriptions],
   ], (name) => {
-    if (name === 'register') return `${percent(registers, pageviews)} of page views`;
+    if (name === 'register') return seen > 0 ? `${percent(registers, seen)} of pages seen` : `${percent(registers, pageviews)} of page views`;
     if (name === 'review_ok') return `${percent(reviews, reviews + count('review_fail'))} of reviews started`;
     if (name === 'checkout_created') return `${percent(checkouts, count('quota_hit'))} of quota hits`;
     if (name === 'sub_active') return `${percent(subscriptions, checkouts)} of checkouts, ${percent(subscriptions, registers)} of registrations`;
@@ -199,23 +209,24 @@ function report(rows, options, range, standing) {
   console.log(`\nMCP registries and monitors: ${count('mcp_crawler')} sessions, ${count('mcp_crawler_call')} tool calls`);
 
   const known = (event) => /^(pv|ref|review_ok|review_fail|review_withheld|mcp_call|mcp_client):/.test(event)
-    || ['register', 'login', 'review_fail', 'quota_hit', 'checkout_created', 'sub_active', 'mcp_session', 'mcp_limited', 'mcp_crawler', 'mcp_crawler_call', 'browser_view'].includes(event);
+    || ['page_seen', 'register', 'login', 'review_fail', 'quota_hit', 'checkout_created', 'sub_active', 'mcp_session', 'mcp_limited', 'mcp_crawler', 'mcp_crawler_call', 'browser_view'].includes(event);
   const clientEvents = [...sums].filter(([event]) => !known(event)).sort((a, b) => b[1] - a[1]);
   printTable('Client events', clientEvents);
 
   const days = new Map();
   for (const { day, event, n } of rows) {
-    const entry = days.get(day) ?? { views: 0, registers: 0, reviews: 0, subscriptions: 0 };
-    if (event.startsWith('pv:')) entry.views += n;
+    const entry = days.get(day) ?? { seen: 0, views: 0, registers: 0, reviews: 0, subscriptions: 0 };
+    if (event === 'page_seen') entry.seen += n;
+    else if (event.startsWith('pv:')) entry.views += n;
     else if (event === 'register') entry.registers += n;
     else if (event.startsWith('review_ok:')) entry.reviews += n;
     else if (event === 'sub_active') entry.subscriptions += n;
     days.set(day, entry);
   }
-  console.log('\nPer day        views  register  reviews  subs');
+  console.log('\nPer day         seen   views  register  reviews  subs');
   for (const [day, entry] of [...days].sort()) {
-    const cells = [entry.views, entry.registers, entry.reviews, entry.subscriptions];
-    console.log(`  ${day}  ${String(cells[0]).padStart(6)}  ${String(cells[1]).padStart(8)}  ${String(cells[2]).padStart(7)}  ${String(cells[3]).padStart(4)}`);
+    const cells = [entry.seen, entry.views, entry.registers, entry.reviews, entry.subscriptions];
+    console.log(`  ${day}  ${String(cells[0]).padStart(5)}  ${String(cells[1]).padStart(6)}  ${String(cells[2]).padStart(8)}  ${String(cells[3]).padStart(7)}  ${String(cells[4]).padStart(4)}`);
   }
   if (days.size === 0) console.log('  none');
 }
@@ -229,9 +240,12 @@ function main() {
   else report(rows, options, range, standing);
 }
 
-try {
-  main();
-} catch (error) {
-  console.error(error.message);
-  process.exitCode = 1;
+// Run as a command. A test imports report() and runs nothing.
+if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
+  try {
+    main();
+  } catch (error) {
+    console.error(error.message);
+    process.exitCode = 1;
+  }
 }

@@ -24,7 +24,12 @@ export const CLIENT_EVENTS: ReadonlySet<string> = new Set([
   'tool_verify',
   'tool_acceptance_rates',
   'template_copied',
+  'template_handoff',
   'mcp_command_copied',
+  'signup_prompt_clicked',
+  // Sent by /theme.js once a page has loaded and is on screen. A script that
+  // fetches a page never runs it, so this total is the people among the page views.
+  'page_seen',
 ]);
 
 // Referrer hosts worth a bucket of their own. A host matches an entry when it
@@ -39,7 +44,7 @@ const REFERRER_HOSTS: readonly (readonly [string, string])[] = [
   ['bing.com', 'bing'],
   ['duckduckgo.com', 'duckduckgo'],
   // Assistants that answer with links. gemini.google.com is listed before the
-  // rule that files every other Google host under google.
+  // rules for the other Google hosts.
   ['chatgpt.com', 'chatgpt'],
   ['chat.openai.com', 'chatgpt'],
   ['perplexity.ai', 'perplexity'],
@@ -54,6 +59,14 @@ const REFERRER_HOSTS: readonly (readonly [string, string])[] = [
   ['t.me', 'telegram'],
   ['farcaster.xyz', 'farcaster'],
   ['warpcast.com', 'farcaster'],
+  // Directories that list the MCP server or the skills, and a bug bounty newsletter.
+  ['glama.ai', 'glama'],
+  ['mcpnav.net', 'mcpnav'],
+  ['mcpservers.org', 'mcpservers'],
+  ['mcpmarket.com', 'mcpmarket'],
+  ['skillsmp.com', 'skillsmp'],
+  ['skillsdirectory.com', 'skillsdirectory'],
+  ['getdisclosed.com', 'disclosed'],
 ];
 
 // What a link may carry in ?ref=. The list is fixed so a visitor cannot mint
@@ -81,17 +94,25 @@ const REF_CODES: Readonly<Record<string, string>> = Object.freeze({
   cli: 'cli',
   launch: 'launch',
   newsletter: 'newsletter',
+  // The note in a downloaded report template links back to its page with this.
+  template: 'template',
 });
 
-// google.com, google.co.uk, google.com.au and the rest of the country sites.
-const GOOGLE_HOST = /(?:^|\.)google\.(?:[a-z]{2,3}|com?\.[a-z]{2})$/;
+// Google Search: google.com, google.co.uk, google.com.au and the rest of the
+// country sites, with or without www. Search Console has a bucket of its own,
+// and any other Google host (Docs, Gmail, Groups) is google-apps: none of them
+// is someone finding the site through search.
+const GOOGLE_SEARCH_HOST = /^(?:www\.)?google\.(?:[a-z]{2,3}|com?\.[a-z]{2})$/;
+const GOOGLE_HOST = /\.google\.(?:[a-z]{2,3}|com?\.[a-z]{2})$/;
+const SEARCH_CONSOLE_HOST = 'search.google.com';
 
 const BOT_AGENT = /bot|crawl|spider|slurp|preview|scan|monitor|fetch|headless|lighthouse|curl|wget|python|http|java|ruby|go-http|node|axios|postman/i;
 
 // The name the release checks give themselves (scripts/check-agent.mjs). They
 // open the live site and call its MCP tools after every release, and none of
-// that is use.
-const OWN_CHECK_AGENT = /^bounty-operator-check\//;
+// that is use. The account audit, which signs up and signs in on the live site
+// with a software passkey, has called itself BountyOperator-AccountAudit/1.0.
+const OWN_CHECK_AGENT = /^(?:bounty-operator-check|BountyOperator-AccountAudit)\//;
 
 // Every MCP client is a program, so the page rule above would hide real agents
 // built on Node or Python. This one names only what connects on a timer.
@@ -130,7 +151,9 @@ export function referrerBucket(referer: string | null | undefined, siteOrigin: s
   for (const [domain, bucket] of REFERRER_HOSTS) {
     if (matchesDomain(host, domain)) return bucket;
   }
-  if (GOOGLE_HOST.test(host)) return 'google';
+  if (GOOGLE_SEARCH_HOST.test(host)) return 'google';
+  if (host === SEARCH_CONSOLE_HOST) return 'search-console';
+  if (GOOGLE_HOST.test(host)) return 'google-apps';
   return 'other';
 }
 
@@ -146,6 +169,7 @@ export function visitSource(url: URL, referer: string | null | undefined, siteOr
   return refCodeBucket(url.searchParams.get('ref')) ?? referrerBucket(referer, siteOrigin);
 }
 
+/** True for a request from one of our own automated checks. It is never counted as use. */
 export function isOwnCheck(userAgent: string | null | undefined): boolean {
   return OWN_CHECK_AGENT.test(userAgent ?? '');
 }

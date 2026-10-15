@@ -15,9 +15,9 @@ export const LOCAL_LINE = 'Your content never leaves the browser.';
 
 /**
  * What a tool page does send, said once in its questions: the name-only
- * counter of /tools/ping.mjs.
+ * page_seen counter of /theme.js and the one of /tools/ping.mjs.
  */
-export const COUNTER_LINE = 'After the page has loaded it makes one request: a counter that says the tool was used, with nothing of yours in it.';
+export const COUNTER_LINE = 'After the page has loaded it sends two counters at most, with nothing of yours in either: one says the page was seen, the other that the tool was used.';
 
 /** The tools, in the order the hub and the footer list them. */
 export const TOOLS = [

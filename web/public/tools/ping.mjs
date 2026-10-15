@@ -6,7 +6,8 @@
 // below, each of which the server also has to know (CLIENT_EVENTS in
 // web/src/funnel.ts). No cookie is sent, and the page neither waits for the
 // answer nor reads it. This is the only module of a tool page that makes a
-// request, and it is the whole of what the page sends after it has loaded.
+// request. Apart from it, a page sends one name after it has loaded: the
+// page_seen counter of /theme.js, which every page sends the same way.
 
 /** The names a page may report. Anything else is dropped before a request is made. */
 export const PING_EVENTS = Object.freeze([
@@ -16,6 +17,7 @@ export const PING_EVENTS = Object.freeze([
   'tool_verify',
   'tool_acceptance_rates',
   'template_copied',
+  'template_handoff',
   'mcp_command_copied',
 ]);
 

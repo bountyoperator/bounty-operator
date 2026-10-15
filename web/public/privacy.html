@@ -114,15 +114,17 @@ FINISH: Responsive layout, native video controls, captions, reduced motion and v
 <div class="prose">
 <p>Page views and named actions are counted in aggregate. We do the counting ourselves and keep one number per day for each of these:</p>
 <ul>
+<li>pages seen: each page reports once that it has loaded and is on screen, unless the browser says automation is driving it</li>
 <li>page views per path, and each day’s total of the views a browser asked for as a page, which the request’s own headers say</li>
-<li>the referring site, from a fixed list: search engines, X, GitHub, Hacker News, Reddit, the bounty platforms, and the assistants ChatGPT, Perplexity, Claude, Copilot and Gemini. Any other site counts as “other”</li>
+<li>the referring site, from a fixed list: search engines, X, GitHub, Hacker News, Reddit, the bounty platforms, the MCP and skills directories glama.ai, mcpnav.net, mcpservers.org, mcpmarket.com, skillsmp.com and skillsdirectory.com, the Disclosed newsletter, and the assistants ChatGPT, Perplexity, Claude, Copilot and Gemini. Google Search, Google Search Console and Google’s other sites each count apart. Any other site counts as “other”</li>
 <li>sign-ups and sign-ins</li>
 <li>completed reviews per profile, failed reviews per kind of failure, and answers withheld per profile</li>
 <li>daily-limit hits, checkouts started and subscriptions activated</li>
-<li>named actions a page reports from a fixed list: an example loaded, a prompt exported, a reply pasted, a packet saved, a repository imported, the sign-in opened, the upgrade button pressed, a gauntlet or a panel started and finished, a free tool run, a template copied, an MCP command copied</li>
+<li>named actions a page reports from a fixed list: an example loaded, a prompt exported, a reply pasted, a packet saved, a repository imported, the sign-in opened, the upgrade button pressed, a gauntlet or a panel started and finished, a free tool run, a template copied, an MCP command copied, a template draft passed to the review, a Create a free account button pressed</li>
 <li>on the MCP endpoint: sessions opened, tool calls per tool, and calls turned away at the limit. A session is counted under the kind of agent that opened it, from a fixed list: Claude, Codex, Cursor, or “other”. A registry or a monitor is counted apart</li>
 </ul>
-<p>A page reports an action by its name and sends nothing with it. On a free tool, a template page and the MCP page that counter is the only request your action causes: what you paste or drop there never leaves the browser.</p>
+<p>A page reports an action by its name and sends nothing with it, and it reports that it was seen the same way. On a free tool, a template page and the MCP page that counter is the only request your action causes: what you paste or drop there never leaves the browser.</p>
+<p>Our own automated checks name themselves in each request. Their page views, named actions, MCP sessions and tool calls, sign-ups, sign-ins and checkouts are not counted.</p>
 <p>A counter holds a date, a name and a total. It holds no account identifier, no IP address and no cookie value. Counters older than 400 days are deleted.</p></div>
 </section><section class="docs-section" aria-labelledby="third-parties">
 <h2 class="docs-section__title" id="third-parties">Cloudflare, GitHub, OpenRouter and MCP</h2>

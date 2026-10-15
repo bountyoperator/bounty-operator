@@ -42,7 +42,7 @@ import {
 } from './billing.ts';
 import { VERSION, seconds } from './env.ts';
 import type { Call, Env } from './env.ts';
-import { CLIENT_EVENTS, count, isBot } from './funnel.ts';
+import { CLIENT_EVENTS, count, isBot, isOwnCheck } from './funnel.ts';
 import { METHOD_SOURCE, missingMethods } from './hosted.ts';
 import { ApiError, aliasRedirect, canonicalRedirect, compressPage, errorResponse, finalize, internalError, json, pageRedirect, readJson, redirectResponse } from './http.ts';
 import { mcpEndpoint, serverCardEndpoint } from './mcp.ts';
@@ -232,8 +232,8 @@ function billingRoute(limitKey: string, max: number, handler: SessionHandler): H
   });
 }
 
-const checkout = billingRoute('billing', BILLING_REQUESTS_PER_10_MIN, async ({ env, ctx }, session) =>
-  json({ url: await createCheckout(env, ctx, session.account_id) }),
+const checkout = billingRoute('billing', BILLING_REQUESTS_PER_10_MIN, async ({ env, ctx, request }, session) =>
+  json({ url: await createCheckout(env, ctx, session.account_id, isOwnCheck(request.headers.get('user-agent'))) }),
 );
 
 const billingPortal = billingRoute('billing', BILLING_REQUESTS_PER_10_MIN, async ({ env }, session) =>
