@@ -866,6 +866,35 @@ test('on the stream path, an answer that is not a stream is read as JSON: an ear
   assert.equal(result.structuredContent.verdict, 'prove-first');
 });
 
+test('a server on the stream path that never sends headers is a timeout, not an unreachable server', async (t) => {
+  // A server that answers this review as JSON, or a proxy that holds the
+  // stream, leaves Node's fetch waiting for headers it gives up on after 300
+  // seconds. The review was reserved and may be running.
+  const headersTimeout = async () => {
+    throw Object.assign(new TypeError('fetch failed'), { cause: Object.assign(new Error('Headers Timeout Error'), { code: 'UND_ERR_HEADERS_TIMEOUT' }) });
+  };
+  const waited = failure(await server({ fetch: headersTimeout, env: BO_ENV }).tool('run_review', BO_ARGS));
+  assert.equal(waited.code, 'timeout');
+  assert.equal(waited.error, `Bounty Operator did not answer within ${TIMEOUT_MS / 1000} seconds. Call account to see whether the review was counted.`);
+
+  // The same failure without a code, told apart by how long the call waited.
+  t.mock.timers.enable({ apis: ['Date'], now: Date.now() });
+  const silent = async () => {
+    t.mock.timers.tick(295000);
+    throw new TypeError('fetch failed');
+  };
+  assert.equal(failure(await server({ fetch: silent, env: BO_ENV }).tool('run_review', BO_ARGS)).code, 'timeout');
+  t.mock.timers.reset();
+
+  // A server that is not there answers at once, and still says so.
+  const down = async () => {
+    throw new TypeError('fetch failed');
+  };
+  const unreachable = failure(await server({ fetch: down, env: BO_ENV }).tool('run_review', BO_ARGS));
+  assert.equal(unreachable.code, 'network');
+  assert.match(unreachable.error, /^Bounty Operator could not be reached/);
+});
+
 test('progress keeps one rising count when its message changes, and says nothing after the call', async (t) => {
   t.mock.timers.enable({ apis: ['setInterval'] });
   let stream;

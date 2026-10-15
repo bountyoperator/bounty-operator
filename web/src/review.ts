@@ -74,7 +74,8 @@ export const STARTING_STATUS = Object.freeze({
   state: 'starting',
   message: `Starting the model. The first request after a quiet spell can take up to ${STARTUP_MS / 60000} minutes; you are not charged for the wait.`,
 });
-// A reader that disconnects after this much of a streamed review has had a review.
+// A browser that disconnects after this much of a streamed review has had a
+// review: the text was on screen as it arrived.
 // The same length decides whether an answer the provider cut short counts.
 const COUNTED_AFTER_CHARS = 2000;
 
@@ -686,11 +687,14 @@ export async function streamHostedReview({ env, ctx, request }: Call, accountId:
       await writer.close();
     } catch (error) {
       abort.abort();
-      // Text the reader already holds is a review once it passes COUNTED_AFTER_CHARS,
+      // Text the browser already holds is a review once it passes COUNTED_AFTER_CHARS,
       // whether the reader left or the provider failed after writing it. A policy
-      // block is never one.
+      // block is never one. Over MCP the deltas are held back and only the
+      // outcome reaches the caller, so a stream that never reached `done` showed
+      // nothing and is not counted, as collectHostedReview does.
       const policy = error instanceof ProviderError && error.kind === 'policy';
-      settle(delivered >= COUNTED_AFTER_CHARS && !policy, failureReason(error, clientGone));
+      const seen = channel === 'web' && delivered >= COUNTED_AFTER_CHARS;
+      settle(seen && !policy, failureReason(error, clientGone));
       if (!finished && !clientGone) {
         await send(sseEvent('error', errorBody(reviewFailure(error)))).catch(() => {});
       }

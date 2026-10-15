@@ -361,6 +361,7 @@ function providerStream(init) {
     response: new Response(stream, { headers: { 'Content-Type': 'text/event-stream' } }),
     push: (text) => controller.enqueue(encoder.encode(text)),
     close: () => controller.close(),
+    fail: (error) => controller.error(error),
     signal: init.signal,
   };
 }
@@ -1197,6 +1198,58 @@ test('a client that leaves after most of the review arrived has used its review'
   await ctx.settled();
 
   assert.deepEqual(reviews(env), [{ status: 'completed', profile: 'solidity', channel: 'web' }]);
+});
+
+test('an mcp caller that leaves after most of the review was written has not used its review', async (t) => {
+  let provider;
+  const { env, ctx, call, disconnect } = setup(t, (init) => {
+    provider = providerStream(init);
+    return provider.response;
+  });
+
+  const response = await streamHostedReview(call, ACCOUNT, parseReviewRequest(body()), 'mcp');
+  const reader = response.body.getReader();
+  provider.push(chunk('x'.repeat(2500)));
+  await reader.read();
+
+  disconnect.abort();
+  await reader.cancel();
+  await ctx.settled();
+
+  // The MCP client holds the deltas back and hands the caller the outcome
+  // alone, so a stream that never reached done showed the caller nothing.
+  assert.deepEqual(reviews(env), [{ status: 'failed', profile: 'solidity', channel: 'mcp' }]);
+  assert.deepEqual(funnelCounts(env.DB), { review_fail: 1, 'review_fail:client_gone': 1 });
+});
+
+test('a provider that drops the connection after most of the review counts on the web and not over mcp', async (t) => {
+  const dropped = async (channel) => {
+    let provider;
+    const { env, ctx, call } = setup(t, (init) => {
+      provider = providerStream(init);
+      return provider.response;
+    });
+
+    const response = await streamHostedReview(call, ACCOUNT, parseReviewRequest(body()), channel);
+    const reader = response.body.getReader();
+    provider.push(chunk('x'.repeat(2500)));
+    await reader.read();
+
+    provider.fail(new TypeError('terminated'));
+    await reader.cancel();
+    await ctx.settled();
+    return { reviews: reviews(env), counts: funnelCounts(env.DB) };
+  };
+
+  // The browser has the 2,500 characters on screen; the MCP caller has nothing.
+  assert.deepEqual(await dropped('web'), {
+    reviews: [{ status: 'completed', profile: 'solidity', channel: 'web' }],
+    counts: { 'review_ok:solidity': 1 },
+  });
+  assert.deepEqual(await dropped('mcp'), {
+    reviews: [{ status: 'failed', profile: 'solidity', channel: 'mcp' }],
+    counts: { review_fail: 1, 'review_fail:provider_network': 1 },
+  });
 });
 
 // ---------------------------------------------------------------------------

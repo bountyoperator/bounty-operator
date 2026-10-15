@@ -21,6 +21,10 @@ export const TIMEOUT_MS = 300000;
 // room for transport. The stream opens at once and a keep-alive arrives every
 // 15 seconds or less, so Node's header and body limits never end it.
 export const STREAM_TIMEOUT_MS = 960000;
+// Node's fetch gives up on response headers after 300 seconds. On the stream
+// path this server waits far longer, so a request that fails with nothing
+// received this long after it was sent waited for headers that never came.
+const HEADERS_WAIT_MS = 290000;
 const RESPONSE_BYTES = 4000000;
 // A stream wraps every piece of the review in its own event and ends with the
 // whole review again, so its wire size is several times the text.
@@ -89,6 +93,7 @@ export async function hostedCall(ctx, path, body, { stream = false, onStatus } =
   let response;
   let text;
   let outcome = null;
+  const sentAt = Date.now();
   try {
     response = await ctx.fetch(origin + path, {
       method: sent === undefined ? 'GET' : 'POST',
@@ -108,6 +113,12 @@ export async function hostedCall(ctx, path, body, { stream = false, onStatus } =
     if (ctx.signal?.aborted) throw new ToolError('The call was cancelled.', 'cancelled');
     if (timeout.aborted) {
       throw new ToolError(`Bounty Operator did not answer within ${limitMs / 1000} seconds. Call account to see whether the review was counted.`, 'timeout');
+    }
+    if (stream && headersGaveUp(error, sentAt)) {
+      // A server that answers this review as JSON instead of a stream: the
+      // review was reserved and may be running, so the call waited rather than
+      // failed to reach the server, and calling again would start a second one.
+      throw new ToolError(`Bounty Operator did not answer within ${TIMEOUT_MS / 1000} seconds. Call account to see whether the review was counted.`, 'timeout');
     }
     if (response) {
       throw new ToolError('The connection to Bounty Operator closed before its answer was complete. Call again; after run_review, call account first to see whether the review was counted.', 'network');
@@ -134,6 +145,13 @@ export async function hostedCall(ctx, path, body, { stream = false, onStatus } =
   }
   if (!isObject) throw new ToolError('Bounty Operator returned an answer this server cannot read.', 'hosted');
   return data;
+}
+
+/** True when a failed request waited for response headers that never arrived. */
+function headersGaveUp(error, sentAt) {
+  const cause = error instanceof Error ? error.cause : null;
+  if (cause && typeof cause === 'object' && cause.code === 'UND_ERR_HEADERS_TIMEOUT') return true;
+  return Date.now() - sentAt >= HEADERS_WAIT_MS;
 }
 
 /** The ToolError for an error body: `{ error, code?, ...extra }`, from JSON or an `error` event. */
