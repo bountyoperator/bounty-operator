@@ -25,7 +25,12 @@ const CAPABILITIES = ['text', 'tools', 'streaming', 'reasoning', 'structured_out
 const BODY_BYTES = 8 * 1024 * 1024;
 const RESPONSE_BYTES = 8 * 1024 * 1024;
 const REQUEST_MS = 300000;
-const STARTUP_MS = 600000;
+// How long a hosted worker may take to start. A streamed review tells the
+// reader this figure while it waits.
+export const STARTUP_MS = 600000;
+// A worker whose first health probe has not answered 200 by then is starting.
+// A warm worker answers its probe at once.
+const STARTING_AFTER_MS = 5000;
 const encoder = new TextEncoder();
 
 // Managed alias metadata was checked against the providers' public catalogs
@@ -547,7 +552,7 @@ async function generate(call: Call, model: InferenceModel, parsed: ReturnType<ty
     await markSupplierDispatched(call.env, id);
     // Warm only a Runpod health endpoint. A generation is submitted exactly once,
     // after readiness, so retrying a cold start cannot duplicate paid work.
-    if (isRunpod(model.endpoint)) await readyWorker(model, call.env, controller.signal);
+    if (isRunpod(model.endpoint)) await readyWorker(model, call.env, controller.signal, call.onStarting);
     clearTimeout(timer);
     timer = setTimeout(() => controller.abort(), REQUEST_MS);
     const upstream = await fetch(`${model.endpoint}/v1/chat/completions`, {
@@ -661,31 +666,51 @@ async function generate(call: Call, model: InferenceModel, parsed: ReturnType<ty
   }
 }
 
-async function readyWorker(model: InferenceModel, env: Env, signal: AbortSignal): Promise<void> {
-  // Use the full startup allowance. A fixed count of three 60-second probes
-  // stopped slower models after about three minutes, before the deadline.
-  while (!signal.aborted) {
-    let status = 0;
-    try {
-      const response = await fetch(`${model.endpoint}/health`, {
-        headers: { Authorization: `Bearer ${env.RUNPOD_API_KEY}` }, redirect: 'manual',
-        signal: AbortSignal.any([signal, AbortSignal.timeout(60000)]),
+/**
+ * Probes the worker until it is up. `onStarting` runs at most once, when the
+ * worker is found to be starting: its first probe has not answered 200 within
+ * STARTING_AFTER_MS, or a probe answered that it is not ready yet (5xx, 408,
+ * 429 or no answer). A warm worker, a paused account and a probe that can
+ * never succeed never call it.
+ */
+async function readyWorker(model: InferenceModel, env: Env, signal: AbortSignal, onStarting?: () => void): Promise<void> {
+  let told = false;
+  const starting = (): void => {
+    if (told || signal.aborted) return;
+    told = true;
+    try { onStarting?.(); } catch { /* The caller's notice never stops the start. */ }
+  };
+  const notice = onStarting ? setTimeout(starting, STARTING_AFTER_MS) : null;
+  try {
+    // Use the full startup allowance. A fixed count of three 60-second probes
+    // stopped slower models after about three minutes, before the deadline.
+    while (!signal.aborted) {
+      let status = 0;
+      try {
+        const response = await fetch(`${model.endpoint}/health`, {
+          headers: { Authorization: `Bearer ${env.RUNPOD_API_KEY}` }, redirect: 'manual',
+          signal: AbortSignal.any([signal, AbortSignal.timeout(60000)]),
+        });
+        await response.body?.cancel();
+        status = response.status;
+      } catch { if (signal.aborted) break; }
+      // A 200 says this worker answers, not that the account is funded, so it
+      // notes nothing: only the hosting API can open payments.
+      if (status === 200) return;
+      // The hosting account has run out: no worker will start until it is replenished.
+      if (status === 402) { workerPaused = { at: Date.now(), key: env.RUNPOD_API_KEY ?? '' }; throw new ApiError(PAUSED_MESSAGE, 503, 'inference_paused', { retryAfter: 300 }); }
+      // Wrong credentials or a changed URL cannot be repaired by warming.
+      if (status > 0 && status < 500 && status !== 429 && status !== 408) break;
+      // Anything else is a worker that is not up yet.
+      starting();
+      if (!signal.aborted) await new Promise<void>((resolve) => {
+        const finish = () => { clearTimeout(delay); signal.removeEventListener('abort', finish); resolve(); };
+        const delay = setTimeout(finish, 15000);
+        signal.addEventListener('abort', finish, { once: true });
       });
-      await response.body?.cancel();
-      status = response.status;
-    } catch { if (signal.aborted) break; }
-    // A 200 says this worker answers, not that the account is funded, so it
-    // notes nothing: only the hosting API can open payments.
-    if (status === 200) return;
-    // The hosting account has run out: no worker will start until it is replenished.
-    if (status === 402) { workerPaused = { at: Date.now(), key: env.RUNPOD_API_KEY ?? '' }; throw new ApiError(PAUSED_MESSAGE, 503, 'inference_paused', { retryAfter: 300 }); }
-    // Wrong credentials or a changed URL cannot be repaired by warming.
-    if (status > 0 && status < 500 && status !== 429 && status !== 408) break;
-    if (!signal.aborted) await new Promise<void>((resolve) => {
-      const finish = () => { clearTimeout(delay); signal.removeEventListener('abort', finish); resolve(); };
-      const delay = setTimeout(finish, 15000);
-      signal.addEventListener('abort', finish, { once: true });
-    });
+    }
+  } finally {
+    if (notice !== null) clearTimeout(notice);
   }
   throw new ApiError('The model is still starting or temporarily unavailable. No charge was made. Try again shortly.', 503, 'model_unavailable', { retryAfter: 30 });
 }

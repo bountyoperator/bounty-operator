@@ -83,7 +83,9 @@ export function failure(result) {
 
 /**
  * A stand-in for fetch. `routes` maps "METHOD /path" to a function of the
- * parsed request returning `{ status?, body }`. Every call is recorded.
+ * parsed request returning `{ status?, body, headers? }`. A string or a
+ * ReadableStream body is sent as it is, anything else as JSON. Every call is
+ * recorded.
  */
 export function fakeFetch(routes) {
   const calls = [];
@@ -100,10 +102,40 @@ export function fakeFetch(routes) {
     calls.push(request);
     const route = routes[`${request.method} ${pathname}`];
     if (!route) return new Response('not found', { status: 404 });
-    const { status = 200, body } = await route(request);
-    return new Response(typeof body === 'string' ? body : JSON.stringify(body), { status });
+    const { status = 200, body, headers } = await route(request);
+    return new Response(typeof body === 'string' || body instanceof ReadableStream ? body : JSON.stringify(body), { status, headers });
   };
   return { fetch, calls };
+}
+
+/**
+ * A server-sent event stream the test writes to by hand: `send(event, data)`,
+ * `comment()`, `end()`. It errors when the request is aborted, as a dropped
+ * connection would.
+ */
+export function eventStream(signal) {
+  const encoder = new TextEncoder();
+  let controller;
+  const body = new ReadableStream({
+    start(streamController) {
+      controller = streamController;
+    },
+  });
+  signal?.addEventListener('abort', () => {
+    try {
+      controller.error(signal.reason);
+    } catch {
+      // Already closed.
+    }
+  }, { once: true });
+  return {
+    body,
+    headers: { 'Content-Type': 'text/event-stream; charset=utf-8' },
+    send: (event, data) => controller.enqueue(encoder.encode(`event: ${event}\ndata: ${typeof data === 'string' ? data : JSON.stringify(data)}\n\n`)),
+    comment: () => controller.enqueue(encoder.encode(': keep-alive\n\n')),
+    raw: (text) => controller.enqueue(encoder.encode(text)),
+    end: () => controller.close(),
+  };
 }
 
 /**

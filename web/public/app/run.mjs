@@ -507,6 +507,13 @@ export async function runReview(options = {}) {
       acknowledgeWarnings: options.acknowledge === true || (coverage.warnings > 0 && accepted),
     }, {
       signal: controller.signal,
+      // A hosted model that is starting can take minutes: the Worker says so,
+      // and the line holds until the review starts arriving. The state leads
+      // the label, which is cut at its end on a narrow screen.
+      onStatus: (status) => {
+        liveState('running', status ? `Starting the model · ${request.model}` : request.model);
+        say(status ? status.message : 'Review running.', { hold: true });
+      },
       onDelta: (delta) => {
         if (!started) {
           started = true;

@@ -112,8 +112,24 @@ refuse redirects and accept at most 2 MB of review text. Streamed calls normally
 300 seconds for generation and 30 seconds of transport margin. Headers alone do not
 shorten that initial wait; after the first body bytes, the usual 180-second inactivity
 limit applies. The review reservation is renewed while the model warms, and caller
-cancellation stops the provider request. The separate single-answer hosted route keeps
-its 270-second limit.
+cancellation stops the provider request. The single-answer hosted route keeps its
+270-second limit for other providers; a Bounty Operator review on it is collected from
+the stream.
+
+The browser's streamed review (`stream: true`) opens its `text/event-stream` as soon
+as the review is reserved, without waiting for the provider. Until the provider accepts
+the request the Worker writes a `: keep-alive` comment every 15 seconds. A Bounty
+Operator review on a model that runs on a GPU worker started on demand gets one
+`status` event, `{ state: 'starting', message }`, when the Model API finds that worker
+starting: its first health probe has not answered within 5 seconds, or answered that it
+is not ready. A warm worker, a gateway-hosted model and any other provider never send
+one. The app shows the message as its status line until the first text arrives, or
+until the stream ends. Once the stream is open, a provider error, including a model
+that did not start, is an `error` event; problems found before the reservation
+(inputs, privacy, plan, allowance) are still JSON errors. The stream is sent with
+`Cache-Control: no-store, no-transform`. The browser waits up to 960 seconds for the
+first bytes, which covers the 930-second allowance behind a proxy that buffers, then
+60 seconds between them.
 
 Source files, instructions, provider keys and review text are held in memory for
 the length of the request. D1 stores accounts, passkey public keys, hashed
@@ -234,7 +250,7 @@ profile.
 | `GET /api/profiles` | The listed profiles: name, description, inputs, output section titles and `hosted`. |
 | `GET /api/account` | Session state, usage, plan, limits and the CSRF token. |
 | `POST /api/review` | Run a review. JSON, or server-sent events when `stream` is true. |
-| `POST /api/client/review` | The same review for a `bok_` connection token. JSON only. |
+| `POST /api/client/review` | The same review for a `bok_` connection token. JSON, or server-sent events when `stream` is true; the local MCP server asks for the stream on a Bounty Operator model. |
 | `GET /api/client/account` | Usage for a connection token. |
 | `POST /api/mcp` | Stateless MCP over HTTP (JSON-RPC 2.0). |
 | `POST /api/event` | Aggregate funnel counter. Whitelisted event names, no account id. |

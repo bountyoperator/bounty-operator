@@ -138,7 +138,7 @@ FINISH: Responsive layout, native video controls, captions, reduced motion and v
 </span><span class="code__line">env_vars = [&quot;BOUNTY_OPERATOR_TOKEN&quot;, &quot;OPENROUTER_API_KEY&quot;]
 </span><span class="code__line">tool_timeout_sec = 1200
 </span></code></pre></figure>
-<p class="fine">Codex stops a tool call after 60 seconds by default, so keep the <code>tool_timeout_sec</code> line: 1200 seconds is above the longest hosted review. On the remote endpoint a hosted review runs until the model finishes, for up to 15 minutes, and sends progress every 10 seconds. Through the local server it ends within 270 seconds.</p></div></div></details>
+<p class="fine">Codex stops a tool call after 60 seconds by default, so keep the <code>tool_timeout_sec</code> line: 1200 seconds is above the longest hosted review. On the remote endpoint a hosted review runs until the model finishes, for up to 15 minutes, and sends progress every 10 seconds. Through the local server it ends within 270 seconds, or runs for up to 15 minutes on a Bounty Operator model, whose first request after a quiet spell can wait up to 10 minutes for the model to start.</p></div></div></details>
 </div><div class="install__panel" id="panel-cursor">
 <h3 class="install__client">Cursor</h3>
 <div class="install__route">

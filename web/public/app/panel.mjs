@@ -401,7 +401,7 @@ function sleep(ms, signal) {
   });
 }
 
-async function runSeat(seat, index, { state, profile, mode, acknowledge, live, signal }) {
+async function runSeat(seat, index, { state, profile, mode, acknowledge, live, signal, onStatus }) {
   const cached = held.records[seatKey(seat)];
   if (cached) {
     live.start(seat.model);
@@ -424,7 +424,15 @@ async function runSeat(seat, index, { state, profile, mode, acknowledge, live, s
         context: state.context,
         mode,
         acknowledgeWarnings: acknowledge,
-      }, { signal, onDelta: live.write });
+      }, {
+        signal,
+        // A hosted model that is starting can take minutes: the seat and the status line say so until its review starts arriving.
+        onStatus: (status) => {
+          live.status(status);
+          onStatus?.(status);
+        },
+        onDelta: live.write,
+      });
       if (result.refused || blockOf(result)) throw declined(result);
 
       const record = seatRecord({ number: index + 1, provider: seat.provider, model: seat.model, review: result.review, usage: result.usage, elapsed: Date.now() - began });
@@ -436,6 +444,7 @@ async function runSeat(seat, index, { state, profile, mode, acknowledge, live, s
       live.end('done', seat.model, VERDICT_LABELS[record.verdict] ?? 'Done');
       return record;
     } catch (error) {
+      onStatus?.(null);
       // Another tab holds a slot: wait for it instead of failing the seat.
       if (error?.code === 'review_running' && attempt < SLOT_RETRIES && !signal.aborted) {
         live.end('queued', `${seat.model} · waiting for a free slot`, 'Waiting');
@@ -529,12 +538,30 @@ export async function runPanel(options = {}) {
   setBusy(runButton, true, 'Running');
   runButton.after(button({ label: 'Cancel', id: 'wb-panel-cancel', variant: 'quiet', icon: 'x', onClick: () => controller?.abort() }));
   if (fresh) track(EVENTS.PANEL_STARTED);
-  say(`Panel running: ${chosen.length} models on ${profile.name}.`, { hold: true });
+  const running = `Panel running: ${chosen.length} models on ${profile.name}.`;
+  say(running, { hold: true });
   const startedAt = Date.now();
+  // The seats whose hosted model is starting, with what the Worker said. The
+  // status line carries it while any of them is still waiting.
+  const starting = new Map();
+  const seatStatus = (index, status) => {
+    if (status) starting.set(index, status.message);
+    else if (!starting.delete(index)) return;
+    const message = starting.values().next().value;
+    say(message ? `${running} ${message}` : running, { hold: true });
+  };
 
   const current = await account().catch(() => currentAccount());
   const limit = Math.min(CONCURRENCY, Number(current.usage?.concurrency) || CONCURRENCY);
-  const outcomes = await runPool(chosen, limit, (seat, index) => runSeat(seat, index, { state, profile, mode, acknowledge, live: boxes[index], signal }));
+  const outcomes = await runPool(chosen, limit, (seat, index) => runSeat(seat, index, {
+    state,
+    profile,
+    mode,
+    acknowledge,
+    live: boxes[index],
+    signal,
+    onStatus: (status) => seatStatus(index, status),
+  }));
 
   const answered = outcomes.map((outcome) => Boolean(outcome && 'value' in outcome));
   const failed = outcomes.map((outcome, index) => ({ outcome, index })).filter(({ outcome }) => !outcome || 'error' in outcome);
@@ -600,7 +627,8 @@ export async function runPanel(options = {}) {
   merge.box.classList.add('rn-stream--wide');
   liveRoot.append(merge.box);
   merge.start(`Cross-examination · ${judgeSeat.model}`);
-  say(`Panel running: ${judgeSeat.model} cross-examines ${records.length} reviews.`, { hold: true });
+  const judging = `Panel running: ${judgeSeat.model} cross-examines ${records.length} reviews.`;
+  say(judging, { hold: true });
 
   let result = null;
   let failure = null;
@@ -615,7 +643,14 @@ export async function runPanel(options = {}) {
       context: state.context,
       mode,
       acknowledgeWarnings: acknowledge || inputs.warnings > 0,
-    }, { signal, onDelta: merge.write });
+    }, {
+      signal,
+      onStatus: (status) => {
+        merge.status(status);
+        say(status ? `${judging} ${status.message}` : judging, { hold: true });
+      },
+      onDelta: merge.write,
+    });
     if (result.refused || blockOf(result)) failure = declined(result);
     else if (!parseReview(result.review).ok) {
       failure = Object.assign(new Error(result.truncated ? 'The answer was cut off before its verdict.' : 'The answer is not in the review format.'), { code: 'format' });

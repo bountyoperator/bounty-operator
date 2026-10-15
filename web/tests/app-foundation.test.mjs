@@ -894,6 +894,138 @@ describe('streamReview', () => {
     await assert.rejects(api.streamReview(REVIEW_BODY, {}, { firstByteMs: 30 }), (error) => error.code === 'timeout' && /did not start answering/.test(error.message));
   });
 
+  test('by default the first bytes may take as long as the Worker allows a hosted model to start and write', async (t) => {
+    // 600 s to start and 300 s to write, plus the Worker's 30 s margin: a proxy that buffers delivers it all at the end.
+    for (const [wait, outcome] of [[930000, 'done'], [960000, 'timeout']]) {
+      const api = await loadApi();
+      t.mock.timers.reset();
+      t.mock.timers.enable({ apis: ['setTimeout'] });
+      let posted;
+      const reached = new Promise((resolve) => { posted = resolve; });
+      let answer;
+      mockFetch({
+        'GET /api/account': () => jsonResponse(ACCOUNT),
+        'POST /api/review': ({ init }) => new Promise((resolve, reject) => {
+          init.signal.addEventListener('abort', () => reject(abortError()), { once: true });
+          answer = () => resolve(sseResponse([sse('done', DONE)], { signal: init.signal }));
+          posted();
+        }),
+      });
+      const pending = api.streamReview(REVIEW_BODY).then((value) => ({ value }), (error) => ({ error }));
+      await reached;
+      t.mock.timers.tick(wait - 1);
+      await new Promise((resolve) => setImmediate(resolve));
+      if (outcome === 'done') {
+        answer();
+        assert.deepEqual(await pending, { value: DONE }, 'an answer after 15.5 minutes still arrives');
+      } else {
+        t.mock.timers.tick(1);
+        const { error } = await pending;
+        assert.equal(error.code, 'timeout', 'the browser gives up at 16 minutes');
+        assert.match(error.message, /did not start answering/);
+      }
+    }
+  });
+
+  test('a status before the review reaches onStatus, and null withdraws it when the text starts', async () => {
+    const api = await loadApi();
+    const starting = { state: 'starting', message: 'Starting the model. The first request after a quiet spell can take up to 10 minutes; you are not charged for the wait.' };
+    mockFetch({
+      'GET /api/account': () => jsonResponse(ACCOUNT),
+      'POST /api/review': ({ init }) =>
+        sseResponse(
+          [
+            sse('status', starting),
+            ': keep-alive\n\n',
+            ': keep-alive\n\n',
+            sse('delta', { text: DONE.review.slice(0, 10) }),
+            // A status once the review is arriving is old news: it is dropped.
+            sse('status', starting),
+            sse('delta', { text: DONE.review.slice(10) }),
+            sse('done', DONE),
+          ],
+          { signal: init.signal },
+        ),
+    });
+    const calls = [];
+    const result = await api.streamReview(REVIEW_BODY, {
+      onStatus: (status) => calls.push(['status', status]),
+      onDelta: (piece) => calls.push(['delta', piece]),
+    });
+    assert.deepEqual(result, DONE);
+    assert.deepEqual(calls, [
+      ['status', starting],
+      ['status', null],
+      ['delta', DONE.review.slice(0, 10)],
+      ['delta', DONE.review.slice(10)],
+    ]);
+  });
+
+  test('a status the client cannot use is ignored, and a review without one never hears onStatus', async () => {
+    for (const status of [{ state: 'starting' }, { message: 'No state.' }, { state: 'starting', message: '' }, 'not json']) {
+      const api = await loadApi();
+      mockFetch({
+        'GET /api/account': () => jsonResponse(ACCOUNT),
+        'POST /api/review': ({ init }) => sseResponse([typeof status === 'string' ? `event: status\ndata: ${status}\n\n` : sse('status', status), sse('delta', { text: DONE.review }), sse('done', DONE)], { signal: init.signal }),
+      });
+      const heard = [];
+      assert.deepEqual(await api.streamReview(REVIEW_BODY, { onStatus: (value) => heard.push(value) }), DONE);
+      assert.deepEqual(heard, [], JSON.stringify(status));
+    }
+  });
+
+  test('an error event after the stream opened and before any text fails with its code and no partial text', async () => {
+    const api = await loadApi();
+    mockFetch({
+      'GET /api/account': () => jsonResponse(ACCOUNT),
+      'POST /api/review': ({ init }) =>
+        sseResponse(
+          [
+            sse('status', { state: 'starting', message: 'Starting the model.' }),
+            ': keep-alive\n\n',
+            sse('error', { error: 'Provider had a server error (HTTP 503). Run the review again in a minute.', code: 'provider', kind: 'server' }),
+          ],
+          { signal: init.signal },
+        ),
+    });
+    const heard = [];
+    const result = await api.streamReview(REVIEW_BODY, { onStatus: (status) => heard.push(['status', status]), onError: (error) => heard.push(['error', error]) });
+    assert.equal(result, null);
+    assert.deepEqual(heard.map(([kind, value]) => (kind === 'error' ? kind : value)), [{ state: 'starting', message: 'Starting the model.' }, null, 'error'], 'the status is withdrawn before the failure is reported');
+    const failure = heard[2][1];
+    assert.equal(failure.code, 'provider');
+    assert.equal(failure.status, 0);
+    assert.deepEqual(failure.data, { kind: 'server' });
+  });
+
+  test('a stream that ends with no text withdraws its status: a done, or a dropped connection', async () => {
+    const starting = { state: 'starting', message: 'Starting the model.' };
+    const empty = { ...DONE, review: '' };
+    for (const [ending, events] of [
+      ['done', [sse('status', starting), ': keep-alive\n\n', sse('done', empty)]],
+      ['dropped', [sse('status', starting), ': keep-alive\n\n']],
+    ]) {
+      const api = await loadApi();
+      mockFetch({
+        'GET /api/account': () => jsonResponse(ACCOUNT),
+        'POST /api/review': ({ init }) => sseResponse(events, { signal: init.signal }),
+      });
+      const heard = [];
+      const result = await api.streamReview(REVIEW_BODY, {
+        onStatus: (status) => heard.push(status),
+        onDone: () => heard.push('done'),
+        onError: (error) => heard.push(error.code),
+      });
+      if (ending === 'done') {
+        assert.deepEqual(result, empty);
+        assert.deepEqual(heard, [starting, null, 'done'], 'null comes before onDone');
+      } else {
+        assert.equal(result, null);
+        assert.deepEqual(heard, [starting, null, 'stream_ended'], 'null comes before the failure');
+      }
+    }
+  });
+
   test('a signed-out visitor is refused before the files and the key are sent', async () => {
     const api = await loadApi();
     const calls = mockFetch({ 'GET /api/account': () => jsonResponse(SIGNED_OUT) });

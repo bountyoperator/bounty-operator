@@ -10,7 +10,7 @@ import type { Call, Env } from './env.ts';
 import { count } from './funnel.ts';
 import { instructionsFor, outputScanner } from './hosted.ts';
 import { ApiError, errorBody } from './http.ts';
-import { inferenceEndpoint } from './inference.ts';
+import { STARTUP_MS, inferenceEndpoint } from './inference.ts';
 import { LEASE_SECONDS, extendLease, finishReview, paidAccess, reserveReview } from './quota.mjs';
 
 export type Channel = 'web' | 'mcp';
@@ -62,7 +62,20 @@ const LEASE_RENEW_SECONDS = 60;
 // proxies from closing an idle stream, and a failed write is how the Worker
 // learns that the reader has gone when no abort signal arrives.
 const KEEP_ALIVE_MS = 5000;
-// A reader that disconnects after this much of a streamed review has had a review.
+// Until the provider accepts a streamed review, a comment line is written this
+// often. A hosted model can take ten minutes to start, far longer than a
+// browser or a proxy waits on a silent request.
+const WARMING_KEEP_ALIVE_MS = 15000;
+/**
+ * The `status` event a streamed review sends once, when the Model API finds
+ * that the model's worker is starting (Call.onStarting; see readyWorker).
+ */
+export const STARTING_STATUS = Object.freeze({
+  state: 'starting',
+  message: `Starting the model. The first request after a quiet spell can take up to ${STARTUP_MS / 60000} minutes; you are not charged for the wait.`,
+});
+// A browser that disconnects after this much of a streamed review has had a
+// review: the text was on screen as it arrived.
 // The same length decides whether an answer the provider cut short counts.
 const COUNTED_AFTER_CHARS = 2000;
 
@@ -371,8 +384,9 @@ function toResult(prepared: Prepared, review: string, answer: ProviderAnswer): R
 }
 
 function providerCall(call: Call, input: ReviewRequest, prepared: Prepared, signal: AbortSignal) {
+  // call.onStarting goes with the in-process call: the Model API knows when a worker is starting.
   const inProcess = input.provider === 'bountyoperator'
-    ? { fetch: (url: string, init?: RequestInit) => inferenceEndpoint({ request: new Request(url, init), env: call.env, ctx: call.ctx, url: new URL(url) }) }
+    ? { fetch: (url: string, init?: RequestInit) => inferenceEndpoint({ request: new Request(url, init), env: call.env, ctx: call.ctx, url: new URL(url), onStarting: call.onStarting }) }
     : {};
   return { provider: input.provider, model: input.model, apiKey: input.apiKey, prepared, signal, ...inProcess };
 }
@@ -536,14 +550,40 @@ async function* withKeepAlive<T>(source: AsyncIterable<T>, intervalMs: number): 
 }
 
 /**
+ * Waits for the provider to accept a streamed review. Until it does, `beat`
+ * runs every WARMING_KEEP_ALIVE_MS. It never runs after the provider has
+ * answered or failed.
+ */
+async function whileOpening<T>(opening: Promise<T>, beat: () => void): Promise<T> {
+  // The timer stays inside this function, so its type is whatever setInterval
+  // returns; see withKeepAlive.
+  const beats = setInterval(beat, WARMING_KEEP_ALIVE_MS);
+  try {
+    return await opening;
+  } finally {
+    clearInterval(beats);
+  }
+}
+
+/**
  * Runs a hosted review as server-sent events: `delta` {text} while the model
  * writes, then one `done` with the same body the JSON route returns, or one
  * `error` {error, code}. A review the provider blocked is a `done` with
  * `refused` and `blocked` set when the block came as an answer, and an error
  * with code `provider_policy` when it came as an error; neither is counted.
  *
- * Errors the provider reports before its first token (bad key, unknown model,
- * rate limit) are thrown, so the caller answers them as ordinary JSON errors.
+ * The stream opens as soon as the review is reserved, before the provider has
+ * answered: a hosted model can take ten minutes to start. Until the provider
+ * accepts the request a `: keep-alive` comment goes out every 15 seconds. A
+ * Bounty Operator review whose model the Model API finds starting gets one
+ * `status` event, STARTING_STATUS; a warm model and any other provider never
+ * send one. An error the provider reports before its first token (bad key,
+ * unknown model, rate limit, a model that did not start) is therefore an
+ * `error` event too.
+ *
+ * Errors found before anything is reserved or sent (paused reviews, the plan,
+ * the inputs, the allowance) are thrown, so the caller answers them as
+ * ordinary JSON errors.
  */
 export async function streamHostedReview({ env, ctx, request }: Call, accountId: string, input: ReviewRequest, channel: Channel): Promise<Response> {
   assertReviewsEnabled(env);
@@ -569,16 +609,6 @@ export async function streamHostedReview({ env, ctx, request }: Call, accountId:
     ctx.waitUntil(extendLease(env.DB, accountId, reviewId, now).catch(() => {}));
   };
 
-  let events: Awaited<ReturnType<typeof providerStream>>;
-  try {
-    events = await openProviderStream({ env, ctx, request, url: new URL(request.url) }, input, prepared, abort.signal, keepLease);
-  } catch (error) {
-    abort.abort();
-    request.signal.removeEventListener('abort', onDisconnect);
-    settle(false, failureReason(error, clientGone));
-    throw reviewFailure(error);
-  }
-
   const { readable, writable } = new TransformStream<Uint8Array, Uint8Array>();
   const writer = writable.getWriter();
   const encoder = new TextEncoder();
@@ -591,6 +621,26 @@ export async function streamHostedReview({ env, ctx, request }: Call, accountId:
       throw error;
     }
   };
+  // Not awaited: a write resolves only once the reader takes it, and the
+  // provider call must not wait for that. A write that fails still stops it.
+  const sendNow = (text: string): void => {
+    void send(text).catch(() => {});
+  };
+
+  // The Model API calls this when it finds the model's worker starting. It is
+  // said once, and only before the provider has accepted the review.
+  let opened = false;
+  let announced = false;
+  const onStarting = (): void => {
+    if (opened || announced) return;
+    announced = true;
+    sendNow(sseEvent('status', STARTING_STATUS));
+  };
+
+  // The provider call starts now, and the response does not wait for it. The
+  // pump reads the outcome; until then a failure is not an unhandled rejection.
+  const opening = openProviderStream({ env, ctx, request, url: new URL(request.url), onStarting }, input, prepared, abort.signal, keepLease);
+  opening.catch(() => {});
 
   // The answer of a hosted profile passes through the scanner, which holds
   // text back until it is known not to open a copy of the method.
@@ -613,6 +663,12 @@ export async function streamHostedReview({ env, ctx, request }: Call, accountId:
       delivered += text.length;
     };
     try {
+      const events = await whileOpening(opening, () => {
+        keepLease();
+        sendNow(': keep-alive\n\n');
+      }).finally(() => {
+        opened = true;
+      });
       for await (const event of withKeepAlive(events, KEEP_ALIVE_MS)) {
         keepLease();
         if (event === KEEP_ALIVE) {
@@ -631,11 +687,14 @@ export async function streamHostedReview({ env, ctx, request }: Call, accountId:
       await writer.close();
     } catch (error) {
       abort.abort();
-      // Text the reader already holds is a review once it passes COUNTED_AFTER_CHARS,
+      // Text the browser already holds is a review once it passes COUNTED_AFTER_CHARS,
       // whether the reader left or the provider failed after writing it. A policy
-      // block is never one.
+      // block is never one. Over MCP the deltas are held back and only the
+      // outcome reaches the caller, so a stream that never reached `done` showed
+      // nothing and is not counted, as collectHostedReview does.
       const policy = error instanceof ProviderError && error.kind === 'policy';
-      settle(delivered >= COUNTED_AFTER_CHARS && !policy, failureReason(error, clientGone));
+      const seen = channel === 'web' && delivered >= COUNTED_AFTER_CHARS;
+      settle(seen && !policy, failureReason(error, clientGone));
       if (!finished && !clientGone) {
         await send(sseEvent('error', errorBody(reviewFailure(error)))).catch(() => {});
       }
@@ -647,7 +706,9 @@ export async function streamHostedReview({ env, ctx, request }: Call, accountId:
   // waitUntil keeps the Worker alive to settle the reservation after the client has left.
   ctx.waitUntil(pump());
 
+  // no-store and no-transform: a cache or proxy on the way must neither keep
+  // the stream nor hold it back to rewrite it.
   return new Response(readable, {
-    headers: { 'Content-Type': 'text/event-stream; charset=utf-8', 'X-Accel-Buffering': 'no' },
+    headers: { 'Content-Type': 'text/event-stream; charset=utf-8', 'Cache-Control': 'no-store, no-transform', 'X-Accel-Buffering': 'no' },
   });
 }
