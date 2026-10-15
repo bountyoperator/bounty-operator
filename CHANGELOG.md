@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.9.18 — 2026-10-15
+
+Site
+
+- New visitors see Sign up in the header, and it opens Create your account
+  with what a free account gets you: Triager simulation, Prior-art overlap and
+  six more checks a chat app can't run, once a day on your own AI key, plus a
+  token for your coding agent. A browser that has signed in before still sees
+  Sign in.
+- On a phone the header is one row with a Menu button, so every page starts
+  higher on the screen.
+- The home page says plainly what works with no account and what a free
+  account adds. After the example or a review, the next step offers a free
+  account when the next check needs one.
+- The report templates point to the review near the top, not only at the end,
+  and after you copy one. The Immunefi template notes that recent audit
+  competitions and some bounties charge a fee for every report.
+- New template: GitHub private vulnerability report, following GitHub's new
+  structured form.
+- /mcp leads to a free account and a token in one step. The passkey notice now
+  helps on computers with no built-in passkey (scan the code with your phone,
+  or use 1Password, Bitwarden or a security key).
+
 ## 0.9.17 — 2026-10-15
 
 Security
