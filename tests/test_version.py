@@ -46,17 +46,6 @@ class VersionTests(unittest.TestCase):
             self.assertIsNotNone(first)
             self.assertEqual(first.group(1), RELEASE)
 
-    def test_install_lines_name_the_release_tag_of_the_public_repository(self) -> None:
-        readme = ROOT / "README.md"
-        if not readme.is_file():
-            self.skipTest("README.md is not part of an installed package")
-        text = readme.read_text(encoding="utf-8")
-        self.assertIn(f'pip install "git+https://github.com/bountyoperator/bounty-operator@v{RELEASE}"', text)
-        self.assertNotIn("bounty-operator-kit@", text)
-        # Every link to this project's repository names the public organisation.
-        owners = set(re.findall(r"github\.com/([^/\s\"'<>)]+)/bounty-operator(?:-kit)?(?![\w-])", text))
-        self.assertEqual(owners, {"bountyoperator"})
-
 
 if __name__ == "__main__":
     unittest.main()

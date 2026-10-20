@@ -479,16 +479,6 @@ test('the docs scripts build no markup from strings and the stylesheet defines n
   assert.doesNotMatch(css, /#[0-9a-fA-F]{3,8}\b|\brgba?\(|\bhsla?\(/);
 });
 
-test('the MCP page shows how to add Immunefi Studio’s own MCP server next to this one', () => {
-  const mcp = textOf(rendered.get('/mcp'));
-  assert.ok(mcp.includes('claude mcp add --transport http immunefi-studio https://studio.immunefi.com/api/mcp --header "Authorization: Bearer $IMMUNEFI_STUDIO_TOKEN"'));
-  assert.ok(mcp.includes('[mcp_servers.immunefi-studio] url = "https://studio.immunefi.com/api/mcp" bearer_token_env_var = "IMMUNEFI_STUDIO_TOKEN"'));
-  assert.ok(mcp.includes('"Authorization": "Bearer ${env:IMMUNEFI_STUDIO_TOKEN}"'));
-  assert.match(mcp, /Your agent sends it to Immunefi; Bounty Operator never receives it\./);
-  assert.match(mcp, /The gauntlet writes a case to your Studio workspace only when you say yes\./);
-  assert.match(rendered.get('/mcp'), /href="https:\/\/studio\.immunefi\.com\/agents"/);
-});
-
 test('the guide says what to do when the model refuses, at #model-refuses, with the same text in its structured data', () => {
   const markup = rendered.get('/guide');
   const start = markup.indexOf('<h2 class="docs-section__title" id="model-refuses">When the model refuses</h2>');

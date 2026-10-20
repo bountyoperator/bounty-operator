@@ -125,7 +125,7 @@ each client: [bountyoperator.com/mcp](https://bountyoperator.com/mcp) and
 Python 3.10 or newer. No dependencies.
 
 ```bash
-pip install "git+https://github.com/bountyoperator/bounty-operator@v0.9.19"
+pip install "git+https://github.com/bountyoperator/bounty-operator@v0.9.20"
 bounty-kit agent-pack ./agent-pack.md --target "Example Protocol" --program "Example bounty"
 ```
 
@@ -228,13 +228,13 @@ The gauntlet needs a connection token and a provider key. Set `BOUNTY_OPERATOR_T
 
 The three review skills carry their full method and run on your own model with no account. The hosted stages run on the Bounty Operator server and are not in this repository.
 
-On an Immunefi programme, add Immunefi Studio's own MCP server next to this one. With it connected, the gauntlet and the report challenge find the programme with its `list_programs` tool and, with Instascope access, read the deployed contract's proxy history and live state, and pass what those tools return to the review as files. Create a personal access token at [studio.immunefi.com/agents](https://studio.immunefi.com/agents), then:
+On an Immunefi programme, add Immunefi Studio's official MCP server next to this one. The report challenge and gauntlet resolve the programme with `list_programs`, which returns names and slugs—not scope or rules. They collect the official programme terms separately. With existing Blueprint access, they read the relevant report sections and cited source files for the finding's chain and keep them as evidence, not proof. The gauntlet also reads Instascope's captured state and proxy history when available, preserving stale or missing-data warnings. [The setup guide](https://bountyoperator.com/mcp#immunefi) explains the tools and access limits. If Studio is not already connected, create a personal access token at [studio.immunefi.com/agents](https://studio.immunefi.com/agents), then:
 
 ```bash
 claude mcp add --transport http immunefi-studio https://studio.immunefi.com/api/mcp --header "Authorization: Bearer $IMMUNEFI_STUDIO_TOKEN"
 ```
 
-The token goes from your agent to Immunefi; Bounty Operator never receives it. The gauntlet writes to your Studio workspace only when you say yes.
+Restart your agent and ask “Who am I in Studio?” to check the account through `whoami`. The token goes from your agent to Immunefi; Bounty Operator never receives it. Keep it out of review files. The gauntlet writes to your Studio workspace only when you say yes; neither workflow starts a trial, unlocks a programme or changes a subscription.
 
 ## Paydirt benchmark
 

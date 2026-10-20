@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.9.20 — 2026-10-20
+
+Immunefi Studio
+
+- Corrected programme evidence collection: Studio's `list_programs` returns
+  names and slugs, not scope or programme rules. The report challenge and
+  gauntlet now collect official terms separately and keep missing rules explicit.
+- Both MCP endpoints and the agent skills can read Blueprint sections and
+  their cited source files with existing access, using the finding's chain.
+  Blueprint leads remain hypotheses, and its report scope is not bounty scope.
+- The gauntlet keeps Instascope's block and implementation metadata and warns
+  about unavailable snapshots, changed implementations and unknown upgrade
+  history. A captured getter snapshot is not presented as an arbitrary live read.
+- The gauntlet skill documents programme-filtered Signals reads when requested,
+  including pagination and withheld metrics. These do not predict a payout.
+- Setup checks the intended Studio account with `whoami`. Workspace writes
+  still need permission; workflows do not start trials or change subscriptions.
+- Checked the official 35-tool catalogue and exercised Blueprint source reads
+  and local MCP evidence preparation without model calls or Studio writes.
+
 ## 0.9.19 — 2026-10-20
 
 Providers

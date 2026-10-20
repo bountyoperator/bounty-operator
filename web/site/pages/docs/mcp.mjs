@@ -391,8 +391,15 @@ const IMMUNEFI_TOKEN_VAR = 'IMMUNEFI_STUDIO_TOKEN';
 
 const immunefi = html`
 <div class="prose">
-<p>${inline('Immunefi Studio runs its own MCP server. Add it next to this one, and on an Immunefi programme the gauntlet and the report challenge use it: `list_programs` finds the programme and, with Instascope access, `get_proxy_history` and `get_target_state` read the deployed contract the finding names. What those tools return goes to the review as files. Studio Review feedback, cases and tasks are there too. The gauntlet writes a case to your Studio workspace only when you say yes.')}</p>
-<p>Create a personal access token on <a class="link" href="${IMMUNEFI_AGENTS}">Studio’s agents page</a>. It starts with <code>stu_</code> and acts as you, so keep it in an environment variable. Your agent sends it to Immunefi; Bounty Operator never receives it.</p>
+<p>${inline('Immunefi Studio runs its own MCP server. Add it next to Bounty Operator, rather than replacing either server. The gauntlet and report challenge use Studio evidence when the relevant feature is already available on your account. Studio is hosted by Immunefi; there is no Studio package here to upgrade.')}</p>
+<ul>
+<li>${inline('Programme rules: `list_programs` finds a name and slug, not the assets, impacts, exclusions or rules. The workflows collect those from the official programme pages or your supplied rules, with source URLs and retrieval time. Missing rules stay a gap.')}</li>
+<li>${inline('Blueprint: `list_blueprints` finds available reports. Start with `get_blueprint` section `overview`, choose the finding’s `chainId`, then read relevant sections and their cited files with `list_blueprint_sources` and `get_blueprint_source`. The report challenge and gauntlet keep those as evidence, compare them with the finding’s revision, and treat suggested leads as hypotheses—not proof or bounty scope.')}</li>
+<li>${inline('Instascope: the gauntlet calls `get_proxy_history` and `get_target_state` with the programme slug and the affected Instascope asset id. State is a captured getter snapshot at a block, not an arbitrary live read. An unavailable snapshot, a changed implementation or null upgrade history stays an explicit limitation.')}</li>
+<li>${inline('Signals: when you ask about target selection or recent programme changes, the gauntlet skill can use `get_signal` and programme-filtered `list_signal_updates`. A partial page is not a complete history; null or withheld metrics are unknown, not zero. Signals do not establish scope or predict a payout.')}</li>
+</ul>
+<p>${inline('An existing Studio Review can be another reviewer’s notes. Cases and tasks are optional: the gauntlet writes to your Studio workspace only when you say yes. No workflow starts a trial, unlocks a programme or changes a Studio subscription.')}</p>
+<p>If you already connected Studio, keep that connection. Otherwise, create a personal access token on <a class="link" href="${IMMUNEFI_AGENTS}">Studio’s agents page</a>. It starts with <code>stu_</code> and acts as you, so keep it in an environment variable. Your agent sends it to Immunefi; Bounty Operator never receives it. Do not put the token or account details in review files.</p>
 </div>
 ${shell(`claude mcp add --transport http immunefi-studio ${IMMUNEFI_ENDPOINT} --header "Authorization: Bearer $${IMMUNEFI_TOKEN_VAR}"`, 'Claude Code: add Immunefi Studio’s MCP server')}
 ${file(
@@ -403,7 +410,8 @@ bearer_token_env_var = "${IMMUNEFI_TOKEN_VAR}"`,
   'Codex: Immunefi Studio’s MCP server',
 )}
 ${file(json({ mcpServers: { 'immunefi-studio': { url: IMMUNEFI_ENDPOINT, headers: { Authorization: `Bearer \${env:${IMMUNEFI_TOKEN_VAR}}` } } } }), '~/.cursor/mcp.json', 'Cursor: Immunefi Studio’s MCP server')}
-<p class="fine">${inline('Immunefi runs that server and decides what its tools do; Studio’s agents page lists them. The Instascope and Studio Review tools need those features on your Studio account. Without the server, the prompts and the skills run as before.')}</p>`;
+<p>${inline('Restart your agent after adding the server, then ask “Who am I in Studio?” It should call `whoami` and identify the account you intended. Blueprint, Instascope, Studio Review and Signals have their own access requirements. If a feature is unavailable, the workflows state the gap and continue without that enrichment.')}</p>
+<p class="fine">Checked against Immunefi’s live 35-tool catalogue on 20 October 2026. <a class="link" href="${IMMUNEFI_AGENTS}">The official agents page</a> is the setup and tool reference. Immunefi controls that server and its access rules; a Studio token does not grant a Bounty Operator subscription, or the reverse.</p>`;
 
 // ---------------------------------------------------------------------------
 // Account token
