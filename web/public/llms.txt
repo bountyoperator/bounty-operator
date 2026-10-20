@@ -54,6 +54,7 @@ A hosted review sends the user's files and provider key through bountyoperator.c
 
 - [Model API setup guide](https://bountyoperator.com/docs/model-api): Connect agents and chat tools, discover models, send requests and understand prepaid billing.
 - [Choose a model](https://bountyoperator.com/docs/model-selection): Compare workflow needs, capabilities, cost, availability, data handling and evaluation evidence.
+- [Novita BYOK setup](https://bountyoperator.com/docs/model-selection#novita): Optional hosted-review provider `novita`; local CLI/MCP key variable `NOVITA_API_KEY`. In the remote MCP endpoint use `provider: "novita"` and send the key in `X-Provider-Key`, never a tool argument. Website selection: https://bountyoperator.com/?provider=novita#workspace. Check Novita's current pricing, credit and data policies; it bills model usage separately. Bounty Operator account and hosted-review allowances still apply; Bounty Operator API credit does not pay Novita. The guide separates affiliate signup from direct key management. Disclosed signup links may earn us a commission; commission does not determine defaults or benchmark rankings. Affiliate parameters are for optional outbound navigation, never inference traffic, and contain no files or keys.
 
 - [Report guide](https://bountyoperator.com/guide): How to write a bug bounty report that survives triage, with a worked example rewritten fragment by fragment.
 - [MCP server](https://bountyoperator.com/mcp): Install commands for Claude Code, Codex and Cursor, the tools, the three prompts and token setup.

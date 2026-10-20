@@ -108,6 +108,11 @@ const thirdParties = html`
 <p>${inline('The MCP server handles the file contents your agent passes to a tool. `list_profiles`, `prepare_review` and `build_packet` keep none of it. `run_review` is a hosted review and is recorded like one. Your agent’s own model provider receives tool results under its own terms.')}</p>
 <p>Connection tokens are shown once and stored as hashes. They expire after 90 days and you can revoke one in the account panel. Recovering an account, or signing out everywhere, revokes all of them.</p>`;
 
+const affiliateLinks = html`
+<p>Novita signup links marked “affiliate link” are optional outbound links. If you follow one, Novita receives the referral and campaign parameters in that link, along with ordinary network metadata such as your IP address and browser information. Novita may use cookies or other provider-side tracking to attribute a signup or purchase under its own policies.</p>
+<p>We may earn a commission if you sign up and pay for Novita through that link. Commission does not determine our defaults or benchmark rankings. You can use the direct API-key management link for an existing account without following the affiliate link.</p>
+<p>These links add no tracking scripts, pixels or affiliate cookies to Bounty Operator. We do not put your files, prompts, API keys or Bounty Operator account identifier in affiliate URLs. Referral parameters are used for voluntary website navigation only, never in model inference requests. A hosted Novita review follows the <a href="#files">same file and API-key path</a> as other providers; Novita processes that content under its own terms.</p>`;
+
 const payments = html`
 <p>Stripe collects your email, card and billing details at checkout. Full card details never reach our application. We send Stripe your account identifier.</p>
 <p>Our database keeps the Stripe customer and subscription IDs, the subscription status, the paid-until time, your receipt email, and webhook event IDs for 30 days. Stripe keeps its own financial records.</p>`;
@@ -136,6 +141,7 @@ const body = docPage({
     { id: 'usage', title: 'Usage records and abuse limits', label: 'Usage and abuse limits', body: usage },
     { id: 'counters', title: 'Page and funnel counters', body: counters },
     { id: 'third-parties', title: 'Cloudflare, GitHub, OpenRouter and MCP', label: 'Other services', body: thirdParties },
+    { id: 'affiliate-links', title: 'Optional affiliate links', body: affiliateLinks },
     { id: 'payments', title: 'Payments', body: payments },
     { id: 'model-api', title: 'Model API and prepaid credit', body: modelApi },
     { id: 'deletion', title: 'Export and deletion', body: deletion },

@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.9.19 — 2026-10-20
+
+Providers
+
+- Novita AI is available in the workbench and local and remote MCP. Bring your
+  own Novita key; DeepSeek V4.1 Flash and GLM 5.3 Flash are listed model choices.
+  Novita bills model usage separately from Bounty Operator's hosted-review plan.
+- New-account links use our approved Novita referral and disclose the commission
+  beside the link. Existing customers have a separate direct key-management
+  link. The setup guide explains provider credit, account limits and privacy.
+  Affiliate parameters never accompany model requests, and commission does not
+  change the default provider or benchmark rankings.
+- Provider links leave the copy-paste route when requested and no longer carry
+  another provider's model into the selected provider. An explicit model or
+  copy-paste-route choice in the link still takes precedence.
+- The local MCP download is versioned 0.9.19; older release archives are retained.
+
 ## 0.9.18 — 2026-10-15
 
 Website update — 20 October

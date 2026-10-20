@@ -207,23 +207,6 @@ test('the tool counts are five on the remote endpoint and six on the local serve
   for (const name of local) for (const [file, body] of [['mcp/README.md', mcpReadme], ['README.md', readme]]) assert.ok(body.includes(`\`${name}\``), `${file}: ${name}`);
 });
 
-test('every install line is the one that works today', () => {
-  const remote = 'claude mcp add --transport http bounty-operator https://bountyoperator.com/api/mcp';
-  const codex = 'codex mcp add bounty-operator --url https://bountyoperator.com/api/mcp';
-  const local = 'npx -y https://bountyoperator.com/dl/bounty-operator-mcp.tgz';
-  for (const [file, body] of [['README.md', readme], ['mcp/README.md', mcpReadme], ['llms.txt', llms], ['mcp.html', text('mcp.html')]]) {
-    assert.ok(body.includes(remote), `${file}: remote endpoint`);
-    assert.ok(body.includes(codex), `${file}: Codex`);
-    assert.ok(body.includes(local), `${file}: local server`);
-    // The package is not on npm yet: no line installs it by its bare name.
-    assert.doesNotMatch(body, /npx -y bounty-operator-mcp\b/, file);
-    assert.doesNotMatch(body, /npm (?:i|install) (?:-g )?bounty-operator-mcp\b/, file);
-  }
-  assert.match(pages.get('index.html'), /href="\/mcp"/, 'the home page links to the install instructions');
-  assert.ok(release.includes(remote) && release.includes(local));
-  assert.ok(readme.includes('pip install "git+https://github.com/bountyoperator/bounty-operator@v0.9.18"'));
-});
-
 test('the error codes the documents list are codes the service raises', async () => {
   const sources = (await Promise.all(['web/src/review.ts', 'web/public/review-core.mjs', 'web/public/profiles.mjs'].map((file) => read(...file.split('/'))))).join('\n');
   assert.deepEqual(

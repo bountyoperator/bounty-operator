@@ -153,7 +153,7 @@ ${button({ label: 'Edit', variant: 'quiet', size: 'sm', attrs: { 'data-step-targ
   const via = html`<div class="wb-picks wb-picks--wide" id="wb-via" role="radiogroup" aria-labelledby="wb-via-label">
 ${viaChoice({ value: 'export', title: 'My AI chat · no API key', text: 'Copy the prompt into your chat and paste the reply back. Code security, Solidity and draft-report reviews need no Bounty Operator account. Your chat provider’s limits apply.' })}
 ${viaChoice({ value: 'connect', title: 'Connect OpenRouter', text: 'Use your own OpenRouter account. Choose a paid model or check the current free models below.' })}
-${viaChoice({ value: 'key', title: 'My own API key', text: 'Bounty Operator, OpenRouter, Infron, OrcaRouter, Anthropic, OpenAI, Gemini, xAI, DeepSeek, Mistral or Groq.' })}
+${viaChoice({ value: 'key', title: 'My own API key', text: 'Bounty Operator, OpenRouter, Infron, OrcaRouter, Anthropic, OpenAI, Gemini, xAI, DeepSeek, Mistral, Groq or Novita AI.' })}
 </div>`;
 
   const model = html`<div class="wb-fields">
@@ -196,6 +196,10 @@ ${input({ id: 'wb-key', type: 'password', mono: true, attrs: { spellcheck: 'fals
 ${button({ label: 'Forget key', id: 'wb-key-forget', variant: 'quiet' })}
 </div>
 <p class="help" id="wb-key-help">Held in memory for this tab and sent with the review request. Never stored. <a class="link" id="wb-key-link" target="_blank" rel="noopener noreferrer" href="https://openrouter.ai/settings/keys">Create a key</a></p>
+<div class="stack stack--12" id="wb-provider-signup" hidden>
+<p class="help">New to Novita? <a class="link" id="wb-provider-signup-link" target="_blank" rel="sponsored noopener noreferrer">Create a Novita account (affiliate link)</a>. We may earn a commission if you sign up and pay for Novita through this link. Commission does not determine our defaults or rankings.</p>
+<p class="help">Check Novita’s current model pricing and available credit, then create a key and paste it above. Novita bills model usage separately; Bounty Operator credit does not pay Novita. A Bounty Operator account is still required: Free covers one hosted review per UTC day. <a class="link" href="/docs/model-selection#novita">Novita setup and privacy</a>.</p>
+</div>
 <p class="help wb-hint" id="wb-key-hint" role="status" hidden></p>
 <p class="field-error" id="wb-key-error" role="alert" hidden></p>
 </div>

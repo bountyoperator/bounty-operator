@@ -67,7 +67,7 @@ const flow = html`
 
 const providerTable = stackTable({
   caption: `Providers a hosted review runs on (${PROVIDERS.length})`,
-  columns: [{ label: 'Provider' }, { label: 'Default model', mono: true }, { label: 'Also suggested', mono: true }, { label: 'Key starts with', mono: true }, { label: 'Create a key' }],
+  columns: [{ label: 'Provider' }, { label: 'Default model', mono: true }, { label: 'Also suggested', mono: true }, { label: 'Key starts with', mono: true }, { label: 'Account and API key' }],
   rows: PROVIDERS.map((provider) => [
     provider.label,
     provider.defaultModel,
@@ -75,7 +75,11 @@ const providerTable = stackTable({
       .filter((model) => model.id !== provider.defaultModel)
       .map((model) => html`<span>${model.id}</span>`)}</span>`,
     provider.keyPrefixHint || html`<span class="muted">No fixed prefix</span>`,
-    link({ label: new URL(provider.docsUrl).hostname, href: provider.docsUrl, external: true }),
+    provider.affiliateUrl ? html`<div class="stack stack--12">
+      <p><a class="link" href="${provider.affiliateUrl}" target="_blank" rel="sponsored noopener noreferrer">Create a ${provider.label} account (affiliate link)</a>. We may earn a commission if you sign up and pay through this link.</p>
+      <p>${link({ label: 'Create or manage an API key', href: provider.docsUrl, external: true })}</p>
+      <p><a class="link" href="/docs/model-selection#novita">Novita setup, costs and privacy</a> · <a class="link" href="/?provider=novita#workspace">Select Novita</a></p>
+    </div>` : link({ label: new URL(provider.docsUrl).hostname, href: provider.docsUrl, external: true }),
   ]),
   className: 'providers',
 });
@@ -159,7 +163,7 @@ ${pageHero({
       title: 'Your API key',
       meta: icon('key'),
       body: html`<div class="stack stack--12">
-        <p>Paste a key from one of eleven providers and run the review on this site. It goes through our server to your provider, and the answer streams into finding cards.</p>
+        <p>Paste a key from one of ${PROVIDERS.length} providers and run the review on this site. It goes through our server to your provider, and the answer streams into finding cards.</p>
         ${tickList(['All 11 review types, the Gauntlet and Panel review', 'Free: 1 review a day, any review type', 'Operator: unlimited, 4 at once', 'The key is used for that request only'])}
       </div>`,
       foot: html`<a class="link" href="${workbenchLink()}">Start a free review</a>`,
@@ -245,6 +249,7 @@ ${pageHero({
     lede: 'One key from any of these runs every review type. The default model is preselected and the others are suggestions in the model list.',
   })}
   ${providerTable}
+  <p class="fine">Affiliate commission does not determine defaults or benchmark rankings. Novita signup is optional; existing users can go straight to key management. Check Novita’s pricing and credit before a review. Its usage is billed separately, and Bounty Operator’s account and hosted-review limits still apply. <a class="link" href="/docs/model-selection#novita">Setup and cost details</a>.</p>
 </section>
 
 <section class="section wrap wrap--narrow" aria-labelledby="faq">
@@ -274,10 +279,10 @@ export default {
   path: PATH,
   title: 'Your model, your key: where your code goes | Bounty Operator',
   description:
-    'Where your code goes, who holds the API key and what is stored. Eight providers on your own key, prompt export for chat subscriptions, MCP for agents.',
+    'Where your code goes, who holds the key and what is stored. Use your provider key, export prompts to your chat subscription, or connect an agent over MCP.',
   label: 'Your model, your key',
   styles: STYLES,
   jsonld: [breadcrumbsLd([{ name: 'Your model, your key', path: PATH }]), faqPageLd(FAQ_ITEMS)],
-  lastmod: '2026-10-09',
+  lastmod: '2026-10-20',
   body,
 };

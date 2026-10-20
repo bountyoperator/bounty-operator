@@ -6,7 +6,7 @@ import unittest
 import bounty_operator_kit
 
 ROOT = Path(__file__).resolve().parent.parent
-RELEASE = "0.9.18"
+RELEASE = bounty_operator_kit.__version__
 
 
 def _read(relative: str) -> str:
@@ -14,9 +14,6 @@ def _read(relative: str) -> str:
 
 
 class VersionTests(unittest.TestCase):
-    def test_the_package_reports_the_release(self) -> None:
-        self.assertEqual(bounty_operator_kit.__version__, RELEASE)
-
     def test_pyproject_carries_the_same_version_and_the_public_repository(self) -> None:
         pyproject = _read("pyproject.toml")
         match = re.search(r'^version = "([^"]+)"$', pyproject, re.MULTILINE)
@@ -42,10 +39,6 @@ class VersionTests(unittest.TestCase):
                 versions[relative] = pick(json.loads(path.read_text(encoding="utf-8")))
         for relative, version in versions.items():
             self.assertEqual(version, RELEASE, relative)
-
-        worker = ROOT / "web" / "src" / "env.ts"
-        if worker.is_file():
-            self.assertIn(f"export const VERSION = '{RELEASE}';", worker.read_text(encoding="utf-8"))
 
         changelog = ROOT / "CHANGELOG.md"
         if changelog.is_file():

@@ -66,7 +66,7 @@ FINISH: Responsive layout, native video controls, captions, reduced motion and v
 <div class="docs-body">
 <nav class="docs-toc" aria-label="On this page">
 <p class="meta">On this page</p>
-<ul><li><a href="#workflow">Start with the task</a></li><li><a href="#free">Start without buying model credit</a></li><li><a href="#budget">Compare cost and readiness</a></li><li><a href="#data">Choose where your content goes</a></li><li><a href="#evidence">Read the evidence in context</a></li></ul>
+<ul><li><a href="#workflow">Start with the task</a></li><li><a href="#free">Start without buying model credit</a></li><li><a href="#novita">Use your own Novita AI key</a></li><li><a href="#budget">Compare cost and readiness</a></li><li><a href="#data">Choose where your content goes</a></li><li><a href="#evidence">Read the evidence in context</a></li></ul>
 </nav>
 <div class="docs-content">
 
@@ -82,6 +82,18 @@ FINISH: Responsive layout, native video controls, captions, reduced motion and v
 <p>As checked on 20 October 2026, <a href="https://openrouter.ai/docs/api_reference/limits#rate-limits" target="_blank" rel="noopener noreferrer">OpenRouter documents</a> 20 free-model requests per minute and 50 per day below its purchased-credit threshold, or 1,000 per day after at least 10 credits purchased. These are provider account limits, not a shared allowance supplied by Bounty Operator.</p>
 <p><strong>Free does not mean confidential.</strong> Check <a href="https://openrouter.ai/docs/guides/privacy/provider-logging" target="_blank" rel="noopener noreferrer">OpenRouter provider logging</a> and the actual model host’s terms before sending a private report. <a href="https://opencode.ai/v2/docs/console/models/#privacy" target="_blank" rel="noopener noreferrer">OpenCode’s free models and privacy exceptions</a> vary by model; some collect data to improve the model, and NVIDIA trial endpoints prohibit confidential or personal data. Start with public or invented examples unless the program permits the selected data handling.</p>
 <p>These are independent services, not claimed partnerships. Bounty Operator’s own <a href="/model-api">hosted Model API</a> remains a separate prepaid product.</p></div>
+</section><section class="docs-section" aria-labelledby="novita">
+<h2 class="docs-section__title" id="novita">Use your own Novita AI key</h2>
+<div class="prose">
+<p>Novita is an optional provider for hosted reviews, not a free-model route or Bounty Operator’s default. It serves models under your own Novita account and bills their usage separately from Bounty Operator.</p>
+<ol>
+<li><a href="https://novita.ai/?ref=ntgxn2f&amp;utm_source=affiliate" target="_blank" rel="sponsored noopener noreferrer">Create a Novita account (affiliate link)</a>, or sign in to your existing account. <strong>Disclosure:</strong> we may earn a commission if you sign up and pay for Novita through this link. Commission does not determine our defaults or benchmark rankings.</li>
+<li>Check Novita’s current model pricing, account limits and available credit before running a review. Do not assume signup includes free inference. Review its data-handling terms before sending a private report.</li>
+<li><a href="https://novita.ai/settings/key-management" target="_blank" rel="noopener noreferrer">Create or manage your Novita API key</a>. Existing account holders can go directly here; the key-management link is not an affiliate link.</li>
+<li><a href="/?provider=novita#workspace">Select Novita AI</a>, choose your files and review type, and paste the key on the Run step under My own API key. Choose an exact model ID supported by Novita, or leave Model empty to use <code>deepseek/deepseek-v4.1-flash</code>. Then run the review when you are ready.</li>
+</ol>
+<p>A Bounty Operator account is still required for hosted reviews. Free covers one hosted review per UTC day; Operator’s review allowance does not include Novita usage. Bounty Operator API credit cannot pay Novita charges. Selecting Novita does not start a request, buy credit or create a paid fallback.</p>
+<p>Your files and key pass through Bounty Operator to Novita only when you run a hosted review. The optional signup link sends referral parameters to Novita, not your files or key; Novita may track the visit under its own policies. We add no affiliate scripts or pixels. See <a href="/privacy#affiliate-links">affiliate-link privacy</a> and <a href="https://docs.novita.ai/guides/quickstart" target="_blank" rel="noopener noreferrer">Novita’s API quickstart</a>.</p></div>
 </section><section class="docs-section" aria-labelledby="budget">
 <h2 class="docs-section__title" id="budget">Compare cost and readiness</h2>
 <div class="prose"><p>Check the model’s current availability before starting. In the catalog, switch workload view to compare estimated token costs, including the minimum request charge. An agent can make several requests for one task, so set an output limit and a spending cap on its API key.</p><p>Estimates are not quotes for a completed investigation. Credit is reserved before a request, and the unused portion is released after settlement. A self-hosted model may take several minutes to start after idle. Allow for that startup time when choosing a model for interactive work. See <a href="/docs/model-api#cost">charging and timeout details</a>.</p></div>

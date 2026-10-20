@@ -28,7 +28,7 @@ command line.
   counterargument, whether the source resolves it, and the one missing artifact
   that would settle it.
 - **Your model and your key. Nothing is stored.** OpenRouter, Anthropic, OpenAI,
-  Gemini, xAI, DeepSeek, Mistral, Groq, Infron, OrcaRouter or Bounty Operator with your own key. A hosted review
+  Gemini, xAI, DeepSeek, Mistral, Groq, Novita AI, Infron, OrcaRouter or Bounty Operator with your own key. A hosted review
   passes your files and your key through bountyoperator.com to that provider.
   Source files, keys and review text are never stored.
 
@@ -38,6 +38,14 @@ command line.
 
 Open [bountyoperator.com](https://bountyoperator.com/) and run the built-in
 example. No account, no API key.
+
+Have a Novita account? [Select Novita AI](https://bountyoperator.com/?provider=novita#workspace)
+and bring your Novita key. It bills model usage separately; Bounty Operator's
+hosted-review account and quota requirements still apply. The
+[Novita setup guide](https://bountyoperator.com/docs/model-selection#novita)
+separates optional affiliate signup from direct key management and discloses
+our commission. Local MCP uses `NOVITA_API_KEY`; remote MCP uses
+`provider: "novita"` with the key in `X-Provider-Key`.
 
 ### Hosted model API
 
@@ -117,7 +125,7 @@ each client: [bountyoperator.com/mcp](https://bountyoperator.com/mcp) and
 Python 3.10 or newer. No dependencies.
 
 ```bash
-pip install "git+https://github.com/bountyoperator/bounty-operator@v0.9.18"
+pip install "git+https://github.com/bountyoperator/bounty-operator@v0.9.19"
 bounty-kit agent-pack ./agent-pack.md --target "Example Protocol" --program "Example bounty"
 ```
 

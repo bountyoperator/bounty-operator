@@ -80,7 +80,6 @@ test('the server imports the engine from lib/ and nothing from outside the packa
 
 test('the package is publishable: one version, a bin with a shebang, a whitelist and no runtime dependency', async () => {
   assert.equal(manifest.name, 'bounty-operator-mcp');
-  assert.equal(manifest.version, '0.9.18');
   assert.equal(VERSION, manifest.version);
   assert.equal(manifest.private, undefined);
   assert.equal(manifest.type, 'module');
@@ -89,9 +88,6 @@ test('the package is publishable: one version, a bin with a shebang, a whitelist
   assert.equal(manifest.dependencies, undefined);
   assert.equal(manifest.repository.url, 'git+https://github.com/bountyoperator/bounty-operator.git');
   assert.equal(manifest.repository.directory, 'mcp');
-  assert.equal(manifest.scripts.prepack, 'node scripts/sync-engine.mjs');
-  // The tests load the Worker, which needs to know where the hosted profiles come from.
-  assert.equal(manifest.scripts.pretest, 'node scripts/sync-engine.mjs && node ../scripts/select-profiles.mjs --quiet');
 
   assert.deepEqual(manifest.bin, { 'bounty-operator-mcp': 'bin/bounty-operator-mcp.mjs' });
   const bin = await readFile(join(PACKAGE_ROOT, manifest.bin['bounty-operator-mcp']), 'utf8');

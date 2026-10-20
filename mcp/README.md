@@ -163,6 +163,8 @@ The token and the key are read from the environment. Neither is a tool argument,
 
 The remote endpoint takes the same two values as headers: `Authorization: Bearer <token>` and `X-Provider-Key: <key>`. The commands for each client are at [bountyoperator.com/mcp](https://bountyoperator.com/mcp).
 
+For Novita AI, set `NOVITA_API_KEY` locally (and include it in Codex's `env_vars`) and call `run_review` with `"provider": "novita"`. Create a key at [Novita Key Management](https://novita.ai/settings/key-management). The default is `deepseek/deepseek-v4.1-flash`; `zai-org/glm-5.3-flash` is also listed. Both local and remote `list_profiles` expose the provider and its models. On the remote endpoint, pass the Novita key in `X-Provider-Key`, not as a tool argument. Novita bills model usage separately; selecting it does not change the app's default provider or enable a fallback. Signup attribution is never sent with inference requests.
+
 ## Environment
 
 | Variable | Purpose |
@@ -170,7 +172,7 @@ The remote endpoint takes the same two values as headers: `Authorization: Bearer
 | `BOUNTY_OPERATOR_TOKEN` | Connection token for `account` and `run_review` |
 | `BOUNTY_OPERATOR_MODEL` | Model id `run_review` uses when the call names none |
 | `BOUNTY_OPERATOR_ROOT` | Absolute path of the project folder that `paths` resolve under. Default: the working directory |
-| `OPENROUTER_API_KEY`, `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GEMINI_API_KEY`, `XAI_API_KEY`, `DEEPSEEK_API_KEY`, `MISTRAL_API_KEY`, `GROQ_API_KEY`, `INFRON_API_KEY`, `ORCAROUTER_API_KEY`, `BOUNTYOPERATOR_API_KEY` | Provider key for `run_review`, one per provider |
+| `OPENROUTER_API_KEY`, `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GEMINI_API_KEY`, `XAI_API_KEY`, `DEEPSEEK_API_KEY`, `MISTRAL_API_KEY`, `GROQ_API_KEY`, `NOVITA_API_KEY`, `INFRON_API_KEY`, `ORCAROUTER_API_KEY`, `BOUNTYOPERATOR_API_KEY` | Provider key for `run_review`, one per provider |
 
 ## What the server reaches
 

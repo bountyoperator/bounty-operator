@@ -10,6 +10,7 @@
  * Exports
  *   initProviders()                 wire the "Run with" and "Model" rows
  *   setVia(via, { focus })          switch between 'connect', 'key' and 'export'
+ *   chooseProvider(providerId)     select a provider and restore its own model choice
  *   credentials()                   -> { via, provider, model, apiKey }   the model falls back to the provider's default
  *   heldKey(providerId)             -> string   the key held in memory for a provider, for the panel
  *   holdKey(providerId, value)      hold a key typed elsewhere (a panel seat) in memory
@@ -200,6 +201,18 @@ export function credentials() {
 }
 
 /**
+ * Selects a provider from a deep link without retaining another provider's model.
+ * @param {string} providerId
+ */
+export function chooseProvider(providerId) {
+  if (!PROVIDERS.some((entry) => entry.id === providerId)) return;
+  clearInvalid();
+  view.set(reconcileVia(providerId, view.get().via, view.get().keyProvider));
+  commit();
+  paint();
+}
+
+/**
  * Puts a model id in the Model field of the provider in use, as if it had been
  * typed there. Nothing happens on the copy-paste route, which calls no model.
  *
@@ -356,7 +369,17 @@ function paintKey(id) {
   const label = qs('#wb-key-label');
   const link = qs('#wb-key-link');
   if (label) label.textContent = selected.keyLabel;
-  if (link) link.setAttribute('href', selected.docsUrl);
+  if (link) {
+    link.setAttribute('href', selected.docsUrl);
+    link.textContent = id === 'novita' ? 'Create or manage a Novita API key' : 'Create a key';
+  }
+  const signup = qs('#wb-provider-signup-link');
+  const hasSignup = id === 'novita' && Boolean(selected.affiliateUrl);
+  show('#wb-provider-signup', hasSignup);
+  if (signup) {
+    if (hasSignup) signup.setAttribute('href', selected.affiliateUrl);
+    else signup.removeAttribute('href');
+  }
   if (field) {
     const value = keys.get(id) ?? '';
     if (field.value !== value) field.value = value;

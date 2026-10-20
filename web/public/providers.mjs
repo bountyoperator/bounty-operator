@@ -40,6 +40,8 @@ const LONG_OUTPUT_MODELS = Object.freeze({
   anthropic: new Set(['claude-opus-5-5', 'claude-sonnet-5-5', 'claude-fable-5-1']),
   openai: new Set(['gpt-6.1-sol', 'gpt-6-astra', 'gpt-6-luna']),
   xai: new Set(['grok-4.7']),
+  // Novita's public model catalog (20 October 2026): 393,216 and 131,072 output tokens.
+  novita: new Set(['deepseek/deepseek-v4.1-flash', 'zai-org/glm-5.3-flash']),
 });
 const TIMEOUT_MS = 180000;
 const CALL_LIMIT_MS = 900000;
@@ -133,6 +135,7 @@ export function policyBlock(text) {
  * @property {readonly ProviderModel[]} models
  * @property {string} envVar
  * @property {string} docsUrl  Where the user creates a key.
+ * @property {string} [affiliateUrl]  Disclosed website signup link; never used for API requests.
  *
  * @typedef {{ input: number | null, output: number | null }} Usage
  * @typedef {{ messages: { role: string, content: string }[] }} PreparedMessages
@@ -280,6 +283,21 @@ export const PROVIDERS = Object.freeze([
     docsUrl: 'https://console.groq.com/keys',
   }),
   describe({
+    id: 'novita',
+    label: 'Novita AI',
+    keyLabel: 'Novita AI API key',
+    keyPrefixHint: '',
+    // The quickstart model and a distinct lab's model, verified in Novita's public catalog.
+    defaultModel: 'deepseek/deepseek-v4.1-flash',
+    models: [
+      model('deepseek/deepseek-v4.1-flash', 'DeepSeek V4.1 Flash', 'default'),
+      model('zai-org/glm-5.3-flash', 'GLM 5.3 Flash'),
+    ],
+    envVar: 'NOVITA_API_KEY',
+    docsUrl: 'https://novita.ai/settings/key-management',
+    affiliateUrl: 'https://novita.ai/?ref=ntgxn2f&utm_source=affiliate',
+  }),
+  describe({
     id: 'infron',
     label: 'Infron',
     keyLabel: 'Infron API key',
@@ -392,6 +410,12 @@ const WIRE = Object.freeze({
     style: 'chat',
     endpoint: 'https://api.groq.com/openai/v1/chat/completions',
     tokenParam: 'max_completion_tokens',
+    streamUsage: true,
+  },
+  novita: {
+    style: 'chat',
+    endpoint: 'https://api.novita.ai/openai/v1/chat/completions',
+    tokenParam: 'max_tokens',
     streamUsage: true,
   },
   infron: {

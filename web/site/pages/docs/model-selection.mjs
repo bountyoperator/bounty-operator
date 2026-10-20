@@ -1,5 +1,6 @@
 import { button, html, stackTable } from '../../components.mjs';
 import { breadcrumbsLd } from '../../layout.mjs';
+import { provider } from '../../../public/providers.mjs';
 import { loadPublished } from '../benchmark/_data.mjs';
 import { DOCS_STYLES, docPage, ext, time } from './_shared.mjs';
 
@@ -7,6 +8,7 @@ const PATH = '/docs/model-selection';
 const UPDATED = '2026-10-20';
 const published = loadPublished();
 const benchmarkDate = published?.results.generated_at?.slice(0, 10);
+const novita = provider('novita');
 
 const workflows = stackTable({
   label: 'Choose the capabilities your workflow needs',
@@ -43,6 +45,16 @@ ${stackTable({
 <p>As checked on 20 October 2026, ${ext('OpenRouter documents', 'https://openrouter.ai/docs/api_reference/limits#rate-limits')} 20 free-model requests per minute and 50 per day below its purchased-credit threshold, or 1,000 per day after at least 10 credits purchased. These are provider account limits, not a shared allowance supplied by Bounty Operator.</p>
 <p><strong>Free does not mean confidential.</strong> Check ${ext('OpenRouter provider logging', 'https://openrouter.ai/docs/guides/privacy/provider-logging')} and the actual model host’s terms before sending a private report. ${ext('OpenCode’s free models and privacy exceptions', 'https://opencode.ai/v2/docs/console/models/#privacy')} vary by model; some collect data to improve the model, and NVIDIA trial endpoints prohibit confidential or personal data. Start with public or invented examples unless the program permits the selected data handling.</p>
 <p>These are independent services, not claimed partnerships. Bounty Operator’s own <a href="/model-api">hosted Model API</a> remains a separate prepaid product.</p>` },
+    { id: 'novita', title: 'Use your own Novita AI key', body: html`
+<p>Novita is an optional provider for hosted reviews, not a free-model route or Bounty Operator’s default. It serves models under your own Novita account and bills their usage separately from Bounty Operator.</p>
+<ol>
+<li><a href="${novita.affiliateUrl}" target="_blank" rel="sponsored noopener noreferrer">Create a Novita account (affiliate link)</a>, or sign in to your existing account. <strong>Disclosure:</strong> we may earn a commission if you sign up and pay for Novita through this link. Commission does not determine our defaults or benchmark rankings.</li>
+<li>Check Novita’s current model pricing, account limits and available credit before running a review. Do not assume signup includes free inference. Review its data-handling terms before sending a private report.</li>
+<li>${ext('Create or manage your Novita API key', novita.docsUrl)}. Existing account holders can go directly here; the key-management link is not an affiliate link.</li>
+<li><a href="/?provider=novita#workspace">Select Novita AI</a>, choose your files and review type, and paste the key on the Run step under My own API key. Choose an exact model ID supported by Novita, or leave Model empty to use <code>${novita.defaultModel}</code>. Then run the review when you are ready.</li>
+</ol>
+<p>A Bounty Operator account is still required for hosted reviews. Free covers one hosted review per UTC day; Operator’s review allowance does not include Novita usage. Bounty Operator API credit cannot pay Novita charges. Selecting Novita does not start a request, buy credit or create a paid fallback.</p>
+<p>Your files and key pass through Bounty Operator to Novita only when you run a hosted review. The optional signup link sends referral parameters to Novita, not your files or key; Novita may track the visit under its own policies. We add no affiliate scripts or pixels. See <a href="/privacy#affiliate-links">affiliate-link privacy</a> and ${ext('Novita’s API quickstart', 'https://docs.novita.ai/guides/quickstart')}.</p>` },
     { id: 'budget', title: 'Compare cost and readiness', body: html`<p>Check the model’s current availability before starting. In the catalog, switch workload view to compare estimated token costs, including the minimum request charge. An agent can make several requests for one task, so set an output limit and a spending cap on its API key.</p><p>Estimates are not quotes for a completed investigation. Credit is reserved before a request, and the unused portion is released after settlement. A self-hosted model may take several minutes to start after idle. Allow for that startup time when choosing a model for interactive work. See <a href="/docs/model-api#cost">charging and timeout details</a>.</p>` },
     { id: 'data', title: 'Choose where your content goes', body: html`<p>Read the hosting provider and source details on the model card. Our self-hosted RunPod deployments disable prompt and response logging and cross-request prefix caching. Managed models use Infron or OrcaRouter, including any downstream providers, under their own terms and retention policies. They do not come with a zero-retention guarantee.</p><p>Send only material you are authorized to share with the selected providers. Review the <a href="/privacy#model-api">data handling details</a> before connecting confidential work.</p>` },
     { id: 'evidence', title: 'Read the evidence in context', body: html`${published ? html`<p>Our <a href="/benchmark">Paydirt benchmark</a>${benchmarkDate ? html`, published ${time(benchmarkDate)},` : ''} measures small-file Solidity and TypeScript review and checking draft reports. Compare its errors, costs and <a href="/benchmark/method">evaluation method</a> alongside its scores. It does not measure whole-repository audits or live web and cloud assessments.</p>` : html`<p>We have no published Paydirt results to link here yet. Treat catalog capabilities as compatibility information, not a quality ranking.</p>`}<p>${ext('Wiz Cyber Model Arena', 'https://www.wiz.io/cyber-model-arena')} is an external reference for broader tasks. Its results evaluate a model together with its agent harness. They do not score our hosted variants: a base model’s result does not transfer to a fine-tune, quantized version or different harness. If the exact setup has no matching evaluation, its performance is unmeasured here.</p><p>Start with a small authorized task whose outcome you can check. Keep the model, harness and settings recorded so comparisons mean something.</p>` },

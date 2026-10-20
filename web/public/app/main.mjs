@@ -35,7 +35,7 @@ import { initGithub } from './github-ui.mjs';
 import { initHistory } from './history.mjs';
 import { initPanel } from './panel.mjs';
 import { initPasteback } from './pasteback.mjs';
-import { chooseModel, initProviders, resumeOpenRouter, setVia } from './providers-ui.mjs';
+import { chooseModel, chooseProvider, initProviders, resumeOpenRouter, setVia } from './providers-ui.mjs';
 import { initResults } from './results.mjs';
 import { initRun } from './run.mjs';
 import { initSourcePane } from './source-pane.mjs';
@@ -432,7 +432,7 @@ export function boot() {
   }
   if (link.provider) {
     leaveExample();
-    workbench.set({ provider: link.provider, ...(link.model ? { model: link.model } : {}) });
+    chooseProvider(link.provider);
     if (link.model) chooseModel(link.model);
   }
   if (link.via) {

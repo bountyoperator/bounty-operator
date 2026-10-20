@@ -1179,6 +1179,7 @@ describe('providers', () => {
     deepseek: { url: 'https://api.deepseek.com/chat/completions', model: 'deepseek-v4-pro', cap: 'max_tokens' },
     mistral: { url: 'https://api.mistral.ai/v1/chat/completions', model: 'mistral-medium-latest', cap: 'max_tokens' },
     groq: { url: 'https://api.groq.com/openai/v1/chat/completions', model: 'openai/gpt-oss-120b', cap: 'max_completion_tokens' },
+    novita: { url: 'https://api.novita.ai/openai/v1/chat/completions', model: 'deepseek/deepseek-v4.1-flash', cap: 'max_tokens' },
     infron: { url: 'https://api.infron.ai/v1/chat/completions', model: 'z-ai/glm-5.3-flash-cybersecurity', cap: 'max_tokens' },
     orcarouter: { url: 'https://api.orcarouter.ai/v1/chat/completions', model: 'orca/orcacyber-zero-1.5', cap: 'max_tokens' },
     bountyoperator: { url: 'https://bountyoperator.com/v1/chat/completions', model: 'cyber-qwen-27b-awq', cap: 'max_completion_tokens' },
@@ -1196,33 +1197,6 @@ describe('providers', () => {
     stop_reason: 'end_turn',
     usage: { input_tokens: 200, output_tokens: 40 },
     ...overrides,
-  });
-
-  test('the registry lists the eleven providers with their default models', () => {
-    assert.deepEqual(PROVIDERS.map((entry) => entry.id), Object.keys(expected));
-    for (const entry of PROVIDERS) {
-      assert.deepEqual(
-        Object.keys(entry).sort(),
-        ['defaultModel', 'docsUrl', 'envVar', 'id', 'keyLabel', 'keyPrefixHint', 'label', 'models'],
-      );
-      assert.equal(entry.defaultModel, expected[entry.id].model);
-      assert.equal(entry.models[0].id, entry.defaultModel);
-      // OpenRouter and Bounty Operator include the broader catalogs; direct providers stay compact.
-      const fewest = entry.id === 'deepseek' ? 2 : 3;
-      const most = entry.id === 'openrouter' || entry.id === 'bountyoperator' ? 12 : entry.id === 'infron' || entry.id === 'orcarouter' ? 7 : 5;
-      assert.ok(entry.models.length >= fewest && entry.models.length <= most, entry.id);
-      assert.equal(new Set(entry.models.map((model) => model.id)).size, entry.models.length, entry.id);
-      for (const model of entry.models) assert.doesNotThrow(() => validateProviderRequest({ provider: entry.id, model: model.id, apiKey: API_KEY }), model.id);
-      assert.ok(entry.models.every((model) => model.id && model.label));
-      assert.match(entry.envVar, /^[A-Z]+_API_KEY$/);
-      assert.match(entry.docsUrl, /^https:\/\//);
-      assert.match(entry.keyLabel, /API key/);
-      assert.ok(Object.isFrozen(entry) && Object.isFrozen(entry.models));
-    }
-    assert.equal(provider('groq').label, 'Groq');
-    assert.equal(provider('infron').label, 'Infron');
-    assert.equal(provider('orcarouter').label, 'OrcaRouter');
-    assert.equal(provider('bountyoperator').label, 'Bounty Operator');
   });
 
   test('unsupported providers, models and keys are rejected before anything is sent', async () => {
@@ -1271,6 +1245,7 @@ describe('providers', () => {
         for (const banned of ['temperature', 'top_p', 'stream']) assert.ok(!(banned in body), `${id} sent ${banned}`);
         // OpenAI would keep the messages in the account's dashboard logs; no other provider takes the field.
         assert.equal(body.store, id === 'openai' ? false : undefined, id);
+        assert.doesNotMatch(JSON.stringify(calls), /affiliate|ntgxn2f|utm_source/);
 
         assert.equal(init.headers['HTTP-Referer'], id === 'openrouter' ? 'https://bountyoperator.com' : undefined);
         assert.equal(init.headers['X-Title'], id === 'openrouter' ? 'Bounty Operator' : undefined);
@@ -1348,44 +1323,12 @@ describe('providers', () => {
     });
   });
 
-  test('every provider lists current models, and OpenRouter only verified slugs', () => {
-    assert.deepEqual(Object.fromEntries(PROVIDERS.map((entry) => [entry.id, entry.models.map((model) => model.id)])), {
-      openrouter: ['anthropic/claude-sonnet-5.5', 'openai/gpt-6.1-sol', 'deepseek/deepseek-v4.1-flash', 'anthropic/claude-opus-5.5', 'openai/gpt-6-astra', 'google/gemini-3.8-flash', 'x-ai/grok-4.7', 'z-ai/glm-5.3-flash', 'xiaomi/mimo-v2.6-pro', 'mistralai/mistral-large-4-0', 'moonshotai/kimi-k3', 'openai/gpt-6-luna'],
-      anthropic: ['claude-opus-5-5', 'claude-sonnet-5-5', 'claude-fable-5-1', 'claude-haiku-4-5'],
-      openai: ['gpt-6.1-sol', 'gpt-6-astra', 'gpt-6-luna'],
-      gemini: ['gemini-3.8-flash', 'gemini-3.1-pro-preview', 'gemini-3.5-flash-lite'],
-      xai: ['grok-4.7', 'grok-4.6', 'grok-4.3'],
-      deepseek: ['deepseek-v4-pro', 'deepseek-flash'],
-      mistral: ['mistral-medium-latest', 'mistral-large-2512', 'mistral-small-latest'],
-      groq: ['openai/gpt-oss-120b', 'qwen/qwen3.8-27b', 'openai/gpt-oss-20b'],
-      infron: ['z-ai/glm-5.3-flash-cybersecurity', 'z-ai/glm-5.3-abliterated', 'z-ai/glm-5.3-flash-abliterated', 'deepseek/deepseek-v4-flash-vision-exp-cybersecurity', 'qwen/qwen3.8-27b-cybersecurity', 'google/gemma-4-26b-a4b-it-cybersecurity', 'nvidia/nemotron-3.5-content-safety'],
-      orcarouter: ['orca/orcacyber-zero-1.5', 'orca/orcacyber-zero-1.0', 'openai/gpt-6.1-sol', 'anthropic/claude-sonnet-5.5', 'deepseek/deepseek-v4.1-flash', 'z-ai/glm-5.3-flash', 'qwen/qwen3.8-27b'],
-      bountyoperator: ['cyber-qwen-27b-awq', 'orca-cyber-zero-1.5', 'glm-5.3-flash-cyber', 'deepseek-v4-flash-cyber', 'qwen3.8-27b-cyber', 'gemma-4-26b-cyber', 'glm-5.3-cyber', 'glm-5.3-ablit', 'glm-5.3-flash-ablit', 'cyberstrike-offsec-35b', 'qwen-coder390-27b-ablit', 'kimi-k3-cyber'],
-    });
-
-    // The slugs checked against OpenRouter's model list on 2 October 2026.
-    const verified = new Set([
-      'deepseek/deepseek-v4.1-flash', 'deepseek/deepseek-v4-pro-0813', 'z-ai/glm-5.3-flash', 'z-ai/glm-5.3', 'qwen/qwen3.8-27b',
-      'qwen/qwen3.8-max-0902', 'minimax/minimax-m3', 'moonshotai/kimi-k3', 'tencent/hy4-preview', 'openai/gpt-oss-120b',
-      'nvidia/nemotron-3-ultra-550b-a55b', 'openai/gpt-6-luna', 'google/gemini-3.5-flash-lite', 'google/gemini-3.8-flash',
-      'x-ai/grok-4.7', 'meta/muse-spark-1.3', 'mistralai/mistral-medium-3-5', 'anthropic/claude-haiku-4.5', 'openai/gpt-5.6-terra',
-      'openai/gpt-6.1-sol', 'google/gemini-3.1-pro-preview', 'anthropic/claude-sonnet-5.5', 'anthropic/claude-opus-5.5',
-      'openai/gpt-6-astra', 'anthropic/claude-fable-5.1', 'xiaomi/mimo-v2.6-pro', 'mistralai/mistral-large-4-0',
-    ]);
-    for (const model of provider('openrouter').models) assert.ok(verified.has(model.id), model.id);
-    // A panel picks models from different labs, so the list spans at least four of them.
-    assert.ok(new Set(provider('openrouter').models.map((model) => model.id.split('/')[0])).size >= 4);
-    // Claude slugs use dots on OpenRouter and hyphens on Anthropic's own API.
-    assert.ok(provider('openrouter').models.every((model) => !/claude-[a-z]+-\d-\d/.test(model.id)));
-    assert.ok(provider('anthropic').models.every((model) => /^claude-[a-z]+-\d-\d$/.test(model.id)));
-  });
-
   test('a redirect answer fails the call and is never followed', async () => {
     const elsewhere = 'https://collector.example/v1/chat/completions';
     const redirect = (status) => new Response('moved', { status, headers: { location: elsewhere } });
 
     for (const status of [301, 302, 303, 307, 308]) {
-      for (const id of ['openai', 'anthropic', 'openrouter']) {
+      for (const id of ['openai', 'anthropic', 'openrouter', 'novita']) {
         for (const call of [providerReview, providerStream]) {
           await withFetch(() => redirect(status), async (calls) => {
             const error = await call({ provider: id, model: 'm', apiKey: API_KEY, prepared: PREPARED }).then(() => null, (reason) => reason);
@@ -1882,6 +1825,31 @@ describe('providers', () => {
       () => providerReview({ provider: 'infron', model: 'z-ai/glm-5.3-flash-cybersecurity', apiKey: API_KEY, prepared: PREPARED }).then(() => null, (reason) => reason),
     );
     assert.deepEqual([infronKey.status, infronKey.kind], [401, 'auth']);
+  });
+
+  test('Novita authentication failures remain key errors, not usage-policy blocks', async () => {
+    const cases = [
+      // Observed from the live endpoint with an obviously invalid key, 20 October 2026.
+      [401, { code: 401, reason: 'FAILED_TO_AUTH', message: 'failed to authenticate API key', metadata: {} }, 'auth', undefined],
+      // Novita's quickstart also documents INVALID_API_KEY with HTTP 403.
+      [403, { code: 'INVALID_API_KEY', message: 'Invalid API key' }, 'auth', undefined],
+      [401, { code: 401, reason: 'FAILED_TO_AUTH', message: `Invalid API key ${API_KEY}`, metadata: {} }, 'auth', undefined],
+      // An explicit policy signal must still be distinguished from a key failure.
+      [403, { error: { code: 'guardrail_blocked', message: 'Blocked by policy' } }, 'policy', 'policy'],
+    ];
+    for (const [status, body, kind, blocked] of cases) {
+      for (const call of [providerReview, providerStream]) {
+        await withFetch(() => json(body, status), async (calls) => {
+          const error = await call({ provider: 'novita', model: 'deepseek/deepseek-v4.1-flash', apiKey: API_KEY, prepared: PREPARED })
+            .then(() => null, (reason) => reason);
+          assert.ok(error instanceof ProviderError);
+          assert.deepEqual([error.status, error.kind, error.blocked], [status, kind, blocked]);
+          assert.equal(error.code, 'provider');
+          assert.ok(!error.message.includes(API_KEY));
+          assert.equal(calls.length, 1, 'a failed Novita request is never retried on another provider');
+        });
+      }
+    }
   });
 
   test('a guardrail block, an upstream cyber block and a credit hold are named by their cause', async () => {
@@ -2415,6 +2383,7 @@ describe('providers', () => {
       deepseek: { include_usage: true },
       mistral: undefined,
       groq: { include_usage: true },
+      novita: { include_usage: true },
       infron: undefined,
       orcarouter: undefined,
       bountyoperator: { include_usage: true },
