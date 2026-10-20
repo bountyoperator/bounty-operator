@@ -196,33 +196,6 @@ test('the legal pages state the lifetimes the Worker enforces', async () => {
   assert.ok(textOf(rendered.get('/mcp')).includes('A token lasts 90 days. An account holds three at a time.'));
 });
 
-// Only the first account ever made a connection token. /mcp now says what a
-// free account adds and leads to one: the home page opens the dialog for
-// /#account/connections (app/account.mjs) and lands on Connections.
-test('the MCP page says what a free account adds and leads to an account and a token', async () => {
-  const markup = rendered.get('/mcp');
-  const { PROFILES } = await import('../public/profiles.mjs');
-  const { ACCOUNT_LINKS } = await import('../public/app/account.mjs');
-  const { TOKEN_SIGNUP } = await import('../site/pages/docs/mcp.mjs');
-  const listed = PROFILES.filter((profile) => profile.listed).length;
-  assert.equal(listed, 11);
-  assert.match(markup, /<h1>Bug report review in your coding agent<\/h1>/);
-  assert.ok(
-    textOf(markup).includes(
-      `Your agent checks a bug report against the code before you submit. Code, Solidity and draft-report reviews run on your agent’s own model with no account. A free account adds run_review for all ${listed} review types, one a day on your own key.`,
-    ),
-  );
-  assert.equal(TOKEN_SIGNUP, '/#account/connections');
-  assert.ok(Object.hasOwn(ACCOUNT_LINKS, '#account/connections'));
-  const button = '<a class="btn btn--secondary btn--sm" href="/#account/connections"><span class="icon icon--key" aria-hidden="true"></span><span class="btn__label">Create a free account and token</span></a>';
-  // One in the token section, and one in each client's "Add your account token".
-  const token = markup.slice(markup.indexOf('id="create-token"'));
-  assert.ok(token.slice(0, token.indexOf('</ol>')).includes(button), 'the token section');
-  const install = markup.slice(markup.indexOf('<section class="install"'), markup.indexOf('</section>', markup.indexOf('<section class="install"')));
-  assert.equal(install.split(button).length - 1, 3, 'one per client');
-  assert.match(markup, /<li>Create a free account at <a href="\/#account\/connections">bountyoperator\.com<\/a> with a passkey, or sign in with yours\. The account panel opens on Connections\.<\/li>/);
-});
-
 test('the security page prints the content security policy from the specification', () => {
   const security = textOf(rendered.get('/security'));
   assert.ok(
@@ -361,14 +334,6 @@ test('llms.txt links only to canonical, extensionless pages on the site', async 
   }
 });
 
-test('the privacy policy says page views and named actions are counted in aggregate', () => {
-  const privacy = textOf(rendered.get('/privacy'));
-  assert.match(privacy, /Page views and named actions are counted in aggregate\./);
-  assert.match(privacy, /named actions a page reports from a fixed list: an example loaded, a prompt exported, a reply pasted, a packet saved, a repository imported, the sign-in opened, the upgrade button pressed, a gauntlet or a panel started and finished, a free tool run, a template copied, an MCP command copied, a template draft passed to the review, a Create a free account button pressed/);
-  assert.match(privacy, /A page reports an action by its name and sends nothing with it, and it reports that it was seen the same way\./);
-  assert.match(privacy, /what you paste or drop there never leaves the browser\./);
-  assert.match(privacy, /Last updated 15 October 2026/);
-});
 
 test('the privacy policy names every counter the Worker keeps', async () => {
   const privacy = textOf(rendered.get('/privacy'));

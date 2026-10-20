@@ -52,7 +52,7 @@ Deployment and payment verification: [hosted API operations](docs/hosted-model-a
 
 ### MCP
 
-Run reviews from Claude Code, Codex, Cursor or any MCP client. The remote
+Run reviews from Claude Code, Codex, Cursor, OpenCode or any MCP client. The remote
 endpoint needs nothing installed.
 
 Claude Code:
@@ -72,6 +72,19 @@ Cursor, in `~/.cursor/mcp.json`:
 ```json
 { "mcpServers": { "bounty-operator": { "url": "https://bountyoperator.com/api/mcp" } } }
 ```
+
+OpenCode v1, merged into the project's `opencode.json`:
+
+```json
+{ "mcp": { "bounty-operator": { "type": "remote", "url": "https://bountyoperator.com/api/mcp", "oauth": false } } }
+```
+
+OpenCode v2 puts the server entry under `mcp.servers` instead of directly under
+`mcp`. Run `opencode --version` before choosing the config, then
+`opencode mcp list` to check the connection. The core workflow uses your agent's
+model and needs no Bounty Operator account. [Versioned configurations and a
+first-review request](https://bountyoperator.com/mcp#install) include local
+setup and optional hosted-review credentials.
 
 The local server reads files by path and keeps review preparation on your
 machine. It needs Node 22 or later:

@@ -531,7 +531,8 @@
   background: var(--surface-2);
 }
 
-.install__panel {
+.install__panel,
+.install__start {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: var(--sp-16);
@@ -611,7 +612,8 @@
     padding-inline: var(--sp-24);
   }
 
-  .install__panel {
+  .install__panel,
+  .install__start {
     padding: var(--sp-24);
   }
 

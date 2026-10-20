@@ -30,6 +30,7 @@
 
 import { reviewProfile } from '../profiles.mjs';
 import { PROVIDERS, outputTokenLimit, provider as findProvider, validateProviderRequest } from '../providers.mjs';
+import { boundedBody } from '../review-core.mjs';
 import { currentAccount, subscribeAccount } from './api.mjs';
 import { EXPORT_PROVIDER, readSession, removeSession, saveWorkbench, workbench, writeSession } from './state.mjs';
 import { button, clear, el, icon, on, qs, qsa, setBusy } from './ui.mjs';
@@ -49,6 +50,8 @@ const keys = new Map();
 const models = new Map();
 /** The key OpenRouter issued through Connect. */
 let connected = '';
+let freeModels = [];
+let loadingFreeModels = false;
 
 // ---------------------------------------------------------------------------
 // Pure helpers
@@ -106,6 +109,64 @@ export function reconcileVia(provider, via, keyProvider) {
   if (via === 'key') return { via: 'key', keyProvider: provider };
   if (provider === OPENROUTER) return { via: 'connect', keyProvider: fallback };
   return { via: 'key', keyProvider: provider };
+}
+
+/** Zero-priced text models whose documented output limit can fit a review. Not a quality ranking. */
+export function freeOpenRouterModels(catalog) {
+  if (!Array.isArray(catalog?.data)) throw new Error('Invalid OpenRouter model catalog.');
+  const zero = (value) => (typeof value === 'number' || (typeof value === 'string' && value.trim() !== ''))
+    && Number.isFinite(Number(value)) && Number(value) === 0;
+  const seen = new Set();
+  return catalog.data.filter((entry) => {
+    if (!entry || typeof entry.id !== 'string' || !/^[\x21-\x7e]{1,200}$/.test(entry.id) || !entry.id.endsWith(':free') || seen.has(entry.id)) return false;
+    if (!zero(entry.pricing?.prompt) || !zero(entry.pricing?.completion) || !Object.values(entry.pricing).every(zero)) return false;
+    if (!Array.isArray(entry.architecture?.input_modalities) || !entry.architecture.input_modalities.includes('text')) return false;
+    if (!Array.isArray(entry.architecture?.output_modalities) || !entry.architecture.output_modalities.includes('text')) return false;
+    if (!Array.isArray(entry.supported_parameters) || !entry.supported_parameters.includes('max_tokens')) return false;
+    if (!Number.isSafeInteger(entry.context_length) || entry.context_length <= outputTokenLimit(OPENROUTER, entry.id, { stream: true })) return false;
+    const output = entry.top_provider?.max_completion_tokens;
+    if (!Number.isSafeInteger(output) || output < outputTokenLimit(OPENROUTER, entry.id, { stream: true })) return false;
+    seen.add(entry.id);
+    return true;
+  }).map((entry) => ({
+    id: entry.id,
+    label: typeof entry.name === 'string' && entry.name.trim() ? entry.name : entry.id,
+    contextLength: entry.context_length,
+  })).sort((a, b) => a.label.localeCompare(b.label));
+}
+
+async function loadFreeModels() {
+  const control = qs('#wb-load-free-models');
+  const select = qs('#wb-free-model');
+  const status = qs('#wb-free-status');
+  if (!control || !select || !status || loadingFreeModels) return;
+  loadingFreeModels = true;
+  select.disabled = true;
+  setBusy(control, true, 'Checking OpenRouter');
+  status.textContent = 'Checking current prices and output limits. Your selected model stays unchanged.';
+  try {
+    const response = await fetch('https://openrouter.ai/api/v1/models', {
+      credentials: 'omit', cache: 'no-store', referrerPolicy: 'no-referrer', redirect: 'error', signal: AbortSignal.timeout(20000),
+    });
+    if (!response.ok) throw new Error('OpenRouter catalog unavailable.');
+    freeModels = freeOpenRouterModels(JSON.parse(await boundedBody(response, 2000000)));
+    clear(select).append(
+      el('option', { value: '', text: 'Choose a free model' }),
+      ...freeModels.map((entry) => el('option', { value: entry.id, text: `${entry.label} · ${entry.contextLength.toLocaleString('en-US')} context tokens` })),
+    );
+    status.textContent = freeModels.length
+      ? `${freeModels.length} zero-priced text models have room for a review’s output. Choose one to change the Model field. This is not a quality ranking or an availability guarantee.`
+      : 'No matching free models could be confirmed. Your selected model has not changed. You can use the AI chat route without an API key.';
+  } catch {
+    freeModels = [];
+    clear(select).append(el('option', { value: '', text: 'No free model selected' }));
+    status.textContent = 'Could not check free models. Your selected model has not changed. Try again, or use the AI chat route without an API key.';
+  } finally {
+    loadingFreeModels = false;
+    select.disabled = !freeModels.length;
+    setBusy(control, false);
+    if (activeProviderId() !== EXPORT_PROVIDER) paintModelHelp(activeProviderId());
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -279,8 +340,14 @@ export function modelUsageNote(providerId, modelId) {
 function paintModelHelp(id) {
   const selected = findProvider(id);
   const help = qs('#wb-model-help');
-  const note = modelUsageNote(id, (models.get(id) ?? '').trim() || selected.defaultModel);
-  if (help) help.textContent = `Left empty, ${selected.defaultModel} is used. Any model id ${selected.label} serves works.${note ? ` ${note}` : ''}`;
+  const modelId = (models.get(id) ?? '').trim() || selected.defaultModel;
+  const free = id === OPENROUTER && freeModels.find((entry) => entry.id === modelId);
+  const note = modelUsageNote(id, modelId);
+  if (help) help.textContent = free
+    ? `${free.label}: OpenRouter listed zero token prices when checked. Provider limits and data policies still apply; a free model is not a security guarantee.`
+    : `Left empty, ${selected.defaultModel} is used. Any model id ${selected.label} serves works.${note ? ` ${note}` : ''}`;
+  const freeSelect = qs('#wb-free-model');
+  if (freeSelect) freeSelect.value = free ? modelId : '';
 }
 
 function paintKey(id) {
@@ -398,6 +465,7 @@ function paint() {
   show('#wb-provider-field', via === 'key');
   show('#wb-key-field', via === 'key');
   show('#wb-connect', via === 'connect');
+  show('#wb-free-models', id === OPENROUTER);
   const select = qs('#wb-provider');
   if (select && select.value !== keyProvider) select.value = keyProvider;
   paintModel(id);
@@ -588,6 +656,12 @@ export function initProviders() {
   });
   on(qs('#wb-or-connect'), 'click', startConnect);
   on(qs('#wb-or-disconnect'), 'click', disconnect);
+  on(qs('#wb-load-free-models'), 'click', loadFreeModels);
+  on(qs('#wb-free-model'), 'change', (event) => {
+    if (activeProviderId() !== OPENROUTER || !freeModels.some((entry) => entry.id === event.target.value)) return;
+    chooseModel(event.target.value);
+    say('Free OpenRouter model selected. Connect OpenRouter or supply your own key; Bounty Operator hosted-review limits still apply.', { tone: 'success' });
+  });
 
   // The chat-subscription rows depend on the profile: a hosted one has no prompt to export.
   workbench.select((current) => current.profile, () => {

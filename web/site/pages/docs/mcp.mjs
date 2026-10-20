@@ -12,6 +12,8 @@
 //   Claude Code  https://code.claude.com/docs/en/mcp
 //   Codex        https://developers.openai.com/codex/mcp and /codex/cli/reference
 //   Cursor       https://cursor.com/docs/context/mcp and /docs/mcp/install-links
+//   OpenCode v1  https://opencode.ai/docs/mcp-servers/
+//   OpenCode v2  https://opencode.ai/v2/docs/mcp-servers/ (checked 20 October 2026)
 //
 // The three prompt names below are the contract this page documents. The MCP
 // endpoint and the local server must register prompts under the same names.
@@ -73,6 +75,12 @@ const cursorLocal = { type: 'stdio', command: 'npx', args: ['-y', TARBALL] };
 const cursorInstallLink = `cursor://anysphere.cursor-deeplink/mcp/install?name=${SERVER}&config=${encodeURIComponent(
   Buffer.from(JSON.stringify(cursorRemote)).toString('base64'),
 )}`;
+const openCodeRemote = { type: 'remote', url: ENDPOINT, oauth: false };
+const openCodeLocal = { type: 'local', command: ['npx', '-y', TARBALL] };
+const openCodeConfig = (server, version) => json({
+  mcp: version === 2 ? { servers: { [SERVER]: server } } : { [SERVER]: server },
+});
+const openCodeHeaders = { Authorization: `Bearer {env:${TOKEN_VAR}}`, 'X-Provider-Key': `{env:${KEY_VAR}}` };
 
 const CLIENTS = [
   {
@@ -169,6 +177,25 @@ ${file(
 )}
 <p class="fine">${inline('Use `.cursor/mcp.json` in a project folder to add the server to that project only.')}</p>`,
   },
+  {
+    id: 'opencode',
+    label: 'OpenCode',
+    remote: html`
+<p>${inline('Check `opencode --version`. Merge this entry into your project’s config; keep any servers you already use. OpenCode v1 and v2 use different shapes.')}</p>
+${file(openCodeConfig(openCodeRemote, 1), 'opencode.json · v1', 'OpenCode v1: the remote endpoint')}
+${disclosure({ summary: 'OpenCode v2 configuration', body: file(openCodeConfig(openCodeRemote, 2), 'opencode.jsonc · v2', 'OpenCode v2: the remote endpoint') })}
+${shell('opencode mcp list', 'OpenCode: check the connection')}
+<p class="fine">${inline('The server should be connected without signing in. `oauth: false` disables an unnecessary OAuth flow: the core tools need no credentials, and hosted tools use explicit headers. Your OpenCode model performs the core review; its normal costs and limits still apply.')}</p>`,
+    local: html`
+${file(openCodeConfig(openCodeLocal, 1), 'opencode.json · v1', 'OpenCode v1: the local server')}
+${disclosure({ summary: 'OpenCode v2 local configuration', body: file(openCodeConfig(openCodeLocal, 2), 'opencode.jsonc · v2', 'OpenCode v2: the local server') })}
+<p class="fine">${inline('Start OpenCode in the project you want to review. On Windows, if your client cannot launch `npx`, use `["cmd", "/c", "npx", "-y", "https://bountyoperator.com/dl/bounty-operator-mcp.tgz"]` as the command.')}</p>`,
+    token: html`
+<p>${inline('These headers are only for hosted reviews. The free core workflow above does not need them. OpenCode expands `{env:NAME}` from your environment; never put a real key in the config you share.')}</p>
+${file(openCodeConfig({ ...openCodeRemote, headers: openCodeHeaders, timeout: CLAUDE_TIMEOUT_MS }, 1), 'opencode.json · v1', 'OpenCode v1: remote endpoint with a token')}
+${disclosure({ summary: 'OpenCode v2 hosted configuration', body: file(openCodeConfig({ ...openCodeRemote, headers: openCodeHeaders, timeout: { execution: CLAUDE_TIMEOUT_MS } }, 2), 'opencode.jsonc · v2', 'OpenCode v2: remote endpoint with a token') })}
+<p class="fine">${inline('The timeout is 20 minutes. v1 uses a number; v2 uses `timeout.execution`. For a local server, put the account token and provider key in `environment` using the same `{env:NAME}` syntax.')}</p>`,
+  },
 ];
 
 // The way from this page to a token: the home page opens the account dialog for
@@ -181,7 +208,7 @@ function tokenSignup() {
   return html`<div class="install__alt">${button({ label: 'Create a free account and token', href: TOKEN_SIGNUP, size: 'sm', icon: 'key' })}<span class="fine">One passkey prompt, no email, no card.</span></div>`;
 }
 
-const install = html`<section class="install" data-tabs aria-labelledby="install-title">
+const install = html`<section class="install" id="install" data-tabs aria-labelledby="install-title">
 <h2 class="visually-hidden" id="install-title">Install</h2>
 ${tabs({ label: 'Client', items: CLIENTS.map((client, index) => ({ id: client.id, label: client.label, selected: index === 0 })) })}
 ${CLIENTS.map(
@@ -197,6 +224,16 @@ ${disclosure({ summary: 'Add your account token', hint: 'for account and run_rev
 )}
 <p class="install__foot fine">${inline('No account needed for either route. `list_profiles`, `prepare_review` for the three core profiles and `build_packet` work as soon as the server is added.')} The local package is listed with its SHA-256 in <a href="${CHECKSUMS}">SHA256SUMS.txt</a>.</p>
 <p class="install__foot fine">${inline(CLIENT_LIMIT)}</p>
+<div class="install__start"><div class="prose"><h3>Ask your agent for a first review</h3><p>Choose the files first. The agent writes the review; Bounty Operator prepares the request and checks the packet.</p></div>
+${codeBlock({
+  code: 'Use bounty-operator to review the files I choose. If I have not chosen files, ask me which ones. Call list_profiles, then prepare_review with the matching core profile (general, solidity or report). Stop if the privacy check blocks. Write the review from the prepared instructions, then call build_packet with the unchanged manifest. Show the verdict, evidence gaps and reference problems. Do not call run_review or spend provider credit on my behalf.',
+  name: 'Agent request',
+  numbers: false,
+  wrap: true,
+  copy: true,
+  label: 'First core review: no Bounty Operator account',
+})}
+</div>
 </section>`;
 
 // ---------------------------------------------------------------------------
@@ -249,16 +286,7 @@ ${TOOLS.map(
 <div class="prose">
 <p>${inline(`A call takes up to ${LIMITS.files} text files, ${LIMITS.fileBytes / 1000} KB per file, ${LIMITS.totalBytes / 1000} KB and ${LIMITS.totalLines.toLocaleString('en-US')} lines in total. File names are repo-relative paths such as \`src/Vault.sol\`. When the privacy check blocks a file, the result lists the file, the line and the kind of match, and never the matched text.`)}</p>
 <p>${inline(`The remote endpoint takes file text inline as \`files\`. On the local server, \`prepare_review\` and \`run_review\` also take \`paths\`: the server reads those files under its working directory, so your agent does not send the text. A client that starts the server outside your project sets \`${ROOT_VAR}\` to the project folder.`)}</p>
-<p>A first request to try:</p>
-</div>
-${codeBlock({
-  code: 'Use bounty-operator to prepare a Solidity review of src/Vault.sol. Answer the request it returns, then build the packet.',
-  name: 'Prompt',
-  numbers: false,
-  wrap: true,
-  copy: true,
-  label: 'A first request',
-})}`;
+</div>`;
 
 // ---------------------------------------------------------------------------
 // Core and hosted profiles
@@ -582,11 +610,11 @@ export default {
   title: 'MCP server for bug bounty report review | Bounty Operator',
   label: 'MCP setup',
   description:
-    'Copy-paste install for the Bounty Operator MCP server in Claude Code, Codex and Cursor, with its tools, three prompts and token setup.',
+    'Copy-paste install for the Bounty Operator MCP server in Claude Code, Codex, Cursor and OpenCode v1 or v2. Start a core review with no Bounty Operator account.',
   styles: [...DOCS_STYLES, '/css/walkthrough.css'],
   scripts: ['/docs/tabs.mjs', '/docs/copy-ping.mjs'],
   jsonld: [breadcrumbsLd([{ name: 'MCP server', path: PATH }]), faqPageLd(FAQ)],
   // The day this page's own text last changed, not the legal pages' date.
-  lastmod: '2026-10-11',
+  lastmod: '2026-10-20',
   body,
 };

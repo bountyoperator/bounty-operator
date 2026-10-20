@@ -35,7 +35,7 @@ import { initGithub } from './github-ui.mjs';
 import { initHistory } from './history.mjs';
 import { initPanel } from './panel.mjs';
 import { initPasteback } from './pasteback.mjs';
-import { chooseModel, initProviders, resumeOpenRouter } from './providers-ui.mjs';
+import { chooseModel, initProviders, resumeOpenRouter, setVia } from './providers-ui.mjs';
 import { initResults } from './results.mjs';
 import { initRun } from './run.mjs';
 import { initSourcePane } from './source-pane.mjs';
@@ -246,7 +246,7 @@ export function exampleList(module) {
  * Reads the deep link from a query string.
  *
  * @param {string} search  `location.search`
- * @returns {{ profile: string, example: boolean, exampleId: string }}
+ * @returns {{ profile: string, example: boolean, exampleId: string, provider?: string, model?: string, via?: 'export' }}
  */
 export function deepLink(search) {
   const params = new URLSearchParams(search);
@@ -269,6 +269,7 @@ export function deepLink(search) {
     exampleId: params.get('example') ?? '',
     ...(provider ? { provider } : {}),
     ...(model ? { model } : {}),
+    ...(params.get('via') === 'export' ? { via: 'export' } : {}),
   };
 }
 
@@ -422,7 +423,7 @@ export function boot() {
 
   // 3. Deep links. The parameters are removed once applied, so a reload keeps what the user changed since.
   const link = deepLink(window.location.search);
-  const arrived = Boolean(handoff) || Boolean(link.profile) || Boolean(link.provider) || link.example;
+  const arrived = Boolean(handoff) || Boolean(link.profile) || Boolean(link.provider) || Boolean(link.via) || link.example;
   if (link.profile) {
     leaveExample();
     const profile = reviewProfile(link.profile);
@@ -434,7 +435,11 @@ export function boot() {
     workbench.set({ provider: link.provider, ...(link.model ? { model: link.model } : {}) });
     if (link.model) chooseModel(link.model);
   }
-  stripParams(['profile', 'start', 'example', 'provider', 'model']);
+  if (link.via) {
+    leaveExample();
+    setVia(link.via);
+  }
+  stripParams(['profile', 'start', 'example', 'provider', 'model', 'via']);
   if (link.example) loadExample(link.exampleId);
   else if (arrived) qs('#workspace').scrollIntoView({ block: 'start' });
 

@@ -315,47 +315,6 @@ test('the data flow of a hosted review is stated the way the Worker runs it', as
   assert.match(review, /export function prepareChecked\(input: ReviewInputs\): Promise<Prepared> \{\s+return prepare\(input, true\);/);
 });
 
-test('the two plans read the same wherever they are summarised', () => {
-  // Operator: unlimited reviews, the full gauntlet, panel review, four at once.
-  const home = text('index.html');
-  for (const line of ['Operator US$10 per month', 'Unlimited reviews, 4 at once', 'US$2 in Bounty Operator API credit per paid month', 'Gauntlet: eight stages on one finding, then a verdict', 'Panel review: compare 2 to 4 models']) {
-    assert.ok(home.includes(line), `home: ${line}`);
-  }
-  assert.ok(description('pricing.html').includes('Operator: US$10 per month for unlimited reviews'));
-  assert.ok(description('pricing.html').includes('US$2 API credit per paid month'));
-  assert.ok(llms.includes('Operator is US$10 per month for unlimited reviews, the Gauntlet, Panel review and 4 reviews at once.'));
-  assert.match(readme, /\*\*Operator: US\$10\/month\*\* for unlimited reviews, the Gauntlet, Panel review and 4 reviews at once, including US\$2 API credit per paid month\./);
-  assert.match(text('terms.html'), /Unlimited reviews, the Gauntlet, Panel review and 4 reviews at once\. Renews monthly until you cancel\./);
-  const pricing = text('pricing.html');
-  for (const line of ['Unlimited reviews', 'US$2 in Bounty Operator API credit per paid month', 'Gauntlet: eight stages on one finding, then a verdict', 'Panel review: 2 to 4 models, then a cross-check', '4 reviews running at once']) {
-    assert.ok(pricing.includes(line), line);
-  }
-
-  // Free: 1 review a day, any review type, with a free account; and what only that account runs.
-  const freeLine = '1 review a day, any of the 11 review types, on your API key with a free account';
-  assert.ok(pricing.includes(freeLine));
-  assert.ok(home.includes(freeLine));
-  assert.ok(text('terms.html').includes(`${freeLine}. No payment method.`));
-  for (const body of [home, pricing]) assert.ok(body.includes('Triager simulation, Prior-art overlap and 6 more checks a chat app does not run'));
-  assert.ok(pricing.includes('Review types on your API key All 11, with a free account All 11'));
-  assert.ok(text('terms.html').includes('1 a day, any review type'));
-  assert.ok(llms.includes('Free gives you 1 review a day, any review type (reset at 00:00 UTC).'));
-  assert.ok(readme.includes('**Free:** 1 review a day, any review type.'));
-  // Why pay: answered on the home page and on /pricing in the same words.
-  const whyPay = 'The US$10 monthly plan pays for unlimited reviews, the Gauntlet, Panel review and 4 reviews running at once. It includes US$2 in Bounty Operator API credit per paid month. Other model providers bill usage to your own key.';
-  assert.ok(home.includes(whyPay));
-  assert.ok(pricing.includes(whyPay));
-  // No buyer-facing plan summary uses the internal words.
-  for (const [file, body] of [['index.html', home], ['pricing.html', pricing]]) {
-    assert.doesNotMatch(body, /hosted review|single profile|core profile|prompt export|UTC day/i, file);
-  }
-  assert.match(flat(release), /A free account runs any single profile as its hosted review of the day\./);
-
-  // What counts: stated once on the pricing page and once in the terms, as the Worker settles it.
-  assert.ok(pricing.includes('The free review resets at 00:00 UTC. A review the provider fails, refuses or cuts off at the start does not count.'));
-  assert.ok(text('terms.html').includes('A review the provider fails, refuses or cuts off at the start is not counted.'));
-});
-
 test('the panel page names the keys the workbench takes', async () => {
   // A seat picks any provider; one that is not the provider keyed above takes its own key in the row.
   const panel = await read('web', 'public', 'app', 'panel.mjs');

@@ -736,7 +736,8 @@
   line-height: 1.5;
 }
 
-/* The key and the connect control take a row of their own under provider and model. */
+/* Model discovery, the key and the connect control each take a full row. */
+#wb-free-models,
 #wb-key-field,
 .wb-connect {
   grid-column: 1 / -1;

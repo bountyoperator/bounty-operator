@@ -40,7 +40,7 @@ import { historyRecord } from '../public/app/history.mjs';
 import { PLACEHOLDER_EXAMPLE, deepLink, exampleList } from '../public/app/main.mjs';
 import { BUYING_CLOSED_STEP, BYTES_PER_TOKEN, DEFAULT_MODELS, WORKLOADS, admits, availabilityLabel, dollarsUp, estimateRunCost, loadCatalog, mergeCatalog, todayBlock } from '../public/app/model-api.mjs';
 import { cleanReply, pastedResult } from '../public/app/pasteback.mjs';
-import { authUrl, challengeFor, newVerifier, reconcileVia } from '../public/app/providers-ui.mjs';
+import { authUrl, challengeFor, freeOpenRouterModels, newVerifier, reconcileVia } from '../public/app/providers-ui.mjs';
 import {
   analyse,
   cellTone,
@@ -474,6 +474,31 @@ describe('providers', () => {
     assert.deepEqual(reconcileVia('openai', 'export', 'anthropic'), { via: 'key', keyProvider: 'openai' });
     assert.deepEqual(reconcileVia('nonsense', 'key', 'nonsense'), { via: 'key', keyProvider: PROVIDERS[0].id });
   });
+
+  test('free model choices exclude chargeable, unknown and insufficient output limits', () => {
+    const free = {
+      id: 'example/reviewer:free', name: 'Example reviewer', pricing: { prompt: '0', completion: '0' },
+      architecture: { input_modalities: ['text'], output_modalities: ['text'] },
+      supported_parameters: ['max_tokens'], context_length: 128000,
+      top_provider: { max_completion_tokens: 16000 },
+    };
+    const rejected = [
+      { ...free, id: 'example/paid', pricing: { prompt: '0.001', completion: '0.001' } },
+      { ...free, pricing: { prompt: '0', completion: '0', request: '0.01' } },
+      { ...free, pricing: { prompt: '', completion: '0' } },
+      { ...free, pricing: { prompt: null, completion: '0' } },
+      { ...free, pricing: { prompt: '0' } },
+      { ...free, top_provider: { max_completion_tokens: 8192 } },
+      { ...free, top_provider: { max_completion_tokens: null } },
+      { ...free, architecture: { input_modalities: ['text'], output_modalities: ['image'] } },
+      { ...free, supported_parameters: [] },
+    ];
+    assert.deepEqual(freeOpenRouterModels({ data: rejected }), []);
+    assert.deepEqual(freeOpenRouterModels({ data: [...rejected, free, free] }), [
+      { id: free.id, label: free.name, contextLength: free.context_length },
+    ]);
+    assert.throws(() => freeOpenRouterModels({ error: 'unavailable' }), /catalog/);
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -631,6 +656,9 @@ describe('deep links', () => {
     });
     assert.deepEqual(deepLink('?provider=unknown&model=x'), { profile: '', example: false, exampleId: '' });
     assert.deepEqual(deepLink('?provider=infron&model=bad%20space'), { profile: '', example: false, exampleId: '', provider: 'infron' });
+    assert.equal(deepLink('?profile=report&via=export').via, 'export');
+    assert.equal(deepLink('?via=javascript:alert(1)').via, undefined);
+    assert.equal(deepLink('?via=connect').via, undefined);
   });
 
   test('model catalog workload estimates respect per-request minimums and reservations', () => {

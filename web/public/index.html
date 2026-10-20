@@ -94,16 +94,15 @@ FINISH: Responsive layout, native video controls, captions, reduced motion and v
 <div class="home-top">
   <section class="wrap home-hero" aria-labelledby="hero-title">
     <div class="home-hero__text">
-      <p class="home-hero__kicker">Bug bounty report review</p>
       <h1 class="display home-hero__title" id="hero-title">Find the hole in your report before the triager does.</h1>
       <p class="lede home-hero__lede">Bounty Operator checks your bug report against the code and proof before you submit. Get one verdict, with the file and line behind it.</p>
       <div class="home-hero__actions">
-        <a class="btn btn--primary btn--lg" href="/?profile=report#workspace"><span class="btn__label">Review my report</span></a>
+        <a class="btn btn--primary btn--lg" href="/?profile=report&amp;via=export#workspace"><span class="btn__label">Review my report</span></a>
         <a class="btn btn--secondary btn--lg" href="#workspace" data-demo data-example=""><span class="btn__label">View example</span></a>
-        <a class="link home-hero__film" href="#meet-spec"><span class="icon icon--play" aria-hidden="true"></span> Watch Spec in 20 seconds</a>
+        <a class="link home-hero__film" href="/mcp#install">Use my coding agent <span class="icon icon--arrow-right" aria-hidden="true"></span></a>
       </div>
       <dl class="home-hero__free">
-        <div><dt>No account</dt><dd>The example, and code, Solidity and draft-report reviews in your ChatGPT or Claude chat.</dd></div>
+        <div><dt>No account</dt><dd>Code, Solidity and draft-report reviews in your AI chat or coding agent. Use the AI you already have; its usual costs and limits apply.</dd></div>
         <div><dt>Free account</dt><dd>All 11 review types on this site, <span class="nowrap">Triager simulation</span> and <span class="nowrap">Prior-art overlap</span> included: 1 a day on your own API key from OpenRouter, OpenAI, Anthropic or another provider.</dd></div>
       </dl>
     </div>
@@ -317,9 +316,9 @@ FINISH: Responsive layout, native video controls, captions, reduced motion and v
 <h4 class="wb-row__label" id="wb-via-label">Run with</h4>
 <div class="wb-row__body">
 <div class="wb-picks wb-picks--wide" id="wb-via" role="radiogroup" aria-labelledby="wb-via-label">
-<label class="wb-pick wb-pick--wide"><input type="radio" name="wb-via" value="connect"><span class="wb-pick__body"><span class="wb-pick__name">OpenRouter, one click</span><span class="wb-pick__tag">Connect your OpenRouter account. Every model, billed to your own credits.</span></span></label>
+<label class="wb-pick wb-pick--wide"><input type="radio" name="wb-via" value="export"><span class="wb-pick__body"><span class="wb-pick__name">My AI chat · no API key</span><span class="wb-pick__tag">Copy the prompt into your chat and paste the reply back. Code security, Solidity and draft-report reviews need no Bounty Operator account. Your chat provider’s limits apply.</span></span></label>
+<label class="wb-pick wb-pick--wide"><input type="radio" name="wb-via" value="connect"><span class="wb-pick__body"><span class="wb-pick__name">Connect OpenRouter</span><span class="wb-pick__tag">Use your own OpenRouter account. Choose a paid model or check the current free models below.</span></span></label>
 <label class="wb-pick wb-pick--wide"><input type="radio" name="wb-via" value="key"><span class="wb-pick__body"><span class="wb-pick__name">My own API key</span><span class="wb-pick__tag">Bounty Operator, OpenRouter, Infron, OrcaRouter, Anthropic, OpenAI, Gemini, xAI, DeepSeek, Mistral or Groq.</span></span></label>
-<label class="wb-pick wb-pick--wide"><input type="radio" name="wb-via" value="export"><span class="wb-pick__body"><span class="wb-pick__name">My chat subscription</span><span class="wb-pick__tag">Copy the prompt into ChatGPT, Claude or Gemini and paste the reply back. Code security, Solidity and draft-report reviews only. No account, no daily limit.</span></span></label>
 </div>
 </div>
 </div>
@@ -338,6 +337,16 @@ FINISH: Responsive layout, native video controls, captions, reduced motion and v
 <p class="help" id="wb-model-help"></p>
 <p class="field-error" id="wb-model-error" role="alert" hidden></p>
 </div>
+<details class="disclosure" id="wb-free-models" hidden>
+<summary class="disclosure__summary">Find a free OpenRouter model</summary>
+<div class="disclosure__body stack stack--12">
+<p class="help">Uses your OpenRouter account, not Bounty Operator credit. A free Bounty Operator account still covers one hosted review per UTC day. Free provider capacity and limits can change; there is no automatic switch to a paid model.</p>
+<div><button class="btn btn--secondary btn--sm" type="button" id="wb-load-free-models"><span class="btn__label">Check current free models</span></button></div>
+<div class="field"><label class="label" for="wb-free-model">Free model</label><select class="select" id="wb-free-model" name="wb-free-model" disabled aria-describedby="wb-free-status"><option value="">Check current models first</option></select></div>
+<p class="help" id="wb-free-status" role="status">The check fetches public model metadata only. It sends no files or API key.</p>
+<p class="help">For private reports, check the model host’s data policy first. <a class="link" href="/docs/model-selection#free">Free routes, limits and privacy</a>.</p>
+</div>
+</details>
 <div class="wb-connect" id="wb-connect">
 <div class="wb-connect__off" id="wb-or-off">
 <button class="btn btn--secondary" type="button" id="wb-or-connect"><span class="icon icon--key" aria-hidden="true"></span><span class="btn__label">Connect OpenRouter</span></button>

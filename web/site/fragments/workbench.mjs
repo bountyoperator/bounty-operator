@@ -151,9 +151,9 @@ ${button({ label: 'Edit', variant: 'quiet', size: 'sm', attrs: { 'data-step-targ
 </div>`;
 
   const via = html`<div class="wb-picks wb-picks--wide" id="wb-via" role="radiogroup" aria-labelledby="wb-via-label">
-${viaChoice({ value: 'connect', title: 'OpenRouter, one click', text: 'Connect your OpenRouter account. Every model, billed to your own credits.' })}
+${viaChoice({ value: 'export', title: 'My AI chat · no API key', text: 'Copy the prompt into your chat and paste the reply back. Code security, Solidity and draft-report reviews need no Bounty Operator account. Your chat provider’s limits apply.' })}
+${viaChoice({ value: 'connect', title: 'Connect OpenRouter', text: 'Use your own OpenRouter account. Choose a paid model or check the current free models below.' })}
 ${viaChoice({ value: 'key', title: 'My own API key', text: 'Bounty Operator, OpenRouter, Infron, OrcaRouter, Anthropic, OpenAI, Gemini, xAI, DeepSeek, Mistral or Groq.' })}
-${viaChoice({ value: 'export', title: 'My chat subscription', text: 'Copy the prompt into ChatGPT, Claude or Gemini and paste the reply back. Code security, Solidity and draft-report reviews only. No account, no daily limit.' })}
 </div>`;
 
   const model = html`<div class="wb-fields">
@@ -168,6 +168,16 @@ ${input({ id: 'wb-model', mono: true, attrs: { list: 'wb-models', spellcheck: 'f
 <p class="help" id="wb-model-help"></p>
 <p class="field-error" id="wb-model-error" role="alert" hidden></p>
 </div>
+<details class="disclosure" id="wb-free-models" hidden>
+<summary class="disclosure__summary">Find a free OpenRouter model</summary>
+<div class="disclosure__body stack stack--12">
+<p class="help">Uses your OpenRouter account, not Bounty Operator credit. A free Bounty Operator account still covers one hosted review per UTC day. Free provider capacity and limits can change; there is no automatic switch to a paid model.</p>
+<div>${button({ label: 'Check current free models', id: 'wb-load-free-models', size: 'sm' })}</div>
+${field({ label: 'Free model', for: 'wb-free-model', control: select({ id: 'wb-free-model', options: [{ value: '', label: 'Check current models first' }], attrs: { disabled: true, 'aria-describedby': 'wb-free-status' } }) })}
+<p class="help" id="wb-free-status" role="status">The check fetches public model metadata only. It sends no files or API key.</p>
+<p class="help">For private reports, check the model host’s data policy first. <a class="link" href="/docs/model-selection#free">Free routes, limits and privacy</a>.</p>
+</div>
+</details>
 <div class="wb-connect" id="wb-connect">
 <div class="wb-connect__off" id="wb-or-off">
 ${button({ label: 'Connect OpenRouter', id: 'wb-or-connect', icon: 'key' })}

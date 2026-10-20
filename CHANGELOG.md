@@ -15,6 +15,18 @@ Website update — 20 October
   Python retries are disabled; JavaScript reports HTTP failures directly.
 - The first request is beside the setup instructions, not after the catalog.
   Copy controls and wrapped examples fit narrow phone screens.
+- The home-page review button now opens the no-key AI chat route explicitly.
+  Core code, Solidity and draft-report reviews can be prepared and pasted back
+  without a Bounty Operator account; provider costs and limits still apply.
+- The workbench can check OpenRouter's current free models. Choices exclude
+  nonzero fees, missing output limits and limits too small for a review. A
+  model changes only when selected, and discovery failures never select a
+  paid alternative. No files or credentials go with the catalog request.
+- OpenCode setup distinguishes the v1 and v2 MCP configurations. The setup
+  page now provides a first core-review request, and the agent-facing index
+  explains the account-free prepare-review/build-packet path first.
+- Model-selection guidance separates chat, agent and free-provider routes,
+  their account allowances, and their model-specific data-use restrictions.
 
 Site
 

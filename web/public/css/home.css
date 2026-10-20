@@ -38,21 +38,6 @@
   display: contents;
 }
 
-/* A quiet category label leaves the headline and Spec in focus. */
-.home-hero__kicker {
-  order: 0;
-  display: flex;
-  align-items: center;
-  gap: var(--sp-12);
-  margin-bottom: var(--sp-16);
-  color: var(--muted);
-  font-family: var(--font-display);
-  font-size: var(--fs-14);
-  font-stretch: 100%;
-  font-weight: 500;
-  line-height: 1.4;
-}
-
 .home-hero__title {
   order: 1;
 }
@@ -210,10 +195,6 @@
 
   .home-hero__text {
     display: block;
-  }
-
-  .home-hero__kicker {
-    margin-bottom: var(--sp-24);
   }
 
   .home-hero__actions {

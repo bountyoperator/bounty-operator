@@ -4,14 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>MCP server for bug bounty report review | Bounty Operator</title>
-<meta name="description" content="Copy-paste install for the Bounty Operator MCP server in Claude Code, Codex and Cursor, with its tools, three prompts and token setup.">
+<meta name="description" content="Copy-paste install for the Bounty Operator MCP server in Claude Code, Codex, Cursor and OpenCode v1 or v2. Start a core review with no Bounty Operator account.">
 <link rel="canonical" href="https://bountyoperator.com/mcp">
 <meta name="color-scheme" content="dark">
 <meta name="theme-color" content="#18232d">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Bounty Operator">
 <meta property="og:title" content="MCP server for bug bounty report review | Bounty Operator">
-<meta property="og:description" content="Copy-paste install for the Bounty Operator MCP server in Claude Code, Codex and Cursor, with its tools, three prompts and token setup.">
+<meta property="og:description" content="Copy-paste install for the Bounty Operator MCP server in Claude Code, Codex, Cursor and OpenCode v1 or v2. Start a core review with no Bounty Operator account.">
 <meta property="og:url" content="https://bountyoperator.com/mcp">
 <meta property="og:image" content="https://bountyoperator.com/social-spec-v2.png">
 <meta property="og:image:width" content="1200">
@@ -20,7 +20,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:creator" content="@Tradi3_">
 <meta name="twitter:title" content="MCP server for bug bounty report review | Bounty Operator">
-<meta name="twitter:description" content="Copy-paste install for the Bounty Operator MCP server in Claude Code, Codex and Cursor, with its tools, three prompts and token setup.">
+<meta name="twitter:description" content="Copy-paste install for the Bounty Operator MCP server in Claude Code, Codex, Cursor and OpenCode v1 or v2. Start a core review with no Bounty Operator account.">
 <meta name="twitter:image" content="https://bountyoperator.com/social-spec-v2.png">
 <meta name="twitter:image:alt" content="Bounty Operator. Find the hole in your report before the triager does. Spec, our coral bug mascot, holds a magnifying glass.">
 <link rel="icon" href="/favicon.ico?v=spec-v1" sizes="48x48">
@@ -67,9 +67,9 @@ FINISH: Responsive layout, native video controls, captions, reduced motion and v
 
 
 </header>
-<div class="docs-lead"><section class="install" data-tabs aria-labelledby="install-title">
+<div class="docs-lead"><section class="install" id="install" data-tabs aria-labelledby="install-title">
 <h2 class="visually-hidden" id="install-title">Install</h2>
-<div class="tabs" role="tablist" aria-label="Client"><button class="tabs__tab" type="button" role="tab" id="tab-claude-code" aria-selected="true" aria-controls="panel-claude-code">Claude Code</button><button class="tabs__tab" type="button" role="tab" id="tab-codex" aria-selected="false" aria-controls="panel-codex" tabindex="-1">Codex</button><button class="tabs__tab" type="button" role="tab" id="tab-cursor" aria-selected="false" aria-controls="panel-cursor" tabindex="-1">Cursor</button></div>
+<div class="tabs" role="tablist" aria-label="Client"><button class="tabs__tab" type="button" role="tab" id="tab-claude-code" aria-selected="true" aria-controls="panel-claude-code">Claude Code</button><button class="tabs__tab" type="button" role="tab" id="tab-codex" aria-selected="false" aria-controls="panel-codex" tabindex="-1">Codex</button><button class="tabs__tab" type="button" role="tab" id="tab-cursor" aria-selected="false" aria-controls="panel-cursor" tabindex="-1">Cursor</button><button class="tabs__tab" type="button" role="tab" id="tab-opencode" aria-selected="false" aria-controls="panel-opencode" tabindex="-1">OpenCode</button></div>
 <div class="install__panel" id="panel-claude-code">
 <h3 class="install__client">Claude Code</h3>
 <div class="install__route">
@@ -200,9 +200,112 @@ FINISH: Responsive layout, native video controls, captions, reduced motion and v
 </span><span class="code__line">}
 </span></code></pre></figure>
 <p class="fine">Use <code>.cursor/mcp.json</code> in a project folder to add the server to that project only.</p></div></div></details>
+</div><div class="install__panel" id="panel-opencode">
+<h3 class="install__client">OpenCode</h3>
+<div class="install__route">
+<p class="install__label"><span class="meta">Remote endpoint</span><span class="chip" data-tone="observed">Nothing to install</span></p>
+
+<p>Check <code>opencode --version</code>. Merge this entry into your project’s config; keep any servers you already use. OpenCode v1 and v2 use different shapes.</p>
+<figure class="code"><figcaption class="code__bar"><span class="code__name">opencode.json · v1</span><button class="code__copy" type="button" data-copy><span class="icon icon--copy" aria-hidden="true"></span><span data-copy-label>Copy</span></button></figcaption><pre class="code__pre" tabindex="0" role="region" aria-label="OpenCode v1: the remote endpoint"><code><span class="code__line">{
+</span><span class="code__line">  &quot;mcp&quot;: {
+</span><span class="code__line">    &quot;bounty-operator&quot;: {
+</span><span class="code__line">      &quot;type&quot;: &quot;remote&quot;,
+</span><span class="code__line">      &quot;url&quot;: &quot;https://bountyoperator.com/api/mcp&quot;,
+</span><span class="code__line">      &quot;oauth&quot;: false
+</span><span class="code__line">    }
+</span><span class="code__line">  }
+</span><span class="code__line">}
+</span></code></pre></figure>
+<details class="disclosure"><summary class="disclosure__summary">OpenCode v2 configuration</summary><div class="disclosure__body"><figure class="code"><figcaption class="code__bar"><span class="code__name">opencode.jsonc · v2</span><button class="code__copy" type="button" data-copy><span class="icon icon--copy" aria-hidden="true"></span><span data-copy-label>Copy</span></button></figcaption><pre class="code__pre" tabindex="0" role="region" aria-label="OpenCode v2: the remote endpoint"><code><span class="code__line">{
+</span><span class="code__line">  &quot;mcp&quot;: {
+</span><span class="code__line">    &quot;servers&quot;: {
+</span><span class="code__line">      &quot;bounty-operator&quot;: {
+</span><span class="code__line">        &quot;type&quot;: &quot;remote&quot;,
+</span><span class="code__line">        &quot;url&quot;: &quot;https://bountyoperator.com/api/mcp&quot;,
+</span><span class="code__line">        &quot;oauth&quot;: false
+</span><span class="code__line">      }
+</span><span class="code__line">    }
+</span><span class="code__line">  }
+</span><span class="code__line">}
+</span></code></pre></figure></div></details>
+<figure class="code code--wrap"><figcaption class="code__bar"><span class="code__name">Terminal</span><button class="code__copy" type="button" data-copy><span class="icon icon--copy" aria-hidden="true"></span><span data-copy-label>Copy</span></button></figcaption><pre class="code__pre" tabindex="0" role="region" aria-label="OpenCode: check the connection"><code><span class="code__line">opencode mcp list
+</span></code></pre></figure>
+<p class="fine">The server should be connected without signing in. <code>oauth: false</code> disables an unnecessary OAuth flow: the core tools need no credentials, and hosted tools use explicit headers. Your OpenCode model performs the core review; its normal costs and limits still apply.</p>
+</div>
+<details class="disclosure"><summary class="disclosure__summary">Run a local server instead<span class="disclosure__hint">Node 22 or later</span></summary><div class="disclosure__body">
+<figure class="code"><figcaption class="code__bar"><span class="code__name">opencode.json · v1</span><button class="code__copy" type="button" data-copy><span class="icon icon--copy" aria-hidden="true"></span><span data-copy-label>Copy</span></button></figcaption><pre class="code__pre" tabindex="0" role="region" aria-label="OpenCode v1: the local server"><code><span class="code__line">{
+</span><span class="code__line">  &quot;mcp&quot;: {
+</span><span class="code__line">    &quot;bounty-operator&quot;: {
+</span><span class="code__line">      &quot;type&quot;: &quot;local&quot;,
+</span><span class="code__line">      &quot;command&quot;: [
+</span><span class="code__line">        &quot;npx&quot;,
+</span><span class="code__line">        &quot;-y&quot;,
+</span><span class="code__line">        &quot;https://bountyoperator.com/dl/bounty-operator-mcp.tgz&quot;
+</span><span class="code__line">      ]
+</span><span class="code__line">    }
+</span><span class="code__line">  }
+</span><span class="code__line">}
+</span></code></pre></figure>
+<details class="disclosure"><summary class="disclosure__summary">OpenCode v2 local configuration</summary><div class="disclosure__body"><figure class="code"><figcaption class="code__bar"><span class="code__name">opencode.jsonc · v2</span><button class="code__copy" type="button" data-copy><span class="icon icon--copy" aria-hidden="true"></span><span data-copy-label>Copy</span></button></figcaption><pre class="code__pre" tabindex="0" role="region" aria-label="OpenCode v2: the local server"><code><span class="code__line">{
+</span><span class="code__line">  &quot;mcp&quot;: {
+</span><span class="code__line">    &quot;servers&quot;: {
+</span><span class="code__line">      &quot;bounty-operator&quot;: {
+</span><span class="code__line">        &quot;type&quot;: &quot;local&quot;,
+</span><span class="code__line">        &quot;command&quot;: [
+</span><span class="code__line">          &quot;npx&quot;,
+</span><span class="code__line">          &quot;-y&quot;,
+</span><span class="code__line">          &quot;https://bountyoperator.com/dl/bounty-operator-mcp.tgz&quot;
+</span><span class="code__line">        ]
+</span><span class="code__line">      }
+</span><span class="code__line">    }
+</span><span class="code__line">  }
+</span><span class="code__line">}
+</span></code></pre></figure></div></details>
+<p class="fine">Start OpenCode in the project you want to review. On Windows, if your client cannot launch <code>npx</code>, use <code>[&quot;cmd&quot;, &quot;/c&quot;, &quot;npx&quot;, &quot;-y&quot;, &quot;https://bountyoperator.com/dl/bounty-operator-mcp.tgz&quot;]</code> as the command.</p></div></details>
+<details class="disclosure"><summary class="disclosure__summary">Add your account token<span class="disclosure__hint">for account and run_review</span></summary><div class="disclosure__body"><div class="install__token"><div class="install__alt"><a class="btn btn--secondary btn--sm" href="/#account/connections"><span class="icon icon--key" aria-hidden="true"></span><span class="btn__label">Create a free account and token</span></a><span class="fine">One passkey prompt, no email, no card.</span></div>
+<p>These headers are only for hosted reviews. The free core workflow above does not need them. OpenCode expands <code>{env:NAME}</code> from your environment; never put a real key in the config you share.</p>
+<figure class="code"><figcaption class="code__bar"><span class="code__name">opencode.json · v1</span><button class="code__copy" type="button" data-copy><span class="icon icon--copy" aria-hidden="true"></span><span data-copy-label>Copy</span></button></figcaption><pre class="code__pre" tabindex="0" role="region" aria-label="OpenCode v1: remote endpoint with a token"><code><span class="code__line">{
+</span><span class="code__line">  &quot;mcp&quot;: {
+</span><span class="code__line">    &quot;bounty-operator&quot;: {
+</span><span class="code__line">      &quot;type&quot;: &quot;remote&quot;,
+</span><span class="code__line">      &quot;url&quot;: &quot;https://bountyoperator.com/api/mcp&quot;,
+</span><span class="code__line">      &quot;oauth&quot;: false,
+</span><span class="code__line">      &quot;headers&quot;: {
+</span><span class="code__line">        &quot;Authorization&quot;: &quot;Bearer {env:BOUNTY_OPERATOR_TOKEN}&quot;,
+</span><span class="code__line">        &quot;X-Provider-Key&quot;: &quot;{env:OPENROUTER_API_KEY}&quot;
+</span><span class="code__line">      },
+</span><span class="code__line">      &quot;timeout&quot;: 1200000
+</span><span class="code__line">    }
+</span><span class="code__line">  }
+</span><span class="code__line">}
+</span></code></pre></figure>
+<details class="disclosure"><summary class="disclosure__summary">OpenCode v2 hosted configuration</summary><div class="disclosure__body"><figure class="code"><figcaption class="code__bar"><span class="code__name">opencode.jsonc · v2</span><button class="code__copy" type="button" data-copy><span class="icon icon--copy" aria-hidden="true"></span><span data-copy-label>Copy</span></button></figcaption><pre class="code__pre" tabindex="0" role="region" aria-label="OpenCode v2: remote endpoint with a token"><code><span class="code__line">{
+</span><span class="code__line">  &quot;mcp&quot;: {
+</span><span class="code__line">    &quot;servers&quot;: {
+</span><span class="code__line">      &quot;bounty-operator&quot;: {
+</span><span class="code__line">        &quot;type&quot;: &quot;remote&quot;,
+</span><span class="code__line">        &quot;url&quot;: &quot;https://bountyoperator.com/api/mcp&quot;,
+</span><span class="code__line">        &quot;oauth&quot;: false,
+</span><span class="code__line">        &quot;headers&quot;: {
+</span><span class="code__line">          &quot;Authorization&quot;: &quot;Bearer {env:BOUNTY_OPERATOR_TOKEN}&quot;,
+</span><span class="code__line">          &quot;X-Provider-Key&quot;: &quot;{env:OPENROUTER_API_KEY}&quot;
+</span><span class="code__line">        },
+</span><span class="code__line">        &quot;timeout&quot;: {
+</span><span class="code__line">          &quot;execution&quot;: 1200000
+</span><span class="code__line">        }
+</span><span class="code__line">      }
+</span><span class="code__line">    }
+</span><span class="code__line">  }
+</span><span class="code__line">}
+</span></code></pre></figure></div></details>
+<p class="fine">The timeout is 20 minutes. v1 uses a number; v2 uses <code>timeout.execution</code>. For a local server, put the account token and provider key in <code>environment</code> using the same <code>{env:NAME}</code> syntax.</p></div></div></details>
 </div>
 <p class="install__foot fine">No account needed for either route. <code>list_profiles</code>, <code>prepare_review</code> for the three core profiles and <code>build_packet</code> work as soon as the server is added. The local package is listed with its SHA-256 in <a href="/dl/SHA256SUMS.txt">SHA256SUMS.txt</a>.</p>
 <p class="install__foot fine">claude.ai and Claude Desktop stop any tool call after 240 seconds, and a hosted review runs for up to 15 minutes. Run hosted reviews from Claude Code, Codex or the website. <code>prepare_review</code> and <code>build_packet</code> for the three core profiles work in every client.</p>
+<div class="install__start"><div class="prose"><h3>Ask your agent for a first review</h3><p>Choose the files first. The agent writes the review; Bounty Operator prepares the request and checks the packet.</p></div>
+<figure class="code code--wrap"><figcaption class="code__bar"><span class="code__name">Agent request</span><button class="code__copy" type="button" data-copy><span class="icon icon--copy" aria-hidden="true"></span><span data-copy-label>Copy</span></button></figcaption><pre class="code__pre" tabindex="0" role="region" aria-label="First core review: no Bounty Operator account"><code><span class="code__line">Use bounty-operator to review the files I choose. If I have not chosen files, ask me which ones. Call list_profiles, then prepare_review with the matching core profile (general, solidity or report). Stop if the privacy check blocks. Write the review from the prepared instructions, then call build_packet with the unchanged manifest. Show the verdict, evidence gaps and reference problems. Do not call run_review or spend provider credit on my behalf.
+</span></code></pre></figure>
+</div>
 </section></div>
 <div class="docs-body">
 <nav class="docs-toc" aria-label="On this page">
@@ -265,10 +368,7 @@ FINISH: Responsive layout, native video controls, captions, reduced motion and v
 <div class="prose">
 <p>A call takes up to 50 text files, 120 KB per file, 240 KB and 20,000 lines in total. File names are repo-relative paths such as <code>src/Vault.sol</code>. When the privacy check blocks a file, the result lists the file, the line and the kind of match, and never the matched text.</p>
 <p>The remote endpoint takes file text inline as <code>files</code>. On the local server, <code>prepare_review</code> and <code>run_review</code> also take <code>paths</code>: the server reads those files under its working directory, so your agent does not send the text. A client that starts the server outside your project sets <code>BOUNTY_OPERATOR_ROOT</code> to the project folder.</p>
-<p>A first request to try:</p>
 </div>
-<figure class="code code--wrap"><figcaption class="code__bar"><span class="code__name">Prompt</span><button class="code__copy" type="button" data-copy><span class="icon icon--copy" aria-hidden="true"></span><span data-copy-label>Copy</span></button></figcaption><pre class="code__pre" tabindex="0" role="region" aria-label="A first request"><code><span class="code__line">Use bounty-operator to prepare a Solidity review of src/Vault.sol. Answer the request it returns, then build the packet.
-</span></code></pre></figure>
 </section><section class="docs-section" aria-labelledby="hosted">
 <h2 class="docs-section__title" id="hosted">Core and hosted profiles</h2>
 

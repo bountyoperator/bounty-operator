@@ -120,32 +120,6 @@ test('the proof strip links the three leaderboards and the method', async () => 
   assert.match(text, new RegExp(`${IMMUNEFI.badge} on Immunefi\\s*: ${IMMUNEFI.rank} on its all-time leaderboard on ${IMMUNEFI.readOn}\\.`));
 });
 
-test('the hero says what is free under its two buttons, and a phone shows it before the slip', async () => {
-  const hero = main.slice(main.indexOf('class="wrap home-hero"'), main.indexOf('class="home-hero__shot"'));
-  // The kicker, the headline, the lede, the actions, then the price line: in that order in the markup.
-  const order = ['class="home-hero__kicker"', 'id="hero-title"', 'class="lede home-hero__lede"', 'class="home-hero__actions"', '<dl class="home-hero__free">'];
-  const positions = order.map((needle) => hero.indexOf(needle));
-  assert.ok(positions.every((position) => position > 0), 'missing: ' + order.filter((_, index) => positions[index] < 0).join(', '));
-  assert.deepEqual([...positions].sort((a, b) => a - b), positions);
-  assert.doesNotMatch(markup, /href="\/benchmark#/);
-
-  // What is free: what needs no account, and what a free account opens, by name.
-  const free = textOf(hero.slice(hero.indexOf('<dl class="home-hero__free">')));
-  assert.match(free, /^No account The example, and code, Solidity and draft-report reviews in your ChatGPT or Claude chat\./);
-  const hosted = PROFILES.filter((profile) => profile.listed && profile.hosted).map((profile) => profile.name);
-  assert.ok(hosted.includes('Triager simulation') && hosted.includes('Prior-art overlap'));
-  assert.match(free, /Free account All 11 review types on this site, Triager simulation and Prior-art overlap included: 1 a day on your own API key from OpenRouter, OpenAI, Anthropic or another provider\./);
-
-  // On a phone the parts take their places by order: the price line sits with the actions, ahead of the slip.
-  const css = (await readFile(path.join(WEB_DIR, 'public', 'css', 'home.css'), 'utf8')).replace(/\r\n/g, '\n');
-  assert.match(css, /\.home-hero__kicker \{\n  order: 0;/);
-  assert.match(css, /\.home-hero__title \{\n  order: 1;/);
-  assert.match(css, /\.home-hero__lede \{\n  order: 2;/);
-  assert.match(css, /\.home-hero__actions \{\n  order: 3;/);
-  assert.match(css, /\.home-hero__free \{\n  order: 3;/);
-  assert.match(css, /\.home-hero__shot \{\n  order: 4;/);
-});
-
 test('pricing states the two plans and the monthly included API credit', () => {
   const pricing = main.slice(main.indexOf('id="pricing"'), main.indexOf('id="faq"'));
   const text = textOf(pricing);

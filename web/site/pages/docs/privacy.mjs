@@ -10,7 +10,7 @@ import { DOCS_STYLES, docPage, facts, supportLink, time } from './_shared.mjs';
 
 const PATH = '/privacy';
 /** The day this page's own text last changed. */
-const PRIVACY_UPDATED = '2026-10-15';
+const PRIVACY_UPDATED = '2026-10-20';
 
 const glance = facts(
   [
@@ -104,6 +104,7 @@ const thirdParties = html`
 <p>Cloudflare, which hosts the site, processes each request’s IP address and other request metadata to deliver it, under its own policies.</p>
 <p>${inline('A GitHub import goes from your browser straight to `api.github.com`, with the link you chose and your read-only token if you supply one. Without a token the files themselves are read from `raw.githubusercontent.com`, GitHub’s file host, which is sent nothing but the file’s address. The token is held in tab memory. The imported files reach our server only when you run a hosted review.')}</p>
 <p>${inline('Connecting OpenRouter happens between your browser and `openrouter.ai`.')}</p>
+<p>${inline('When you press “Check current free models”, your browser requests the public model catalog from `openrouter.ai`. That request contains no files, API key or cookies. OpenRouter receives ordinary network metadata, including your IP address, under its own policies. The fetched list stays in this page’s memory; only the model you select is kept with the existing workbench settings.')}</p>
 <p>${inline('The MCP server handles the file contents your agent passes to a tool. `list_profiles`, `prepare_review` and `build_packet` keep none of it. `run_review` is a hosted review and is recorded like one. Your agent’s own model provider receives tool results under its own terms.')}</p>
 <p>Connection tokens are shown once and stored as hashes. They expire after 90 days and you can revoke one in the account panel. Recovering an account, or signing out everywhere, revokes all of them.</p>`;
 

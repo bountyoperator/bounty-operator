@@ -38,7 +38,7 @@ import { BENCH_TEASER } from './benchmark/_teaser.mjs';
 import { ACCOUNT_TICK, AGENT_TICK, CHAT_TICK, FREE_LINE, INCLUDED_API_CREDIT, RENEWAL, SERVER_ONLY_EXAMPLES, SERVER_ONLY_TYPES, WHY_PAY } from '../plans.mjs';
 import { walkthrough } from '../walkthroughs.mjs';
 
-const LASTMOD = '2026-10-15';
+const LASTMOD = '2026-10-20';
 const DEV_BUILD = process.argv.includes('--dev');
 
 // ---------------------------------------------------------------------------
@@ -113,16 +113,15 @@ const hero = html`
 <div class="home-top">
   <section class="wrap home-hero" aria-labelledby="hero-title">
     <div class="home-hero__text">
-      <p class="home-hero__kicker">Bug bounty report review</p>
       <h1 class="display home-hero__title" id="hero-title">${SITE.promise}</h1>
       <p class="lede home-hero__lede">Bounty Operator checks your bug report against the code and proof before you submit. Get one verdict, with the file and line behind it.</p>
       <div class="home-hero__actions">
-        ${button({ label: 'Review my report', href: '/?profile=report#workspace', variant: 'primary', size: 'lg' })}
+        ${button({ label: 'Review my report', href: '/?profile=report&via=export#workspace', variant: 'primary', size: 'lg' })}
         ${button({ label: 'View example', href: '#workspace', variant: 'secondary', size: 'lg', attrs: { 'data-demo': true, 'data-example': '' } })}
-        <a class="link home-hero__film" href="#meet-spec">${icon('play')} Watch Spec in 20 seconds</a>
+        <a class="link home-hero__film" href="/mcp#install">Use my coding agent ${icon('arrow-right')}</a>
       </div>
       <dl class="home-hero__free">
-        <div><dt>No account</dt><dd>The example, and code, Solidity and draft-report reviews in your ChatGPT or Claude chat.</dd></div>
+        <div><dt>No account</dt><dd>Code, Solidity and draft-report reviews in your AI chat or coding agent. Use the AI you already have; its usual costs and limits apply.</dd></div>
         <div><dt>Free account</dt><dd>All ${PROFILE_TOTAL} review types on this site, ${keepTogether(SERVER_ONLY_EXAMPLES[0])} and ${keepTogether(SERVER_ONLY_EXAMPLES[1])} included: 1 a day on your own API key from OpenRouter, OpenAI, Anthropic or another provider.</dd></div>
       </dl>
     </div>
@@ -157,7 +156,7 @@ const meetSpec = html`
 
 const STEPS = [
   { title: 'Add your files', text: 'Paste text, drop files or import from GitHub.' },
-  { title: 'Choose your model', text: 'Use your own API key, or your ChatGPT or Claude chat.' },
+  { title: 'Choose your AI', text: 'Use your AI chat, connect a coding agent, or choose a provider with your own API key.' },
   { title: 'Read the result', text: 'See the verdict, source citations and next steps.' },
 ];
 
@@ -183,7 +182,7 @@ const resources = html`
   ${sectionHeading({ title: 'More ways to use Bounty Operator', id: 'free-tools' })}
   <ul class="home-resources">
     <li><a class="link" href="/tools">Free tools</a><span>Check a draft, scan for secrets or verify a review packet.</span></li>
-    <li><a class="link" href="/mcp">Coding agent setup</a><span>Connect Claude Code, Codex or Cursor.</span></li>
+    <li><a class="link" href="/mcp#install">Coding agent setup</a><span>Connect Claude Code, Codex, Cursor or OpenCode. Core reviews need no account.</span></li>
     <li><a class="link" href="/method">How the review works</a><span>The checks behind each verdict.</span></li>
   </ul>
 </section>`;
