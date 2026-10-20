@@ -72,10 +72,10 @@ FINISH: Responsive layout, native video controls, captions, reduced motion and v
 
 <div class="cluster page-head__actions"><a class="btn btn--primary btn--lg" href="/#account/api"><span class="btn__label">Get an API key</span></a><a class="btn btn--secondary btn--lg" href="#models"><span class="btn__label">See all models</span></a><a class="btn btn--secondary btn--lg" href="/docs/model-api"><span class="btn__label">Setup guide</span></a></div>
 </header>
-<section class="api-today" id="model-api-start" data-open="true" data-state="open" aria-labelledby="start">
+<section class="api-today" id="model-api-start" data-open="false" data-state="unknown" aria-labelledby="start">
 <div class="api-today__text">
-<h2 id="start">Available today</h2>
-<p class="api-today__line" id="model-api-today">Qwen Cyber 27B AWQ, DeepHat V1 7B, Orca Qwen 3.8 27B, Orca Nex N2.5 Mini, Hermes 4 14B, Hermes 4.3 36B, Foundation-Sec 1.1 8B. Each card below shows its price. The other 17 models below are not available yet.</p>
+<h2 id="start">Checking availability</h2>
+<p class="api-today__line" id="model-api-today">Live availability and prices load here before a request is offered.</p>
 <div class="api-today__start">
 <h3 class="api-today__how">How to start</h3>
 <ol class="steps api-steps">
@@ -86,18 +86,7 @@ FINISH: Responsive layout, native video controls, captions, reduced motion and v
 <p class="help">After an idle spell the first request waits up to 10 minutes while the model starts. You are not charged for the wait.</p>
 </div>
 </div>
-<figure class="code code--wrap api-today__code"><figcaption class="code__bar"><span class="code__name">Your first call</span><button class="code__copy" type="button" data-copy><span class="icon icon--copy" aria-hidden="true"></span><span data-copy-label>Copy</span></button></figcaption><pre class="code__pre" tabindex="0" role="region" aria-label="Your first call: curl"><code><span class="code__line">curl https://bountyoperator.com/v1/chat/completions \
-</span><span class="code__line">  -H &quot;Authorization: Bearer $BOUNTY_OPERATOR_API_KEY&quot; \
-</span><span class="code__line">  -H &quot;Content-Type: application/json&quot; \
-</span><span class="code__line">  -d &#39;{
-</span><span class="code__line">  &quot;model&quot;: &quot;cyber-qwen-27b-awq&quot;,
-</span><span class="code__line">  &quot;messages&quot;: [
-</span><span class="code__line">    { &quot;role&quot;: &quot;user&quot;, &quot;content&quot;: &quot;Trace every external call and state update in withdraw().&quot; }
-</span><span class="code__line">  ],
-</span><span class="code__line">  &quot;max_tokens&quot;: 2048,
-</span><span class="code__line">  &quot;chat_template_kwargs&quot;: { &quot;enable_thinking&quot;: false }
-</span><span class="code__line">}&#39;
-</span></code></pre></figure>
+<div id="model-api-quickstart" class="api-today__code" aria-label="Interactive quickstart"></div>
 </section>
 <ul class="api-highlights" aria-label="API features"><li>Works with tools that use the OpenAI chat API</li><li>Prepaid credit, no subscription</li><li>A spending limit on every key</li><li>We don’t store your prompts or answers</li></ul>
 <p class="help">Requests also pass to the selected hosting provider, whose data policies apply. Read the <a href="/privacy#model-api">provider and data handling details</a>.</p>
@@ -106,7 +95,6 @@ FINISH: Responsive layout, native video controls, captions, reduced motion and v
 <div class="catalog-heading"><h2 id="models">All models and prices</h2><p class="help">USD per million tokens. Every request costs at least the model’s minimum. Switch the price view to estimate a review or an agent session.</p></div>
 <p class="help catalog-status" role="status" id="model-api-status">Checking model availability…</p>
 <div id="model-api-catalog"></div>
-<div id="model-api-quickstart" class="catalog-quickstart" aria-label="Interactive quickstart"></div>
 <noscript><p>Enable JavaScript to filter models, estimate workload costs and copy model snippets. Full reference: <a href="/docs/model-api">/docs/model-api</a>.</p></noscript>
 <p class="help catalog-footnote">When a model has been idle, its first request waits up to 10 minutes while a GPU starts and loads it. Requests after that answer in seconds while it stays warm. You are not charged for the wait. <a href="/docs/model-api#cost">What to expect</a></p>
 </section>

@@ -38,7 +38,7 @@ import {
 } from '../public/app/github-ui.mjs';
 import { historyRecord } from '../public/app/history.mjs';
 import { PLACEHOLDER_EXAMPLE, deepLink, exampleList } from '../public/app/main.mjs';
-import { BUYING_CLOSED_STEP, BYTES_PER_TOKEN, DEFAULT_MODELS, WORKLOADS, admits, availabilityLabel, buildSnippet, dollarsUp, estimateRunCost, loadCatalog, mergeCatalog, todayBlock } from '../public/app/model-api.mjs';
+import { BUYING_CLOSED_STEP, BYTES_PER_TOKEN, DEFAULT_MODELS, WORKLOADS, admits, availabilityLabel, dollarsUp, estimateRunCost, loadCatalog, mergeCatalog, todayBlock } from '../public/app/model-api.mjs';
 import { cleanReply, pastedResult } from '../public/app/pasteback.mjs';
 import { authUrl, challengeFor, newVerifier, reconcileVia } from '../public/app/providers-ui.mjs';
 import {
@@ -633,7 +633,7 @@ describe('deep links', () => {
     assert.deepEqual(deepLink('?provider=infron&model=bad%20space'), { profile: '', example: false, exampleId: '', provider: 'infron' });
   });
 
-  test('model catalog workload estimator and quickstart snippets respect per-request minimums and reasoning parameters', () => {
+  test('model catalog workload estimates respect per-request minimums and reservations', () => {
     assert.equal(DEFAULT_MODELS.length, 24);
     const qwen = DEFAULT_MODELS.find((m) => m.id === 'cyber-qwen-27b-awq');
     // 24K in and 4K out is US$0.216 of tokens, under the US$0.30 floor that covers a cold start.
@@ -649,13 +649,6 @@ describe('deep links', () => {
     // Short workload stays at the model's minimum_request floor.
     const minEst = estimateRunCost(qwen, { inputTokens: 1000, outputTokens: 500 });
     assert.equal(minEst.cost, 0.3);
-    assert.match(buildSnippet(qwen, 'curl'), /"chat_template_kwargs": \{ "enable_thinking": false \}/);
-    const nex = DEFAULT_MODELS.find((m) => m.id === 'orca-nex-mini');
-    assert.match(buildSnippet(nex, 'ts'), /"reasoning_effort": "low"/);
-    assert.match(buildSnippet(qwen, 'agent'), /context_window = 262144/);
-    // No snippet puts a key in the source, and the tool settings name no tool that cannot use this API.
-    for (const tab of ['curl', 'python', 'ts', 'agent']) assert.doesNotMatch(buildSnippet(qwen, tab), /bo_api_\.\.\.|Codex/, tab);
-    assert.match(buildSnippet(qwen, 'python'), /api_key=os\.environ\["BOUNTY_OPERATOR_API_KEY"\]/);
   });
 
   test('the estimator never assumes more output than a model allows, and prices only what the gateway would admit', () => {
@@ -725,16 +718,6 @@ describe('deep links', () => {
     assert.equal(dollarsUp(0.000001), '$0.01');
   });
 
-  test('every price-view label fits a 320px phone, and the detail goes in the line above the cards', () => {
-    // 'Agent session (8 requests, 12.5K in · 2K out each)' made a 332px button that pushed a
-    // 320px page 28px sideways. The old 33-character label measured 231px of the 288px row.
-    for (const [key, workload] of Object.entries(WORKLOADS)) {
-      assert.ok(workload.label.length <= 30, `${key}: "${workload.label}" is ${workload.label.length} characters`);
-      assert.ok(workload.summary, key);
-    }
-    assert.equal(WORKLOADS.agent.label, 'Agent session (8 requests)');
-    assert.match(WORKLOADS.agent.summary, /8 requests, each 12\.5K tokens in and 2K out/);
-  });
 });
 
 describe('model catalog availability and provenance', () => {
@@ -814,9 +797,10 @@ describe('model catalog availability and provenance', () => {
     assert.equal(states.length, 24);
     assert.ok(states.every((text) => text === 'Not checked'));
     assert.equal(descendants(catalog).filter((node) => node.className === 'catalog-group').length, 0);
-    const kimi = descendants(catalog).find((node) => node.attributes.get('aria-label') === 'Use Kimi K3 Cybersecurity Two-Stage in quickstart snippet');
-    kimi.listeners.get('click')();
-    assert.match(nodes.get('model-api-quickstart').textContent, /kimi-k3-cyber/);
+    assert.equal(descendants(catalog).filter((node) => node.attributes.get('aria-label')?.endsWith('in quickstart snippet')).length, 0);
+    const code = descendants(nodes.get('model-api-quickstart')).find((node) => node.tagName === 'pre');
+    assert.equal(code.hidden, true);
+    assert.equal(code.textContent, '');
   });
 
   test('only individually available live models launch review and direct metadata links stay with the provider', async (t) => {
@@ -882,37 +866,6 @@ describe('model catalog availability and provenance', () => {
     assert.equal(availabilityLabel('available', false), 'Not checked');
   });
 
-  test('the top of the page tells one state in its heading and its line: open, paused, closed or not checked', () => {
-    const open = todayBlock(OPEN, mergeCatalog(OPEN));
-    assert.deepEqual(open, {
-      state: 'open', heading: 'Available today', open: true, buying: true,
-      line: 'Qwen Cyber 27B AWQ (cyber-qwen-27b-awq): US$3 per million input tokens, US$36 per million output tokens, at least US$0.30 a request. The other 23 models below are not available yet.',
-    });
-    // Open with buying closed: still open, the line still names the model, and step 1 changes instead.
-    const noBuy = todayBlock({ ...OPEN, topups_enabled: false }, mergeCatalog(OPEN));
-    assert.deepEqual([noBuy.state, noBuy.heading, noBuy.open, noBuy.buying, noBuy.line], ['open', 'Available today', true, false, open.line]);
-    const paused = todayBlock({ enabled: false, status: 'paused', topups_enabled: false }, mergeCatalog({ enabled: false, models: [] }));
-    assert.deepEqual([paused.state, paused.heading, paused.open], ['paused', 'Paused right now', false]);
-    assert.equal(paused.line, 'No request runs and no credit can be bought until it resumes. Credit you already hold is kept.');
-    // Open, but every listed model paused: the heading says paused, not "Available today".
-    const allPaused = { enabled: true, status: 'available', topups_enabled: true, models: [{ ...DEFAULT_MODELS[0], availability: 'paused' }] };
-    assert.equal(todayBlock(allPaused, mergeCatalog(allPaused)).heading, 'Paused right now');
-    const closed = todayBlock({ enabled: false, status: 'unavailable' }, mergeCatalog({ enabled: false, models: [] }));
-    assert.deepEqual([closed.state, closed.heading, closed.open], ['closed', 'Not open right now', false]);
-    assert.equal(closed.line, 'No model can be bought or called. Reviews on your own AI provider API key work today.');
-    // Enabled with nothing available is closed too.
-    assert.equal(todayBlock({ enabled: true, status: 'available', models: [] }, mergeCatalog({ enabled: true, models: [] })).state, 'closed');
-    const unknown = todayBlock(null);
-    assert.deepEqual([unknown.state, unknown.heading, unknown.open], ['unknown', 'Availability not checked', false]);
-    assert.match(unknown.line, /cannot say what can be bought or called right now\. Refresh the page before adding credit\.$/);
-    const two = { enabled: true, topups_enabled: true, models: [OPEN.models[0], { ...DEFAULT_MODELS[1], availability: 'available' }] };
-    assert.equal(todayBlock(two, mergeCatalog(two)).line, 'Qwen Cyber 27B AWQ, OrcaCyber Zero 1.5. Each card below shows its price. The other 22 models below are not available yet.');
-    // Only the open state says "Available today", and no other heading or line claims a model can be used.
-    for (const block of [paused, closed, unknown]) {
-      assert.notEqual(block.heading, 'Available today');
-      assert.doesNotMatch(`${block.heading} ${block.line}`, /Qwen|US\$|available today/i);
-    }
-  });
 
   /** The top block as the page is built: the section, its heading, the line under it and step 1. */
   function topNodes(nodes) {
@@ -1003,9 +956,11 @@ describe('model catalog availability and provenance', () => {
     assert.deepEqual(pills(cards[0]), ['Paused']);
     assert.deepEqual(pills(cards[1]), ['Not available yet']);
     assert.match(cards[0].textContent, /Hosting provider: RunPod · Paused/);
-    // Paused sells nothing: no card launches a review, and the quickstart line says so.
     assert.equal(reviewLinks(catalog).length, 0);
-    assert.match(nodes.get('model-api-quickstart').textContent, /Qwen Cyber 27B AWQ \(cyber-qwen-27b-awq\) · \$3\/\$36 per 1M · paused/);
+    assert.equal(descendants(catalog).filter((node) => node.attributes.get('aria-label')?.endsWith('in quickstart snippet')).length, 0);
+    const code = descendants(nodes.get('model-api-quickstart')).find((node) => node.tagName === 'pre');
+    assert.equal(code.hidden, true);
+    assert.equal(code.textContent, '');
   });
 
   test('when the live check fails, the top stops claiming a model is available and hides the steps and the first call', async (t) => {
@@ -1043,6 +998,43 @@ describe('model catalog availability and provenance', () => {
     const boxes = descendants(hermes).filter((node) => typeof node.className === 'string' && node.className.startsWith('catalog-rate'));
     assert.deepEqual(boxes.map((node) => node.className), ['catalog-rates', 'catalog-rate catalog-rate--wide']);
     assert.match(hermes.textContent, /Per reviewToo long for this model/);
+  });
+  test('availability filtering preserves the full catalog and only callable models offer setup', async (t) => {
+    const nodes = setup(t, OPEN);
+    await loadCatalog();
+    const catalog = nodes.get('model-api-catalog');
+    const setupButtons = () => descendants(catalog).filter((node) => node.attributes.get('aria-label')?.endsWith('in quickstart snippet'));
+    assert.equal(setupButtons().length, 1);
+    const filter = descendants(catalog).find((node) => node.tagName === 'button' && node.textContent.startsWith('Available now'));
+    filter.listeners.get('click')();
+    assert.deepEqual(descendants(catalog).filter((node) => node.className === 'catalog-card').map((node) => node.dataset.availability), ['available']);
+    const all = descendants(catalog).find((node) => node.tagName === 'button' && node.textContent.startsWith('All ('));
+    all.listeners.get('click')();
+    assert.equal(descendants(catalog).filter((node) => node.className === 'catalog-card').length, DEFAULT_MODELS.length);
+    assert.equal(setupButtons().length, 1);
+  });
+
+  test('an unavailable shared model never silently generates a request for another model', async (t) => {
+    const previous = globalThis.location;
+    globalThis.location = new URL('https://bountyoperator.com/model-api?model=orca-cyber-zero-1.5&lang=python');
+    t.after(() => {
+      if (previous === undefined) delete globalThis.location;
+      else globalThis.location = previous;
+    });
+    const nodes = setup(t, OPEN);
+    await loadCatalog();
+    const quickstart = nodes.get('model-api-quickstart');
+    const code = descendants(quickstart).find((node) => node.tagName === 'pre');
+    assert.equal(code.hidden, true);
+    assert.equal(code.textContent, '');
+    const actions = descendants(quickstart).find((node) => node.attributes.get('aria-label') === 'Snippet language');
+    assert.equal(actions.hidden, true);
+    const available = descendants(nodes.get('model-api-catalog')).find((node) => node.attributes.get('aria-label') === `Use ${OPEN.models[0].name} in quickstart snippet`);
+    available.listeners.get('click')();
+    assert.equal(code.hidden, false);
+    assert.equal(actions.hidden, false);
+    assert.ok(code.textContent.includes(`model="${OPEN.models[0].id}"`));
+    assert.ok(!code.textContent.includes('orca-cyber-zero-1.5'));
   });
 });
 

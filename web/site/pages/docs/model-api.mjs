@@ -1,26 +1,12 @@
-import { button, closingBand, codeBlock, html } from '../../components.mjs';
+import { button, closingBand, html } from '../../components.mjs';
 import { breadcrumbsLd } from '../../layout.mjs';
 import { ACCOUNT_SCRIPTS, ACCOUNT_STYLES, accountDialog } from '../../fragments/account-dialog.mjs';
-import { DEFAULT_MODELS, buildSnippet, mergeCatalog, todayBlock } from '../../../public/app/model-api.mjs';
 import { DOCS_STYLES, docHead } from './_shared.mjs';
 
-// The models production sells today (0.9.16: the seven that passed a live test
-// request on 15 October 2026). The page is built with them named at the top; on
-// load, /app/model-api.mjs rewrites that line and the steps from the live
-// catalog, so a pause, a closure or a newly opened model shows without a rebuild.
-const SELLING = ['cyber-qwen-27b-awq', 'deephat-v1-7b', 'foundation-sec-8b', 'hermes-4-14b', 'orca-nex-mini', 'orca-qwen-27b', 'hermes-4.3-36b'];
-const OPEN_MODEL = DEFAULT_MODELS.find((model) => model.id === 'cyber-qwen-27b-awq');
-// The heading and line the script writes for that catalog, so the built page and the script agree.
-const OPEN_CATALOG = { enabled: true, status: 'available', topups_enabled: true, models: DEFAULT_MODELS.filter((model) => SELLING.includes(model.id)).map((model) => ({ ...model, availability: 'available' })) };
-const OPEN_TODAY = todayBlock(OPEN_CATALOG, mergeCatalog(OPEN_CATALOG));
-const OPEN_HEADING = OPEN_TODAY.heading;
-
-// data-open says whether the steps and the first call lead anywhere, data-state which state the
-// heading and line tell (open, paused, closed, unknown): the script sets all three from the live catalog.
-const today = html`<section class="api-today" id="model-api-start" data-open="true" data-state="open" aria-labelledby="start">
+const today = html`<section class="api-today" id="model-api-start" data-open="false" data-state="unknown" aria-labelledby="start">
 <div class="api-today__text">
-<h2 id="start">${OPEN_HEADING}</h2>
-<p class="api-today__line" id="model-api-today">${OPEN_TODAY.line}</p>
+<h2 id="start">Checking availability</h2>
+<p class="api-today__line" id="model-api-today">Live availability and prices load here before a request is offered.</p>
 <div class="api-today__start">
 <h3 class="api-today__how">How to start</h3>
 <ol class="steps api-steps">
@@ -31,7 +17,7 @@ const today = html`<section class="api-today" id="model-api-start" data-open="tr
 <p class="help">After an idle spell the first request waits up to 10 minutes while the model starts. You are not charged for the wait.</p>
 </div>
 </div>
-${codeBlock({ code: buildSnippet(OPEN_MODEL, 'curl'), name: 'Your first call', numbers: false, wrap: true, copy: true, label: 'Your first call: curl', className: 'api-today__code' })}
+<div id="model-api-quickstart" class="api-today__code" aria-label="Interactive quickstart"></div>
 </section>`;
 
 const INFRON_STACK = [
@@ -59,7 +45,6 @@ ${today}
 <div class="catalog-heading"><h2 id="models">All models and prices</h2><p class="help">USD per million tokens. Every request costs at least the model’s minimum. Switch the price view to estimate a review or an agent session.</p></div>
 <p class="help catalog-status" role="status" id="model-api-status">Checking model availability…</p>
 <div id="model-api-catalog"></div>
-<div id="model-api-quickstart" class="catalog-quickstart" aria-label="Interactive quickstart"></div>
 <noscript><p>Enable JavaScript to filter models, estimate workload costs and copy model snippets. Full reference: <a href="/docs/model-api">/docs/model-api</a>.</p></noscript>
 <p class="help catalog-footnote">When a model has been idle, its first request waits up to 10 minutes while a GPU starts and loads it. Requests after that answer in seconds while it stays warm. You are not charged for the wait. <a href="/docs/model-api#cost">What to expect</a></p>
 </section>
@@ -113,5 +98,5 @@ export default {
   path: '/model-api', title: 'Cyber model API with prepaid credit | Bounty Operator', label: 'Model API', nav: 'model-api',
   description: 'Call a security-tuned model from your own code or agent through an OpenAI-compatible API. Prepaid credit and a spending limit on every key.',
   styles: [...DOCS_STYLES, ...ACCOUNT_STYLES, '/css/catalog.css'], scripts: [...ACCOUNT_SCRIPTS, '/app/model-api.mjs'], overlays: accountDialog(),
-  jsonld: [breadcrumbsLd([{ name: 'Model API', path: '/model-api' }])], lastmod: '2026-10-15', body,
+  jsonld: [breadcrumbsLd([{ name: 'Model API', path: '/model-api' }])], lastmod: '2026-10-20', body,
 };

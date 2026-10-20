@@ -192,24 +192,46 @@ function showToday(block) {
   if (buy && block.open && !block.buying) buy.replaceChildren(el('strong', { text: BUYING_CLOSED_STEP.title }), ` ${BUYING_CLOSED_STEP.text}`);
 }
 
+const FIRST_REQUEST = `Review this invented Solidity example for a concrete security bug. Cite the relevant statement, explain the preconditions and suggest a fix. Do not claim to have run an exploit.
+
+contract DemoVault {
+    mapping(address => uint256) public balance;
+    function deposit() external payable {
+        balance[msg.sender] += msg.value;
+    }
+    function withdraw() external {
+        uint256 amount = balance[msg.sender];
+        require(amount > 0);
+        (bool ok,) = msg.sender.call{value: amount}("");
+        require(ok);
+        balance[msg.sender] = 0;
+    }
+}`;
+
 export function buildSnippet(model, tab = 'curl') {
   const id = model?.id ?? 'cyber-qwen-27b-awq';
   const param = model?.reasoning_parameter ?? '';
-  const extra = param.endsWith('.reasoning_effort')
-    ? ',\n  "reasoning_effort": "low"'
+  const reasoning = param.endsWith('.reasoning_effort')
+    ? { reasoning_effort: 'low' }
     : param.startsWith('chat_template_kwargs.')
-      ? `,\n  "chat_template_kwargs": { "${param.slice('chat_template_kwargs.'.length)}": false }`
-      : '';
+      ? { chat_template_kwargs: { [param.slice('chat_template_kwargs.'.length)]: false } }
+      : {};
+  const request = { model: id, messages: [{ role: 'user', content: FIRST_REQUEST }], max_tokens: 2048, ...reasoning };
   if (tab === 'python') {
-    return `import os\nfrom openai import OpenAI\n\nclient = OpenAI(\n    base_url="https://bountyoperator.com/v1",\n    api_key=os.environ["BOUNTY_OPERATOR_API_KEY"],\n)\n\nres = client.chat.completions.create(\n    model="${id}",\n    messages=[\n        {"role": "system", "content": "Focus on concrete security bugs and proof paths."},\n        {"role": "user", "content": "Review withdraw() for re-entrancy and accounting invariants."},\n    ],\n    max_tokens=2048,\n)\nprint(res.choices[0].message.content)`;
+    const extra = param.endsWith('.reasoning_effort')
+      ? '\n    extra_body={"reasoning_effort": "low"},'
+      : param.startsWith('chat_template_kwargs.')
+        ? `\n    extra_body={"chat_template_kwargs": {"${param.slice('chat_template_kwargs.'.length)}": False}},`
+        : '';
+    return `# Install once: python -m pip install openai\nimport os\nfrom openai import OpenAI\n\nclient = OpenAI(\n    base_url="https://bountyoperator.com/v1",\n    api_key=os.environ["BOUNTY_OPERATOR_API_KEY"],\n    timeout=1200.0,\n    max_retries=0,\n)\n\nres = client.chat.completions.create(\n    model="${id}",\n    messages=[{"role": "user", "content": ${JSON.stringify(FIRST_REQUEST)}}],\n    max_tokens=2048,${extra}\n)\nprint(res.choices[0].message.content)`;
   }
   if (tab === 'ts') {
-    return `const res = await fetch("https://bountyoperator.com/v1/chat/completions", {\n  method: "POST",\n  headers: {\n    "Authorization": \`Bearer \${process.env.BOUNTY_OPERATOR_API_KEY}\`,\n    "Content-Type": "application/json",\n  },\n  body: JSON.stringify({\n    model: "${id}",\n    messages: [\n      { role: "user", content: "Check this diff for broken invariants and exploit paths." }\n    ],\n    max_tokens: 2048${extra ? extra.replace(/\n  /g, '\n    ') : ''}\n  }),\n});\nconst data = await res.json();\nconsole.log(data.choices[0].message.content);`;
+    return `// Node.js 22+. Set BOUNTY_OPERATOR_API_KEY in your environment.\nconst res = await fetch("https://bountyoperator.com/v1/chat/completions", {\n  method: "POST",\n  headers: {\n    "Authorization": \`Bearer \${process.env.BOUNTY_OPERATOR_API_KEY}\`,\n    "Content-Type": "application/json",\n  },\n  signal: AbortSignal.timeout(1200000),\n  body: JSON.stringify(${JSON.stringify(request, null, 2).replaceAll('\n', '\n  ')}),\n});\nif (!res.ok) throw new Error(\`HTTP \${res.status}: \${await res.text()}\`);\nconst data = await res.json();\nconsole.log(data.choices[0].message.content);`;
   }
   if (tab === 'agent') {
-    return `# Settings for a tool that takes an OpenAI-compatible base URL\nbase_url = "https://bountyoperator.com/v1"\napi_key_env = "BOUNTY_OPERATOR_API_KEY"\nmodel = "${id}"\ncontext_window = ${model?.context_length ?? 262144}\nmax_output_tokens = ${model?.max_output_tokens ?? 8192}`;
+    return `API: OpenAI Chat Completions (not Responses or Anthropic Messages)\nBase URL: https://bountyoperator.com/v1\nAPI key: your BOUNTY_OPERATOR_API_KEY environment value\nModel ID: ${id}\nContext window: ${model?.context_length ?? 262144} tokens\nMaximum output: ${model?.max_output_tokens ?? 8192} tokens\nRequest timeout: 1200 seconds\nAutomatic retries: off`;
   }
-  return `curl https://bountyoperator.com/v1/chat/completions \\\n  -H "Authorization: Bearer $BOUNTY_OPERATOR_API_KEY" \\\n  -H "Content-Type: application/json" \\\n  -d '{\n  "model": "${id}",\n  "messages": [\n    { "role": "user", "content": "Trace every external call and state update in withdraw()." }\n  ],\n  "max_tokens": 2048${extra}\n}'`;
+  return `curl --fail-with-body --max-time 1200 https://bountyoperator.com/v1/chat/completions \\\n  -H "Authorization: Bearer $BOUNTY_OPERATOR_API_KEY" \\\n  -H "Content-Type: application/json" \\\n  -d '${JSON.stringify(request, null, 2)}'`;
 }
 
 function familyMark(model) {
@@ -296,13 +318,13 @@ function modelCard(model, { workload, activeId, onSelect, checked }) {
         el('p', { class: 'help' }, 'Revision: ', el('code', { text: model.revision ?? undisclosed })),
       ),
       el('div', { class: 'catalog-filter-buttons' },
-        button({
+        checked && available ? button({
           label: isSelected ? 'In quickstart' : 'Use in quickstart',
           size: 'sm',
           variant: 'secondary',
           attrs: { 'aria-pressed': isSelected ? 'true' : 'false', 'aria-label': `Use ${model.name} in quickstart snippet` },
           onClick: () => onSelect(model.id, true),
-        }),
+        }) : null,
         available ? el('a', {
           class: 'btn btn--secondary btn--sm',
           href: `/?provider=bountyoperator&model=${encodeURIComponent(model.id)}#workspace`,
@@ -323,11 +345,15 @@ function mountCatalog(modelsList, { checked = true } = {}) {
   const search = el('input', { id: 'catalog-search', class: 'input', type: 'search', placeholder: 'Search by model name, ID or family' });
   let selectedFilter = '';
   let selectedWorkload = 'rates';
-  // The quickstart starts on a model that can be called, when there is one.
-  let activeModelId = (modelsList.find((model) => model.availability === 'available') ?? modelsList[0])?.id ?? 'cyber-qwen-27b-awq';
-  let activeTab = 'curl';
-  const filters = [['', 'All'], ['cybersecurity', 'Cybersecurity'], ['uncensored', 'Low refusal'], ['tools', 'Agent tools']];
-  const filterButtons = filters.map(([value, label]) => button({ label: `${label} (${modelsList.filter((model) => !value || [...(model.tags ?? []), ...(model.capabilities ?? [])].includes(value)).length})`, size: 'sm', variant: 'secondary', attrs: { 'aria-pressed': value === '' ? 'true' : 'false' }, onClick: () => {
+  const params = new URLSearchParams(globalThis.location?.search ?? '');
+  // A shared link never silently switches to a different model.
+  let activeModelId = params.get('model') || modelsList.find((model) => model.availability === 'available')?.id || '';
+  let activeTab = ['curl', 'python', 'ts', 'agent'].includes(params.get('lang')) ? params.get('lang') : 'curl';
+  const matchesFilter = (model, value) => value === 'available'
+    ? checked && model.availability === 'available'
+    : !value || [...(model.tags ?? []), ...(model.capabilities ?? [])].includes(value);
+  const filters = [['', 'All'], ['available', 'Available now'], ['cybersecurity', 'Cybersecurity'], ['uncensored', 'Low refusal'], ['tools', 'Agent tools']];
+  const filterButtons = filters.map(([value, label]) => button({ label: `${label} (${modelsList.filter((model) => matchesFilter(model, value)).length})`, size: 'sm', variant: 'secondary', attrs: { 'aria-pressed': value === '' ? 'true' : 'false' }, onClick: () => {
     selectedFilter = value;
     filterButtons.forEach((item, index) => item.setAttribute('aria-pressed', filters[index][0] === value ? 'true' : 'false'));
     render();
@@ -343,34 +369,63 @@ function mountCatalog(modelsList, { checked = true } = {}) {
   const snippetCode = el('pre', { class: 'catalog-quickstart__code' });
   const snippetModel = el('code', { class: 'catalog-slug' });
   const snippetStatus = el('span', { role: 'status', class: 'help catalog-copied' });
+  const snippetNotice = el('p', { class: 'help', role: 'status' });
+  const snippetHelp = el('p', { class: 'help', text: 'This request reviews an invented contract and uses your prepaid credit. Set BOUNTY_OPERATOR_API_KEY in your environment first. The first request may take up to 10 minutes to start.' });
   const tabs = [['curl', 'curl'], ['python', 'Python'], ['ts', 'TypeScript'], ['agent', 'Tool settings']];
   const tabButtons = tabs.map(([id, label]) => button({ label, size: 'sm', variant: 'secondary', attrs: { 'aria-pressed': id === activeTab ? 'true' : 'false' }, onClick: () => {
     activeTab = id;
     tabButtons.forEach((item, index) => item.setAttribute('aria-pressed', tabs[index][0] === id ? 'true' : 'false'));
     renderQuickstart();
   } }));
+  const snippetActions = el('div', { class: 'catalog-filter-buttons', role: 'group', 'aria-label': 'Snippet language' },
+    ...tabButtons,
+    button({ label: 'Copy snippet', size: 'sm', variant: 'primary', onClick: async () => {
+      if (snippetCode.hidden) return;
+      snippetStatus.textContent = await copyText(snippetCode.textContent) ? 'Snippet copied.' : 'Select and copy the snippet below.';
+    } }),
+    button({ label: 'Copy setup link', size: 'sm', variant: 'secondary', onClick: async () => {
+      if (snippetCode.hidden) return;
+      const link = new URL('/model-api', globalThis.location?.origin ?? 'https://bountyoperator.com');
+      link.searchParams.set('model', activeModelId);
+      link.searchParams.set('lang', activeTab);
+      link.hash = 'model-api-quickstart';
+      snippetStatus.textContent = await copyText(link.href) ? 'Setup link copied. It contains no API key.' : link.href;
+    } }),
+  );
 
   const renderQuickstart = () => {
     if (!quickstart) return;
-    const chosen = modelsList.find((entry) => entry.id === activeModelId) ?? modelsList[0];
-    if (!chosen) return;
-    snippetModel.textContent = `${chosen.name} (${chosen.id}) · $${chosen.pricing.input_per_million}/$${chosen.pricing.output_per_million} per 1M${!checked || chosen.availability === 'available' ? '' : ` · ${availabilityLabel(chosen.availability).toLowerCase()}`}`;
-    snippetCode.textContent = buildSnippet(chosen, activeTab);
+    const chosen = modelsList.find((entry) => entry.id === activeModelId);
+    const callable = checked && chosen?.availability === 'available';
+    snippetModel.textContent = chosen
+      ? `${chosen.name} (${chosen.id}) · $${chosen.pricing.input_per_million}/$${chosen.pricing.output_per_million} per 1M · ${availabilityLabel(chosen.availability, checked).toLowerCase()}`
+      : '';
+    snippetCode.hidden = snippetActions.hidden = snippetHelp.hidden = !callable;
+    snippetCode.textContent = callable ? buildSnippet(chosen, activeTab) : '';
+    snippetNotice.hidden = Boolean(callable);
+    snippetNotice.replaceChildren(...(callable ? [] : [
+      !checked ? 'Availability has not been verified. Refresh before making a request. '
+        : chosen ? `${chosen.name} is ${availabilityLabel(chosen.availability).toLowerCase()}. No request snippet is offered. `
+          : activeModelId ? 'The linked model is not in the current catalog. '
+            : 'No model is available for a request right now. ',
+      el('a', { href: '#models', text: 'Choose an available model below.' }),
+    ]));
     snippetStatus.textContent = '';
   };
 
   const selectModel = (id, scroll = false) => {
+    if (!checked || !modelsList.some((model) => model.id === id && model.availability === 'available')) return;
     activeModelId = id;
     render();
     renderQuickstart();
-    if (scroll && quickstart) quickstart.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    if (scroll && quickstart) quickstart.scrollIntoView({ behavior: 'auto', block: 'start' });
   };
 
   const render = () => {
     const query = search.value.trim().toLowerCase().replace(/\b(?:unfiltered|low[- ]refusal|abliterated)\b/g, 'uncensored');
     const filtered = modelsList.filter((model) => {
       const labels = [...(model.tags ?? []), ...(model.capabilities ?? [])];
-      return (!selectedFilter || labels.includes(selectedFilter)) && [model.id, model.name, model.source, model.description, ...labels].join(' ').toLowerCase().includes(query);
+      return matchesFilter(model, selectedFilter) && [model.id, model.name, model.source, model.description, ...labels].join(' ').toLowerCase().includes(query);
     });
     count.textContent = `${filtered.length} of ${modelsList.length} models · ${WORKLOADS[selectedWorkload].summary}`;
     holdNote.hidden = selectedWorkload === 'rates';
@@ -404,14 +459,11 @@ function mountCatalog(modelsList, { checked = true } = {}) {
   if (quickstart) {
     quickstart.replaceChildren(
       el('div', { class: 'catalog-quickstart__head' },
-        el('div', null, el('h3', { text: 'Quickstart snippet' }), snippetModel),
-        el('div', { class: 'catalog-filter-buttons', role: 'group', 'aria-label': 'Snippet language' },
-          ...tabButtons,
-          button({ label: 'Copy snippet', size: 'sm', variant: 'primary', onClick: async () => {
-            snippetStatus.textContent = await copyText(snippetCode.textContent) ? 'Snippet copied.' : 'Select and copy the snippet below.';
-          } }),
-        ),
+        el('div', null, el('h3', { text: 'Try this model' }), snippetModel),
       ),
+      snippetNotice,
+      snippetActions,
+      snippetHelp,
       snippetStatus,
       snippetCode,
     );

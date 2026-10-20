@@ -9,7 +9,7 @@
 .api-today__code { align-self: start; min-width: 0; margin: 0; }
 /* While nothing can be bought or called, the block says so and nothing more. */
 .api-today[data-open="false"] { grid-template-columns: minmax(0, 1fr); }
-.api-today[data-open="false"] :is(.api-today__start, .api-today__code) { display: none; }
+.api-today[data-open="false"] .api-today__start { display: none; }
 .model-api-page .api-highlights { display: flex; flex-wrap: wrap; gap: var(--sp-12) var(--sp-24); list-style: none; padding: 0 0 var(--sp-32); color: var(--muted); font-size: var(--fs-14); }
 .api-highlights li::before { content: '✓'; margin-right: var(--sp-8); color: var(--accent); }
 .api-content > * + * { margin-top: var(--sp-48); }
@@ -67,11 +67,10 @@
 .catalog-connect > div > .help { margin: 0; min-width: 4.5rem; }
 .catalog-connect code { font-size: var(--fs-13); }
 .catalog-copied:empty { display: none; }
-.catalog-quickstart { margin-top: var(--sp-24); padding: var(--sp-24); border: 1px solid var(--line-strong); border-radius: var(--r-card); background: var(--surface); }
-.catalog-quickstart:empty { display: none; }
 .catalog-quickstart__head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--sp-12) var(--sp-16); margin-bottom: var(--sp-16); }
 .catalog-quickstart__head h3 { margin: 0 0 var(--sp-4); font-size: var(--fs-18); }
 .catalog-quickstart__code { margin: 0; padding: var(--sp-16); border: 1px solid var(--code-line); border-radius: var(--r-ctl); background: var(--code-bg); color: var(--code-text); font-family: var(--font-mono); font-size: var(--fs-13); line-height: 1.5; overflow-x: auto; }
+.api-today__code .catalog-quickstart__code { margin-top: var(--sp-16); max-height: 24rem; white-space: pre-wrap; overflow-wrap: anywhere; }
 .catalog-footnote { margin-top: var(--sp-24); max-width: 80ch; }
 .api-start { display: grid; gap: var(--sp-32); }
 .api-start h2 { font-size: clamp(2rem, 4vw, 3.5rem); line-height: 1.08; }

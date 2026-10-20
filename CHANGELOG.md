@@ -2,6 +2,20 @@
 
 ## 0.9.18 — 2026-10-15
 
+Website update — 20 October
+
+- The model API quickstart waits for live availability. Only callable models
+  can create a request; unavailable or unknown models in a shared link get an
+  explicit notice rather than silently selecting another model.
+- The catalog keeps every model visible and adds an Available now filter.
+  Quickstart links preserve the selected model and client without including
+  API keys.
+- curl, Python and JavaScript examples now include a complete sample contract,
+  model-specific reasoning settings and a 20-minute cold-start timeout.
+  Python retries are disabled; JavaScript reports HTTP failures directly.
+- The first request is beside the setup instructions, not after the catalog.
+  Copy controls and wrapped examples fit narrow phone screens.
+
 Site
 
 - New visitors see Sign up in the header, and it opens Create your account

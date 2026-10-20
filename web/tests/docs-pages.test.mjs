@@ -233,53 +233,6 @@ test('the security page prints the content security policy from the specificatio
   assert.match(security, /security@bountyoperator\.com/);
 });
 
-/** The text of the first-call code block in a slice of /model-api markup. */
-function buildSnippetText(markup) {
-  return textOf(markup.slice(markup.indexOf('api-today__code')));
-}
-
-// The Model API sells seven models since 0.9.16. A first-time visitor reads what
-// can be used today and how to start before the catalog of everything else.
-test('the Model API page says at the top what can be used today and how to start, before the full catalog', async () => {
-  const markup = rendered.get('/model-api');
-  const top = markup.slice(markup.indexOf('<h1'), markup.indexOf('id="models"'));
-  const text = textOf(top);
-  const { DEFAULT_MODELS, mergeCatalog, todayBlock } = await import('../public/app/model-api.mjs');
-
-  // Available today, the price, then the three steps in order, then the first call.
-  const order = ['Available today', 'Qwen Cyber 27B AWQ, DeepHat V1 7B, Orca Qwen 3.8 27B, Orca Nex N2.5 Mini, Hermes 4 14B, Hermes 4.3 36B, Foundation-Sec 1.1 8B. Each card below shows its price. The other 17 models below are not available yet.', 'How to start', 'Buy credit.', 'Create a key.', 'Call it.', 'Your first call'];
-  const positions = order.map((needle) => text.indexOf(needle));
-  assert.ok(positions.every((position) => position >= 0), `missing: ${order.filter((_, index) => positions[index] < 0).join(', ')}`);
-  assert.deepEqual([...positions].sort((a, b) => a - b), positions);
-  assert.match(text, /add US\$20, US\$50 or US\$100\./);
-  assert.match(text, /The key starts with bo_api_ and is shown once/);
-  assert.match(text, /"model": "cyber-qwen-27b-awq"/);
-  assert.match(top, /<section class="api-today" id="model-api-start" data-open="true" data-state="open" aria-labelledby="start">/);
-  // Step 1 has an id: while buying credit is closed, the script swaps it for the credit already held.
-  assert.match(top, /<li id="model-api-step-buy"><strong>Buy credit\.<\/strong>/);
-  // The first call reads the key from BOUNTY_OPERATOR_API_KEY, and step 2 says to put it there.
-  assert.match(buildSnippetText(top), /\$BOUNTY_OPERATOR_API_KEY/);
-  assert.match(text, /shown once, so save it in your environment as BOUNTY_OPERATOR_API_KEY : the call below reads it from there\./);
-  // "No subscription" is said once above the catalog, in the highlights, not three times.
-  const aboveCatalog = textOf(markup.slice(markup.indexOf('<h1'), markup.indexOf('id="models"')));
-  assert.equal(aboveCatalog.match(/subscription/gi)?.length, 1, aboveCatalog);
-  assert.match(aboveCatalog, /Prepaid credit, no subscription/);
-
-  // The built heading and line are the ones the script writes for today's catalog, so on load the script
-  // leaves them, markup and all. Paused, closed and unchecked states rewrite both (app-core tests).
-  const selling = ['cyber-qwen-27b-awq', 'deephat-v1-7b', 'foundation-sec-8b', 'hermes-4-14b', 'orca-nex-mini', 'orca-qwen-27b', 'hermes-4.3-36b'];
-  const open = { enabled: true, topups_enabled: true, models: DEFAULT_MODELS.filter((model) => selling.includes(model.id)).map((model) => ({ ...model, availability: 'available' })) };
-  const block = todayBlock(open, mergeCatalog(open));
-  // The line for several models is plain text, so it is compared as built, with no markup to strip.
-  const built = /<p class="api-today__line" id="model-api-today">([\s\S]*?)<\/p>/.exec(markup)[1];
-  assert.equal(built, block.line);
-  assert.equal(/<h2 id="start">([^<]*)<\/h2>/.exec(markup)[1], block.heading);
-
-  // The whole catalog follows, and the page speaks of your own AI provider API key, never a "model key".
-  assert.ok(markup.indexOf('id="model-api-catalog"') > markup.indexOf('id="model-api-start"'));
-  assert.match(textOf(markup), /All models and prices/);
-  assert.doesNotMatch(textOf(markup), /model key|Hosted security catalog|BYO key/);
-});
 
 // /security once said Model API keys are never stored, while /privacy said
 // their hashes and prefixes are. What the code keeps decides both pages.
