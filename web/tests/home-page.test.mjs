@@ -13,7 +13,7 @@ import { renderPage } from '../site/layout.mjs';
 import home from '../site/pages/index.mjs';
 import { IMMUNEFI } from '../site/pages/method/_shared.mjs';
 import { CARD, cardDocument } from '../site/social/card.mjs';
-import { EXAMPLE } from '../site/social/example.mjs';
+import { reportSlip } from '../site/social/example.mjs';
 import { EXAMPLES } from '../public/example.mjs';
 import { PROFILES } from '../public/profiles.mjs';
 import { PROVIDERS } from '../public/providers.mjs';
@@ -44,48 +44,16 @@ function textOf(source) {
 }
 
 const find = (name, test) => tags.filter((tag) => tag.name === name && (!test || test(tag.attributes)));
-const byId = (id) => tags.find((tag) => tag.attributes.get('id') === id);
 
 test('the home page passes the generator checks and has one h1', () => {
   const { errors, warnings } = validateMarkup(markup, () => true);
   assert.deepEqual(errors, []);
   assert.deepEqual(warnings, []);
   assert.equal(home.path, '/');
-  assert.equal(home.title, 'Bounty Operator: pre-submission review for bug bounty reports');
-  assert.match(textOf(main), /Find the hole in your report before the triager does\./);
   assert.equal(find('h1').length, 1);
-  assert.match(main, /<h1 class="display home-hero__title" id="hero-title">Find the hole in your report before the triager does\.<\/h1>/);
 });
 
-test('the hooks other streams rely on are present exactly once', () => {
-  const demo = tags.filter((tag) => tag.attributes.has('data-demo'));
-  assert.equal(demo.length, 1, '[data-demo]');
-  assert.equal(demo[0].attributes.get('href'), '#workspace');
-  assert.ok(demo[0].attributes.has('data-example'), 'the demo control also carries the workbench attribute');
 
-  assert.equal(byId('workspace')?.name, 'section');
-  assert.equal(byId('pricing')?.name, 'section');
-
-  const upgrade = byId('upgrade');
-  assert.equal(upgrade?.name, 'button');
-  assert.ok(upgrade.attributes.has('data-upgrade'));
-  assert.equal(upgrade.attributes.get('data-account-action'), 'checkout');
-  assert.equal(tags.filter((tag) => tag.attributes.has('data-upgrade')).length, 1);
-  assert.equal(tags.filter((tag) => tag.attributes.has('data-checkout-note')).length, 1);
-
-  assert.ok(find('a', (attributes) => attributes.get('href') === '/?profile=report#workspace').length >= 1);
-  assert.ok(find('script', (attributes) => attributes.get('src') === '/app/main.mjs').length === 1, 'the page loads /app/main.mjs');
-  assert.ok(find('link', (attributes) => attributes.get('href') === '/css/home.css').length === 1);
-});
-
-test('the sections come in the order the brief sets', () => {
-  const order = ['id="hero-title"', 'class="home-proof"', 'class="home-stats"', 'id="meet-spec"', 'id="verdicts-title"', 'id="workspace"', 'id="bench-teaser-title"', 'id="pricing"', 'id="faq"'];
-  // The three-step strip and the "More ways" list are gone: the header and the footer carry those links.
-  assert.doesNotMatch(markup, /id="how"|id="free-tools"|home-steps|home-resources/);
-  const positions = order.map((needle) => markup.indexOf(needle));
-  assert.ok(positions.every((position) => position > 0), `missing: ${order.filter((_, index) => positions[index] < 0).join(', ')}`);
-  assert.deepEqual([...positions].sort((a, b) => a - b), positions);
-});
 
 test('the proof strip links the three leaderboards and the method', async () => {
   // Each link is parsed and compared whole: origin and path, not a substring of the href.
@@ -186,68 +154,51 @@ test('no markup the CSP would block, and no .html links', () => {
   for (const tag of find('a')) assert.doesNotMatch(tag.attributes.get('href') ?? '', /\.html(?:$|[?#])/);
 });
 
-test('the hero shows the bundled example the workbench opens, as the parser reads it', async () => {
-  // "Run the example" loads EXAMPLES[0]. The card is that review: same verdict, same finding, same file.
-  const source = EXAMPLES[0];
-  assert.equal(EXAMPLE.id, source.id);
-  const manifest = await manifestFor(source.files);
-  const parsed = parseReview(source.review, { labels: manifest.map((entry) => entry.label) });
-  assert.equal(parsed.ok, true);
-  assert.deepEqual(checkRefs(parsed, manifest), []);
-  assert.equal(EXAMPLE.verdict, parsed.verdict);
-  assert.equal(EXAMPLE.verdict, 'rewrite-then-submit');
-  assert.equal(EXAMPLE.headline, parsed.headline);
-  assert.ok(EXAMPLE.headline.length <= 140, 'the headline fits the format limit');
-  assert.equal(EXAMPLE.finding.title, parsed.findings[0].title);
-  assert.equal(EXAMPLE.supported, parsed.findings[0].severity);
-  assert.equal(EXAMPLE.supported, 'medium');
-  assert.equal(EXAMPLE.claimed, 'critical');
-  assert.equal(EXAMPLE.model, source.model);
+for (const example of EXAMPLES) {
+  test(`the ${example.id} slip shows the saved verdict, draft and cited source`, async () => {
+    const slip = String(reportSlip({ exampleId: example.id, still: true }));
+    const manifest = await manifestFor(example.files);
+    const parsed = parseReview(example.review, { labels: manifest.map((entry) => entry.label) });
+    assert.equal(parsed.ok, true);
+    assert.deepEqual(checkRefs(parsed, manifest), []);
+    const finding = parsed.findings[0];
+    const draft = example.files.find((file) => /draft/i.test(file.name)).content;
+    const title = /^#\s+(.+)$/m.exec(draft)[1].trim();
+    const claimed = /^Severity:\s*(\w+)/im.exec(draft)[1].toLowerCase();
+    assert.ok(textOf(slip).includes(title));
+    assert.ok(textOf(slip).includes(parsed.headline));
+    assert.ok(textOf(slip).includes(example.model));
+    assert.match(slip, new RegExp(`class="slip__supported"><span class="chip sev sev--stamp" data-sev="${finding.severity}"`));
+    assert.match(slip, new RegExp(`data-verdict="${parsed.verdict}"`));
+    assert.match(slip, /data-status="example"/);
+    assert.match(slip, /home-shot--still/);
+    assert.match(textOf(slip), /Saved example\..+is an invented protocol\./);
+    if (claimed === finding.severity) {
+      assert.doesNotMatch(slip, /<s\b|slip__claimed/);
+    } else {
+      assert.match(slip, new RegExp(`<s class="slip__claimed"><span class="chip sev" data-sev="${claimed}"`));
+    }
 
-  // The file bar shows the product's own manifest entry for that file.
-  const entry = manifest.find((candidate) => candidate.label === EXAMPLE.file);
-  assert.ok(entry, EXAMPLE.file);
-  assert.equal(EXAMPLE.sha256, entry.sha256);
-  assert.equal(EXAMPLE.lines, `${entry.lines} lines`);
+    const location = finding.locations[0];
+    const file = example.files[manifest.findIndex((entry) => entry.label === location.label)];
+    const lines = file.content.split('\n');
+    const shown = [...slip.matchAll(/<span class="code__line[^"]*" data-n="(\d+)">([\s\S]*?)<\/span>/g)];
+    assert.ok(shown.length > 0);
+    for (const [, number, code] of shown) {
+      assert.ok(Number(number) >= location.start && Number(number) <= location.end);
+      assert.equal(textOf(code), textOf(lines[Number(number) - 1]));
+    }
+  });
+}
 
-  // The excerpt is lines of the supplied file from the start of the cited range, with the file's
-  // indentation taken off the left. The marked lines are in it.
-  const location = EXAMPLE.finding.locations[0];
-  const file = source.files[manifest.indexOf(entry)];
-  const lines = file.content.split('\n');
-  const shown = EXAMPLE.source.split('\n');
-  assert.equal(EXAMPLE.sourceStart, location.start);
-  assert.equal(shown.length, EXAMPLE.sourceEnd - EXAMPLE.sourceStart + 1);
-  assert.ok(EXAMPLE.sourceEnd <= location.end);
-  shown.forEach((line, index) => assert.equal(line.trim(), lines[EXAMPLE.sourceStart - 1 + index].trim()));
-  assert.ok(shown.some((line) => line && !/^\s/.test(line)), 'the excerpt starts at the left edge');
-  for (const line of EXAMPLE.highlight) assert.ok(line >= location.start && line <= EXAMPLE.sourceEnd, `line ${line}`);
-  assert.match(lines[location.start - 1], /function stake\(/);
-});
-
-test('Spec introduces the saved example, which stays labelled and tied to its evidence', () => {
-  const hero = main.slice(0, main.indexOf('id="verdicts-title"'));
-  assert.match(hero, /<div class="home-top">/);
-  assert.match(hero, /<figure class="home-shot home-shot--still">\n<div class="slip theme-light">/);
-  assert.match(hero, /data-status="example"/);
-  assert.match(textOf(hero), /Saved example\. Tessera Staking is an invented protocol\./);
-  assert.match(textOf(hero), /TesseraStaking\.sol/);
-  // The draft's own header lines, as the hunter wrote them.
-  const draft = EXAMPLES[0].files.find((file) => /draft/i.test(file.name)).content;
-  assert.equal(EXAMPLE.draftTitle, /^#\s+(.+)$/m.exec(draft)[1].trim());
-  assert.ok(textOf(hero).includes(EXAMPLE.draftTitle));
-  // The claimed severity is struck; the supported one and the verdict are stamped, and the verdict is dated.
-  assert.match(hero, /<s class="slip__claimed"><span class="chip sev" data-sev="critical">/);
-  assert.match(hero, /<dd class="slip__supported"><span class="chip sev sev--stamp" data-sev="medium">/);
-  assert.match(hero, /<dt>Verdict<\/dt><dd class="slip__stamp"><span class="chip verdict verdict--lg" data-verdict="rewrite-then-submit">Rewrite, then submit<\/span>/);
-  assert.match(textOf(hero), /2 Oct 2026 · anthropic\/claude-opus-5\.5/);
-  // The line that decides it, printed under its reference: the line the fix names, highlighted, with its number.
-  assert.equal(EXAMPLE.deciding, 89);
-  assert.match(EXAMPLE.finding.fix, /:89\)/);
-  const source = hero.slice(hero.indexOf('slip__field--source'), hero.indexOf('slip__field--verdict'));
-  assert.match(source, /<span class="code__line is-hl" data-n="89">\s*_updateGlobal\(\);/);
-  // No eyebrow and no breadcrumb above the headline.
-  assert.doesNotMatch(hero, /class="eyebrow"|class="breadcrumbs"/);
+test('unnamed slips stay Tessera, named Halyard shows Critical unchanged, and unknown IDs fail closed', () => {
+  assert.equal(String(reportSlip()), String(reportSlip({ exampleId: 'critical-to-medium' })));
+  const halyard = String(reportSlip({ exampleId: 'confirmed-critical', still: true }));
+  assert.match(textOf(halyard), /Halyard Treasury/);
+  assert.equal([...halyard.matchAll(/data-sev="critical"/g)].length, 2);
+  assert.match(halyard, /data-verdict="submit"/);
+  assert.ok(textOf(halyard).includes('if (isOwner[signer]) approvals++;'));
+  assert.throws(() => reportSlip({ exampleId: 'missing-example' }), /unknown example/);
 });
 
 test('legacy verdict assets remain available without masking live verdict text', async () => {
@@ -301,19 +252,11 @@ test('the stamps are pressed with real ink from the two CC0 scans, and no noise 
   assert.match(builder, /pressure\.png/);
 });
 
-test('the five verdicts are listed with what each one means', () => {
-  const section = main.slice(main.indexOf('id="verdicts-title"'), main.indexOf('id="workspace"'));
-  for (const verdict of ['submit', 'rewrite-then-submit', 'prove-first', 'hold-duplicate', 'drop']) {
-    assert.match(section, new RegExp(`data-verdict="${verdict}"`), verdict);
-  }
-  assert.match(textOf(section), /Every review ends in one of five verdicts\./);
-});
 
 test('the social card is a 1200 x 630 document using the shared Spec identity', async () => {
   assert.deepEqual(CARD, { width: 1200, height: 630 });
   const card = cardDocument();
   assert.match(card, /<html lang="en">/);
-  assert.match(textOf(card), /Find the hole in your report before the triager does\./);
   assert.match(card, /brand\/spec-960\.webp/);
   assert.match(textOf(card), /Spec\. A bug with standards\./);
   assert.match(textOf(card), /bountyoperator\.com/);

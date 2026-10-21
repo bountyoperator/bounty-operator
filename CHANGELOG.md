@@ -1,6 +1,46 @@
 # Changelog
 
+## 0.9.21 — 2026-10-21
+
+Providers
+
+- Nebius Token Factory is available in the workbench and in local and remote
+  MCP. Bring your own Nebius key; DeepSeek V4.1 Flash is the default, and GLM
+  5.3 Flash and Kimi K3 are listed model choices.
+- Nebius bills model usage separately, and we receive no commission. Each
+  request asks Nebius not to store the answer. The setup guide covers Nebius's
+  billing details and its zero-data-retention setting.
+- The local MCP download is versioned 0.9.21; older release archives are retained.
+
 ## 0.9.20 — 2026-10-20
+
+Website
+
+- The website now leads with making a stronger, evidence-backed submission.
+  Its first saved example confirms a Critical finding in the explicitly
+  invented Halyard Treasury, with a named link to the matching review.
+- Unchanged severity is no longer struck through in the saved-review display.
+  The cited excerpt includes the complete first fix range.
+- The original Tessera film and walkthrough remain together in a collapsed
+  supporting section. Existing Tessera links still open the same example.
+- Shared messaging and the refreshed Spec share card use the new positioning.
+  Review instructions and severity criteria are unchanged.
+- The site footer now links to Bounty Operator's official X account,
+  `@BountyOperator`.
+- Link previews and organization metadata identify the company account
+  separately from the builder's personal attribution.
+
+Media update — 21 October 2026
+
+- Created an 18-second Spec film about supporting a confirmed Critical finding
+  in the explicitly invented Halyard example, rather than leading with a
+  severity reduction.
+- Added a repeatable local renderer and timed captions. The source notes
+  identify the reused Higgsfield animation and newly generated Cillian
+  narration. Rendering does not publish or replace existing website videos
+  or X posts.
+- Published the film as a new post on `@BountyOperator`. The pinned
+  introduction, earlier posts and website videos are unchanged.
 
 Immunefi Studio
 

@@ -1,7 +1,7 @@
 // "/": the home page.
 //
-// Sections: Spec and the product promise, public proof, the film and saved
-// review, verdicts, workbench, benchmark, pricing and FAQ.
+// Sections: Spec and the product promise, a confirmed finding, workbench,
+// supporting examples, verdicts, benchmark, pricing and FAQ.
 //
 // Hooks other streams rely on:
 //   [data-demo]      the hero's "View example" control; it also carries
@@ -13,13 +13,14 @@
 //   [data-checkout-note]  where the account script writes its line after a cancelled checkout
 //
 // Providers and the profile count come from the engine at build time. The
-// compact result is the first bundled example, opened by "View example".
+// leading saved review opens the named confirmed-critical example.
 
 import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 import {
   button,
+  disclosure,
   faq,
   html,
   icon,
@@ -38,7 +39,7 @@ import { BENCH_TEASER } from './benchmark/_teaser.mjs';
 import { ACCOUNT_TICK, AGENT_TICK, CHAT_TICK, FREE_LINE, INCLUDED_API_CREDIT, RENEWAL, SERVER_ONLY_EXAMPLES, SERVER_ONLY_TYPES, WHY_PAY } from '../plans.mjs';
 import { walkthrough } from '../walkthroughs.mjs';
 
-const LASTMOD = '2026-10-20';
+const LASTMOD = '2026-10-21';
 const DEV_BUILD = process.argv.includes('--dev');
 
 // ---------------------------------------------------------------------------
@@ -114,10 +115,10 @@ const hero = html`
   <section class="wrap home-hero" aria-labelledby="hero-title">
     <div class="home-hero__text">
       <h1 class="display home-hero__title" id="hero-title">${SITE.promise}</h1>
-      <p class="lede home-hero__lede">Bounty Operator checks your bug report against the code and proof before you submit. Get one verdict, with the file and line behind it.</p>
+      <p class="lede home-hero__lede">${SITE.summary}</p>
       <div class="home-hero__actions">
         ${button({ label: 'Review my report', href: '/?profile=report&via=export#workspace', variant: 'primary', size: 'lg' })}
-        ${button({ label: 'View example', href: '#workspace', variant: 'secondary', size: 'lg', attrs: { 'data-demo': true, 'data-example': '' } })}
+        ${button({ label: 'View example', href: '/?start=example&example=confirmed-critical#workspace', variant: 'secondary', size: 'lg', attrs: { 'data-demo': true, 'data-example': 'confirmed-critical' } })}
         <a class="link home-hero__film" href="/mcp#install">Use my coding agent ${icon('arrow-right')}</a>
       </div>
       <dl class="home-hero__free">
@@ -142,16 +143,40 @@ const hero = html`
   </div>
 </div>`;
 
-const meetSpec = html`
-<section class="section wrap" id="meet-spec" aria-labelledby="spec-title">
-  ${sectionHeading({ title: 'Critical? Spec has questions.', id: 'spec-title', lede: 'Our bug with standards has one rule: the claim has to match the proof. Watch the film, then inspect the saved review.' })}
+const confirmedExample = html`
+<section class="section wrap" id="confirmed-example" aria-labelledby="confirmed-title">
   <div class="spec-example">
-    ${walkthrough('spec', 'spec-title')}
+    <div>
+      ${sectionHeading({ title: 'See why this Critical holds up.', id: 'confirmed-title', lede: 'Explore a saved review of the invented Halyard Treasury. The draft claims a 3-of-5 approval bypass; the code and supplied proof support it.' })}
+      <p>Follow the finding from its claim to the deciding source lines and proof of concept. Then put your own report through the same checks.</p>
+      <p class="spec-example__link">${button({ label: 'Inspect the confirmed finding', href: '/?start=example&example=confirmed-critical#workspace', variant: 'secondary', attrs: { 'data-example': 'confirmed-critical' } })}</p>
+    </div>
     <div class="spec-example__report">
-      ${reportSlip({ still: true })}
-      <p class="spec-example__link"><a class="link" href="/?start=example#workspace">Inspect the public example ${icon('arrow-right')}</a></p>
+      ${reportSlip({ exampleId: 'confirmed-critical', still: true })}
     </div>
   </div>
+</section>`;
+
+const meetSpec = html`
+<section class="section section--tight wrap" id="meet-spec" aria-label="Supporting review examples">
+  ${disclosure({
+    summary: 'When a claim needs correcting',
+    hint: 'Tessera example and videos',
+    body: html`
+      ${sectionHeading({ title: 'A different outcome, backed by the same checks.', id: 'spec-title', lede: 'In the invented Tessera Staking example, the reward-theft finding holds, but the evidence does not support a loss of staked principal.' })}
+      <div class="spec-example">
+        ${walkthrough('spec', 'spec-title')}
+        <div class="spec-example__report">
+          ${reportSlip({ still: true })}
+          <p class="spec-example__link"><a class="link" href="/?start=example#workspace">Inspect the Tessera example ${icon('arrow-right')}</a></p>
+        </div>
+      </div>
+      <section class="section section--tight" id="product-video" aria-labelledby="product-video-title">
+        ${sectionHeading({ title: 'Follow the Tessera review in the workbench.', id: 'product-video-title', lede: 'The 54-second walkthrough follows this saved example from the draft to the cited code and downloadable packet.' })}
+        ${walkthrough('product', 'product-video-title')}
+        <p class="fine">Working in a coding agent? <a class="link" href="/mcp#mcp-walkthrough">Watch the MCP walkthrough</a>.</p>
+      </section>`,
+  })}
 </section>`;
 
 const STEPS = [
@@ -257,14 +282,10 @@ const questions = html`
 
 const body = html`
 ${hero}
+${confirmedExample}
+${workbenchSection()}
 ${meetSpec}
 ${verdicts}
-<section class="section section--tight wrap" id="product-video" aria-labelledby="product-video-title">
-  ${sectionHeading({ title: 'See a report review in 54 seconds.', id: 'product-video-title', lede: 'Follow the saved example from the draft to the cited code and downloadable packet.' })}
-  ${walkthrough('product', 'product-video-title')}
-  <p class="fine">Working in a coding agent? <a class="link" href="/mcp#mcp-walkthrough">Watch the MCP walkthrough</a>.</p>
-</section>
-${workbenchSection()}
 ${BENCH_TEASER}
 ${pricing}
 ${questions}`;
@@ -284,12 +305,11 @@ const scripts = unique(['/app/main.mjs', ...lists(workbenchModule, 'scripts'), .
 export default {
   path: '/',
   title: 'Bounty Operator: pre-submission review for bug bounty reports',
-  description:
-    'Review your bug bounty report against its supporting files. Get a verdict, source citations and next steps using your own AI model.',
+  description: SITE.summary,
   label: 'Bounty Operator',
   og: {
-    title: 'Find the hole in your report before the triager does',
-    alt: 'Bounty Operator. Find the hole in your report before the triager does. Spec, a coral bug with a magnifying glass: a bug with standards.',
+    title: SITE.promise,
+    alt: `Bounty Operator. ${SITE.promise} Spec, a coral bug with a magnifying glass.`,
   },
   styles,
   scripts,

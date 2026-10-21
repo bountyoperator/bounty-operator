@@ -9,7 +9,8 @@
  * Deep links
  *   /?profile=<id>#workspace     preselect a listed profile and open the Load step
  *   /?start=<id>#workspace       the same, for hero buttons (`?start=report`)
- *   /?start=example#workspace    load the bundled example
+ *   /?start=example#workspace    load the original Tessera example
+ *   /?start=example&example=confirmed-critical#workspace    load Halyard
  *   sessionStorage["bo:handoff"] files, profile, focus and context from a tool or template page
  *
  * Any element with a `data-example` attribute loads an example when clicked;

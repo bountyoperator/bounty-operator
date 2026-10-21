@@ -1180,6 +1180,7 @@ describe('providers', () => {
     mistral: { url: 'https://api.mistral.ai/v1/chat/completions', model: 'mistral-medium-latest', cap: 'max_tokens' },
     groq: { url: 'https://api.groq.com/openai/v1/chat/completions', model: 'openai/gpt-oss-120b', cap: 'max_completion_tokens' },
     novita: { url: 'https://api.novita.ai/openai/v1/chat/completions', model: 'deepseek/deepseek-v4.1-flash', cap: 'max_tokens' },
+    nebius: { url: 'https://api.tokenfactory.nebius.com/v1/chat/completions', model: 'deepseek-ai/DeepSeek-V4.1-Flash', cap: 'max_completion_tokens' },
     infron: { url: 'https://api.infron.ai/v1/chat/completions', model: 'z-ai/glm-5.3-flash-cybersecurity', cap: 'max_tokens' },
     orcarouter: { url: 'https://api.orcarouter.ai/v1/chat/completions', model: 'orca/orcacyber-zero-1.5', cap: 'max_tokens' },
     bountyoperator: { url: 'https://bountyoperator.com/v1/chat/completions', model: 'cyber-qwen-27b-awq', cap: 'max_completion_tokens' },
@@ -1243,8 +1244,8 @@ describe('providers', () => {
         assert.deepEqual(caps, expected[id].cap ? [expected[id].cap] : [], id);
         if (expected[id].cap) assert.equal(body[expected[id].cap], id === 'bountyoperator' ? 8192 : 16000);
         for (const banned of ['temperature', 'top_p', 'stream']) assert.ok(!(banned in body), `${id} sent ${banned}`);
-        // OpenAI would keep the messages in the account's dashboard logs; no other provider takes the field.
-        assert.equal(body.store, id === 'openai' ? false : undefined, id);
+        // OpenAI would keep the messages in the account's dashboard logs and Nebius in its distillation store; no other provider takes the field.
+        assert.equal(body.store, id === 'openai' || id === 'nebius' ? false : undefined, id);
         assert.doesNotMatch(JSON.stringify(calls), /affiliate|ntgxn2f|utm_source/);
 
         assert.equal(init.headers['HTTP-Referer'], id === 'openrouter' ? 'https://bountyoperator.com' : undefined);
@@ -1852,6 +1853,24 @@ describe('providers', () => {
     }
   });
 
+  test('Nebius authentication failures remain key errors', async () => {
+    // Observed from the live endpoint with an obviously invalid key, 21 October 2026.
+    const body = {
+      error: { type: 'invalid_request_error', message: "Couldn't authenticate. Reason: Unable authenticate", param: null, code: 'unauthenticated' },
+      detail: "Invalid request. Please check the parameters and try again. Details: Couldn't authenticate. Reason: Unable authenticate",
+    };
+    for (const call of [providerReview, providerStream]) {
+      await withFetch(() => json(body, 401), async (calls) => {
+        const error = await call({ provider: 'nebius', model: 'deepseek-ai/DeepSeek-V4.1-Flash', apiKey: API_KEY, prepared: PREPARED })
+          .then(() => null, (reason) => reason);
+        assert.ok(error instanceof ProviderError);
+        assert.deepEqual([error.status, error.kind, error.blocked], [401, 'auth', undefined]);
+        assert.ok(!error.message.includes(API_KEY));
+        assert.equal(calls.length, 1, 'a failed Nebius request is never retried on another provider');
+      });
+    }
+  });
+
   test('a guardrail block, an upstream cyber block and a credit hold are named by their cause', async () => {
     const failure = (body, status, headers = {}) => withFetch(() => json(body, status, headers), () => providerReview({ provider: 'openrouter', model: 'openai/gpt-6.1-sol', apiKey: API_KEY, prepared: PREPARED })
       .then(() => null, (reason) => reason));
@@ -2371,8 +2390,8 @@ describe('providers', () => {
         await collect(await providerStream({ provider: id, model: 'm', apiKey: API_KEY, prepared: PREPARED }));
         asked[id] = calls[0].body.stream_options;
         assert.ok(!('temperature' in calls[0].body));
-        // A streamed review is kept out of OpenAI's stored completions too.
-        assert.equal(calls[0].body.store, id === 'openai' ? false : undefined, id);
+        // A streamed review is kept out of OpenAI's stored completions and Nebius's distillation store too.
+        assert.equal(calls[0].body.store, id === 'openai' || id === 'nebius' ? false : undefined, id);
       });
     }
     assert.deepEqual(asked, {
@@ -2384,6 +2403,7 @@ describe('providers', () => {
       mistral: undefined,
       groq: { include_usage: true },
       novita: { include_usage: true },
+      nebius: { include_usage: true },
       infron: undefined,
       orcarouter: undefined,
       bountyoperator: { include_usage: true },

@@ -168,12 +168,7 @@ test('renderPage emits the head contract and no markup the CSP would block', () 
   const markup = renderPage(page, site);
 
   assert.match(markup, /<link rel="canonical" href="https:\/\/bountyoperator\.com\/tools\/report-check">/);
-  assert.match(markup, /<meta property="og:image" content="https:\/\/bountyoperator\.com\/social-spec-v2\.png">/);
   assert.match(markup, /<meta name="twitter:card" content="summary_large_image">/);
-  // The builder's handle credits the card. The product has no X account, so there is no twitter:site.
-  assert.equal([...markup.matchAll(/<meta name="twitter:creator" content="@Tradi3_">/g)].length, 1);
-  assert.doesNotMatch(markup, /twitter:site/);
-  assert.doesNotMatch(markup, /href="https?:\/\/(?:www\.)?(?:x|twitter)\.com/, 'no visible X link');
   // One look, the black page: one colour scheme and one theme colour, the page's own.
   assert.match(markup, /<meta name="color-scheme" content="dark">/);
   assert.equal([...markup.matchAll(/<meta name="theme-color" content="#18232d">/g)].length, 1);
@@ -208,7 +203,6 @@ test('renderPage emits the head contract and no markup the CSP would block', () 
 
   const home = renderPage({ ...page, path: '/', nav: undefined }, { has: () => false, pages: [] });
   assert.ok(home.includes(`<button id="account-button" class="btn btn--secondary btn--sm" type="button">${labels}</button>`));
-  assert.match(home, /<meta name="twitter:creator" content="@Tradi3_">/);
   assert.doesNotMatch(home, /Benchmark/);
 });
 

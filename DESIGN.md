@@ -159,7 +159,7 @@ Spec is a bug with standards. The original clay character introduces Bounty Oper
 
 The film's charcoal ink, cream paper, coral shell and blue jacket define the palette. Archivo is shared with the film. The character carries the personality while the report, citations, verdicts and review controls stay factual and readable. Headlines stay plain: no circled words, scrolling decorative verdicts, animated glows or floating paper stacks. See [Spec's brand guide](docs/spec-brand.md) for the artwork, provenance and rebuild paths.
 
-The home hero gives the product promise and review actions room beside Spec. His 20-second film appears beside the saved, explicitly invented example it demonstrates, with native controls, captions and a transcript. The detailed 54-second product tour remains available. Supporting pages use a plain charcoal heading area; the workbench keeps its existing interaction and evidence flow.
+The home hero gives the product promise, "Make your strongest case before you submit.", and review actions room beside Spec. Supporting copy: "Check your proof, make the impact explicit, and catch missing evidence before the triager has to ask." The leading saved example is Halyard: an explicitly invented protocol with a confirmed Critical finding, opened by `/?start=example&example=confirmed-critical#workspace`. The real workbench follows. After it, one collapsed supporting disclosure groups the unchanged 20-second Spec film and 54-second Tessera walkthrough, clearly paired with the Tessera example, native controls, captions and transcripts. Supporting pages use a plain charcoal heading area; the workbench keeps its existing interaction and evidence flow.
 
 There is one look. Nothing follows the system's colour scheme, and there is no theme to choose.
 
@@ -234,7 +234,7 @@ Supporting pages open on a plain charcoal heading area directly under the header
 
 Every page but the home page uses the same head: the trail on a page two levels down, the h1, the lede, then the page's own line or actions. Its rhythm is set once: 48px above (32 on a phone), 24px below, 16px between parts, and 24px above the lede and actions. Headings use an 18em maximum measure. Closing calls to action use a flat panel, a section heading and the shared buttons.
 
-The home page pairs the product promise and review actions with Spec's portrait. The film and flat saved report follow it. On a phone, the introduction and actions precede the portrait. Decorative headline rings, floating paper stacks and the verdict ticker are retired.
+The home page pairs the product promise and review actions with Spec's portrait. The flat saved Halyard report follows it, showing what evidence supports the finding, then the real workbench. The unchanged Spec film and Tessera walkthrough sit together in one collapsed supporting disclosure after the workbench, not as the lead proof. On a phone, the introduction and actions precede the portrait. Decorative headline rings, floating paper stacks and the verdict ticker are retired.
 
 Forms are ledgers. The finding card and the workbench sheet print a 9.75rem caption margin, one 1px rule and the content to its right, and under 704px the caption moves above its content. Grids of cells are ruled by 1px gaps over the hairline ground inside a 1px frame, like the rack of verdict stamps.
 
@@ -311,7 +311,7 @@ A sheet over the page: a 1px frame, 12px corners and the pop shadow over a backd
 The result as an inspection form: a file bar, finding id, severity, status, title and source references, then rows with sentence-case captions in a 9.75rem margin. Observed is green; Counterargument is ochre while open and green when resolved; Evidence gap is ochre with a dashed margin rule. Numbered path steps preserve the draft's numbering. See `web/site/COMPONENTS.md` for the markup.
 
 ### Report Slip
-The saved example beside Spec's film is built by `reportSlip()` in `web/site/social/example.mjs`. It is a flat, aligned document on paper (`.theme-light`), with no tilted copy or decorative shadow. On it: the draft's typed title in mono, the claimed severity struck through with one pen stroke, the supported severity, the review's headline, the cited source and the verdict beside its date and model. On a phone the slip leads with the claim, stamps and verdict. The homepage hero and share image now use Spec's original portrait.
+The saved examples are built by `reportSlip()` in `web/site/social/example.mjs`. Each is a flat, aligned document on paper (`.theme-light`), with no tilted copy or decorative shadow. Lead with Halyard's confirmed Critical finding: show the draft's typed title in mono, the claimed and supported severity, the review's headline, the cited source and the verdict beside its date and model. Strike through a claimed severity only when that saved review actually changes it, as in Tessera's separate film example. Do not rewrite saved review text to fit the positioning. On a phone the slip leads with the claim, stamps and verdict. The homepage hero and share image use Spec's original portrait.
 
 ### Figures and bars
 - **The three results** (`.home-stats`): a cream figure over a muted caption, subordinate to the main heading, the whole item a link to the leaderboard it comes from.

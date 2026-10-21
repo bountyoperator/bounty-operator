@@ -646,6 +646,8 @@ describe('deep links', () => {
     assert.equal(deepLink('?profile=verdict').profile, '');
     assert.equal(deepLink('?profile=%3Cscript%3E').profile, '');
     assert.deepEqual(deepLink('?start=example'), { profile: '', example: true, exampleId: '' });
+    assert.deepEqual(deepLink('?start=example&example=confirmed-critical'), { profile: '', example: true, exampleId: 'confirmed-critical' });
+    assert.deepEqual(deepLink('?example=critical-to-medium'), { profile: '', example: true, exampleId: 'critical-to-medium' });
     assert.deepEqual(deepLink('?checkout=complete&session_id=cs_x'), { profile: '', example: false, exampleId: '' });
     assert.deepEqual(deepLink('?provider=infron&model=z-ai/glm-5.3-flash-cybersecurity'), {
       profile: '',

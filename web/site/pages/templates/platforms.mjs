@@ -32,7 +32,7 @@ function platformPage(platform) {
       copied: 'Copied. Once it is filled in, paste it under Challenge the filled draft for a free check before you submit.',
     })}
     ${headHandoff({
-      text: `Bounty Operator argues against the draft the way a ${reader} would, every claim checked against the code you add. Free in ChatGPT or Claude with no account, or once a day on your own AI key with a free account.`,
+      text: `Bounty Operator checks the draft against the code you add, including counterarguments a ${reader} could raise. Supported claims are confirmed and missing evidence is identified. Free in ChatGPT or Claude with no account, or once a day on your own AI key with a free account.`,
       label: 'Challenge my draft',
     })}
     <p class="meta">Rules checked ${checked.label} · ${platform.sources.length} sources</p>
@@ -81,7 +81,7 @@ function platformPage(platform) {
             profile: 'triage',
             focus: `${platform.h1.replace(/ template$/, '')} draft. Act as the ${reader} who reads it first: give the three likeliest reasons to close this report and the evidence that flips each one.`,
           },
-          intro: html`<p class="tpl-block__lede">Paste the report once every placeholder is replaced. The button below opens a review with <a class="link" href="/challenge-report">Challenge a draft report</a> selected. It argues against each claim: the impact row, the proof, the severity, the known issues. You decide what to rewrite.</p>`,
+          intro: html`<p class="tpl-block__lede">Paste the report once every placeholder is replaced. The button below opens a review with <a class="link" href="/challenge-report">Challenge a draft report</a> selected. It checks the evidence for each claim: the impact row, the proof, the severity, the known issues. Supported claims are confirmed; gaps and counterarguments show what still needs work. You decide what to rewrite.</p>`,
         })}
       </section>
 

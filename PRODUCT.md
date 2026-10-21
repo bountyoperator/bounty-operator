@@ -26,19 +26,25 @@ web
 
 ## Product Purpose
 
-Pre-submission review. The hunter adds the draft and its files; the review argues
-against the finding, checks every claim against the code it cites, and returns one
-verdict (submit, rewrite then submit, prove first, hold as a duplicate, or drop)
-with file-and-line citations and what to fix. The hunter writes the report; the
-AI never does. Success is fewer invalid, overstated or duplicate submissions and
-stronger evidence on the ones that go out.
+Pre-submission review for a defensible, evidence-backed report. The hunter adds
+the draft and its files; the review checks claims and counterarguments against
+the supplied code and proof, confirms supported claims and identifies gaps. It
+returns one verdict (submit, rewrite then submit, prove first, hold as a duplicate,
+or drop) with file-and-line citations and what to fix. The hunter writes the
+report; the AI never does. Success is stronger evidence and explicit impact in
+the reports that go out, without unsupported claims.
 
-Promise: "Find the hole in your report before the triager does."
+Promise: "Make your strongest case before you submit."
+
+Supporting copy: "Check your proof, make the impact explicit, and catch missing evidence before the triager has to ask."
 
 ## Positioning
 
-- The review is adversarial by design: it plays the triager and argues the
-  finding down, and the verdict can be "drop".
+- The review is adversarial by design: it tests the finding against the evidence,
+  including counterarguments a triager could raise. Supported findings can be
+  confirmed at their claimed severity; gaps and overstated impact are called out
+  honestly, and the verdict can be "drop". This positioning does not change the
+  review instructions or guarantee acceptance, severity or a payout.
 - Bring your own model: the visitor's own API key (OpenRouter, Anthropic, OpenAI,
   Google Gemini, xAI, DeepSeek, Mistral, Groq), a copy-paste prompt in their
   ChatGPT or Claude chat, or their coding agent's own model over MCP.
@@ -106,17 +112,23 @@ beats their current workflow.
   (`web/public/bench/2026-10.json`). Frozen; never regraded. /benchmark ranks
   the models on the raw arm, the model alone. The release's profile arms stay
   in the results file and are not shown as a comparison on the site.
-- Saved examples: `web/public/example.mjs` (Tessera Staking, an invented
-  protocol: a draft claiming Critical cut to Medium with file-and-line citations;
-  a confirmed Critical). Render through `web/site/social/example.mjs`.
+- Saved examples: `web/public/example.mjs`. Lead with Halyard, an explicitly
+  invented protocol with a confirmed Critical finding and file-and-line
+  citations, linked as `/?start=example&example=confirmed-critical#workspace`.
+  Put the real workbench next. Tessera Staking, also invented, shows a Critical
+  claim reduced to Medium. The unchanged Spec film and 54-second Tessera
+  walkthrough belong together in one collapsed supporting disclosure after
+  the workbench. The published film and `/?start=example#workspace` must
+  continue to open Tessera. Do not rewrite either saved review. Render through
+  `web/site/social/example.mjs`.
 - No testimonials, customer names, logos, user counts or revenue figures exist.
   Never invent them.
 
 ## Product Principles
 
 1. Prove, don't claim: show a real result, a real citation, a real number.
-2. The hunter stays the author; the product is the adversary that makes the
-   report survive triage.
+2. The hunter stays the author; the product tests the report's claims so the
+   submission is backed by evidence. It does not promise a triage outcome.
 3. The visitor's model, key and files stay theirs; say exactly where data goes.
 4. One verdict, stated plainly, beats a hedge.
 5. Free must be genuinely useful; Operator is for volume and depth.

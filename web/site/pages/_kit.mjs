@@ -674,12 +674,12 @@ const typeSection = kitSection(
   'Archivo, self-hosted and variable: condensed and heavy for the display and stamps, semi-condensed for headings and printed labels. Running text uses the system face. Mono is for code, paths and hashes only. 12px is the floor.',
   html`
   <div class="specimen">
-    <div class="specimen__row"><span class="meta">Display 88</span><p class="display">Find the hole first.</p></div>
+    <div class="specimen__row"><span class="meta">Display 88</span><p class="display">Make your strongest case before you submit.</p></div>
     <div class="specimen__row"><span class="meta">H1 52</span><p class="h1">Challenge a draft report</p></div>
     <div class="specimen__row"><span class="meta">H2 38</span><p class="h2">What a triager checks first</p></div>
     <div class="specimen__row"><span class="meta">H3 22</span><p class="h3">A first stake is credited with the whole reward history</p></div>
     <div class="specimen__row"><span class="meta">H4 18</span><p class="h4">Counterargument, resolved</p></div>
-    <div class="specimen__row"><span class="meta">Lede 18</span><p class="lede">The AI argues against the finding. The hunter writes the report.</p></div>
+    <div class="specimen__row"><span class="meta">Lede 18</span><p class="lede">Check your proof, make the impact explicit, and catch missing evidence before the triager has to ask.</p></div>
     <div class="specimen__row"><span class="meta">Body 16</span><p>State who loses what, and give the bound. A reader who stops after one sentence should know the worst case.</p></div>
     <div class="specimen__row"><span class="meta">Small 14</span><p class="small">Each call is a normal review with a profile id.</p></div>
     <div class="specimen__row"><span class="meta">Fine 13</span><p class="fine">Files stay in this tab until you run a review.</p></div>

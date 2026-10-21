@@ -113,7 +113,7 @@ const body = html`
 
   ${closingBand({
     title: 'Fill one in, then challenge it',
-    text: html`A template gives the report its shape. A review argues against what you wrote in it: the impact row, the proof, the severity, the prior art. <a class="link" href="/challenge-report">How the challenge works</a>.`,
+    text: html`A template gives the report its shape. A review checks the evidence behind the impact row, the proof, the severity and the prior art, including counterarguments. Supported claims are confirmed; gaps show what to strengthen. <a class="link" href="/challenge-report">How the challenge works</a>.`,
     actions: [
       { label: 'Review my report', href: '/?profile=report#workspace' },
       { label: 'Run the report check', href: '/tools/report-check' },

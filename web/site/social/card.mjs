@@ -3,7 +3,7 @@
 // 1200 x 630. The promise and shared Spec mark sit beside the original mascot
 // portrait. The homepage and film use the same Archivo and four brand colours.
 //
-//   node web/site/social/render.mjs      writes card.html and social-spec-v2.png
+//   node web/site/social/render.mjs      writes card.html and social-spec-v3.png
 //
 // This module lives outside web/site/pages, so the generator builds no page from it.
 
@@ -18,7 +18,7 @@ export function cardDocument({ assets = '../../public' } = {}) {
 <div class="social-card__pitch">
 <p class="social-card__brand">${brandMark()}<span>${SITE.name}</span></p>
 <h1 class="social-card__title">${SITE.promise}</h1>
-<p class="social-card__lede">Review your bug report against the code and proof.</p>
+<p class="social-card__lede">${SITE.summary}</p>
 </div>
 <div class="social-card__shot">
 <img src="${assets}/brand/spec-960.webp" width="960" height="960" alt="Spec, a coral bug with a magnifying glass.">

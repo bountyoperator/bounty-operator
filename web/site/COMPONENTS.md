@@ -94,13 +94,13 @@ export default {
 
 A module may default-export an array of pages. A module with no default export is treated as a shared helper and skipped.
 
-What the layout adds: charset, viewport, title, description, canonical, `color-scheme` (dark), one `theme-color` meta, Open Graph and Twitter tags (with `twitter:creator` set to the builder's handle; there is no `twitter:site`, the product has no X account), icons, manifest, `/theme.js`, stylesheets, preloads, `/field.mjs` and the page's scripts, JSON-LD, the skip link, the header and the footer.
+What the layout adds: charset, viewport, title, description, canonical, `color-scheme` (dark), one `theme-color` meta, Open Graph and Twitter tags (`twitter:site` identifies `@BountyOperator`; `twitter:creator` retains the builder's personal attribution), icons, manifest, `/theme.js`, stylesheets, preloads and the page's scripts, JSON-LD, the skip link, the header and the footer.
 
 Header: brand, nav (Review `/#workspace`, Benchmark `/benchmark` only when that page exists, Tools `/tools`, Guide `/guide`, Pricing), account control. Pricing links to `/#pricing` on the home page and to `/pricing` everywhere else. The account control is `<button id="account-button">` on `/` and a link to `/#account` everywhere else. Both carry two labels, `.account-label--new` "Sign up" and `.account-label--known` "Sign in"; `/theme.js` sets `[data-known]` on `<html>` before the first paint when this browser has signed in before, and the stylesheet shows one. A page that loads `/app/account.mjs` relabels it "Account" for a signed-in visitor. After it, `button.site-header__menu` (Menu, `aria-controls="site-nav"`, `aria-expanded`, `data-menu-toggle`) opens and closes the navigation on a phone; `/theme.js` wires it.
 
-Footer: Product, Tools, Resources and Legal columns. The Tools column lists the first six `/tools/*` pages. Method, gauntlet, panel review, templates, changelog, benchmark, security and licences links appear when those pages exist.
+Footer: Product, Resources and Legal columns. Benchmark, Model API, review method, report templates, changelog, help, security and licences links appear when those pages exist. Resources includes the source repository and the official company account under "Updates on X".
 
-JSON-LD helpers in `layout.mjs`: `organizationLd()`, `softwareApplicationLd()` (Free and Operator offers), `faqPageLd(items)`, `breadcrumbsLd(trail)`.
+JSON-LD helpers in `layout.mjs`: `organizationLd()` (the source repository and official company X account in `sameAs`), `softwareApplicationLd()` (Free and Operator offers), `faqPageLd(items)`, `breadcrumbsLd(trail)`.
 
 ## Build, check, validate
 

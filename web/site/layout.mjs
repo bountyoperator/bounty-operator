@@ -9,19 +9,20 @@ import { CHAT_LINE, FREE_LINE, INCLUDED_API_CREDIT, OPERATOR_LINE } from './plan
 export const SITE = {
   origin: 'https://bountyoperator.com',
   name: 'Bounty Operator',
-  promise: 'Find the hole in your report before the triager does.',
+  promise: 'Make your strongest case before you submit.',
   summary:
-    'Pre-submission review for bug bounty reports and smart-contract findings. The AI argues against the finding. The hunter writes the report.',
-  defaultImage: '/social-spec-v2.png',
+    'Check your proof, make the impact explicit, and catch missing evidence before the triager has to ask.',
+  defaultImage: '/social-spec-v3.png',
   iconVersion: 'spec-v1',
   source: 'https://github.com/bountyoperator/bounty-operator',
+  x: '@BountyOperator',
+  xUrl: 'https://x.com/BountyOperator',
   // The forum: GitHub Discussions on the source repository. /support routes each kind of request.
   forum: 'https://github.com/bountyoperator/bounty-operator/discussions',
   support: 'support@bountyoperator.com',
   security: 'security@bountyoperator.com',
   // The builder's public Immunefi profile, the other places the same name
-  // publishes, and the handle on X for link previews (twitter:creator). The
-  // product has no X account, so no twitter:site.
+  // publishes, and the handle credited as twitter:creator in link previews.
   builder: {
     name: 'Tradi3',
     url: 'https://immunefi.com/profile/Tradi3/',
@@ -43,8 +44,8 @@ export const FONT_FILE = '/fonts/archivo-latin-wdth.woff2';
 export const DESIGN_CONTRACT = `<!--
 THESIS: Spec is a bug with standards. Every claim has to stand up to the code and proof before a report is submitted.
 OWN-WORLD: The film's coral shell, cream paper, charcoal ink and blue work jacket. Archivo carries both film and site; mono is reserved for code and typed evidence. Spec brings the personality; the review stays clear and factual.
-STORY: Meet Spec, see an inflated Critical claim meet the evidence, then open the saved example or review your own report.
-FIRST VIEWPORT: The product promise and review actions beside the original Spec portrait. Below: the narrated film and its actual, clearly labelled invented example.
+STORY: Meet Spec, see a Critical finding supported by the supplied evidence, then open the saved example or review your own report. The unchanged Tessera film is optional supporting material, not the lead demonstration.
+FIRST VIEWPORT: The product promise and review actions beside the original Spec portrait. Below: the saved, clearly labelled invented Halyard example, then the real workbench. Group the unchanged Spec film and Tessera walkthrough in one collapsed supporting disclosure after the workbench, linked to their Tessera example.
 FORM: Original clay mascot, a small vector Spec mark, readable report sheets and verdict stamps.
 FINISH: Responsive layout, native video controls, captions, reduced motion and verified source citations. See DESIGN.md and docs/spec-brand.md.
 -->`;
@@ -110,7 +111,7 @@ export function organizationLd() {
     url: `${SITE.origin}/`,
     logo: absoluteUrl(`/icon-512.png?v=${SITE.iconVersion}`),
     email: SITE.support,
-    sameAs: [SITE.source],
+    sameAs: [SITE.source, SITE.xUrl],
   };
 }
 
@@ -219,7 +220,7 @@ function socialTags(page, canonical) {
   const usesDefaultImage = !og.image;
   const width = og.width ?? (usesDefaultImage ? 1200 : null);
   const height = og.height ?? (usesDefaultImage ? 630 : null);
-  const alt = og.alt ?? `${SITE.name}. ${SITE.promise} Spec, our coral bug mascot, holds a magnifying glass.`;
+  const alt = og.alt ?? `${SITE.name}. ${SITE.promise} ${SITE.summary} Spec, our coral bug mascot, holds a magnifying glass.`;
 
   return html`
 <meta property="og:type" content="${og.type ?? 'website'}">
@@ -232,6 +233,7 @@ function socialTags(page, canonical) {
 <meta property="og:image:height" content="${height}">`}
 <meta property="og:image:alt" content="${alt}">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="${SITE.x}">
 <meta name="twitter:creator" content="${SITE.builder.x}">
 <meta name="twitter:title" content="${title}">
 <meta name="twitter:description" content="${description}">
@@ -356,6 +358,7 @@ ${footerColumn('Resources', [
     optional('/changelog', 'Changelog'),
     optional('/support', 'Help and feedback'),
     { href: SITE.source, label: 'Source', external: true },
+    { href: SITE.xUrl, label: 'Updates on X', external: true },
   ])}
 ${footerColumn('Legal', [
     { href: '/privacy', label: 'Privacy' },

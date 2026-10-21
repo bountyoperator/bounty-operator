@@ -2,11 +2,13 @@
 
 # Bounty Operator
 
-**Find the hole in your report before the triager does.**
+**Make your strongest case before you submit.**
 
-Bounty Operator argues against your bug bounty report before you submit it.
-Give it the draft and the code it cites. It checks every claim against the
-code, the way a triager will, and you get one verdict: `submit`,
+Check your proof, make the impact explicit, and catch missing evidence before the triager has to ask.
+
+Give Bounty Operator the draft and the code it cites. It checks every claim against
+the supplied evidence, confirms supported claims and identifies gaps and
+counterarguments to address. You get one verdict: `submit`,
 `rewrite-then-submit`, `prove-first`, `hold-duplicate` or `drop`. It runs on
 your own model: in the browser, in your coding agent over MCP, or from the
 command line.
@@ -24,11 +26,11 @@ command line.
 - **Every claim tied to file and line.** Findings cite `input-1/src/Vault.sol:142-158`.
   A reference to a file or line you did not supply is flagged. Each review
   downloads as a packet with a SHA-256 manifest of exactly what was reviewed.
-- **The triager's objection first.** Each finding carries its strongest
+- **Counterarguments checked against evidence.** Each finding carries its strongest
   counterargument, whether the source resolves it, and the one missing artifact
   that would settle it.
 - **Your model and your key. Nothing is stored.** OpenRouter, Anthropic, OpenAI,
-  Gemini, xAI, DeepSeek, Mistral, Groq, Novita AI, Infron, OrcaRouter or Bounty Operator with your own key. A hosted review
+  Gemini, xAI, DeepSeek, Mistral, Groq, Novita AI, Nebius Token Factory, Infron, OrcaRouter or Bounty Operator with your own key. A hosted review
   passes your files and your key through bountyoperator.com to that provider.
   Source files, keys and review text are never stored.
 
@@ -46,6 +48,13 @@ hosted-review account and quota requirements still apply. The
 separates optional affiliate signup from direct key management and discloses
 our commission. Local MCP uses `NOVITA_API_KEY`; remote MCP uses
 `provider: "novita"` with the key in `X-Provider-Key`.
+
+Have a Nebius Token Factory account? [Select Nebius Token Factory](https://bountyoperator.com/?provider=nebius#workspace)
+and bring your Nebius key. It bills model usage separately, and we receive no
+commission; Bounty Operator's hosted-review account and quota requirements
+still apply. See the [Nebius setup guide](https://bountyoperator.com/docs/model-selection#nebius).
+Local MCP uses `NEBIUS_API_KEY`; remote MCP uses `provider: "nebius"` with the
+key in `X-Provider-Key`.
 
 ### Hosted model API
 
@@ -125,7 +134,7 @@ each client: [bountyoperator.com/mcp](https://bountyoperator.com/mcp) and
 Python 3.10 or newer. No dependencies.
 
 ```bash
-pip install "git+https://github.com/bountyoperator/bounty-operator@v0.9.20"
+pip install "git+https://github.com/bountyoperator/bounty-operator@v0.9.21"
 bounty-kit agent-pack ./agent-pack.md --target "Example Protocol" --program "Example bounty"
 ```
 

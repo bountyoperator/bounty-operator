@@ -82,7 +82,7 @@ const body = docPage({
   ],
   after: closingBand({
     title: 'Not sure the report is ready?',
-    text: 'The guide covers what a triager checks first, and the review argues against your draft before one does.',
+    text: 'The guide covers what a triager checks first. A review checks your draft against the evidence, confirms supported claims and identifies what still needs proof.',
     actions: [
       { label: 'Review my report', href: '/?profile=report#workspace' },
       { label: 'Report guide', href: '/guide' },

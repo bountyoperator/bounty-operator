@@ -153,7 +153,7 @@ ${button({ label: 'Edit', variant: 'quiet', size: 'sm', attrs: { 'data-step-targ
   const via = html`<div class="wb-picks wb-picks--wide" id="wb-via" role="radiogroup" aria-labelledby="wb-via-label">
 ${viaChoice({ value: 'export', title: 'My AI chat · no API key', text: 'Copy the prompt into your chat and paste the reply back. Code security, Solidity and draft-report reviews need no Bounty Operator account. Your chat provider’s limits apply.' })}
 ${viaChoice({ value: 'connect', title: 'Connect OpenRouter', text: 'Use your own OpenRouter account. Choose a paid model or check the current free models below.' })}
-${viaChoice({ value: 'key', title: 'My own API key', text: 'Bounty Operator, OpenRouter, Infron, OrcaRouter, Anthropic, OpenAI, Gemini, xAI, DeepSeek, Mistral, Groq or Novita AI.' })}
+${viaChoice({ value: 'key', title: 'My own API key', text: 'Bounty Operator, OpenRouter, Infron, OrcaRouter, Anthropic, OpenAI, Gemini, xAI, DeepSeek, Mistral, Groq, Novita AI or Nebius.' })}
 </div>`;
 
   const model = html`<div class="wb-fields">

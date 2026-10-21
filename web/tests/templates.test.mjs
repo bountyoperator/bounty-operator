@@ -207,7 +207,6 @@ test('the GitHub private vulnerability report page: the 1 Oct 2026 form, sourced
   assert.equal((sources.match(/checked 15 Oct 2026/g) ?? []).length, GITHUB.sources.length);
   assert.match(markup, /<p class="meta">Rules checked 15 Oct 2026 · 6 sources<\/p>/);
   assert.match(markup, /href="\/templates\/github-private-vulnerability-report\.md" download="github-private-vulnerability-report-template\.md"/);
-  assert.match(markup, /the way a maintainer would/);
   assert.equal(page.lastmod, '2026-10-15');
 
   // Listed on the hub and in the sitemap.

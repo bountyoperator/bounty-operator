@@ -19,9 +19,22 @@ mark simplifies his antennae, eyes, shell and jacket for navigation and browser
 icons. Its geometry lives in `web/site/components.mjs`; `scripts/build-icons.mjs`
 produces the SVG, favicon and home-screen icons from it.
 
-Keep the product language direct: review the report, question its claims, cite
-the code and proof. The public example is an invented protocol. Existing
-severity colours retain their meaning; they are not mascot decoration.
+Lead with "Make your strongest case before you submit." Supporting copy:
+"Check your proof, make the impact explicit, and catch missing evidence before the triager has to ask."
+Keep the product language direct: check claims and counterarguments against the
+code and proof, confirm supported findings, and identify missing evidence.
+Adversarial review is not a promise to lower severity or invent objections.
+It does not guarantee acceptance or a payout, or change the review instructions.
+Existing severity colours retain their meaning; they are not mascot decoration.
+
+After the hero, lead with the saved Halyard example: an explicitly invented
+protocol with a confirmed Critical finding. Its named link is
+`/?start=example&example=confirmed-critical#workspace`. The real workbench
+follows. Keep both saved reviews unchanged.
+Group the unchanged Spec film and 54-second Tessera walkthrough in one
+collapsed supporting disclosure after the workbench. They must remain paired
+with the Tessera example they demonstrate, including `/?start=example#workspace`
+from the published introduction on X.
 
 Spec carries the personality. Keep headlines plain, evidence aligned, and
 motion tied to an interaction. Do not add hand-drawn circles, decorative
@@ -54,6 +67,44 @@ is the approved film unchanged; its poster is an extracted frame. Captions and
 a visible transcript accompany it. Native controls require a visitor to play
 it; there is no autoplay, remote embed or extra player library.
 
-`web/site/social/card.mjs` and `social.css` are the editable 1200 by 630 preview
-layout. Its export is `web/public/social-spec-v2.png`; the versioned path lets
-new link previews pick up the new identity without changing previous shares.
+`web/site/social/card.mjs` generates `card.html`; these and `social.css` define
+the editable 1200 by 630 preview layout. Run `node web/site/social/render.mjs`
+to render `web/public/social-spec-v3.png`. This card pairs the approved headline
+and supporting copy with Spec's original portrait. The versioned path gives
+new link previews the current positioning. Preserve `social-spec-v2.png` for
+existing shares, including the published X introduction.
+
+### Strongest-case replacement film
+
+The 18-second replacement master created on 21 October 2026 leads with making
+a stronger submission, then shows the unchanged saved Halyard review and its
+source evidence. Halyard is explicitly an invented protocol; the attack needs
+one valid owner signature. The film does not imply a real bounty, acceptance
+or payout.
+
+It reuses Higgsfield's Spec animation
+`abf19021-fbd9-4bde-9383-5eba8dbb3d88` with new Cillian narration from
+ElevenLabs v3 through Higgsfield, generation
+`ed3770b5-cb5e-42da-9ed7-725040b8fedd`. The final composition is rendered locally,
+not a new Higgsfield video generation.
+
+The input bundle and master are in `.local/spec-strongest-case-20261021/`.
+Rebuild with
+`node scripts/render-spec-film.mjs .local/spec-strongest-case-20261021`.
+The renderer needs `spec-source.mp4`, `narration.mp3` and `review-capture.png`,
+plus the same global Playwright/Chromium setup as the social-card renderer and
+FFmpeg. It writes the MP4, a poster, and timed VTT/SRT captions. Rendering does
+not upload, publish, buy credits or replace existing website assets or posts.
+The bundle's `provenance.json` records the source URLs and checksums.
+
+The verified master is 1080 by 1080 at 30 fps, with H.264 video and AAC audio.
+Its SHA-256 is
+`64dd5764cf1528e24ddbf8d8774459f79669a31f31c07053d93182723e82d773`.
+
+Published on 21 October 2026 as a new `@BountyOperator` post,
+<https://x.com/BountyOperator/status/2112745508603330779>. Its link opens
+`/?start=example&example=confirmed-critical#workspace`. X's optional
+Made with AI label is off.
+The pinned introduction, the earlier Spec post and the website's films are
+unchanged.
+

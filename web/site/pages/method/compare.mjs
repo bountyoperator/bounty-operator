@@ -266,7 +266,7 @@ ${pageHero({
     lede: 'Each of these checks a finding before it is filed, on its own or as one step of a larger job: hunting, filtering, deduplicating or writing. The last column names the gauntlet stages that ask the same kind of question.',
   })}
   ${toolTable}
-  <p class="fine compare__note">Two of them hunt for bugs, two filter a batch of findings, one builds a register of known issues, and two check one report you already hold. Bounty Operator starts from one finding you already hold and argues against the report: scope, design intent, duplicates, proof, severity and what the platform stored. It works with any platform’s programme, on your own model and key.</p>
+  <p class="fine compare__note">Two of them hunt for bugs, two filter a batch of findings, one builds a register of known issues, and two check one report you already hold. Bounty Operator starts from one finding you already hold and checks the report against the evidence: scope, design intent, duplicates, proof, severity and what the platform stored. It tests counterarguments, confirms supported claims and identifies missing proof. It works with any platform’s programme, on your own model and key.</p>
 </section>
 
 <section class="section wrap" aria-labelledby="sources">
@@ -292,7 +292,7 @@ ${pageHero({
       { title: 'A hunting kit or a finding filter', text: 'Recon, hunting and a first gate on what an agent found. What it keeps is a candidate.' },
       {
         title: 'Bounty Operator',
-        text: 'One candidate at a time, argued against in a fixed order: scope, intent, prior art, proof, severity. The inputs are pinned and the answer is one verdict. It works with any platform and runs from a coding agent over MCP.',
+        text: 'One candidate at a time, checked against evidence in a fixed order: scope, intent, prior art, proof, severity. The inputs are pinned and the answer is one verdict, with supported claims confirmed and gaps identified. It works with any platform and runs from a coding agent over MCP.',
       },
     ],
     { columns: 3 },

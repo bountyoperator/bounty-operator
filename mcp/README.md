@@ -1,6 +1,8 @@
 # Bounty Operator MCP
 
-Find the hole in your report before the triager does, from inside your coding agent.
+Make your strongest case before you submit.
+
+Check your proof, make the impact explicit, and catch missing evidence before the triager has to ask.
 
 This is the MCP server for [Bounty Operator](https://bountyoperator.com). Your agent names the files, the server scans them for secrets and returns the review request, your agent's own model writes the review, and the server checks every cited line and builds the evidence packet. Preparing a review and building the packet need no account and no key.
 
@@ -165,6 +167,8 @@ The remote endpoint takes the same two values as headers: `Authorization: Bearer
 
 For Novita AI, set `NOVITA_API_KEY` locally (and include it in Codex's `env_vars`) and call `run_review` with `"provider": "novita"`. Create a key at [Novita Key Management](https://novita.ai/settings/key-management). The default is `deepseek/deepseek-v4.1-flash`; `zai-org/glm-5.3-flash` is also listed. Both local and remote `list_profiles` expose the provider and its models. On the remote endpoint, pass the Novita key in `X-Provider-Key`, not as a tool argument. Novita bills model usage separately; selecting it does not change the app's default provider or enable a fallback. Signup attribution is never sent with inference requests.
 
+For Nebius Token Factory, set `NEBIUS_API_KEY` locally (and include it in Codex's `env_vars`) and call `run_review` with `"provider": "nebius"`. Create a key at [Nebius Token Factory](https://tokenfactory.nebius.com/project/api-keys). The default is `deepseek-ai/DeepSeek-V4.1-Flash`; `zai-org/GLM-5.3-Flash` and `moonshotai/Kimi-K3` are also listed. Requests ask Nebius not to store the answer. On the remote endpoint, pass the Nebius key in `X-Provider-Key`, not as a tool argument. Nebius bills model usage separately; selecting it does not change the app's default provider or enable a fallback.
+
 ## Environment
 
 | Variable | Purpose |
@@ -172,7 +176,7 @@ For Novita AI, set `NOVITA_API_KEY` locally (and include it in Codex's `env_vars
 | `BOUNTY_OPERATOR_TOKEN` | Connection token for `account` and `run_review` |
 | `BOUNTY_OPERATOR_MODEL` | Model id `run_review` uses when the call names none |
 | `BOUNTY_OPERATOR_ROOT` | Absolute path of the project folder that `paths` resolve under. Default: the working directory |
-| `OPENROUTER_API_KEY`, `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GEMINI_API_KEY`, `XAI_API_KEY`, `DEEPSEEK_API_KEY`, `MISTRAL_API_KEY`, `GROQ_API_KEY`, `NOVITA_API_KEY`, `INFRON_API_KEY`, `ORCAROUTER_API_KEY`, `BOUNTYOPERATOR_API_KEY` | Provider key for `run_review`, one per provider |
+| `OPENROUTER_API_KEY`, `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GEMINI_API_KEY`, `XAI_API_KEY`, `DEEPSEEK_API_KEY`, `MISTRAL_API_KEY`, `GROQ_API_KEY`, `NOVITA_API_KEY`, `NEBIUS_API_KEY`, `INFRON_API_KEY`, `ORCAROUTER_API_KEY`, `BOUNTYOPERATOR_API_KEY` | Provider key for `run_review`, one per provider |
 
 ## What the server reaches
 

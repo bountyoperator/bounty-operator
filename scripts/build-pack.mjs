@@ -199,7 +199,7 @@ function pluginManifest(e) {
     displayName: 'Bounty Operator',
     version: e.version,
     description:
-      'Find the hole in your report before the triager does. Skills that argue against a security finding or a draft report before it is filed, on your own model, and the Bounty Operator MCP server for the hosted eight-stage gauntlet.',
+      'Make your strongest case before you submit. Check your proof, make the impact explicit, and catch missing evidence before the triager has to ask. Skills for evidence-backed security findings and draft reports on your own model, and the Bounty Operator MCP server for the hosted eight-stage gauntlet.',
     author: { name: 'Tradi3', url: pack.SITE },
     homepage: pack.SITE,
     repository: pack.REPOSITORY,

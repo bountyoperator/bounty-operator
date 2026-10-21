@@ -42,6 +42,9 @@ const LONG_OUTPUT_MODELS = Object.freeze({
   xai: new Set(['grok-4.7']),
   // Novita's public model catalog (20 October 2026): 393,216 and 131,072 output tokens.
   novita: new Set(['deepseek/deepseek-v4.1-flash', 'zai-org/glm-5.3-flash']),
+  // Nebius caps max tokens only by the model's context (its OpenAPI, 21 October
+  // 2026), and all three listed models have contexts of about a million tokens.
+  nebius: new Set(['deepseek-ai/DeepSeek-V4.1-Flash', 'zai-org/GLM-5.3-Flash', 'moonshotai/Kimi-K3']),
 });
 const TIMEOUT_MS = 180000;
 const CALL_LIMIT_MS = 900000;
@@ -298,6 +301,21 @@ export const PROVIDERS = Object.freeze([
     affiliateUrl: 'https://novita.ai/?ref=ntgxn2f&utm_source=affiliate',
   }),
   describe({
+    id: 'nebius',
+    label: 'Nebius Token Factory',
+    keyLabel: 'Nebius Token Factory API key',
+    keyPrefixHint: '',
+    // Exact ids from Nebius's public model catalog, 21 October 2026.
+    defaultModel: 'deepseek-ai/DeepSeek-V4.1-Flash',
+    models: [
+      model('deepseek-ai/DeepSeek-V4.1-Flash', 'DeepSeek V4.1 Flash', 'default'),
+      model('zai-org/GLM-5.3-Flash', 'GLM 5.3 Flash', 'value'),
+      model('moonshotai/Kimi-K3', 'Kimi K3', 'flagship'),
+    ],
+    envVar: 'NEBIUS_API_KEY',
+    docsUrl: 'https://tokenfactory.nebius.com/project/api-keys',
+  }),
+  describe({
     id: 'infron',
     label: 'Infron',
     keyLabel: 'Infron API key',
@@ -417,6 +435,15 @@ const WIRE = Object.freeze({
     endpoint: 'https://api.novita.ai/openai/v1/chat/completions',
     tokenParam: 'max_tokens',
     streamUsage: true,
+  },
+  // `max_completion_tokens` includes reasoning; `store: false` keeps the answer
+  // out of Nebius's distillation store (its OpenAPI, 21 October 2026).
+  nebius: {
+    style: 'chat',
+    endpoint: 'https://api.tokenfactory.nebius.com/v1/chat/completions',
+    tokenParam: 'max_completion_tokens',
+    streamUsage: true,
+    body: { store: false },
   },
   infron: {
     style: 'chat',
