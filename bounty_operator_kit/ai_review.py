@@ -360,7 +360,8 @@ def _read_completion(data: object) -> ReviewResult:
 
 
 def request_review(prepared: PreparedReview, config: AIReviewConfig, api_key: str) -> ReviewResult:
-    if not api_key or len(api_key) > 4096 or any(ord(c) < 33 for c in api_key):
+    # Printable ASCII only: a pasted curly quote would otherwise fail later as a header codec error.
+    if not api_key or len(api_key) > 4096 or any(not 0x21 <= ord(c) <= 0x7E for c in api_key):
         raise ValueError("provide a valid API key for the selected provider")
     base_url = configured_base_url(config)
     payload = build_payload(prepared, config, base_url)
