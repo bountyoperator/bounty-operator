@@ -94,6 +94,15 @@ class PrepareTests(unittest.TestCase):
         self.assertEqual([entry["lines"] for entry in prepared.manifest], [1, 3, 0])
         self.assertIn("Never invent extra line numbers for its sentences", index)
 
+    def test_a_blocked_line_is_named_by_the_number_the_model_would_cite(self) -> None:
+        # A form feed is not a line break in the numbered file, so it must not be one for the scanner.
+        source = "x = 1\f\nkey = '" + "AKIA" + "ABCDEFGHIJKLMNOP'\n"
+        with self.assertRaisesRegex(ValueError, r"input-1:2 \(aws-access-key\)"):
+            prepare_text_review([("config.py", source)], "", AIReviewConfig())
+        prepared = prepare_text_review([("config.py", source)], "", AIReviewConfig(allow_sensitive=True))
+        sent = json.loads(prepared.messages[1]["content"].split("\n", 1)[1].split("\n\n## Citation boundaries", 1)[0])
+        self.assertTrue(sent["content"].split("\n")[1].startswith("2| key = "))
+
     def test_file_count_is_bounded(self) -> None:
         too_many = [(f"file-{index}.txt", "text") for index in range(51)]
         with self.assertRaisesRegex(ValueError, "between 1 and 50"):
@@ -254,6 +263,7 @@ class ErrorTests(unittest.TestCase):
 
     def test_connection_failure_is_reported(self) -> None:
         self.assertIn("failed before a response arrived", self.failure(URLError("connection refused")))
+
 
 
 if __name__ == "__main__":

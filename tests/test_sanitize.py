@@ -27,6 +27,17 @@ class SanitizeTests(unittest.TestCase):
         self.assertEqual(findings[0].path, "prompt")
         self.assertEqual(findings[0].kind, "openai-key")
 
+    def test_line_numbers_count_only_line_breaks(self) -> None:
+        # Form feeds and Unicode separators do not start a line in an editor or in the review prompt.
+        key = "AKIA" + "ABCDEFGHIJKLMNOP"
+        for text in (
+            *(f"first{separator}\nkey = {key}\n" for separator in ("\f", "\v", "\x85", "\u2028", "\u2029")),
+            *(f"first{newline}key = {key}{newline}" for newline in ("\n", "\r\n", "\r")),
+        ):
+            with self.subTest(text=repr(text)):
+                findings = scan_text(text, honor_allow_comments=False)
+                self.assertEqual([(finding.line, finding.kind) for finding in findings], [(2, "aws-access-key")])
+
 
 if __name__ == "__main__":
     unittest.main()
