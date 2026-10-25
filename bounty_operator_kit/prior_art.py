@@ -13,6 +13,8 @@ def _first_line(summary: str) -> str:
 
 def build_prior_art_checklist(*, summary: str, target: str, program: str = "", repo: str = "") -> str:
     title = _first_line(summary)
+    # The searches are literal: as a regex, a title such as "withdraw()" silently misses
+    # its own text, and "[" or a leading "-" makes the command fail.
     quoted_title = shlex.quote(title)
     quoted_target = shlex.quote(target)
     repo_text = repo or "TBD"
@@ -40,10 +42,10 @@ Do not compare only by title. Check whether another item has the same:
 Run these from the target repository when possible:
 
 ```bash
-rg -n -i {quoted_title} .
-rg -n -i {quoted_target} .
-git log --oneline --all --grep={quoted_title}
-git log --all -G {quoted_title} -- .
+rg -n -i -F -e {quoted_title} .
+rg -n -i -F -e {quoted_target} .
+git log --oneline --all -i -F --grep={quoted_title}
+git log --oneline --all -i -S{quoted_title} -- .
 ```
 
 Also search:
