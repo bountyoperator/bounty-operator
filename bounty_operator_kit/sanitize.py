@@ -144,6 +144,20 @@ def _patterns(allow_email: bool) -> list[tuple[str, re.Pattern[str], str]]:
     return patterns
 
 
+def split_lines(text: str) -> list[str]:
+    """Split text into the lines the review prompt numbers and the scanner reports.
+
+    Only CRLF, CR and LF end a line. str.splitlines() also breaks on form feeds and
+    Unicode separators, which would shift every later finding off the line cited.
+    """
+    if not text:
+        return []
+    lines = text.replace("\r\n", "\n").replace("\r", "\n").split("\n")
+    if len(lines) > 1 and lines[-1] == "":
+        lines.pop()
+    return lines
+
+
 def scan_text(
     text: str,
     *,
@@ -153,7 +167,7 @@ def scan_text(
 ) -> list[Finding]:
     findings: list[Finding] = []
     patterns = _patterns(allow_email)
-    for line_no, line in enumerate(text.splitlines(), start=1):
+    for line_no, line in enumerate(split_lines(text), start=1):
         if honor_allow_comments and "bounty-kit: allow" in line:
             continue
         matched_kinds: set[str] = set()

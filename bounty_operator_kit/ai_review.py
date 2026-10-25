@@ -17,7 +17,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from .file_io import decode_text, read_bytes_limited
-from .sanitize import Finding, path_findings, scan_text
+from .sanitize import Finding, path_findings, scan_text, split_lines
 
 
 DEFAULT_BASE_URL = "https://api.openai.com/v1"
@@ -161,15 +161,6 @@ def _safe_label(name: str, index: int) -> str:
     return f"input-{index}/{name}"
 
 
-def _source_lines(content: str) -> list[str]:
-    if not content:
-        return []
-    lines = content.replace("\r\n", "\n").replace("\r", "\n").split("\n")
-    if len(lines) > 1 and lines[-1] == "":
-        lines.pop()
-    return lines
-
-
 def _numbered(lines: list[str]) -> str:
     """Prefix each line with its 1-based number so the model can cite exact lines."""
     return "\n".join(f"{number}| {line}" for number, line in enumerate(lines, start=1))
@@ -227,7 +218,7 @@ def prepare_text_review(inputs: list[tuple[str, str]], prompt: str, config: AIRe
         findings.extend(Finding(source, f.line, f.kind, f.detail) for f in path_findings(Path(name)))
         findings.extend(scan_text(name, source=f"{source}-name", honor_allow_comments=False))
         findings.extend(scan_text(content, source=source, honor_allow_comments=False))
-        lines = _source_lines(content)
+        lines = split_lines(content)
         manifest.append(
             {
                 "label": label,
