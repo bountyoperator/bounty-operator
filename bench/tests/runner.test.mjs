@@ -35,7 +35,10 @@ async function withFake(mode, fn) {
     for (const [i, name] of ['PAYDIRT_OMP', 'PAYDIRT_OMP_ARGS'].entries()) { if (saved[i] === undefined) delete process.env[name]; else process.env[name] = saved[i]; }
   }
 }
-const alive = (pid) => { try { process.kill(pid, 0); return true; } catch { return false; } };
+// A killed process its parent has not reaped is a zombie: dead, yet kill(pid, 0) still finds it. An
+// orphaned grandchild is left so wherever PID 1 does not reap, as in a container started without an init.
+const zombie = (pid) => { try { return /^State:\s+Z/m.test(fs.readFileSync(`/proc/${pid}/status`, 'utf8')); } catch { return false; } };
+const alive = (pid) => { try { process.kill(pid, 0); } catch { return false; } return !zombie(pid); };
 
 test('one run: workspace copy, clean environment, captured events, redacted key', () => withFake('ok', async (ctx, out) => {
   assert.equal(ompVersion(ctx), 'omp/18.4.4');
