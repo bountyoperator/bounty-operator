@@ -264,6 +264,12 @@ class ErrorTests(unittest.TestCase):
     def test_connection_failure_is_reported(self) -> None:
         self.assertIn("failed before a response arrived", self.failure(URLError("connection refused")))
 
+    def test_a_key_outside_printable_ascii_is_refused_before_any_request(self) -> None:
+        for key in (API_KEY + "\u2019", API_KEY + "\x7f", "provided key"):
+            with self.subTest(key=repr(key)), patch("bounty_operator_kit.ai_review._open_request") as opened:
+                with self.assertRaisesRegex(ValueError, "valid API key"):
+                    request_review(prepared_review(), AIReviewConfig(), key)
+                opened.assert_not_called()
 
 
 if __name__ == "__main__":
