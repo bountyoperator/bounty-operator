@@ -1,6 +1,11 @@
 from __future__ import annotations
 
+import re
 import shlex
+
+
+# git log -G reads a POSIX extended regex; a backslash before any other character is undefined there.
+_ERE_SPECIAL = re.compile(r"([.\[\\()*+?{|^$])")
 
 
 def _first_line(summary: str) -> str:
@@ -16,6 +21,8 @@ def build_prior_art_checklist(*, summary: str, target: str, program: str = "", r
     # The searches are literal: as a regex, a title such as "withdraw()" silently misses
     # its own text, and "[" or a leading "-" makes the command fail.
     quoted_title = shlex.quote(title)
+    # -G, not -S: -S counts occurrences, so it skips a fix commit that edits a line and keeps the title.
+    quoted_title_pattern = shlex.quote(_ERE_SPECIAL.sub(r"\\\1", title))
     quoted_target = shlex.quote(target)
     repo_text = repo or "TBD"
 
@@ -45,7 +52,7 @@ Run these from the target repository when possible:
 rg -n -i -F -e {quoted_title} .
 rg -n -i -F -e {quoted_target} .
 git log --oneline --all -i -F --grep={quoted_title}
-git log --oneline --all -i -S{quoted_title} -- .
+git log --oneline --all -i -G{quoted_title_pattern} -- .
 ```
 
 Also search:
