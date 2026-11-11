@@ -1,4 +1,4 @@
-// Answers the RunPod hosting API can give to { myself { underBalance } }.
+// Answers the RunPod hosting API can give to { myself { underBalance clientBalance } }.
 // Each failure must leave the funding state unknown, which closes payments.
 
 export const HOSTING_API = 'https://api.runpod.io/graphql';

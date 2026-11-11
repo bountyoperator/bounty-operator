@@ -1,4 +1,4 @@
-// A name-only counter for the free tools, the report templates and the MCP page.
+// A name-only counter for the free tools, the report templates, the MCP page and the bounty board.
 //
 // ping(name) asks the server to add one to a per-day total. The request is
 // POST /api/event with the body {"event":"<name>"} and nothing else: no file
@@ -19,6 +19,7 @@ export const PING_EVENTS = Object.freeze([
   'template_copied',
   'template_handoff',
   'mcp_command_copied',
+  'board_used',
 ]);
 
 const EVENT_PATH = '/api/event';

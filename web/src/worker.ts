@@ -56,6 +56,7 @@ import { createApiTopup, reconcileApiTopup, resyncPendingTopups, topupsUnavailab
 import { inferenceBilling, inferenceCatalog, inferenceEndpoint, inferenceModels, shownInferenceStatus, topupBilling } from './inference.ts';
 import { reconcileRunpodBilling, supplierBudgetProviders, supplierBudgetShare, supplierBudgetShareProblem, supplierShareShortfalls, sweepSupplierBudgets } from './supplier-costs.ts';
 import { monitorRunpod } from './alerts.ts';
+import { boardRoute } from './board.ts';
 
 const AUTH_REQUESTS_PER_HOUR = 90;
 const BILLING_REQUESTS_PER_10_MIN = 6;
@@ -314,6 +315,8 @@ async function stripeWebhook({ env, ctx, request }: Call): Promise<Response> {
 const ROUTES: Readonly<Record<string, Readonly<Record<string, Handler>>>> = {
   '/api/health': { GET: health },
   '/api/profiles': { GET: profiles },
+  '/api/board/snapshot': { GET: boardRoute('snapshot') },
+  '/api/board/programs': { GET: boardRoute('programs') },
   '/api/inference/catalog': { GET: async ({ env }) => {
     // The catalog shows an unknown hosting state as available; top-ups open only on a known one.
     const billing = await inferenceBilling(env);

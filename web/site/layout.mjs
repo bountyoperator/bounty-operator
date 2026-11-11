@@ -57,6 +57,7 @@ FINISH: Responsive layout, native video controls, captions, reduced motion and v
  */
 export const NAV = [
   { id: 'workbench', label: 'Review', href: '/#workspace' },
+  { id: 'board', label: 'Board', href: '/board', requires: '/board' },
   { id: 'benchmark', label: 'Benchmark', href: '/benchmark', requires: '/benchmark' },
   { id: 'model-api', label: 'Model API', href: '/model-api', requires: '/model-api' },
   { id: 'tools', label: 'Tools', href: '/tools' },
@@ -344,6 +345,7 @@ function siteFooter(page, site) {
 </div>
 ${footerColumn('Product', [
     { href: '/#workspace', label: 'Review a report' },
+    optional('/board', 'Bounty board'),
     optional('/benchmark', 'Benchmark'),
     optional('/model-api', 'Model API'),
     { href: '/tools', label: 'Free tools' },

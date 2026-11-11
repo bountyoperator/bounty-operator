@@ -27,6 +27,7 @@ export const CLIENT_EVENTS: ReadonlySet<string> = new Set([
   'template_handoff',
   'mcp_command_copied',
   'signup_prompt_clicked',
+  'board_used',
   // Sent by /theme.js once a page has loaded and is on screen. A script that
   // fetches a page never runs it, so this total is the people among the page views.
   'page_seen',

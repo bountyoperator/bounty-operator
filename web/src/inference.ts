@@ -116,6 +116,8 @@ export function inferenceReady(env: Env): boolean {
 // fail closed: when the state cannot be read, no top-up is sold or sent.
 const HOSTING_CHECK_MS = 60000;
 const HOSTING_TIMEOUT_MS = 5000;
+/** Below this the hosting account cannot pay for one request on the larger GPU (its allowance is US$0.50). */
+export const HOSTING_MIN_BALANCE_USD = 0.5;
 const HOSTING_API = 'https://api.runpod.io/graphql';
 const PAUSED_MESSAGE = 'Model inference is paused right now. No charge was made. Try again later.';
 
@@ -180,7 +182,7 @@ async function readHosting(env: Env): Promise<HostingRead> {
     response = await fetch(HOSTING_API, {
       method: 'POST', redirect: 'manual', signal: AbortSignal.timeout(HOSTING_TIMEOUT_MS),
       headers: { Authorization: `Bearer ${env.RUNPOD_API_KEY}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query: '{ myself { underBalance } }' }),
+      body: JSON.stringify({ query: '{ myself { underBalance clientBalance } }' }),
     });
   } catch (error) {
     const name = errorName(error);
@@ -210,8 +212,12 @@ async function readHosting(env: Env): Promise<HostingRead> {
   const myself = object(result.data) ? result.data.myself : undefined;
   if (!object(myself)) return unknownHosting('no_account');
   if (myself.underBalance === true) return { state: 'paused', reason: null };
-  if (myself.underBalance === false) return { state: 'funded', reason: null };
-  return unknownHosting('no_flag');
+  if (myself.underBalance !== false) return unknownHosting('no_flag');
+  // RunPod's flag stayed false on an account at -US$0.05 (read 9 to 11 November
+  // 2026), with every model still listed as available and top-ups open. A
+  // balance that cannot pay for one request is out of funds, whatever the flag says.
+  if (typeof myself.clientBalance === 'number' && Number.isFinite(myself.clientBalance) && myself.clientBalance < HOSTING_MIN_BALANCE_USD) return { state: 'paused', reason: null };
+  return { state: 'funded', reason: null };
 }
 
 /**

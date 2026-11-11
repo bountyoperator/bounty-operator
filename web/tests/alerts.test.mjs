@@ -445,7 +445,7 @@ test('a mixed catalog that stops selling after the day\'s out-of-funds email sti
   assert.deepEqual(result.held, ['runpod_under_balance', 'budget_low:infron-window']);
   assert.equal(subjects(binding).at(-1), 'Bounty Operator: model sales have stopped, RunPod is out of funds');
   const body = bodyOf(binding.sent.at(-1));
-  assert.match(body, /not selling: RunPod reports the account under its minimum balance and no model on another provider can sell/);
+  assert.match(body, /not selling: the RunPod account is out of funds and no model on another provider can sell/);
   assert.match(body, /new top-ups are closed too/);
   assert.match(body, /- direct-test: its provider's supplier budget window is used up\./);
   assert.match(body, /https:\/\/console\.runpod\.io\/user\/billing/);
@@ -471,7 +471,7 @@ test('a used-up budget while RunPod is paused does not say that other providers 
   assert.deepEqual(result.sent, ['model_sales_paused', 'budget_low:infron-window']);
   assert.equal(subjects(binding).at(-1), 'Bounty Operator: the Infron supplier budget is used up');
   const body = bodyOf(binding.sent.at(-1));
-  assert.match(body, /so the Infron models have stopped selling\. Nothing else is selling either: RunPod reports the account under its minimum balance\./);
+  assert.match(body, /so the Infron models have stopped selling\. Nothing else is selling either: the RunPod account is out of funds\./);
   assert.doesNotMatch(body, /Models on other providers still sell/);
 });
 

@@ -76,7 +76,10 @@ available, and payments already initiated continue to reconcile.
 
 Payments fail closed on the RunPod funding state. When every usable model is
 hosted on RunPod, a purchase needs the hosting API to confirm the account is
-funded (`underBalance: false`). A worker answering `/health` with 200 does not
+funded: `underBalance: false` and, where the answer carries it, a
+`clientBalance` of at least US$0.50, the allowance of one request on the larger
+GPU. RunPod's flag alone is not enough: it stayed `false` on an account at
+-US$0.05 in November 2026. A worker answering `/health` with 200 does not
 count, because a draining worker can answer on an account that has run out; a
 worker's 402 closes payments at once. No configured `RUNPOD_API_KEY`, a non-200
 answer, a redirect, a network error, a five-second timeout, GraphQL errors,
@@ -186,7 +189,7 @@ while any is pending.
 Back up D1 and apply migrations before enabling inference. Keep customer
 top-ups closed during model acceptance. Before opening top-ups on a RunPod-only
 catalog, confirm that the production `RUNPOD_API_KEY` answers
-`{ myself { underBalance } }` with HTTP 200, a boolean flag and no `errors`;
+`{ myself { underBalance clientBalance } }` with HTTP 200, a boolean flag and no `errors`;
 otherwise every purchase stays closed. Run the affected tests, type check,
 private-profile checks, and `npm run deploy:check` from `web/`. Deploy using
 `npm run deploy`; then run `npm run verify:live -- --base-url YOUR_ORIGIN`,

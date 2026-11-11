@@ -1,0 +1,537 @@
+/*
+  /board: the bounty board.
+
+  Figures first, in the display face with tabular digits; the coral ink marks
+  the one thing this board adds to a directory, what filing costs. Lines are
+  drawn in SVG and coloured here: green rose, ochre fell, grey held.
+*/
+
+.board-updated {
+  margin: 0;
+}
+
+.board-hint {
+  max-width: 64ch;
+  margin: var(--sp-8) 0 var(--sp-16);
+}
+
+/* --- Top figures --- */
+
+.board-tiles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-12);
+  margin: var(--sp-24) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.board-tile {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  min-width: 0;
+  padding: var(--sp-16);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface);
+}
+
+.board-tile__n {
+  font-family: var(--font-display);
+  font-size: var(--fs-28);
+  font-stretch: 100%;
+  font-weight: 780;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  overflow-wrap: anywhere;
+}
+
+.board-tile[data-tone="accent"] {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
+}
+
+.board-tile[data-tone="accent"] .board-tile__n {
+  color: var(--accent);
+}
+
+.board-tile__label {
+  color: var(--text);
+}
+
+.board-tile__note {
+  margin: 0;
+}
+
+@media (min-width: 40em) {
+  .board-tiles {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .board-tile__n {
+    font-size: var(--fs-40);
+  }
+}
+
+@media (min-width: 72em) {
+  .board-tiles {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  .board-tile__n {
+    font-size: 2.125rem;
+  }
+}
+
+/* --- Platform chips and names --- */
+
+.board-platform {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.375rem;
+  padding: 0 0.375rem;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-chip);
+  color: var(--muted);
+  font-family: var(--font-display);
+  font-size: var(--fs-12);
+  font-stretch: 100%;
+  font-weight: 650;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.board-name {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+/* --- Lines --- */
+
+.board-spark {
+  display: block;
+  width: 5rem;
+  height: 1.5rem;
+  margin-top: var(--sp-4);
+  margin-left: auto;
+  color: var(--line-strong);
+  overflow: visible;
+}
+
+.board-spark[data-trend="up"] {
+  color: var(--observed);
+}
+
+.board-spark[data-trend="down"] {
+  color: var(--gap);
+}
+
+.board-spark__line {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.board-spark__area {
+  fill: currentColor;
+  fill-opacity: 0.12;
+  stroke: none;
+}
+
+/* --- By platform --- */
+
+.board-platforms__name {
+  min-width: 9rem;
+  font-family: var(--font-display);
+  font-size: var(--fs-16);
+  font-stretch: 100%;
+  font-weight: 700;
+}
+
+.board-platforms__side {
+  display: block;
+  font-family: var(--font-sans);
+  font-weight: 400;
+}
+
+.board-platforms__name .chip {
+  margin-top: var(--sp-4);
+}
+
+.board-figure__n {
+  font-family: var(--font-display);
+  font-size: var(--fs-18);
+  font-stretch: 100%;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+.board-top__name {
+  display: block;
+  max-width: 14rem;
+}
+
+.board-notes {
+  display: grid;
+  gap: var(--sp-4);
+  min-width: 15rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--fs-13);
+  line-height: 1.45;
+}
+
+.board-platforms tr[data-platform="immunefi"] .board-notes li:first-child,
+.board-platforms tr[data-platform="cantina"] .board-notes li:first-child,
+.board-platforms tr[data-platform="sherlock"] .board-notes li:first-child {
+  color: var(--accent);
+}
+
+@media (max-width: 59.99em) {
+  .board-spark {
+    margin-left: 0;
+  }
+
+  .board-notes {
+    min-width: 0;
+  }
+}
+
+/* --- What filing costs --- */
+
+.board-cost-wrap {
+  display: grid;
+  gap: var(--sp-24);
+  padding: var(--sp-24);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-hero);
+  background: var(--surface-2);
+}
+
+.board-cost__intro > h2 {
+  margin-top: 0;
+}
+
+.board-cost__intro > p {
+  max-width: 52ch;
+}
+
+.board-cost__actions {
+  margin: var(--sp-16) 0 var(--sp-12);
+}
+
+.board-cost {
+  display: grid;
+  gap: var(--sp-24);
+}
+
+.board-cost__col {
+  min-width: 0;
+  padding-top: var(--sp-16);
+  border-top: var(--rule-w) solid var(--rule);
+}
+
+.board-cost__n {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-64);
+  font-stretch: 100%;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+
+.board-cost__col:first-child .board-cost__n {
+  color: var(--accent);
+}
+
+.board-cost__title {
+  margin: var(--sp-8) 0 var(--sp-12);
+  font-size: var(--fs-16);
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+.board-cost__rows {
+  display: grid;
+  gap: var(--sp-8);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.board-cost__rows li {
+  display: grid;
+  gap: 0;
+}
+
+.board-cost__who {
+  font-weight: 600;
+}
+
+@media (min-width: 40em) {
+  .board-cost {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 72em) {
+  .board-cost-wrap {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: var(--sp-48);
+    padding: var(--sp-32);
+  }
+}
+
+/* --- New, and contests --- */
+
+.board-split {
+  display: grid;
+  gap: var(--sp-32);
+}
+
+@media (min-width: 60em) {
+  .board-split {
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    gap: var(--sp-48);
+  }
+}
+
+.board-fresh {
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--rule);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  list-style: none;
+}
+
+.board-fresh__row {
+  display: grid;
+  grid-template-columns: 3.75rem minmax(0, 1fr) auto;
+  gap: var(--sp-12);
+  align-items: baseline;
+  padding: var(--sp-12) var(--sp-16);
+  border-bottom: 1px solid var(--line);
+}
+
+.board-fresh__row:last-child {
+  border-bottom: 0;
+}
+
+.board-fresh__main {
+  display: grid;
+  gap: var(--sp-4);
+  min-width: 0;
+}
+
+.board-fresh__what,
+.board-row__tags,
+.board-row__chips,
+.board-contest__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-4) 0.375rem;
+  align-items: center;
+}
+
+.board-fresh__max {
+  font-family: var(--font-display);
+  font-stretch: 100%;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.board-contests {
+  display: grid;
+  gap: var(--sp-12);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.board-contest {
+  display: grid;
+  gap: var(--sp-4);
+  padding: var(--sp-16);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-card);
+  background: var(--surface);
+}
+
+.board-contest > p {
+  margin: 0;
+}
+
+.board-contest__head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-8);
+  align-items: center;
+  justify-content: space-between;
+}
+
+.board-contest__pool {
+  font-family: var(--font-display);
+  font-size: var(--fs-28);
+  font-stretch: 100%;
+  font-weight: 780;
+  line-height: 1.1;
+}
+
+.board-contests__quiet {
+  margin: var(--sp-12) 0 0;
+}
+
+/* --- Every program --- */
+
+.board-controls {
+  display: none;
+  gap: var(--sp-12) var(--sp-16);
+  align-items: end;
+  margin: var(--sp-16) 0;
+}
+
+/* The controls work through the page script, so they are shown only where scripts run. */
+:root[data-js] .board-controls {
+  display: grid;
+}
+
+.board-controls .field {
+  margin: 0;
+}
+
+.board-controls__checks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--sp-16);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.board-controls__checks .label {
+  flex-basis: 100%;
+  padding: 0;
+}
+
+@media (min-width: 40em) {
+  :root[data-js] .board-controls {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .board-controls__checks {
+    grid-column: 1 / -1;
+  }
+}
+
+.board-count {
+  margin: 0 0 var(--sp-8);
+}
+
+.board-row__name {
+  min-width: 14rem;
+  font-weight: 400;
+}
+
+.board-row__name .board-name {
+  display: inline;
+}
+
+.board-row__tags {
+  margin-top: var(--sp-4);
+}
+
+.board-row__max {
+  font-family: var(--font-display);
+  font-size: var(--fs-16);
+  font-stretch: 100%;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.board-row__kinds {
+  display: block;
+}
+
+.board-row__activity {
+  min-width: 11rem;
+}
+
+.board-row__since {
+  white-space: nowrap;
+}
+
+.board-more {
+  display: flex;
+  justify-content: center;
+  margin-top: var(--sp-16);
+}
+
+/* --- Method --- */
+
+.board-sources {
+  padding-left: 1.125rem;
+}
+
+.board-method {
+  max-width: 68ch;
+}
+
+/* --- On a phone --- */
+
+/* A row is a card: its name across the top, its figures two abreast, and a
+   cell with nothing to show left out. */
+@media (max-width: 43.99em) {
+  .table-wrap > .table.board-platforms tbody tr,
+  .table-wrap > .table.board-programs tbody tr {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--sp-8) var(--sp-16);
+    align-items: start;
+  }
+
+  .table-wrap > .table.board-platforms tbody tr > * + *,
+  .table-wrap > .table.board-programs tbody tr > * + * {
+    margin-top: 0;
+  }
+
+  .table-wrap > .table.board-platforms tbody tr > th,
+  .table-wrap > .table.board-platforms tbody tr > .board-filing,
+  .table-wrap > .table.board-programs tbody tr > th,
+  .table-wrap > .table.board-programs tbody tr > .board-row__filing,
+  .table-wrap > .table.board-programs tbody tr > .board-row__activity {
+    grid-column: 1 / -1;
+  }
+
+  .table-wrap > .table.board-platforms tbody tr > .is-empty,
+  .table-wrap > .table.board-programs tbody tr > .is-empty {
+    display: none;
+  }
+
+  .board-row__name,
+  .board-platforms__name {
+    min-width: 0;
+  }
+
+  .board-fresh__row {
+    grid-template-columns: 3.25rem minmax(0, 1fr);
+  }
+
+  .board-fresh__max {
+    grid-column: 2;
+  }
+
+  .board-cost-wrap {
+    padding: var(--sp-16);
+  }
+
+  .board-cost__n {
+    font-size: var(--fs-40);
+  }
+}

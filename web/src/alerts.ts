@@ -299,7 +299,7 @@ function pausedEmail(report: SalesReport): Email {
   return {
     subject: 'Bounty Operator: model sales have stopped, RunPod is out of funds',
     lines: [
-      'The Model API is not selling: RunPod reports the account under its minimum balance and no model on another provider can sell, so no model can take a paid request and new top-ups are closed too.',
+      'The Model API is not selling: the RunPod account is out of funds and no model on another provider can sell, so no model can take a paid request and new top-ups are closed too.',
       ...also,
       '',
       ADD_FUNDS,
@@ -357,7 +357,7 @@ function budgetLowEmail(budget: SupplierBudget, remaining: number, exhausted: bo
   // What is left on sale once this provider's models stop.
   const rest = {
     available: 'Models on other providers still sell.',
-    paused: 'Nothing else is selling either: RunPod reports the account under its minimum balance.',
+    paused: 'Nothing else is selling either: the RunPod account is out of funds.',
     unknown: 'Whether anything else still sells is not known: the RunPod account could not be read.',
     unavailable: 'Nothing else is selling either; a separate email explains it.',
     off: 'Model inference is switched off (INFERENCE_ENABLED), so nothing is on sale either way.',

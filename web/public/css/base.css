@@ -3373,11 +3373,11 @@ button.ref:hover {
   }
 }
 
-/* Under 384px one row would crowd the links: they take two even rows of three. */
+/* Under 384px a wrapped row would crowd the links: the seven take a row of four and a row of three. */
 @media (max-width: 23.99em) {
   .site-nav ul {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
 

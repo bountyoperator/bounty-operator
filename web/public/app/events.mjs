@@ -36,6 +36,7 @@
  *   TEMPLATE_HANDOFF     a template page passed its draft to the review
  *   MCP_COMMAND_COPIED   an MCP install command was copied
  *   SIGNUP_PROMPT_CLICKED  an in-page Create a free account button was pressed
+ *   BOARD_USED           the bounty board was searched, filtered or extended
  *   PAGE_SEEN            a page loaded and was on screen. /theme.js sends this
  *                        one itself, once per page load; nothing else sends it
  */
@@ -62,6 +63,7 @@ export const EVENTS = Object.freeze({
   TEMPLATE_HANDOFF: 'template_handoff',
   MCP_COMMAND_COPIED: 'mcp_command_copied',
   SIGNUP_PROMPT_CLICKED: 'signup_prompt_clicked',
+  BOARD_USED: 'board_used',
   PAGE_SEEN: 'page_seen',
 });
 

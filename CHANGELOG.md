@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.9.22 — 2026-11-11
+
+Bounty board
+
+- New page, /board: every public bug bounty program on HackerOne, Bugcrowd,
+  Intigriti, YesWeHack, Immunefi, Cantina, Sherlock and Code4rena on one
+  board, web2 and web3 side by side. Each figure is read from the platform's
+  own public list, once a day.
+- It shows what filing costs: which programs take a fee or a stake with every
+  report, which ask for an identity check, and which require a proof of
+  concept.
+- What is new: programs launched and assets added to scope in the last 30
+  days, and the audit contests open now. A return visit marks what changed
+  since you last looked; that date stays in your browser.
+- Search every program and filter by platform, bounty, fee, KYC and new scope.
+- The four web2 platforms carry a year of history, from the commit log of the
+  open bounty-targets-data set.
+
+Model API
+
+- A RunPod balance too low to run one request now counts as out of funds, so
+  models show as paused and top-ups close. RunPod's own flag had stayed off on
+  an empty account, which left credit on sale that could not be spent.
+
 ## 0.9.21 — 2026-10-21
 
 Providers

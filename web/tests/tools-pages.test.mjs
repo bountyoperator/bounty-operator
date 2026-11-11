@@ -222,7 +222,7 @@ describe('tool browser modules', () => {
   test('every name the counter may send is one the Worker accepts, and each tool sends its own', async () => {
     const { CLIENT_EVENTS } = await import('../src/funnel.ts');
     for (const name of PING_EVENTS) assert.ok(CLIENT_EVENTS.has(name), name);
-    assert.deepEqual([...PING_EVENTS], ['tool_report_check', 'tool_secret_check', 'tool_slither_focus', 'tool_verify', 'tool_acceptance_rates', 'template_copied', 'template_handoff', 'mcp_command_copied']);
+    assert.deepEqual([...PING_EVENTS], ['tool_report_check', 'tool_secret_check', 'tool_slither_focus', 'tool_verify', 'tool_acceptance_rates', 'template_copied', 'template_handoff', 'mcp_command_copied', 'board_used']);
 
     // A page script calls ping with a string literal from the list, never with a value it computed.
     const expected = {

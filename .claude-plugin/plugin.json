@@ -1,7 +1,7 @@
 {
   "name": "bounty-operator",
   "displayName": "Bounty Operator",
-  "version": "0.9.21",
+  "version": "0.9.22",
   "description": "Make your strongest case before you submit. Check your proof, make the impact explicit, and catch missing evidence before the triager has to ask. Skills for evidence-backed security findings and draft reports on your own model, and the Bounty Operator MCP server for the hosted eight-stage gauntlet.",
   "author": {
     "name": "Tradi3",

@@ -232,7 +232,7 @@ test('the header and footer link the method, the pricing page and the security p
 // Pricing sat wholly off the screen. Now no link can leave the screen. With
 // scripts running, a phone folds the links behind Menu (the next test); these
 // rules are what a phone shows without them, and what a tablet shows.
-test('without scripts every header link is on a phone screen: one shared row, two rows of three under 384px, never a sideways scroll', async () => {
+test('without scripts every header link is on a phone screen: a shared row that wraps, four abreast under 384px, never a sideways scroll', async () => {
   const css = (await readFile(path.join(WEB_DIR, 'public', 'css', 'base.css'), 'utf8')).replace(/\/\*[\s\S]*?\*\//g, '');
   /** The body of the media block that opens with `open`, braces balanced. */
   const block = (open) => {
@@ -254,17 +254,18 @@ test('without scripts every header link is on a phone screen: one shared row, tw
   for (const rule of css.matchAll(/([^{}]*\.site-(?:nav|header)[^{}]*)\{([^{}]*)\}/g)) {
     assert.doesNotMatch(rule[2], /overflow(?:-x)?:\s*(?:auto|scroll)|width:\s*max-content|scrollbar-width/, rule[1].trim());
   }
-  // Under 384px the six links take two even rows of three.
-  assert.match(block('@media (max-width: 23.99em) {'), /^\s*\.site-nav ul \{\s*display: grid;\s*grid-template-columns: repeat\(3, minmax\(0, 1fr\)\);\s*\}\s*$/);
+  // Under 384px the seven links take a row of four and a row of three.
+  assert.match(block('@media (max-width: 23.99em) {'), /^\s*\.site-nav ul \{\s*display: grid;\s*grid-template-columns: repeat\(4, minmax\(0, 1fr\)\);\s*\}\s*$/);
 
   // The script that scrolled the current link into view is gone with the scroll.
   assert.doesNotMatch(await readFile(path.join(WEB_DIR, 'public', 'theme.js'), 'utf8'), /site-nav|scrollLeft/);
 
-  // One row of a 390px phone holds these six labels: in Archivo at the nav size
-  // they measured 307px of the 382px row. A new or longer label needs a fresh look at 390px.
+  // These seven labels, measured in a browser with scripts off (11 Nov 2026): one row from
+  // 430px, two rows at 390px, four and three at 360px, and no sideways scroll at any width.
+  // With scripts a phone shows Menu instead. A new or longer label needs a fresh look.
   const nav = renderPage({ path: '/guide', title: 'Guide | Bounty Operator', description: DESCRIPTION, nav: 'guide', body: html`<h1>Guide</h1>` }, { has: () => true, pages: [] });
   const labels = [...nav.slice(nav.indexOf('<nav class="site-nav"'), nav.indexOf('</nav>')).matchAll(/<a [^>]*>([^<]+)<\/a>/g)].map((match) => match[1]);
-  assert.deepEqual(labels, ['Review', 'Benchmark', 'Model API', 'Tools', 'Guide', 'Pricing']);
+  assert.deepEqual(labels, ['Review', 'Board', 'Benchmark', 'Model API', 'Tools', 'Guide', 'Pricing']);
 });
 
 // The two-row phone header pushed every headline down: at 390px the h1 of the

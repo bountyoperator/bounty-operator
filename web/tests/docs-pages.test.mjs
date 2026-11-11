@@ -117,7 +117,7 @@ test('the privacy policy lists every key the site scripts keep in the browser', 
   // passed to localStorage, sessionStorage or indexedDB.
   const { readdir } = await import('node:fs/promises');
   const scripts = ['theme.js'];
-  for (const dir of ['app', 'benchmark', 'docs', 'templates', 'tools']) {
+  for (const dir of ['app', 'benchmark', 'board', 'docs', 'templates', 'tools']) {
     for (const name of await readdir(path.join(PUBLIC_DIR, dir))) if (name.endsWith('.mjs')) scripts.push(`${dir}/${name}`);
   }
   const used = new Set();
@@ -347,6 +347,7 @@ test('the privacy policy names every counter the Worker keeps', async () => {
     tool_report_check: 'a free tool run', tool_secret_check: 'a free tool run', tool_slither_focus: 'a free tool run', tool_verify: 'a free tool run',
     tool_acceptance_rates: 'a free tool run', template_copied: 'a template copied', mcp_command_copied: 'an MCP command copied',
     template_handoff: 'a template draft passed to the review', signup_prompt_clicked: 'a Create a free account button pressed',
+    board_used: 'the bounty board searched or filtered',
     page_seen: 'pages seen: each page reports once that it has loaded and is on screen, unless the browser says automation is driving it',
   };
   assert.deepEqual(Object.keys(words).sort(), [...CLIENT_EVENTS].sort(), 'a new named action needs its words on /privacy');

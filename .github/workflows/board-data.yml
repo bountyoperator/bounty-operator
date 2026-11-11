@@ -1,0 +1,57 @@
+# Builds the bounty board's data once a day and puts it on the board-data branch,
+# where the site reads it (web/src/board.ts). The site never waits for this: when
+# the branch cannot be read it serves the data it was deployed with.
+#
+# What it reads: each platform's public program list (scripts/board/sources.mjs).
+# No account, key or secret is used. A platform that cannot be read that day keeps
+# its last good figures, marked with their date; the job fails only when no
+# platform could be read, and GitHub then mails the repository's owner.
+#
+# The branch holds one commit, replaced every day: the history that matters is
+# inside history.json, and a year of daily commits of a megabyte of state would
+# only make every clone of the repository larger.
+name: Board data
+
+on:
+  schedule:
+    - cron: '23 5 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: board-data
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: write # replaces the board-data branch; nothing else is granted
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+
+      # Yesterday's data: what is new today is measured against it.
+      - name: Fetch the data branch
+        run: |
+          mkdir -p ../board-data
+          git fetch --depth 1 origin board-data
+          git archive FETCH_HEAD state.json history.json programs.json snapshot.json | tar -x -C ../board-data
+
+      - name: Read the platforms and build the day
+        run: node scripts/build-board.mjs --data ../board-data
+
+      - name: Replace the data branch
+        run: |
+          cd ../board-data
+          git init --quiet --initial-branch board-data
+          git add state.json history.json programs.json snapshot.json
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit --quiet -m "Board data $(date -u +%F)"
+          git push --force "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" board-data
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
