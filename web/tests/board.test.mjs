@@ -471,7 +471,11 @@ function boardEnv(deployed) {
 test('the route serves the later day of the branch and the deployed copy, and a bad branch file never replaces a good one', async (t) => {
   const asked = [];
   let branch = {};
-  t.mock.method(globalThis, 'fetch', async (url) => {
+  const modes = [];
+  t.mock.method(globalThis, 'fetch', async (url, init = {}) => {
+    // As the Workers runtime does: the Fetch standard's 'error' redirect mode is not implemented and throws.
+    if (init.redirect === 'error') throw new TypeError('Invalid redirect value, must be one of "follow" or "manual".');
+    modes.push(init.redirect);
     asked.push(String(url));
     const name = String(url).slice(BOARD_SOURCE.length + 1).replace('.json', '');
     if (branch[name] === undefined) return new Response('not found', { status: 404 });
@@ -488,6 +492,7 @@ test('the route serves the later day of the branch and the deployed copy, and a 
   branch = { snapshot: doc('snapshot', '2026-11-12') };
   assert.deepEqual(await day(env, 'snapshot'), ['2026-11-12', 'application/json; charset=utf-8']);
   assert.deepEqual(asked, [`${BOARD_SOURCE}/snapshot.json`]);
+  assert.deepEqual(modes, ['manual'], 'a redirect mode the Workers runtime accepts');
   // Kept for half an hour: the next visitor costs no request.
   await boardData(env, 'snapshot');
   assert.equal(asked.length, 1);
@@ -512,6 +517,14 @@ test('the route serves the later day of the branch and the deployed copy, and a 
   clearBoardData();
   branch = {};
   await assert.rejects(boardData(boardEnv({}), 'snapshot'), (error) => error.status === 503 && error.code === 'board_unavailable');
+});
+
+test('no Worker code asks fetch for the redirect mode the Workers runtime does not implement', async () => {
+  const { readdirSync } = await import('node:fs');
+  const dir = path.join(WEB_DIR, 'src');
+  for (const file of readdirSync(dir).filter((name) => name.endsWith('.ts'))) {
+    assert.doesNotMatch(readFileSync(path.join(dir, file), 'utf8'), /redirect:\s*['"]error['"]/, file);
+  }
 });
 
 test('the Worker routes both files, and only those', () => {

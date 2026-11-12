@@ -61,12 +61,21 @@ async function deployed(env: Env, name: BoardFile): Promise<Kept | null> {
 
 async function newest(name: BoardFile): Promise<Kept | null> {
   try {
-    const response = await fetch(`${BOARD_SOURCE}/${name}.json`, { redirect: 'error', signal: AbortSignal.timeout(READ_TIMEOUT_MS) });
-    if (!response.ok) return null;
+    // Workers do not implement the Fetch standard's 'error' redirect mode: passing
+    // it throws, which for a day made every read fail and the board serve its
+    // deployed copy. 'manual' returns a redirect as a 3xx, which is not ok here.
+    const response = await fetch(`${BOARD_SOURCE}/${name}.json`, { redirect: 'manual', signal: AbortSignal.timeout(READ_TIMEOUT_MS) });
+    if (!response.ok) {
+      await response.body?.cancel().catch(() => {});
+      console.warn('Board data branch not read', { file: name, status: response.status });
+      return null;
+    }
     const text = await response.text();
     const doc = parse(name, text);
+    if (!doc) console.warn('Board data branch not read', { file: name, reason: 'malformed' });
     return doc ? { at: Date.now(), day: doc.day, text } : null;
-  } catch {
+  } catch (error) {
+    console.warn('Board data branch not read', { file: name, reason: error instanceof Error ? error.name : 'unknown' });
     return null;
   }
 }
@@ -76,7 +85,8 @@ export async function boardData(env: Env, name: BoardFile): Promise<Response> {
   let found = kept.get(name) ?? null;
   if (!found || Date.now() - found.at > KEEP_MS) {
     const [fresh, own] = await Promise.all([newest(name), deployed(env, name)]);
-    // The later day wins; a deploy can be newer than the branch, and the branch newer than the deploy.
+    // The later day wins; a deploy can be newer than the branch, and the branch
+    // newer than the deploy. On the same day the branch wins: it is read later.
     const best = fresh && own ? (fresh.day >= own.day ? fresh : own) : fresh ?? own;
     // A failed read is not kept, so the next request tries again; the last good one stands meanwhile.
     if (best) kept.set(name, best);

@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.9.23 — 2026-11-12
+
+Bounty board
+
+- The board now shows each day's read as soon as it is made. Since 0.9.22 it
+  had kept showing the day the site was deployed with, because the site's
+  request for the newer data used an option Cloudflare Workers do not support.
+  A failed read is now logged instead of passing unnoticed.
+
 ## 0.9.22 — 2026-11-11
 
 Bounty board
